@@ -16,6 +16,19 @@ def make(dt=None, threshold=1):
 
 
 class CalibratedTests(unittest.TestCase):
+    def test_numpy_bridge_free_legacy_digest_restart(self):
+        import hashlib
+        from unittest.mock import patch
+        sim=make()
+        legacy_digest=hashlib.sha256(sim.coefficients.detach().cpu().numpy().tobytes()).hexdigest()
+        state=sim.snapshot()
+        self.assertEqual(state["coefficient_sha256"],legacy_digest)
+        with patch.object(torch.Tensor,"numpy",side_effect=RuntimeError("NumPy bridge unavailable")):
+            restored=CalibratedIceDEM.from_snapshot(state)
+            self.assertEqual(restored.coefficient_hash,legacy_digest)
+            restored.step(torch.zeros_like(restored.positions))
+            self.assertEqual(restored._hash(),legacy_digest)
+
     def test_force_energy_and_release(self):
         sim=make(threshold=.001)
         sim.positions[:,0]*=1.01
