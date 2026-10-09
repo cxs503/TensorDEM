@@ -5,6 +5,8 @@ import math
 
 import torch
 
+from .hull_contact import polyline_contact_forces
+
 
 @dataclass(frozen=True)
 class DEMConfig:
@@ -75,7 +77,14 @@ class IceDEM:
     The model still has no particle rotations or explicit shear-bond moments.
     """
 
-    def __init__(self, config: DEMConfig = DEMConfig()) -> None:
+    def __init__(
+        self,
+        config: DEMConfig = DEMConfig(),
+        *,
+        hull_profile: torch.Tensor | None = None,
+        hull_start: tuple[float, float] = (0.0, 0.0),
+        hull_velocity: tuple[float, float] = (0.0, 0.0),
+    ) -> None:
         self.config = config
         self.device = torch.device(config.device)
         if self.device.type not in ("cpu", "cuda"):
@@ -122,9 +131,28 @@ class IceDEM:
         self.tool_velocity = torch.tensor(
             [0.0, -config.tool_speed], dtype=torch.float64, device=self.device
         )
+        self.hull_profile = None
+        self.hull_start = torch.tensor(hull_start, dtype=torch.float64, device=self.device)
+        self.hull_velocity = torch.tensor(hull_velocity, dtype=torch.float64, device=self.device)
+        if not bool(torch.isfinite(self.hull_start).all() and torch.isfinite(self.hull_velocity).all()):
+            raise ValueError("hull_start and hull_velocity must be finite")
+        if hull_profile is not None:
+            if not isinstance(hull_profile, torch.Tensor):
+                raise TypeError("hull_profile must be a torch.Tensor with shape (M, 2)")
+            if hull_profile.ndim != 2 or hull_profile.shape[1] != 2 or hull_profile.shape[0] < 2:
+                raise ValueError("hull_profile must have shape (M, 2), M >= 2")
+            self.hull_profile = hull_profile.to(device=self.device, dtype=torch.float64).clone()
+            if not bool(torch.isfinite(self.hull_profile).all()):
+                raise ValueError("hull_profile must contain only finite values")
+            if bool((torch.linalg.vector_norm(self.hull_profile[1:] - self.hull_profile[:-1], dim=1)
+                     <= torch.finfo(self.hull_profile.dtype).eps).any()):
+                raise ValueError("hull_profile must not contain zero-length segments")
 
     @property
     def tool_position(self) -> torch.Tensor:
+        """Return the circular tool position or prescribed hull translation."""
+        if self.hull_profile is not None:
+            return self.hull_start + self.time * self.hull_velocity
         return self.tool_start + self.time * self.tool_velocity
 
     @property
@@ -216,27 +244,41 @@ class IceDEM:
         force.index_add_(0, i, pair_force)
         force.index_add_(0, j, -pair_force)
 
-        tool_delta = self.positions - self.tool_position
-        tool_distance = torch.linalg.vector_norm(tool_delta, dim=1)
-        tool_normal = tool_delta / tool_distance.clamp_min(
-            torch.finfo(tool_delta.dtype).eps
-        )[:, None]
-        fallback = torch.zeros_like(tool_normal)
-        fallback[:, 1] = -1
-        tool_normal = torch.where((tool_distance > 0)[:, None], tool_normal, fallback)
-        tool_overlap = (cfg.radius + cfg.tool_radius - tool_distance).clamp_min(0)
-        tool_speed = ((self.velocities - self.tool_velocity) * tool_normal).sum(dim=1)
-        tool_magnitude = (
-            cfg.contact_stiffness * tool_overlap - cfg.contact_damping * tool_speed
-        ).clamp_min(0)
-        tool_magnitude = torch.where(
-            tool_overlap > 0, tool_magnitude, torch.zeros_like(tool_magnitude)
-        )
-        tool_force = tool_magnitude[:, None] * tool_normal
+        if self.hull_profile is None:
+            tool_delta = self.positions - self.tool_position
+            tool_distance = torch.linalg.vector_norm(tool_delta, dim=1)
+            tool_normal = tool_delta / tool_distance.clamp_min(
+                torch.finfo(tool_delta.dtype).eps
+            )[:, None]
+            fallback = torch.zeros_like(tool_normal)
+            fallback[:, 1] = -1
+            tool_normal = torch.where((tool_distance > 0)[:, None], tool_normal, fallback)
+            tool_overlap = (cfg.radius + cfg.tool_radius - tool_distance).clamp_min(0)
+            tool_speed = ((self.velocities - self.tool_velocity) * tool_normal).sum(dim=1)
+            tool_magnitude = (
+                cfg.contact_stiffness * tool_overlap - cfg.contact_damping * tool_speed
+            ).clamp_min(0)
+            tool_magnitude = torch.where(
+                tool_overlap > 0, tool_magnitude, torch.zeros_like(tool_magnitude)
+            )
+            tool_force = tool_magnitude[:, None] * tool_normal
+            tool_reaction = -tool_force.sum(dim=0)
+        else:
+            vertices = self.hull_profile + self.tool_position
+            tool_force, tool_reaction = polyline_contact_forces(
+                self.positions,
+                self.velocities,
+                vertices,
+                self.hull_velocity,
+                particle_radius=cfg.radius,
+                hull_radius=cfg.tool_radius,
+                stiffness=cfg.contact_stiffness,
+                damping=cfg.contact_damping,
+            )
         force += tool_force
         if loads is not None:
             force += loads
-        return force, -tool_force.sum(dim=0)
+        return force, tool_reaction
 
     @torch.no_grad()
     def step(self, external_forces: torch.Tensor | None = None) -> None:
