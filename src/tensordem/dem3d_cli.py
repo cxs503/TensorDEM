@@ -40,7 +40,13 @@ def main(argv: list[str] | None = None) -> None:
                 parser.error("restart checkpoint has no valid saved configuration")
             config = DEM3DConfig(**{**saved_config, "device": args.device})
             sim = IceDEM3D(config)
-            sim.load_state_dict(checkpoint["state"])
+            state_to_load = checkpoint["state"]
+            if saved_config.get("device") != args.device:
+                # Device is an execution choice, not physical state; permit a
+                # trusted checkpoint to move between CPU and CUDA.
+                state_to_load = dict(state_to_load)
+                state_to_load["config"] = {**saved_config, "device": args.device}
+            sim.load_state_dict(state_to_load)
         else:
             config = DEM3DConfig(nx=args.nx, ny=args.ny, nz=args.nz, dt=args.dt,
                 tool_speed=args.speed, radius=args.radius, tool_radius=args.tool_radius,
