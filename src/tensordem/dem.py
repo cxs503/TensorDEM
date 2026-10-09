@@ -16,6 +16,7 @@ class DEMConfig:
     bond_stiffness: float = 2_000.0
     contact_stiffness: float = 2_000.0
     breaking_strain: float = 0.015
+    shear_breaking_strain: float = 0.03
     contact_damping: float = 5.0
     drag: float = 2.0
     tool_radius: float = 0.1
@@ -32,7 +33,8 @@ class DEMConfig:
                 raise ValueError(f"{name} must be an integer >= 2")
         for name in (
             "radius", "thickness", "density", "bond_stiffness",
-            "contact_stiffness", "breaking_strain", "tool_radius", "tool_speed",
+            "contact_stiffness", "breaking_strain", "shear_breaking_strain",
+            "tool_radius", "tool_speed",
         ):
             value = getattr(self, name)
             if not math.isfinite(value) or value <= 0:
@@ -68,8 +70,9 @@ class IceDEM:
     Positions, velocities and externally applied forces have shape (N, 2).
     External forces use SI newtons in the global x/y frame and are evaluated
     at the current step (not accumulated internally). Bond and contact forces
-    are central and equal/opposite. There are no rotational or shear degrees
-    of freedom. Force evaluation irreversibly updates bond damage.
+    are central and equal/opposite. Tensile failure uses axial bond strain;
+    shear failure uses an objective local Green-Lagrange strain invariant.
+    The model still has no particle rotations or explicit shear-bond moments.
     """
 
     def __init__(self, config: DEMConfig = DEMConfig()) -> None:
@@ -103,6 +106,11 @@ class IceDEM:
         self.initial_normals = delta / distances[:, None]
         # Square-grid nearest neighbors and diagonals form the bonded lattice.
         self.bonded = distances <= 2 * config.radius * math.sqrt(2) * (1 + 1e-10)
+        self.bond_indices = self.pairs[self.bonded]
+        self.reference_bond_vectors = (
+            self.initial_positions[self.bond_indices[:, 1]]
+            - self.initial_positions[self.bond_indices[:, 0]]
+        )
         self.rest_lengths = distances.clone()
         self.alive = self.bonded.clone()
         self.time = 0.0
@@ -122,6 +130,34 @@ class IceDEM:
     @property
     def broken_bonds(self) -> int:
         return int((self.bonded & ~self.alive).sum().item())
+
+    @torch.no_grad()
+    def _local_objective_shear_strain(self) -> torch.Tensor:
+        """Return a rotation-invariant local shear strain estimate per particle.
+
+        A least-squares deformation gradient is reconstructed from the initial
+        bonded neighborhood. The Green-Lagrange strain removes rigid rotation;
+        the equivalent in-plane shear measure is sqrt((E_xx-E_yy)^2 + 4 E_xy^2).
+        """
+        n = len(self.positions)
+        i, j = self.bond_indices.T
+        reference = self.reference_bond_vectors
+        current = self.positions[j] - self.positions[i]
+        reference_outer = reference[:, :, None] * reference[:, None, :]
+        current_reference = current[:, :, None] * reference[:, None, :]
+        covariance = torch.zeros((n, 2, 2), dtype=self.positions.dtype, device=self.device)
+        cross = torch.zeros_like(covariance)
+        covariance.index_add_(0, i, reference_outer)
+        covariance.index_add_(0, j, reference_outer)
+        cross.index_add_(0, i, current_reference)
+        cross.index_add_(0, j, current_reference)
+        deformation = cross @ torch.linalg.pinv(covariance)
+        identity = torch.eye(2, dtype=self.positions.dtype, device=self.device)
+        strain = 0.5 * (deformation.transpose(1, 2) @ deformation - identity)
+        return torch.sqrt(
+            (strain[:, 0, 0] - strain[:, 1, 1]).square()
+            + 4.0 * strain[:, 0, 1].square()
+        )
 
     def _validate_external_forces(
         self, external_forces: torch.Tensor | None
@@ -157,7 +193,13 @@ class IceDEM:
         normal = delta / distance.clamp_min(torch.finfo(delta.dtype).eps)[:, None]
         normal = torch.where((distance > 0)[:, None], normal, self.initial_normals)
         extension = distance - self.rest_lengths
-        self.alive &= extension / self.rest_lengths <= cfg.breaking_strain
+        tensile_strain = extension / self.rest_lengths
+        local_shear = self._local_objective_shear_strain()
+        i_bond, j_bond = self.bond_indices.T
+        bond_shear = 0.5 * (local_shear[i_bond] + local_shear[j_bond])
+        shear_failed = bond_shear > cfg.shear_breaking_strain
+        tensile_failed = tensile_strain[self.bonded] > cfg.breaking_strain
+        self.alive[self.bonded] &= ~(tensile_failed | shear_failed)
         normal_speed = ((self.velocities[j] - self.velocities[i]) * normal).sum(dim=1)
         overlap = (2 * cfg.radius - distance).clamp_min(0)
         repulsion = (
