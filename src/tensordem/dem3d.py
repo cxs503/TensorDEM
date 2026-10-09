@@ -335,6 +335,26 @@ class IceDEM3D:
     def diagnostics(self, external_forces: torch.Tensor | None = None) -> dict[str, float | int]:
         force, reaction = self.forces(external_forces)
         support = -force[self.fixed].sum(dim=0)
+        kinetic = 0.5 * self.config.mass * self.velocities.square().sum()
+        # Recoverable elastic energy in surviving bonds only. Broken bonds are
+        # represented separately by their recorded release-energy estimate.
+        i, j = self.pairs.T
+        distance = torch.linalg.vector_norm(self.positions[j] - self.positions[i], dim=1)
+        extension = distance - self.rest_lengths
+        bond_energy = (0.5 * self.config.bond_stiffness * extension.square() * self.alive).sum()
+        contact_pairs = self._contact_candidate_pairs()
+        contact_energy = torch.zeros((), dtype=self.dtype, device=self.device)
+        if contact_pairs.numel():
+            ci, cj = contact_pairs.T
+            cdistance = torch.linalg.vector_norm(self.positions[cj] - self.positions[ci], dim=1)
+            overlap = (2 * self.config.radius - cdistance).clamp_min(0)
+            broken_or_unbonded = ~self._alive_bond_for_pairs(contact_pairs)
+            contact_energy = (0.5 * self.config.contact_stiffness
+                              * overlap.square() * broken_or_unbonded).sum()
+        tool_overlap = (self.config.radius + self.config.tool_radius
+                        - torch.linalg.vector_norm(self.positions - self.tool_position, dim=1)).clamp_min(0)
+        tool_energy = (0.5 * self.config.contact_stiffness * tool_overlap.square()).sum()
+        released = self.failure_energy_J.sum()
         return {
             "time": self.time,
             "tool_x": float(self.tool_position[0]), "tool_y": float(self.tool_position[1]),
@@ -344,8 +364,13 @@ class IceDEM3D:
             "boundary_reaction_x": float(support[0]), "boundary_reaction_y": float(support[1]),
             "boundary_reaction_z": float(support[2]),
             "broken_bonds": self.broken_bonds,
-            "kinetic_energy_J": float(0.5 * self.config.mass * self.velocities.square().sum()),
             "particle_count": len(self.positions),
+            "kinetic_energy_J": float(kinetic),
+            "bond_elastic_energy_J": float(bond_energy),
+            "particle_contact_energy_J": float(contact_energy),
+            "tool_contact_energy_J": float(tool_energy),
+            "released_bond_energy_J": float(released),
+            "mechanical_energy_J": float(kinetic + bond_energy + contact_energy + tool_energy),
         }
 
     def state_dict(self) -> dict[str, Any]:
