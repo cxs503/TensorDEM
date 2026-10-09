@@ -211,8 +211,10 @@ class IceDEM:
             raise FloatingPointError("Non-finite simulation state; reduce dt")
 
     @torch.no_grad()
-    def diagnostics(self) -> dict[str, float | int]:
-        force, reaction = self.forces()
+    def diagnostics(
+        self, external_forces: torch.Tensor | None = None
+    ) -> dict[str, float | int]:
+        force, reaction = self.forces(external_forces=external_forces)
         boundary_reaction = -force[self.fixed].sum(dim=0)
         return {
             "time": self.time,
