@@ -107,20 +107,27 @@ class IceDEM3D:
         if config.fix_bottom:
             self.fixed |= zz.reshape(-1) == 0
 
-        self.pairs = torch.triu_indices(len(grid), len(grid), offset=1, device=self.device).T
-        i, j = self.pairs.T
-        ref = self.initial_positions[j] - self.initial_positions[i]
-        self.rest_lengths = torch.linalg.vector_norm(ref, dim=1)
-        cutoff = 2 * config.radius * math.sqrt(3) * (1 + 1e-10)
-        self.bonded = self.rest_lengths <= cutoff
+        # Store only permanent bonded topology. Contact candidates are rebuilt
+        # from a spatial cell list at the current configuration, avoiding the
+        # quadratic all-pairs arrays that dominate memory for larger ice blocks.
+        all_pairs = torch.triu_indices(len(grid), len(grid), offset=1, device=self.device).T
+        ai, aj = all_pairs.T
+        all_ref = self.initial_positions[aj] - self.initial_positions[ai]
+        all_rest = torch.linalg.vector_norm(all_ref, dim=1)
+        bond_cutoff = 2 * config.radius * math.sqrt(3) * (1 + 1e-10)
+        keep = all_rest <= bond_cutoff
+        self.pairs = all_pairs[keep]
+        self.bonded = torch.ones(len(self.pairs), dtype=torch.bool, device=self.device)
+        self.rest_lengths = all_rest[keep]
         self.alive = self.bonded.clone()
-        self.bond_indices = self.pairs[self.bonded]
-        self.reference_bond_vectors = ref[self.bonded].clone()
-        self.initial_normals = ref / self.rest_lengths.clamp_min(torch.finfo(self.dtype).eps)[:, None]
+        self.bond_indices = self.pairs
+        self.reference_bond_vectors = all_ref[keep].clone()
+        self.initial_normals = all_ref[keep] / self.rest_lengths.clamp_min(torch.finfo(self.dtype).eps)[:, None]
         self.failure_mode = torch.zeros(len(self.pairs), dtype=torch.uint8, device=self.device)
         self.failure_time_s = torch.full((len(self.pairs),), -1.0, dtype=self.dtype, device=self.device)
         self.failure_extension_m = torch.zeros(len(self.pairs), dtype=self.dtype, device=self.device)
         self.failure_energy_J = torch.zeros(len(self.pairs), dtype=self.dtype, device=self.device)
+        self._bond_keys = self.pairs[:, 0] * len(grid) + self.pairs[:, 1]
 
         self.time = 0.0
         self.step_count = 0
@@ -139,6 +146,53 @@ class IceDEM3D:
     @property
     def broken_bonds(self) -> int:
         return int((self.bonded & ~self.alive).sum().item())
+
+    @torch.no_grad()
+    def _contact_candidate_pairs(self) -> torch.Tensor:
+        """Build current overlap candidates with a uniform spatial cell list.
+
+        Cell width is the contact diameter, so overlapping spheres can only be
+        in the same or one of the 26 adjacent cells. Bond topology is stored
+        separately and is never discarded when particles move or bonds break.
+        """
+        n = len(self.positions)
+        if n < 2:
+            return torch.empty((0, 2), dtype=torch.long, device=self.device)
+        width = 2.0 * self.config.radius
+        coords = torch.floor(self.positions.detach().cpu() / width).to(torch.int64).tolist()
+        cells: dict[tuple[int, int, int], list[int]] = {}
+        for idx, xyz in enumerate(coords):
+            key = (xyz[0], xyz[1], xyz[2])
+            cells.setdefault(key, []).append(idx)
+        pairs: list[tuple[int, int]] = []
+        for key, members in cells.items():
+            x, y, z = key
+            for dx in (-1, 0, 1):
+                for dy in (-1, 0, 1):
+                    for dz in (-1, 0, 1):
+                        other = cells.get((x + dx, y + dy, z + dz))
+                        if other is None:
+                            continue
+                        for i in members:
+                            for j in other:
+                                if j > i:
+                                    pairs.append((i, j))
+        if not pairs:
+            return torch.empty((0, 2), dtype=torch.long, device=self.device)
+        return torch.tensor(pairs, dtype=torch.long, device=self.device)
+
+    @torch.no_grad()
+    def _alive_bond_for_pairs(self, pairs: torch.Tensor) -> torch.Tensor:
+        """Return an alive-bond mask aligned with arbitrary sorted node pairs."""
+        if pairs.numel() == 0:
+            return torch.zeros((0,), dtype=torch.bool, device=self.device)
+        keys = pairs[:, 0] * len(self.positions) + pairs[:, 1]
+        where = torch.searchsorted(self._bond_keys, keys)
+        safe = where.clamp(max=max(len(self._bond_keys) - 1, 0))
+        matched = (where < len(self._bond_keys)) & (self._bond_keys[safe] == keys)
+        result = torch.zeros_like(matched)
+        result[matched] = self.alive[safe[matched]]
+        return result
 
     @torch.no_grad()
     def _objective_shear_strain(self) -> torch.Tensor:
@@ -175,10 +229,11 @@ class IceDEM3D:
         """Calculate nodal forces and the ice-on-tool reaction vector."""
         cfg = self.config
         loads = self._loads(external_forces)
+        eps = torch.finfo(self.dtype).eps
+        # Permanent bond interactions retain compact topology and failure history.
         i, j = self.pairs.T
         delta = self.positions[j] - self.positions[i]
         distance = torch.linalg.vector_norm(delta, dim=1)
-        eps = torch.finfo(self.dtype).eps
         normal = delta / distance.clamp_min(eps)[:, None]
         normal = torch.where((distance > eps)[:, None], normal, self.initial_normals)
         extension = distance - self.rest_lengths
@@ -186,30 +241,42 @@ class IceDEM3D:
         bi, bj = self.bond_indices.T
         shear = self._objective_shear_strain()
         shear_bond = 0.5 * (shear[bi] + shear[bj])
-        tensile_fail = strain[self.bonded] > cfg.breaking_strain
+        tensile_fail = strain > cfg.breaking_strain
         shear_fail = shear_bond > cfg.shear_breaking_strain
         old_alive = self.alive.clone()
-        self.alive[self.bonded] &= ~(tensile_fail | shear_fail)
+        self.alive &= ~(tensile_fail | shear_fail)
         newly = old_alive & ~self.alive
-        modes_t = torch.zeros_like(self.bonded); modes_s = torch.zeros_like(self.bonded)
-        modes_t[self.bonded] = tensile_fail
-        modes_s[self.bonded] = shear_fail
-        self.failure_mode[newly] = modes_t[newly].to(torch.uint8) + 2 * modes_s[newly].to(torch.uint8)
+        self.failure_mode[newly] = tensile_fail[newly].to(torch.uint8) + 2 * shear_fail[newly].to(torch.uint8)
         self.failure_time_s[newly] = self.time
         self.failure_extension_m[newly] = extension[newly]
         self.failure_energy_J[newly] = 0.5 * cfg.bond_stiffness * extension[newly].square()
 
-        relative_v = self.velocities[j] - self.velocities[i]
-        vn = (relative_v * normal).sum(dim=1)
-        overlap = (2 * cfg.radius - distance).clamp_min(0)
-        contact_mag = (cfg.contact_stiffness * overlap - cfg.contact_damping * vn).clamp_min(0)
-        contact_mag = torch.where((overlap > 0) & ~self.alive, contact_mag, torch.zeros_like(contact_mag))
         bond_mag = cfg.bond_stiffness * extension
-        magnitude = torch.where(self.alive, bond_mag, -contact_mag)
-        pair_force = magnitude[:, None] * normal
+        bond_force = bond_mag[:, None] * normal
         force = -cfg.drag * self.velocities
-        force.index_add_(0, i, pair_force)
-        force.index_add_(0, j, -pair_force)
+        active_bond_force = torch.where(self.alive[:, None], bond_force, torch.zeros_like(bond_force))
+        force.index_add_(0, i, active_bond_force)
+        force.index_add_(0, j, -active_bond_force)
+
+        contact_pairs = self._contact_candidate_pairs()
+        if contact_pairs.numel():
+            ci, cj = contact_pairs.T
+            cdelta = self.positions[cj] - self.positions[ci]
+            cdistance = torch.linalg.vector_norm(cdelta, dim=1)
+            overlap = (2 * cfg.radius - cdistance).clamp_min(0)
+            near = overlap > 0
+            ci, cj = ci[near], cj[near]
+            cdelta, cdistance, overlap = cdelta[near], cdistance[near], overlap[near]
+            if ci.numel():
+                cnormal = cdelta / cdistance.clamp_min(eps)[:, None]
+                bond_alive = self._alive_bond_for_pairs(torch.stack((ci, cj), dim=1))
+                relative_v = self.velocities[cj] - self.velocities[ci]
+                vn = (relative_v * cnormal).sum(dim=1)
+                contact_mag = (cfg.contact_stiffness * overlap - cfg.contact_damping * vn).clamp_min(0)
+                contact_mag = torch.where(~bond_alive, contact_mag, torch.zeros_like(contact_mag))
+                contact_force = -contact_mag[:, None] * cnormal
+                force.index_add_(0, ci, contact_force)
+                force.index_add_(0, cj, -contact_force)
 
         tool_delta = self.positions - self.tool_position
         tool_dist = torch.linalg.vector_norm(tool_delta, dim=1)
