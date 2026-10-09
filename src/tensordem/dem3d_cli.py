@@ -1,7 +1,7 @@
 """Command-line driver for the 3-D DEM prototype."""
 import argparse
 import csv
-from dataclasses import asdict, replace
+from dataclasses import asdict
 from pathlib import Path
 import torch
 from .dem3d import DEM3DConfig, IceDEM3D
@@ -29,7 +29,6 @@ def main(argv: list[str] | None = None) -> None:
     if args.steps < 1 or args.save_every < 1:
         parser.error("--steps and --save-every must be positive")
     try:
-        restart_state = None
         if args.restart is not None:
             if not args.restart.is_file():
                 parser.error(f"restart checkpoint not found: {args.restart}")
@@ -42,7 +41,6 @@ def main(argv: list[str] | None = None) -> None:
             config = DEM3DConfig(**{**saved_config, "device": args.device})
             sim = IceDEM3D(config)
             sim.load_state_dict(checkpoint["state"])
-            restart_state = checkpoint["state"]
         else:
             config = DEM3DConfig(nx=args.nx, ny=args.ny, nz=args.nz, dt=args.dt,
                 tool_speed=args.speed, radius=args.radius, tool_radius=args.tool_radius,
