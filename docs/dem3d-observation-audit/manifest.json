@@ -1,0 +1,15 @@
+{
+  "source_sha256": {
+    "src/tensordem/dem3d.py": "cc2735558859c48b4799b0288fb2880212bb79878b8bbde7ed6d87319f43bab9",
+    "tests/test_dem3d.py": "21e64a3ff555679fd7d4ae9a2a2a790460ce6bd81fac1ee523320a3e50b01466"
+  },
+  "artifacts_sha256": {
+    "README.md": "a9383df5dae608e2a50ae99f84aa1d862643461cc0cc869ce31d80c77d0e44c0",
+    "tensordem3d-observation-validation.txt": "8afbcc61657095b88ba11f3d7ddaa671e5ef6e09ae6c95652d965c2a225aaef8",
+    "tensordem3d-pre-fix-repro.py": "c125d8d989acacd90e704a1f858b87a14f51b78a73878c52ec6159ab799cc687",
+    "tensordem3d-pre-fix.json": "daf48d339db5c7ac7c953750920f61ccaac4bbcff13b94a71606040358b3f238",
+    "tensordem3d-root-replay.json": "daf48d339db5c7ac7c953750920f61ccaac4bbcff13b94a71606040358b3f238"
+  },
+  "pre_fix_source_sha256": "1f86f5fc31a9d11383b7c157482476751b0d3b93c8615b08d4b5cf0a985a2f3b",
+  "physical_accuracy_qualified": false
+}

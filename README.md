@@ -182,3 +182,12 @@ segment; the checkpoint is the authoritative full restart state. The energy
 columns are instantaneous diagnostics, not a complete energy-conservation audit:
 damping work, external work, and numerical integration error are not yet closed
 in a cumulative balance. Only load checkpoint files from trusted sources.
+
+
+### Observation and checkpoint validation correction
+
+The 3-D diagnostics now evaluate the stored bond state without committing new fracture events or changing the stored last reaction. Fracture is committed by explicit force updates (the existing forces default) or stepping. Output sampling therefore does not advance fracture history.
+
+Checkpoint tensors must retain their declared storage dtype before device transfer. Invalid floating masks or fractional topology indices are rejected before conversion and before any state mutation. This does not establish a complete physical admissibility or energy audit of a checkpoint.
+
+Regression evidence and the retained pre-fix reproduction are in [the observation audit](docs/dem3d-observation-audit/README.md).

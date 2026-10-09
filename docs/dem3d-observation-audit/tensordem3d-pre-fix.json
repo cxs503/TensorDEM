@@ -1,0 +1,10 @@
+{
+  "source_head": "6dd9e7824c4f90a8eebad1c454cc946ef04d5fdd",
+  "source_sha256": "1f86f5fc31a9d11383b7c157482476751b0d3b93c8615b08d4b5cf0a985a2f3b",
+  "reproducer_sha256": "c125d8d989acacd90e704a1f858b87a14f51b78a73878c52ec6159ab799cc687",
+  "diagnostics_new_broken": 89,
+  "diagnostics_changed_failure_history": true,
+  "diagnostics_time_s": 0.0,
+  "nan_alive_dtype_accepted": true,
+  "scope": "isolated exact pre-fix git source; observation and checkpoint validation only; not physical energy qualification"
+}
