@@ -1,0 +1,167 @@
+{
+  "schema": "tensordem.calibrated-wet-study/1",
+  "source_sha256": {
+    "tensordem.calibrated_wet_coupling": "7d341eb0f653c6f8949252c5fa70ed5c253d7683cda7908c36c3e2d4ff2697ab",
+    "tensordem.calibrated_dem": "8b159784cd7b1aac05d10b21e0c1dcb11bc4524026268e41be43334e990ea3f6",
+    "tensordem.dem": "e6b00e84b4ca0753981bdf8c4772994d8ed221d35527eb91f6b54d9b24ff1b71",
+    "tensordem.material_calibration": "de39024dd8a51f3322bbd0eac66f76a9f887f6cfa68eff765b9a2bb7e372c57c",
+    "tensorlbm.ice_coupling_2d": "1100840642d6086ac25b21debe5a655c0200e458ba211d81776dd96c592aea07",
+    "tensorlbm.solver": "6cef9523e393f4d584ef01620074c945fc94e44521884ff308ce25b7b59c39b3",
+    "tensorlbm.d2q9": "1065c3093e07dfa186d729412c4081c7e4ba0925db223e8083ff007d457adf4d",
+    "tensorlbm.icebreaking": "3b05c434692b462cedb098e6917c2f90b7ba60be5f7a8abc91af5f4d2367d818",
+    "tensordem.hull_contact": "7775b6e625a3cb74fab705b3f78280d232b73b4e1199b8640fe8af888c966a09",
+    "scripts/calibrated_wet_study.py": "d0657d981f57102715b4758977f9bcb756949a82fd9a3b4a143907cf6e782218"
+  },
+  "cases": {
+    "wet_6": {
+      "peak_force_N": 0.7964982545511587,
+      "impulse_Ns": 0.018342251421953292,
+      "broken_bonds": 0,
+      "substeps": 1,
+      "restart_bitwise": true,
+      "max_momentum_error_kg_m_s": 6.541781005786618e-13,
+      "max_mass_relative_error": 4.884981308350689e-15,
+      "final_dem_energy_residual_J": 9.313064680795764e-06,
+      "final_interface_work_residual_J": 6.411013231430278e-07,
+      "max_force_mapping_error_N": 1.1102813889550743e-16,
+      "max_moment_mapping_error_Nm": 1.0625181290357943e-17,
+      "max_adjoint_power_error_W": 2.168404344971009e-19
+    },
+    "wet_12": {
+      "peak_force_N": 1.8379482723140614,
+      "impulse_Ns": 0.03234230433833918,
+      "broken_bonds": 0,
+      "substeps": 1,
+      "restart_bitwise": true,
+      "max_momentum_error_kg_m_s": 7.069345109300684e-13,
+      "max_mass_relative_error": 4.6629367034256575e-15,
+      "final_dem_energy_residual_J": 5.593806520986849e-05,
+      "final_interface_work_residual_J": -1.6750526659905195e-06,
+      "max_force_mapping_error_N": 1.1129640277756033e-16,
+      "max_moment_mapping_error_Nm": 1.3877787807814457e-17,
+      "max_adjoint_power_error_W": 2.168404344971009e-19
+    },
+    "wet_18": {
+      "peak_force_N": 1.9647361632135358,
+      "impulse_Ns": 0.03740476837650025,
+      "broken_bonds": 0,
+      "substeps": 2,
+      "restart_bitwise": true,
+      "max_momentum_error_kg_m_s": 6.521658213465287e-13,
+      "max_mass_relative_error": 4.9960036108132044e-15,
+      "final_dem_energy_residual_J": 2.7097562378532863e-05,
+      "final_interface_work_residual_J": -6.037147484388387e-06,
+      "max_force_mapping_error_N": 3.331075624877762e-16,
+      "max_moment_mapping_error_Nm": 2.0599841277224584e-17,
+      "max_adjoint_power_error_W": 4.336808689942018e-19
+    },
+    "wet_12_time_half": {
+      "peak_force_N": 1.850729795861707,
+      "impulse_Ns": 0.03249525955115514,
+      "broken_bonds": 0,
+      "substeps": 1,
+      "restart_bitwise": true,
+      "max_momentum_error_kg_m_s": 3.0469862744020304e-12,
+      "max_mass_relative_error": 1.099120794378905e-14,
+      "final_dem_energy_residual_J": 2.795510631725803e-05,
+      "final_interface_work_residual_J": -1.7268860806685452e-06,
+      "max_force_mapping_error_N": 1.1121272157765006e-16,
+      "max_moment_mapping_error_Nm": 2.970713952610282e-17,
+      "max_adjoint_power_error_W": 2.168404344971009e-19
+    },
+    "dry_6": {
+      "peak_force_N": 0.1999956915218702,
+      "impulse_Ns": 0.00039205028561551205,
+      "broken_bonds": 0,
+      "substeps": 1,
+      "restart_bitwise": true,
+      "max_momentum_error_kg_m_s": 1.0842021724855044e-19,
+      "max_mass_relative_error": 0.0,
+      "final_dem_energy_residual_J": 9.377900119119189e-06,
+      "final_interface_work_residual_J": 0.0,
+      "max_force_mapping_error_N": 0.0,
+      "max_moment_mapping_error_Nm": 0.0,
+      "max_adjoint_power_error_W": 0.0
+    },
+    "dry_12": {
+      "peak_force_N": 1.233113960846131,
+      "impulse_Ns": 0.014356510290576757,
+      "broken_bonds": 0,
+      "substeps": 1,
+      "restart_bitwise": true,
+      "max_momentum_error_kg_m_s": 3.469446951953614e-18,
+      "max_mass_relative_error": 0.0,
+      "final_dem_energy_residual_J": 5.3541200798835724e-05,
+      "final_interface_work_residual_J": 0.0,
+      "max_force_mapping_error_N": 0.0,
+      "max_moment_mapping_error_Nm": 0.0,
+      "max_adjoint_power_error_W": 0.0
+    },
+    "dry_18": {
+      "peak_force_N": 1.3340970798991987,
+      "impulse_Ns": 0.019257619741176162,
+      "broken_bonds": 0,
+      "substeps": 2,
+      "restart_bitwise": true,
+      "max_momentum_error_kg_m_s": 6.938893903907228e-18,
+      "max_mass_relative_error": 0.0,
+      "final_dem_energy_residual_J": 2.3518980079109165e-05,
+      "final_interface_work_residual_J": 0.0,
+      "max_force_mapping_error_N": 0.0,
+      "max_moment_mapping_error_Nm": 0.0,
+      "max_adjoint_power_error_W": 0.0
+    },
+    "fracture_12": {
+      "peak_force_N": 7.170309688716495,
+      "impulse_Ns": 0.5929955067425907,
+      "broken_bonds": 51,
+      "substeps": 1,
+      "restart_bitwise": true,
+      "max_momentum_error_kg_m_s": 3.760658451312793e-12,
+      "max_mass_relative_error": 2.8976820942716586e-14,
+      "final_dem_energy_residual_J": 0.0006900521573033336,
+      "final_interface_work_residual_J": -4.884136317072352e-06,
+      "max_force_mapping_error_N": 1.3323399077344022e-15,
+      "max_moment_mapping_error_Nm": 2.0469737016526324e-16,
+      "max_adjoint_power_error_W": 2.7755575615628914e-17
+    }
+  },
+  "artifacts_sha256": {
+    "wet_6.json": "b78a9c7501f311cf5e1f77698b08837d7341407aebf7a15e917846f6d502cdbe",
+    "wet_12.json": "907fcaad9f1126e0d7a37ff4380870533c2d882e317bb1b91712de882a4243b4",
+    "wet_18.json": "f8e3ff7406d9184a3918a471080c6fa5784d3a8fe380d9679af346a27b5cefbf",
+    "wet_12_time_half.json": "0aeac5211e4652eb153264739057eb68abf085d0fae3794237245eba35bcd85d",
+    "dry_6.json": "ee8484d11471c514d73d15a9ff8281eab3e75b5eccd277ed9fcf02101f95d67a",
+    "dry_12.json": "1946a1907032293ab57725b1014b017e8e568c726222b41f33643c375045b3cc",
+    "dry_18.json": "de8902dc9106203c5a2b09f57b9bba30c25d49adf3e9b966455d97c4ddc3d599",
+    "fracture_12.json": "b28e308e606fb7578e10d1b47215a4863dcf3d542c61b73e0e760efb5430ea9f"
+  },
+  "physical_accuracy_pass": false,
+  "scope": "Actual per-bond E=1000Pa nu=1/3 dynamics, point friction periodic liquid, artificial viscosity .02m2/s; no impermeable boundary or calibrated fracture",
+  "invariants": {
+    "outer_disk_envelope_m": [
+      0.45,
+      0.15
+    ],
+    "total_mass_kg": 12.3795,
+    "thickness_m": 0.2,
+    "young_modulus_Pa": 1000.0,
+    "poisson_ratio": 0.3333333333333333
+  },
+  "boundary_caveat": "fixed first/last center columns move inward by radius; central spring material spans shrink by 2radius; homogeneous disk mass, density compensates overlap convention; contact damping/stiffness fixed but particle contact discretization changes",
+  "sensitivity": {
+    "wet_12": {
+      "peak_force_N": 1.3075358443186782,
+      "impulse_Ns": 0.7632679650018122
+    },
+    "wet_18": {
+      "peak_force_N": 0.06898338370526758,
+      "impulse_Ns": 0.15652762354845362
+    },
+    "wet_12_time_half": {
+      "peak_force_N": 0.006954234643150814,
+      "impulse_Ns": 0.004729261440862942
+    }
+  },
+  "three_percent_sensitivity_pass": false
+}
