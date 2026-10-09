@@ -22,7 +22,7 @@ TensorLBM adapter code should later map fluid traction to particle nodal forces,
 
 1. **Kinematics and equilibrium:** rigid translation/rotation, undeformed lattice and force balance.
 2. **Bond law:** axial tension, compression, irreversible failure, then contact-only response after failure.
-3. **Shear law (next mechanics increment):** introduce an objective bond shear measure and rotational degrees of freedom/torques, then test pure shear separately from rigid-body rotation. Do not approximate shear failure with a fixed global-axis displacement test; that would incorrectly damage a rigidly rotated lattice.
+3. **Shear fracture criterion (implemented in this increment):** reconstruct local deformation gradients from the initial bonded neighborhood, calculate Green-Lagrange strain, and irreversibly break bonds when the equivalent in-plane shear strain exceeds shear_breaking_strain. Tests cover affine shear and rigid-body rotation. This adds a shear failure criterion, not explicit shear-bond forces/torques.
 4. **Boundaries:** check fixed-node positions and report support reactions for global force balance.
 5. **External loads:** verify load additivity, shape/finiteness validation and one-step response.
 6. **Numerical stability:** repeat representative tests with smaller time steps and compare force histories and broken-bond counts.
@@ -39,4 +39,4 @@ TensorLBM adapter code should later map fluid traction to particle nodal forces,
 
 ## Known limits
 
-This increment does **not** implement shear bond stiffness/failure yet. The current central-force bonds only fail in tension; the shear model is deliberately the next mechanics increment because it needs an objective formulation consistent with rigid-body rotation, rather than a coordinate-dependent shortcut. Rotational DOFs, shear bond forces/torques, contact friction, calibrated material parameters and 3-D geometry remain future work.
+This increment implements objective shear-triggered bond failure but does **not** implement explicit shear-bond stiffness, particle rotations/torques or contact friction. The existing force law remains central-force; shear failure is inferred from the local Green-Lagrange strain field. The criterion requires calibration against material tests. These limitations, calibrated material parameters and 3-D geometry remain future work.
