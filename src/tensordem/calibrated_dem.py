@@ -70,10 +70,10 @@ class CalibratedIceDEM(IceDEM):
         force.index_add_(0, self.pairs[:, 0], correction)
         force.index_add_(0, self.pairs[:, 1], -correction)
         newly_broken = previous & ~self.alive
-        self.accounting["fracture_release_J"] += float(
-            0.5
-            * (difference[newly_broken] * extension[newly_broken].square()).sum()
-        )
+        energy_correction = 0.5 * difference[newly_broken] * extension[newly_broken].square()
+        self.accounting["fracture_release_J"] += float(energy_correction.sum())
+        # Keep event-level energy consistent with the actual per-bond spring law.
+        self.failure_energy_J[newly_broken] += energy_correction
         return force, reaction
 
     def mechanical_energy(self):
