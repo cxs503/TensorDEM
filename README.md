@@ -107,3 +107,32 @@ no dynamic degrees of freedom and does not respond to that force. Choose an init
 position that avoids unintended initial overlap, and use a conservative speed bound
 when selecting --dt. This mode is a prescribed-contact prototype, not a calibrated
 ship resistance prediction.
+
+
+## 3-D bonded-sphere solver (new prototype)
+
+The 2-D API and command remain unchanged. A separate 3-D solver is available with
+spherical particles, a prescribed spherical indenter, irreversible tensile/shear
+bond failure, post-fracture sphere contact, fixed x-side boundaries, instantaneous
+nodal external loads, and fracture-event arrays in the saved trajectory.
+
+```bash
+python -m tensordem.dem3d_cli --nx 9 --ny 5 --nz 3 --steps 1000 --save-every 10 --output results-3d
+# Or after installation:
+tensordem-3d --nx 9 --ny 5 --nz 3 --steps 1000 --device cuda --output results-3d-cuda
+python -m unittest discover -s tests -v
+```
+
+Python API: `DEM3DConfig` and `IceDEM3D` from `tensordem`. The state uses
+`(N, 3)` positions, velocities and external forces (N). The z-axis is vertical;
+the indenter reaction is reported as `reaction_x/y/z`. Outputs are
+`history.csv` and `trajectory_3d.pt`, including 3-D particle coordinates,
+bond survival masks and per-pair fracture metadata.
+
+This is a first 3-D verification baseline, not yet a validated ship-ice engineering
+solver. It uses a simple-cubic central-force network, a prescribed spherical tool,
+no particle rotational degrees of freedom or tangential friction, and O(N²) pair
+search. The central-force lattice is directionally biased; calibrate the constitutive
+response, verify time-step and particle-resolution convergence, and validate
+against experiments before interpreting resistance quantitatively. Large domains
+need a spatial neighbor list and streaming trajectory output.
