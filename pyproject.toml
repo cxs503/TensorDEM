@@ -1,0 +1,19 @@
+[project]
+name = "tensordem"
+version = "0.1.0"
+description = "A PyTorch bonded-particle DEM prototype for ice breaking"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "torch==2.14.1",
+]
+
+[project.scripts]
+tensordem = "tensordem.cli:main"
+
+[build-system]
+requires = ["setuptools>=82.0.1"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
