@@ -131,11 +131,15 @@ bond survival masks and per-pair fracture metadata.
 
 This is a first 3-D verification baseline, not yet a validated ship-ice engineering
 solver. It uses a simple-cubic central-force network, a prescribed spherical tool,
-no particle rotational degrees of freedom or tangential friction, and O(N²) pair
-search. The central-force lattice is directionally biased; calibrate the constitutive
-response, verify time-step and particle-resolution convergence, and validate
-against experiments before interpreting resistance quantitatively. Large domains
-need a spatial neighbor list and streaming trajectory output.
+no particle rotational degrees of freedom or tangential friction. Permanent local
+bond topology is constructed in O(N), and current contact candidates are generated
+with a uniform spatial cell list rather than a full all-pairs distance matrix.
+The cell hash currently runs on CPU, causing host-device synchronization for CUDA;
+benchmark before using large GPU cases. The central-force lattice is directionally
+biased; calibrate the constitutive response, verify time-step and particle-resolution
+convergence, and validate against experiments before interpreting resistance
+quantitatively. Large domains still need optimized device-side neighbor search,
+performance benchmarking, and streaming trajectory output.
 
 
 ### Checkpoint / restart (3-D)
