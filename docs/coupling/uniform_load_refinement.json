@@ -1,0 +1,111 @@
+{
+  "schema": "tensordem.uniform-load-refinement/1",
+  "analytic_acceleration_m_s2": 1,
+  "records": [
+    {
+      "dt_s": 0.0008091578764007228,
+      "time_s": 0.01618315752801445,
+      "max_position_error_m": 6.547364689413329e-06,
+      "energy": {
+        "kinetic_J": 0.00028292869688276005,
+        "bond_J": 0.0,
+        "pair_contact_J": 0.0,
+        "tool_contact_J": 0.0,
+        "mechanical_J": 0.00028292869688276005
+      },
+      "accounting": {
+        "external_work_J": 0.0002970751317268957,
+        "fracture_release_J": 0.0,
+        "tool_work_J": 0.0,
+        "damping_dissipation_J": 0.0,
+        "external_impulse_Ns": [
+          0.03496582127350439,
+          0.0
+        ],
+        "support_impulse_Ns": [
+          0.0,
+          0.0
+        ],
+        "drag_impulse_Ns": [
+          0.0,
+          0.0
+        ],
+        "tool_impulse_on_ice_Ns": [
+          0.0,
+          0.0
+        ]
+      },
+      "energy_residual_J": -1.4146434844135671e-05
+    },
+    {
+      "dt_s": 0.0004045789382003614,
+      "time_s": 0.016183157528014466,
+      "max_position_error_m": 3.273682344705458e-06,
+      "energy": {
+        "kinetic_J": 0.0002829286968827604,
+        "bond_J": 0.0,
+        "pair_contact_J": 0.0,
+        "tool_contact_J": 0.0,
+        "mechanical_J": 0.0002829286968827604
+      },
+      "accounting": {
+        "external_work_J": 0.00029000191430482604,
+        "fracture_release_J": 0.0,
+        "tool_work_J": 0.0,
+        "damping_dissipation_J": 0.0,
+        "external_impulse_Ns": [
+          0.034965821273504366,
+          0.0
+        ],
+        "support_impulse_Ns": [
+          0.0,
+          0.0
+        ],
+        "drag_impulse_Ns": [
+          0.0,
+          0.0
+        ],
+        "tool_impulse_on_ice_Ns": [
+          0.0,
+          0.0
+        ]
+      },
+      "energy_residual_J": -7.073217422065667e-06
+    },
+    {
+      "dt_s": 0.0002022894691001807,
+      "time_s": 0.01618315752801444,
+      "max_position_error_m": 1.6368411723588548e-06,
+      "energy": {
+        "kinetic_J": 0.00028292869688275994,
+        "bond_J": 4.81482486096809e-31,
+        "pair_contact_J": 0.0,
+        "tool_contact_J": 0.0,
+        "mechanical_J": 0.00028292869688275994
+      },
+      "accounting": {
+        "external_work_J": 0.0002864653055937999,
+        "fracture_release_J": 0.0,
+        "tool_work_J": 0.0,
+        "damping_dissipation_J": 0.0,
+        "external_impulse_Ns": [
+          0.03496582127350435,
+          0.0
+        ],
+        "support_impulse_Ns": [
+          0.0,
+          0.0
+        ],
+        "drag_impulse_Ns": [
+          0.0,
+          0.0
+        ],
+        "tool_impulse_on_ice_Ns": [
+          0.0,
+          0.0
+        ]
+      },
+      "energy_residual_J": -3.5366087110399623e-06
+    }
+  ]
+}
