@@ -65,9 +65,11 @@ class DEMConfig:
 class IceDEM:
     """A small ice lattice; only tensile axial strain breaks bonds.
 
-    Positions and velocities have shape (N, 2). Bond and contact forces are
-    central and equal/opposite. There are no rotational or shear degrees of
-    freedom. Force evaluation irreversibly updates bond damage.
+    Positions, velocities and externally applied forces have shape (N, 2).
+    External forces use SI newtons in the global x/y frame and are evaluated
+    at the current step (not accumulated internally). Bond and contact forces
+    are central and equal/opposite. There are no rotational or shear degrees
+    of freedom. Force evaluation irreversibly updates bond damage.
     """
 
     def __init__(self, config: DEMConfig = DEMConfig()) -> None:
@@ -121,10 +123,34 @@ class IceDEM:
     def broken_bonds(self) -> int:
         return int((self.bonded & ~self.alive).sum().item())
 
+    def _validate_external_forces(
+        self, external_forces: torch.Tensor | None
+    ) -> torch.Tensor | None:
+        if external_forces is None:
+            return None
+        if not isinstance(external_forces, torch.Tensor):
+            raise TypeError("external_forces must be a torch.Tensor with shape (N, 2)")
+        if tuple(external_forces.shape) != tuple(self.positions.shape):
+            raise ValueError(
+                f"external_forces must have shape {tuple(self.positions.shape)}"
+            )
+        loads = external_forces.to(device=self.device, dtype=self.positions.dtype)
+        if not bool(torch.isfinite(loads).all()):
+            raise ValueError("external_forces must contain only finite values")
+        return loads
+
     @torch.no_grad()
-    def forces(self) -> tuple[torch.Tensor, torch.Tensor]:
-        """Return particle forces and ice-on-tool reaction at current time."""
+    def forces(
+        self, external_forces: torch.Tensor | None = None
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        """Return total particle force and ice-on-tool reaction.
+
+        external_forces is an optional instantaneous nodal load array in N.
+        It is additive to DEM bond/contact forces and linear drag. The returned
+        tool reaction retains its existing sign convention (ice on tool).
+        """
         cfg = self.config
+        loads = self._validate_external_forces(external_forces)
         i, j = self.pairs.T
         delta = self.positions[j] - self.positions[i]
         distance = torch.linalg.vector_norm(delta, dim=1)
@@ -166,12 +192,14 @@ class IceDEM:
         )
         tool_force = tool_magnitude[:, None] * tool_normal
         force += tool_force
+        if loads is not None:
+            force += loads
         return force, -tool_force.sum(dim=0)
 
     @torch.no_grad()
-    def step(self) -> None:
-        """Semi-implicit Euler with hard constraints on the edge particles."""
-        force, _ = self.forces()
+    def step(self, external_forces: torch.Tensor | None = None) -> None:
+        """Semi-implicit Euler; optional nodal loads are supplied in newtons."""
+        force, _ = self.forces(external_forces=external_forces)
         self.velocities += self.dt * force / self.config.mass
         self.velocities[self.fixed] = 0
         self.positions += self.dt * self.velocities
@@ -184,12 +212,15 @@ class IceDEM:
 
     @torch.no_grad()
     def diagnostics(self) -> dict[str, float | int]:
-        _, reaction = self.forces()
+        force, reaction = self.forces()
+        boundary_reaction = -force[self.fixed].sum(dim=0)
         return {
             "time": self.time,
             "tool_y": float(self.tool_position[1].item()),
             "reaction_x": float(reaction[0].item()),
             "reaction_y": float(reaction[1].item()),
+            "boundary_reaction_x": float(boundary_reaction[0].item()),
+            "boundary_reaction_y": float(boundary_reaction[1].item()),
             "broken_bonds": self.broken_bonds,
             "kinetic_energy": float(
                 (0.5 * self.config.mass * self.velocities.square().sum()).item()
