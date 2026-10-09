@@ -169,6 +169,64 @@ class DEM3DTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             incompatible.load_state_dict(snapshot)
 
+    def test_diagnostics_is_pure_even_when_pending_fracture_exceeds_threshold(self):
+        sim = self.model()
+        sim.positions = sim.initial_positions * 1.03
+        sim.last_reaction = torch.tensor([1., 2., 3.], dtype=torch.float64)
+        before = sim.state_dict()
+        reaction_before = sim.last_reaction.clone()
+        for _ in range(3):
+            row = sim.diagnostics()
+            self.assertEqual(row['broken_bonds'], 0)
+            self.assertGreater(row['bond_elastic_energy_J'], 0)
+        after = sim.state_dict()
+        for key, value in before.items():
+            if isinstance(value, torch.Tensor):
+                self.assertTrue(torch.equal(value, after[key]), key)
+            else:
+                self.assertEqual(value, after[key], key)
+        self.assertTrue(torch.equal(sim.last_reaction, reaction_before))
+        sim.forces()  # Existing default API still commits the pending fracture.
+        self.assertGreater(sim.broken_bonds, 0)
+
+    def test_observation_frequency_preserves_fracture_history_and_force_evolution(self):
+        unobserved, observed = self.model(), self.model()
+        # Start below failure, then apply a reproducible deformation schedule.
+        for scale in (1.005, 1.01, 1.03, 1.0, 1.04):
+            for sim in (unobserved, observed):
+                sim.positions = sim.initial_positions * scale
+            for _ in range(5):
+                observed.diagnostics()
+            unobserved.step(); observed.step()
+            for key in ('positions', 'velocities', 'alive', 'failure_mode',
+                        'failure_time_s', 'failure_extension_m', 'failure_energy_J'):
+                self.assertTrue(torch.equal(getattr(unobserved, key), getattr(observed, key)), key)
+            first = unobserved.forces(update_fracture=False)
+            second = observed.forces(update_fracture=False)
+            for a, b in zip(first, second):
+                self.assertTrue(torch.equal(a, b))
+        self.assertGreater(unobserved.broken_bonds, 0)
+
+    def test_checkpoint_dtype_corruption_rejected_atomically_before_conversion(self):
+        sim = self.model()
+        original = sim.state_dict()
+        corruptions = {
+            'alive': torch.full(sim.alive.shape, float('nan'), dtype=torch.float64),
+            'pairs': sim.pairs.to(torch.float64) + .2,
+            'failure_mode': sim.failure_mode.to(torch.int64) + 256,
+            'positions': sim.positions.to(torch.float32),
+        }
+        for key, tensor in corruptions.items():
+            corrupt = dict(original); corrupt[key] = tensor
+            with self.assertRaisesRegex(ValueError, 'dtype'):
+                sim.load_state_dict(corrupt)
+            after = sim.state_dict()
+            for field, value in original.items():
+                if isinstance(value, torch.Tensor):
+                    self.assertTrue(torch.equal(value, after[field]), field)
+                else:
+                    self.assertEqual(value, after[field], field)
+
 
 if __name__ == "__main__":
     unittest.main()
