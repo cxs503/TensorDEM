@@ -354,6 +354,7 @@ class IceDEM:
         boundary_reaction = -force[self.fixed].sum(dim=0)
         return {
             "time": self.time,
+            "tool_x": float(self.tool_position[0].item()),
             "tool_y": float(self.tool_position[1].item()),
             "reaction_x": float(reaction[0].item()),
             "reaction_y": float(reaction[1].item()),
