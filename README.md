@@ -136,3 +136,31 @@ search. The central-force lattice is directionally biased; calibrate the constit
 response, verify time-step and particle-resolution convergence, and validate
 against experiments before interpreting resistance quantitatively. Large domains
 need a spatial neighbor list and streaming trajectory output.
+
+
+### Checkpoint / restart (3-D)
+
+The 3-D solver now supports strict state restoration for reproducible continuation:
+
+```python
+from tensordem import DEM3DConfig, IceDEM3D
+
+cfg = DEM3DConfig(nx=9, ny=5, nz=3)
+sim = IceDEM3D(cfg)
+for _ in range(500):
+    sim.step()
+
+checkpoint = sim.state_dict()
+# Persist only trusted checkpoints, e.g. with torch.save(checkpoint, "checkpoint.pt")
+
+resumed = IceDEM3D(cfg)
+resumed.load_state_dict(checkpoint)
+for _ in range(500):
+    resumed.step()
+```
+
+Loading validates the dimensionality, exact solver configuration and time step,
+array shapes, pair/bond topology, fixed-boundary mask, and finite floating-point
+state before mutating the simulation. The checkpoint contains the dynamic state
+and fracture metadata; it is an API-level checkpoint at present, not yet a CLI
+`--restart` workflow. Only load checkpoint files from trusted sources.
