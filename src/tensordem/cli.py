@@ -18,6 +18,7 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--dt", type=float, default=None, help="时间步长 (s)，默认自动")
     parser.add_argument("--speed", type=float, default=1.0, help="破冰头速度 (m/s)")
     parser.add_argument("--breaking-strain", type=float, default=0.015)
+    parser.add_argument("--shear-breaking-strain", type=float, default=0.03)
     parser.add_argument("--device", default="cpu", help="cpu 或 cuda")
     parser.add_argument("--output", type=Path, default=Path("results"))
     parser.add_argument("--save-every", type=int, default=20, help="轨迹采样间隔")
@@ -27,7 +28,8 @@ def main(argv: list[str] | None = None) -> None:
     try:
         simulation = IceDEM(DEMConfig(
             nx=args.nx, ny=args.ny, dt=args.dt, tool_speed=args.speed,
-            breaking_strain=args.breaking_strain, device=args.device,
+            breaking_strain=args.breaking_strain,
+            shear_breaking_strain=args.shear_breaking_strain, device=args.device,
         ))
     except (ValueError, RuntimeError) as exc:
         parser.error(str(exc))
