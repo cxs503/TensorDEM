@@ -85,3 +85,25 @@ python -m tensordem.sensitivity --nx-levels 7,11,15 --duration 0.12 --speed 0.2 
 需要实验标定，不能直接用于工程载荷预测。
 全粒子对检测的时间和内存复杂度为 O(N²)，轨迹保存内存随采样帧数增长，
 不适合大规模冰场；扩大模型前需要空间邻居搜索与流式轨迹存储。
+## Prescribed polyline hull mode (prototype)
+
+The circular indenter remains the default. To prescribe a moving 2-D hull, provide
+a CSV of local hull vertices in metres with x,y headers. Vertices are joined
+in file order; the local origin is translated by hull-start-x/y and the hull
+moves at the prescribed hull-velocity-x/y. The included examples/hull_profile.csv
+is only a small synthetic wedge for exercising the API, not a digitized Glacier
+profile or validated vessel geometry.
+
+```bash
+python -m tensordem --hull-profile examples/hull_profile.csv \
+  --hull-start-x -0.2 --hull-start-y 0.05 \
+  --hull-velocity-x 0.2 --hull-velocity-y 0 \
+  --speed 0.2 --steps 2000 --save-every 10 --output results/hull
+```
+
+history.csv records tool_x, tool_y, reaction_x, and reaction_y in SI units.
+The reported reaction is the ice-on-prescribed-hull contact reaction; the hull has
+no dynamic degrees of freedom and does not respond to that force. Choose an initial
+position that avoids unintended initial overlap, and use a conservative speed bound
+when selecting --dt. This mode is a prescribed-contact prototype, not a calibrated
+ship resistance prediction.
