@@ -534,8 +534,8 @@ class IceDEM:
                     raise ValueError("failed bond has invalid failure time")
                 if attribute == "failure_time_s" and bool((tensor[result.failure_mode == 0] != -1).any()):
                     raise ValueError("intact bond has failure time")
-                if attribute in ("failure_extension_m", "failure_energy_J") and bool((tensor < 0).any()):
-                    raise ValueError(f"negative restart {key}")
+                if attribute == "failure_energy_J" and bool((tensor < 0).any()):
+                    raise ValueError("negative restart failure energy")
                 if attribute == "failure_energy_J" and bool((tensor[result.failure_mode == 0] != 0).any()):
                     raise ValueError("intact bond has failure energy")
             setattr(result, attribute, tensor)
