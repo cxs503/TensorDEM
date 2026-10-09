@@ -268,3 +268,70 @@ class IceDEM3D:
             "failure_mode": self.failure_mode.clone(), "failure_time_s": self.failure_time_s.clone(),
             "failure_extension_m": self.failure_extension_m.clone(), "failure_energy_J": self.failure_energy_J.clone(),
         }
+
+    @torch.no_grad()
+    def load_state_dict(self, state: dict[str, Any]) -> None:
+        """Restore a snapshot created by :meth:`state_dict` after strict validation."""
+        if not isinstance(state, dict):
+            raise TypeError("state must be a dictionary returned by state_dict()")
+        required = {
+            "dimension", "config", "dt", "time", "step_count", "positions",
+            "velocities", "initial_positions", "fixed", "pairs", "bonded",
+            "alive", "failure_mode", "failure_time_s", "failure_extension_m",
+            "failure_energy_J",
+        }
+        missing = required.difference(state)
+        if missing:
+            raise ValueError(f"checkpoint is missing keys: {sorted(missing)}")
+        if state["dimension"] != 3:
+            raise ValueError("checkpoint dimension must be 3")
+        if state["config"] != asdict(self.config):
+            raise ValueError("checkpoint config does not match this solver configuration")
+        if not math.isfinite(float(state["dt"])) or float(state["dt"]) != self.dt:
+            raise ValueError("checkpoint dt does not match this solver")
+        time_value = float(state["time"])
+        step_value = state["step_count"]
+        if not math.isfinite(time_value) or time_value < 0:
+            raise ValueError("checkpoint time must be finite and nonnegative")
+        if isinstance(step_value, bool) or not isinstance(step_value, int) or step_value < 0:
+            raise ValueError("checkpoint step_count must be a nonnegative integer")
+
+        tensor_shapes = {
+            "positions": tuple(self.positions.shape),
+            "velocities": tuple(self.velocities.shape),
+            "initial_positions": tuple(self.initial_positions.shape),
+            "fixed": tuple(self.fixed.shape),
+            "pairs": tuple(self.pairs.shape),
+            "bonded": tuple(self.bonded.shape),
+            "alive": tuple(self.alive.shape),
+            "failure_mode": tuple(self.failure_mode.shape),
+            "failure_time_s": tuple(self.failure_time_s.shape),
+            "failure_extension_m": tuple(self.failure_extension_m.shape),
+            "failure_energy_J": tuple(self.failure_energy_J.shape),
+        }
+        staged: dict[str, torch.Tensor] = {}
+        for name, expected_shape in tensor_shapes.items():
+            value = state[name]
+            if not isinstance(value, torch.Tensor) or tuple(value.shape) != expected_shape:
+                raise ValueError(f"checkpoint {name} must be a tensor with shape {expected_shape}")
+            target = getattr(self, name)
+            value = value.to(device=self.device, dtype=target.dtype)
+            if value.is_floating_point() and not bool(torch.isfinite(value).all()):
+                raise ValueError(f"checkpoint {name} contains non-finite values")
+            staged[name] = value
+        if not torch.equal(staged["pairs"], self.pairs):
+            raise ValueError("checkpoint pair topology does not match this solver")
+        if not torch.equal(staged["bonded"], self.bonded):
+            raise ValueError("checkpoint bond topology does not match this solver")
+        if bool((staged["alive"] & ~staged["bonded"]).any()):
+            raise ValueError("checkpoint marks a non-bond pair as alive")
+        if not torch.equal(staged["fixed"], self.fixed):
+            raise ValueError("checkpoint fixed-boundary mask does not match this solver")
+
+        for name in ("positions", "velocities", "initial_positions", "fixed", "pairs",
+                     "bonded", "alive", "failure_mode", "failure_time_s",
+                     "failure_extension_m", "failure_energy_J"):
+            getattr(self, name).copy_(staged[name])
+        self.time = time_value
+        self.step_count = step_value
+        self.last_reaction.zero_()
