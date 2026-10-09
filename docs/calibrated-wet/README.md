@@ -59,7 +59,7 @@ python scripts/audit_calibrated_wet.py
 python -m pytest -q tests/test_calibrated_wet_coupling.py tests/test_calibrated_dem.py
 ```
 
-The raw audit binds source hashes, full fields and summary reconstruction. Nine
+The raw audit binds source hashes, full fields and summary reconstruction. Ten
 related tests cover coefficient integrity, complete held-exchange restart,
 corrupt clocks/populations/subcycling and calibrated backend behavior.
 
@@ -67,3 +67,9 @@ Next: separate prescribed distributed-load elasticity refinement from changing
 contact boundaries; introduce fixed continuum support geometry, pressure
 resolved finite solid boundaries, contact scaling qualification and independent
 ice fracture calibration before claiming a converged wet breaking case.
+
+PR #12 replaces the optional NumPy tensor bridge in coefficient hashing with
+explicit little-endian float64 packing. All eight full raw restart JSON hashes
+remain identical after an actual replay; only the solver source hash changes.
+The compatibility test disables Tensor.numpy and restores the original digest
+and snapshot before taking a real dynamics step.
