@@ -74,6 +74,39 @@ class DEM3DTests(unittest.TestCase):
             DEM3DConfig(dt=math.nan)
 
 
+    def test_cell_list_covers_all_overlapping_pairs_without_duplicates(self):
+        sim = self.model()
+        # Force a non-grid configuration with several deliberately overlapping
+        # pairs, then compare the broad-phase list against brute-force truth.
+        generator = torch.Generator().manual_seed(73)
+        sim.positions = torch.randn(sim.positions.shape, generator=generator,
+                                    dtype=torch.float64) * 0.035
+        candidates = sim._contact_candidate_pairs()
+        keys = candidates[:, 0] * len(sim.positions) + candidates[:, 1]
+        self.assertEqual(len(keys), len(torch.unique(keys)))
+        delta = sim.positions[:, None, :] - sim.positions[None, :, :]
+        distance = torch.linalg.vector_norm(delta, dim=-1)
+        truth = torch.triu(distance < 2 * sim.config.radius, diagonal=1).nonzero()
+        candidate_keys = set(keys.tolist())
+        truth_keys = (truth[:, 0] * len(sim.positions) + truth[:, 1]).tolist()
+        self.assertTrue(set(truth_keys).issubset(candidate_keys))
+
+    def test_broken_bond_is_still_eligible_for_contact(self):
+        sim = self.model()
+        # Move a bonded pair into overlap and mark its bond broken. The cell
+        # list must still find the pair and contact lookup must not call it alive.
+        pair = sim.pairs[0].clone()
+        i, j = int(pair[0]), int(pair[1])
+        sim.positions[j] = sim.positions[i] + torch.tensor(
+            [sim.config.radius, 0.0, 0.0], dtype=torch.float64)
+        sim.alive[0] = False
+        candidates = sim._contact_candidate_pairs()
+        keys = candidates[:, 0] * len(sim.positions) + candidates[:, 1]
+        key = i * len(sim.positions) + j
+        self.assertIn(key, keys.tolist())
+        idx = (candidates[:, 0] == i) & (candidates[:, 1] == j)
+        self.assertFalse(bool(sim._alive_bond_for_pairs(candidates[idx]).any()))
+
     def test_checkpoint_round_trip_continues_identically(self):
         first = self.model()
         for _ in range(5):
