@@ -319,6 +319,8 @@ class IceDEM3D:
             if value.is_floating_point() and not bool(torch.isfinite(value).all()):
                 raise ValueError(f"checkpoint {name} contains non-finite values")
             staged[name] = value
+        if not torch.equal(staged["initial_positions"], self.initial_positions):
+            raise ValueError("checkpoint reference geometry does not match this solver")
         if not torch.equal(staged["pairs"], self.pairs):
             raise ValueError("checkpoint pair topology does not match this solver")
         if not torch.equal(staged["bonded"], self.bonded):
