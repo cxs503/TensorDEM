@@ -106,7 +106,12 @@ class CampaignSpec:
             if not math.isfinite(value) or value < 0:
                 raise CampaignValidationError(f"{name} must be finite and nonnegative")
         if self.dt_s is not None:
-            if isinstance(self.dt_s, bool) or not math.isfinite(self.dt_s) or self.dt_s <= 0:
+            if (
+                isinstance(self.dt_s, bool)
+                or not isinstance(self.dt_s, (int, float))
+                or not math.isfinite(self.dt_s)
+                or self.dt_s <= 0
+            ):
                 raise CampaignValidationError("dt_s must be finite and positive")
         if self.device not in ("cpu", "cuda"):
             raise CampaignValidationError("device must be cpu or cuda")
@@ -330,8 +335,12 @@ def compare_histories(
     difference_rms = _rms(difference)
     candidate_summary = summarize_history(candidate_rows, force_channel=force_channel)
     reference_summary = summarize_history(reference_rows, force_channel=force_channel)
-    ref_peak = float(reference_summary["peak_absolute_force_N"])
-    cand_peak = float(candidate_summary["peak_absolute_force_N"])
+    # Peaks and impulses are computed on the same overlap used by the waveform
+    # comparison, not on unmatched tails from different physical horizons.
+    ref_peak = max(abs(value) for value in rv)
+    cand_peak = max(abs(value) for value in cv)
+    candidate_impulse = trapezoidal_integral(sample_times, cv)
+    reference_impulse = trapezoidal_integral(sample_times, rv)
     bias = sum(difference) / len(difference)
     variance_c = sum((value - sum(cv) / len(cv)) ** 2 for value in cv)
     variance_r = sum((value - sum(rv) / len(rv)) ** 2 for value in rv)
@@ -350,11 +359,10 @@ def compare_histories(
         "force_mean_bias_N": bias,
         "force_peak_absolute_relative_difference": abs(cand_peak - ref_peak) / max(ref_peak, 1e-15),
         "force_correlation": correlation,
-        "candidate_signed_impulse_Ns": float(candidate_summary["signed_impulse_Ns"]),
-        "reference_signed_impulse_Ns": float(reference_summary["signed_impulse_Ns"]),
-        "signed_impulse_relative_difference": abs(
-            float(candidate_summary["signed_impulse_Ns"]) - float(reference_summary["signed_impulse_Ns"])
-        ) / max(abs(float(reference_summary["signed_impulse_Ns"])), 1e-15),
+        "candidate_signed_impulse_Ns": candidate_impulse,
+        "reference_signed_impulse_Ns": reference_impulse,
+        "signed_impulse_relative_difference": abs(candidate_impulse - reference_impulse)
+        / max(abs(reference_impulse), 1e-15),
     }
 
 
