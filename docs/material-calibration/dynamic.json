@@ -2,7 +2,7 @@
   "schema": "tensordem.calibrated-dynamic-patch/1",
   "source_sha256": {
     "src/tensordem/calibrated_dem.py": "8b159784cd7b1aac05d10b21e0c1dcb11bc4524026268e41be43334e990ea3f6",
-    "src/tensordem/dem.py": "39ff7c146aa1fd172e47640de5ae26e7cee40947258595e747281420b9c70bfc",
+    "src/tensordem/dem.py": "e6b00e84b4ca0753981bdf8c4772994d8ed221d35527eb91f6b54d9b24ff1b71",
     "src/tensordem/material_calibration.py": "de39024dd8a51f3322bbd0eac66f76a9f887f6cfa68eff765b9a2bb7e372c57c"
   },
   "cases": [
