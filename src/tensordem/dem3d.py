@@ -249,18 +249,9 @@ class IceDEM3D:
         return loads
 
     @torch.no_grad()
-    def forces(self, external_forces: torch.Tensor | None = None) -> tuple[torch.Tensor, torch.Tensor]:
-        """Calculate nodal forces and the ice-on-tool reaction vector."""
+    def _commit_fracture(self, extension: torch.Tensor) -> None:
+        """Commit irreversible bond events only during an explicit force update."""
         cfg = self.config
-        loads = self._loads(external_forces)
-        eps = torch.finfo(self.dtype).eps
-        # Permanent bond interactions retain compact topology and failure history.
-        i, j = self.pairs.T
-        delta = self.positions[j] - self.positions[i]
-        distance = torch.linalg.vector_norm(delta, dim=1)
-        normal = delta / distance.clamp_min(eps)[:, None]
-        normal = torch.where((distance > eps)[:, None], normal, self.initial_normals)
-        extension = distance - self.rest_lengths
         strain = extension / self.rest_lengths
         bi, bj = self.bond_indices.T
         shear = self._objective_shear_strain()
@@ -274,6 +265,28 @@ class IceDEM3D:
         self.failure_time_s[newly] = self.time
         self.failure_extension_m[newly] = extension[newly]
         self.failure_energy_J[newly] = 0.5 * cfg.bond_stiffness * extension[newly].square()
+
+
+    @torch.no_grad()
+    def forces(self, external_forces: torch.Tensor | None = None, *,
+               update_fracture: bool = True) -> tuple[torch.Tensor, torch.Tensor]:
+        """Evaluate forces; default commits fracture for API compatibility.
+
+        ``update_fracture=False`` evaluates the currently stored bond topology
+        without changing fracture history or the stored last reaction.
+        """
+        cfg = self.config
+        loads = self._loads(external_forces)
+        eps = torch.finfo(self.dtype).eps
+        # Permanent bond interactions retain compact topology and failure history.
+        i, j = self.pairs.T
+        delta = self.positions[j] - self.positions[i]
+        distance = torch.linalg.vector_norm(delta, dim=1)
+        normal = delta / distance.clamp_min(eps)[:, None]
+        normal = torch.where((distance > eps)[:, None], normal, self.initial_normals)
+        extension = distance - self.rest_lengths
+        if update_fracture:
+            self._commit_fracture(extension)
 
         bond_mag = cfg.bond_stiffness * extension
         bond_force = bond_mag[:, None] * normal
@@ -316,7 +329,8 @@ class IceDEM3D:
         force += tool_force
         if loads is not None:
             force += loads
-        self.last_reaction = reaction
+        if update_fracture:
+            self.last_reaction = reaction
         return force, reaction
 
     @torch.no_grad()
@@ -333,7 +347,7 @@ class IceDEM3D:
 
     @torch.no_grad()
     def diagnostics(self, external_forces: torch.Tensor | None = None) -> dict[str, float | int]:
-        force, reaction = self.forces(external_forces)
+        force, reaction = self.forces(external_forces, update_fracture=False)
         support = -force[self.fixed].sum(dim=0)
         kinetic = 0.5 * self.config.mass * self.velocities.square().sum()
         # Recoverable elastic energy in surviving bonds only. Broken bonds are
@@ -431,7 +445,11 @@ class IceDEM3D:
             if not isinstance(value, torch.Tensor) or tuple(value.shape) != expected_shape:
                 raise ValueError(f"checkpoint {name} must be a tensor with shape {expected_shape}")
             target = getattr(self, name)
-            value = value.to(device=self.device, dtype=target.dtype)
+            # Validate storage type before conversion: e.g. float NaN->bool
+            # silently becomes True, and fractional pair indices truncate.
+            if value.dtype != target.dtype:
+                raise ValueError(f"checkpoint {name} dtype must be {target.dtype}, got {value.dtype}")
+            value = value.to(device=self.device)
             if value.is_floating_point() and not bool(torch.isfinite(value).all()):
                 raise ValueError(f"checkpoint {name} contains non-finite values")
             staged[name] = value
