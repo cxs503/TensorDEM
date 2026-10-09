@@ -1,7 +1,12 @@
 import math
 import unittest
+import tempfile
+from contextlib import redirect_stdout
+from io import StringIO
+from pathlib import Path
 import torch
 from tensordem.dem3d import DEM3DConfig, IceDEM3D
+from tensordem.dem3d_cli import main as dem3d_main
 
 
 class DEM3DTests(unittest.TestCase):
@@ -106,6 +111,33 @@ class DEM3DTests(unittest.TestCase):
         self.assertIn(key, keys.tolist())
         idx = (candidates[:, 0] == i) & (candidates[:, 1] == j)
         self.assertFalse(bool(sim._alive_bond_for_pairs(candidates[idx]).any()))
+
+    def test_energy_diagnostics_and_cli_restart_workflow(self):
+        sim = self.model()
+        row = sim.diagnostics()
+        for key in ("kinetic_energy_J", "bond_elastic_energy_J",
+                    "particle_contact_energy_J", "tool_contact_energy_J",
+                    "released_bond_energy_J", "mechanical_energy_J"):
+            self.assertIn(key, row)
+            self.assertTrue(math.isfinite(row[key]))
+            self.assertGreaterEqual(row[key], 0.0)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            output = Path(tmp) / "run"
+            with redirect_stdout(StringIO()):
+                dem3d_main(["--nx", "3", "--ny", "3", "--nz", "2",
+                            "--steps", "2", "--save-every", "1",
+                            "--output", str(output)])
+            checkpoint_path = output / "checkpoint_3d.pt"
+            self.assertTrue(checkpoint_path.is_file())
+            first = torch.load(checkpoint_path, map_location="cpu", weights_only=False)
+            self.assertEqual(first["state"]["step_count"], 2)
+            with redirect_stdout(StringIO()):
+                dem3d_main(["--steps", "2", "--save-every", "1",
+                            "--output", str(output), "--restart", str(checkpoint_path)])
+            second = torch.load(checkpoint_path, map_location="cpu", weights_only=False)
+            self.assertEqual(second["state"]["step_count"], 4)
+            self.assertAlmostEqual(second["state"]["time"], 4 * second["state"]["dt"])
 
     def test_checkpoint_round_trip_continues_identically(self):
         first = self.model()
