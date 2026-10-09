@@ -90,6 +90,47 @@ class MechanicsInvariantTests(unittest.TestCase):
         torch.testing.assert_close(force_zero, force_none, atol=0.0, rtol=0.0)
         torch.testing.assert_close(reaction_zero, reaction_none, atol=0.0, rtol=0.0)
 
+    def test_halving_timestep_reduces_trajectory_error(self):
+        base_config = DEMConfig(
+            nx=4,
+            ny=3,
+            drag=0.0,
+            breaking_strain=10.0,
+            shear_breaking_strain=10.0,
+            tool_gap=10.0,
+            tool_speed=0.01,
+        )
+        coarse_dt = 0.5 * base_config.recommended_dt
+        horizon = 8 * coarse_dt
+        loads = torch.zeros((base_config.nx * base_config.ny, 2), dtype=torch.float64)
+        loads[5, 0] = 0.02
+
+        def final_positions(dt):
+            sim = IceDEM(DEMConfig(
+                nx=base_config.nx,
+                ny=base_config.ny,
+                drag=base_config.drag,
+                breaking_strain=base_config.breaking_strain,
+                shear_breaking_strain=base_config.shear_breaking_strain,
+                tool_gap=base_config.tool_gap,
+                tool_speed=base_config.tool_speed,
+                dt=dt,
+            ))
+            steps = round(horizon / dt)
+            for _ in range(steps):
+                sim.step(external_forces=loads)
+            self.assertAlmostEqual(sim.time, horizon, places=12)
+            return sim.positions
+
+        coarse = final_positions(coarse_dt)
+        medium = final_positions(coarse_dt / 2)
+        fine = final_positions(coarse_dt / 4)
+        coarse_error = torch.linalg.vector_norm(coarse - fine)
+        medium_error = torch.linalg.vector_norm(medium - fine)
+        self.assertTrue(bool(torch.isfinite(fine).all()))
+        self.assertGreater(float(coarse_error), 0.0)
+        self.assertLess(float(medium_error), float(coarse_error))
+
 
 if __name__ == "__main__":
     unittest.main()
