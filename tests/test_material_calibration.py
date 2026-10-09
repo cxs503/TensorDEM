@@ -2,7 +2,7 @@ import math
 import unittest
 import torch
 from tensordem.dem import DEMConfig, IceDEM
-from tensordem.material_calibration import lattice, energy, qualify, relaxed_tension
+from tensordem.material_calibration import lattice, energy, qualify, relaxed_tension, corrected_patch
 
 
 class MaterialCalibrationTests(unittest.TestCase):
@@ -45,6 +45,16 @@ class MaterialCalibrationTests(unittest.TestCase):
         self.assertLess(case['free_dof_residual_N'], 1e-10)
         self.assertGreater(case['E_relative_error'], 0.1)
         self.assertGreater(case['apparent_nu'], 0.4)
+
+    def test_realizable_two_stiffness_patch(self):
+        for n in (4, 8, 16):
+            case = corrected_patch(n)
+            self.assertTrue(case['qualified'])
+            self.assertFalse(case['actual_IceDEM_backend_qualified'])
+            self.assertLess(max(case['relative_errors'].values()), 1e-12)
+            self.assertLess(case['tension']['E_relative_error'], 1e-10)
+            self.assertLess(case['tension']['free_dof_residual_N'], 1e-10)
+            self.assertAlmostEqual(case['tension']['apparent_nu'], 1/3)
 
     def test_invalid_inputs(self):
         for n in (True, 1, 2.5):

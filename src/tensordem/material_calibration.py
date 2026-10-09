@@ -82,7 +82,7 @@ def qualify(cells_y, *, young_modulus=1e6, poisson_ratio=0.3, length=0.8,
                 infinitesimal_boundary='all nodes prescribed affine strain; bending is polynomial displacement, no transverse relaxation')
 
 
-def relaxed_tension(cells_y, **kwargs):
+def relaxed_tension(cells_y, *, corrected=False, **kwargs):
     """Actual central-spring equilibrium with transverse displacements free.
 
     Left/right x displacement prescribed; one y DOF removes translation.
@@ -98,10 +98,11 @@ def relaxed_tension(cells_y, **kwargs):
     vector = x[bonds[:, 1]] - x[bonds[:, 0]]
     normal = vector / torch.linalg.vector_norm(vector, dim=1)[:, None]
     matrix = torch.zeros((2 * n, 2 * n), dtype=torch.float64)
-    for pair, direction in zip(bonds, normal):
+    coefficients = corrected_stiffness(x, bonds, case['target']['E_Pa'], geometry['thickness_m']) if corrected else torch.full((len(bonds),), case['stiffness_N_per_m'], dtype=torch.float64)
+    for pair, direction, coefficient in zip(bonds, normal, coefficients):
         dofs = torch.tensor([2 * pair[0], 2 * pair[0] + 1, 2 * pair[1], 2 * pair[1] + 1])
         b = torch.cat((-direction, direction))
-        matrix[dofs[:, None], dofs[None, :]] += case['stiffness_N_per_m'] * b[:, None] * b[None, :]
+        matrix[dofs[:, None], dofs[None, :]] += coefficient * b[:, None] * b[None, :]
     left = torch.where(x[:, 0] == 0)[0]
     right = torch.where(x[:, 0] == geometry['length_m'])[0]
     constrained = torch.cat((2 * left, 2 * right, torch.tensor([2 * left[0] + 1])))
@@ -120,8 +121,48 @@ def relaxed_tension(cells_y, **kwargs):
     transverse_strain = float(displacement.reshape(-1, 2)[top, 1].mean() - displacement.reshape(-1, 2)[bottom, 1].mean()) / geometry['height_m']
     return dict(cells_y=cells_y, measured_E_Pa=modulus, target_E_Pa=case['target']['E_Pa'],
                 E_relative_error=abs(modulus / case['target']['E_Pa'] - 1),
-                apparent_nu=-transverse_strain / strain, target_nu=case['target']['nu'],
+                apparent_nu=-transverse_strain / strain, target_nu=1/3 if corrected else case['target']['nu'], corrected=corrected,
                 free_dof_residual_N=float(reaction[free].abs().max()),
                 displacement_m=displacement.reshape(-1, 2).tolist(),
                 reaction_N=reaction.reshape(-1, 2).tolist(),
                 boundary='prescribed left/right x displacement, transverse y free, one y translation fixed')
+
+
+def corrected_stiffness(positions, bonds, young_modulus, thickness):
+    """Per-bond N/m coefficients for realizable isotropic nu=1/3.
+
+    Axial k=2*diagonal k; axial bonds on rectangle boundaries carry 1/2
+    control-volume weight. These coefficients require a future per-bond
+    IceDEM interface and are not silently passed to its scalar config.
+    """
+    vector = positions[bonds[:, 1]] - positions[bonds[:, 0]]
+    axial = (vector[:, 0] == 0) | (vector[:, 1] == 0)
+    midpoint = (positions[bonds[:, 1]] + positions[bonds[:, 0]]) / 2
+    on_boundary = (midpoint[:, 0] == positions[:, 0].min()) | (midpoint[:, 0] == positions[:, 0].max()) | (midpoint[:, 1] == positions[:, 1].min()) | (midpoint[:, 1] == positions[:, 1].max())
+    kd = 3 * young_modulus * thickness / 8
+    return torch.where(axial, 2 * kd, kd) * torch.where(axial & on_boundary, 0.5, 1.0)
+
+
+def corrected_patch(cells_y):
+    x, bonds, masses = lattice(cells_y)
+    coefficients = corrected_stiffness(x, bonds, 1e6, 0.2)
+    vector = x[bonds[:, 1]] - x[bonds[:, 0]]
+    normals = vector / torch.linalg.vector_norm(vector, dim=1)[:, None]
+    def potential(u):
+        extension = ((u[bonds[:, 1]] - u[bonds[:, 0]]) * normals).sum(1)
+        return float(0.5 * (coefficients * extension.square()).sum())
+    eps = 1e-4
+    ux = torch.stack((eps*x[:,0], torch.zeros(len(x))),1)
+    uy = torch.stack((torch.zeros(len(x)),eps*x[:,1]),1)
+    shear = torch.stack((eps*x[:,1],torch.zeros(len(x))),1)
+    factor=0.8*0.4*0.2*eps**2
+    measured=dict(C11_Pa=2*potential(ux)/factor,
+                  C12_Pa=(potential(ux+uy)-potential(ux)-potential(uy))/factor,
+                  G_Pa=2*potential(shear)/factor)
+    target=dict(C11_Pa=1125000.0,C12_Pa=375000.0,G_Pa=375000.0)
+    errors={key:abs(measured[key]/target[key]-1) for key in target}
+    tension=relaxed_tension(cells_y,corrected=True)
+    return dict(cells_y=cells_y, mass_kg=float(masses.sum()), coefficients_N_per_m=coefficients.tolist(),
+                measured=measured,target=target,relative_errors=errors,tension=tension,
+                qualified=max(errors.values())<0.03 and tension['E_relative_error']<0.03 and abs(tension['apparent_nu']-1/3)<0.01,
+                actual_IceDEM_backend_qualified=False)

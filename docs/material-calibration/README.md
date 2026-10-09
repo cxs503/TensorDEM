@@ -35,3 +35,11 @@ OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 PYTHONPATH=src python -m unittest discover -
 ```
 
 The audit regenerates and exactly compares source hash, raw fields and metrics. This verifies reproducibility; it does not promote the material to a physically qualified ice model. Dense equilibrium solves are limited to 600 nodes. No dynamic fracture, experimental ice comparison, cantilever convergence or physical three-dimensional shell ice is claimed.
+
+## Executable correction for the realizable ν = 1/3 material
+
+The benchmark also implements a **separate corrected network** with the same bond topology. For E = 1 MPa and t = 0.2 m, diagonal k = 3Et/8 = **75000 N/m**, axial k = **150000 N/m**. Axial bonds lying on a rectangle boundary receive control-volume weight 1/2. Coefficients are returned per bond by `corrected_stiffness(positions, bonds, E, t)`; they cannot be represented by the present scalar `DEMConfig.bond_stiffness`.
+
+On 4, 8 and 16 height-cell grids, C11 = 1125000 Pa, C12 = G = 375000 Pa match the ν = 1/3 target to < 4e−16 relative error. The actual free-transverse equilibrium solves produce E = 1 MPa with relative error **1.6e−15, 1.0e−14, 4.6e−14**, and apparent ν = 1/3 to machine precision. These uniform patch fields are exact at all three grids; this is patch reproduction rather than a measured asymptotic convergence rate. All three corrected patch gates pass C11/C12/G/E within 3% and absolute ν within 0.01.
+
+Raw per-bond coefficients, equilibrium displacements and reactions are retained under `corrected_cases`. The ν = 0.3 failures remain untouched. This correction is usable as an independent material network and demonstrates the necessary mapping, but `actual_IceDEM_backend_qualified` remains false: a future per-bond stiffness interface must consistently update spring force, energy, failure release, timestep bounds and snapshot validation before replacing the live coupling model. Nonuniform deformation, free cantilever bending, fracture calibration and wet particle refinement still require qualification.
