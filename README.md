@@ -58,7 +58,7 @@ Python API 中 `DEMConfig` 可调整粒径、密度、厚度、刚度、阻尼�
 可用 `torch.load("results/trajectory.pt", weights_only=True)` 读取，
 绘制颗粒及存活键或分析破冰力曲线。仅加载可信来源的数据。
 
-## 适用范围
+## 外部载荷接口（为后续 TensorLBM 耦合准备）\n\nIceDEM.forces(external_forces=loads) 和 IceDEM.step(external_forces=loads) 接受形状为 (N, 2) 的 PyTorch 张量，表示每个颗粒在全局 x/y 坐标系中的瞬时外力，单位 N。每个时间步都应重新传入载荷；求解器不会自动累加或缓存外力。输入必须为有限数值，求解器会转换到自身设备和双精度类型。diagnostics() 另外输出 boundary_reaction_x/y，表示固定边界施加给颗粒的合支反力（按固定颗粒未约束力残差取反）。\n\n该接口仅是载荷入口，不代表已完成流固耦合。TensorLBM 侧应先将流体牵引力按对应表面积分成颗粒节点力，并验证总力/力矩传递守恒。\n\n## 适用范围
 
 这是教学/研究起步用的二维压入断裂演示，并非完整船舶破冰预测软件：
 没有转动自由度、切向摩擦、剪切/弯曲黏结、压碎、海水浮力/流固耦合，
