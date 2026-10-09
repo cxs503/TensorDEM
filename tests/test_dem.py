@@ -121,7 +121,7 @@ class DEMTests(unittest.TestCase):
     def test_input_validation(self):
         for kwargs in (
             {"nx": 1}, {"ny": 2.5}, {"radius": 0}, {"drag": -1},
-            {"dt": math.nan}, {"breaking_strain": math.inf}, {"tool_speed": 0},
+            {"dt": math.nan}, {"breaking_strain": math.inf}, {"shear_breaking_strain": 0}, {"tool_speed": 0},
         ):
             with self.subTest(kwargs=kwargs), self.assertRaises(ValueError):
                 DEMConfig(**kwargs)
