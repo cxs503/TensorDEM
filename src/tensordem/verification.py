@@ -333,8 +333,6 @@ def compare_histories(
     difference = [left - right for left, right in zip(cv, rv)]
     reference_rms = _rms(rv)
     difference_rms = _rms(difference)
-    candidate_summary = summarize_history(candidate_rows, force_channel=force_channel)
-    reference_summary = summarize_history(reference_rows, force_channel=force_channel)
     # Peaks and impulses are computed on the same overlap used by the waveform
     # comparison, not on unmatched tails from different physical horizons.
     ref_peak = max(abs(value) for value in rv)
