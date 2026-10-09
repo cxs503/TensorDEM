@@ -65,3 +65,12 @@ OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 PYTHONPATH=src python scripts/calibrated_dyn
 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 PYTHONPATH=src python scripts/calibrated_dynamic_patch.py --audit
 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 PYTHONPATH=src python -m unittest discover -s tests -p test_calibrated_dem.py -v
 ```
+
+## Concurrent main integration
+
+The upstream prescribed-hull CLI and `tool_x` diagnostic were merged before
+publication. The dynamic fixture was executed again and its full-state replay
+audit passed against the merged source. Only the `dem.py` source SHA in
+`dynamic.json` changed; all numerical fields and the retained failure decisions
+are identical. The merged tree passed 47 unittest cases, including the new CLI
+checks. This does not qualify the concurrent fluid features or wet fracture.
