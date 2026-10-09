@@ -77,8 +77,9 @@ class IceDEM3D:
 
     State arrays have shape (N, 3); external forces are instantaneous nodal
     loads in newtons. The indenter translates downward at constant speed.
-    Bond failure is irreversible. Pair interactions are currently O(N^2), so
-    this engine is intended for verification and moderate-sized prototypes.
+    Bond failure is irreversible. Permanent local bonds are stored in O(N);
+    contacts use a spatial cell list rebuilt each force evaluation. The current
+    CPU-side cell hashing is a prototype and can synchronize CUDA execution.
     """
 
     def __init__(self, config: DEM3DConfig = DEM3DConfig()) -> None:
@@ -107,20 +108,50 @@ class IceDEM3D:
         if config.fix_bottom:
             self.fixed |= zz.reshape(-1) == 0
 
-        self.pairs = torch.triu_indices(len(grid), len(grid), offset=1, device=self.device).T
+        # Build the fixed 26-neighbour bond lattice directly in O(N), rather
+        # than constructing and filtering all N*(N-1)/2 particle pairs.
+        n = len(grid)
+        bond_pairs: list[tuple[int, int]] = []
+        for dz in range(0, 2):
+            for dy in range(-1, 2):
+                for dx in range(-1, 2):
+                    if dx == dy == dz == 0:
+                        continue
+                    # Keep one half-space of offsets to avoid duplicate bonds.
+                    if not (dz > 0 or (dz == 0 and dy > 0) or
+                            (dz == 0 and dy == 0 and dx > 0)):
+                        continue
+                    for z in range(config.nz):
+                        zz2 = z + dz
+                        if not 0 <= zz2 < config.nz:
+                            continue
+                        for y in range(config.ny):
+                            yy2 = y + dy
+                            if not 0 <= yy2 < config.ny:
+                                continue
+                            for x in range(config.nx):
+                                xx2 = x + dx
+                                if not 0 <= xx2 < config.nx:
+                                    continue
+                                a = (z * config.ny + y) * config.nx + x
+                                b = (zz2 * config.ny + yy2) * config.nx + xx2
+                                bond_pairs.append((min(a, b), max(a, b)))
+        self.pairs = torch.tensor(bond_pairs, dtype=torch.long, device=self.device)
+        order = torch.argsort(self.pairs[:, 0] * n + self.pairs[:, 1])
+        self.pairs = self.pairs[order]
         i, j = self.pairs.T
         ref = self.initial_positions[j] - self.initial_positions[i]
         self.rest_lengths = torch.linalg.vector_norm(ref, dim=1)
-        cutoff = 2 * config.radius * math.sqrt(3) * (1 + 1e-10)
-        self.bonded = self.rest_lengths <= cutoff
+        self.bonded = torch.ones(len(self.pairs), dtype=torch.bool, device=self.device)
         self.alive = self.bonded.clone()
-        self.bond_indices = self.pairs[self.bonded]
-        self.reference_bond_vectors = ref[self.bonded].clone()
+        self.bond_indices = self.pairs
+        self.reference_bond_vectors = ref.clone()
         self.initial_normals = ref / self.rest_lengths.clamp_min(torch.finfo(self.dtype).eps)[:, None]
         self.failure_mode = torch.zeros(len(self.pairs), dtype=torch.uint8, device=self.device)
         self.failure_time_s = torch.full((len(self.pairs),), -1.0, dtype=self.dtype, device=self.device)
         self.failure_extension_m = torch.zeros(len(self.pairs), dtype=self.dtype, device=self.device)
         self.failure_energy_J = torch.zeros(len(self.pairs), dtype=self.dtype, device=self.device)
+        self._bond_keys = self.pairs[:, 0] * len(grid) + self.pairs[:, 1]
 
         self.time = 0.0
         self.step_count = 0
@@ -139,6 +170,53 @@ class IceDEM3D:
     @property
     def broken_bonds(self) -> int:
         return int((self.bonded & ~self.alive).sum().item())
+
+    @torch.no_grad()
+    def _contact_candidate_pairs(self) -> torch.Tensor:
+        """Build current overlap candidates with a uniform spatial cell list.
+
+        Cell width is the contact diameter, so overlapping spheres can only be
+        in the same or one of the 26 adjacent cells. Bond topology is stored
+        separately and is never discarded when particles move or bonds break.
+        """
+        n = len(self.positions)
+        if n < 2:
+            return torch.empty((0, 2), dtype=torch.long, device=self.device)
+        width = 2.0 * self.config.radius
+        coords = torch.floor(self.positions.detach().cpu() / width).to(torch.int64).tolist()
+        cells: dict[tuple[int, int, int], list[int]] = {}
+        for idx, xyz in enumerate(coords):
+            key = (xyz[0], xyz[1], xyz[2])
+            cells.setdefault(key, []).append(idx)
+        pairs: list[tuple[int, int]] = []
+        for key, members in cells.items():
+            x, y, z = key
+            for dx in (-1, 0, 1):
+                for dy in (-1, 0, 1):
+                    for dz in (-1, 0, 1):
+                        other = cells.get((x + dx, y + dy, z + dz))
+                        if other is None:
+                            continue
+                        for i in members:
+                            for j in other:
+                                if j > i:
+                                    pairs.append((i, j))
+        if not pairs:
+            return torch.empty((0, 2), dtype=torch.long, device=self.device)
+        return torch.tensor(pairs, dtype=torch.long, device=self.device)
+
+    @torch.no_grad()
+    def _alive_bond_for_pairs(self, pairs: torch.Tensor) -> torch.Tensor:
+        """Return an alive-bond mask aligned with arbitrary sorted node pairs."""
+        if pairs.numel() == 0:
+            return torch.zeros((0,), dtype=torch.bool, device=self.device)
+        keys = pairs[:, 0] * len(self.positions) + pairs[:, 1]
+        where = torch.searchsorted(self._bond_keys, keys)
+        safe = where.clamp(max=max(len(self._bond_keys) - 1, 0))
+        matched = (where < len(self._bond_keys)) & (self._bond_keys[safe] == keys)
+        result = torch.zeros_like(matched)
+        result[matched] = self.alive[safe[matched]]
+        return result
 
     @torch.no_grad()
     def _objective_shear_strain(self) -> torch.Tensor:
@@ -175,10 +253,11 @@ class IceDEM3D:
         """Calculate nodal forces and the ice-on-tool reaction vector."""
         cfg = self.config
         loads = self._loads(external_forces)
+        eps = torch.finfo(self.dtype).eps
+        # Permanent bond interactions retain compact topology and failure history.
         i, j = self.pairs.T
         delta = self.positions[j] - self.positions[i]
         distance = torch.linalg.vector_norm(delta, dim=1)
-        eps = torch.finfo(self.dtype).eps
         normal = delta / distance.clamp_min(eps)[:, None]
         normal = torch.where((distance > eps)[:, None], normal, self.initial_normals)
         extension = distance - self.rest_lengths
@@ -186,30 +265,42 @@ class IceDEM3D:
         bi, bj = self.bond_indices.T
         shear = self._objective_shear_strain()
         shear_bond = 0.5 * (shear[bi] + shear[bj])
-        tensile_fail = strain[self.bonded] > cfg.breaking_strain
+        tensile_fail = strain > cfg.breaking_strain
         shear_fail = shear_bond > cfg.shear_breaking_strain
         old_alive = self.alive.clone()
-        self.alive[self.bonded] &= ~(tensile_fail | shear_fail)
+        self.alive &= ~(tensile_fail | shear_fail)
         newly = old_alive & ~self.alive
-        modes_t = torch.zeros_like(self.bonded); modes_s = torch.zeros_like(self.bonded)
-        modes_t[self.bonded] = tensile_fail
-        modes_s[self.bonded] = shear_fail
-        self.failure_mode[newly] = modes_t[newly].to(torch.uint8) + 2 * modes_s[newly].to(torch.uint8)
+        self.failure_mode[newly] = tensile_fail[newly].to(torch.uint8) + 2 * shear_fail[newly].to(torch.uint8)
         self.failure_time_s[newly] = self.time
         self.failure_extension_m[newly] = extension[newly]
         self.failure_energy_J[newly] = 0.5 * cfg.bond_stiffness * extension[newly].square()
 
-        relative_v = self.velocities[j] - self.velocities[i]
-        vn = (relative_v * normal).sum(dim=1)
-        overlap = (2 * cfg.radius - distance).clamp_min(0)
-        contact_mag = (cfg.contact_stiffness * overlap - cfg.contact_damping * vn).clamp_min(0)
-        contact_mag = torch.where((overlap > 0) & ~self.alive, contact_mag, torch.zeros_like(contact_mag))
         bond_mag = cfg.bond_stiffness * extension
-        magnitude = torch.where(self.alive, bond_mag, -contact_mag)
-        pair_force = magnitude[:, None] * normal
+        bond_force = bond_mag[:, None] * normal
         force = -cfg.drag * self.velocities
-        force.index_add_(0, i, pair_force)
-        force.index_add_(0, j, -pair_force)
+        active_bond_force = torch.where(self.alive[:, None], bond_force, torch.zeros_like(bond_force))
+        force.index_add_(0, i, active_bond_force)
+        force.index_add_(0, j, -active_bond_force)
+
+        contact_pairs = self._contact_candidate_pairs()
+        if contact_pairs.numel():
+            ci, cj = contact_pairs.T
+            cdelta = self.positions[cj] - self.positions[ci]
+            cdistance = torch.linalg.vector_norm(cdelta, dim=1)
+            overlap = (2 * cfg.radius - cdistance).clamp_min(0)
+            near = overlap > 0
+            ci, cj = ci[near], cj[near]
+            cdelta, cdistance, overlap = cdelta[near], cdistance[near], overlap[near]
+            if ci.numel():
+                cnormal = cdelta / cdistance.clamp_min(eps)[:, None]
+                bond_alive = self._alive_bond_for_pairs(torch.stack((ci, cj), dim=1))
+                relative_v = self.velocities[cj] - self.velocities[ci]
+                vn = (relative_v * cnormal).sum(dim=1)
+                contact_mag = (cfg.contact_stiffness * overlap - cfg.contact_damping * vn).clamp_min(0)
+                contact_mag = torch.where(~bond_alive, contact_mag, torch.zeros_like(contact_mag))
+                contact_force = -contact_mag[:, None] * cnormal
+                force.index_add_(0, ci, contact_force)
+                force.index_add_(0, cj, -contact_force)
 
         tool_delta = self.positions - self.tool_position
         tool_dist = torch.linalg.vector_norm(tool_delta, dim=1)
@@ -268,3 +359,72 @@ class IceDEM3D:
             "failure_mode": self.failure_mode.clone(), "failure_time_s": self.failure_time_s.clone(),
             "failure_extension_m": self.failure_extension_m.clone(), "failure_energy_J": self.failure_energy_J.clone(),
         }
+
+    @torch.no_grad()
+    def load_state_dict(self, state: dict[str, Any]) -> None:
+        """Restore a snapshot created by :meth:`state_dict` after strict validation."""
+        if not isinstance(state, dict):
+            raise TypeError("state must be a dictionary returned by state_dict()")
+        required = {
+            "dimension", "config", "dt", "time", "step_count", "positions",
+            "velocities", "initial_positions", "fixed", "pairs", "bonded",
+            "alive", "failure_mode", "failure_time_s", "failure_extension_m",
+            "failure_energy_J",
+        }
+        missing = required.difference(state)
+        if missing:
+            raise ValueError(f"checkpoint is missing keys: {sorted(missing)}")
+        if state["dimension"] != 3:
+            raise ValueError("checkpoint dimension must be 3")
+        if state["config"] != asdict(self.config):
+            raise ValueError("checkpoint config does not match this solver configuration")
+        if not math.isfinite(float(state["dt"])) or float(state["dt"]) != self.dt:
+            raise ValueError("checkpoint dt does not match this solver")
+        time_value = float(state["time"])
+        step_value = state["step_count"]
+        if not math.isfinite(time_value) or time_value < 0:
+            raise ValueError("checkpoint time must be finite and nonnegative")
+        if isinstance(step_value, bool) or not isinstance(step_value, int) or step_value < 0:
+            raise ValueError("checkpoint step_count must be a nonnegative integer")
+
+        tensor_shapes = {
+            "positions": tuple(self.positions.shape),
+            "velocities": tuple(self.velocities.shape),
+            "initial_positions": tuple(self.initial_positions.shape),
+            "fixed": tuple(self.fixed.shape),
+            "pairs": tuple(self.pairs.shape),
+            "bonded": tuple(self.bonded.shape),
+            "alive": tuple(self.alive.shape),
+            "failure_mode": tuple(self.failure_mode.shape),
+            "failure_time_s": tuple(self.failure_time_s.shape),
+            "failure_extension_m": tuple(self.failure_extension_m.shape),
+            "failure_energy_J": tuple(self.failure_energy_J.shape),
+        }
+        staged: dict[str, torch.Tensor] = {}
+        for name, expected_shape in tensor_shapes.items():
+            value = state[name]
+            if not isinstance(value, torch.Tensor) or tuple(value.shape) != expected_shape:
+                raise ValueError(f"checkpoint {name} must be a tensor with shape {expected_shape}")
+            target = getattr(self, name)
+            value = value.to(device=self.device, dtype=target.dtype)
+            if value.is_floating_point() and not bool(torch.isfinite(value).all()):
+                raise ValueError(f"checkpoint {name} contains non-finite values")
+            staged[name] = value
+        if not torch.equal(staged["initial_positions"], self.initial_positions):
+            raise ValueError("checkpoint reference geometry does not match this solver")
+        if not torch.equal(staged["pairs"], self.pairs):
+            raise ValueError("checkpoint pair topology does not match this solver")
+        if not torch.equal(staged["bonded"], self.bonded):
+            raise ValueError("checkpoint bond topology does not match this solver")
+        if bool((staged["alive"] & ~staged["bonded"]).any()):
+            raise ValueError("checkpoint marks a non-bond pair as alive")
+        if not torch.equal(staged["fixed"], self.fixed):
+            raise ValueError("checkpoint fixed-boundary mask does not match this solver")
+
+        for name in ("positions", "velocities", "initial_positions", "fixed", "pairs",
+                     "bonded", "alive", "failure_mode", "failure_time_s",
+                     "failure_extension_m", "failure_energy_J"):
+            getattr(self, name).copy_(staged[name])
+        self.time = time_value
+        self.step_count = step_value
+        self.last_reaction.zero_()
