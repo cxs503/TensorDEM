@@ -1,0 +1,45 @@
+{
+  "cases": [
+    {
+      "file": "contact-16.json",
+      "raw_field_audit_passed": true
+    },
+    {
+      "file": "contact-32.json",
+      "raw_field_audit_passed": true
+    },
+    {
+      "file": "contact-64-half.json",
+      "raw_field_audit_passed": true
+    },
+    {
+      "file": "contact-64.json",
+      "raw_field_audit_passed": true
+    },
+    {
+      "file": "load-16.json",
+      "raw_field_audit_passed": true
+    },
+    {
+      "file": "load-32.json",
+      "raw_field_audit_passed": true
+    },
+    {
+      "file": "load-64.json",
+      "raw_field_audit_passed": true
+    },
+    {
+      "file": "separation-16.json",
+      "raw_field_audit_passed": true
+    },
+    {
+      "file": "separation-32.json",
+      "raw_field_audit_passed": true
+    },
+    {
+      "file": "separation-64.json",
+      "raw_field_audit_passed": true
+    }
+  ],
+  "physical_accuracy_qualified": false
+}
