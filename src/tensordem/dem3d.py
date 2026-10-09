@@ -107,22 +107,45 @@ class IceDEM3D:
         if config.fix_bottom:
             self.fixed |= zz.reshape(-1) == 0
 
-        # Store only permanent bonded topology. Contact candidates are rebuilt
-        # from a spatial cell list at the current configuration, avoiding the
-        # quadratic all-pairs arrays that dominate memory for larger ice blocks.
-        all_pairs = torch.triu_indices(len(grid), len(grid), offset=1, device=self.device).T
-        ai, aj = all_pairs.T
-        all_ref = self.initial_positions[aj] - self.initial_positions[ai]
-        all_rest = torch.linalg.vector_norm(all_ref, dim=1)
-        bond_cutoff = 2 * config.radius * math.sqrt(3) * (1 + 1e-10)
-        keep = all_rest <= bond_cutoff
-        self.pairs = all_pairs[keep]
+        # Build the fixed 26-neighbour bond lattice directly in O(N), rather
+        # than constructing and filtering all N*(N-1)/2 particle pairs.
+        n = len(grid)
+        bond_pairs: list[tuple[int, int]] = []
+        for dz in range(0, 2):
+            for dy in range(-1 if dz == 0 else -1, 2):
+                for dx in range(-1, 2):
+                    if dx == dy == dz == 0:
+                        continue
+                    # Keep one half-space of offsets to avoid duplicate bonds.
+                    if not (dz > 0 or (dz == 0 and dy > 0) or
+                            (dz == 0 and dy == 0 and dx > 0)):
+                        continue
+                    for z in range(config.nz):
+                        zz2 = z + dz
+                        if not 0 <= zz2 < config.nz:
+                            continue
+                        for y in range(config.ny):
+                            yy2 = y + dy
+                            if not 0 <= yy2 < config.ny:
+                                continue
+                            for x in range(config.nx):
+                                xx2 = x + dx
+                                if not 0 <= xx2 < config.nx:
+                                    continue
+                                a = (z * config.ny + y) * config.nx + x
+                                b = (zz2 * config.ny + yy2) * config.nx + xx2
+                                bond_pairs.append((min(a, b), max(a, b)))
+        self.pairs = torch.tensor(bond_pairs, dtype=torch.long, device=self.device)
+        order = torch.argsort(self.pairs[:, 0] * n + self.pairs[:, 1])
+        self.pairs = self.pairs[order]
+        i, j = self.pairs.T
+        ref = self.initial_positions[j] - self.initial_positions[i]
+        self.rest_lengths = torch.linalg.vector_norm(ref, dim=1)
         self.bonded = torch.ones(len(self.pairs), dtype=torch.bool, device=self.device)
-        self.rest_lengths = all_rest[keep]
         self.alive = self.bonded.clone()
         self.bond_indices = self.pairs
-        self.reference_bond_vectors = all_ref[keep].clone()
-        self.initial_normals = all_ref[keep] / self.rest_lengths.clamp_min(torch.finfo(self.dtype).eps)[:, None]
+        self.reference_bond_vectors = ref.clone()
+        self.initial_normals = ref / self.rest_lengths.clamp_min(torch.finfo(self.dtype).eps)[:, None]
         self.failure_mode = torch.zeros(len(self.pairs), dtype=torch.uint8, device=self.device)
         self.failure_time_s = torch.full((len(self.pairs),), -1.0, dtype=self.dtype, device=self.device)
         self.failure_extension_m = torch.zeros(len(self.pairs), dtype=self.dtype, device=self.device)
