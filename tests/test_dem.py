@@ -54,6 +54,27 @@ class DEMTests(unittest.TestCase):
         self.assertGreater(float(force.abs().sum()), 0)
         torch.testing.assert_close(force.sum(0), torch.zeros(2, dtype=torch.float64))
 
+    def test_objective_shear_breaks_bonds_but_rigid_rotation_does_not(self):
+        rotated = self.model(shear_breaking_strain=0.02, breaking_strain=0.5)
+        angle = 0.6
+        rotation = torch.tensor([
+            [math.cos(angle), -math.sin(angle)],
+            [math.sin(angle), math.cos(angle)],
+        ], dtype=torch.float64)
+        rotated.positions = rotated.initial_positions @ rotation.T + torch.tensor([2.0, -3.0])
+        rotated.forces()
+        self.assertEqual(rotated.broken_bonds, 0)
+
+        sheared = self.model(shear_breaking_strain=0.02, breaking_strain=0.5)
+        sheared.positions = sheared.initial_positions.clone()
+        sheared.positions[:, 0] += 0.08 * sheared.positions[:, 1]
+        sheared.forces()
+        self.assertGreater(sheared.broken_bonds, 0)
+        # Damage is irreversible even if the original configuration is restored.
+        sheared.positions = sheared.initial_positions.clone()
+        sheared.forces()
+        self.assertGreater(sheared.broken_bonds, 0)
+
     def test_contact_repels_without_attraction(self):
         sim = self.model()
         sim.alive[:] = False
@@ -100,7 +121,7 @@ class DEMTests(unittest.TestCase):
     def test_input_validation(self):
         for kwargs in (
             {"nx": 1}, {"ny": 2.5}, {"radius": 0}, {"drag": -1},
-            {"dt": math.nan}, {"breaking_strain": math.inf}, {"tool_speed": 0},
+            {"dt": math.nan}, {"breaking_strain": math.inf}, {"shear_breaking_strain": 0}, {"tool_speed": 0},
         ):
             with self.subTest(kwargs=kwargs), self.assertRaises(ValueError):
                 DEMConfig(**kwargs)
