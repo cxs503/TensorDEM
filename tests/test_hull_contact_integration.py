@@ -20,7 +20,12 @@ class IceDEMHullIntegrationTests(unittest.TestCase):
         )
         force, reaction = sim.forces()
         self.assertGreater(float(reaction[0]), 0.0)
-        torch.testing.assert_close(force.sum(dim=0) - reaction * -1, force.sum(dim=0) + (-reaction), rtol=0, atol=1e-12)
+        torch.testing.assert_close(
+            force.sum(dim=0) + reaction,
+            torch.zeros(2, dtype=torch.float64),
+            rtol=0,
+            atol=1e-12,
+        )
         self.assertAlmostEqual(float(sim.tool_position[0]), 0.01, places=12)
 
     def test_hull_moves_at_prescribed_horizontal_velocity(self):
