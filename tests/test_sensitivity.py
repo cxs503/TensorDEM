@@ -1,7 +1,7 @@
 import math
 import unittest
 
-from tensordem.sensitivity import build_config, simulate_case
+from tensordem.sensitivity import build_config, compare_histories, simulate_case
 
 
 class SensitivitySweepTests(unittest.TestCase):
@@ -29,6 +29,40 @@ class SensitivitySweepTests(unittest.TestCase):
                 self.assertTrue(math.isfinite(float(value)))
         self.assertGreaterEqual(summary["final_broken_bonds"], 0)
         self.assertGreaterEqual(summary["peak_abs_reaction_y_N"], 0.0)
+
+    def test_identical_histories_have_zero_difference(self):
+        history = [
+            {"time": 0.0, "reaction_y": 0.0},
+            {"time": 0.5, "reaction_y": 2.0},
+            {"time": 1.0, "reaction_y": 0.0},
+        ]
+        metrics = compare_histories(history, history)
+        self.assertAlmostEqual(metrics["reaction_rms_difference_N"], 0.0)
+        self.assertAlmostEqual(metrics["reaction_relative_rms_difference"], 0.0)
+        self.assertAlmostEqual(metrics["peak_abs_reaction_relative_difference"], 0.0)
+
+    def test_histories_with_different_time_steps_are_interpolated(self):
+        reference = [
+            {"time": 0.0, "reaction_y": 0.0},
+            {"time": 0.25, "reaction_y": 1.0},
+            {"time": 0.5, "reaction_y": 2.0},
+            {"time": 0.75, "reaction_y": 1.0},
+            {"time": 1.0, "reaction_y": 0.0},
+        ]
+        candidate = [
+            {"time": 0.0, "reaction_y": 0.0},
+            {"time": 0.5, "reaction_y": 2.0},
+            {"time": 1.0, "reaction_y": 0.0},
+        ]
+        metrics = compare_histories(candidate, reference)
+        self.assertAlmostEqual(metrics["reaction_rms_difference_N"], 0.0)
+        self.assertEqual(metrics["sample_count"], 3)
+
+    def test_nonoverlapping_histories_are_rejected(self):
+        first = [{"time": 0.0, "reaction_y": 1.0}, {"time": 1.0, "reaction_y": 2.0}]
+        second = [{"time": 2.0, "reaction_y": 1.0}, {"time": 3.0, "reaction_y": 2.0}]
+        with self.assertRaises(ValueError):
+            compare_histories(first, second)
 
     def test_nonpositive_duration_is_rejected(self):
         with self.assertRaises(ValueError):
