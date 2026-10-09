@@ -194,6 +194,16 @@ class NumericMetricTests(unittest.TestCase):
         self.assertEqual(result["force_relative_rms_difference"], 0)
         self.assertEqual(result["force_peak_absolute_relative_difference"], 0)
 
+    def test_peak_and_impulse_metrics_ignore_unmatched_history_tails(self):
+        candidate = history([0, 1, 2], [100, 1, 0])
+        reference = history([1, 2, 3], [1, 2, 100])
+        result = compare_histories(candidate, reference)
+        self.assertEqual(result["overlap_start_s"], 1)
+        self.assertEqual(result["overlap_end_s"], 2)
+        self.assertAlmostEqual(result["force_peak_absolute_relative_difference"], 0.5)
+        self.assertAlmostEqual(result["candidate_signed_impulse_Ns"], 0.5)
+        self.assertAlmostEqual(result["reference_signed_impulse_Ns"], 1.5)
+
 
 class ParameterGridTests(unittest.TestCase):
     def test_cartesian_grid_is_deterministic(self):
