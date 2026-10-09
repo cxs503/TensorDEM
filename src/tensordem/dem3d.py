@@ -77,8 +77,9 @@ class IceDEM3D:
 
     State arrays have shape (N, 3); external forces are instantaneous nodal
     loads in newtons. The indenter translates downward at constant speed.
-    Bond failure is irreversible. Pair interactions are currently O(N^2), so
-    this engine is intended for verification and moderate-sized prototypes.
+    Bond failure is irreversible. Permanent local bonds are stored in O(N);
+    contacts use a spatial cell list rebuilt each force evaluation. The current
+    CPU-side cell hashing is a prototype and can synchronize CUDA execution.
     """
 
     def __init__(self, config: DEM3DConfig = DEM3DConfig()) -> None:
@@ -112,7 +113,7 @@ class IceDEM3D:
         n = len(grid)
         bond_pairs: list[tuple[int, int]] = []
         for dz in range(0, 2):
-            for dy in range(-1 if dz == 0 else -1, 2):
+            for dy in range(-1, 2):
                 for dx in range(-1, 2):
                     if dx == dy == dz == 0:
                         continue
