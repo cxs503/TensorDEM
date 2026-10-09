@@ -44,9 +44,10 @@ class LoadInterfaceTests(unittest.TestCase):
         torch.testing.assert_close(
             sim.positions[sim.fixed], sim.initial_positions[sim.fixed], atol=0, rtol=0
         )
-        diag = sim.diagnostics()
+        diag = sim.diagnostics(external_forces=loads)
         self.assertIn("boundary_reaction_x", diag)
         self.assertIn("boundary_reaction_y", diag)
+        self.assertTrue(torch.isfinite(torch.tensor(diag["boundary_reaction_x"])))
 
 
 if __name__ == "__main__":
