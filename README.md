@@ -73,7 +73,7 @@ IceDEM.forces(external_forces=loads) 和 IceDEM.step(external_forces=loads) 接�
 python -m tensordem.sensitivity --nx-levels 7,11,15 --duration 0.12 --speed 0.2 --output sensitivity-results
 ```
 
-工具尽量保持目标冰层宽度和高度不变，逐级改变颗粒半径；由于离散行数必须为整数，实际高度会有轻微偏差，汇总表会记录每组实际几何、时间步长、峰值反力、反力冲量、断键数和动能。每组的逐步数据写入 `history_nx_*.csv`，汇总写入 `summary.csv`。
+工具尽量保持目标冰层宽度和高度不变，逐级改变颗粒半径；由于离散行数必须为整数，实际高度会有轻微偏差，汇总表会记录每组实际几何、时间步长、峰值反力、反力冲量、断键数和动能。每组的逐步数据写入 `history_nx_*.csv`，指标汇总写入 `summary.csv`；新增的 `comparison_to_finest.csv` 将各组的反力历史按重叠时间区间插值到共同采样时刻，并报告相对最细网格的反力 RMS 差异和峰值差异。该指标用于比较敏感性，不是正式的收敛阶估计。
 
 该扫描用于暴露离散分辨率敏感性，不自动证明收敛。当前中心力晶格存在方向偏差，且各向同性材料响应尚未校准；跨分辨率比较前仍需合理标定本构参数，并对齐物理几何、时间范围和边界条件。默认扫描计算成本会随粒子数近似按平方增长，可先用较小的 `--nx-levels` 做试跑。
 
