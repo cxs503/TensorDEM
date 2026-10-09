@@ -1,0 +1,26 @@
+{
+  "cases": [
+    {
+      "file": "grid-64-half.json",
+      "raw_field_and_tool_work_audit_passed": true,
+      "final_energy_error_J": 2.747741270625603e-13
+    },
+    {
+      "file": "grid-32.json",
+      "raw_field_and_tool_work_audit_passed": true,
+      "final_energy_error_J": 3.508278303282486e-12
+    },
+    {
+      "file": "grid-64.json",
+      "raw_field_and_tool_work_audit_passed": true,
+      "final_energy_error_J": 1.0992123010422628e-12
+    },
+    {
+      "file": "grid-16.json",
+      "raw_field_and_tool_work_audit_passed": true,
+      "final_energy_error_J": 1.0020635579990889e-11
+    }
+  ],
+  "dynamic_3_percent_passed": true,
+  "physical_accuracy_qualified": false
+}

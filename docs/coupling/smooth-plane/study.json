@@ -1,0 +1,78 @@
+{
+  "records": [
+    {
+      "nx": 16,
+      "dt_factor": 1.0,
+      "steps": 2950,
+      "dt_s": 0.0002711864406779661,
+      "tool_impulse_Ns": 1.5127966068445435,
+      "tool_work_J": 0.0013756964935126453,
+      "end_displacement_m": -0.0009783905138329562,
+      "maximum_energy_residual_J": 8.453301448586859e-11,
+      "maximum_energy_residual_relative_to_final_work": 6.144743036309234e-08,
+      "momentum_residual_Ns": 7.379351036479465e-17,
+      "restart_exact": true
+    },
+    {
+      "nx": 32,
+      "dt_factor": 1.0,
+      "steps": 4968,
+      "dt_s": 0.00016103059581320451,
+      "tool_impulse_Ns": 1.5127779686514398,
+      "tool_work_J": 0.001375685274661646,
+      "end_displacement_m": -0.0009783899044511321,
+      "maximum_energy_residual_J": 2.9451189317158954e-11,
+      "maximum_energy_residual_relative_to_final_work": 2.1408377235412777e-08,
+      "momentum_residual_Ns": 3.583288180064592e-17,
+      "restart_exact": true
+    },
+    {
+      "nx": 64,
+      "dt_factor": 1.0,
+      "steps": 8859,
+      "dt_s": 9.030364600970765e-05,
+      "tool_impulse_Ns": 1.512774624682417,
+      "tool_work_J": 0.0013756824717820568,
+      "end_displacement_m": -0.0009783868493663482,
+      "maximum_energy_residual_J": 9.2689230856563e-12,
+      "maximum_energy_residual_relative_to_final_work": 6.7376907649694424e-09,
+      "momentum_residual_Ns": 1.4094628242311558e-17,
+      "restart_exact": true
+    },
+    {
+      "nx": 64,
+      "dt_factor": 0.5,
+      "steps": 17718,
+      "dt_s": 4.5151823004853824e-05,
+      "tool_impulse_Ns": 1.512774626296,
+      "tool_work_J": 0.0013756824761349997,
+      "end_displacement_m": -0.0009783868385440967,
+      "maximum_energy_residual_J": 2.3172561959550197e-12,
+      "maximum_energy_residual_relative_to_final_work": 1.6844411673145574e-09,
+      "momentum_residual_Ns": 7.277707082808949e-17,
+      "restart_exact": true
+    }
+  ],
+  "source_sha256": {
+    "src/tensordem/continuum_boundary_dem.py": "4a0d8853e8bcf90d7d425c904cacccd1e59119572676c10da424d72712b391ae",
+    "src/tensordem/moving_plane_boundary.py": "45246c0459dd089916b2075f512f3766473195d88bc8902e283dd8fb00431e82"
+  },
+  "raw_sha256": {
+    "grid-64-half.json": "f2e5a5ac5f3ce46cb3ccfdd4a611815ce96db383a8cabd0dbdfa1e322afb5d61",
+    "grid-32.json": "1ee1260e876496107ef6e258fca638c5722a95adeb604d149f808f94598086b9",
+    "grid-64.json": "084af753494cedf33e16105ddc5786825c3925051ddaa4237455b0febd08b66e",
+    "grid-16.json": "5ec1f0e12735c0635f192bd5c96aa3a37970b0ee80b043a8dd810658dce67a28"
+  },
+  "physical_accuracy_qualified": false,
+  "tool_impulse_Ns_refinement_relative": [
+    1.2320356232553564e-05,
+    2.2104823655944017e-06
+  ],
+  "tool_impulse_Ns_time_half_relative": 1.066638111169027e-09,
+  "end_displacement_m_refinement_relative": [
+    6.228411002506817e-07,
+    3.122563683399804e-06
+  ],
+  "end_displacement_m_time_half_relative": 1.1061321525396295e-08,
+  "dynamic_3_percent_passed": true
+}
