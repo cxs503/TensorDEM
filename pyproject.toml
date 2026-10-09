@@ -15,6 +15,7 @@ test = [
 
 [project.scripts]
 tensordem = "tensordem.cli:main"
+tensordem-3d = "tensordem.dem3d_cli:main"
 
 [build-system]
 requires = ["setuptools>=82.0.1"]
