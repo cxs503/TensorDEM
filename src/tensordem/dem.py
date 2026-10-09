@@ -122,6 +122,12 @@ class IceDEM:
         )
         self.rest_lengths = distances.clone()
         self.alive = self.bonded.clone()
+        # Per-pair fracture ledger: 0=not failed, 1=tension, 2=shear, 3=both.
+        # Non-bonded pairs must remain zero; time -1 marks an intact bond.
+        self.failure_mode = torch.zeros(len(self.pairs), dtype=torch.uint8, device=self.device)
+        self.failure_time_s = torch.full((len(self.pairs),), -1.0, dtype=torch.float64, device=self.device)
+        self.failure_extension_m = torch.zeros(len(self.pairs), dtype=torch.float64, device=self.device)
+        self.failure_energy_J = torch.zeros(len(self.pairs), dtype=torch.float64, device=self.device)
         self.time = 0.0
         self.step_count = 0
         self.accounting = dict(external_work_J=0.0, fracture_release_J=0.0,
@@ -237,8 +243,22 @@ class IceDEM:
         previous = self.alive.clone()
         self.alive[self.bonded] &= ~(tensile_failed | shear_failed)
         newly_broken = previous & ~self.alive
-        # Actual spring energy removed at failure, not a calibrated fracture Gc.
-        released = 0.5 * cfg.bond_stiffness * extension[newly_broken].square().sum()
+        # Record the first failure event exactly once. This is the elastic spring
+        # energy removed at failure, not a calibrated fracture toughness Gc.
+        tensile_pairs = torch.zeros_like(self.bonded)
+        shear_pairs = torch.zeros_like(self.bonded)
+        tensile_pairs[self.bonded] = tensile_failed
+        shear_pairs[self.bonded] = shear_failed
+        self.failure_mode[newly_broken] = (
+            tensile_pairs[newly_broken].to(torch.uint8)
+            + 2 * shear_pairs[newly_broken].to(torch.uint8)
+        )
+        self.failure_time_s[newly_broken] = self.time
+        self.failure_extension_m[newly_broken] = extension[newly_broken]
+        self.failure_energy_J[newly_broken] = (
+            0.5 * cfg.bond_stiffness * extension[newly_broken].square()
+        )
+        released = self.failure_energy_J[newly_broken].sum()
         self.accounting["fracture_release_J"] += float(released)
         normal_speed = ((self.velocities[j] - self.velocities[i]) * normal).sum(dim=1)
         overlap = (2 * cfg.radius - distance).clamp_min(0)
@@ -379,6 +399,31 @@ class IceDEM:
                     fixed=self.fixed.tolist(), particle_radius_m=self.config.radius,
                     thickness_m=self.config.thickness)
 
+    def fracture_events(self) -> list[dict]:
+        """Return deterministic per-bond failure records in SI units.
+
+        Modes are tensile, shear, or mixed according to the criteria crossed on
+        the first force evaluation that broke each bond. Event energy is the
+        actual spring energy removed by this model; it is not fracture Gc.
+        """
+        labels = {1: "tensile", 2: "shear", 3: "mixed"}
+        indices = torch.nonzero(self.failure_mode > 0, as_tuple=False).flatten().tolist()
+        events = []
+        for p in indices:
+            i, j = self.pairs[p].tolist()
+            midpoint = ((self.positions[i] + self.positions[j]) * 0.5).tolist()
+            events.append({
+                "pair_index": p,
+                "particle_i": i,
+                "particle_j": j,
+                "time_s": float(self.failure_time_s[p]),
+                "mode": labels[int(self.failure_mode[p])],
+                "midpoint_m": midpoint,
+                "extension_at_failure_m": float(self.failure_extension_m[p]),
+                "released_spring_energy_J": float(self.failure_energy_J[p]),
+            })
+        return events
+
     def fragments(self) -> list[dict]:
         """Connected components of surviving bonds, including isolated disks."""
         neighbors = [set() for _ in self.positions]
@@ -410,7 +455,12 @@ class IceDEM:
                     dt_s=self.dt, time_s=self.time, step_count=self.step_count,
                     positions_m=self.positions.tolist(), velocities_m_s=self.velocities.tolist(),
                     initial_positions_m=self.initial_positions.tolist(), fixed=self.fixed.tolist(),
-                    alive=self.alive.tolist(), tool_start_m=self.tool_start.tolist(),
+                    alive=self.alive.tolist(),
+                    failure_mode=self.failure_mode.tolist(),
+                    failure_time_s=self.failure_time_s.tolist(),
+                    failure_extension_m=self.failure_extension_m.tolist(),
+                    failure_energy_J=self.failure_energy_J.tolist(),
+                    tool_start_m=self.tool_start.tolist(),
                     tool_velocity_m_s=self.tool_velocity.tolist(),
                     hull_profile_m=None if self.hull_profile is None else self.hull_profile.tolist(),
                     hull_start_m=self.hull_start.tolist(), hull_velocity_m_s=self.hull_velocity.tolist(),
@@ -461,6 +511,34 @@ class IceDEM:
             if key == "fixed" and not torch.equal(tensor, result.fixed):
                 raise ValueError("fixed boundary mismatch")
             setattr(result, key, tensor)
+        for key, attribute in (
+            ("failure_mode", "failure_mode"),
+            ("failure_time_s", "failure_time_s"),
+            ("failure_extension_m", "failure_extension_m"),
+            ("failure_energy_J", "failure_energy_J"),
+        ):
+            dtype = torch.uint8 if attribute == "failure_mode" else torch.float64
+            values = state[key]
+            tensor = torch.as_tensor(values, dtype=dtype, device=result.device)
+            if tensor.shape != getattr(result, attribute).shape:
+                raise ValueError(f"invalid restart {key} shape")
+            if attribute == "failure_mode":
+                if bool((tensor > 3).any()) or bool((tensor[~result.bonded] != 0).any()):
+                    raise ValueError("invalid restart failure modes")
+                if not torch.equal(tensor > 0, result.bonded & ~result.alive):
+                    raise ValueError("failure ledger inconsistent with bond state")
+            else:
+                if not bool(torch.isfinite(tensor).all()):
+                    raise ValueError(f"nonfinite restart {key}")
+                if attribute == "failure_time_s" and bool((tensor[result.failure_mode > 0] < 0).any()):
+                    raise ValueError("failed bond has invalid failure time")
+                if attribute == "failure_time_s" and bool((tensor[result.failure_mode == 0] != -1).any()):
+                    raise ValueError("intact bond has failure time")
+                if attribute == "failure_energy_J" and bool((tensor < 0).any()):
+                    raise ValueError("negative restart failure energy")
+                if attribute == "failure_energy_J" and bool((tensor[result.failure_mode == 0] != 0).any()):
+                    raise ValueError("intact bond has failure energy")
+            setattr(result, attribute, tensor)
         if not torch.equal(result.positions[result.fixed], result.initial_positions[result.fixed]) or bool((result.velocities[result.fixed] != 0).any()):
             raise ValueError("fixed particle state mismatch")
         accounting = state["accounting"]
