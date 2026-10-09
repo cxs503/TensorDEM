@@ -1,0 +1,4433 @@
+{
+  "schema": "tensordem.calibrated-dynamic-patch/1",
+  "source_sha256": {
+    "src/tensordem/calibrated_dem.py": "8b159784cd7b1aac05d10b21e0c1dcb11bc4524026268e41be43334e990ea3f6",
+    "src/tensordem/dem.py": "39ff7c146aa1fd172e47640de5ae26e7cee40947258595e747281420b9c70bfc",
+    "src/tensordem/material_calibration.py": "de39024dd8a51f3322bbd0eac66f76a9f887f6cfa68eff765b9a2bb7e372c57c"
+  },
+  "cases": [
+    {
+      "dt_s": 0.00023014959723820482,
+      "steps": 4345,
+      "measured_E_Pa": 1000176.931597291,
+      "apparent_nu": 0.33330503871091177,
+      "E_relative_error": 0.00017693159729104124,
+      "nu_abs_error": 2.8294622421543014e-05,
+      "history": [
+        {
+          "time_s": 0.00023014959723820482,
+          "axial_strain": 6.128863874743651e-08,
+          "transverse_strain": 0.0,
+          "kinetic_J": 2.206390993861402e-07,
+          "bond_J": 3.80325105152088e-10,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 2.210194244912923e-07
+        },
+        {
+          "time_s": 0.010126582278481004,
+          "axial_strain": 4.565024763656759e-05,
+          "transverse_strain": -4.633074474205346e-06,
+          "kinetic_J": 0.0001697664422050564,
+          "bond_J": 0.00012065041938931592,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0002904168615943723
+        },
+        {
+          "time_s": 0.02002301495972381,
+          "axial_strain": 0.00011049344767870746,
+          "transverse_strain": -3.4289774921349694e-05,
+          "kinetic_J": 0.00019957214757265263,
+          "bond_J": 0.0004306222679349877,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0006301944155076404
+        },
+        {
+          "time_s": 0.029919447640966657,
+          "axial_strain": 0.00015905409266487683,
+          "transverse_strain": -5.889600265438796e-05,
+          "kinetic_J": 4.3484377245526436e-05,
+          "bond_J": 0.0008188097127377038,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0008622940899832302
+        },
+        {
+          "time_s": 0.039815880322209375,
+          "axial_strain": 0.00016202689962427352,
+          "transverse_strain": -5.643088069103605e-05,
+          "kinetic_J": 3.5909416100431215e-05,
+          "bond_J": 0.000807859028885561,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0008437684449859922
+        },
+        {
+          "time_s": 0.04971231300345207,
+          "axial_strain": 0.00012134988760861831,
+          "transverse_strain": -5.312436717621149e-05,
+          "kinetic_J": 0.00011020639485468617,
+          "bond_J": 0.0004658217980951827,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0005760281929498689
+        },
+        {
+          "time_s": 0.05960874568469477,
+          "axial_strain": 7.064137184422299e-05,
+          "transverse_strain": -3.389356064196796e-05,
+          "kinetic_J": 7.7292866191906e-05,
+          "bond_J": 0.0001682402775674574,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0002455331437593634
+        },
+        {
+          "time_s": 0.06950517836593748,
+          "axial_strain": 5.6994523024295196e-05,
+          "transverse_strain": -5.073365220468271e-07,
+          "kinetic_J": 9.808862707474433e-06,
+          "bond_J": 0.00016148727896987762,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00017129614167735207
+        },
+        {
+          "time_s": 0.07940161104718017,
+          "axial_strain": 6.548742993356393e-05,
+          "transverse_strain": -5.3131708410462326e-06,
+          "kinetic_J": 3.49232373243696e-05,
+          "bond_J": 0.0001764194751894842,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0002113427125138538
+        },
+        {
+          "time_s": 0.08929804372842287,
+          "axial_strain": 9.739223320121004e-05,
+          "transverse_strain": -3.524120738199342e-05,
+          "kinetic_J": 6.50125022477489e-05,
+          "bond_J": 0.0003128565425489766,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00037786904479672554
+        },
+        {
+          "time_s": 0.09919447640966557,
+          "axial_strain": 0.00012693764347533146,
+          "transverse_strain": -5.2445565620790504e-05,
+          "kinetic_J": 1.9860008456753174e-05,
+          "bond_J": 0.0005064722508235593,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0005263322592803125
+        },
+        {
+          "time_s": 0.10909090909090827,
+          "axial_strain": 0.00013284374266157398,
+          "transverse_strain": -5.355328550066714e-05,
+          "kinetic_J": 6.569086097313679e-06,
+          "bond_J": 0.0005448373368728506,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0005514064229701643
+        },
+        {
+          "time_s": 0.11898734177215096,
+          "axial_strain": 0.00011657801119715112,
+          "transverse_strain": -4.012476788428659e-05,
+          "kinetic_J": 3.177980755142094e-05,
+          "bond_J": 0.000426102145878177,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0004578819534295979
+        },
+        {
+          "time_s": 0.12888377445339388,
+          "axial_strain": 9.466351579996238e-05,
+          "transverse_strain": -2.4811887441178893e-05,
+          "kinetic_J": 2.478466657200803e-05,
+          "bond_J": 0.00031163641919077227,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00033642108576278034
+        },
+        {
+          "time_s": 0.13878020713463718,
+          "axial_strain": 7.45671975831604e-05,
+          "transverse_strain": -2.1660034282706637e-05,
+          "kinetic_J": 5.960600981036147e-06,
+          "bond_J": 0.00019650455396808236,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0002024651549491185
+        },
+        {
+          "time_s": 0.14867663981588047,
+          "axial_strain": 7.735709818754155e-05,
+          "transverse_strain": -2.30577003165337e-05,
+          "kinetic_J": 8.473516067058255e-06,
+          "bond_J": 0.00019647754306001582,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0002049510591270741
+        },
+        {
+          "time_s": 0.15857307249712377,
+          "axial_strain": 9.491699369243434e-05,
+          "transverse_strain": -3.118814487075056e-05,
+          "kinetic_J": 1.7562117088951574e-05,
+          "bond_J": 0.00028635326019610456,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00030391537728505615
+        },
+        {
+          "time_s": 0.16846950517836706,
+          "axial_strain": 0.00011188531957413242,
+          "transverse_strain": -4.2553404744586897e-05,
+          "kinetic_J": 9.879040443329127e-06,
+          "bond_J": 0.00039766404390248163,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00040754308434581073
+        },
+        {
+          "time_s": 0.17836593785961036,
+          "axial_strain": 0.00011971901163430423,
+          "transverse_strain": -4.1437142020982705e-05,
+          "kinetic_J": 1.3550009744984769e-06,
+          "bond_J": 0.00045525533594388133,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0004566103369183798
+        },
+        {
+          "time_s": 0.18826237054085365,
+          "axial_strain": 0.0001133073948038817,
+          "transverse_strain": -3.527266814662069e-05,
+          "kinetic_J": 7.540782215743606e-06,
+          "bond_J": 0.0004066755881364334,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00041421637035217695
+        },
+        {
+          "time_s": 0.19815880322209695,
+          "axial_strain": 9.653450036177975e-05,
+          "transverse_strain": -3.385224592086125e-05,
+          "kinetic_J": 9.124657053985403e-06,
+          "bond_J": 0.00029614511979007564,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.000305269776844061
+        },
+        {
+          "time_s": 0.20805523590334024,
+          "axial_strain": 8.689777971471191e-05,
+          "transverse_strain": -2.996999372719306e-05,
+          "kinetic_J": 2.1327154153892706e-06,
+          "bond_J": 0.0002466255005934396,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00024875821600882884
+        },
+        {
+          "time_s": 0.21795166858458354,
+          "axial_strain": 8.745984680623893e-05,
+          "transverse_strain": -2.6737953502452397e-05,
+          "kinetic_J": 2.024571723548234e-06,
+          "bond_J": 0.00025195980529236096,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0002539843770159092
+        },
+        {
+          "time_s": 0.22784810126582683,
+          "axial_strain": 9.540873469012408e-05,
+          "transverse_strain": -2.9393821773588364e-05,
+          "kinetic_J": 4.9299474940802264e-06,
+          "bond_J": 0.0002952651545814881,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00030019510207556833
+        },
+        {
+          "time_s": 0.23774453394707012,
+          "axial_strain": 0.00010613462049210987,
+          "transverse_strain": -3.44201518809599e-05,
+          "kinetic_J": 3.548156230086411e-06,
+          "bond_J": 0.00036049809520197955,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00036404625143206595
+        },
+        {
+          "time_s": 0.24764096662831342,
+          "axial_strain": 0.00011027244650777904,
+          "transverse_strain": -3.938296490455521e-05,
+          "kinetic_J": 6.812350214200182e-07,
+          "bond_J": 0.0003849127406105318,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00038559397563195185
+        },
+        {
+          "time_s": 0.2575373993095567,
+          "axial_strain": 0.00010647489497357202,
+          "transverse_strain": -3.909590933093682e-05,
+          "kinetic_J": 1.5709743191365703e-06,
+          "bond_J": 0.0003567271174363095,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00035829809175544607
+        },
+        {
+          "time_s": 0.2674338319908,
+          "axial_strain": 0.00010027453246283513,
+          "transverse_strain": -3.2947494638019835e-05,
+          "kinetic_J": 2.910748307374633e-06,
+          "bond_J": 0.000319557122112694,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003224678704200687
+        },
+        {
+          "time_s": 0.2773302646720433,
+          "axial_strain": 9.440630894747928e-05,
+          "transverse_strain": -2.9450684892428216e-05,
+          "kinetic_J": 1.0914517647848758e-06,
+          "bond_J": 0.00029050167145275665,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0002915931232175415
+        },
+        {
+          "time_s": 0.2872266973532866,
+          "axial_strain": 9.264467885017336e-05,
+          "transverse_strain": -2.969837341236388e-05,
+          "kinetic_J": 1.9308726136114013e-07,
+          "bond_J": 0.00028149289203409735,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00028168597929545847
+        },
+        {
+          "time_s": 0.2971231300345299,
+          "axial_strain": 9.684722115428182e-05,
+          "transverse_strain": -3.0998800361795025e-05,
+          "kinetic_J": 1.4750983192640363e-06,
+          "bond_J": 0.0003023082622565814,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00030378336057584546
+        },
+        {
+          "time_s": 0.3070195627157732,
+          "axial_strain": 0.00010169368972273718,
+          "transverse_strain": -3.464709577279436e-05,
+          "kinetic_J": 1.1939516216407407e-06,
+          "bond_J": 0.00032748627166835794,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003286802232899987
+        },
+        {
+          "time_s": 0.3169159953970165,
+          "axial_strain": 0.00010489628553258153,
+          "transverse_strain": -3.706727474152224e-05,
+          "kinetic_J": 2.0611054504532135e-07,
+          "bond_J": 0.000348665313575037,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003488714241200823
+        },
+        {
+          "time_s": 0.3268124280782598,
+          "axial_strain": 0.00010483318540421838,
+          "transverse_strain": -3.5492848021308345e-05,
+          "kinetic_J": 3.9044745243861857e-07,
+          "bond_J": 0.0003506761211349752,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003510665685874139
+        },
+        {
+          "time_s": 0.33670886075950307,
+          "axial_strain": 0.00010118126609004463,
+          "transverse_strain": -3.30448498936875e-05,
+          "kinetic_J": 8.224905468359421e-07,
+          "bond_J": 0.00032827912117013735,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003291016117169733
+        },
+        {
+          "time_s": 0.34660529344074636,
+          "axial_strain": 9.709351899702771e-05,
+          "transverse_strain": -3.154722168678166e-05,
+          "kinetic_J": 4.2819122127172156e-07,
+          "bond_J": 0.00030286902942379775,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003032972206450695
+        },
+        {
+          "time_s": 0.35650172612198966,
+          "axial_strain": 9.603582880680453e-05,
+          "transverse_strain": -3.1606898858512634e-05,
+          "kinetic_J": 3.75428278193094e-08,
+          "bond_J": 0.00029710040004985653,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00029713794287767584
+        },
+        {
+          "time_s": 0.36639815880323295,
+          "axial_strain": 9.725853720774408e-05,
+          "transverse_strain": -3.296643823371935e-05,
+          "kinetic_J": 3.47210623340607e-07,
+          "bond_J": 0.0003031979487262113,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003035451593495519
+        },
+        {
+          "time_s": 0.37629459148447625,
+          "axial_strain": 0.00010057790140074556,
+          "transverse_strain": -3.3410426488852644e-05,
+          "kinetic_J": 4.228332878457288e-07,
+          "bond_J": 0.0003233330414929395,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00032375587478078525
+        },
+        {
+          "time_s": 0.38619102416571954,
+          "axial_strain": 0.00010296958430270248,
+          "transverse_strain": -3.38726831581923e-05,
+          "kinetic_J": 6.611140067790201e-08,
+          "bond_J": 0.00033856698332849296,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003386330947291709
+        },
+        {
+          "time_s": 0.39608745684696284,
+          "axial_strain": 0.00010271746423373695,
+          "transverse_strain": -3.4877926943933345e-05,
+          "kinetic_J": 8.283029995735435e-08,
+          "bond_J": 0.0003369374360851769,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00033702026638513427
+        },
+        {
+          "time_s": 0.40598388952820613,
+          "axial_strain": 0.00010072419690111227,
+          "transverse_strain": -3.418391873547484e-05,
+          "kinetic_J": 2.4471545044116006e-07,
+          "bond_J": 0.0003238673377604983,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00032411205321093944
+        },
+        {
+          "time_s": 0.4158803222094494,
+          "axial_strain": 9.884173472626823e-05,
+          "transverse_strain": -3.2655192174994456e-05,
+          "kinetic_J": 1.3399420225506035e-07,
+          "bond_J": 0.0003125842034112286,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00031271819761348365
+        },
+        {
+          "time_s": 0.4257767548906927,
+          "axial_strain": 9.767985591620693e-05,
+          "transverse_strain": -3.231753805358472e-05,
+          "kinetic_J": 2.4610784116953073e-08,
+          "bond_J": 0.00030606733095376134,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003060919417378783
+        },
+        {
+          "time_s": 0.435673187571936,
+          "axial_strain": 9.857295232141665e-05,
+          "transverse_strain": -3.24451947335116e-05,
+          "kinetic_J": 8.012360662415428e-08,
+          "bond_J": 0.00031263329572232313,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00031271341932894727
+        },
+        {
+          "time_s": 0.4455696202531793,
+          "axial_strain": 0.00010011571126009496,
+          "transverse_strain": -3.307386853350737e-05,
+          "kinetic_J": 1.2385659374947087e-07,
+          "bond_J": 0.00032128814686263466,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00032141200345638414
+        },
+        {
+          "time_s": 0.4554660529344226,
+          "axial_strain": 0.00010124049642346034,
+          "transverse_strain": -3.4076878907171127e-05,
+          "kinetic_J": 4.0897845676772205e-08,
+          "bond_J": 0.0003268857286457188,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003269266264913956
+        },
+        {
+          "time_s": 0.4653624856156659,
+          "axial_strain": 0.00010143859090765613,
+          "transverse_strain": -3.429151929823591e-05,
+          "kinetic_J": 1.1977345954032663e-08,
+          "bond_J": 0.0003279394572496348,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00032795143459558884
+        },
+        {
+          "time_s": 0.4752589182969092,
+          "axial_strain": 0.00010074655437009028,
+          "transverse_strain": -3.380023325237231e-05,
+          "kinetic_J": 6.58148966855807e-08,
+          "bond_J": 0.0003245923758273212,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00032465819072400676
+        },
+        {
+          "time_s": 0.4851553509781525,
+          "axial_strain": 9.94944855320599e-05,
+          "transverse_strain": -3.307783237291017e-05,
+          "kinetic_J": 5.027473797660772e-08,
+          "bond_J": 0.000317219592846584,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00031726986758456063
+        },
+        {
+          "time_s": 0.4950517836593958,
+          "axial_strain": 9.897317197600969e-05,
+          "transverse_strain": -3.245734001415571e-05,
+          "kinetic_J": 6.7245314859029856e-09,
+          "bond_J": 0.0003143003008931409,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003143070254246268
+        },
+        {
+          "time_s": 0.504948216340639,
+          "axial_strain": 9.903957094876496e-05,
+          "transverse_strain": -3.281134981121375e-05,
+          "kinetic_J": 2.114171799941484e-08,
+          "bond_J": 0.00031435853230335573,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00031437967402135516
+        },
+        {
+          "time_s": 0.5148446490218823,
+          "axial_strain": 9.974521334947989e-05,
+          "transverse_strain": -3.3542438926555805e-05,
+          "kinetic_J": 3.4414425145332986e-08,
+          "bond_J": 0.0003183049436314719,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00031833935805661724
+        },
+        {
+          "time_s": 0.5247410817031256,
+          "axial_strain": 0.0001005925951783985,
+          "transverse_strain": -3.367860217448222e-05,
+          "kinetic_J": 1.7768299174840997e-08,
+          "bond_J": 0.00032331274545134206,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00032333051375051694
+        },
+        {
+          "time_s": 0.5346375143843689,
+          "axial_strain": 0.00010090881310787872,
+          "transverse_strain": -3.3615802076327226e-05,
+          "kinetic_J": 3.6670282544126133e-09,
+          "bond_J": 0.000325460281534016,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003254639485622704
+        },
+        {
+          "time_s": 0.5445339470656122,
+          "axial_strain": 0.00010048187991928507,
+          "transverse_strain": -3.35480580408472e-05,
+          "kinetic_J": 1.4907651373836845e-08,
+          "bond_J": 0.00032302762442735285,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00032304253207872673
+        },
+        {
+          "time_s": 0.5544303797468555,
+          "axial_strain": 9.990183207133722e-05,
+          "transverse_strain": -3.326358570497421e-05,
+          "kinetic_J": 1.8267967638778086e-08,
+          "bond_J": 0.00031963010025764317,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.000319648368225282
+        },
+        {
+          "time_s": 0.5643268124280988,
+          "axial_strain": 9.937307497868975e-05,
+          "transverse_strain": -3.309429839415958e-05,
+          "kinetic_J": 3.95619223614778e-09,
+          "bond_J": 0.000316101152436707,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003161051086289431
+        },
+        {
+          "time_s": 0.5742232451093421,
+          "axial_strain": 9.93932304316908e-05,
+          "transverse_strain": -3.308976601305512e-05,
+          "kinetic_J": 3.4885487155413534e-09,
+          "bond_J": 0.00031621347527978865,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003162169638285042
+        },
+        {
+          "time_s": 0.5841196777905854,
+          "axial_strain": 9.984643173794233e-05,
+          "transverse_strain": -3.320284624391234e-05,
+          "kinetic_J": 1.1057412348471507e-08,
+          "bond_J": 0.0003192144274712776,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003192254848836261
+        },
+        {
+          "time_s": 0.5940161104718287,
+          "axial_strain": 0.00010028882725582333,
+          "transverse_strain": -3.344872329542393e-05,
+          "kinetic_J": 6.26777864868251e-09,
+          "bond_J": 0.0003219324014076457,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00032193866918629434
+        },
+        {
+          "time_s": 0.603912543153072,
+          "axial_strain": 0.00010045233486323062,
+          "transverse_strain": -3.354472722217091e-05,
+          "kinetic_J": 1.220714149896582e-09,
+          "bond_J": 0.00032265774420492713,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.000322658964919077
+        },
+        {
+          "time_s": 0.6138089758343153,
+          "axial_strain": 0.00010033080055855033,
+          "transverse_strain": -3.3475675618188775e-05,
+          "kinetic_J": 3.7271510046272676e-09,
+          "bond_J": 0.00032185460967500563,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00032185833682601023
+        },
+        {
+          "time_s": 0.6237054085155586,
+          "axial_strain": 9.994815504760224e-05,
+          "transverse_strain": -3.341288576438042e-05,
+          "kinetic_J": 5.6106890781939994e-09,
+          "bond_J": 0.0003195985815880701,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003196041922771483
+        },
+        {
+          "time_s": 0.6336018411968019,
+          "axial_strain": 9.970575184171475e-05,
+          "transverse_strain": -3.321926104284949e-05,
+          "kinetic_J": 2.1350104148725033e-09,
+          "bond_J": 0.0003183126057293956,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00031831474073981046
+        },
+        {
+          "time_s": 0.6434982738780451,
+          "axial_strain": 9.970479395100354e-05,
+          "transverse_strain": -3.307438631119156e-05,
+          "kinetic_J": 4.6431750562058e-10,
+          "bond_J": 0.0003183634459736916,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003183639102911973
+        },
+        {
+          "time_s": 0.6533947065592884,
+          "axial_strain": 9.985630848951173e-05,
+          "transverse_strain": -3.322880666067227e-05,
+          "kinetic_J": 3.0532812209491357e-09,
+          "bond_J": 0.0003191898397244035,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00031919289300562446
+        },
+        {
+          "time_s": 0.6632911392405317,
+          "axial_strain": 0.00010008910336862613,
+          "transverse_strain": -3.343306357767322e-05,
+          "kinetic_J": 2.4927916017238313e-09,
+          "bond_J": 0.00032050576743713295,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00032050826022873467
+        },
+        {
+          "time_s": 0.673187571921775,
+          "axial_strain": 0.00010024023935098952,
+          "transverse_strain": -3.3487239161579246e-05,
+          "kinetic_J": 2.2775910365976924e-10,
+          "bond_J": 0.00032137472537440586,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00032137495313350954
+        },
+        {
+          "time_s": 0.6830840046030183,
+          "axial_strain": 0.00010018342901915722,
+          "transverse_strain": -3.3435314157681e-05,
+          "kinetic_J": 9.662548411727067e-10,
+          "bond_J": 0.0003210262542373512,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003210272204921924
+        },
+        {
+          "time_s": 0.6929804372842616,
+          "axial_strain": 0.00010003579236382565,
+          "transverse_strain": -3.331577757956963e-05,
+          "kinetic_J": 1.7516146179846402e-09,
+          "bond_J": 0.00032026063462236914,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00032026238623698714
+        },
+        {
+          "time_s": 0.7028768699655049,
+          "axial_strain": 9.987866448103733e-05,
+          "transverse_strain": -3.3246619048212085e-05,
+          "kinetic_J": 7.207610657335254e-10,
+          "bond_J": 0.00031938089189198504,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003193816126530508
+        },
+        {
+          "time_s": 0.7127733026467482,
+          "axial_strain": 9.980270640440325e-05,
+          "transverse_strain": -3.325946605326273e-05,
+          "kinetic_J": 1.828392141230298e-10,
+          "bond_J": 0.0003188292884808047,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00031882947132001884
+        },
+        {
+          "time_s": 0.7226697353279915,
+          "axial_strain": 9.989012773224207e-05,
+          "transverse_strain": -3.3286203580949095e-05,
+          "kinetic_J": 7.418256900292319e-10,
+          "bond_J": 0.00031929044960880197,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00031929119143449204
+        },
+        {
+          "time_s": 0.7325661680092348,
+          "axial_strain": 0.00010003125007709372,
+          "transverse_strain": -3.3351853766764364e-05,
+          "kinetic_J": 8.397582564411604e-10,
+          "bond_J": 0.00032016657172895474,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00032016741148721117
+        },
+        {
+          "time_s": 0.7424626006904781,
+          "axial_strain": 0.00010011997296983005,
+          "transverse_strain": -3.3404228929029177e-05,
+          "kinetic_J": 1.4537865617214308e-10,
+          "bond_J": 0.00032075172201286045,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003207518673915166
+        },
+        {
+          "time_s": 0.7523590333717214,
+          "axial_strain": 0.00010012440252292013,
+          "transverse_strain": -3.337282937036194e-05,
+          "kinetic_J": 1.8103995648329354e-10,
+          "bond_J": 0.0003207787615119597,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00032077894255191615
+        },
+        {
+          "time_s": 0.7622554660529647,
+          "axial_strain": 0.00010003547130499796,
+          "transverse_strain": -3.33373789078324e-05,
+          "kinetic_J": 5.300738793889613e-10,
+          "bond_J": 0.00032020282846733554,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00032020335854121497
+        },
+        {
+          "time_s": 0.772151898734208,
+          "axial_strain": 9.992506214524337e-05,
+          "transverse_strain": -3.33226673185882e-05,
+          "kinetic_J": 2.6135398923436873e-10,
+          "bond_J": 0.00031952492922789977,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.000319525190581889
+        },
+        {
+          "time_s": 0.7820483314154513,
+          "axial_strain": 9.989802558757477e-05,
+          "transverse_strain": -3.32934120687922e-05,
+          "kinetic_J": 3.9236723691337006e-11,
+          "bond_J": 0.00031940699088499845,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00031940703012172213
+        },
+        {
+          "time_s": 0.7919447640966946,
+          "axial_strain": 9.993219142659844e-05,
+          "transverse_strain": -3.32913870212729e-05,
+          "kinetic_J": 2.0406547479718837e-10,
+          "bond_J": 0.0003196151452716157,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003196153493370905
+        },
+        {
+          "time_s": 0.8018411967779379,
+          "axial_strain": 0.00010000396420762706,
+          "transverse_strain": -3.3321071238971985e-05,
+          "kinetic_J": 2.3563451579990825e-10,
+          "bond_J": 0.0003200417659168834,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003200420015513992
+        },
+        {
+          "time_s": 0.8117376294591812,
+          "axial_strain": 0.00010006192358682126,
+          "transverse_strain": -3.335773922879611e-05,
+          "kinetic_J": 8.263218804480729e-11,
+          "bond_J": 0.0003203822901781787,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003203823728103668
+        },
+        {
+          "time_s": 0.8216340621404244,
+          "axial_strain": 0.00010006279204379427,
+          "transverse_strain": -3.338237363101994e-05,
+          "kinetic_J": 3.550413691361012e-11,
+          "bond_J": 0.0003203660469973993,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00032036608250153624
+        },
+        {
+          "time_s": 0.8315304948216677,
+          "axial_strain": 0.00010001881191330775,
+          "transverse_strain": -3.3356018797313116e-05,
+          "kinetic_J": 1.3295319273933938e-10,
+          "bond_J": 0.00032008850580572375,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003200886387589165
+        },
+        {
+          "time_s": 0.841426927502911,
+          "axial_strain": 9.997748678676938e-05,
+          "transverse_strain": -3.330855843802486e-05,
+          "kinetic_J": 1.0380266325072064e-10,
+          "bond_J": 0.0003198773214433798,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003198774252460431
+        },
+        {
+          "time_s": 0.8513233601841543,
+          "axial_strain": 9.994520779104305e-05,
+          "transverse_strain": -3.330220213305943e-05,
+          "kinetic_J": 1.1436345612366276e-11,
+          "bond_J": 0.00031970060588443563,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003197006173207812
+        },
+        {
+          "time_s": 0.8612197928653976,
+          "axial_strain": 9.995561812824183e-05,
+          "transverse_strain": -3.331334020738161e-05,
+          "kinetic_J": 4.438640708517179e-11,
+          "bond_J": 0.00031975801141021046,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00031975805579661755
+        },
+        {
+          "time_s": 0.8711162255466409,
+          "axial_strain": 9.99920107769281e-05,
+          "transverse_strain": -3.332731329177957e-05,
+          "kinetic_J": 7.512338903462343e-11,
+          "bond_J": 0.0003199477187302705,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00031994779385365957
+        },
+        {
+          "time_s": 0.8810126582278842,
+          "axial_strain": 0.00010002379278811757,
+          "transverse_strain": -3.335177410942658e-05,
+          "kinetic_J": 2.9247457863353164e-11,
+          "bond_J": 0.00032012804615702106,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003201280754044789
+        },
+        {
+          "time_s": 0.8909090909091275,
+          "axial_strain": 0.00010003335184587586,
+          "transverse_strain": -3.3356482141064775e-05,
+          "kinetic_J": 9.834424028026514e-12,
+          "bond_J": 0.00032020086398414506,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00032020087381856913
+        },
+        {
+          "time_s": 0.9008055235903708,
+          "axial_strain": 0.00010002144935137661,
+          "transverse_strain": -3.333759764624112e-05,
+          "kinetic_J": 3.216914386551889e-11,
+          "bond_J": 0.00032014924111573224,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003201492732848761
+        },
+        {
+          "time_s": 0.9107019562716141,
+          "axial_strain": 9.998817088468132e-05,
+          "transverse_strain": -3.332422175349881e-05,
+          "kinetic_J": 3.449923940547463e-11,
+          "bond_J": 0.00031993657812639435,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00031993661262563376
+        },
+        {
+          "time_s": 0.9205983889528574,
+          "axial_strain": 9.99694782440515e-05,
+          "transverse_strain": -3.331896360011158e-05,
+          "kinetic_J": 8.422894327308363e-12,
+          "bond_J": 0.0003198211204930514,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003198211289159457
+        },
+        {
+          "time_s": 0.9304948216341007,
+          "axial_strain": 9.99707518178905e-05,
+          "transverse_strain": -3.332344552792026e-05,
+          "kinetic_J": 6.567188109164703e-12,
+          "bond_J": 0.00031982882400256494,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00031982883056975303
+        },
+        {
+          "time_s": 0.940391254315344,
+          "axial_strain": 9.998897132682445e-05,
+          "transverse_strain": -3.333236039790278e-05,
+          "kinetic_J": 2.2988847331768078e-11,
+          "bond_J": 0.00031993894559635054,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003199389685851979
+        },
+        {
+          "time_s": 0.9502876869965873,
+          "axial_strain": 0.00010001057104858102,
+          "transverse_strain": -3.3334712492897367e-05,
+          "kinetic_J": 1.2286591736921519e-11,
+          "bond_J": 0.00032006922767167576,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00032006923995826753
+        },
+        {
+          "time_s": 0.9601841196778306,
+          "axial_strain": 0.00010002004457653849,
+          "transverse_strain": -3.33386991703597e-05,
+          "kinetic_J": 1.1075637912325947e-12,
+          "bond_J": 0.000320130315848681,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003201303169562448
+        },
+        {
+          "time_s": 0.9700805523590739,
+          "axial_strain": 0.00010000886102025836,
+          "transverse_strain": -3.33426642700669e-05,
+          "kinetic_J": 8.757882836960336e-12,
+          "bond_J": 0.0003200567196322689,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003200567283901518
+        },
+        {
+          "time_s": 0.9799769850403172,
+          "axial_strain": 9.999476693257903e-05,
+          "transverse_strain": -3.3333650334843765e-05,
+          "kinetic_J": 1.1051880376621762e-11,
+          "bond_J": 0.00031997081981723904,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00031997083086911937
+        },
+        {
+          "time_s": 0.9898734177215605,
+          "axial_strain": 9.99829666890652e-05,
+          "transverse_strain": -3.332451617479333e-05,
+          "kinetic_J": 3.3117381356419164e-12,
+          "bond_J": 0.0003199003445254181,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00031990034783715624
+        },
+        {
+          "time_s": 0.9997698504028038,
+          "axial_strain": 9.998217111238199e-05,
+          "transverse_strain": -3.332454914470496e-05,
+          "kinetic_J": 1.5950708347360477e-12,
+          "bond_J": 0.00031990260912632165,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003199026107213925
+        },
+        {
+          "time_s": 1.000000000000042,
+          "axial_strain": 9.998230997019612e-05,
+          "transverse_strain": -3.33246076950226e-05,
+          "kinetic_J": 1.6555330888337719e-12,
+          "bond_J": 0.0003199036256205758,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00031990362727610895
+        }
+      ],
+      "snapshot": {
+        "schema": "tensordem.calibrated-restart/1",
+        "base": {
+          "schema": "tensordem.restart/1",
+          "config": {
+            "nx": 5,
+            "ny": 3,
+            "radius": 0.1,
+            "thickness": 0.2,
+            "density": 917.0,
+            "bond_stiffness": 150000,
+            "contact_stiffness": 2000.0,
+            "breaking_strain": 1,
+            "shear_breaking_strain": 1,
+            "contact_damping": 0,
+            "drag": 100,
+            "tool_radius": 0.1,
+            "tool_speed": 1.0,
+            "tool_gap": 10,
+            "dt": 0.00023014959723820482,
+            "device": "cpu",
+            "fix_edges": false
+          },
+          "dt_s": 0.00023014959723820482,
+          "time_s": 1.000000000000042,
+          "step_count": 4345,
+          "positions_m": [
+            [
+              -0.4000399917085721,
+              6.662964160191881e-06
+            ],
+            [
+              -0.2000199964840701,
+              6.6662150000570926e-06
+            ],
+            [
+              6.492278846208744e-17,
+              6.666249374875085e-06
+            ],
+            [
+              0.20001999648407032,
+              6.666215000275525e-06
+            ],
+            [
+              0.4000399917085725,
+              6.662964160749179e-06
+            ],
+            [
+              -0.40003999535481993,
+              0.2
+            ],
+            [
+              -0.2000199966847924,
+              0.20000000000000007
+            ],
+            [
+              -3.32642971029155e-18,
+              0.2000000000000001
+            ],
+            [
+              0.20001999668479228,
+              0.20000000000000034
+            ],
+            [
+              0.4000399953548197,
+              0.20000000000000046
+            ],
+            [
+              -0.4000399917085724,
+              0.3999933370358398
+            ],
+            [
+              -0.2000199964840703,
+              0.3999933337850002
+            ],
+            [
+              -7.778296331782112e-17,
+              0.3999933337506257
+            ],
+            [
+              0.20001999648406987,
+              0.39999333378500024
+            ],
+            [
+              0.40003999170857196,
+              0.39999333703584034
+            ]
+          ],
+          "velocities_m_s": [
+            [
+              -1.7187939183299855e-07,
+              -3.1725356140694074e-08
+            ],
+            [
+              -1.282978859898309e-07,
+              1.2189251673687375e-07
+            ],
+            [
+              5.369745470171993e-15,
+              7.406696815415285e-08
+            ],
+            [
+              1.2829789210913313e-07,
+              1.218925511430746e-07
+            ],
+            [
+              1.7187937341562176e-07,
+              -3.17253676057206e-08
+            ],
+            [
+              -3.802458714182041e-07,
+              -2.523413477486524e-14
+            ],
+            [
+              -1.163096203990534e-07,
+              5.4701852869858376e-14
+            ],
+            [
+              7.723214385419098e-15,
+              4.595598405675513e-15
+            ],
+            [
+              1.1630957842841353e-07,
+              5.8632137865113875e-15
+            ],
+            [
+              3.8024589029797645e-07,
+              -5.305016136565392e-15
+            ],
+            [
+              -1.7187938280918347e-07,
+              3.1725362370769724e-08
+            ],
+            [
+              -1.2829785693699656e-07,
+              -1.2189256756040182e-07
+            ],
+            [
+              3.7004531409333075e-15,
+              -7.406696040495809e-08
+            ],
+            [
+              1.2829785429584587e-07,
+              -1.218925464178079e-07
+            ],
+            [
+              1.7187940404587868e-07,
+              3.172536510347826e-08
+            ]
+          ],
+          "initial_positions_m": [
+            [
+              -0.4,
+              0.0
+            ],
+            [
+              -0.2,
+              0.0
+            ],
+            [
+              0.0,
+              0.0
+            ],
+            [
+              0.2,
+              0.0
+            ],
+            [
+              0.4,
+              0.0
+            ],
+            [
+              -0.4,
+              0.2
+            ],
+            [
+              -0.2,
+              0.2
+            ],
+            [
+              0.0,
+              0.2
+            ],
+            [
+              0.2,
+              0.2
+            ],
+            [
+              0.4,
+              0.2
+            ],
+            [
+              -0.4,
+              0.4
+            ],
+            [
+              -0.2,
+              0.4
+            ],
+            [
+              0.0,
+              0.4
+            ],
+            [
+              0.2,
+              0.4
+            ],
+            [
+              0.4,
+              0.4
+            ]
+          ],
+          "fixed": [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "alive": [
+            true,
+            false,
+            false,
+            false,
+            true,
+            true,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            true,
+            false,
+            false,
+            true,
+            true,
+            true,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            true,
+            false,
+            false,
+            true,
+            true,
+            true,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            true,
+            false,
+            false,
+            true,
+            true,
+            true,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            true,
+            true,
+            false,
+            false,
+            false,
+            false,
+            false,
+            true,
+            false,
+            false,
+            false,
+            true,
+            true,
+            false,
+            false,
+            false,
+            true,
+            false,
+            false,
+            true,
+            true,
+            true,
+            false,
+            false,
+            true,
+            false,
+            false,
+            true,
+            true,
+            true,
+            false,
+            true,
+            false,
+            false,
+            true,
+            true,
+            true,
+            false,
+            false,
+            false,
+            true,
+            true,
+            true,
+            false,
+            false,
+            false,
+            true,
+            false,
+            false,
+            true,
+            false,
+            true
+          ],
+          "tool_start_m": [
+            0.0,
+            10.6
+          ],
+          "tool_velocity_m_s": [
+            0.0,
+            -1.0
+          ],
+          "hull_profile_m": null,
+          "hull_start_m": [
+            0.0,
+            0.0
+          ],
+          "hull_velocity_m_s": [
+            0.0,
+            0.0
+          ],
+          "accounting": {
+            "external_work_J": 0.0006398965071361395,
+            "fracture_release_J": 0.0,
+            "tool_work_J": 0.0,
+            "damping_dissipation_J": 0.0003200481751595935,
+            "external_impulse_Ns": [
+              0.0,
+              0.0
+            ],
+            "support_impulse_Ns": [
+              0.0,
+              0.0
+            ],
+            "drag_impulse_Ns": [
+              -2.0888404606995444e-17,
+              -8.731862622274048e-18
+            ],
+            "tool_impulse_on_ice_Ns": [
+              0.0,
+              0.0
+            ]
+          },
+          "last_step": {
+            "time_start_s": 0.9997698504028038,
+            "time_end_s": 1.000000000000042,
+            "external_work_J": 1.016571271605926e-09,
+            "support_force_N": [
+              -0.0,
+              -0.0
+            ],
+            "tool_reaction_N": [
+              -0.0,
+              -0.0
+            ],
+            "external_force_N": [
+              0.0,
+              0.0
+            ],
+            "external_moment_Nm": -3.9968028886505635e-15
+          }
+        },
+        "bond_stiffness_N_per_m": [
+          75000.0,
+          75000.0,
+          75000.0,
+          75000.0,
+          75000.0,
+          150000.0,
+          75000.0,
+          75000.0,
+          75000.0,
+          150000.0,
+          75000.0,
+          75000.0,
+          75000.0,
+          150000.0,
+          75000.0,
+          75000.0,
+          75000.0,
+          150000.0,
+          75000.0,
+          75000.0,
+          150000.0,
+          75000.0,
+          150000.0,
+          75000.0,
+          150000.0,
+          75000.0,
+          150000.0,
+          75000.0,
+          150000.0,
+          75000.0,
+          150000.0,
+          75000.0,
+          75000.0,
+          75000.0,
+          75000.0,
+          75000.0,
+          75000.0,
+          75000.0
+        ],
+        "coefficient_sha256": "4b6552bad91deeb6e0c439f0e58fcba5523f52865c1dabc960bc8658477df9c8"
+      },
+      "discrete_energy_residual_J": 5.529529956290434e-08
+    },
+    {
+      "dt_s": 0.00011507479861910241,
+      "steps": 8690,
+      "measured_E_Pa": 1000180.9516185232,
+      "apparent_nu": 0.33330457580267536,
+      "E_relative_error": 0.00018095161852316188,
+      "nu_abs_error": 2.875753065795239e-05,
+      "history": [
+        {
+          "time_s": 0.00011507479861910241,
+          "axial_strain": 1.5322159652164657e-08,
+          "transverse_strain": 0.0,
+          "kinetic_J": 5.515977484653505e-08,
+          "bond_J": 2.3770318432709606e-11,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 5.518354516496776e-08
+        },
+        {
+          "time_s": 0.010011507479861905,
+          "axial_strain": 4.443369690678341e-05,
+          "transverse_strain": -4.360924556186058e-06,
+          "kinetic_J": 0.00016779951227676042,
+          "bond_J": 0.00011607759439680961,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00028387710667357
+        },
+        {
+          "time_s": 0.019907940161104688,
+          "axial_strain": 0.00010939097371788034,
+          "transverse_strain": -3.3612192009370706e-05,
+          "kinetic_J": 0.00020070926814044315,
+          "bond_J": 0.0004234184559372727,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0006241277240777158
+        },
+        {
+          "time_s": 0.029804372842347385,
+          "axial_strain": 0.00015848800333002436,
+          "transverse_strain": -5.874513283953104e-05,
+          "kinetic_J": 4.4786778112769124e-05,
+          "bond_J": 0.0008143571569565559,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.000859143935069325
+        },
+        {
+          "time_s": 0.03970080552359009,
+          "axial_strain": 0.00016244876101328964,
+          "transverse_strain": -5.6545860580954603e-05,
+          "kinetic_J": 3.5246126410302054e-05,
+          "bond_J": 0.0008118035800896442,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0008470497064999462
+        },
+        {
+          "time_s": 0.049597238204832785,
+          "axial_strain": 0.00012245830826688545,
+          "transverse_strain": -5.32236349490408e-05,
+          "kinetic_J": 0.00010972436858325189,
+          "bond_J": 0.0004736711892414952,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0005833955578247471
+        },
+        {
+          "time_s": 0.05949367088607548,
+          "axial_strain": 7.13484303764093e-05,
+          "transverse_strain": -3.459051566051696e-05,
+          "kinetic_J": 7.82351856222038e-05,
+          "bond_J": 0.00017129419796644218,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.000249529383588646
+        },
+        {
+          "time_s": 0.06939010356731859,
+          "axial_strain": 5.697217119871959e-05,
+          "transverse_strain": -9.39030428047164e-07,
+          "kinetic_J": 1.0525396584708143e-05,
+          "bond_J": 0.00016022021191101273,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00017074560849572088
+        },
+        {
+          "time_s": 0.07928653624856188,
+          "axial_strain": 6.50653161612021e-05,
+          "transverse_strain": -4.748126405620495e-06,
+          "kinetic_J": 3.414219707487829e-05,
+          "bond_J": 0.00017549102644543032,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00020963322352030863
+        },
+        {
+          "time_s": 0.08918296892980518,
+          "axial_strain": 9.655780882703024e-05,
+          "transverse_strain": -3.4657708878671736e-05,
+          "kinetic_J": 6.514943713797173e-05,
+          "bond_J": 0.0003082359348783654,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003733853720163371
+        },
+        {
+          "time_s": 0.09907940161104847,
+          "axial_strain": 0.0001265289440021781,
+          "transverse_strain": -5.225773822633175e-05,
+          "kinetic_J": 2.0768120709055614e-05,
+          "bond_J": 0.0005033415560397718,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0005241096767488274
+        },
+        {
+          "time_s": 0.10897583429229177,
+          "axial_strain": 0.00013301225966697028,
+          "transverse_strain": -5.370670634360601e-05,
+          "kinetic_J": 6.416229950119079e-06,
+          "bond_J": 0.0005461005591184969,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.000552516789068616
+        },
+        {
+          "time_s": 0.11887226697353506,
+          "axial_strain": 0.00011708690003410052,
+          "transverse_strain": -4.055538447561875e-05,
+          "kinetic_J": 3.144873692804527e-05,
+          "bond_J": 0.00042937299649212636,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00046082173342017164
+        },
+        {
+          "time_s": 0.12876869965477836,
+          "axial_strain": 9.520721032020099e-05,
+          "transverse_strain": -2.503527598751138e-05,
+          "kinetic_J": 2.523814842888011e-05,
+          "bond_J": 0.00031425931135014163,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00033949745977902173
+        },
+        {
+          "time_s": 0.13866513233602165,
+          "axial_strain": 7.485635267437396e-05,
+          "transverse_strain": -2.1636862788548855e-05,
+          "kinetic_J": 6.2575872219727565e-06,
+          "bond_J": 0.00019841043673409647,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00020466802395606925
+        },
+        {
+          "time_s": 0.14856156501726495,
+          "axial_strain": 7.697357455508275e-05,
+          "transverse_strain": -2.2977928666510916e-05,
+          "kinetic_J": 8.2626279505085e-06,
+          "bond_J": 0.00019466060985727865,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00020292323780778717
+        },
+        {
+          "time_s": 0.15845799769850824,
+          "axial_strain": 9.445685420046238e-05,
+          "transverse_strain": -3.086165568115582e-05,
+          "kinetic_J": 1.7506635649264624e-05,
+          "bond_J": 0.0002837797360866648,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003012863717359294
+        },
+        {
+          "time_s": 0.16835443037975154,
+          "axial_strain": 0.00011151466939844182,
+          "transverse_strain": -4.238605790144738e-05,
+          "kinetic_J": 1.0240892464697359e-05,
+          "bond_J": 0.00039483882776717696,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0004050797202318743
+        },
+        {
+          "time_s": 0.17825086306099483,
+          "axial_strain": 0.00011971202705338135,
+          "transverse_strain": -4.162534067829696e-05,
+          "kinetic_J": 1.3698153040349812e-06,
+          "bond_J": 0.0004552671139044907,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00045663692920852567
+        },
+        {
+          "time_s": 0.18814729574223812,
+          "axial_strain": 0.00011367124285635577,
+          "transverse_strain": -3.5368627632674434e-05,
+          "kinetic_J": 7.350904561637229e-06,
+          "bond_J": 0.00040928921577674816,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0004166401203383854
+        },
+        {
+          "time_s": 0.19804372842348142,
+          "axial_strain": 9.69898035008826e-05,
+          "transverse_strain": -3.3888493202676695e-05,
+          "kinetic_J": 9.279477660834675e-06,
+          "bond_J": 0.00029886483339365165,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003081443110544863
+        },
+        {
+          "time_s": 0.2079401611047247,
+          "axial_strain": 8.69702573719211e-05,
+          "transverse_strain": -3.012078463131349e-05,
+          "kinetic_J": 2.2661936546302764e-06,
+          "bond_J": 0.00024673030276472477,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00024899649641935503
+        },
+        {
+          "time_s": 0.217836593785968,
+          "axial_strain": 8.734806109136442e-05,
+          "transverse_strain": -2.673486429378598e-05,
+          "kinetic_J": 1.921766535871213e-06,
+          "bond_J": 0.0002515068929627108,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00025342865949858203
+        },
+        {
+          "time_s": 0.2277330264672113,
+          "axial_strain": 9.507030055611967e-05,
+          "transverse_strain": -2.9263646074383887e-05,
+          "kinetic_J": 4.917890198165261e-06,
+          "bond_J": 0.00029323997943742785,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0002981578696355931
+        },
+        {
+          "time_s": 0.2376294591484546,
+          "axial_strain": 0.00010589666681412128,
+          "transverse_strain": -3.4259312161735e-05,
+          "kinetic_J": 3.643999827451153e-06,
+          "bond_J": 0.0003590323271164246,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003626763269438758
+        },
+        {
+          "time_s": 0.2475258918296979,
+          "axial_strain": 0.00011028109250979523,
+          "transverse_strain": -3.9282181449389653e-05,
+          "kinetic_J": 6.962738756446509e-07,
+          "bond_J": 0.0003850706826610431,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003857669565366877
+        },
+        {
+          "time_s": 0.25742232451094116,
+          "axial_strain": 0.00010667606088988109,
+          "transverse_strain": -3.9229227517749554e-05,
+          "kinetic_J": 1.5122750704918861e-06,
+          "bond_J": 0.00035812119450602997,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003596334695765218
+        },
+        {
+          "time_s": 0.26731875719218445,
+          "axial_strain": 0.00010045332420269743,
+          "transverse_strain": -3.314346442238284e-05,
+          "kinetic_J": 2.9315819165505317e-06,
+          "bond_J": 0.00032043397018432227,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00032336555210087277
+        },
+        {
+          "time_s": 0.27721518987342775,
+          "axial_strain": 9.456948387345787e-05,
+          "transverse_strain": -2.9471090109529633e-05,
+          "kinetic_J": 1.1444097180348237e-06,
+          "bond_J": 0.0002913621475320345,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0002925065572500693
+        },
+        {
+          "time_s": 0.28711162255467104,
+          "axial_strain": 9.256795609043078e-05,
+          "transverse_strain": -2.9674413067271544e-05,
+          "kinetic_J": 1.6339967519703573e-07,
+          "bond_J": 0.00028108666258294153,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00028125006225813856
+        },
+        {
+          "time_s": 0.29700805523591434,
+          "axial_strain": 9.668012471784893e-05,
+          "transverse_strain": -3.091754478758491e-05,
+          "kinetic_J": 1.4585513382178103e-06,
+          "bond_J": 0.00030151484064038484,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003029733919786027
+        },
+        {
+          "time_s": 0.30690448791715763,
+          "axial_strain": 0.0001015466204280548,
+          "transverse_strain": -3.451273229788214e-05,
+          "kinetic_J": 1.2226569252129596e-06,
+          "bond_J": 0.0003266149192297131,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00032783757615492605
+        },
+        {
+          "time_s": 0.3168009205984009,
+          "axial_strain": 0.00010484765483549652,
+          "transverse_strain": -3.706139555912118e-05,
+          "kinetic_J": 2.1149721073311818e-07,
+          "bond_J": 0.0003482897910729243,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00034850128828365745
+        },
+        {
+          "time_s": 0.3266973532796442,
+          "axial_strain": 0.00010489712373817443,
+          "transverse_strain": -3.5587865842897525e-05,
+          "kinetic_J": 3.748176916747367e-07,
+          "bond_J": 0.0003510053161585431,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003513801338502178
+        },
+        {
+          "time_s": 0.3365937859608875,
+          "axial_strain": 0.0001013569015468017,
+          "transverse_strain": -3.311319231126984e-05,
+          "kinetic_J": 8.22629132165492e-07,
+          "bond_J": 0.0003294091292120217,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00033023175834418715
+        },
+        {
+          "time_s": 0.3464902186421308,
+          "axial_strain": 9.717698308563116e-05,
+          "transverse_strain": -3.157870342252019e-05,
+          "kinetic_J": 4.4113822528600095e-07,
+          "bond_J": 0.00030334820328235167,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00030378934150763765
+        },
+        {
+          "time_s": 0.3563866513233741,
+          "axial_strain": 9.603203958562234e-05,
+          "transverse_strain": -3.15661454005359e-05,
+          "kinetic_J": 3.765557343849112e-08,
+          "bond_J": 0.0002971046302119242,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00029714228578536274
+        },
+        {
+          "time_s": 0.3662830840046174,
+          "axial_strain": 9.716099653151361e-05,
+          "transverse_strain": -3.292431275873538e-05,
+          "kinetic_J": 3.3626345193707286e-07,
+          "bond_J": 0.00030263993765320047,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00030297620110513753
+        },
+        {
+          "time_s": 0.3761795166858607,
+          "axial_strain": 0.00010045536143974315,
+          "transverse_strain": -3.3410565662497576e-05,
+          "kinetic_J": 4.291601376242736e-07,
+          "bond_J": 0.00032257342125057136,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003230025813881956
+        },
+        {
+          "time_s": 0.386075949367104,
+          "axial_strain": 0.00010292670830911362,
+          "transverse_strain": -3.383568047052938e-05,
+          "kinetic_J": 7.261968887615528e-08,
+          "bond_J": 0.00033828047876339963,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00033835309845227574
+        },
+        {
+          "time_s": 0.3959723820483473,
+          "axial_strain": 0.00010278166071427582,
+          "transverse_strain": -3.4860416985794996e-05,
+          "kinetic_J": 7.764467558700764e-08,
+          "bond_J": 0.0003373680122797158,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00033744565695530284
+        },
+        {
+          "time_s": 0.4058688147295906,
+          "axial_strain": 0.00010080076520410652,
+          "transverse_strain": -3.424855164951661e-05,
+          "kinetic_J": 2.429006466796072e-07,
+          "bond_J": 0.00032434444246108216,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003245873431077618
+        },
+        {
+          "time_s": 0.41576524741083387,
+          "axial_strain": 9.891088107132998e-05,
+          "transverse_strain": -3.269320585125305e-05,
+          "kinetic_J": 1.3895678488774104e-07,
+          "bond_J": 0.00031299836186725815,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003131373186521459
+        },
+        {
+          "time_s": 0.42566168009207717,
+          "axial_strain": 9.768236317514445e-05,
+          "transverse_strain": -3.2312835758538695e-05,
+          "kinetic_J": 2.6105380795949664e-08,
+          "bond_J": 0.0003060358326236398,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003060619380044358
+        },
+        {
+          "time_s": 0.43555811277332046,
+          "axial_strain": 9.850982686047022e-05,
+          "transverse_strain": -3.243468317371656e-05,
+          "kinetic_J": 7.709527656898017e-08,
+          "bond_J": 0.00031223423213948693,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003123113274160559
+        },
+        {
+          "time_s": 0.44545454545456376,
+          "axial_strain": 0.00010005717421037358,
+          "transverse_strain": -3.3033292643774814e-05,
+          "kinetic_J": 1.2422762489150446e-07,
+          "bond_J": 0.0003209908326385777,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003211150602634692
+        },
+        {
+          "time_s": 0.45535097813580705,
+          "axial_strain": 0.00010121507461727242,
+          "transverse_strain": -3.4046493905814134e-05,
+          "kinetic_J": 4.481578189335348e-08,
+          "bond_J": 0.00032676827662919444,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003268130924110878
+        },
+        {
+          "time_s": 0.46524741081705034,
+          "axial_strain": 0.0001014491731227603,
+          "transverse_strain": -3.430449127733876e-05,
+          "kinetic_J": 1.097835692162364e-08,
+          "bond_J": 0.0003279739219567316,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003279849003136533
+        },
+        {
+          "time_s": 0.47514384349829364,
+          "axial_strain": 0.00010079710249538223,
+          "transverse_strain": -3.382641803431222e-05,
+          "kinetic_J": 6.42561117723259e-08,
+          "bond_J": 0.0003248750348288006,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00032493929094057296
+        },
+        {
+          "time_s": 0.48504027617953693,
+          "axial_strain": 9.953671572538364e-05,
+          "transverse_strain": -3.311186510888166e-05,
+          "kinetic_J": 5.2582981840622376e-08,
+          "bond_J": 0.0003174689479591983,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003175215309410389
+        },
+        {
+          "time_s": 0.49493670886078023,
+          "axial_strain": 9.897807315554136e-05,
+          "transverse_strain": -3.2466538604463435e-05,
+          "kinetic_J": 7.70361259381891e-09,
+          "bond_J": 0.0003143282138283529,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003143359174409468
+        },
+        {
+          "time_s": 0.5048331415420212,
+          "axial_strain": 9.902273592208205e-05,
+          "transverse_strain": -3.277542425237051e-05,
+          "kinetic_J": 2.0035026935443982e-08,
+          "bond_J": 0.0003142790910302978,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00031429912605723326
+        },
+        {
+          "time_s": 0.5147295742232597,
+          "axial_strain": 9.970422160482845e-05,
+          "transverse_strain": -3.352154759236838e-05,
+          "kinetic_J": 3.468111838521451e-08,
+          "bond_J": 0.0003180657958671017,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003181004769854869
+        },
+        {
+          "time_s": 0.5246260069044982,
+          "axial_strain": 0.00010056322718135963,
+          "transverse_strain": -3.368360192211563e-05,
+          "kinetic_J": 1.9064753022341294e-08,
+          "bond_J": 0.0003231314592169014,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003231505239699238
+        },
+        {
+          "time_s": 0.5345224395857368,
+          "axial_strain": 0.0001009150683561888,
+          "transverse_strain": -3.361662736529646e-05,
+          "kinetic_J": 3.6775327626935885e-09,
+          "bond_J": 0.00032548687825989335,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00032549055579265604
+        },
+        {
+          "time_s": 0.5444188722669753,
+          "axial_strain": 0.00010050979643109563,
+          "transverse_strain": -3.355680109897137e-05,
+          "kinetic_J": 1.435486012268986e-08,
+          "bond_J": 0.0003231900517654896,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003232044066256123
+        },
+        {
+          "time_s": 0.5543153049482138,
+          "axial_strain": 9.992822194090922e-05,
+          "transverse_strain": -3.3277175042410735e-05,
+          "kinetic_J": 1.8909565667303933e-08,
+          "bond_J": 0.000319793239765901,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003198121493315683
+        },
+        {
+          "time_s": 0.5642117376294523,
+          "axial_strain": 9.938860890609802e-05,
+          "transverse_strain": -3.309612839547455e-05,
+          "kinetic_J": 4.5269200169862125e-09,
+          "bond_J": 0.00031621238121999005,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00031621690814000707
+        },
+        {
+          "time_s": 0.5741081703106908,
+          "axial_strain": 9.937609564525385e-05,
+          "transverse_strain": -3.308789267376506e-05,
+          "kinetic_J": 3.090252897380217e-09,
+          "bond_J": 0.0003160966922499327,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00031609978250283013
+        },
+        {
+          "time_s": 0.5840046029919294,
+          "axial_strain": 9.982246339237016e-05,
+          "transverse_strain": -3.319290250427793e-05,
+          "kinetic_J": 1.113157020755717e-08,
+          "bond_J": 0.00031906057806414334,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00031907170963435094
+        },
+        {
+          "time_s": 0.5939010356731679,
+          "axial_strain": 0.00010027331536698973,
+          "transverse_strain": -3.34380174039747e-05,
+          "kinetic_J": 6.698314557276062e-09,
+          "bond_J": 0.00032184530383992877,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003218520021544861
+        },
+        {
+          "time_s": 0.6037974683544064,
+          "axial_strain": 0.0001004526252208528,
+          "transverse_strain": -3.3546691617147315e-05,
+          "kinetic_J": 1.2379942125732922e-09,
+          "bond_J": 0.0003226722550933748,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00032267349308758735
+        },
+        {
+          "time_s": 0.6136939010356449,
+          "axial_strain": 0.000100344550891876,
+          "transverse_strain": -3.347921435731276e-05,
+          "kinetic_J": 3.5977902383838405e-09,
+          "bond_J": 0.0003219342222875958,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00032193782007783415
+        },
+        {
+          "time_s": 0.6235903337168834,
+          "axial_strain": 9.996821529400604e-05,
+          "transverse_strain": -3.341779315871509e-05,
+          "kinetic_J": 5.746983379525054e-09,
+          "bond_J": 0.00031971571496755563,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00031972146195093516
+        },
+        {
+          "time_s": 0.633486766398122,
+          "axial_strain": 9.970918769683368e-05,
+          "transverse_strain": -3.323151328513099e-05,
+          "kinetic_J": 2.304546322276723e-09,
+          "bond_J": 0.0003183228450138926,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003183251495602149
+        },
+        {
+          "time_s": 0.6433831990793605,
+          "axial_strain": 9.970089909654145e-05,
+          "transverse_strain": -3.307373697721524e-05,
+          "kinetic_J": 4.1426524532765836e-10,
+          "bond_J": 0.00031834444936847784,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003183448636337232
+        },
+        {
+          "time_s": 0.653279631760599,
+          "axial_strain": 9.98445923724306e-05,
+          "transverse_strain": -3.321598321586006e-05,
+          "kinetic_J": 3.005100514526522e-09,
+          "bond_J": 0.00031912296567487977,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00031912597077539433
+        },
+        {
+          "time_s": 0.6631760644418375,
+          "axial_strain": 0.00010007819787378562,
+          "transverse_strain": -3.3426372578798185e-05,
+          "kinetic_J": 2.618617340391287e-09,
+          "bond_J": 0.00032044462799172755,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.000320447246609068
+        },
+        {
+          "time_s": 0.673072497123076,
+          "axial_strain": 0.00010023750007468375,
+          "transverse_strain": -3.3488024249213e-05,
+          "kinetic_J": 2.5652326920058024e-10,
+          "bond_J": 0.00032135843242630586,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00032135868894957506
+        },
+        {
+          "time_s": 0.6829689298043146,
+          "axial_strain": 0.00010019144558069219,
+          "transverse_strain": -3.344045239603513e-05,
+          "kinetic_J": 9.16309624149455e-10,
+          "bond_J": 0.0003210732197269874,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003210741360366115
+        },
+        {
+          "time_s": 0.6928653624855531,
+          "axial_strain": 0.00010004341613222463,
+          "transverse_strain": -3.332224284254739e-05,
+          "kinetic_J": 1.7723813947830987e-09,
+          "bond_J": 0.000320296986042416,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00032029875842381074
+        },
+        {
+          "time_s": 0.7027617951667916,
+          "axial_strain": 9.988675266988284e-05,
+          "transverse_strain": -3.32471302262605e-05,
+          "kinetic_J": 7.677424459240179e-10,
+          "bond_J": 0.00031943299787219023,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00031943376561463613
+        },
+        {
+          "time_s": 0.7126582278480301,
+          "axial_strain": 9.980132057901363e-05,
+          "transverse_strain": -3.3258032967448296e-05,
+          "kinetic_J": 1.8072964459888945e-10,
+          "bond_J": 0.0003188258687369359,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003188260494665805
+        },
+        {
+          "time_s": 0.7225546605292686,
+          "axial_strain": 9.988266470160878e-05,
+          "transverse_strain": -3.328397352530645e-05,
+          "kinetic_J": 7.178302382992992e-10,
+          "bond_J": 0.000319247424917084,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00031924814274732227
+        },
+        {
+          "time_s": 0.7324510932105072,
+          "axial_strain": 0.00010002395729046448,
+          "transverse_strain": -3.334743547097821e-05,
+          "kinetic_J": 8.567390782865823e-10,
+          "bond_J": 0.00032011840131826523,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00032011925805734356
+        },
+        {
+          "time_s": 0.7423475258917457,
+          "axial_strain": 0.00010011796935128585,
+          "transverse_strain": -3.340379457878432e-05,
+          "kinetic_J": 1.7169313043266666e-10,
+          "bond_J": 0.0003207389063326077,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003207390780257381
+        },
+        {
+          "time_s": 0.7522439585729842,
+          "axial_strain": 0.00010012657036033434,
+          "transverse_strain": -3.337601036587222e-05,
+          "kinetic_J": 1.6228230083397326e-10,
+          "bond_J": 0.0003207923388935867,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003207925011758876
+        },
+        {
+          "time_s": 0.7621403912542227,
+          "axial_strain": 0.00010004299974263979,
+          "transverse_strain": -3.3338217010425084e-05,
+          "kinetic_J": 5.231112282504483e-10,
+          "bond_J": 0.0003202516785893885,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00032025220170061675
+        },
+        {
+          "time_s": 0.7720368239354612,
+          "axial_strain": 9.992889098973018e-05,
+          "transverse_strain": -3.3323937119704474e-05,
+          "kinetic_J": 2.8131087297101633e-10,
+          "bond_J": 0.00031954546510273,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003195457464136029
+        },
+        {
+          "time_s": 0.7819332566166998,
+          "axial_strain": 9.989745039855798e-05,
+          "transverse_strain": -3.3294752902043645e-05,
+          "kinetic_J": 3.972344391017048e-11,
+          "bond_J": 0.0003194022699201166,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003194023096435605
+        },
+        {
+          "time_s": 0.7918296892979383,
+          "axial_strain": 9.992847482077905e-05,
+          "transverse_strain": -3.329018538452607e-05,
+          "kinetic_J": 1.9345631766141872e-10,
+          "bond_J": 0.0003195929790929212,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003195931725492389
+        },
+        {
+          "time_s": 0.8017261219791768,
+          "axial_strain": 9.999976993980048e-05,
+          "transverse_strain": -3.331898155127385e-05,
+          "kinetic_J": 2.387264395700654e-10,
+          "bond_J": 0.0003200172452606832,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00032001748398712275
+        },
+        {
+          "time_s": 0.8116225546604153,
+          "axial_strain": 0.0001000598010346641,
+          "transverse_strain": -3.3355663565766606e-05,
+          "kinetic_J": 9.216314050045448e-11,
+          "bond_J": 0.00032036975611582163,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00032036984827896214
+        },
+        {
+          "time_s": 0.8215189873416539,
+          "axial_strain": 0.00010006502122493949,
+          "transverse_strain": -3.338213398056066e-05,
+          "kinetic_J": 3.168788451169336e-11,
+          "bond_J": 0.00032038167685658457,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003203817085444691
+        },
+        {
+          "time_s": 0.8314154200228924,
+          "axial_strain": 0.00010002145972007326,
+          "transverse_strain": -3.3359205893485526e-05,
+          "kinetic_J": 1.276155660921265e-10,
+          "bond_J": 0.00032010300382947864,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00032010313144504476
+        },
+        {
+          "time_s": 0.8413118527041309,
+          "axial_strain": 9.99799933635211e-05,
+          "transverse_strain": -3.3310418159533785e-05,
+          "kinetic_J": 1.1038495700656016e-10,
+          "bond_J": 0.0003198904041773726,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003198905145623296
+        },
+        {
+          "time_s": 0.8512082853853694,
+          "axial_strain": 9.994592529621871e-05,
+          "transverse_strain": -3.330142918992401e-05,
+          "kinetic_J": 1.4011261782577082e-11,
+          "bond_J": 0.00031970445898221473,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003197044729934765
+        },
+        {
+          "time_s": 0.8611047180666079,
+          "axial_strain": 9.995374606437217e-05,
+          "transverse_strain": -3.3312700504217596e-05,
+          "kinetic_J": 3.939927267660757e-11,
+          "bond_J": 0.0003197482112315984,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003197482506308711
+        },
+        {
+          "time_s": 0.8710011507478465,
+          "axial_strain": 9.998949178413596e-05,
+          "transverse_strain": -3.3326024103243116e-05,
+          "kinetic_J": 7.662077924344303e-11,
+          "bond_J": 0.0003199340851939624,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003199341618147417
+        },
+        {
+          "time_s": 0.880897583429085,
+          "axial_strain": 0.00010002262694761473,
+          "transverse_strain": -3.335044696453384e-05,
+          "kinetic_J": 3.2604198499479884e-11,
+          "bond_J": 0.0003201209767806909,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00032012100938488944
+        },
+        {
+          "time_s": 0.8907940161103235,
+          "axial_strain": 0.0001000333624613196,
+          "transverse_strain": -3.335731125688355e-05,
+          "kinetic_J": 8.923628787832056e-12,
+          "bond_J": 0.0003201990544262817,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00032019906334991046
+        },
+        {
+          "time_s": 0.900690448791562,
+          "axial_strain": 0.00010002321875243747,
+          "transverse_strain": -3.3338871278229555e-05,
+          "kinetic_J": 3.081524635234854e-11,
+          "bond_J": 0.0003201598267169241,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003201598575321705
+        },
+        {
+          "time_s": 0.9105868814728005,
+          "axial_strain": 9.99901649945123e-05,
+          "transverse_strain": -3.332473049402773e-05,
+          "kinetic_J": 3.6250468778261865e-11,
+          "bond_J": 0.00031994948320764006,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00031994951945810883
+        },
+        {
+          "time_s": 0.9204833141540391,
+          "axial_strain": 9.996989949650573e-05,
+          "transverse_strain": -3.331902707095823e-05,
+          "kinetic_J": 9.685085215994405e-12,
+          "bond_J": 0.00031982351049057375,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00031982352017565895
+        },
+        {
+          "time_s": 0.9303797468352776,
+          "axial_strain": 9.996999097846662e-05,
+          "transverse_strain": -3.332279801890418e-05,
+          "kinetic_J": 5.482264439044253e-12,
+          "bond_J": 0.00031982424606331064,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00031982425154557513
+        },
+        {
+          "time_s": 0.9402761795165161,
+          "axial_strain": 9.998746537685325e-05,
+          "transverse_strain": -3.333194982558357e-05,
+          "kinetic_J": 2.305355238454711e-11,
+          "bond_J": 0.0003199299405293896,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00031992996358294195
+        },
+        {
+          "time_s": 0.9501726121977546,
+          "axial_strain": 0.0001000093512666204,
+          "transverse_strain": -3.333469405261175e-05,
+          "kinetic_J": 1.3661427599217236e-11,
+          "bond_J": 0.0003200616127821348,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00032006162644356234
+        },
+        {
+          "time_s": 0.9600690448789931,
+          "axial_strain": 0.00010002024332998276,
+          "transverse_strain": -3.333825179547555e-05,
+          "kinetic_J": 9.728630810620803e-13,
+          "bond_J": 0.000320131562631284,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00032013156360414705
+        },
+        {
+          "time_s": 0.9699654775602317,
+          "axial_strain": 0.00010000996030508819,
+          "transverse_strain": -3.334280335117301e-05,
+          "kinetic_J": 8.422678299099121e-12,
+          "bond_J": 0.00032006377092616014,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003200637793488384
+        },
+        {
+          "time_s": 0.9798619102414702,
+          "axial_strain": 9.999564000010008e-05,
+          "transverse_strain": -3.333454360337162e-05,
+          "kinetic_J": 1.1559617679848895e-11,
+          "bond_J": 0.00031997597896170316,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003199759905213208
+        },
+        {
+          "time_s": 0.9897583429227087,
+          "axial_strain": 9.998350321710942e-05,
+          "transverse_strain": -3.332477215412716e-05,
+          "kinetic_J": 3.716042817552003e-12,
+          "bond_J": 0.0003199034100522252,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.000319903413768268
+        },
+        {
+          "time_s": 0.9996547756039472,
+          "axial_strain": 9.998172231034477e-05,
+          "transverse_strain": -3.332434376664374e-05,
+          "kinetic_J": 1.4905488614836136e-12,
+          "bond_J": 0.00031989933246095564,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00031989933395150453
+        },
+        {
+          "time_s": 0.9999999999998044,
+          "axial_strain": 9.99819081119041e-05,
+          "transverse_strain": -3.332442747118027e-05,
+          "kinetic_J": 1.5545900725414726e-12,
+          "bond_J": 0.00031990073791404055,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00031990073946863067
+        }
+      ],
+      "snapshot": {
+        "schema": "tensordem.calibrated-restart/1",
+        "base": {
+          "schema": "tensordem.restart/1",
+          "config": {
+            "nx": 5,
+            "ny": 3,
+            "radius": 0.1,
+            "thickness": 0.2,
+            "density": 917.0,
+            "bond_stiffness": 150000,
+            "contact_stiffness": 2000.0,
+            "breaking_strain": 1,
+            "shear_breaking_strain": 1,
+            "contact_damping": 0,
+            "drag": 100,
+            "tool_radius": 0.1,
+            "tool_speed": 1.0,
+            "tool_gap": 10,
+            "dt": 0.00011507479861910241,
+            "device": "cpu",
+            "fix_edges": false
+          },
+          "dt_s": 0.00011507479861910241,
+          "time_s": 0.9999999999998044,
+          "step_count": 8690,
+          "positions_m": [
+            [
+              -0.4000399915873344,
+              6.662973473213712e-06
+            ],
+            [
+              -0.20001999639869772,
+              6.666140134118539e-06
+            ],
+            [
+              1.3254069114387812e-16,
+              6.666200256747728e-06
+            ],
+            [
+              0.200019996398698,
+              6.666140134154719e-06
+            ],
+            [
+              0.4000399915873346,
+              6.662973473288095e-06
+            ],
+            [
+              -0.4000399951150653,
+              0.2
+            ],
+            [
+              -0.20001999662815947,
+              0.2
+            ],
+            [
+              4.5182197334955335e-17,
+              0.2
+            ],
+            [
+              0.2000199966281598,
+              0.2
+            ],
+            [
+              0.4000399951150656,
+              0.2
+            ],
+            [
+              -0.4000399915873342,
+              0.39999333702652684
+            ],
+            [
+              -0.20001999639869772,
+              0.399993333859866
+            ],
+            [
+              2.0049892068899092e-16,
+              0.39999333379974367
+            ],
+            [
+              0.20001999639869808,
+              0.3999933338598659
+            ],
+            [
+              0.40003999158733455,
+              0.39999333702652684
+            ]
+          ],
+          "velocities_m_s": [
+            [
+              -1.4355752375429733e-07,
+              -5.3367229427057344e-08
+            ],
+            [
+              -1.320127617608429e-07,
+              1.3041032101687733e-07
+            ],
+            [
+              -3.518906901242391e-15,
+              9.148886320663277e-08
+            ],
+            [
+              1.3201276507106244e-07,
+              1.304103211625947e-07
+            ],
+            [
+              1.435575326417864e-07,
+              -5.336723006119555e-08
+            ],
+            [
+              -3.7442528713987563e-07,
+              -4.3688327582775594e-14
+            ],
+            [
+              -7.395103047871139e-08,
+              -1.0959930274208562e-14
+            ],
+            [
+              -2.140773949439944e-15,
+              -3.0953117650522575e-14
+            ],
+            [
+              7.39510198757439e-08,
+              -1.7794234314015124e-14
+            ],
+            [
+              3.7442528999468213e-07,
+              -3.16562421487017e-14
+            ],
+            [
+              -1.4355754351454536e-07,
+              5.336730559638685e-08
+            ],
+            [
+              -1.3201277816123976e-07,
+              -1.304103564802835e-07
+            ],
+            [
+              5.4858832654433265e-15,
+              -9.148881603096968e-08
+            ],
+            [
+              1.320127933188065e-07,
+              -1.3041031899733995e-07
+            ],
+            [
+              1.4355752408091045e-07,
+              5.336727506626127e-08
+            ]
+          ],
+          "initial_positions_m": [
+            [
+              -0.4,
+              0.0
+            ],
+            [
+              -0.2,
+              0.0
+            ],
+            [
+              0.0,
+              0.0
+            ],
+            [
+              0.2,
+              0.0
+            ],
+            [
+              0.4,
+              0.0
+            ],
+            [
+              -0.4,
+              0.2
+            ],
+            [
+              -0.2,
+              0.2
+            ],
+            [
+              0.0,
+              0.2
+            ],
+            [
+              0.2,
+              0.2
+            ],
+            [
+              0.4,
+              0.2
+            ],
+            [
+              -0.4,
+              0.4
+            ],
+            [
+              -0.2,
+              0.4
+            ],
+            [
+              0.0,
+              0.4
+            ],
+            [
+              0.2,
+              0.4
+            ],
+            [
+              0.4,
+              0.4
+            ]
+          ],
+          "fixed": [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "alive": [
+            true,
+            false,
+            false,
+            false,
+            true,
+            true,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            true,
+            false,
+            false,
+            true,
+            true,
+            true,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            true,
+            false,
+            false,
+            true,
+            true,
+            true,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            true,
+            false,
+            false,
+            true,
+            true,
+            true,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            true,
+            true,
+            false,
+            false,
+            false,
+            false,
+            false,
+            true,
+            false,
+            false,
+            false,
+            true,
+            true,
+            false,
+            false,
+            false,
+            true,
+            false,
+            false,
+            true,
+            true,
+            true,
+            false,
+            false,
+            true,
+            false,
+            false,
+            true,
+            true,
+            true,
+            false,
+            true,
+            false,
+            false,
+            true,
+            true,
+            true,
+            false,
+            false,
+            false,
+            true,
+            true,
+            true,
+            false,
+            false,
+            false,
+            true,
+            false,
+            false,
+            true,
+            false,
+            true
+          ],
+          "tool_start_m": [
+            0.0,
+            10.6
+          ],
+          "tool_velocity_m_s": [
+            0.0,
+            -1.0
+          ],
+          "hull_profile_m": null,
+          "hull_start_m": [
+            0.0,
+            0.0
+          ],
+          "hull_velocity_m_s": [
+            0.0,
+            0.0
+          ],
+          "accounting": {
+            "external_work_J": 0.0006398936191989169,
+            "fracture_release_J": 0.0,
+            "tool_work_J": 0.0,
+            "damping_dissipation_J": 0.0003200066852516933,
+            "external_impulse_Ns": [
+              0.0,
+              0.0
+            ],
+            "support_impulse_Ns": [
+              0.0,
+              0.0
+            ],
+            "drag_impulse_Ns": [
+              -1.7385803626424386e-17,
+              3.485345054948697e-18
+            ],
+            "tool_impulse_on_ice_Ns": [
+              0.0,
+              0.0
+            ]
+          },
+          "last_step": {
+            "time_start_s": 0.9998849252011853,
+            "time_end_s": 0.9999999999998044,
+            "external_work_J": 4.768541117528002e-10,
+            "support_force_N": [
+              -0.0,
+              -0.0
+            ],
+            "tool_reaction_N": [
+              -0.0,
+              -0.0
+            ],
+            "external_force_N": [
+              0.0,
+              0.0
+            ],
+            "external_moment_Nm": -1.1102230246251565e-16
+          }
+        },
+        "bond_stiffness_N_per_m": [
+          75000.0,
+          75000.0,
+          75000.0,
+          75000.0,
+          75000.0,
+          150000.0,
+          75000.0,
+          75000.0,
+          75000.0,
+          150000.0,
+          75000.0,
+          75000.0,
+          75000.0,
+          150000.0,
+          75000.0,
+          75000.0,
+          75000.0,
+          150000.0,
+          75000.0,
+          75000.0,
+          150000.0,
+          75000.0,
+          150000.0,
+          75000.0,
+          150000.0,
+          75000.0,
+          150000.0,
+          75000.0,
+          150000.0,
+          75000.0,
+          150000.0,
+          75000.0,
+          75000.0,
+          75000.0,
+          75000.0,
+          75000.0,
+          75000.0,
+          75000.0
+        ],
+        "coefficient_sha256": "4b6552bad91deeb6e0c439f0e58fcba5523f52865c1dabc960bc8658477df9c8"
+      },
+      "discrete_energy_residual_J": 1.380552140710584e-08
+    },
+    {
+      "dt_s": 5.7537399309551206e-05,
+      "steps": 17380,
+      "measured_E_Pa": 1000182.8105194531,
+      "apparent_nu": 0.3333043282438213,
+      "E_relative_error": 0.0001828105194532359,
+      "nu_abs_error": 2.9005089512035287e-05,
+      "history": [
+        {
+          "time_s": 5.7537399309551206e-05,
+          "axial_strain": 3.830539959300457e-09,
+          "transverse_strain": 0.0,
+          "kinetic_J": 1.3789943711633763e-08,
+          "bond_J": 1.4856449225830446e-12,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 1.3791429356556346e-08
+        },
+        {
+          "time_s": 0.010011507479861894,
+          "axial_strain": 4.4220215548729236e-05,
+          "transverse_strain": -4.314339688826033e-06,
+          "kinetic_J": 0.000167680345067363,
+          "bond_J": 0.0001152750521276502,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0002829553971950132
+        },
+        {
+          "time_s": 0.019965477560414144,
+          "axial_strain": 0.00010953758092758595,
+          "transverse_strain": -3.3700808249014896e-05,
+          "kinetic_J": 0.00020006804975032948,
+          "bond_J": 0.0004243729773363687,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0006244410270866982
+        },
+        {
+          "time_s": 0.029919447640966393,
+          "axial_strain": 0.00015873395385700612,
+          "transverse_strain": -5.881349738133424e-05,
+          "kinetic_J": 4.3657487370932076e-05,
+          "bond_J": 0.000816315070768453,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0008599725581393852
+        },
+        {
+          "time_s": 0.03987341772151916,
+          "axial_strain": 0.00016216642181566635,
+          "transverse_strain": -5.6471701349362025e-05,
+          "kinetic_J": 3.6010097949559734e-05,
+          "bond_J": 0.000809159926877673,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0008451700248272326
+        },
+        {
+          "time_s": 0.04982738780207201,
+          "axial_strain": 0.00012140436913309534,
+          "transverse_strain": -5.312637604671051e-05,
+          "kinetic_J": 0.00011031335581658908,
+          "bond_J": 0.00046620128391783197,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.000576514639734421
+        },
+        {
+          "time_s": 0.059781357882624855,
+          "axial_strain": 7.048747288717257e-05,
+          "transverse_strain": -3.375165468802089e-05,
+          "kinetic_J": 7.636029794077852e-05,
+          "bond_J": 0.00016758366059710752,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00024394395853788605
+        },
+        {
+          "time_s": 0.0697353279631777,
+          "axial_strain": 5.697770329558353e-05,
+          "transverse_strain": -3.1697065646468377e-07,
+          "kinetic_J": 9.028036739621025e-06,
+          "bond_J": 0.00016191601190888237,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00017094404864850338
+        },
+        {
+          "time_s": 0.07968929804373055,
+          "axial_strain": 6.576337442568136e-05,
+          "transverse_strain": -5.667854719368463e-06,
+          "kinetic_J": 3.603552626885561e-05,
+          "bond_J": 0.00017707784230597913,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00021311336857483473
+        },
+        {
+          "time_s": 0.0896432681242834,
+          "axial_strain": 9.811555305156797e-05,
+          "transverse_strain": -3.574881742716784e-05,
+          "kinetic_J": 6.465243399892824e-05,
+          "bond_J": 0.00031687642924194744,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003815288632408757
+        },
+        {
+          "time_s": 0.09959723820483625,
+          "axial_strain": 0.00012739874470285573,
+          "transverse_strain": -5.266407952436894e-05,
+          "kinetic_J": 1.8139433277645736e-05,
+          "bond_J": 0.000509993404500089,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0005281328377777347
+        },
+        {
+          "time_s": 0.1095512082853891,
+          "axial_strain": 0.0001326481687393318,
+          "transverse_strain": -5.336513020765839e-05,
+          "kinetic_J": 6.973433429364511e-06,
+          "bond_J": 0.0005433775465761714,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0005503509800055359
+        },
+        {
+          "time_s": 0.11950517836594195,
+          "axial_strain": 0.00011585112543529193,
+          "transverse_strain": -3.95066733413205e-05,
+          "kinetic_J": 3.251018889865396e-05,
+          "bond_J": 0.0004215008202699536,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0004540110091686075
+        },
+        {
+          "time_s": 0.12945914844649478,
+          "axial_strain": 9.374786673616944e-05,
+          "transverse_strain": -2.4446863506938956e-05,
+          "kinetic_J": 2.3611234431370402e-05,
+          "bond_J": 0.0003071553996606486,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.000330766634092019
+        },
+        {
+          "time_s": 0.13941311852704763,
+          "axial_strain": 7.405480281927335e-05,
+          "transverse_strain": -2.167420400405013e-05,
+          "kinetic_J": 5.1914950252718944e-06,
+          "bond_J": 0.00019320408806054796,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00019839558308581986
+        },
+        {
+          "time_s": 0.14936708860760048,
+          "axial_strain": 7.807792171146688e-05,
+          "transverse_strain": -2.3224178664883876e-05,
+          "kinetic_J": 9.120343589049541e-06,
+          "bond_J": 0.0001998892424274003,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00020900958601644987
+        },
+        {
+          "time_s": 0.15932105868815333,
+          "axial_strain": 9.590264131021745e-05,
+          "transverse_strain": -3.188454727480401e-05,
+          "kinetic_J": 1.771317509020631e-05,
+          "bond_J": 0.00029194241261562407,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003096555877058304
+        },
+        {
+          "time_s": 0.16927502876870618,
+          "axial_strain": 0.0001127362239240759,
+          "transverse_strain": -4.29126476980156e-05,
+          "kinetic_J": 8.697860199508286e-06,
+          "bond_J": 0.0004041316213666493,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0004128294815661576
+        },
+        {
+          "time_s": 0.17922899884925902,
+          "axial_strain": 0.00011975000004766737,
+          "transverse_strain": -4.1006845004466e-05,
+          "kinetic_J": 1.3465069540940035e-06,
+          "bond_J": 0.00045536071202775027,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00045670721898184426
+        },
+        {
+          "time_s": 0.18918296892981187,
+          "axial_strain": 0.00011236134869904713,
+          "transverse_strain": -3.5050459146541396e-05,
+          "kinetic_J": 8.21963030907333e-06,
+          "bond_J": 0.00039992476195198953,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00040814439226106287
+        },
+        {
+          "time_s": 0.19913693901036472,
+          "axial_strain": 9.534150721986674e-05,
+          "transverse_strain": -3.372111225478874e-05,
+          "kinetic_J": 8.52675559281538e-06,
+          "bond_J": 0.0002891258117564911,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0002976525673493065
+        },
+        {
+          "time_s": 0.20909090909091757,
+          "axial_strain": 8.666296119822872e-05,
+          "transverse_strain": -2.9545380024739215e-05,
+          "kinetic_J": 1.6373505518674059e-06,
+          "bond_J": 0.0002461238448833115,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0002477611954351789
+        },
+        {
+          "time_s": 0.21904487917147042,
+          "axial_strain": 8.779687196943294e-05,
+          "transverse_strain": -2.675288374893863e-05,
+          "kinetic_J": 2.441835273433887e-06,
+          "bond_J": 0.0002534152784261382,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0002558571136995721
+        },
+        {
+          "time_s": 0.22899884925202327,
+          "axial_strain": 9.644289556192305e-05,
+          "transverse_strain": -2.9790795118653008e-05,
+          "kinetic_J": 4.9777499801260786e-06,
+          "bond_J": 0.0003014797130920848,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003064574630722109
+        },
+        {
+          "time_s": 0.23895281933257612,
+          "axial_strain": 0.00010688654025578503,
+          "transverse_strain": -3.49480153748442e-05,
+          "kinetic_J": 3.1221621522200696e-06,
+          "bond_J": 0.00036516874467618934,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003682909068284094
+        },
+        {
+          "time_s": 0.24890678941312896,
+          "axial_strain": 0.00011023566989010192,
+          "transverse_strain": -3.969758561291481e-05,
+          "kinetic_J": 6.256955415973709e-07,
+          "bond_J": 0.0003843413447931529,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003849670403347503
+        },
+        {
+          "time_s": 0.25886075949367754,
+          "axial_strain": 0.00010581704629863964,
+          "transverse_strain": -3.862257376851188e-05,
+          "kinetic_J": 1.847379751160138e-06,
+          "bond_J": 0.000352228023801332,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003540754035524921
+        },
+        {
+          "time_s": 0.2688147295742256,
+          "axial_strain": 9.9623094630454e-05,
+          "transverse_strain": -3.229520793854916e-05,
+          "kinetic_J": 2.7905213027460575e-06,
+          "bond_J": 0.0003163556557680004,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003191461770707465
+        },
+        {
+          "time_s": 0.27876869965477363,
+          "axial_strain": 9.383430571149876e-05,
+          "transverse_strain": -2.937093113171199e-05,
+          "kinetic_J": 8.374619074347969e-07,
+          "bond_J": 0.0002875227767038979,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00028836023861133266
+        },
+        {
+          "time_s": 0.2887226697353217,
+          "axial_strain": 9.293612791232604e-05,
+          "transverse_strain": -2.977327798368938e-05,
+          "kinetic_J": 3.575443329942265e-07,
+          "bond_J": 0.0002830120592756613,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0002833696036086555
+        },
+        {
+          "time_s": 0.2986766398158697,
+          "axial_strain": 9.747227607386406e-05,
+          "transverse_strain": -3.133460929349491e-05,
+          "kinetic_J": 1.5439807826057163e-06,
+          "bond_J": 0.0003053044473328694,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003068484281154751
+        },
+        {
+          "time_s": 0.3086306098964178,
+          "axial_strain": 0.00010226708830792426,
+          "transverse_strain": -3.515671872157217e-05,
+          "kinetic_J": 1.0375487706341635e-06,
+          "bond_J": 0.0003309479797366283,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00033198552850726245
+        },
+        {
+          "time_s": 0.3185845799769658,
+          "axial_strain": 0.00010509246370055125,
+          "transverse_strain": -3.706617032388911e-05,
+          "kinetic_J": 1.896580979802846e-07,
+          "bond_J": 0.00035018732027651696,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003503769783744972
+        },
+        {
+          "time_s": 0.32853855005751387,
+          "axial_strain": 0.00010454747863541947,
+          "transverse_strain": -3.5121112342134874e-05,
+          "kinetic_J": 4.79905253537854e-07,
+          "bond_J": 0.00034914094678994355,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00034962085204348143
+        },
+        {
+          "time_s": 0.3384925201380619,
+          "axial_strain": 0.00010046242522316709,
+          "transverse_strain": -3.276324426612056e-05,
+          "kinetic_J": 8.092210176765876e-07,
+          "bond_J": 0.0003236904407439618,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00032449966176163834
+        },
+        {
+          "time_s": 0.34844649021860996,
+          "axial_strain": 9.675278041516391e-05,
+          "transverse_strain": -3.1424148389794975e-05,
+          "kinetic_J": 3.5711769805320105e-07,
+          "bond_J": 0.00030093991140790006,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003012970291059533
+        },
+        {
+          "time_s": 0.358400460299158,
+          "axial_strain": 9.605168471607528e-05,
+          "transverse_strain": -3.178725350352924e-05,
+          "kinetic_J": 5.3801013886140115e-08,
+          "bond_J": 0.0002970532472523353,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00029710704826622144
+        },
+        {
+          "time_s": 0.36835443037970605,
+          "axial_strain": 9.770728477312418e-05,
+          "transverse_strain": -3.31239232753912e-05,
+          "kinetic_J": 4.0388634880457477e-07,
+          "bond_J": 0.00030580796581022976,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00030621185215903434
+        },
+        {
+          "time_s": 0.3783084004602541,
+          "axial_strain": 0.00010111271331626295,
+          "transverse_strain": -3.3426642281198605e-05,
+          "kinetic_J": 3.799138327953348e-07,
+          "bond_J": 0.0003266626050018798,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00032704251883467514
+        },
+        {
+          "time_s": 0.38826237054080215,
+          "axial_strain": 0.00010314198439826763,
+          "transverse_strain": -3.4059272368143854e-05,
+          "kinetic_J": 4.1557908318407286e-08,
+          "bond_J": 0.0003397144404476469,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003397559983559653
+        },
+        {
+          "time_s": 0.3982163406213502,
+          "axial_strain": 0.00010242033096722705,
+          "transverse_strain": -3.492385975844307e-05,
+          "kinetic_J": 1.1780388832293996e-07,
+          "bond_J": 0.00033493812578006926,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00033505592966839225
+        },
+        {
+          "time_s": 0.40817031070189824,
+          "axial_strain": 0.00010037027718012848,
+          "transverse_strain": -3.38810418403028e-05,
+          "kinetic_J": 2.4960998278124804e-07,
+          "bond_J": 0.00032168491740642733,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00032193452738920854
+        },
+        {
+          "time_s": 0.4181242807824463,
+          "axial_strain": 9.851124856408155e-05,
+          "transverse_strain": -3.2497353237681405e-05,
+          "kinetic_J": 1.093033815837089e-07,
+          "bond_J": 0.0003106086708796879,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003107179742612716
+        },
+        {
+          "time_s": 0.42807825086299434,
+          "axial_strain": 9.769749679283679e-05,
+          "transverse_strain": -3.232828187492931e-05,
+          "kinetic_J": 2.3105720108955796e-08,
+          "bond_J": 0.00030642211767620335,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003064452233963123
+        },
+        {
+          "time_s": 0.4380322209435424,
+          "axial_strain": 9.887255775697008e-05,
+          "transverse_strain": -3.25066637912777e-05,
+          "kinetic_J": 9.87585106822949e-08,
+          "bond_J": 0.0003144785120035462,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00031457727051422855
+        },
+        {
+          "time_s": 0.44798619102409043,
+          "axial_strain": 0.00010040126601750428,
+          "transverse_strain": -3.328269807006424e-05,
+          "kinetic_J": 1.2037926847255628e-07,
+          "bond_J": 0.00032274154487681937,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00032286192414529195
+        },
+        {
+          "time_s": 0.4579401611046385,
+          "axial_strain": 0.00010136030891870947,
+          "transverse_strain": -3.421129554256385e-05,
+          "kinetic_J": 2.2736354998213654e-08,
+          "bond_J": 0.0003274532583765612,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00032747599473155947
+        },
+        {
+          "time_s": 0.4678941311851865,
+          "axial_strain": 0.00010137725891941803,
+          "transverse_strain": -3.422300617084059e-05,
+          "kinetic_J": 2.147811215910709e-08,
+          "bond_J": 0.0003277335721558817,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003277550502680408
+        },
+        {
+          "time_s": 0.47784810126573457,
+          "axial_strain": 0.00010047735982690598,
+          "transverse_strain": -3.366259302912636e-05,
+          "kinetic_J": 7.429380886897516e-08,
+          "bond_J": 0.0003230533554738175,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003231276492826865
+        },
+        {
+          "time_s": 0.4878020713462826,
+          "axial_strain": 9.929744288682725e-05,
+          "transverse_strain": -3.289886203124029e-05,
+          "kinetic_J": 3.810377684178319e-08,
+          "bond_J": 0.00031607834695974334,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003161164507365851
+        },
+        {
+          "time_s": 0.49775604142683066,
+          "axial_strain": 9.894241801700066e-05,
+          "transverse_strain": -3.243717159979576e-05,
+          "kinetic_J": 4.041194146763287e-09,
+          "bond_J": 0.00031409743622977826,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00031410147742392505
+        },
+        {
+          "time_s": 0.5077100115073861,
+          "axial_strain": 9.914423717218475e-05,
+          "transverse_strain": -3.299909681109782e-05,
+          "kinetic_J": 2.8330224922136164e-08,
+          "bond_J": 0.000314888098495807,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00031491642872072916
+        },
+        {
+          "time_s": 0.5176639815879438,
+          "axial_strain": 9.996321397841752e-05,
+          "transverse_strain": -3.363264986447214e-05,
+          "kinetic_J": 3.349721732342405e-08,
+          "bond_J": 0.0003195735666643938,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003196070638817172
+        },
+        {
+          "time_s": 0.5276179516685015,
+          "axial_strain": 0.00010074115277591833,
+          "transverse_strain": -3.365839610152134e-05,
+          "kinetic_J": 1.0971620415816316e-08,
+          "bond_J": 0.00032424510118433833,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003242560728047541
+        },
+        {
+          "time_s": 0.5375719217490591,
+          "axial_strain": 0.0001008589543308643,
+          "transverse_strain": -3.361381656786369e-05,
+          "kinetic_J": 4.905487630676451e-09,
+          "bond_J": 0.00032520898026636814,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003252138857539988
+        },
+        {
+          "time_s": 0.5475258918296168,
+          "axial_strain": 0.00010033517062848125,
+          "transverse_strain": -3.34911088405253e-05,
+          "kinetic_J": 1.887003328267241e-08,
+          "bond_J": 0.0003221822920102964,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00032220116204357906
+        },
+        {
+          "time_s": 0.5574798619101744,
+          "axial_strain": 9.974876293815844e-05,
+          "transverse_strain": -3.319578194757346e-05,
+          "kinetic_J": 1.4407005333703758e-08,
+          "bond_J": 0.0003186578386957059,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00031867224570103963
+        },
+        {
+          "time_s": 0.567433831990732,
+          "axial_strain": 9.93064197541323e-05,
+          "transverse_strain": -3.3083746270729e-05,
+          "kinetic_J": 1.2028442802435807e-09,
+          "bond_J": 0.0003156307592250083,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003156319620692885
+        },
+        {
+          "time_s": 0.5773878020712897,
+          "axial_strain": 9.949365748477637e-05,
+          "transverse_strain": -3.310259496753818e-05,
+          "kinetic_J": 6.632853084497971e-09,
+          "bond_J": 0.00031689519585410575,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00031690182870719024
+        },
+        {
+          "time_s": 0.5873417721518474,
+          "axial_strain": 9.99807847687495e-05,
+          "transverse_strain": -3.326485026486539e-05,
+          "kinetic_J": 1.0591576926328635e-08,
+          "bond_J": 0.00032006985313260593,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003200804447095322
+        },
+        {
+          "time_s": 0.597295742232405,
+          "axial_strain": 0.00010036879426508771,
+          "transverse_strain": -3.350182375824971e-05,
+          "kinetic_J": 3.714253972499419e-09,
+          "bond_J": 0.0003223620955539304,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00032236580980790294
+        },
+        {
+          "time_s": 0.6072497123129627,
+          "axial_strain": 0.00010044779516664899,
+          "transverse_strain": -3.35314382905293e-05,
+          "kinetic_J": 1.4968417362881625e-09,
+          "bond_J": 0.0003225751918186435,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003225766886603798
+        },
+        {
+          "time_s": 0.6172036823935203,
+          "axial_strain": 0.00010023956544887487,
+          "transverse_strain": -3.345983138756956e-05,
+          "kinetic_J": 4.823287756289156e-09,
+          "bond_J": 0.0003213183591004599,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00032132318238821617
+        },
+        {
+          "time_s": 0.627157652474078,
+          "axial_strain": 9.984321182154865e-05,
+          "transverse_strain": -3.337341082167722e-05,
+          "kinetic_J": 4.598189684825516e-09,
+          "bond_J": 0.0003190004628724648,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003190050610621496
+        },
+        {
+          "time_s": 0.6371116225546356,
+          "axial_strain": 9.968812600990214e-05,
+          "transverse_strain": -3.315102608527644e-05,
+          "kinetic_J": 1.0763236975523089e-09,
+          "bond_J": 0.00031825480121715796,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00031825587754085556
+        },
+        {
+          "time_s": 0.6470655926351933,
+          "axial_strain": 9.973218887668334e-05,
+          "transverse_strain": -3.3092353048875305e-05,
+          "kinetic_J": 1.1528011543391334e-09,
+          "bond_J": 0.0003185025191865059,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003185036719876602
+        },
+        {
+          "time_s": 0.6570195627157509,
+          "axial_strain": 9.992759455605219e-05,
+          "transverse_strain": -3.330218346060357e-05,
+          "kinetic_J": 3.254897963115742e-09,
+          "bond_J": 0.0003195954073174628,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003195986622154259
+        },
+        {
+          "time_s": 0.6669735327963086,
+          "axial_strain": 0.00010015256988242978,
+          "transverse_strain": -3.346644687530672e-05,
+          "kinetic_J": 1.534831657592813e-09,
+          "bond_J": 0.0003208655680724337,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003208671029040913
+        },
+        {
+          "time_s": 0.6769275028768662,
+          "axial_strain": 0.00010024683847452882,
+          "transverse_strain": -3.348077709332916e-05,
+          "kinetic_J": 2.3226629331970168e-10,
+          "bond_J": 0.00032140990705109313,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00032141013931738646
+        },
+        {
+          "time_s": 0.6868814729574239,
+          "axial_strain": 0.00010013659121015557,
+          "transverse_strain": -3.340099164600439e-05,
+          "kinetic_J": 1.3414688277354581e-09,
+          "bond_J": 0.000320765073556899,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00032076641502572673
+        },
+        {
+          "time_s": 0.6968354430379815,
+          "axial_strain": 9.998619367660813e-05,
+          "transverse_strain": -3.3281028950233184e-05,
+          "kinetic_J": 1.4680263917738863e-09,
+          "bond_J": 0.00032001004308954595,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003200115111159377
+        },
+        {
+          "time_s": 0.7067894131185392,
+          "axial_strain": 9.983379669874688e-05,
+          "transverse_strain": -3.324587857833732e-05,
+          "kinetic_J": 4.21456615496898e-10,
+          "bond_J": 0.00031908439872201187,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00031908482017862735
+        },
+        {
+          "time_s": 0.7167433831990968,
+          "axial_strain": 9.981784180152867e-05,
+          "transverse_strain": -3.326661607922347e-05,
+          "kinetic_J": 2.9052022996409497e-10,
+          "bond_J": 0.00031889270216419103,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.000318892992684421
+        },
+        {
+          "time_s": 0.7266973532796545,
+          "axial_strain": 9.993747400636557e-05,
+          "transverse_strain": -3.330360020420266e-05,
+          "kinetic_J": 8.581388732920682e-10,
+          "bond_J": 0.0003195711791499306,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00031957203728880394
+        },
+        {
+          "time_s": 0.7366513233602121,
+          "axial_strain": 0.00010007294321883371,
+          "transverse_strain": -3.337786164474831e-05,
+          "kinetic_J": 6.341524651067617e-10,
+          "bond_J": 0.0003204419434923752,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003204425776448403
+        },
+        {
+          "time_s": 0.7466052934407698,
+          "axial_strain": 0.00010013073468988683,
+          "transverse_strain": -3.3401460317572146e-05,
+          "kinetic_J": 4.0311398884446146e-11,
+          "bond_J": 0.00032081944209590716,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.000320819482407306
+        },
+        {
+          "time_s": 0.7565592635213274,
+          "axial_strain": 0.00010010472393170988,
+          "transverse_strain": -3.335576890673501e-05,
+          "kinetic_J": 3.2268259990536466e-10,
+          "bond_J": 0.00032065242525527516,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003206527479378751
+        },
+        {
+          "time_s": 0.7665132336018851,
+          "axial_strain": 9.998874463725456e-05,
+          "transverse_strain": -3.333277599882411e-05,
+          "kinetic_J": 5.053713908098513e-10,
+          "bond_J": 0.00031990452492988085,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00031990503030127163
+        },
+        {
+          "time_s": 0.7764672036824427,
+          "axial_strain": 9.990563315969332e-05,
+          "transverse_strain": -3.331222984846385e-05,
+          "kinetic_J": 1.3681767082617927e-10,
+          "bond_J": 0.00031942628270895514,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00031942641952662594
+        },
+        {
+          "time_s": 0.7864211737630004,
+          "axial_strain": 9.990367442415844e-05,
+          "transverse_strain": -3.328727702812869e-05,
+          "kinetic_J": 6.95710033559961e-11,
+          "bond_J": 0.00031944515873415225,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003194452283051556
+        },
+        {
+          "time_s": 0.796375143843558,
+          "axial_strain": 9.995767329957586e-05,
+          "transverse_strain": -3.330042053708227e-05,
+          "kinetic_J": 2.5104950168135055e-10,
+          "bond_J": 0.00031976766646749826,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.000319767917517
+        },
+        {
+          "time_s": 0.8063291139241157,
+          "axial_strain": 0.00010003015385132152,
+          "transverse_strain": -3.33349810081844e-05,
+          "kinetic_J": 1.9925069474790746e-10,
+          "bond_J": 0.00032019528588193694,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00032019548513263166
+        },
+        {
+          "time_s": 0.8162830840046733,
+          "axial_strain": 0.00010007143639712926,
+          "transverse_strain": -3.337098035706611e-05,
+          "kinetic_J": 3.324593653212571e-11,
+          "bond_J": 0.00032043527584061277,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00032043530908654926
+        },
+        {
+          "time_s": 0.826237054085231,
+          "axial_strain": 0.00010004697041862687,
+          "transverse_strain": -3.337929461665333e-05,
+          "kinetic_J": 7.068512304077574e-11,
+          "bond_J": 0.0003202585211653905,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003202585918505135
+        },
+        {
+          "time_s": 0.8361910241657886,
+          "axial_strain": 0.00010000228510604706,
+          "transverse_strain": -3.3334870608433927e-05,
+          "kinetic_J": 1.545342599661025e-10,
+          "bond_J": 0.0003200024100530229,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00032000256458728285
+        },
+        {
+          "time_s": 0.8461449942463463,
+          "axial_strain": 9.996092362999734e-05,
+          "transverse_strain": -3.3300576475365826e-05,
+          "kinetic_J": 5.982182326504006e-11,
+          "bond_J": 0.00031978778224258286,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00031978784206440614
+        },
+        {
+          "time_s": 0.8560989643269039,
+          "axial_strain": 9.994395827388665e-05,
+          "transverse_strain": -3.330676405973811e-05,
+          "kinetic_J": 7.588333784125253e-12,
+          "bond_J": 0.00031969492365674487,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003196949312450787
+        },
+        {
+          "time_s": 0.8660529344074616,
+          "axial_strain": 9.996900659831978e-05,
+          "transverse_strain": -3.3317703942913813e-05,
+          "kinetic_J": 7.528685763088289e-11,
+          "bond_J": 0.00031982682444434726,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00031982689973120485
+        },
+        {
+          "time_s": 0.8760069044880192,
+          "axial_strain": 0.00010000785329575268,
+          "transverse_strain": -3.33373647566321e-05,
+          "kinetic_J": 6.261753116710974e-11,
+          "bond_J": 0.00032003536072778904,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003200354233453202
+        },
+        {
+          "time_s": 0.8859608745685769,
+          "axial_strain": 0.0001000302984813702,
+          "transverse_strain": -3.3358088898320307e-05,
+          "kinetic_J": 1.2036938813765799e-11,
+          "bond_J": 0.000320169930807709,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003201699428446478
+        },
+        {
+          "time_s": 0.8959148446491345,
+          "axial_strain": 0.00010003193987228227,
+          "transverse_strain": -3.334946581187649e-05,
+          "kinetic_J": 1.9827090466257757e-11,
+          "bond_J": 0.0003202043598136203,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003202043796407108
+        },
+        {
+          "time_s": 0.9058688147296922,
+          "axial_strain": 0.00010000768637695907,
+          "transverse_strain": -3.3330390020229906e-05,
+          "kinetic_J": 4.212092209124534e-11,
+          "bond_J": 0.0003200630214678053,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00032006306358872737
+        },
+        {
+          "time_s": 0.9158227848102498,
+          "axial_strain": 9.997693623744104e-05,
+          "transverse_strain": -3.3321011773925796e-05,
+          "kinetic_J": 2.2663687949743348e-11,
+          "bond_J": 0.0003198656938575863,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003198657165212743
+        },
+        {
+          "time_s": 0.9257767548908075,
+          "axial_strain": 9.996758778256046e-05,
+          "transverse_strain": -3.3319491864632266e-05,
+          "kinetic_J": 2.9523894990588512e-12,
+          "bond_J": 0.0003198100214362377,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003198100243886272
+        },
+        {
+          "time_s": 0.9357307249713651,
+          "axial_strain": 9.997730727892562e-05,
+          "transverse_strain": -3.332782774328181e-05,
+          "kinetic_J": 1.7685038940949713e-11,
+          "bond_J": 0.0003198685963148054,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00031986861399984436
+        },
+        {
+          "time_s": 0.9456846950519228,
+          "axial_strain": 9.999922659399232e-05,
+          "transverse_strain": -3.333415495036613e-05,
+          "kinetic_J": 2.161119668413173e-11,
+          "bond_J": 0.00032000014425701185,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003200001658682085
+        },
+        {
+          "time_s": 0.9556386651324804,
+          "axial_strain": 0.00010001768387853567,
+          "transverse_strain": -3.333574806833463e-05,
+          "kinetic_J": 4.016071658051853e-12,
+          "bond_J": 0.00032011454277623344,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003201145467923051
+        },
+        {
+          "time_s": 0.9655926352130381,
+          "axial_strain": 0.00010001668852233081,
+          "transverse_strain": -3.334170040461023e-05,
+          "kinetic_J": 4.855878143358955e-12,
+          "bond_J": 0.000320107910200072,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00032010791505595015
+        },
+        {
+          "time_s": 0.9755466052935957,
+          "axial_strain": 0.00010000195155471236,
+          "transverse_strain": -3.333989696576954e-05,
+          "kinetic_J": 1.2066564083397301e-11,
+          "bond_J": 0.00032001365997831274,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.00032001367204487685
+        },
+        {
+          "time_s": 0.9855005753741534,
+          "axial_strain": 9.99885350878397e-05,
+          "transverse_strain": -3.3328154223185644e-05,
+          "kinetic_J": 7.207330023293099e-12,
+          "bond_J": 0.0003199333924464499,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003199333996537799
+        },
+        {
+          "time_s": 0.995454545454711,
+          "axial_strain": 9.998068388972214e-05,
+          "transverse_strain": -3.332365105833806e-05,
+          "kinetic_J": 1.6314291097393836e-12,
+          "bond_J": 0.0003198892298558198,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003198892314872489
+        },
+        {
+          "time_s": 1.0000000000001679,
+          "axial_strain": 9.998172228941245e-05,
+          "transverse_strain": -3.332434078433291e-05,
+          "kinetic_J": 1.5157943686758299e-12,
+          "bond_J": 0.00031989938552835545,
+          "pair_contact_J": 0.0,
+          "tool_contact_J": 0.0,
+          "mechanical_J": 0.0003198993870441498
+        }
+      ],
+      "snapshot": {
+        "schema": "tensordem.calibrated-restart/1",
+        "base": {
+          "schema": "tensordem.restart/1",
+          "config": {
+            "nx": 5,
+            "ny": 3,
+            "radius": 0.1,
+            "thickness": 0.2,
+            "density": 917.0,
+            "bond_stiffness": 150000,
+            "contact_stiffness": 2000.0,
+            "breaking_strain": 1,
+            "shear_breaking_strain": 1,
+            "contact_damping": 0,
+            "drag": 100,
+            "tool_radius": 0.1,
+            "tool_speed": 1.0,
+            "tool_gap": 10,
+            "dt": 5.7537399309551206e-05,
+            "device": "cpu",
+            "fix_edges": false
+          },
+          "dt_s": 5.7537399309551206e-05,
+          "time_s": 1.0000000000001679,
+          "step_count": 17380,
+          "positions_m": [
+            [
+              -0.4000399915334083,
+              6.6629825646464185e-06
+            ],
+            [
+              -0.20001999635516987,
+              6.666101678092114e-06
+            ],
+            [
+              2.73974083003384e-20,
+              6.666172298843732e-06
+            ],
+            [
+              0.20001999635516987,
+              6.666101678092078e-06
+            ],
+            [
+              0.4000399915334083,
+              6.662982564645048e-06
+            ],
+            [
+              -0.40003999499993087,
+              0.2
+            ],
+            [
+              -0.2000199966074035,
+              0.2
+            ],
+            [
+              -9.18265589180619e-18,
+              0.2
+            ],
+            [
+              0.2000199966074035,
+              0.2
+            ],
+            [
+              0.40003999499993087,
+              0.2
+            ],
+            [
+              -0.4000399915334082,
+              0.399993337017435
+            ],
+            [
+              -0.20001999635517004,
+              0.3999933338983222
+            ],
+            [
+              2.8425660333335715e-20,
+              0.39999333382770136
+            ],
+            [
+              0.20001999635517004,
+              0.3999933338983222
+            ],
+            [
+              0.4000399915334082,
+              0.399993337017435
+            ]
+          ],
+          "velocities_m_s": [
+            [
+              -1.293109942063045e-07,
+              -6.3776029148813e-08
+            ],
+            [
+              -1.3343484325056224e-07,
+              1.3418884700992967e-07
+            ],
+            [
+              6.873895779389423e-20,
+              9.916113235399374e-08
+            ],
+            [
+              1.3343484313847339e-07,
+              1.3418884711570564e-07
+            ],
+            [
+              1.2931099419476492e-07,
+              -6.377602907822217e-08
+            ],
+            [
+              -3.700603016802049e-07,
+              -5.981098466956705e-14
+            ],
+            [
+              -5.571315562777552e-08,
+              -6.586305276649245e-14
+            ],
+            [
+              7.142559778540782e-17,
+              -2.492646430980648e-14
+            ],
+            [
+              5.571315563911808e-08,
+              -6.594963154380428e-14
+            ],
+            [
+              3.7006030172092774e-07,
+              -5.982948755506681e-14
+            ],
+            [
+              -1.2931105555470343e-07,
+              6.377613067103316e-08
+            ],
+            [
+              -1.3343484181344802e-07,
+              -1.3418881426352923e-07
+            ],
+            [
+              5.986941485274658e-20,
+              -9.916112468787985e-08
+            ],
+            [
+              1.334348418135203e-07,
+              -1.341888142635379e-07
+            ],
+            [
+              1.2931105555486145e-07,
+              6.377613067102361e-08
+            ]
+          ],
+          "initial_positions_m": [
+            [
+              -0.4,
+              0.0
+            ],
+            [
+              -0.2,
+              0.0
+            ],
+            [
+              0.0,
+              0.0
+            ],
+            [
+              0.2,
+              0.0
+            ],
+            [
+              0.4,
+              0.0
+            ],
+            [
+              -0.4,
+              0.2
+            ],
+            [
+              -0.2,
+              0.2
+            ],
+            [
+              0.0,
+              0.2
+            ],
+            [
+              0.2,
+              0.2
+            ],
+            [
+              0.4,
+              0.2
+            ],
+            [
+              -0.4,
+              0.4
+            ],
+            [
+              -0.2,
+              0.4
+            ],
+            [
+              0.0,
+              0.4
+            ],
+            [
+              0.2,
+              0.4
+            ],
+            [
+              0.4,
+              0.4
+            ]
+          ],
+          "fixed": [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "alive": [
+            true,
+            false,
+            false,
+            false,
+            true,
+            true,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            true,
+            false,
+            false,
+            true,
+            true,
+            true,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            true,
+            false,
+            false,
+            true,
+            true,
+            true,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            true,
+            false,
+            false,
+            true,
+            true,
+            true,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            true,
+            true,
+            false,
+            false,
+            false,
+            false,
+            false,
+            true,
+            false,
+            false,
+            false,
+            true,
+            true,
+            false,
+            false,
+            false,
+            true,
+            false,
+            false,
+            true,
+            true,
+            true,
+            false,
+            false,
+            true,
+            false,
+            false,
+            true,
+            true,
+            true,
+            false,
+            true,
+            false,
+            false,
+            true,
+            true,
+            true,
+            false,
+            false,
+            false,
+            true,
+            true,
+            true,
+            false,
+            false,
+            false,
+            true,
+            false,
+            false,
+            true,
+            false,
+            true
+          ],
+          "tool_start_m": [
+            0.0,
+            10.6
+          ],
+          "tool_velocity_m_s": [
+            0.0,
+            -1.0
+          ],
+          "hull_profile_m": null,
+          "hull_start_m": [
+            0.0,
+            0.0
+          ],
+          "hull_velocity_m_s": [
+            0.0,
+            0.0
+          ],
+          "accounting": {
+            "external_work_J": 0.0006398922667125717,
+            "fracture_release_J": 0.0,
+            "tool_work_J": 0.0,
+            "damping_dissipation_J": 0.00031999632903801126,
+            "external_impulse_Ns": [
+              0.0,
+              0.0
+            ],
+            "support_impulse_Ns": [
+              0.0,
+              0.0
+            ],
+            "drag_impulse_Ns": [
+              -5.292201257530671e-17,
+              -9.870066942464737e-18
+            ],
+            "tool_impulse_on_ice_Ns": [
+              0.0,
+              0.0
+            ]
+          },
+          "last_step": {
+            "time_start_s": 0.9999424626008584,
+            "time_end_s": 1.0000000000001679,
+            "external_work_J": 2.2986013092918256e-10,
+            "support_force_N": [
+              -0.0,
+              -0.0
+            ],
+            "tool_reaction_N": [
+              -0.0,
+              -0.0
+            ],
+            "external_force_N": [
+              0.0,
+              0.0
+            ],
+            "external_moment_Nm": 0.0
+          }
+        },
+        "bond_stiffness_N_per_m": [
+          75000.0,
+          75000.0,
+          75000.0,
+          75000.0,
+          75000.0,
+          150000.0,
+          75000.0,
+          75000.0,
+          75000.0,
+          150000.0,
+          75000.0,
+          75000.0,
+          75000.0,
+          150000.0,
+          75000.0,
+          75000.0,
+          75000.0,
+          150000.0,
+          75000.0,
+          75000.0,
+          150000.0,
+          75000.0,
+          150000.0,
+          75000.0,
+          150000.0,
+          75000.0,
+          150000.0,
+          75000.0,
+          150000.0,
+          75000.0,
+          150000.0,
+          75000.0,
+          75000.0,
+          75000.0,
+          75000.0,
+          75000.0,
+          75000.0,
+          75000.0
+        ],
+        "coefficient_sha256": "4b6552bad91deeb6e0c439f0e58fcba5523f52865c1dabc960bc8658477df9c8"
+      },
+      "discrete_energy_residual_J": 3.4493695893296136e-09
+    }
+  ],
+  "scope": "1 second bilateral 8 N traction, actual disk masses, drag100 N*s/m relaxation; no continuum mass, fracture or coupled wet qualification",
+  "patch_passed": true
+}
