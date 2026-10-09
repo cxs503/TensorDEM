@@ -42,4 +42,26 @@ The benchmark also implements a **separate corrected network** with the same bon
 
 On 4, 8 and 16 height-cell grids, C11 = 1125000 Pa, C12 = G = 375000 Pa match the ν = 1/3 target to < 4e−16 relative error. The actual free-transverse equilibrium solves produce E = 1 MPa with relative error **1.6e−15, 1.0e−14, 4.6e−14**, and apparent ν = 1/3 to machine precision. These uniform patch fields are exact at all three grids; this is patch reproduction rather than a measured asymptotic convergence rate. All three corrected patch gates pass C11/C12/G/E within 3% and absolute ν within 0.01.
 
-Raw per-bond coefficients, equilibrium displacements and reactions are retained under `corrected_cases`. The ν = 0.3 failures remain untouched. This correction is usable as an independent material network and demonstrates the necessary mapping, but `actual_IceDEM_backend_qualified` remains false: a future per-bond stiffness interface must consistently update spring force, energy, failure release, timestep bounds and snapshot validation before replacing the live coupling model. Nonuniform deformation, free cantilever bending, fracture calibration and wet particle refinement still require qualification.
+Raw per-bond coefficients, equilibrium displacements and reactions are retained under `corrected_cases`. The ν = 0.3 failures remain untouched. This correction is usable as an independent material network and demonstrates the necessary mapping, but `actual_IceDEM_backend_qualified` remains false: a per-bond stiffness interface must consistently update spring force, energy, failure release, timestep bounds and snapshot validation before replacing the live coupling model. The opt-in backend below supplies that interface; live coupling migration remains pending. Nonuniform deformation, free cantilever bending, fracture calibration and wet particle refinement still require qualification.
+
+## Opt-in actual per-bond dynamics backend
+
+`CalibratedIceDEM(config, bond_stiffness=coefficients)` now implements the corrected coefficients in actual nonlinear central-spring dynamics while preserving the original `IceDEM` implementation and its evidence hashes. It consistently corrects forces, nonmutating potential energy and first broken-bond energy release. Existing pair/tool contact, damping, disk masses and the semi-implicit Euler integrator are reused. `config.bond_stiffness` must upper-bound every supplied coefficient; therefore its conservative timestep remains valid. Invalid shape, nonfinite/negative values, out-of-bound stiffness, changed coefficients and altered restart coefficients fail closed. The separate restart schema includes the complete legacy state and coefficient hash. Tests verify force as the energy gradient, one-time release and exact continued dynamic restart.
+
+The actual 5×3 disk simulation applies bilateral ±8 N tensile loads for 1 s, with drag = 100 N·s/m to relax transients. Particles remain free; total applied resultant is zero. The original cross-section is 0.4×0.2 m² and nominal axial stress is 100 Pa. It uses actual IceDEM disk masses, not the control-volume masses in the independent static material test.
+
+| dt (s) | Measured E (Pa) | Apparent ν | Discrete energy residual (J) |
+|---|---:|---:|---:|
+| 0.000230150 | 1000176.93 | 0.33330504 | 5.53e−8 |
+| 0.000115075 | 1000180.95 | 0.33330458 | 1.38e−8 |
+| 0.0000575374 | 1000182.81 | 0.33330433 | 3.45e−9 |
+
+All three pass E within 3% and ν within 0.01 of the realizable ν=1/3 target. The small E offset includes remaining transients and finite-strain geometry; time refinement does not monotonically remove that offset. The discrete energy residual, defined as final mechanical energy minus applied work plus damping loss, decreases with dt. These measurements qualify this small tension patch only. They do not qualify fracture, wet particle refinement, continuum mass, arbitrary ν=0.3, free bending or the live LBM coupling, which continues using legacy IceDEM.
+
+`dynamic.json` retains complete final snapshots, histories, source hashes and measured metrics. Reproduce and exactly replay the actual dynamics with:
+
+```sh
+OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 PYTHONPATH=src python scripts/calibrated_dynamic_patch.py
+OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 PYTHONPATH=src python scripts/calibrated_dynamic_patch.py --audit
+OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 PYTHONPATH=src python -m unittest discover -s tests -p test_calibrated_dem.py -v
+```
