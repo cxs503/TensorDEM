@@ -74,5 +74,36 @@ class DEM3DTests(unittest.TestCase):
             DEM3DConfig(dt=math.nan)
 
 
+    def test_checkpoint_round_trip_continues_identically(self):
+        first = self.model()
+        for _ in range(5):
+            first.step()
+        snapshot = first.state_dict()
+        for _ in range(5):
+            first.step()
+
+        resumed = self.model()
+        resumed.load_state_dict(snapshot)
+        for _ in range(5):
+            resumed.step()
+        torch.testing.assert_close(resumed.positions, first.positions, atol=1e-12, rtol=1e-12)
+        torch.testing.assert_close(resumed.velocities, first.velocities, atol=1e-12, rtol=1e-12)
+        self.assertEqual(resumed.step_count, first.step_count)
+        self.assertEqual(resumed.time, first.time)
+        self.assertTrue(torch.equal(resumed.alive, first.alive))
+
+    def test_checkpoint_rejects_incompatible_or_corrupt_state(self):
+        sim = self.model()
+        snapshot = sim.state_dict()
+        broken = dict(snapshot)
+        broken["positions"] = torch.zeros((1, 3))
+        with self.assertRaises(ValueError):
+            sim.load_state_dict(broken)
+        incompatible = IceDEM3D(DEM3DConfig(nx=4, ny=3, nz=2, drag=0.0,
+                                             fix_x_edges=False))
+        with self.assertRaises(ValueError):
+            incompatible.load_state_dict(snapshot)
+
+
 if __name__ == "__main__":
     unittest.main()
