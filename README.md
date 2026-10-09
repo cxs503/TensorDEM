@@ -126,8 +126,9 @@ python -m unittest discover -s tests -v
 Python API: `DEM3DConfig` and `IceDEM3D` from `tensordem`. The state uses
 `(N, 3)` positions, velocities and external forces (N). The z-axis is vertical;
 the indenter reaction is reported as `reaction_x/y/z`. Outputs are
-`history.csv` and `trajectory_3d.pt`, including 3-D particle coordinates,
-bond survival masks and per-pair fracture metadata.
+`history.csv`, `trajectory_3d.pt`, and `checkpoint_3d.pt`. The CSV includes
+kinetic energy, surviving-bond elastic energy, particle/tool contact potential,
+recorded bond-release energy, and the instantaneous mechanical-energy estimate.
 
 This is a first 3-D verification baseline, not yet a validated ship-ice engineering
 solver. It uses a simple-cubic central-force network, a prescribed spherical tool,
@@ -165,6 +166,19 @@ for _ in range(500):
 
 Loading validates the dimensionality, exact solver configuration and time step,
 array shapes, pair/bond topology, fixed-boundary mask, and finite floating-point
-state before mutating the simulation. The checkpoint contains the dynamic state
-and fracture metadata; it is an API-level checkpoint at present, not yet a CLI
-`--restart` workflow. Only load checkpoint files from trusted sources.
+state before mutating the simulation. The CLI saves a checkpoint at each recorded
+output and can continue a run from one:
+
+```bash
+python -m tensordem.dem3d_cli --steps 1000 --save-every 20 --output results-3d
+python -m tensordem.dem3d_cli --restart results-3d/checkpoint_3d.pt \\
+  --steps 1000 --save-every 20 --output results-3d
+```
+
+The restart command restores physical parameters from the checkpoint; `--device`
+may be used to select CPU or CUDA. If the existing `history.csv` is in the output
+directory, resumed rows are appended. `trajectory_3d.pt` contains the latest run
+segment; the checkpoint is the authoritative full restart state. The energy
+columns are instantaneous diagnostics, not a complete energy-conservation audit:
+damping work, external work, and numerical integration error are not yet closed
+in a cumulative balance. Only load checkpoint files from trusted sources.
