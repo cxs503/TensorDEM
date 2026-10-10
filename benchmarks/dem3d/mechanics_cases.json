@@ -1,0 +1,55 @@
+{
+  "protocol": "tensordem-dem3d-mechanics-v1",
+  "units": "SI",
+  "model_scope": "Current linear central-force bonds and linear penalty contacts; this is not a Hertz-Mindlin implementation.",
+  "cases": [
+    {
+      "id": "bond_axial_spring",
+      "kind": "analytic",
+      "purpose": "Compare the solver's isolated axial bond force against F = k * delta_l.",
+      "parameters": {"bond_stiffness_N_per_m": 2000.0, "extension_m": 0.0001},
+      "acceptance": {"absolute_force_error_N": 1e-10, "relative_force_error": 1e-10}
+    },
+    {
+      "id": "linear_contact_penalty",
+      "kind": "analytic",
+      "purpose": "Compare isolated unbonded sphere contact against F = k_c * overlap for zero normal velocity.",
+      "parameters": {"contact_stiffness_N_per_m": 5000.0, "overlap_m": 0.005},
+      "acceptance": {"absolute_force_error_N": 1e-10, "relative_force_error": 1e-10}
+    },
+    {
+      "id": "force_balance",
+      "kind": "invariant",
+      "purpose": "Check internal force balance and action-reaction consistency for the prescribed indenter.",
+      "acceptance": {"net_force_residual_N": 1e-9}
+    },
+    {
+      "id": "irreversible_tensile_failure",
+      "kind": "invariant",
+      "purpose": "Verify that an over-threshold tensile bond fails once and does not heal after unloading.",
+      "acceptance": {"minimum_broken_bonds": 1, "healing_events": 0}
+    },
+    {
+      "id": "rigid_rotation_objectivity",
+      "kind": "invariant",
+      "purpose": "Verify rigid rotation does not create spurious shear damage or internal force.",
+      "acceptance": {"maximum_internal_force_N": 1e-7, "broken_bonds": 0}
+    },
+    {
+      "id": "timestep_guard",
+      "kind": "invariant",
+      "purpose": "Reject an explicitly supplied time step above the solver's conservative recommended bound.",
+      "acceptance": {"oversized_dt_rejected": true}
+    }
+  ],
+  "not_yet_supported": [
+    {
+      "id": "hertz_mindlin_contact",
+      "reason": "The current solver uses a linear penalty normal contact law and has no tangential Mindlin history. A Hertz-Mindlin benchmark must be added together with an explicitly implemented constitutive model, not simulated by relabeling the existing law."
+    },
+    {
+      "id": "macroscopic_ucs_brazilian_three_point_bending",
+      "reason": "These require controlled specimen geometry, loading fixtures, boundary conditions, and calibrated material-level acceptance data. The present benchmark pack establishes the analytic and invariant layer first."
+    }
+  ]
+}
