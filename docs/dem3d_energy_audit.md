@@ -244,3 +244,53 @@ runs correctly. The campaign is CPU-only for reproducibility in this version.
 Its verdict only reflects configured numerical gates; it does not imply
 experimental validation, material calibration, or full-scale icebreaker
 qualification.
+
+
+## Named DEM3D benchmark cases
+
+The repository includes a small, explicit benchmark suite at
+`benchmarks/dem3d/cases.json`. Run the fast smoke case first:
+
+```bash
+python scripts/run_dem3d_benchmark_suite.py \
+  --case indenter_smoke \
+  --output results-dem3d-benchmark-smoke
+```
+
+Run the reference indenter case and the lower-threshold fracture challenge:
+
+```bash
+python scripts/run_dem3d_benchmark_suite.py \
+  --case indenter_reference \
+  --case fracture_challenge \
+  --output results-dem3d-benchmark-engineering
+```
+
+Run all cases, repeating each case to check deterministic CPU signatures:
+
+```bash
+python scripts/run_dem3d_benchmark_suite.py \
+  --verify-repeat \
+  --output results-dem3d-benchmark-suite
+```
+
+Cases are deliberately separated by purpose:
+
+| Case | Purpose | Key expectation |
+|---|---|---|
+| `indenter_smoke` | Fast CI/environment and artifact-schema check | Finite diagnostics, event table consistent with broken-bond count, repeat signature matches |
+| `indenter_reference` | Reference 3-D spherical-indenter regression history | Preserve a stable configuration and inspect force/energy/damage traces |
+| `fracture_challenge` | Exercise irreversible damage and fracture-event output at lower failure thresholds | At least one broken bond, with one event record per broken bond |
+
+Each case writes the underlying benchmark artifacts into its own subdirectory.
+The suite also writes `benchmark_suite_summary.json` and
+`benchmark_suite_summary.csv`, including every invariant check and its observed
+value. A failed invariant gives the command a nonzero exit status.
+
+The lower-threshold fracture challenge is a software/regression case, not a
+physical calibration of ice. Do not compare its threshold values directly to
+laboratory material properties. Record the Git commit, case definition, CPU/
+PyTorch environment, and all output artifacts when publishing performance or
+physics comparisons. For force peak convergence, time-step convergence, or
+particle-resolution effects, use the dedicated validation studies in this
+document in addition to the benchmark suite.
