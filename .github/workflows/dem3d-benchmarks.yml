@@ -16,6 +16,13 @@ on:
       - "scripts/run_dem3d_benchmark_suite.py"
       - "scripts/run_dem3d_mechanics_benchmarks.py"
       - "tests/test_dem3d_mechanics_benchmarks.py"
+      - "scripts/run_dem3d_specimen_response_benchmarks.py"
+      - "scripts/benchmark_dem3d_platen_compression.py"
+      - "tests/test_dem3d_platen_compression.py"
+      - "docs/dem3d_plane_platen_boundaries.md"
+      - "src/tensordem/dem3d_cli.py"
+      - "tests/test_dem3d_specimen_response_benchmarks.py"
+      - "docs/dem3d_specimen_response_benchmarks.md"
       - "src/tensordem/dem3d.py"
       - "src/tensordem/dem3d_energy.py"
       - ".github/workflows/dem3d-benchmarks.yml"
@@ -51,6 +58,10 @@ jobs:
             --output results-dem3d-benchmark-suite
           python scripts/run_dem3d_mechanics_benchmarks.py \
             --output results-dem3d-mechanics
+          python scripts/run_dem3d_specimen_response_benchmarks.py \
+            --output results-dem3d-specimen-response
+          python scripts/benchmark_dem3d_platen_compression.py \
+            --output results-dem3d-platen-compression
       - name: Upload benchmark results
         if: always()
         uses: actions/upload-artifact@v4
@@ -59,5 +70,7 @@ jobs:
           path: |
             results-dem3d-benchmark-suite/
             results-dem3d-mechanics/
+            results-dem3d-specimen-response/
+            results-dem3d-platen-compression/
           if-no-files-found: warn
           retention-days: 30
