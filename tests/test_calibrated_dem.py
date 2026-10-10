@@ -1,5 +1,7 @@
 import copy
 import unittest
+import struct
+import hashlib
 import torch
 from tensordem.dem import DEMConfig
 from tensordem.calibrated_dem import CalibratedIceDEM
@@ -17,10 +19,12 @@ def make(dt=None, threshold=1):
 
 class CalibratedTests(unittest.TestCase):
     def test_numpy_bridge_free_legacy_digest_restart(self):
-        import hashlib
         from unittest.mock import patch
         sim=make()
-        legacy_digest=hashlib.sha256(sim.coefficients.detach().cpu().numpy().tobytes()).hexdigest()
+        # Compute the legacy little-endian float64 digest without requiring the
+        # optional PyTorch-to-NumPy bridge in minimal CI environments.
+        values=sim.coefficients.detach().to(device="cpu", dtype=torch.float64).tolist()
+        legacy_digest=hashlib.sha256(struct.pack(f"<{len(values)}d", *values)).hexdigest()
         state=sim.snapshot()
         self.assertEqual(state["coefficient_sha256"],legacy_digest)
         with patch.object(torch.Tensor,"numpy",side_effect=RuntimeError("NumPy bridge unavailable")):
