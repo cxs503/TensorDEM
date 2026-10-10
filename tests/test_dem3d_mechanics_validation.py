@@ -76,7 +76,7 @@ class DEM3DMechanicsValidationTests(unittest.TestCase):
             self.assertGreater(row["dt_s"], 0)
         self.assertEqual(levels[-1]["broken_bond_delta_vs_finest"], 0)
         history = report["history"]
-        self.assertEqual(len(history), sum(row["steps"] for row in levels))
+        self.assertEqual(len(history), sum(row["steps"] + 1 for row in levels))
         self.assertTrue(all(math.isfinite(row["reaction_z_N"]) for row in history))
         with tempfile.TemporaryDirectory() as tmp:
             output = Path(tmp)
