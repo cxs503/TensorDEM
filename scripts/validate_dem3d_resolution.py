@@ -80,13 +80,18 @@ def run_resolution_study(
     history: list[dict[str, Any]] = []
 
     for factor in factors:
-        level_config = refined_config(config, factor, base_dt)
-        steps = base_steps * factor
+        candidate = refined_config(config, factor, base_dt)
+        # Refinement changes the local coordination number, so the solver's
+        # stability bound may be stricter than exactly base_dt/factor. Choose
+        # an integer step count that lands exactly on the common physical time.
+        stable_limit = replace(candidate, dt=None).recommended_dt
+        allowed_dt = min(base_dt / factor, stable_limit)
+        steps = max(base_steps * factor, math.ceil(target_time / allowed_dt))
+        level_config = replace(candidate, dt=target_time / steps)
         sim = EnergyAuditedIceDEM3D(level_config)
         peak_abs_reaction = 0.0
         peak_signed_reaction = 0.0
         max_abs_energy_residual = 0.0
-        initial_positions = sim.positions.clone()
         initial_diag = sim.diagnostics()
 
         def record(step: int, row: dict[str, Any]) -> None:
@@ -154,9 +159,6 @@ def run_resolution_study(
             "final_mechanical_energy_J": float(final["mechanical_energy_J"]),
             "final_energy_balance_residual_J": float(final["energy_balance_residual_J"]),
             "max_abs_energy_balance_residual_J": max_abs_energy_residual,
-            "initial_state_unchanged": bool(torch.equal(
-                initial_positions, sim.initial_positions
-            )),
         })
 
     finest = levels[-1]
