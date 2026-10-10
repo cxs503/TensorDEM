@@ -48,8 +48,6 @@ def run_sensitivity_campaign(
             raise ValueError(f"{name} must be nonempty and unique")
         if any(not math.isfinite(v) or v <= lower or v > upper for v in values):
             raise ValueError(f"{name} contains an out-of-range value")
-    if any(v >= 1.0 for v in dt_factors):
-        raise ValueError("dt_factors must be in (0, 1]; use a factor of 1.0 for the nominal timestep")
     torch.set_num_threads(1)
 
     definitions: list[dict[str, Any]] = []
