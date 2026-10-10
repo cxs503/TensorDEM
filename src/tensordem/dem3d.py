@@ -33,6 +33,7 @@ class DEM3DConfig:
     tool_gap: float = 0.01
     dt: float | None = None
     device: str = "cpu"
+    geometry: str = "box"
     fix_x_edges: bool = True
     fix_bottom: bool = False
     top_platen_enabled: bool = False
@@ -71,6 +72,10 @@ class DEM3DConfig:
             raise ValueError("dt must be finite and positive")
         if self.device not in ("cpu", "cuda"):
             raise ValueError("device must be 'cpu' or 'cuda'")
+        if self.geometry not in ("box", "cylinder_xz"):
+            raise ValueError("geometry must be 'box' or 'cylinder_xz'")
+        if self.geometry == "cylinder_xz" and (self.nx < 3 or self.nz < 3):
+            raise ValueError("cylinder_xz geometry requires nx and nz >= 3")
 
     @property
     def mass(self) -> float:
@@ -118,21 +123,34 @@ class IceDEM3D:
         axes = [torch.arange(v, dtype=self.dtype, device=self.device) for v in
                 (config.nx, config.ny, config.nz)]
         zz, yy, xx = torch.meshgrid(axes[2], axes[1], axes[0], indexing="ij")
-        grid = torch.stack((xx, yy, zz), dim=-1).reshape(-1, 3)
+        full_grid = torch.stack((xx, yy, zz), dim=-1).reshape(-1, 3)
+        # Geometry is defined on the original structured lattice, then compacted
+        # so every state array and every bond uses contiguous particle indices.
+        if config.geometry == "cylinder_xz":
+            xc, zc = (config.nx - 1) / 2.0, (config.nz - 1) / 2.0
+            disk_radius = min(config.nx - 1, config.nz - 1) / 2.0
+            keep = ((xx - xc).square() + (zz - zc).square()) <= disk_radius**2 + 1e-12
+        else:
+            keep = torch.ones_like(xx, dtype=torch.bool)
+        compact_to_full = torch.nonzero(keep.reshape(-1), as_tuple=False).flatten()
+        full_to_compact = torch.full((len(full_grid),), -1, dtype=torch.long, device=self.device)
+        full_to_compact[compact_to_full] = torch.arange(len(compact_to_full), device=self.device)
+        grid = full_grid[compact_to_full]
+        z_origin = (config.nz - 1) / 2.0 if config.geometry == "cylinder_xz" else 0.0
         self.positions = (grid - torch.tensor(
-            [(config.nx - 1) / 2, (config.ny - 1) / 2, 0.0],
+            [(config.nx - 1) / 2, (config.ny - 1) / 2, z_origin],
             dtype=self.dtype, device=self.device
         )) * (2 * config.radius)
         self.initial_positions = self.positions.clone()
         self.velocities = torch.zeros_like(self.positions)
         self.fixed = torch.zeros(len(grid), dtype=torch.bool, device=self.device)
-        if config.fix_x_edges:
-            self.fixed |= (xx.reshape(-1) == 0) | (xx.reshape(-1) == config.nx - 1)
+        gx, gy, gz = grid.unbind(dim=1)
+        if config.fix_x_edges and config.geometry == "box":
+            self.fixed |= (gx == 0) | (gx == config.nx - 1)
         if config.fix_bottom:
-            self.fixed |= zz.reshape(-1) == 0
+            self.fixed |= gz == 0
 
-        # Build the fixed 26-neighbour bond lattice directly in O(N), rather
-        # than constructing and filtering all N*(N-1)/2 particle pairs.
+        # Build only valid neighbour bonds and remap full-grid IDs to compact IDs.
         n = len(grid)
         bond_pairs: list[tuple[int, int]] = []
         for dz in range(0, 2):
@@ -156,9 +174,12 @@ class IceDEM3D:
                                 xx2 = x + dx
                                 if not 0 <= xx2 < config.nx:
                                     continue
-                                a = (z * config.ny + y) * config.nx + x
-                                b = (zz2 * config.ny + yy2) * config.nx + xx2
-                                bond_pairs.append((min(a, b), max(a, b)))
+                                full_a = (z * config.ny + y) * config.nx + x
+                                full_b = (zz2 * config.ny + yy2) * config.nx + xx2
+                                a = int(full_to_compact[full_a].item())
+                                b = int(full_to_compact[full_b].item())
+                                if a >= 0 and b >= 0:
+                                    bond_pairs.append((min(a, b), max(a, b)))
         self.pairs = torch.tensor(bond_pairs, dtype=torch.long, device=self.device)
         order = torch.argsort(self.pairs[:, 0] * n + self.pairs[:, 1])
         self.pairs = self.pairs[order]
