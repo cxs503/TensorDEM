@@ -121,10 +121,11 @@ python scripts/validate_dem3d_resolution.py \
 The integer refinement factor preserves each initial block extent using
 `n'=(n-1)m+1` and `r'=r/m`, and keeps the indenter radius, speed, and nominal
 block dimensions fixed. The protocol scales bond and contact stiffness by `1/m`
-and viscous damping coefficients by `1/m²`, with `dt` divided by `m`; these
-are explicit continuum-like scaling assumptions, not universally valid material
-laws. The script rejects invalid schedules and compares all levels at the same
-physical final time.
+and viscous damping coefficients by `1/m²`. The nominal `dt` scales as `1/m`,
+but is reduced further when the solver's coordination-dependent stability bound
+requires it; the step count is adjusted so every level reaches the same physical
+final time. These are explicit continuum-like scaling assumptions, not universally
+valid material laws. The script rejects invalid schedules.
 
 Outputs:
 
