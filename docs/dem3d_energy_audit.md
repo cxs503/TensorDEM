@@ -18,6 +18,9 @@ The script writes:
 - `summary_3d.json`: fixed configuration, peak absolute vertical reaction,
   final energy ledger and a SHA-256 signature.
 - `final_checkpoint_3d.pt`: restart-capable solver state including the audit ledger.
+- `fracture_events_3d.csv`: one row per broken bond, with stable bond/particle
+  indices, initial and final bond midpoints and lengths, failure mode (tensile,
+  shear, or mixed), failure time, extension at detection, and estimated release energy.
 
 The repeat check runs the same CPU case twice and requires matching signatures.
 It deliberately avoids `Tensor.numpy()`, so it can run in minimal PyTorch CI
@@ -55,3 +58,17 @@ validation or a ship-scale prediction. Before quantitative use, perform time-ste
 and lattice-sensitivity studies, calibrate bond/contact parameters against material
 data, and compare load-displacement and fracture patterns with an independent
 experiment or reference solution.
+
+## Fracture event traceability
+
+`fracture_events_3d.csv` is an event table rather than a sampled damage curve.
+It contains only bonds that have broken by the end of the run; an intact run still
+writes the header so downstream tooling can rely on a stable schema. `bond_id`
+is the deterministic index in the solver's sorted bond topology, while
+`particle_i` and `particle_j` identify its endpoints. Failure time, extension,
+and energy are the values recorded when the irreversible failure was detected;
+the final midpoint and length describe the post-run geometry and are not the
+failure geometry. The failure mode code is 1=tensile, 2=shear, and 3=mixed.
+
+This output supports crack-front reconstruction and debugging, but a broken-bond
+network is not by itself a calibrated macroscopic fracture model.
