@@ -125,7 +125,7 @@ jobs:
       - name: Install package and dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -e ".[test]"
+          python -m pip install -e ".[test,viz]"
       - name: Run named DEM3D benchmark cases
         shell: bash
         run: |
@@ -136,6 +136,10 @@ jobs:
           python scripts/run_dem3d_benchmark_suite.py \
             ${REPEAT_FLAG} \
             --output results-dem3d-benchmark-suite
+          python scripts/visualize_dem3d_benchmarks.py \
+            --input results-dem3d-benchmark-suite \
+            --output results-dem3d-visualizations
+          python -m unittest discover -s tests -p test_dem3d_visualization.py
           python scripts/run_dem3d_mechanics_benchmarks.py \
             --output results-dem3d-mechanics
           python scripts/run_dem3d_specimen_response_benchmarks.py \
@@ -167,6 +171,7 @@ jobs:
           name: dem3d-benchmark-results-${{ github.run_id }}
           path: |
             results-dem3d-benchmark-suite/
+            results-dem3d-visualizations/
             results-dem3d-mechanics/
             results-dem3d-specimen-response/
             results-dem3d-platen-compression/
