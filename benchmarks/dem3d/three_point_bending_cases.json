@@ -1,0 +1,7 @@
+{
+  "protocol":"tensordem-dem3d-three-point-bending-v1",
+  "units":"SI",
+  "scope":"Numerical load-transfer and fracture-tracking fixture; not calibrated flexural-strength validation.",
+  "references":[{"citation":"Ji, Di and Long (2017), DEM for sea-ice uniaxial compressive and flexural strength","doi":"10.1061/(ASCE)EM.1943-7889.0000996","use":"Calibration context only; no experimental values are asserted here."}],
+  "cases":[{"id":"three_point_bending_load_transfer_smoke","config":{"nx":9,"ny":3,"nz":3,"radius_m":0.01,"density_kg_m3":917.0,"bond_stiffness_N_m":2000.0,"contact_stiffness_N_m":5000.0,"breaking_strain":0.025,"shear_breaking_strain":0.04,"contact_damping_Ns_m":0.05,"drag":0.2,"peak_load_N":0.02,"steps":120},"acceptance":{"minimum_peak_support_reaction_N":1e-8,"minimum_peak_deflection_m":1e-10}}]
+}
