@@ -58,7 +58,7 @@ def run_convergence_study(
     for factor in factors:
         dt = base_dt / factor
         level_config = replace(config, dt=dt)
-        steps = base_steps * (max(factors) // factor) if False else int(round(final_time / dt))
+        steps = int(round(final_time / dt))
         sim = EnergyAuditedIceDEM3D(level_config)
         peak_reaction = 0.0
         peak_reaction_signed = 0.0
