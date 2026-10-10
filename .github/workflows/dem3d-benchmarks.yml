@@ -16,6 +16,9 @@ on:
       - "scripts/run_dem3d_benchmark_suite.py"
       - "scripts/run_dem3d_mechanics_benchmarks.py"
       - "tests/test_dem3d_mechanics_benchmarks.py"
+      - "scripts/run_dem3d_specimen_response_benchmarks.py"
+      - "tests/test_dem3d_specimen_response_benchmarks.py"
+      - "docs/dem3d_specimen_response_benchmarks.md"
       - "src/tensordem/dem3d.py"
       - "src/tensordem/dem3d_energy.py"
       - ".github/workflows/dem3d-benchmarks.yml"
@@ -51,6 +54,8 @@ jobs:
             --output results-dem3d-benchmark-suite
           python scripts/run_dem3d_mechanics_benchmarks.py \
             --output results-dem3d-mechanics
+          python scripts/run_dem3d_specimen_response_benchmarks.py \
+            --output results-dem3d-specimen-response
       - name: Upload benchmark results
         if: always()
         uses: actions/upload-artifact@v4
@@ -59,5 +64,6 @@ jobs:
           path: |
             results-dem3d-benchmark-suite/
             results-dem3d-mechanics/
+            results-dem3d-specimen-response/
           if-no-files-found: warn
           retention-days: 30
