@@ -208,7 +208,7 @@ def run_validation(output: Path) -> dict[str, Any]:
     }
     output.mkdir(parents=True, exist_ok=True)
     (output / "dem3d_fracture_validation.json").write_text(
-        json.dumps(report, indent=2, sort_keys=True) + "\\n", encoding="utf-8"
+        json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
     with (output / "dem3d_fracture_events.csv").open("w", newline="", encoding="utf-8") as stream:
         fields = [
