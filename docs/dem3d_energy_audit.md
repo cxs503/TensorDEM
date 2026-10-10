@@ -294,3 +294,22 @@ PyTorch environment, and all output artifacts when publishing performance or
 physics comparisons. For force peak convergence, time-step convergence, or
 particle-resolution effects, use the dedicated validation studies in this
 document in addition to the benchmark suite.
+
+
+## Analytic mechanics benchmark pack
+
+The mechanics-level analytic and invariant checks are documented in
+[the DEM3D mechanics benchmark protocol](dem3d_mechanics_benchmark_protocol.md).
+Run them with:
+
+```bash
+python scripts/run_dem3d_mechanics_benchmarks.py --output results-dem3d-mechanics
+```
+
+This pack validates the currently implemented linear bond and linear penalty
+contact laws, force balance, irreversible tensile failure, rigid-rotation
+objectivity, and the explicit time-step guard. It intentionally identifies
+Hertz-Mindlin and macroscopic UCS/Brazilian/three-point-bending benchmarks as
+not yet supported, rather than claiming validation of physics the solver does
+not implement. Results are regression evidence, not material calibration or
+experimental validation.
