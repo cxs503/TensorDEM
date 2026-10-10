@@ -1,12 +1,14 @@
 """Independent mechanics and time-step sensitivity regressions for DEM3D."""
+import csv
 import math
+import tempfile
 import unittest
-from dataclasses import replace
+from pathlib import Path
 
 import torch
 
 from tensordem.dem3d import DEM3DConfig, IceDEM3D
-from scripts.validate_dem3d_convergence import run_convergence_study
+from scripts.validate_dem3d_convergence import run_convergence_study, write_report
 
 
 class DEM3DMechanicsValidationTests(unittest.TestCase):
@@ -25,6 +27,25 @@ class DEM3DMechanicsValidationTests(unittest.TestCase):
         torch.testing.assert_close(force.sum(dim=0), -reaction, atol=1e-10, rtol=0)
         # In the undeformed state, internal bond forces vanish and no contacts overlap.
         self.assertLess(float(force.abs().max()), 1e-8)
+
+    def test_unbonded_particle_contact_matches_linear_spring_law(self):
+        sim = IceDEM3D(DEM3DConfig(
+            nx=3, ny=3, nz=2, fix_x_edges=False, drag=0.0,
+            contact_damping=0.0, tool_radius=0.01, tool_gap=1.0,
+        ))
+        sim.alive[:] = False
+        i, j = (int(v) for v in sim.pairs[0])
+        delta = sim.positions[j] - sim.positions[i]
+        normal = delta / torch.linalg.vector_norm(delta)
+        overlap = 0.01
+        sim.positions[j] = sim.positions[i] + normal * (
+            2 * sim.config.radius - overlap
+        )
+        force, reaction = sim.forces(update_fracture=False)
+        expected = sim.config.contact_stiffness * overlap
+        torch.testing.assert_close(force[i], -expected * normal, atol=1e-9, rtol=1e-12)
+        torch.testing.assert_close(force[j], expected * normal, atol=1e-9, rtol=1e-12)
+        torch.testing.assert_close(force.sum(dim=0), -reaction, atol=1e-9, rtol=0)
 
     def test_fixed_particles_remain_fixed_under_external_load(self):
         sim = IceDEM3D(DEM3DConfig(nx=3, ny=3, nz=2, fix_x_edges=True, drag=0.0))
@@ -54,6 +75,19 @@ class DEM3DMechanicsValidationTests(unittest.TestCase):
                 self.assertTrue(math.isfinite(float(row[key])), key)
             self.assertGreater(row["dt_s"], 0)
         self.assertEqual(levels[-1]["broken_bond_delta_vs_finest"], 0)
+        history = report["history"]
+        self.assertEqual(len(history), sum(row["steps"] + 1 for row in levels))
+        self.assertTrue(all(math.isfinite(row["reaction_z_N"]) for row in history))
+        with tempfile.TemporaryDirectory() as tmp:
+            output = Path(tmp)
+            write_report(report, output)
+            with (output / "reaction_history_3d.csv").open(
+                newline="", encoding="utf-8"
+            ) as stream:
+                saved = list(csv.DictReader(stream))
+            self.assertEqual(len(saved), len(history))
+            self.assertTrue((output / "convergence_3d.csv").is_file())
+            self.assertTrue((output / "convergence_3d.json").is_file())
 
     def test_invalid_refinement_schedule_rejected(self):
         cfg = DEM3DConfig(nx=3, ny=3, nz=2)
