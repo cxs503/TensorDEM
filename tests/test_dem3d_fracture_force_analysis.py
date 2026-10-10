@@ -25,11 +25,14 @@ class DEM3DFractureForceAnalysisTests(unittest.TestCase):
             {"step": 30, "time": 3.0, "reaction_z": 0.0, "broken_bonds": 3},
         ])
         self._write_csv(events, [
-            "bond_id", "failure_time_s", "failure_mode_label"
+            "bond_id", "failure_time_s", "failure_mode_label", "failure_energy_J"
         ], [
-            {"bond_id": 3, "failure_time_s": 0.5, "failure_mode_label": "tensile"},
-            {"bond_id": 5, "failure_time_s": 1.5, "failure_mode_label": "shear"},
-            {"bond_id": 8, "failure_time_s": 1.8, "failure_mode_label": "mixed"},
+            {"bond_id": 3, "failure_time_s": 0.5, "failure_mode_label": "tensile",
+             "failure_energy_J": 0.1},
+            {"bond_id": 5, "failure_time_s": 1.5, "failure_mode_label": "shear",
+             "failure_energy_J": 0.2},
+            {"bond_id": 8, "failure_time_s": 1.8, "failure_mode_label": "mixed",
+             "failure_energy_J": 0.3},
         ])
         return history, events
 
@@ -40,6 +43,10 @@ class DEM3DFractureForceAnalysisTests(unittest.TestCase):
             output = root / "analysis"
             summary = analyze_fracture_force(history, events, output)
             self.assertEqual(summary["total_broken_bonds"], 3)
+            self.assertEqual(summary["fracture_mode_counts"],
+                             {"tensile": 1, "shear": 1, "mixed": 1})
+            self.assertAlmostEqual(summary["total_fracture_energy_release_J"], 0.6)
+            self.assertAlmostEqual(summary["peak_sample_reaction_time_s"], 2.0)
             self.assertEqual(summary["interval_count"], 3)
             self.assertTrue(summary["interval_damage_matches_event_timestamps"])
             self.assertAlmostEqual(summary["total_signed_reaction_impulse_Ns"], 6.0)
@@ -53,6 +60,8 @@ class DEM3DFractureForceAnalysisTests(unittest.TestCase):
             self.assertEqual([int(row["new_fractures"]) for row in intervals], [1, 2, 0])
             self.assertEqual([row["event_bond_ids"] for row in intervals], ["3", "5;8", ""])
             self.assertAlmostEqual(float(intervals[1]["fracture_rate_per_s"]), 2.0)
+            self.assertAlmostEqual(float(intervals[1]["fracture_energy_release_sum_J"]), 0.5)
+            self.assertAlmostEqual(float(intervals[0]["reaction_z_slope_N_per_s"]), 2.0)
             saved = json.loads((output / "fracture_force_summary_3d.json").read_text())
             self.assertEqual(saved["protocol"], "tensordem-dem3d-fracture-force-analysis-v1")
 
@@ -78,7 +87,7 @@ class DEM3DFractureForceAnalysisTests(unittest.TestCase):
                 {"step": 10, "time": 1.0, "reaction_z": 2.0, "broken_bonds": 0},
             ])
             self._write_csv(events, [
-                "bond_id", "failure_time_s", "failure_mode_label"
+                "bond_id", "failure_time_s", "failure_mode_label", "failure_energy_J"
             ], [])
             summary = analyze_fracture_force(history, events, root / "analysis")
             self.assertEqual(summary["total_broken_bonds"], 0)
