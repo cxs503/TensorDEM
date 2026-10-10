@@ -172,3 +172,38 @@ Use identical physical loading and calibration assumptions, inspect the full
 curves, and compare against experiments before making engineering claims. A
 small force-history error does not guarantee converged crack paths or fracture
 energy.
+
+
+## Integrated numerical screening report
+
+After running the time-step sensitivity study, particle-resolution study, and
+cross-resolution comparison, combine their JSON summaries into a single
+machine-readable numerical QA report:
+
+```bash
+python scripts/report_dem3d_engineering_screen.py \
+  --timestep results-dem3d-convergence/convergence_3d.json \
+  --resolution results-dem3d-resolution/resolution_sensitivity_3d.json \
+  --cross-resolution results-dem3d-cross-resolution/cross_resolution_summary_3d.json \
+  --output results-dem3d-acceptance
+```
+
+The tool writes `engineering_screen_3d.json` (complete provenance, configured
+thresholds, each check, verdict, and follow-up guidance) and
+`engineering_screen_3d.csv` (one row per check). Defaults are explicit and
+can be overridden: time-step peak-force difference 5%, resolution peak-force
+difference 10%, normalized cross-resolution force RMSE 10%, energy residual /
+absolute final mechanical energy 5%, and final-time relative tolerance 1e-8.
+
+Verdicts are `PASS`, `WARN`, or `FAIL`. Final-time mismatch and excessive
+energy residual are blocking `FAIL` checks. Force sensitivity over the chosen
+limits is `WARN`, prompting review rather than automatically declaring the
+simulation invalid. The report validates schema and finite numerical values;
+it does not independently rerun simulations or certify their physics.
+
+These thresholds are screening defaults, not universal acceptance criteria.
+The finest numerical resolution is not ground truth, and a `PASS` does not mean
+the model is calibrated, experimentally validated, asymptotically converged, or
+qualified to predict full-scale ship/ice interaction. Engineering acceptance
+still requires calibrated material properties, measured load/displacement or
+fracture-energy comparisons, and documented physical validation.
