@@ -98,6 +98,9 @@ def run_benchmark(
     def execute(write_history: bool) -> tuple[list[dict[str, Any]], str, int]:
         sim = EnergyAuditedIceDEM3D(config)
         rows: list[dict[str, Any]] = []
+        # Keep a compact, sampled state history for reproducible post-processing.
+        # This is separate from the numerical signature and is written only once.
+        frames: list[dict[str, Any]] = []
         digest = hashlib.sha256()
         max_broken = 0
         for step in range(steps + 1):
@@ -116,6 +119,13 @@ def run_benchmark(
                     raise AssertionError(f"non-finite diagnostic at step {step}")
                 rows.append({"step": step, **row})
                 digest.update(json.dumps(rows[-1], sort_keys=True, separators=(",", ":")).encode())
+                if write_history:
+                    frames.append({
+                        "step": step, "time_s": float(row["time"]),
+                        "positions": sim.positions.detach().cpu().clone(),
+                        "alive": sim.alive.detach().cpu().clone(),
+                        "tool_position": sim.tool_position.detach().cpu().clone(),
+                    })
         for tensor in (sim.positions, sim.velocities, sim.alive, sim.failure_mode,
                        sim.failure_time_s, sim.failure_extension_m, sim.failure_energy_J):
             _tensor_digest(digest, tensor)
@@ -128,6 +138,14 @@ def run_benchmark(
             torch.save({"format": "tensordem-dem3d-energy-benchmark-v1",
                         "config": config.__dict__, "state": sim.state_dict()},
                        output / "final_checkpoint_3d.pt")
+            torch.save({
+                "format": "tensordem-dem3d-visualization-trajectory-v1",
+                "config": config.__dict__,
+                "frames": frames,
+                "initial_positions": sim.initial_positions.detach().cpu().clone(),
+                "pairs": sim.pairs.detach().cpu().clone(),
+                "rest_lengths": sim.rest_lengths.detach().cpu().clone(),
+            }, output / "visualization_trajectory_3d.pt")
             write_fracture_events(sim, output / "fracture_events_3d.csv")
         return rows, digest.hexdigest(), sim.broken_bonds
 
