@@ -12,6 +12,9 @@ on:
     branches: [main]
     paths:
       - "benchmarks/dem3d/**"
+      - "scripts/benchmark_dem3d_three_point_bending.py"
+      - "tests/test_dem3d_three_point_bending.py"
+      - "docs/dem3d_three_point_bending.md"
       - "scripts/benchmark_dem3d_energy_timestep.py"
       - "tests/test_dem3d_energy_timestep.py"
       - "docs/dem3d_energy_timestep_campaign.md"
@@ -141,6 +144,7 @@ jobs:
           python scripts/benchmark_dem3d_moving_wedge_bow.py --output results-dem3d-moving-wedge-bow
           python scripts/benchmark_dem3d_wedge_resistance_sensitivity.py --output results-dem3d-wedge-sensitivity
           python scripts/benchmark_dem3d_ship_ice_formula_baselines.py --output results-dem3d-mt-uikku-formulas
+          python scripts/benchmark_dem3d_three_point_bending.py --output results-dem3d-three-point-bending
       - name: Upload benchmark results
         if: always()
         uses: actions/upload-artifact@v4
@@ -160,5 +164,6 @@ jobs:
             results-dem3d-moving-wedge-bow/
             results-dem3d-wedge-sensitivity/
             results-dem3d-mt-uikku-formulas/
+            results-dem3d-three-point-bending/
           if-no-files-found: warn
           retention-days: 30
