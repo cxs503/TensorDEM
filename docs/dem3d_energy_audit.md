@@ -72,3 +72,37 @@ failure geometry. The failure mode code is 1=tensile, 2=shear, and 3=mixed.
 
 This output supports crack-front reconstruction and debugging, but a broken-bond
 network is not by itself a calibrated macroscopic fracture model.
+
+## Fracture-force temporal analysis
+
+After running the benchmark, correlate the sampled indenter reaction history with
+the per-bond event table:
+
+```bash
+python scripts/analyze_dem3d_fracture.py \
+  --history results-dem3d-benchmark/history_3d.csv \
+  --events results-dem3d-benchmark/fracture_events_3d.csv \
+  --output results-dem3d-fracture-analysis
+```
+
+The post-processor validates monotonic sample times and cumulative damage, checks
+that each broken bond has one event row, and verifies that the number of event
+timestamps in each sample interval matches the increase in cumulative broken bonds.
+It writes:
+
+- `fracture_force_intervals_3d.csv`: new fractures and fracture rate per interval,
+  event bond IDs and modes, summed estimated fracture-release energy, reaction
+  change and slope, trapezoidal signed/absolute reaction impulse, and sampled peak.
+- `fracture_force_summary_3d.json`: time window, total fractures, peak sampled
+  reaction and its time, total reaction impulses, fracture-mode counts, first/last
+  fracture times, total estimated fracture-release energy, maximum interval fracture
+  rate, and the Pearson correlation between interval fracture rate and mean absolute
+  reaction.
+
+Intervals are half-open at the left and closed at the right to prevent events on
+sample boundaries being counted twice. Force impulses use trapezoidal integration
+of the sampled history. The reported peak is only the maximum sampled endpoint,
+not a guarantee of the true continuous-time peak. Correlation is descriptive and
+does not establish causation; increase the sampling frequency before interpreting
+rapid crack/force transients. The report is not a substitute for material
+calibration or experimental validation.
