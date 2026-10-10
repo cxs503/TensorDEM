@@ -12,7 +12,7 @@ python scripts/run_dem3d_benchmark_suite.py --output results-dem3d-benchmark-sui
 python scripts/visualize_dem3d_benchmarks.py --input results-dem3d-benchmark-suite --output results-dem3d-visualizations
 ```
 
-For cases with saved state histories, each case folder receives `damage_initial.png`, `damage_final.png`, `displacement_final.png`, and `damage_evolution.gif`. A supported history CSV also produces `force_history.png`. `visualization_summary.json` and per-case `visualization_manifest.json` list what was actually emitted.
+For cases with saved state histories, each case folder receives `damage_initial.png`, `damage_final.png`, `displacement_final.png`, and `damage_evolution.gif`. A supported history CSV also produces `force_history.png`. When `fracture_events_3d.csv` contains exported broken bonds, `fracture_crack_map.png` plots their final bond-midpoint locations grouped by recorded failure mode. `visualization_summary.json` and per-case `visualization_manifest.json` list what was actually emitted.
 
 Damage is colored by the fraction of incident bonds that have broken at each particle. Displacement is the magnitude relative to the initial particle position. These are particle fields, not continuum stress contours. The GIF shows sampled states only and does not interpolate. If a case has no sampled trajectory, the script can still produce a force-history plot from a recognized CSV but does not fabricate a cloud map.
 
