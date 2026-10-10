@@ -42,7 +42,9 @@ def _isolated_pair(*, bond_active: bool, extension_m: float = 0.0,
     target = int(torch.argmin(torch.abs(sim.rest_lengths - 2.0 * sim.config.radius)))
     i, j = (int(v) for v in sim.pairs[target].tolist())
     rest = float(sim.rest_lengths[target])
-    sim.positions[:] = 1000.0
+    sim.positions[:, 0] = 1000.0 + 10.0 * torch.arange(
+        len(sim.positions), dtype=sim.dtype, device=sim.device
+    )
     sim.positions[:, 1:] = 0.0
     sim.positions[i] = torch.tensor([0.0, 0.0, 0.0], dtype=sim.dtype)
     distance = rest + extension_m if bond_active else 2.0 * sim.config.radius - overlap_m
