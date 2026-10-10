@@ -14,6 +14,8 @@ on:
       - "benchmarks/dem3d/**"
       - "scripts/benchmark_dem3d.py"
       - "scripts/run_dem3d_benchmark_suite.py"
+      - "scripts/run_dem3d_mechanics_benchmarks.py"
+      - "tests/test_dem3d_mechanics_benchmarks.py"
       - "src/tensordem/dem3d.py"
       - "src/tensordem/dem3d_energy.py"
       - ".github/workflows/dem3d-benchmarks.yml"
@@ -47,11 +49,15 @@ jobs:
           python scripts/run_dem3d_benchmark_suite.py \
             ${REPEAT_FLAG} \
             --output results-dem3d-benchmark-suite
+          python scripts/run_dem3d_mechanics_benchmarks.py \
+            --output results-dem3d-mechanics
       - name: Upload benchmark results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: dem3d-benchmark-results-${{ github.run_id }}
-          path: results-dem3d-benchmark-suite/
+          path: |
+            results-dem3d-benchmark-suite/
+            results-dem3d-mechanics/
           if-no-files-found: warn
           retention-days: 30
