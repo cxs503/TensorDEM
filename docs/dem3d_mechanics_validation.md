@@ -27,7 +27,10 @@ The coarsest level uses the configured `dt` (or the solver's recommended `dt`).
 Each refinement divides `dt` by its integer factor and adjusts the step count so
 all levels reach the same physical final time. Outputs are:
 - `convergence_3d.csv`: one row per time-step level;
-- `convergence_3d.json`: configuration, protocol, end time and interpretation.
+- `convergence_3d.json`: configuration, protocol, end time and interpretation;
+- `reaction_history_3d.csv`: initial state plus every step for every refinement,
+  including all reaction components and magnitude, broken-bond count, mechanical
+  energy, and energy-balance residual.
 
 Metrics include peak absolute vertical indenter reaction, final reaction, broken
 bond count, final mechanical energy, maximum absolute energy-balance residual,
