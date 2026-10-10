@@ -91,11 +91,13 @@ timestamps in each sample interval matches the increase in cumulative broken bon
 It writes:
 
 - `fracture_force_intervals_3d.csv`: new fractures and fracture rate per interval,
-  event bond IDs and modes, sampled endpoint reaction, trapezoidal signed/absolute
-  reaction impulse, and sampled interval peak.
+  event bond IDs and modes, summed estimated fracture-release energy, reaction
+  change and slope, trapezoidal signed/absolute reaction impulse, and sampled peak.
 - `fracture_force_summary_3d.json`: time window, total fractures, peak sampled
-  reaction, total reaction impulses, maximum interval fracture rate, and the
-  Pearson correlation between interval fracture rate and mean absolute reaction.
+  reaction and its time, total reaction impulses, fracture-mode counts, first/last
+  fracture times, total estimated fracture-release energy, maximum interval fracture
+  rate, and the Pearson correlation between interval fracture rate and mean absolute
+  reaction.
 
 Intervals are half-open at the left and closed at the right to prevent events on
 sample boundaries being counted twice. Force impulses use trapezoidal integration
