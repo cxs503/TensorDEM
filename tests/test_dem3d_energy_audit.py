@@ -1,4 +1,5 @@
 """Regression tests for cumulative 3-D DEM energy accounting and benchmark."""
+import csv
 import json
 import tempfile
 import unittest
@@ -8,7 +9,7 @@ import torch
 
 from tensordem.dem3d import DEM3DConfig
 from tensordem.dem3d_energy import EnergyAuditedIceDEM3D
-from scripts.benchmark_dem3d import run_benchmark
+from scripts.benchmark_dem3d import run_benchmark, write_fracture_events
 
 
 class DEM3DEnergyAuditTests(unittest.TestCase):
@@ -66,6 +67,27 @@ class DEM3DEnergyAuditTests(unittest.TestCase):
         self.assertEqual(resumed.energy_balance_residual_J,
                          uninterrupted.energy_balance_residual_J)
 
+    def test_fracture_event_export_contains_per_bond_failure_metadata(self):
+        sim = EnergyAuditedIceDEM3D(self.config())
+        sim.alive[0] = False
+        sim.failure_mode[0] = 3
+        sim.failure_time_s[0] = 0.012
+        sim.failure_extension_m[0] = 0.001
+        sim.failure_energy_J[0] = 0.2
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "fracture_events_3d.csv"
+            count = write_fracture_events(sim, path)
+            with path.open(newline="", encoding="utf-8") as stream:
+                rows = list(csv.DictReader(stream))
+            self.assertEqual(count, 1)
+            self.assertEqual(len(rows), 1)
+            self.assertEqual(int(rows[0]["bond_id"]), 0)
+            self.assertEqual(rows[0]["failure_mode_label"], "mixed")
+            self.assertAlmostEqual(float(rows[0]["failure_time_s"]), 0.012)
+            self.assertAlmostEqual(float(rows[0]["failure_extension_m"]), 0.001)
+            self.assertAlmostEqual(float(rows[0]["failure_energy_J"]), 0.2)
+            self.assertIn("final_midpoint_z_m", rows[0])
+
     def test_benchmark_repeat_signature_and_artifacts(self):
         config = self.config()
         with tempfile.TemporaryDirectory() as tmp:
@@ -77,6 +99,12 @@ class DEM3DEnergyAuditTests(unittest.TestCase):
                              summary["repeat_signature_sha256"])
             self.assertTrue((output / "history_3d.csv").is_file())
             self.assertTrue((output / "final_checkpoint_3d.pt").is_file())
+            self.assertTrue((output / "fracture_events_3d.csv").is_file())
+            with (output / "fracture_events_3d.csv").open(
+                newline="", encoding="utf-8"
+            ) as stream:
+                fracture_rows = list(csv.DictReader(stream))
+            self.assertEqual(len(fracture_rows), summary["broken_bonds"])
             saved = json.loads((output / "summary_3d.json").read_text())
             self.assertEqual(saved["protocol"], "tensordem-dem3d-indenter-v1")
             self.assertEqual(saved["signature_sha256"], summary["signature_sha256"])
