@@ -288,5 +288,38 @@ class DEM3DTests(unittest.TestCase):
             self.assertIn("bottom_platen_reaction_z_N", rows[0])
             self.assertIn("platen_contact_energy_J", rows[0])
 
+
+    def test_cylinder_xz_geometry_is_compact_and_bonded(self):
+        sim = IceDEM3D(DEM3DConfig(
+            nx=9, ny=3, nz=9, geometry="cylinder_xz",
+            fix_x_edges=False, drag=0.0,
+        ))
+        self.assertLess(len(sim.positions), 9 * 3 * 9)
+        self.assertEqual(tuple(sim.positions.shape), (len(sim.velocities), 3))
+        self.assertTrue(bool((sim.pairs >= 0).all()))
+        self.assertTrue(bool((sim.pairs < len(sim.positions)).all()))
+        self.assertEqual(len(torch.unique(sim.pairs[:, 0] * len(sim.positions) + sim.pairs[:, 1])),
+                         len(sim.pairs))
+        radial = torch.sqrt(sim.initial_positions[:, 0] ** 2 + sim.initial_positions[:, 2] ** 2)
+        self.assertLessEqual(float(radial.max()), 4 * 2 * sim.config.radius + 1e-12)
+        force, reaction = sim.forces(update_fracture=False)
+        self.assertTrue(torch.isfinite(force).all())
+        torch.testing.assert_close(force.sum(0), -reaction, atol=1e-9, rtol=0)
+        self.assertLess(float(force.abs().max()), 1e-7)
+
+    def test_cylinder_geometry_validation_and_checkpoint_round_trip(self):
+        with self.assertRaises(ValueError):
+            DEM3DConfig(nx=2, nz=5, geometry="cylinder_xz")
+        with self.assertRaises(ValueError):
+            DEM3DConfig(geometry="sphere")
+        sim = IceDEM3D(DEM3DConfig(nx=7, ny=2, nz=7, geometry="cylinder_xz",
+                                   fix_x_edges=False))
+        snapshot = sim.state_dict()
+        resumed = IceDEM3D(DEM3DConfig(nx=7, ny=2, nz=7, geometry="cylinder_xz",
+                                       fix_x_edges=False))
+        resumed.load_state_dict(snapshot)
+        torch.testing.assert_close(resumed.positions, sim.positions, atol=0, rtol=0)
+        self.assertTrue(torch.equal(resumed.pairs, sim.pairs))
+
 if __name__ == "__main__":
     unittest.main()
