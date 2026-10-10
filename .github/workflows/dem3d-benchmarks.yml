@@ -116,10 +116,8 @@ jobs:
             --output results-dem3d-ucs-sensitivity
           python scripts/benchmark_dem3d_ucs_fracture_threshold.py \
             --output results-dem3d-ucs-fracture-threshold
-          python scripts/benchmark_dem3d_energy_timestep.py \\
-            --output results-dem3d-energy-timestep
-          python scripts/benchmark_dem3d_ucs_timestep_convergence.py \\
-            --output results-dem3d-ucs-timestep
+          python scripts/benchmark_dem3d_energy_timestep.py --output results-dem3d-energy-timestep
+          python scripts/benchmark_dem3d_ucs_timestep_convergence.py --output results-dem3d-ucs-timestep
       - name: Upload benchmark results
         if: always()
         uses: actions/upload-artifact@v4
@@ -135,5 +133,6 @@ jobs:
             results-dem3d-ucs-fracture-threshold/
             results-dem3d-fracture-validation/
             results-dem3d-energy-timestep/
+            results-dem3d-ucs-timestep/
           if-no-files-found: warn
           retention-days: 30
