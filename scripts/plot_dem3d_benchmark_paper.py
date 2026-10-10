@@ -107,7 +107,7 @@ def _emit_resolution(root: Path, output: Path, manifest: list[dict[str, Any]]) -
 
 
 def _emit_ucs_timestep(root: Path, output: Path, manifest: list[dict[str, Any]]) -> None:
-    filename = "ucs_timestep_convergence.csv"
+    filename = "ucs_timestep_convergence_summary.csv"
     path = _find_csv(root, filename)
     name = "ucs_timestep_sensitivity.png"
     if path is None:
