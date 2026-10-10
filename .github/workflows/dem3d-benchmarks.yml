@@ -154,6 +154,8 @@ jobs:
           python scripts/benchmark_dem3d_wedge_resistance_sensitivity.py --output results-dem3d-wedge-sensitivity
           python scripts/benchmark_dem3d_ship_ice_formula_baselines.py --output results-dem3d-mt-uikku-formulas
           python scripts/benchmark_dem3d_three_point_bending.py --output results-dem3d-three-point-bending
+          python scripts/validate_dem3d_fracture.py --output results-dem3d-fracture-validation
+          python -m unittest discover -s tests -p test_dem3d_fracture_objectivity.py
           python scripts/benchmark_dem3d_bending_load_convergence.py --output results-dem3d-bending-load-convergence
           python -m unittest discover -s tests -p test_dem3d_bending_load_convergence.py
           python scripts/benchmark_dem3d_bending_resolution.py --output results-dem3d-bending-resolution
