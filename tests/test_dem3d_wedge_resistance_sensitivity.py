@@ -16,11 +16,14 @@ class WedgeResistanceSensitivityTests(unittest.TestCase):
                 dt_factors=(1.0, 0.5, 0.25),
             )
             self.assertEqual(report["verdict"], "PASS", report)
-            self.assertEqual(report["case_count"], 7)
+            self.assertEqual(report["case_count"], 10)
             self.assertTrue(all(report["checks"].values()))
             self.assertTrue(all(case["finite"] and case["repeatable"] for case in report["cases"]))
             timestep_cases = [c for c in report["cases"] if c["sweep"] == "timestep"]
             self.assertEqual([c["steps"] for c in timestep_cases], [8, 16, 32])
+            width_cases = [c for c in report["cases"] if c["sweep"] == "bow_half_width"]
+            self.assertEqual([c["value"] for c in width_cases], [0.02, 0.03, 0.04])
+            self.assertTrue(all(c["bow_half_width_m"] == c["value"] for c in width_cases))
             for filename in (
                 "wedge_resistance_sensitivity_report.json",
                 "wedge_resistance_sensitivity_summary.csv",
@@ -36,6 +39,8 @@ class WedgeResistanceSensitivityTests(unittest.TestCase):
                 run_sensitivity_campaign(Path(tmp), dt_factors=(1.0, 1.0))
             with self.assertRaises(ValueError):
                 run_sensitivity_campaign(Path(tmp), speeds_m_s=(0.0,))
+            with self.assertRaises(ValueError):
+                run_sensitivity_campaign(Path(tmp), widths_m=(0.0,))
 
 
 if __name__ == "__main__":
