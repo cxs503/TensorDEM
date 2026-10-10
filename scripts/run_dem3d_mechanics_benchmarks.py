@@ -36,9 +36,12 @@ def _base_config(**overrides: Any) -> DEM3DConfig:
 
 
 def _isolated_pair(*, bond_active: bool, extension_m: float = 0.0,
-                   overlap_m: float = 0.0) -> tuple[IceDEM3D, int, int]:
+                   overlap_m: float = 0.0, bond_stiffness: float = 2000.0,
+                   contact_stiffness: float = 5000.0) -> tuple[IceDEM3D, int, int]:
     """Move every non-target particle away and isolate one axial lattice pair."""
-    sim = IceDEM3D(_base_config())
+    sim = IceDEM3D(_base_config(
+        bond_stiffness=bond_stiffness, contact_stiffness=contact_stiffness
+    ))
     target = int(torch.argmin(torch.abs(sim.rest_lengths - 2.0 * sim.config.radius)))
     i, j = (int(v) for v in sim.pairs[target].tolist())
     rest = float(sim.rest_lengths[target])
@@ -74,32 +77,51 @@ def run_mechanics_benchmarks(output: Path) -> dict[str, Any]:
     torch.set_num_threads(1)
     output.mkdir(parents=True, exist_ok=True)
     records: list[dict[str, Any]] = []
+    manifest_path = ROOT / "benchmarks" / "dem3d" / "mechanics_cases.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if manifest.get("protocol") != "tensordem-dem3d-mechanics-v1":
+        raise ValueError(f"unsupported mechanics benchmark protocol in {manifest_path}")
+    definitions = {case["id"]: case for case in manifest.get("cases", [])}
+    if len(definitions) != len(manifest.get("cases", [])):
+        raise ValueError("mechanics benchmark manifest contains duplicate case IDs")
 
     # 1. Isolated central-force bond: compare a real solver force with F=k*delta_l.
-    extension = 1.0e-4
-    sim, i, j = _isolated_pair(bond_active=True, extension_m=extension)
+    bond_case = definitions["bond_axial_spring"]
+    extension = float(bond_case["parameters"]["extension_m"])
+    bond_stiffness = float(bond_case["parameters"]["bond_stiffness_N_per_m"])
+    sim, i, j = _isolated_pair(
+        bond_active=True, extension_m=extension, bond_stiffness=bond_stiffness
+    )
     force, _ = sim.forces(update_fracture=False)
     expected_force = sim.config.bond_stiffness * extension
     observed_force = float(force[i, 0])
     abs_error = abs(observed_force - expected_force)
     rel_error = abs_error / max(abs(expected_force), 1.0e-30)
+    bond_acceptance = bond_case["acceptance"]
     records.append(_record(
         "bond_axial_spring", observed_force, expected_force,
-        abs_error <= 1.0e-10 and rel_error <= 1.0e-10, "N",
+        abs_error <= float(bond_acceptance["absolute_force_error_N"])
+        and rel_error <= float(bond_acceptance["relative_force_error"]), "N",
         f"absolute_error_N={abs_error:.6g}; relative_error={rel_error:.6g}; pair=({i},{j})",
     ))
 
     # 2. Isolated unbonded pair: current law is linear penalty, not Hertz contact.
-    overlap = 0.005
-    sim, i, j = _isolated_pair(bond_active=False, overlap_m=overlap)
+    contact_case = definitions["linear_contact_penalty"]
+    overlap = float(contact_case["parameters"]["overlap_m"])
+    contact_stiffness = float(contact_case["parameters"]["contact_stiffness_N_per_m"])
+    sim, i, j = _isolated_pair(
+        bond_active=False, overlap_m=overlap, contact_stiffness=contact_stiffness
+    )
     force, _ = sim.forces(update_fracture=False)
     expected_contact = sim.config.contact_stiffness * overlap
     observed_contact = abs(float(force[i, 0]))
     contact_error = abs(observed_contact - expected_contact)
     contact_rel = contact_error / max(abs(expected_contact), 1.0e-30)
+    contact_acceptance = contact_case["acceptance"]
     records.append(_record(
         "linear_contact_penalty", observed_contact, expected_contact,
-        contact_error <= 1.0e-10 and contact_rel <= 1.0e-10, "N",
+        contact_error <= float(contact_acceptance["absolute_force_error_N"])
+        and contact_rel <= float(contact_acceptance["relative_force_error"]), "N",
         f"absolute_error_N={contact_error:.6g}; relative_error={contact_rel:.6g}; "
         "zero normal velocity; no tangential history",
     ))
@@ -118,9 +140,10 @@ def run_mechanics_benchmarks(output: Path) -> dict[str, Any]:
     contact_count = int((torch.linalg.vector_norm(
         sim.positions - sim.tool_position, dim=1
     ) < sim.config.radius + sim.config.tool_radius).sum())
+    force_limit = float(definitions["force_balance"]["acceptance"]["net_force_residual_N"])
     records.append(_record(
         "force_balance", {"residual_N": residual, "tool_contact_particles": contact_count}, 0.0,
-        math.isfinite(residual) and residual <= 1.0e-9 and contact_count >= 1, "N",
+        math.isfinite(residual) and residual <= force_limit and contact_count >= 1, "N",
         "Checks action-reaction with an explicitly loaded top-axis particle in tool contact; "
         "the contact count must be nonzero.",
     ))
@@ -138,7 +161,8 @@ def run_mechanics_benchmarks(output: Path) -> dict[str, Any]:
     sim.forces()
     broken_after_unload = sim.broken_bonds
     healing = broken_after_load - broken_after_unload
-    passed = broken_after_load >= 1 and healing == 0
+    minimum_broken = int(definitions["irreversible_tensile_failure"]["acceptance"]["minimum_broken_bonds"])
+    passed = broken_after_load >= minimum_broken and healing == 0
     records.append(_record(
         "irreversible_tensile_failure", {"after_load": broken_after_load,
                                          "after_unload": broken_after_unload},
@@ -159,24 +183,27 @@ def run_mechanics_benchmarks(output: Path) -> dict[str, Any]:
     )
     force, _ = sim.forces(update_fracture=False)
     max_force = float(force.abs().max())
+    rotation_limit = float(definitions["rigid_rotation_objectivity"]["acceptance"]["maximum_internal_force_N"])
+    required_broken = int(definitions["rigid_rotation_objectivity"]["acceptance"]["broken_bonds"])
     records.append(_record(
         "rigid_rotation_objectivity", {"max_abs_force_N": max_force,
                                        "broken_bonds": sim.broken_bonds},
-        {"max_abs_force_N": 1.0e-7, "broken_bonds": 0},
-        max_force <= 1.0e-7 and sim.broken_bonds == 0, "N",
+        {"max_abs_force_N": rotation_limit, "broken_bonds": required_broken},
+        max_force <= rotation_limit and sim.broken_bonds == required_broken, "N",
         "A rigid-body rotation and translation should not generate internal force or shear failure.",
     ))
 
     # 6. The configured explicit step must not exceed the model's conservative guard.
     base = _base_config()
+    dt_factor = float(definitions["timestep_guard"]["parameters"]["dt_factor"])
     oversized_rejected = False
     try:
-        IceDEM3D(_base_config(dt=base.recommended_dt * 1.01))
+        IceDEM3D(_base_config(dt=base.recommended_dt * dt_factor))
     except ValueError:
         oversized_rejected = True
     records.append(_record(
         "timestep_guard", oversized_rejected, True, oversized_rejected, "boolean",
-        f"recommended_dt_s={base.recommended_dt:.12g}; attempted_dt_s={base.recommended_dt * 1.01:.12g}",
+        f"recommended_dt_s={base.recommended_dt:.12g}; attempted_dt_s={base.recommended_dt * dt_factor:.12g}",
     ))
 
     failed = [row for row in records if row["status"] != "PASS"]
@@ -193,6 +220,7 @@ def run_mechanics_benchmarks(output: Path) -> dict[str, Any]:
         "pass_count": len(records) - len(failed),
         "fail_count": len(failed),
         "cases": records,
+        "not_yet_supported": manifest.get("not_yet_supported", []),
     }
     (output / "mechanics_benchmark_report.json").write_text(
         json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8"
