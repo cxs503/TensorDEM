@@ -202,16 +202,19 @@ def visualize_case(case_dir: Path, output: Path, *, make_gif: bool = True) -> di
         frames = payload["frames"]
         broken_by_frame = [int((~frame["alive"].bool()).sum().item()) for frame in frames]
         total_bonds = int(payload["pairs"].shape[0])
+        newly_broken = broken_by_frame[-1] - broken_by_frame[0]
+        newly_broken_fraction = newly_broken / max(total_bonds, 1)
         report["fracture_diagnostics"] = {
             "initial_broken_bonds": broken_by_frame[0],
             "final_broken_bonds": broken_by_frame[-1],
-            "newly_broken_bonds": broken_by_frame[-1] - broken_by_frame[0],
+            "newly_broken_bonds": newly_broken,
             "bond_count": total_bonds,
             "final_broken_fraction": broken_by_frame[-1] / max(total_bonds, 1),
+            "newly_broken_fraction": newly_broken_fraction,
             "frames_with_new_breakage": sum(b > a for a, b in zip(broken_by_frame, broken_by_frame[1:])),
             "max_new_breaks_between_saved_frames": max((b - a for a, b in zip(broken_by_frame, broken_by_frame[1:])), default=0),
-            "warning": ("NO_VISIBLE_FRACTURE: no bonds broke in saved trajectory" if broken_by_frame[-1] == 0 else
-                        "LOW_FRACTURE_ACTIVITY: fewer than 1% of bonds broke" if broken_by_frame[-1] / max(total_bonds, 1) < 0.01 else None),
+            "warning": ("NO_VISIBLE_FRACTURE: no bonds broke in saved trajectory" if newly_broken == 0 else
+                        "LOW_FRACTURE_ACTIVITY: fewer than 1% of bonds broke" if newly_broken_fraction < 0.01 else None),
         }
         with (output / "fracture_diagnostics.csv").open("w", newline="", encoding="utf-8") as stream:
             writer = csv.writer(stream)
