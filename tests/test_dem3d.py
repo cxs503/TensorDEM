@@ -254,5 +254,19 @@ class DEM3DTests(unittest.TestCase):
             self.model(bottom_platen_velocity=float("nan"))
 
 
+
+    def test_checkpoint_without_new_platen_keys_remains_loadable(self):
+        original = self.model()
+        snapshot = original.state_dict()
+        for key in (
+            "top_platen_enabled", "bottom_platen_enabled", "platen_stiffness",
+            "platen_damping", "top_platen_gap", "bottom_platen_gap",
+            "top_platen_velocity", "bottom_platen_velocity",
+        ):
+            snapshot["config"].pop(key, None)
+        resumed = self.model()
+        resumed.load_state_dict(snapshot)
+        torch.testing.assert_close(resumed.positions, original.positions, atol=0, rtol=0)
+
 if __name__ == "__main__":
     unittest.main()
