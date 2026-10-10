@@ -38,7 +38,7 @@ class DEM3DPaperFiguresTests(unittest.TestCase):
                 {"resolution_factor": 2, "peak_support_reaction_abs_N": 0.012,
                  "peak_midspan_deflection_abs_m": 0.0018, "broken_bonds": 3},
             ])
-            write_csv(root / "results-dem3d-ucs-timestep" / "ucs_timestep_convergence.csv", [
+            write_csv(root / "results-dem3d-ucs-timestep" / "ucs_timestep_convergence_summary.csv", [
                 {"dt_factor": 1.0, "peak_stress_Pa": 100.0},
                 {"dt_factor": 0.5, "peak_stress_Pa": 102.0},
             ])
