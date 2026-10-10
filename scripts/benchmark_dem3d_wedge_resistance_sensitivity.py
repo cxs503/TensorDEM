@@ -72,15 +72,17 @@ def run_sensitivity_campaign(
     records: list[dict[str, Any]] = []
     history: list[dict[str, Any]] = []
     for index, spec in enumerate(definitions):
-        rows, signature, metrics = _run_once(
-            int(spec["steps"]), bow_speed=float(spec["bow_speed_m_s"]),
-            wedge_angle_deg=float(spec["wedge_angle_deg"]), dt_factor=float(spec["dt_factor"]),
-            bow_half_width_m=float(spec["bow_half_width_m"]),
-        )
-        repeat_rows, repeat_signature, repeat_metrics = _run_once(
-            int(spec["steps"]), bow_speed=float(spec["bow_speed_m_s"]),
-            wedge_angle_deg=float(spec["wedge_angle_deg"]), dt_factor=float(spec["dt_factor"]),
-        )
+        run_kwargs = {
+            "bow_speed": float(spec["bow_speed_m_s"]),
+            "wedge_angle_deg": float(spec["wedge_angle_deg"]),
+            "dt_factor": float(spec["dt_factor"]),
+            "bow_half_width_m": float(spec["bow_half_width_m"]),
+        }
+        rows, signature, metrics = _run_once(int(spec["steps"]), **run_kwargs)
+        # Repeat the exact same physical case. Omitting bow_half_width_m here
+        # silently used _run_once's 0.03 m default and made 0.02/0.04 m cases
+        # compare different geometries, falsely reporting non-repeatability.
+        repeat_rows, repeat_signature, repeat_metrics = _run_once(int(spec["steps"]), **run_kwargs)
         finite = all(math.isfinite(float(value)) for row in rows for value in row.values())
         first_fracture = _first_fracture(rows)
         repeatable = signature == repeat_signature and metrics == repeat_metrics
