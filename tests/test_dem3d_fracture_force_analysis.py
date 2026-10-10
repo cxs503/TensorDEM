@@ -68,6 +68,28 @@ class DEM3DFractureForceAnalysisTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "outside the sampled history window"):
                 analyze_fracture_force(history, events, root / "bad-output")
 
+    def test_accepts_header_only_event_file_when_no_bonds_break(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            history = root / "history_3d.csv"
+            events = root / "fracture_events_3d.csv"
+            self._write_csv(history, ["step", "time", "reaction_z", "broken_bonds"], [
+                {"step": 0, "time": 0.0, "reaction_z": 0.0, "broken_bonds": 0},
+                {"step": 10, "time": 1.0, "reaction_z": 2.0, "broken_bonds": 0},
+            ])
+            self._write_csv(events, [
+                "bond_id", "failure_time_s", "failure_mode_label"
+            ], [])
+            summary = analyze_fracture_force(history, events, root / "analysis")
+            self.assertEqual(summary["total_broken_bonds"], 0)
+            self.assertEqual(summary["maximum_interval_fracture_rate_per_s"], 0.0)
+            self.assertIsNone(summary["pearson_fracture_rate_vs_abs_reaction"])
+            with (root / "analysis" / "fracture_force_intervals_3d.csv").open(
+                newline="", encoding="utf-8"
+            ) as stream:
+                rows = list(csv.DictReader(stream))
+            self.assertEqual(rows[0]["new_fractures"], "0")
+
     def test_rejects_decreasing_damage(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
