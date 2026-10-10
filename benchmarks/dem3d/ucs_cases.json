@@ -1,0 +1,38 @@
+{
+  "protocol": "tensordem-dem3d-ucs-v1",
+  "units": "SI",
+  "scope": "Dynamic uniaxial platen-compression regression with free lateral particle motion; numerical verification only, not experimental calibration.",
+  "cases": [
+    {
+      "id": "ucs_dynamic_smoke",
+      "config": {
+        "nx": 4,
+        "ny": 4,
+        "nz": 3,
+        "radius_m": 0.025,
+        "density_kg_m3": 917.0,
+        "bond_stiffness_N_m": 2000.0,
+        "contact_stiffness_N_m": 5000.0,
+        "breaking_strain": 0.015,
+        "platen_stiffness_N_m": 5000.0,
+        "platen_damping_Ns_m": 0.5,
+        "loading_speed_m_s": 0.05,
+        "fix_x_edges": false,
+        "fix_bottom": false,
+        "steps": 500
+      },
+      "acceptance": {
+        "minimum_peak_load_N": 0.0,
+        "minimum_peak_stress_Pa": 0.0,
+        "require_finite_history": true,
+        "require_repeatable": true
+      }
+    }
+  ],
+  "interpretation_limits": [
+    "The specimen is a simple-cubic bonded-sphere prism, not a cylindrical laboratory specimen.",
+    "Platens are infinite, frictionless planes with prescribed constant velocity.",
+    "Peak stress is a software benchmark output, not a calibrated ice compressive strength.",
+    "Particle resolution, loading-rate, boundary-condition and material-parameter convergence are not established by this case."
+  ]
+}
