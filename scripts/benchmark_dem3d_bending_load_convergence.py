@@ -1,4 +1,4 @@
-"""Step-refinement campaign for the DEM3D three-point-bending smoke fixture.
+"""Load-ramp step-count sensitivity campaign for the DEM3D three-point-bending fixture.
 
 The campaign reports numerical refinement trends. It is not experimental validation,
 a flexural-strength calibration, or a guarantee that the underlying model is physical.
@@ -78,7 +78,7 @@ def run_bending_load_convergence(
         })
 
     report = {
-        "protocol": "tensordem-dem3d-bending-load-convergence-v1",
+        "protocol": "tensordem-dem3d-bending-load-sensitivity-v1",\n        "study_type": "load-ramp step-count and effective loading-rate sensitivity",
         "verdict": "PASS" if all(row["verdict"] == "PASS" for row in rows) else "FAIL",
         "base_steps": base_steps,
         "levels": levels,
