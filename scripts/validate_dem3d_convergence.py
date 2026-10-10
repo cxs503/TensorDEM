@@ -54,6 +54,7 @@ def run_convergence_study(
         raise ValueError("base dt exceeds the solver's recommended limit")
     final_time = base_steps * base_dt
     levels: list[dict[str, Any]] = []
+    history: list[dict[str, Any]] = []
 
     for factor in factors:
         dt = base_dt / factor
@@ -74,6 +75,22 @@ def run_convergence_study(
                 peak_reaction_signed = rz
             residual = abs(float(row["energy_balance_residual_J"]))
             max_energy_residual_abs = max(max_energy_residual_abs, residual)
+            history.append({
+                "refinement_factor": factor,
+                "step": sim.step_count,
+                "time_s": float(row["time"]),
+                "dt_s": dt,
+                "reaction_x_N": float(row["reaction_x"]),
+                "reaction_y_N": float(row["reaction_y"]),
+                "reaction_z_N": rz,
+                "reaction_magnitude_N": math.sqrt(
+                    float(row["reaction_x"]) ** 2
+                    + float(row["reaction_y"]) ** 2 + rz ** 2
+                ),
+                "broken_bonds": int(row["broken_bonds"]),
+                "mechanical_energy_J": float(row["mechanical_energy_J"]),
+                "energy_balance_residual_J": float(row["energy_balance_residual_J"]),
+            })
         final = sim.diagnostics()
         levels.append({
             "refinement_factor": factor,
@@ -113,15 +130,25 @@ def run_convergence_study(
         "base_dt_s": base_dt,
         "target_final_time_s": final_time,
         "levels": levels,
+        "history": history,
         "finest_refinement_factor": factors[-1],
     }
 
 
 def write_report(report: dict[str, Any], output: Path) -> None:
     output.mkdir(parents=True, exist_ok=True)
+    summary = {key: value for key, value in report.items() if key != "history"}
     (output / "convergence_3d.json").write_text(
-        json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
+    history = report.get("history", [])
+    if history:
+        with (output / "reaction_history_3d.csv").open(
+            "w", newline="", encoding="utf-8"
+        ) as stream:
+            writer = csv.DictWriter(stream, fieldnames=list(history[0]))
+            writer.writeheader()
+            writer.writerows(history)
     levels = report["levels"]
     with (output / "convergence_3d.csv").open("w", newline="", encoding="utf-8") as stream:
         writer = csv.DictWriter(stream, fieldnames=list(levels[0]))
@@ -158,7 +185,9 @@ def main(argv: list[str] | None = None) -> None:
         write_report(report, args.output)
     except (ValueError, RuntimeError, AssertionError) as exc:
         parser.error(str(exc))
-    print(json.dumps(report, indent=2, sort_keys=True))
+    printable = {key: value for key, value in report.items() if key != "history"}
+    printable["history_rows_written"] = len(report.get("history", []))
+    print(json.dumps(printable, indent=2, sort_keys=True))
 
 
 if __name__ == "__main__":
