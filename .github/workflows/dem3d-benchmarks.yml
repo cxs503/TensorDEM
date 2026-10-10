@@ -22,6 +22,9 @@ on:
       - "scripts/benchmark_dem3d_moving_wedge_bow.py"
       - "tests/test_dem3d_moving_wedge_bow.py"
       - "docs/dem3d_moving_wedge_bow.md"
+      - "scripts/benchmark_dem3d_wedge_resistance_sensitivity.py"
+      - "tests/test_dem3d_wedge_resistance_sensitivity.py"
+      - "docs/dem3d_wedge_resistance_sensitivity.md"
       - "scripts/validate_dem3d_fracture.py"
       - "tests/test_dem3d_fracture_objectivity.py"
       - "docs/dem3d_fracture_objectivity_energy.md"
@@ -56,6 +59,9 @@ on:
       - "scripts/benchmark_dem3d_moving_wedge_bow.py"
       - "tests/test_dem3d_moving_wedge_bow.py"
       - "docs/dem3d_moving_wedge_bow.md"
+      - "scripts/benchmark_dem3d_wedge_resistance_sensitivity.py"
+      - "tests/test_dem3d_wedge_resistance_sensitivity.py"
+      - "docs/dem3d_wedge_resistance_sensitivity.md"
       - "scripts/validate_dem3d_fracture.py"
       - "tests/test_dem3d_fracture_objectivity.py"
       - "docs/dem3d_fracture_objectivity_energy.md"
@@ -127,6 +133,7 @@ jobs:
           python scripts/benchmark_dem3d_energy_timestep.py --output results-dem3d-energy-timestep
           python scripts/benchmark_dem3d_ucs_timestep_convergence.py --output results-dem3d-ucs-timestep
           python scripts/benchmark_dem3d_moving_wedge_bow.py --output results-dem3d-moving-wedge-bow
+          python scripts/benchmark_dem3d_wedge_resistance_sensitivity.py --output results-dem3d-wedge-sensitivity
       - name: Upload benchmark results
         if: always()
         uses: actions/upload-artifact@v4
@@ -144,5 +151,6 @@ jobs:
             results-dem3d-energy-timestep/
             results-dem3d-ucs-timestep/
             results-dem3d-moving-wedge-bow/
+            results-dem3d-wedge-sensitivity/
           if-no-files-found: warn
           retention-days: 30
