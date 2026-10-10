@@ -41,7 +41,8 @@ The runner returns a nonzero exit code if any invariant fails and writes:
 |---|---|---|
 | `bond_axial_spring` | Isolated force equals (k_b\,\Delta l) | Absolute and relative error each (le 10^{-10}) |
 | `linear_contact_penalty` | Zero-velocity normal force equals (k_c\,\delta) | Absolute and relative error each (le 10^{-10}) |
-| `force_balance` | Sum of particle forces plus indenter reaction is zero | Residual (le 10^{-9}) N |
+| `force_balance` | Sum of particle forces plus indenter reaction is zero, with active tool contact | Residual (le 10^{-9}) N |
+| `single_bond_shear_failure` | Affine simple shear triggers the objective shear criterion while tensile threshold is held high | At least one broken bond, shear mode code 2 |
 | `irreversible_tensile_failure` | Above-threshold bond fails and does not heal on unloading | At least one failure, zero healing |
 | `rigid_rotation_objectivity` | Rigid rotation creates no internal force or damage | Maximum force (le 10^{-7}) N; zero broken bonds |
 | `timestep_guard` | An explicit step above the configured conservative bound is rejected | Rejection required |
@@ -69,7 +70,7 @@ boundary conditions. The planned cases are:
 2. Brazilian splitting: force-displacement curve, peak load and tensile crack path;
 3. three-point bending with a notch: load-deflection curve, crack trajectory and
    fracture-energy estimate;
-4. single-bond shear: objective shear invariant, failure mode and event timestamp.
+
 
 Each material-level case needs a published or laboratory reference dataset and a
 declared calibration/validation split. A numerically repeatable result alone is
