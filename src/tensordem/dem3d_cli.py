@@ -25,6 +25,20 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--restart", type=Path, default=None,
                         help="从之前保存的 checkpoint_3d.pt 续算；物理参数以检查点为准")
     parser.add_argument("--fix-bottom", action="store_true", help="固定底部颗粒层")
+    parser.add_argument("--top-platen", action="store_true", help="启用上部平面压板")
+    parser.add_argument("--bottom-platen", action="store_true", help="启用下部平面压板")
+    parser.add_argument("--platen-stiffness", type=float, default=5000.0,
+                        help="平面压板法向罚刚度 (N/m)")
+    parser.add_argument("--platen-damping", type=float, default=0.0,
+                        help="平面压板法向阻尼 (N s/m)")
+    parser.add_argument("--top-platen-gap", type=float, default=0.0,
+                        help="上压板与初始颗粒表面的间隙 (m)")
+    parser.add_argument("--bottom-platen-gap", type=float, default=0.0,
+                        help="下压板与初始颗粒表面的间隙 (m)")
+    parser.add_argument("--top-platen-velocity", type=float, default=0.0,
+                        help="上压板 z 向速度 (m/s)，向下为负")
+    parser.add_argument("--bottom-platen-velocity", type=float, default=0.0,
+                        help="下压板 z 向速度 (m/s)，向上为正")
     args = parser.parse_args(argv)
     if args.steps < 1 or args.save_every < 1:
         parser.error("--steps and --save-every must be positive")
@@ -52,7 +66,15 @@ def main(argv: list[str] | None = None) -> None:
                 tool_speed=args.speed, radius=args.radius, tool_radius=args.tool_radius,
                 breaking_strain=args.breaking_strain,
                 shear_breaking_strain=args.shear_breaking_strain,
-                device=args.device, fix_bottom=args.fix_bottom)
+                device=args.device, fix_bottom=args.fix_bottom,
+                top_platen_enabled=args.top_platen,
+                bottom_platen_enabled=args.bottom_platen,
+                platen_stiffness=args.platen_stiffness,
+                platen_damping=args.platen_damping,
+                top_platen_gap=args.top_platen_gap,
+                bottom_platen_gap=args.bottom_platen_gap,
+                top_platen_velocity=args.top_platen_velocity,
+                bottom_platen_velocity=args.bottom_platen_velocity)
             sim = IceDEM3D(config)
     except (ValueError, RuntimeError, TypeError, OSError, KeyError) as exc:
         parser.error(str(exc))
