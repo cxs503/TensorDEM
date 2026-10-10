@@ -141,3 +141,34 @@ with factors `1 2` before attempting `1 2 4`. Discrete bond topology changes wit
 resolution; fracture counts need not converge monotonically. Treat this as a
 sensitivity screen, then calibrate the scaling against measured stiffness,
 fracture energy, and load-displacement data before engineering prediction.
+
+
+## Cross-resolution force/damage validation
+
+After a resolution campaign has produced `resolution_history_3d.csv`, compare
+the time histories on a common physical-time window:
+
+```bash
+python scripts/compare_dem3d_resolutions.py \
+  --history results-dem3d-resolution/resolution_history_3d.csv \
+  --output results-dem3d-cross-resolution
+```
+
+The script aligns signed indenter reaction using linear interpolation on the
+finest-level sample grid and aligns cumulative broken-bond counts using a
+zero-order hold. It exports:
+
+- `cross_resolution_summary_3d.json`: common time window, reference level, and
+  protocol/interpretation notes.
+- `cross_resolution_levels_3d.csv`: peak reaction and time, signed impulse,
+  force RMSE and normalized RMSE versus the finest level, final damage delta,
+  damage-curve RMSE, first sampled fracture time, and maximum energy-balance
+  residual.
+- `cross_resolution_history_3d.csv`: aligned per-time reaction and cumulative
+  damage differences against the finest level.
+
+The finest level is only a numerical comparison reference, not ground truth.
+Use identical physical loading and calibration assumptions, inspect the full
+curves, and compare against experiments before making engineering claims. A
+small force-history error does not guarantee converged crack paths or fracture
+energy.
