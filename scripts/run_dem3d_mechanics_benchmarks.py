@@ -109,7 +109,7 @@ def run_mechanics_benchmarks(output: Path) -> dict[str, Any]:
     candidates = torch.where(sim.initial_positions[:, 2] == top, top_axis,
                              torch.full_like(top_axis, float("inf")))
     loaded = int(torch.argmin(candidates))
-    sim.positions[loaded, 2] -= 0.015
+    sim.positions[loaded, 2] += 0.015
     sim.velocities[loaded, 0] = 0.02
     force, reaction = sim.forces(update_fracture=False)
     residual = float(torch.linalg.vector_norm(force.sum(dim=0) + reaction))
