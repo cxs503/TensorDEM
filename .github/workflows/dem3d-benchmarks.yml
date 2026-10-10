@@ -62,6 +62,9 @@ on:
       - "scripts/visualize_dem3d_benchmarks.py"
       - "tests/test_dem3d_visualization.py"
       - "docs/dem3d_benchmark_visualization.md"
+      - "docs/DEM3D_BENCHMARK_PAPER.md"
+      - "scripts/plot_dem3d_benchmark_paper.py"
+      - "tests/test_dem3d_paper_figures.py"
       - "pyproject.toml"
       - ".github/workflows/dem3d-benchmarks.yml"
   push:
@@ -112,6 +115,9 @@ on:
       - "scripts/visualize_dem3d_benchmarks.py"
       - "tests/test_dem3d_visualization.py"
       - "docs/dem3d_benchmark_visualization.md"
+      - "docs/DEM3D_BENCHMARK_PAPER.md"
+      - "scripts/plot_dem3d_benchmark_paper.py"
+      - "tests/test_dem3d_paper_figures.py"
       - "pyproject.toml"
       - ".github/workflows/dem3d-benchmarks.yml"
 
@@ -172,6 +178,8 @@ jobs:
           python -m unittest discover -s tests -p test_dem3d_bending_load_convergence.py
           python scripts/benchmark_dem3d_bending_resolution.py --output results-dem3d-bending-resolution
           python -m unittest discover -s tests -p test_dem3d_bending_resolution.py
+          python scripts/plot_dem3d_benchmark_paper.py --input-root . --output results-dem3d-paper-figures
+          python -m unittest discover -s tests -p test_dem3d_paper_figures.py
       - name: Upload benchmark results
         if: always()
         uses: actions/upload-artifact@v4
@@ -195,5 +203,6 @@ jobs:
             results-dem3d-three-point-bending/
             results-dem3d-bending-load-convergence/
             results-dem3d-bending-resolution/
+            results-dem3d-paper-figures/
           if-no-files-found: warn
           retention-days: 30
