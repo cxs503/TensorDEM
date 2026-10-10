@@ -14,6 +14,9 @@ on:
       - "benchmarks/dem3d/**"
       - "scripts/benchmark_dem3d_ucs.py"
       - "tests/test_dem3d_ucs_benchmark.py"
+      - "scripts/benchmark_dem3d_ucs_sensitivity.py"
+      - "tests/test_dem3d_ucs_sensitivity.py"
+      - "docs/dem3d_ucs_sensitivity.md"
       - ".github/workflows/dem3d-benchmarks.yml"
   push:
     branches: [main]
@@ -28,6 +31,9 @@ on:
       - "tests/test_dem3d_platen_compression.py"
       - "scripts/benchmark_dem3d_ucs.py"
       - "tests/test_dem3d_ucs_benchmark.py"
+      - "scripts/benchmark_dem3d_ucs_sensitivity.py"
+      - "tests/test_dem3d_ucs_sensitivity.py"
+      - "docs/dem3d_ucs_sensitivity.md"
       - "docs/dem3d_ucs_benchmark.md"
       - "docs/dem3d_plane_platen_boundaries.md"
       - "src/tensordem/dem3d_cli.py"
@@ -74,6 +80,8 @@ jobs:
             --output results-dem3d-platen-compression
           python scripts/benchmark_dem3d_ucs.py \
             --output results-dem3d-ucs
+          python scripts/benchmark_dem3d_ucs_sensitivity.py \
+            --output results-dem3d-ucs-sensitivity
       - name: Upload benchmark results
         if: always()
         uses: actions/upload-artifact@v4
@@ -85,5 +93,6 @@ jobs:
             results-dem3d-specimen-response/
             results-dem3d-platen-compression/
             results-dem3d-ucs/
+            results-dem3d-ucs-sensitivity/
           if-no-files-found: warn
           retention-days: 30
