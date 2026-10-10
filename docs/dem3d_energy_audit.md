@@ -207,3 +207,40 @@ the model is calibrated, experimentally validated, asymptotically converged, or
 qualified to predict full-scale ship/ice interaction. Engineering acceptance
 still requires calibrated material properties, measured load/displacement or
 fracture-energy comparisons, and documented physical validation.
+
+
+## One-command DEM3D verification campaign
+
+The individual stages can be run as a single reproducible campaign:
+
+```bash
+python scripts/run_dem3d_validation_campaign.py \
+  --nx 5 --ny 4 --nz 3 \
+  --steps 100 \
+  --timestep-factors 1 2 4 \
+  --resolution-factors 1 2 \
+  --sample-every 5 \
+  --output results-dem3d-validation-campaign
+```
+
+The runner executes time-step sensitivity, particle-resolution sensitivity,
+cross-resolution force/damage comparison, and the integrated numerical screen
+in order. It records a `validation_campaign_manifest.json` with the input
+configuration, stage output paths, screening verdict/counts, and SHA-256 hashes
+of generated artifacts. This provides a compact audit index for comparing runs
+and detecting post-run artifact changes.
+
+Directory layout:
+
+- `timestep/`: time-step sensitivity summary and force/energy history.
+- `resolution/`: particle-resolution summary, level table, and sampled histories.
+- `cross_resolution/`: aligned force/damage comparison and per-level metrics.
+- `screening/`: JSON and CSV PASS/WARN/FAIL screening checks.
+- `validation_campaign_manifest.json`: run settings and artifact digests.
+
+Use smaller `--steps` values first to confirm the environment and expected
+runtime. Increase the duration and refinement levels only after the small case
+runs correctly. The campaign is CPU-only for reproducibility in this version.
+Its verdict only reflects configured numerical gates; it does not imply
+experimental validation, material calibration, or full-scale icebreaker
+qualification.
