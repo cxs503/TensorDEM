@@ -148,7 +148,40 @@ def run_mechanics_benchmarks(output: Path) -> dict[str, Any]:
         "the contact count must be nonzero.",
     ))
 
-    # 4. Tensile failure is committed by the force update and remains irreversible.
+    # 4. Objective shear failure with tensile threshold intentionally out of range.
+    shear_case = definitions["single_bond_shear_failure"]
+    shear_params = shear_case["parameters"]
+    shear_cfg = _base_config(
+        breaking_strain=float(shear_params["breaking_strain"]),
+        shear_breaking_strain=float(shear_params["shear_breaking_strain"]),
+    )
+    sim = IceDEM3D(shear_cfg)
+    gamma = float(shear_params["engineering_shear_strain"])
+    deformation = torch.tensor([
+        [1.0, gamma, 0.0],
+        [0.0, 1.0, 0.0],
+        [0.0, 0.0, 1.0],
+    ], dtype=sim.dtype)
+    sim.positions = sim.initial_positions @ deformation.T
+    sim.forces()
+    shear_broken = sim.failure_mode[~sim.alive]
+    required_mode = int(shear_case["acceptance"]["failure_mode_code"])
+    shear_passed = (
+        sim.broken_bonds >= int(shear_case["acceptance"]["minimum_broken_bonds"])
+        and shear_broken.numel() > 0
+        and bool((shear_broken == required_mode).all())
+    )
+    records.append(_record(
+        "single_bond_shear_failure",
+        {"broken_bonds": sim.broken_bonds,
+         "failure_modes": sorted(set(int(v) for v in shear_broken.tolist()))},
+        {"minimum_broken_bonds": int(shear_case["acceptance"]["minimum_broken_bonds"]),
+         "failure_mode_code": required_mode},
+        shear_passed, "bonds",
+        "Affine simple shear is applied while tensile failure is disabled by a high threshold.",
+    ))
+
+    # 5. Tensile failure is committed by the force update and remains irreversible.
     sim = IceDEM3D(_base_config(breaking_strain=0.015, shear_breaking_strain=0.5))
     target = int(torch.argmin(torch.abs(sim.rest_lengths - 2.0 * sim.config.radius)))
     i, j = (int(v) for v in sim.pairs[target].tolist())
@@ -170,7 +203,7 @@ def run_mechanics_benchmarks(output: Path) -> dict[str, Any]:
         "Bond damage must be monotone under unloading; only a real force update commits failure.",
     ))
 
-    # 5. Objectivity: rigid rotation must not create strain damage.
+    # 6. Objectivity: rigid rotation must not create strain damage.
     sim = IceDEM3D(_base_config())
     angle = 0.37
     rotation = torch.tensor([
@@ -193,7 +226,7 @@ def run_mechanics_benchmarks(output: Path) -> dict[str, Any]:
         "A rigid-body rotation and translation should not generate internal force or shear failure.",
     ))
 
-    # 6. The configured explicit step must not exceed the model's conservative guard.
+    # 7. The configured explicit step must not exceed the model's conservative guard.
     base = _base_config()
     dt_factor = float(definitions["timestep_guard"]["parameters"]["dt_factor"])
     oversized_rejected = False
