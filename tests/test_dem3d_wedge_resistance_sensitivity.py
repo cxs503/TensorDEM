@@ -3,6 +3,7 @@ from __future__ import annotations
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from scripts.benchmark_dem3d_wedge_resistance_sensitivity import run_sensitivity_campaign
 
@@ -30,6 +31,47 @@ class WedgeResistanceSensitivityTests(unittest.TestCase):
                 "wedge_resistance_sensitivity_history.csv",
             ):
                 self.assertTrue((Path(tmp) / filename).is_file())
+
+    def test_repeat_run_uses_identical_geometry_for_every_width(self):
+        calls = []
+
+        def fake_run_once(steps, **kwargs):
+            calls.append((steps, kwargs.copy()))
+            speed = kwargs["bow_speed"]
+            rows = [
+                {"step": 0, "time_s": 0.0, "bow_tip_x_m": 0.0,
+                 "ice_resistance_N": 0.0, "broken_bonds": 0},
+                {"step": 1, "time_s": 0.001, "bow_tip_x_m": speed * 0.001,
+                 "ice_resistance_N": 1.0, "broken_bonds": 0},
+            ]
+            metrics = {
+                "particle_count": 1, "initial_bond_count": 1,
+                "final_broken_bonds": 0, "broken_bond_fraction": 0.0,
+                "peak_ice_resistance_N": 1.0, "mean_ice_resistance_N": 0.5,
+                "integrated_resistance_work_J": speed * 0.001,
+                "first_fracture_time_s": None, "bow_travel_m": speed * 0.001,
+            }
+            return rows, "stable-signature", metrics
+
+        with tempfile.TemporaryDirectory() as tmp, patch(
+            "scripts.benchmark_dem3d_wedge_resistance_sensitivity._run_once",
+            side_effect=fake_run_once,
+        ):
+            report = run_sensitivity_campaign(
+                Path(tmp), base_steps=2,
+                speeds_m_s=(0.1,), angles_deg=(45.0,),
+                dt_factors=(1.0,), widths_m=(0.02, 0.04),
+            )
+
+        self.assertEqual(report["verdict"], "PASS", report)
+        self.assertEqual(len(calls), 10)
+        for first, second in zip(calls[::2], calls[1::2]):
+            self.assertEqual(first, second)
+        width_pairs = [
+            (calls[i][0], calls[i][1]["bow_half_width_m"])
+            for i in range(6, 10, 2)
+        ]
+        self.assertEqual(width_pairs, [(2, 0.02), (2, 0.04)])
 
     def test_invalid_parameters_are_rejected(self):
         with tempfile.TemporaryDirectory() as tmp:
