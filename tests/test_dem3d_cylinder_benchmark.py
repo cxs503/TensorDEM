@@ -10,6 +10,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from scripts.run_dem3d_cylinder_benchmark import main as cylinder_benchmark_main
+from scripts.plot_dem3d_cylinder_benchmark import main as cylinder_plot_main
 
 
 class CylinderBenchmarkIntegrationTests(unittest.TestCase):
@@ -53,6 +54,13 @@ class CylinderBenchmarkIntegrationTests(unittest.TestCase):
                             "bottom_platen_reaction_z_N", "mechanical_energy_J"):
                     self.assertTrue(float(row[key]) == float(row[key]), f"non-finite {key}")
             self.assertIn("not experimental validation", summary["validation_note"])
+
+            with patch.object(sys, "argv", [
+                "plot_dem3d_cylinder_benchmark.py", str(output), "--format", "both"
+            ]), redirect_stdout(StringIO()):
+                cylinder_plot_main()
+            self.assertGreater((output / "cylinder_compression.png").stat().st_size, 1000)
+            self.assertGreater((output / "cylinder_compression.pdf").stat().st_size, 1000)
 
 
 if __name__ == "__main__":
