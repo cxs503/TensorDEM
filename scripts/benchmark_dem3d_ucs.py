@@ -25,12 +25,12 @@ for candidate in (ROOT, ROOT / "src"):
 from tensordem.dem3d import DEM3DConfig, IceDEM3D
 
 
-def _run_once(case: dict[str, Any], steps: int) -> tuple[list[dict[str, float | int]], str, dict[str, Any]]:
+def _run_once(case: dict[str, Any], steps: int, dt_factor: float = 1.0) -> tuple[list[dict[str, float | int]], str, dict[str, Any]]:
     p = case["config"]
     radius = float(p["radius_m"])
     speed = float(p["loading_speed_m_s"])
     nx, ny, nz = int(p["nx"]), int(p["ny"]), int(p["nz"])
-    sim = IceDEM3D(DEM3DConfig(
+    base_config = DEM3DConfig(
         nx=nx, ny=ny, nz=nz,
         radius=radius,
         density=float(p["density_kg_m3"]),
@@ -47,6 +47,11 @@ def _run_once(case: dict[str, Any], steps: int) -> tuple[list[dict[str, float | 
         contact_damping=0.5,
         fix_x_edges=False,
         fix_bottom=False,
+    )
+    if not math.isfinite(dt_factor) or dt_factor <= 0.0 or dt_factor > 1.0:
+        raise ValueError("dt_factor must be finite and in (0, 1]")
+    sim = IceDEM3D(DEM3DConfig(
+        **{**base_config.__dict__, "dt": base_config.recommended_dt * dt_factor}
     ))
     # This protocol isolates plane-platen compression; disable the spherical tool.
     sim.tool_start[:] = torch.tensor([1.0e6, 1.0e6, 1.0e6], dtype=sim.dtype)
