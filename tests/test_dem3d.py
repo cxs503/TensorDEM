@@ -228,5 +228,31 @@ class DEM3DTests(unittest.TestCase):
                     self.assertEqual(value, after[field], field)
 
 
+    def test_moving_plane_platens_report_action_reaction_and_energy(self):
+        sim = self.model(
+            top_platen_enabled=True, bottom_platen_enabled=True,
+            platen_stiffness=4000.0, platen_damping=0.0,
+            top_platen_velocity=-0.1, bottom_platen_velocity=0.1,
+        )
+        sim.time = 0.01
+        force, _ = sim.forces(update_fracture=False)
+        self.assertTrue(torch.isfinite(force).all())
+        self.assertGreater(float(sim.last_top_platen_reaction_z), 0.0)
+        self.assertLess(float(sim.last_bottom_platen_reaction_z), 0.0)
+        row = sim.diagnostics()
+        self.assertGreater(row["top_platen_reaction_z_N"], 0.0)
+        self.assertLess(row["bottom_platen_reaction_z_N"], 0.0)
+        self.assertGreater(row["platen_contact_energy_J"], 0.0)
+        self.assertTrue(math.isfinite(row["mechanical_energy_J"]))
+
+    def test_plane_platen_configuration_validation(self):
+        with self.assertRaises(ValueError):
+            self.model(platen_stiffness=0.0)
+        with self.assertRaises(ValueError):
+            self.model(top_platen_gap=-1e-3)
+        with self.assertRaises(ValueError):
+            self.model(bottom_platen_velocity=float("nan"))
+
+
 if __name__ == "__main__":
     unittest.main()
