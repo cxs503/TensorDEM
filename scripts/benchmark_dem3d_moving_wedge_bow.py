@@ -22,7 +22,7 @@ from tensordem.dem3d import DEM3DConfig
 from tensordem.dem3d_wedge import MovingWedgeBowIceDEM3D
 
 
-def _run_once(steps: int, *, bow_speed: float, wedge_angle_deg: float, dt_factor: float = 1.0) -> tuple[list[dict[str, Any]], str, dict[str, Any]]:
+def _run_once(steps: int, *, bow_speed: float, wedge_angle_deg: float, dt_factor: float = 1.0, bow_half_width_m: float | None = 0.03) -> tuple[list[dict[str, Any]], str, dict[str, Any]]:
     radius = 0.02
     config = DEM3DConfig(
         nx=7, ny=3, nz=4,
@@ -43,7 +43,7 @@ def _run_once(steps: int, *, bow_speed: float, wedge_angle_deg: float, dt_factor
     config = replace(config, dt=config.recommended_dt * dt_factor)
     sim = MovingWedgeBowIceDEM3D(
         config, bow_speed=bow_speed, wedge_angle_deg=wedge_angle_deg,
-        initial_gap=0.0, tip_height_fraction=0.5,
+        initial_gap=0.0, tip_height_fraction=0.5, bow_half_width_m=bow_half_width_m,
     )
     rows: list[dict[str, Any]] = []
     digest = hashlib.sha256()
@@ -65,6 +65,7 @@ def _run_once(steps: int, *, bow_speed: float, wedge_angle_deg: float, dt_factor
             "time_s": float(d["time"]),
             "bow_tip_x_m": float(d["bow_tip_x_m"]),
             "bow_reaction_x_N": float(d["bow_reaction_x_N"]),
+            "bow_reaction_y_N": float(d["bow_reaction_y_N"]),
             "bow_reaction_z_N": float(d["bow_reaction_z_N"]),
             "ice_resistance_N": resistance,
             "broken_bonds": int(d["broken_bonds"]),
@@ -93,7 +94,7 @@ def _run_once(steps: int, *, bow_speed: float, wedge_angle_deg: float, dt_factor
     return rows, digest.hexdigest(), metrics
 
 
-def run_campaign(output: Path, *, steps: int = 300, bow_speed: float = 0.1, wedge_angle_deg: float = 45.0, dt_factor: float = 1.0) -> dict[str, Any]:
+def run_campaign(output: Path, *, steps: int = 300, bow_speed: float = 0.1, wedge_angle_deg: float = 45.0, dt_factor: float = 1.0, bow_half_width_m: float | None = 0.03) -> dict[str, Any]:
     if isinstance(steps, bool) or not isinstance(steps, int) or steps < 1:
         raise ValueError("steps must be a positive integer")
     if not math.isfinite(bow_speed) or bow_speed <= 0:
@@ -103,8 +104,8 @@ def run_campaign(output: Path, *, steps: int = 300, bow_speed: float = 0.1, wedg
     torch.set_num_threads(1)
     if not math.isfinite(dt_factor) or not 0.0 < dt_factor <= 1.0:
         raise ValueError("dt_factor must be finite and in (0, 1]")
-    rows, signature, metrics = _run_once(steps, bow_speed=bow_speed, wedge_angle_deg=wedge_angle_deg, dt_factor=dt_factor)
-    repeat_rows, repeat_signature, repeat_metrics = _run_once(steps, bow_speed=bow_speed, wedge_angle_deg=wedge_angle_deg, dt_factor=dt_factor)
+    rows, signature, metrics = _run_once(steps, bow_speed=bow_speed, wedge_angle_deg=wedge_angle_deg, dt_factor=dt_factor, bow_half_width_m=bow_half_width_m)
+    repeat_rows, repeat_signature, repeat_metrics = _run_once(steps, bow_speed=bow_speed, wedge_angle_deg=wedge_angle_deg, dt_factor=dt_factor, bow_half_width_m=bow_half_width_m)
     checks = {
         "finite_history": all(math.isfinite(float(value)) for row in rows for value in row.values()),
         "repeatable_history": signature == repeat_signature,
@@ -118,6 +119,8 @@ def run_campaign(output: Path, *, steps: int = 300, bow_speed: float = 0.1, wedg
         "steps": steps,
         "bow_speed_m_s": bow_speed,
         "wedge_angle_deg": wedge_angle_deg,
+        "bow_half_width_m": 0.0 if bow_half_width_m is None else bow_half_width_m,
+        "finite_width_enabled": bow_half_width_m is not None,
         "dt_factor": dt_factor,
         "dt_s": float(rows[1]["time_s"]) if len(rows) > 1 else 0.0,
         "checks": checks,
@@ -149,8 +152,10 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--bow-speed", type=float, default=0.1)
     parser.add_argument("--wedge-angle-deg", type=float, default=45.0)
     parser.add_argument("--dt-factor", type=float, default=1.0)
+    parser.add_argument("--bow-half-width-m", type=float, default=0.03, help="finite bow half-width in metres; use 0 for the legacy infinite-width model")
     args = parser.parse_args(argv)
-    report = run_campaign(args.output, steps=args.steps, bow_speed=args.bow_speed, wedge_angle_deg=args.wedge_angle_deg, dt_factor=args.dt_factor)
+    half_width = None if args.bow_half_width_m == 0.0 else args.bow_half_width_m
+    report = run_campaign(args.output, steps=args.steps, bow_speed=args.bow_speed, wedge_angle_deg=args.wedge_angle_deg, dt_factor=args.dt_factor, bow_half_width_m=half_width)
     print(json.dumps(report, indent=2))
     if report["verdict"] != "PASS":
         raise SystemExit(1)
