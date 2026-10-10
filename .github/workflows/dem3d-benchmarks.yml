@@ -59,6 +59,10 @@ on:
       - "tests/test_dem3d_ucs_fracture_threshold.py"
       - "docs/dem3d_ucs_fracture_threshold.md"
       - "docs/dem3d_ucs_sensitivity.md"
+      - "scripts/visualize_dem3d_benchmarks.py"
+      - "tests/test_dem3d_visualization.py"
+      - "docs/dem3d_benchmark_visualization.md"
+      - "pyproject.toml"
       - ".github/workflows/dem3d-benchmarks.yml"
   push:
     branches: [main]
@@ -105,6 +109,10 @@ on:
       - "docs/dem3d_specimen_response_benchmarks.md"
       - "src/tensordem/dem3d.py"
       - "src/tensordem/dem3d_energy.py"
+      - "scripts/visualize_dem3d_benchmarks.py"
+      - "tests/test_dem3d_visualization.py"
+      - "docs/dem3d_benchmark_visualization.md"
+      - "pyproject.toml"
       - ".github/workflows/dem3d-benchmarks.yml"
 
 permissions:
