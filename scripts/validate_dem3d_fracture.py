@@ -5,6 +5,8 @@ This is a numerical verification harness, not an ice-material calibration.
 from __future__ import annotations
 
 import argparse
+import csv
+import hashlib
 import json
 import math
 from pathlib import Path
@@ -121,6 +123,44 @@ def check_mixed_mode_failure_and_ledger() -> dict[str, Any]:
     }
 
 
+def _fracture_event_ledger() -> list[dict[str, Any]]:
+    """Return a deterministic per-bond ledger from the controlled mixed-mode probe."""
+    sim = EnergyAuditedIceDEM3D(
+        _config(breaking_strain=0.02, shear_breaking_strain=0.001)
+    )
+    deformation = torch.tensor(
+        [[1.04, 0.08, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
+        dtype=torch.float64,
+    )
+    sim.positions = sim.initial_positions @ deformation.T
+    sim.forces()
+    pairs = sim.pairs.detach().cpu().tolist()
+    alive = sim.alive.detach().cpu().tolist()
+    modes = sim.failure_mode.detach().cpu().tolist()
+    times = sim.failure_time_s.detach().cpu().tolist()
+    extensions = sim.failure_extension_m.detach().cpu().tolist()
+    energies = sim.failure_energy_J.detach().cpu().tolist()
+    lengths = sim.rest_lengths.detach().cpu().tolist()
+    events: list[dict[str, Any]] = []
+    for bond_id, pair in enumerate(pairs):
+        if alive[bond_id]:
+            continue
+        extension = float(extensions[bond_id])
+        length = float(lengths[bond_id])
+        events.append({
+            "bond_id": bond_id,
+            "particle_i": int(pair[0]),
+            "particle_j": int(pair[1]),
+            "failure_mode_code": int(modes[bond_id]),
+            "failure_time_s": float(times[bond_id]),
+            "failure_extension_m": extension,
+            "reference_length_m": length,
+            "failure_strain": extension / max(length, 1.0e-30),
+            "released_energy_J": float(energies[bond_id]),
+        })
+    return events
+
+
 def run_validation(output: Path) -> dict[str, Any]:
     torch.set_num_threads(1)
     checks = [
@@ -128,20 +168,59 @@ def run_validation(output: Path) -> dict[str, Any]:
         check_single_bond_release_energy(),
         check_mixed_mode_failure_and_ledger(),
     ]
+    events = _fracture_event_ledger()
+    event_ids = [int(event["bond_id"]) for event in events]
+    energies = [float(event["released_energy_J"]) for event in events]
+    event_finite = all(
+        math.isfinite(float(value))
+        for event in events
+        for value in event.values()
+    )
+    expected_energy = float(checks[2]["sum_per_bond_release_J"])
+    event_checks = {
+        "unique_bond_ids": len(event_ids) == len(set(event_ids)),
+        "stable_bond_id_order": event_ids == sorted(event_ids),
+        "finite_event_values": event_finite,
+        "nonnegative_release_energy": all(value >= 0.0 for value in energies),
+        "event_count_matches_fracture_count": len(events) == int(checks[2]["broken_bonds"]),
+        "event_energy_matches_ledger": abs(sum(energies) - expected_energy)
+        <= max(1.0e-14, abs(expected_energy) * 1.0e-12),
+    }
+    ledger_digest = hashlib.sha256(
+        json.dumps(events, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+    all_passed = all(item["passed"] for item in checks) and all(event_checks.values())
     report = {
-        "protocol": "tensordem-dem3d-fracture-objectivity-energy-v1",
-        "verdict": "PASS" if all(x["passed"] for x in checks) else "FAIL",
-        "check_count": len(checks),
+        "protocol": "tensordem-dem3d-fracture-objectivity-energy-v2",
+        "verdict": "PASS" if all_passed else "FAIL",
+        "check_count": len(checks) + len(event_checks),
         "checks": checks,
+        "fracture_event_count": len(events),
+        "fracture_event_checks": event_checks,
+        "fracture_release_energy_sum_J": sum(energies),
+        "fracture_event_signature_sha256": ledger_digest,
         "interpretation": (
-            "PASS means the controlled numerical invariants met their tolerances; "
-            "it does not establish physical ice fracture-energy calibration."
+            "PASS means controlled numerical invariants and event-ledger integrity checks met their "
+            "tolerances. The ledger is a deterministic audit record of the controlled mixed-mode "
+            "probe, not a full time-resolved crack-propagation history and not physical ice "
+            "fracture-energy calibration."
         ),
     }
     output.mkdir(parents=True, exist_ok=True)
     (output / "dem3d_fracture_validation.json").write_text(
         json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
+    with (output / "dem3d_fracture_events.csv").open("w", newline="", encoding="utf-8") as stream:
+        fields = [
+            "bond_id", "particle_i", "particle_j", "failure_mode_code",
+            "failure_time_s", "failure_extension_m", "reference_length_m",
+            "failure_strain", "released_energy_J",
+        ]
+        writer = csv.DictWriter(stream, fieldnames=fields)
+        writer.writeheader()
+        writer.writerows(events)
+    if not all_passed:
+        raise RuntimeError("DEM3D fracture validation or event-ledger integrity check failed")
     return report
 
 
