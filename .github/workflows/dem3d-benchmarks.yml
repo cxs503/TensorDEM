@@ -18,6 +18,10 @@ on:
       - "scripts/benchmark_dem3d_ucs_timestep_convergence.py"
       - "tests/test_dem3d_ucs_timestep_convergence.py"
       - "docs/dem3d_ucs_timestep_convergence.md"
+      - "src/tensordem/dem3d_wedge.py"
+      - "scripts/benchmark_dem3d_moving_wedge_bow.py"
+      - "tests/test_dem3d_moving_wedge_bow.py"
+      - "docs/dem3d_moving_wedge_bow.md"
       - "scripts/validate_dem3d_fracture.py"
       - "tests/test_dem3d_fracture_objectivity.py"
       - "docs/dem3d_fracture_objectivity_energy.md"
@@ -48,6 +52,10 @@ on:
       - "scripts/benchmark_dem3d_ucs_timestep_convergence.py"
       - "tests/test_dem3d_ucs_timestep_convergence.py"
       - "docs/dem3d_ucs_timestep_convergence.md"
+      - "src/tensordem/dem3d_wedge.py"
+      - "scripts/benchmark_dem3d_moving_wedge_bow.py"
+      - "tests/test_dem3d_moving_wedge_bow.py"
+      - "docs/dem3d_moving_wedge_bow.md"
       - "scripts/validate_dem3d_fracture.py"
       - "tests/test_dem3d_fracture_objectivity.py"
       - "docs/dem3d_fracture_objectivity_energy.md"
@@ -118,6 +126,7 @@ jobs:
             --output results-dem3d-ucs-fracture-threshold
           python scripts/benchmark_dem3d_energy_timestep.py --output results-dem3d-energy-timestep
           python scripts/benchmark_dem3d_ucs_timestep_convergence.py --output results-dem3d-ucs-timestep
+          python scripts/benchmark_dem3d_moving_wedge_bow.py --output results-dem3d-moving-wedge-bow
       - name: Upload benchmark results
         if: always()
         uses: actions/upload-artifact@v4
@@ -134,5 +143,6 @@ jobs:
             results-dem3d-fracture-validation/
             results-dem3d-energy-timestep/
             results-dem3d-ucs-timestep/
+            results-dem3d-moving-wedge-bow/
           if-no-files-found: warn
           retention-days: 30
