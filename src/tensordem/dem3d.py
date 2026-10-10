@@ -35,6 +35,14 @@ class DEM3DConfig:
     device: str = "cpu"
     fix_x_edges: bool = True
     fix_bottom: bool = False
+    top_platen_enabled: bool = False
+    bottom_platen_enabled: bool = False
+    platen_stiffness: float = 5_000.0
+    platen_damping: float = 0.0
+    top_platen_gap: float = 0.0
+    bottom_platen_gap: float = 0.0
+    top_platen_velocity: float = 0.0
+    bottom_platen_velocity: float = 0.0
 
     def __post_init__(self) -> None:
         for name in ("nx", "ny", "nz"):
@@ -46,10 +54,19 @@ class DEM3DConfig:
             value = getattr(self, name)
             if not math.isfinite(value) or value <= 0:
                 raise ValueError(f"{name} must be finite and positive")
-        for name in ("contact_damping", "drag", "tool_gap"):
+        for name in ("contact_damping", "drag", "tool_gap", "platen_damping",
+                     "top_platen_gap", "bottom_platen_gap"):
             value = getattr(self, name)
             if not math.isfinite(value) or value < 0:
                 raise ValueError(f"{name} must be finite and nonnegative")
+        if not math.isfinite(self.platen_stiffness) or self.platen_stiffness <= 0:
+            raise ValueError("platen_stiffness must be finite and positive")
+        for name in ("top_platen_velocity", "bottom_platen_velocity"):
+            if not math.isfinite(getattr(self, name)):
+                raise ValueError(f"{name} must be finite")
+        for name in ("top_platen_enabled", "bottom_platen_enabled"):
+            if not isinstance(getattr(self, name), bool):
+                raise ValueError(f"{name} must be a boolean")
         if self.dt is not None and (not math.isfinite(self.dt) or self.dt <= 0):
             raise ValueError("dt must be finite and positive")
         if self.device not in ("cpu", "cuda"):
@@ -64,8 +81,14 @@ class DEM3DConfig:
         # Conservative explicit stability/travel bound; validate by convergence.
         n = self.nx * self.ny * self.nz
         degree_bound = min(n - 1, 26)
-        k = (2 * degree_bound + 1) * max(self.bond_stiffness, self.contact_stiffness)
-        c = (2 * degree_bound + 1) * self.contact_damping + self.drag
+        contact_stiffness = max(
+            self.bond_stiffness, self.contact_stiffness,
+            self.platen_stiffness if (self.top_platen_enabled or self.bottom_platen_enabled) else 0.0,
+        )
+        k = (2 * degree_bound + 1) * contact_stiffness
+        c = ((2 * degree_bound + 1) * self.contact_damping + self.drag
+             + (2 if (self.top_platen_enabled or self.bottom_platen_enabled) else 0)
+             * self.platen_damping)
         elastic = 0.15 * math.sqrt(self.mass / k)
         damping = 0.15 * self.mass / c if c > 0 else math.inf
         travel = 0.1 * self.radius / self.tool_speed
@@ -162,6 +185,14 @@ class IceDEM3D:
         self.tool_velocity = torch.tensor([0.0, 0.0, -config.tool_speed],
                                           dtype=self.dtype, device=self.device)
         self.last_reaction = torch.zeros(3, dtype=self.dtype, device=self.device)
+        self.top_platen_start_z = (
+            float(self.initial_positions[:, 2].max()) + config.radius + config.top_platen_gap
+        )
+        self.bottom_platen_start_z = (
+            float(self.initial_positions[:, 2].min()) - config.radius - config.bottom_platen_gap
+        )
+        self.last_top_platen_reaction_z = torch.zeros((), dtype=self.dtype, device=self.device)
+        self.last_bottom_platen_reaction_z = torch.zeros((), dtype=self.dtype, device=self.device)
 
     @property
     def tool_position(self) -> torch.Tensor:
@@ -327,6 +358,31 @@ class IceDEM3D:
         tool_force = tool_mag[:, None] * tool_normal
         reaction = -tool_force.sum(dim=0)
         force += tool_force
+
+        # Optional infinite horizontal platens. Positive overlap means a particle
+        # intersects the plane; damping opposes the relative normal approach.
+        top_reaction_z = torch.zeros((), dtype=self.dtype, device=self.device)
+        bottom_reaction_z = torch.zeros((), dtype=self.dtype, device=self.device)
+        if cfg.top_platen_enabled:
+            top_z = self.top_platen_start_z + self.time * cfg.top_platen_velocity
+            top_overlap = (self.positions[:, 2] + cfg.radius - top_z).clamp_min(0.0)
+            top_relative_v = self.velocities[:, 2] - cfg.top_platen_velocity
+            top_mag = (cfg.platen_stiffness * top_overlap
+                       + cfg.platen_damping * top_relative_v).clamp_min(0.0)
+            top_force_z = -top_mag
+            force[:, 2] += top_force_z
+            top_reaction_z = -top_force_z.sum()
+        if cfg.bottom_platen_enabled:
+            bottom_z = self.bottom_platen_start_z + self.time * cfg.bottom_platen_velocity
+            bottom_overlap = (bottom_z + cfg.radius - self.positions[:, 2]).clamp_min(0.0)
+            bottom_relative_v = self.velocities[:, 2] - cfg.bottom_platen_velocity
+            bottom_mag = (cfg.platen_stiffness * bottom_overlap
+                          - cfg.platen_damping * bottom_relative_v).clamp_min(0.0)
+            bottom_force_z = bottom_mag
+            force[:, 2] += bottom_force_z
+            bottom_reaction_z = -bottom_force_z.sum()
+        self.last_top_platen_reaction_z = top_reaction_z
+        self.last_bottom_platen_reaction_z = bottom_reaction_z
         if loads is not None:
             force += loads
         if update_fracture:
@@ -368,6 +424,17 @@ class IceDEM3D:
         tool_overlap = (self.config.radius + self.config.tool_radius
                         - torch.linalg.vector_norm(self.positions - self.tool_position, dim=1)).clamp_min(0)
         tool_energy = (0.5 * self.config.contact_stiffness * tool_overlap.square()).sum()
+        top_platen_energy = torch.zeros((), dtype=self.dtype, device=self.device)
+        if self.config.top_platen_enabled:
+            top_z = self.top_platen_start_z + self.time * self.config.top_platen_velocity
+            top_overlap = (self.positions[:, 2] + self.config.radius - top_z).clamp_min(0.0)
+            top_platen_energy = (0.5 * self.config.platen_stiffness * top_overlap.square()).sum()
+        bottom_platen_energy = torch.zeros((), dtype=self.dtype, device=self.device)
+        if self.config.bottom_platen_enabled:
+            bottom_z = self.bottom_platen_start_z + self.time * self.config.bottom_platen_velocity
+            bottom_overlap = (bottom_z + self.config.radius - self.positions[:, 2]).clamp_min(0.0)
+            bottom_platen_energy = (0.5 * self.config.platen_stiffness * bottom_overlap.square()).sum()
+        platen_energy = top_platen_energy + bottom_platen_energy
         released = self.failure_energy_J.sum()
         return {
             "time": self.time,
@@ -375,6 +442,8 @@ class IceDEM3D:
             "tool_z": float(self.tool_position[2]),
             "reaction_x": float(reaction[0]), "reaction_y": float(reaction[1]),
             "reaction_z": float(reaction[2]),
+            "top_platen_reaction_z_N": float(self.last_top_platen_reaction_z),
+            "bottom_platen_reaction_z_N": float(self.last_bottom_platen_reaction_z),
             "boundary_reaction_x": float(support[0]), "boundary_reaction_y": float(support[1]),
             "boundary_reaction_z": float(support[2]),
             "broken_bonds": self.broken_bonds,
@@ -383,8 +452,9 @@ class IceDEM3D:
             "bond_elastic_energy_J": float(bond_energy),
             "particle_contact_energy_J": float(contact_energy),
             "tool_contact_energy_J": float(tool_energy),
+            "platen_contact_energy_J": float(platen_energy),
             "released_bond_energy_J": float(released),
-            "mechanical_energy_J": float(kinetic + bond_energy + contact_energy + tool_energy),
+            "mechanical_energy_J": float(kinetic + bond_energy + contact_energy + tool_energy + platen_energy),
         }
 
     def state_dict(self) -> dict[str, Any]:
@@ -415,7 +485,13 @@ class IceDEM3D:
             raise ValueError(f"checkpoint is missing keys: {sorted(missing)}")
         if state["dimension"] != 3:
             raise ValueError("checkpoint dimension must be 3")
-        if state["config"] != asdict(self.config):
+        saved_config = state["config"]
+        if not isinstance(saved_config, dict):
+            raise ValueError("checkpoint config must be a dictionary")
+        # Backward compatibility: configs saved before plane-platen support omit
+        # new optional keys, whose defaults preserve the previous solver behavior.
+        normalized_config = {**asdict(DEM3DConfig()), **saved_config}
+        if normalized_config != asdict(self.config):
             raise ValueError("checkpoint config does not match this solver configuration")
         if not math.isfinite(float(state["dt"])) or float(state["dt"]) != self.dt:
             raise ValueError("checkpoint dt does not match this solver")
