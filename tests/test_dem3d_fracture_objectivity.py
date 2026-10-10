@@ -42,8 +42,26 @@ class DEM3DFractureObjectivityTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             report = run_validation(Path(tmp))
             self.assertEqual(report["verdict"], "PASS", report)
-            self.assertEqual(report["check_count"], 3)
+            self.assertEqual(report["check_count"], 9)
+            self.assertEqual(report["protocol"], "tensordem-dem3d-fracture-objectivity-energy-v2")
+            self.assertTrue(all(report["fracture_event_checks"].values()), report)
+            self.assertGreater(report["fracture_event_count"], 0)
             self.assertTrue((Path(tmp) / "dem3d_fracture_validation.json").is_file())
+            events_path = Path(tmp) / "dem3d_fracture_events.csv"
+            self.assertTrue(events_path.is_file())
+            import csv
+            with events_path.open(newline="", encoding="utf-8") as stream:
+                events = list(csv.DictReader(stream))
+            self.assertEqual(len(events), report["fracture_event_count"])
+            self.assertEqual(
+                [int(row["bond_id"]) for row in events],
+                sorted(int(row["bond_id"]) for row in events),
+            )
+            self.assertAlmostEqual(
+                sum(float(row["released_energy_J"]) for row in events),
+                report["fracture_release_energy_sum_J"],
+                places=14,
+            )
 
 
 if __name__ == "__main__":
