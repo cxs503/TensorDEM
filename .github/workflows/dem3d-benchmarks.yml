@@ -12,10 +12,18 @@ on:
     branches: [main]
     paths:
       - "benchmarks/dem3d/**"
+      - "scripts/calibrate_dem3d_ucs.py"
+      - "tests/test_dem3d_ucs_calibration.py"
+      - "docs/dem3d_ucs_calibration.md"
+      - "docs/dem3d_material_calibration_roadmap.md"
       - "scripts/benchmark_dem3d_ucs.py"
       - "tests/test_dem3d_ucs_benchmark.py"
       - "scripts/benchmark_dem3d_ucs_sensitivity.py"
       - "tests/test_dem3d_ucs_sensitivity.py"
+      - "scripts/calibrate_dem3d_ucs.py"
+      - "tests/test_dem3d_ucs_calibration.py"
+      - "docs/dem3d_ucs_calibration.md"
+      - "docs/dem3d_material_calibration_roadmap.md"
       - "scripts/benchmark_dem3d_ucs_fracture_threshold.py"
       - "tests/test_dem3d_ucs_fracture_threshold.py"
       - "docs/dem3d_ucs_fracture_threshold.md"
