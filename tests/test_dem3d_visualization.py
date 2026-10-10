@@ -32,11 +32,22 @@ class DEM3DVisualizationTests(unittest.TestCase):
                 writer.writeheader()
                 writer.writerows([{"step": 0, "time": 0, "reaction_z": 0},
                                   {"step": 1, "time": .1, "reaction_z": 1}])
+            with (case / "fracture_events_3d.csv").open("w", newline="", encoding="utf-8") as stream:
+                writer = csv.DictWriter(stream, fieldnames=[
+                    "final_midpoint_x_m", "final_midpoint_y_m", "final_midpoint_z_m",
+                    "failure_mode_label",
+                ])
+                writer.writeheader()
+                writer.writerow({
+                    "final_midpoint_x_m": 0.5, "final_midpoint_y_m": 0.0,
+                    "final_midpoint_z_m": 0.05, "failure_mode_label": "tensile",
+                })
             report = visualize_case(case, root / "out")
             self.assertTrue(report["trajectory_available"])
             self.assertEqual(report["frame_count"], 2)
             for filename in ("damage_initial.png", "damage_final.png",
-                             "displacement_final.png", "damage_evolution.gif", "force_history.png"):
+                             "displacement_final.png", "damage_evolution.gif", "force_history.png",
+                             "fracture_crack_map.png"):
                 self.assertTrue((root / "out" / filename).is_file(), filename)
 
 
