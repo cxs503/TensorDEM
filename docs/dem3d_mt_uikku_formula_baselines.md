@@ -21,7 +21,7 @@ Literature source:
 ```bash
 python scripts/benchmark_dem3d_ship_ice_formula_baselines.py \
   --output results-dem3d-mt-uikku-formulas
-python -m unittest tests.test_dem3d_ship_ice_formula_baselines
+python -m unittest discover -s tests -p 'test_dem3d_ship_ice_formula_baselines.py'
 ```
 
 The run writes a JSON report, a per-case CSV and a per-formula summary CSV.
