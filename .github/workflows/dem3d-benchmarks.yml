@@ -80,7 +80,7 @@ jobs:
             --output results-dem3d-platen-compression
           python scripts/benchmark_dem3d_ucs.py \
             --output results-dem3d-ucs
-          python scripts/benchmark_dem3d_ucs_sensitivity.py \\
+          python scripts/benchmark_dem3d_ucs_sensitivity.py \
             --output results-dem3d-ucs-sensitivity
       - name: Upload benchmark results
         if: always()
