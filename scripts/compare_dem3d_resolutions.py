@@ -60,8 +60,6 @@ def read_resolution_history(path: Path) -> dict[int, list[dict[str, float | int]
                 "energy_balance_residual_J": _finite(raw, "energy_balance_residual_J", line),
             }
             by_factor.setdefault(factor, []).append(row)
-    if len(by_factor) < 2:
-        raise ValueError("history must contain at least two resolution factors")
     for factor, rows in by_factor.items():
         if len(rows) < 2:
             raise ValueError(f"factor {factor}: at least two history samples are required")
