@@ -32,8 +32,8 @@ def run_bending_load_convergence(
 ) -> dict[str, Any]:
     """Run geometrically refined load ramps and summarize response changes.
 
-    steps controls the number of load increments over the same nominal ramp;
-    it is a load-path discretization study, not a physical-time timestep study.
+    Changing steps also changes simulated ramp duration and effective loading rate,
+    so this is not a pure load-path or physical-time timestep convergence study.
     """
     if isinstance(base_steps, bool) or not isinstance(base_steps, int) or base_steps < 2:
         raise ValueError("base_steps must be an integer >= 2")
@@ -54,6 +54,8 @@ def run_bending_load_convergence(
             "level": level + 1,
             "steps": nsteps,
             "peak_load_N": peak_load_N,
+            "dt_s": float(report["dt_s"]),
+            "ramp_duration_s": nsteps * float(report["dt_s"]),
             "peak_support_reaction_abs_N": float(report["peak_support_reaction_abs_N"]),
             "peak_midspan_deflection_abs_m": float(report["peak_midspan_deflection_abs_m"]),
             "broken_bonds": int(report["broken_bonds"]),
@@ -78,7 +80,8 @@ def run_bending_load_convergence(
         })
 
     report = {
-        "protocol": "tensordem-dem3d-bending-load-sensitivity-v1",\n        "study_type": "load-ramp step-count and effective loading-rate sensitivity",
+        "protocol": "tensordem-dem3d-bending-load-sensitivity-v1",
+        "study_type": "load-ramp step-count and effective loading-rate sensitivity",
         "verdict": "PASS" if all(row["verdict"] == "PASS" for row in rows) else "FAIL",
         "base_steps": base_steps,
         "levels": levels,
@@ -87,9 +90,9 @@ def run_bending_load_convergence(
         "runs": rows,
         "comparisons": comparisons,
         "interpretation": (
-            "This is a load-increment refinement study with the same nominal load ramp. "
-            "Changes quantify numerical path sensitivity only; they do not demonstrate "
-            "time-step convergence, experimental agreement, or calibrated ice flexural strength. "
+            "Changing step count also changes total simulated ramp duration and effective loading rate. "
+            "Changes therefore combine load-ramp discretization and rate sensitivity; they do not demonstrate "
+            "physical-time timestep convergence, experimental agreement, or calibrated ice flexural strength. "
             "Bond-break count changes indicate a potentially discontinuous fracture response."
         ),
     }
