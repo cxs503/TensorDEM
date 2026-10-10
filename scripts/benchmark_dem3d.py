@@ -33,6 +33,55 @@ def _tensor_digest(digest: Any, tensor: torch.Tensor) -> None:
     digest.update(bytes(value.view(torch.uint8).reshape(-1).tolist()))
 
 
+def write_fracture_events(sim: EnergyAuditedIceDEM3D, path: Path) -> int:
+    """Write one auditable row per broken bond; return the event count."""
+    fields = [
+        "bond_id", "particle_i", "particle_j",
+        "initial_midpoint_x_m", "initial_midpoint_y_m", "initial_midpoint_z_m",
+        "final_midpoint_x_m", "final_midpoint_y_m", "final_midpoint_z_m",
+        "initial_length_m", "final_length_m", "failure_mode",
+        "failure_mode_label", "failure_time_s", "failure_extension_m",
+        "failure_energy_J",
+    ]
+    pairs = sim.pairs.detach().cpu().tolist()
+    initial = sim.initial_positions.detach().cpu().tolist()
+    final = sim.positions.detach().cpu().tolist()
+    rest = sim.rest_lengths.detach().cpu().tolist()
+    alive = sim.alive.detach().cpu().tolist()
+    modes = sim.failure_mode.detach().cpu().tolist()
+    times = sim.failure_time_s.detach().cpu().tolist()
+    extensions = sim.failure_extension_m.detach().cpu().tolist()
+    energies = sim.failure_energy_J.detach().cpu().tolist()
+    labels = {1: "tensile", 2: "shear", 3: "mixed"}
+    count = 0
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", newline="", encoding="utf-8") as stream:
+        writer = csv.DictWriter(stream, fieldnames=fields)
+        writer.writeheader()
+        for bond_id, (i, j) in enumerate(pairs):
+            if alive[bond_id]:
+                continue
+            mode = int(modes[bond_id])
+            initial_mid = [(initial[i][axis] + initial[j][axis]) / 2 for axis in range(3)]
+            final_mid = [(final[i][axis] + final[j][axis]) / 2 for axis in range(3)]
+            final_length = sum((final[j][axis] - final[i][axis]) ** 2
+                               for axis in range(3)) ** 0.5
+            writer.writerow({
+                "bond_id": bond_id, "particle_i": i, "particle_j": j,
+                **{f"initial_midpoint_{axis}_m": value
+                   for axis, value in zip(("x", "y", "z"), initial_mid)},
+                **{f"final_midpoint_{axis}_m": value
+                   for axis, value in zip(("x", "y", "z"), final_mid)},
+                "initial_length_m": rest[bond_id], "final_length_m": final_length,
+                "failure_mode": mode, "failure_mode_label": labels.get(mode, "unknown"),
+                "failure_time_s": times[bond_id],
+                "failure_extension_m": extensions[bond_id],
+                "failure_energy_J": energies[bond_id],
+            })
+            count += 1
+    return count
+
+
 def run_benchmark(
     output: Path,
     config: DEM3DConfig,
@@ -79,6 +128,7 @@ def run_benchmark(
             torch.save({"format": "tensordem-dem3d-energy-benchmark-v1",
                         "config": config.__dict__, "state": sim.state_dict()},
                        output / "final_checkpoint_3d.pt")
+            write_fracture_events(sim, output / "fracture_events_3d.csv")
         return rows, digest.hexdigest(), sim.broken_bonds
 
     rows, signature, broken = execute(write_history=True)
