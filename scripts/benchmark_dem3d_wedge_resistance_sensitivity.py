@@ -1,4 +1,4 @@
-"""Run repeatable speed, wedge-angle and timestep sensitivity campaigns for bow resistance."""
+"""Run repeatable bow-angle, speed, timestep and finite-width resistance campaigns."""
 from __future__ import annotations
 
 import argparse
@@ -36,6 +36,7 @@ def run_sensitivity_campaign(
     speeds_m_s: tuple[float, ...] = (0.05, 0.1, 0.2),
     angles_deg: tuple[float, ...] = (30.0, 45.0, 60.0),
     dt_factors: tuple[float, ...] = (1.0, 0.5, 0.25),
+    widths_m: tuple[float, ...] = (0.02, 0.03, 0.04),
 ) -> dict[str, Any]:
     if isinstance(base_steps, bool) or not isinstance(base_steps, int) or base_steps < 1:
         raise ValueError("base_steps must be a positive integer")
@@ -43,6 +44,7 @@ def run_sensitivity_campaign(
         ("speeds_m_s", speeds_m_s, 0.0, math.inf),
         ("angles_deg", angles_deg, 5.0, 85.0),
         ("dt_factors", dt_factors, 0.0, 1.0),
+        ("widths_m", widths_m, 0.0, math.inf),
     ):
         if not values or len(set(values)) != len(values):
             raise ValueError(f"{name} must be nonempty and unique")
@@ -53,14 +55,19 @@ def run_sensitivity_campaign(
     definitions: list[dict[str, Any]] = []
     for angle in angles_deg:
         definitions.append({"sweep": "wedge_angle", "value": float(angle), "bow_speed_m_s": 0.1,
-                            "wedge_angle_deg": float(angle), "dt_factor": 1.0, "steps": base_steps})
+                            "wedge_angle_deg": float(angle), "dt_factor": 1.0, "bow_half_width_m": 0.03, "steps": base_steps})
     for speed in speeds_m_s:
         definitions.append({"sweep": "bow_speed", "value": float(speed), "bow_speed_m_s": float(speed),
-                            "wedge_angle_deg": 45.0, "dt_factor": 1.0, "steps": base_steps})
+                            "wedge_angle_deg": 45.0, "dt_factor": 1.0, "bow_half_width_m": 0.03, "steps": base_steps})
     for factor in dt_factors:
         steps = int(math.ceil(base_steps / factor))
         definitions.append({"sweep": "timestep", "value": float(factor), "bow_speed_m_s": 0.1,
-                            "wedge_angle_deg": 45.0, "dt_factor": float(factor), "steps": steps})
+                            "wedge_angle_deg": 45.0, "dt_factor": float(factor), "bow_half_width_m": 0.03, "steps": steps})
+
+    for width in widths_m:
+        definitions.append({"sweep": "bow_half_width", "value": float(width), "bow_speed_m_s": 0.1,
+                            "wedge_angle_deg": 45.0, "dt_factor": 1.0,
+                            "bow_half_width_m": float(width), "steps": base_steps})
 
     records: list[dict[str, Any]] = []
     history: list[dict[str, Any]] = []
@@ -68,6 +75,7 @@ def run_sensitivity_campaign(
         rows, signature, metrics = _run_once(
             int(spec["steps"]), bow_speed=float(spec["bow_speed_m_s"]),
             wedge_angle_deg=float(spec["wedge_angle_deg"]), dt_factor=float(spec["dt_factor"]),
+            bow_half_width_m=float(spec["bow_half_width_m"]),
         )
         repeat_rows, repeat_signature, repeat_metrics = _run_once(
             int(spec["steps"]), bow_speed=float(spec["bow_speed_m_s"]),
@@ -104,8 +112,13 @@ def run_sensitivity_campaign(
             reference = next(r for r in records if r["sweep"] == "wedge_angle" and r["value"] == 45.0)
         elif record["sweep"] == "bow_speed":
             reference = next(r for r in records if r["sweep"] == "bow_speed" and r["value"] == 0.1)
-        else:
+        elif record["sweep"] == "timestep":
             reference = next(r for r in records if r["sweep"] == "timestep" and r["value"] == min(dt_factors))
+        else:
+            reference = min(
+                (r for r in records if r["sweep"] == "bow_half_width"),
+                key=lambda r: abs(float(r["value"]) - 0.03),
+            )
         record["reference_value"] = reference["value"]
         record["peak_resistance_relative_delta_vs_reference"] = _relative_delta(
             record["peak_ice_resistance_N"], reference["peak_ice_resistance_N"]
@@ -129,6 +142,7 @@ def run_sensitivity_campaign(
             "wedge_angle_deg": list(angles_deg),
             "bow_speed_m_s": list(speeds_m_s),
             "dt_factors": list(dt_factors),
+            "bow_half_width_m": list(widths_m),
             "duration_policy": "Timestep cases scale step count by inverse dt factor to approximately preserve physical duration.",
         },
         "checks": checks,
@@ -137,7 +151,8 @@ def run_sensitivity_campaign(
             "This is a numerical sensitivity screen for an idealized dry wedge/contact model. "
             "Relative deltas quantify sensitivity and are not accuracy errors against experiments. "
             "Timestep cases approximately preserve physical duration; speed and angle cases use the same step count. "
-            "No fluid, hydrostatic, buoyancy, finite-width hull, or calibrated material response is included."
+            "Finite width is a sharp wedge/slab intersection, not a full hull signed-distance model. "
+            "No fluid, hydrostatic, buoyancy, or calibrated material response is included."
         ),
     }
     output.mkdir(parents=True, exist_ok=True)

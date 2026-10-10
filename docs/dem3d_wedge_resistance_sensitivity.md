@@ -7,7 +7,7 @@ python scripts/benchmark_dem3d_wedge_resistance_sensitivity.py --output results-
 python -m unittest tests.test_dem3d_wedge_resistance_sensitivity -v
 ```
 
-The default campaign contains nine cases: three wedge angles (30°, 45°, 60°), three bow speeds (0.05, 0.1, 0.2 m/s), and three timestep factors (1, 1/2, 1/4). Every case is run twice. The report records deterministic signatures, finite-value checks, peak/mean opposing resistance, integrated resistance work, broken-bond count/fraction, first-fracture time, timestep, duration and bow travel. JSON, summary CSV and full history CSV are written. By default, the underlying bow benchmark uses a finite half-width of 0.03 m.
+The default campaign contains twelve cases: three wedge angles (30°, 45°, 60°), three bow speeds (0.05, 0.1, 0.2 m/s), three timestep factors (1, 1/2, 1/4), and three finite bow half-widths (0.02, 0.03, 0.04 m). Every case is run twice. The report records deterministic signatures, finite-value checks, peak/mean opposing resistance, integrated resistance work, broken-bond count/fraction, first-fracture time, timestep, duration and bow travel. JSON, summary CSV and full history CSV are written. By default, the underlying bow benchmark uses a finite half-width of 0.03 m. Width cases change only this half-width and compare against the 0.03 m reference case; the angle, speed, and timestep sweeps hold width fixed at 0.03 m.
 
 ## Comparison policy
 
@@ -21,4 +21,4 @@ The default campaign contains nine cases: three wedge angles (30°, 45°, 60°),
 
 The hard gate requires finite histories, repeatable CPU signatures/metrics, forward bow travel and nonnegative integrated resistance work. The workflow deliberately does not require a specific force magnitude or fracture event because those depend on the selected model parameters and simulation duration.
 
-The model now supports finite transverse width through a sharp intersection of the wedge profile and a slab, but it remains an idealized dry-contact prototype. It excludes fluid dynamics, hydrostatic pressure, buoyancy, ship motions, realistic stem curvature, and calibrated ice/hull properties. A stable sensitivity result is necessary but not sufficient for physical validation; measured resistance and fracture data are still required.
+The model supports finite transverse width through a sharp intersection of the wedge profile and a slab; the campaign now includes a width sweep, but this remains an idealized dry-contact prototype. It excludes fluid dynamics, hydrostatic pressure, buoyancy, ship motions, realistic stem curvature, and calibrated ice/hull properties. A stable sensitivity result is necessary but not sufficient for physical validation; measured resistance and fracture data are still required.

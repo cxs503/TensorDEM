@@ -94,6 +94,7 @@ class MovingWedgeBowIceDEM3D(IceDEM3D):
             normal[:, 0] = torch.where(side_active, 0.0, normal[:, 0])
             normal[:, 2] = torch.where(side_active, 0.0, normal[:, 2])
             normal[:, 1] = torch.where(side_active, torch.where(dy >= 0, 1.0, -1.0), 0.0)
+        overlap = (self.config.radius - signed_distance).clamp_min(0.0)
         relative_velocity = self.velocities.clone()
         relative_velocity[:, 0] -= self.bow_speed
         normal_speed = (relative_velocity * normal).sum(dim=1)
