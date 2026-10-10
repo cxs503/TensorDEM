@@ -1,0 +1,55 @@
+{
+  "protocol": "tensordem-dem3d-benchmark-suite-v1",
+  "units": "SI",
+  "cases": [
+    {
+      "id": "indenter_smoke",
+      "title": "Small-grid indenter smoke test",
+      "purpose": "Fast installation, finite-state, output-schema, and repeatability check.",
+      "config": {
+        "nx": 3, "ny": 3, "nz": 2,
+        "drag": 0.0, "fix_x_edges": false,
+        "tool_speed": 0.5, "breaking_strain": 0.015,
+        "shear_breaking_strain": 0.03
+      },
+      "steps": 12,
+      "sample_every": 3,
+      "verify_repeat": true,
+      "minimum_broken_bonds": 0
+    },
+    {
+      "id": "indenter_reference",
+      "title": "Reference spherical-indenter regression case",
+      "purpose": "Stable reference geometry and force/energy/fracture-history artifacts for regression comparisons.",
+      "config": {
+        "nx": 7, "ny": 5, "nz": 3,
+        "radius": 0.025, "density": 917.0,
+        "bond_stiffness": 2000.0, "contact_stiffness": 5000.0,
+        "contact_damping": 5.0, "drag": 2.0,
+        "tool_radius": 0.1, "tool_speed": 0.5, "tool_gap": 0.01,
+        "breaking_strain": 0.015, "shear_breaking_strain": 0.03
+      },
+      "steps": 400,
+      "sample_every": 10,
+      "verify_repeat": false,
+      "minimum_broken_bonds": 0
+    },
+    {
+      "id": "fracture_challenge",
+      "title": "Lower-threshold fracture challenge",
+      "purpose": "Exercise irreversible bond failure and per-bond event export under stronger indentation damage.",
+      "config": {
+        "nx": 7, "ny": 5, "nz": 3,
+        "radius": 0.025, "density": 917.0,
+        "bond_stiffness": 2000.0, "contact_stiffness": 5000.0,
+        "contact_damping": 5.0, "drag": 2.0,
+        "tool_radius": 0.1, "tool_speed": 0.5, "tool_gap": 0.01,
+        "breaking_strain": 0.005, "shear_breaking_strain": 0.01
+      },
+      "steps": 800,
+      "sample_every": 10,
+      "verify_repeat": false,
+      "minimum_broken_bonds": 1
+    }
+  ]
+}
