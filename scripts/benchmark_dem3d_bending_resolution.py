@@ -46,10 +46,20 @@ def _run_level(base: dict[str, Any], factor: int, base_steps: int) -> dict[str, 
         drag=float(base["drag"]), fix_x_edges=False, fix_bottom=False,
         tool_gap=1.0, tool_radius=0.01, tool_speed=0.01,
     )
-    # Preserve approximately the same physical ramp duration as the lattice
-    # is refined. This is not a timestep-convergence study.
-    steps = int(math.ceil(base_steps * factor ** 1.5))
+    # Preserve approximately the same physical ramp duration using the actual
+    # recommended timestep ratio (which also depends on damping/drag limits).
+    reference_cfg = DEM3DConfig(
+        nx=int(base["nx"]), ny=int(base["ny"]), nz=int(base["nz"]),
+        radius=float(base["radius_m"]), density=float(base["density_kg_m3"]),
+        bond_stiffness=float(base["bond_stiffness_N_m"]),
+        contact_stiffness=float(base["contact_stiffness_N_m"]),
+        breaking_strain=float(base["breaking_strain"]),
+        shear_breaking_strain=float(base["shear_breaking_strain"]),
+        contact_damping=float(base["contact_damping_Ns_m"]), drag=float(base["drag"]),
+        fix_x_edges=False, fix_bottom=False, tool_gap=1.0, tool_radius=0.01, tool_speed=0.01,
+    )
     sim = IceDEM3D(cfg)
+    steps = int(math.ceil(base_steps * reference_cfg.recommended_dt / sim.dt))
     sim.tool_start[:] = torch.tensor([1e6, 1e6, 1e6], dtype=sim.dtype)
     sim.tool_velocity.zero_()
     x = sim.initial_positions[:, 0]
