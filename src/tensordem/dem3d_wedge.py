@@ -25,6 +25,8 @@ class MovingWedgeBowIceDEM3D(IceDEM3D):
         wedge_angle_deg: float = 45.0,
         initial_gap: float = 0.0,
         tip_height_fraction: float = 0.5,
+        bow_half_width_m: float | None = None,
+        bow_center_y_m: float | None = None,
     ) -> None:
         for name, value in (
             ("bow_speed", bow_speed),
@@ -42,11 +44,19 @@ class MovingWedgeBowIceDEM3D(IceDEM3D):
             raise ValueError("initial_gap must be nonnegative")
         if not 0.0 <= tip_height_fraction <= 1.0:
             raise ValueError("tip_height_fraction must be in [0, 1]")
+        if bow_half_width_m is not None and (not math.isfinite(bow_half_width_m) or bow_half_width_m <= 0.0):
+            raise ValueError("bow_half_width_m must be finite and positive when specified")
+        if bow_center_y_m is not None and not math.isfinite(bow_center_y_m):
+            raise ValueError("bow_center_y_m must be finite when specified")
         super().__init__(config)
         self.bow_speed = float(bow_speed)
         self.wedge_angle_deg = float(wedge_angle_deg)
         self.initial_gap = float(initial_gap)
         self.tip_height_fraction = float(tip_height_fraction)
+        self.bow_half_width_m = None if bow_half_width_m is None else float(bow_half_width_m)
+        y_min = float(self.initial_positions[:, 1].min())
+        y_max = float(self.initial_positions[:, 1].max())
+        self.bow_center_y_m = 0.5 * (y_min + y_max) if bow_center_y_m is None else float(bow_center_y_m)
         self.bow_start_x = float(self.initial_positions[:, 0].min()) - 0.5 * config.radius - initial_gap
         z_min = float(self.initial_positions[:, 2].min())
         z_max = float(self.initial_positions[:, 2].max())
@@ -68,11 +78,22 @@ class MovingWedgeBowIceDEM3D(IceDEM3D):
         dx = self.positions[:, 0] - self.bow_tip_x
         dz = self.positions[:, 2] - self.bow_tip_z
         side = torch.where(dz >= 0, 1.0, -1.0)
-        signed_distance = sin_t * dx + cos_t * dz.abs()
-        overlap = (self.config.radius - signed_distance).clamp_min(0.0)
+        wedge_distance = sin_t * dx + cos_t * dz.abs()
         normal = torch.zeros_like(self.positions)
         normal[:, 0] = sin_t
         normal[:, 2] = side * cos_t
+        signed_distance = wedge_distance
+        if self.bow_half_width_m is not None:
+            # Intersection of the x-z wedge and a finite transverse slab.
+            # At sharp corners use the normal of the active limiting face;
+            # this is intentionally a nonsmoothed contact geometry.
+            dy = self.positions[:, 1] - self.bow_center_y_m
+            side_distance = dy.abs() - self.bow_half_width_m
+            side_active = side_distance > wedge_distance
+            signed_distance = torch.maximum(wedge_distance, side_distance)
+            normal[:, 0] = torch.where(side_active, 0.0, normal[:, 0])
+            normal[:, 2] = torch.where(side_active, 0.0, normal[:, 2])
+            normal[:, 1] = torch.where(side_active, torch.where(dy >= 0, 1.0, -1.0), 0.0)
         relative_velocity = self.velocities.clone()
         relative_velocity[:, 0] -= self.bow_speed
         normal_speed = (relative_velocity * normal).sum(dim=1)
@@ -107,6 +128,8 @@ class MovingWedgeBowIceDEM3D(IceDEM3D):
             "bow_tip_x_m": self.bow_tip_x,
             "bow_tip_z_m": self.bow_tip_z,
             "bow_speed_m_s": self.bow_speed,
+            "bow_half_width_m": float("nan") if self.bow_half_width_m is None else self.bow_half_width_m,
+            "bow_center_y_m": self.bow_center_y_m,
             "bow_reaction_x_N": float(reaction[0]),
             "bow_reaction_y_N": float(reaction[1]),
             "bow_reaction_z_N": float(reaction[2]),
