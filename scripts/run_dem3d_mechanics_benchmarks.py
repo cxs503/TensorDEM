@@ -104,13 +104,23 @@ def run_mechanics_benchmarks(output: Path) -> dict[str, Any]:
 
     # 3. Action-reaction consistency with a displaced indenter and a deformed lattice.
     sim = IceDEM3D(_base_config(tool_radius=0.1, tool_gap=0.0))
-    sim.positions[sim.positions.shape[0] // 2, 2] -= 0.015
-    sim.velocities[sim.positions.shape[0] // 2, 0] = 0.02
+    top = sim.initial_positions[:, 2].max()
+    top_axis = torch.linalg.vector_norm(sim.initial_positions[:, :2], dim=1)
+    candidates = torch.where(sim.initial_positions[:, 2] == top, top_axis,
+                             torch.full_like(top_axis, float("inf")))
+    loaded = int(torch.argmin(candidates))
+    sim.positions[loaded, 2] -= 0.015
+    sim.velocities[loaded, 0] = 0.02
     force, reaction = sim.forces(update_fracture=False)
     residual = float(torch.linalg.vector_norm(force.sum(dim=0) + reaction))
+    contact_count = int((torch.linalg.vector_norm(
+        sim.positions - sim.tool_position, dim=1
+    ) < sim.config.radius + sim.config.tool_radius).sum())
     records.append(_record(
-        "force_balance", residual, 0.0, math.isfinite(residual) and residual <= 1.0e-9,
-        "N", "Checks sum(particle forces) + indenter reaction = 0 for this force convention.",
+        "force_balance", {"residual_N": residual, "tool_contact_particles": contact_count}, 0.0,
+        math.isfinite(residual) and residual <= 1.0e-9 and contact_count >= 1, "N",
+        "Checks action-reaction with an explicitly loaded top-axis particle in tool contact; "
+        "the contact count must be nonzero.",
     ))
 
     # 4. Tensile failure is committed by the force update and remains irreversible.
