@@ -24,6 +24,13 @@
       "acceptance": {"net_force_residual_N": 1e-9}
     },
     {
+      "id": "single_bond_shear_failure",
+      "kind": "invariant",
+      "purpose": "Exercise the objective shear-strain failure criterion independently of the tensile threshold.",
+      "parameters": {"engineering_shear_strain": 0.1, "breaking_strain": 1.0, "shear_breaking_strain": 0.01},
+      "acceptance": {"minimum_broken_bonds": 1, "failure_mode_code": 2}
+    },
+    {
       "id": "irreversible_tensile_failure",
       "kind": "invariant",
       "purpose": "Verify that an over-threshold tensile bond fails once and does not heal after unloading.",
