@@ -45,6 +45,11 @@ class DEM3DVisualizationTests(unittest.TestCase):
             report = visualize_case(case, root / "out")
             self.assertTrue(report["trajectory_available"])
             self.assertEqual(report["frame_count"], 2)
+            self.assertEqual(report["fracture_diagnostics"]["initial_broken_bonds"], 0)
+            self.assertEqual(report["fracture_diagnostics"]["final_broken_bonds"], 1)
+            self.assertAlmostEqual(report["fracture_diagnostics"]["final_broken_fraction"], 0.5)
+            self.assertTrue((root / "out" / "fracture_diagnostics.csv").is_file())
+            self.assertIsNone(report["fracture_diagnostics"]["warning"])
             for filename in ("damage_initial.png", "damage_final.png",
                              "displacement_final.png", "damage_evolution.gif", "force_history.png",
                              "fracture_crack_map.png"):
