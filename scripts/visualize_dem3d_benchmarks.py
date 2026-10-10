@@ -200,6 +200,29 @@ def visualize_case(case_dir: Path, output: Path, *, make_gif: bool = True) -> di
     if trajectory_path.is_file():
         payload = _load(trajectory_path)
         frames = payload["frames"]
+        broken_by_frame = [int((~frame["alive"].bool()).sum().item()) for frame in frames]
+        total_bonds = int(payload["pairs"].shape[0])
+        report["fracture_diagnostics"] = {
+            "initial_broken_bonds": broken_by_frame[0],
+            "final_broken_bonds": broken_by_frame[-1],
+            "newly_broken_bonds": broken_by_frame[-1] - broken_by_frame[0],
+            "bond_count": total_bonds,
+            "final_broken_fraction": broken_by_frame[-1] / max(total_bonds, 1),
+            "frames_with_new_breakage": sum(b > a for a, b in zip(broken_by_frame, broken_by_frame[1:])),
+            "max_new_breaks_between_saved_frames": max((b - a for a, b in zip(broken_by_frame, broken_by_frame[1:])), default=0),
+            "warning": ("NO_VISIBLE_FRACTURE: no bonds broke in saved trajectory" if broken_by_frame[-1] == 0 else
+                        "LOW_FRACTURE_ACTIVITY: fewer than 1% of bonds broke" if broken_by_frame[-1] / max(total_bonds, 1) < 0.01 else None),
+        }
+        with (output / "fracture_diagnostics.csv").open("w", newline="", encoding="utf-8") as stream:
+            writer = csv.writer(stream)
+            writer.writerow(["frame_index", "step", "time_s", "broken_bonds", "broken_fraction", "new_breaks_since_previous_frame"])
+            previous = broken_by_frame[0]
+            for frame_index, (frame, broken_count) in enumerate(zip(frames, broken_by_frame)):
+                writer.writerow([frame_index, frame["step"], frame["time_s"], broken_count,
+                                 broken_count / max(total_bonds, 1),
+                                 broken_count - previous if frame_index else 0])
+                previous = broken_count
+        report["outputs"].append("fracture_diagnostics.csv")
         for name, index, field in (
             ("damage_initial.png", 0, "damage"),
             ("damage_final.png", len(frames) - 1, "damage"),
@@ -229,7 +252,9 @@ def visualize_case(case_dir: Path, output: Path, *, make_gif: bool = True) -> di
                 values = _damage_fraction(alive, payload["pairs"].long(), len(pos))
                 scat._offsets3d = (pos[:, 0].numpy(), pos[:, 1].numpy(), pos[:, 2].numpy())
                 scat.set_array(values.numpy())
-                title.set_text(f"DEM3D damage | step={frame['step']} | t={frame['time_s']:.6g} s")
+                broken_count = int((~alive).sum().item())
+                total_bonds = int(payload["pairs"].shape[0])
+                title.set_text(f"DEM3D fracture | step={frame['step']} | t={frame['time_s']:.6g} s | broken={broken_count}/{total_bonds} ({100*broken_count/max(total_bonds,1):.2f}%)")
                 return scat, title
             animation = FuncAnimation(fig, update, frames=len(frames), interval=250, blit=False)
             animation.save(output / "damage_evolution.gif", writer=PillowWriter(fps=4))
