@@ -34,6 +34,38 @@ class MovingWedgeBowTests(unittest.TestCase):
         )))
         self.assertGreaterEqual(d["bow_contact_energy_J"], 0.0)
 
+
+    def test_finite_width_activates_transverse_side_contact(self):
+        sim = MovingWedgeBowIceDEM3D(
+            DEM3DConfig(
+                nx=3, ny=2, nz=3, radius=0.02, tool_speed=0.1,
+                bond_stiffness=1000.0, contact_stiffness=3000.0,
+                breaking_strain=0.5, shear_breaking_strain=0.5,
+                drag=0.1, contact_damping=0.5,
+                fix_x_edges=False, fix_bottom=False,
+            ),
+            bow_speed=0.1, wedge_angle_deg=45.0, bow_half_width_m=0.01,
+        )
+        sim.positions[:, 0] = sim.bow_tip_x
+        sim.positions[:, 2] = sim.bow_tip_z
+        sim.positions[:, 1] = sim.bow_center_y_m
+        target = 0
+        sim.positions[target, 1] = sim.bow_center_y_m + 0.01 + 0.5 * sim.config.radius
+        force, reaction, overlap = sim._wedge_contact()
+        self.assertGreater(float(overlap[target]), 0.0)
+        self.assertGreater(float(abs(force[target, 1])), 0.0)
+        self.assertAlmostEqual(float(force[target, 0]), 0.0, places=12)
+        self.assertAlmostEqual(float(force[target, 2]), 0.0, places=12)
+        self.assertTrue(all(__import__("math").isfinite(float(v)) for v in reaction))
+        diag = sim.diagnostics()
+        self.assertEqual(diag["bow_width_finite"], 1)
+        self.assertAlmostEqual(diag["bow_half_width_m"], 0.01)
+
+    def test_invalid_finite_width_is_rejected(self):
+        cfg = DEM3DConfig(nx=2, ny=2, nz=2)
+        with self.assertRaises(ValueError):
+            MovingWedgeBowIceDEM3D(cfg, bow_half_width_m=0.0)
+
     def test_invalid_wedge_parameters_are_rejected(self):
         cfg = DEM3DConfig(nx=2, ny=2, nz=2)
         with self.assertRaises(ValueError):
