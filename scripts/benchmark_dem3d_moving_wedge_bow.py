@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+from dataclasses import replace
 import hashlib
 import json
 import math
@@ -21,7 +22,7 @@ from tensordem.dem3d import DEM3DConfig
 from tensordem.dem3d_wedge import MovingWedgeBowIceDEM3D
 
 
-def _run_once(steps: int, *, bow_speed: float, wedge_angle_deg: float) -> tuple[list[dict[str, Any]], str, dict[str, Any]]:
+def _run_once(steps: int, *, bow_speed: float, wedge_angle_deg: float, dt_factor: float = 1.0) -> tuple[list[dict[str, Any]], str, dict[str, Any]]:
     radius = 0.02
     config = DEM3DConfig(
         nx=7, ny=3, nz=4,
@@ -37,6 +38,9 @@ def _run_once(steps: int, *, bow_speed: float, wedge_angle_deg: float) -> tuple[
         fix_x_edges=False,
         fix_bottom=False,
     )
+    if not math.isfinite(dt_factor) or not 0.0 < dt_factor <= 1.0:
+        raise ValueError("dt_factor must be finite and in (0, 1]")
+    config = replace(config, dt=config.recommended_dt * dt_factor)
     sim = MovingWedgeBowIceDEM3D(
         config, bow_speed=bow_speed, wedge_angle_deg=wedge_angle_deg,
         initial_gap=0.0, tip_height_fraction=0.5,
@@ -89,7 +93,7 @@ def _run_once(steps: int, *, bow_speed: float, wedge_angle_deg: float) -> tuple[
     return rows, digest.hexdigest(), metrics
 
 
-def run_campaign(output: Path, *, steps: int = 300, bow_speed: float = 0.1, wedge_angle_deg: float = 45.0) -> dict[str, Any]:
+def run_campaign(output: Path, *, steps: int = 300, bow_speed: float = 0.1, wedge_angle_deg: float = 45.0, dt_factor: float = 1.0) -> dict[str, Any]:
     if isinstance(steps, bool) or not isinstance(steps, int) or steps < 1:
         raise ValueError("steps must be a positive integer")
     if not math.isfinite(bow_speed) or bow_speed <= 0:
@@ -97,8 +101,10 @@ def run_campaign(output: Path, *, steps: int = 300, bow_speed: float = 0.1, wedg
     if not math.isfinite(wedge_angle_deg) or not 5 <= wedge_angle_deg <= 85:
         raise ValueError("wedge_angle_deg must be in [5, 85]")
     torch.set_num_threads(1)
-    rows, signature, metrics = _run_once(steps, bow_speed=bow_speed, wedge_angle_deg=wedge_angle_deg)
-    repeat_rows, repeat_signature, repeat_metrics = _run_once(steps, bow_speed=bow_speed, wedge_angle_deg=wedge_angle_deg)
+    if not math.isfinite(dt_factor) or not 0.0 < dt_factor <= 1.0:
+        raise ValueError("dt_factor must be finite and in (0, 1]")
+    rows, signature, metrics = _run_once(steps, bow_speed=bow_speed, wedge_angle_deg=wedge_angle_deg, dt_factor=dt_factor)
+    repeat_rows, repeat_signature, repeat_metrics = _run_once(steps, bow_speed=bow_speed, wedge_angle_deg=wedge_angle_deg, dt_factor=dt_factor)
     checks = {
         "finite_history": all(math.isfinite(float(value)) for row in rows for value in row.values()),
         "repeatable_history": signature == repeat_signature,
@@ -112,6 +118,8 @@ def run_campaign(output: Path, *, steps: int = 300, bow_speed: float = 0.1, wedg
         "steps": steps,
         "bow_speed_m_s": bow_speed,
         "wedge_angle_deg": wedge_angle_deg,
+        "dt_factor": dt_factor,
+        "dt_s": float(rows[1]["time_s"]) if len(rows) > 1 else 0.0,
         "checks": checks,
         "metrics": metrics,
         "interpretation": (
@@ -140,8 +148,9 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--steps", type=int, default=300)
     parser.add_argument("--bow-speed", type=float, default=0.1)
     parser.add_argument("--wedge-angle-deg", type=float, default=45.0)
+    parser.add_argument("--dt-factor", type=float, default=1.0)
     args = parser.parse_args(argv)
-    report = run_campaign(args.output, steps=args.steps, bow_speed=args.bow_speed, wedge_angle_deg=args.wedge_angle_deg)
+    report = run_campaign(args.output, steps=args.steps, bow_speed=args.bow_speed, wedge_angle_deg=args.wedge_angle_deg, dt_factor=args.dt_factor)
     print(json.dumps(report, indent=2))
     if report["verdict"] != "PASS":
         raise SystemExit(1)
