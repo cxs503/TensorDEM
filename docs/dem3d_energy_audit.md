@@ -106,3 +106,38 @@ not a guarantee of the true continuous-time peak. Correlation is descriptive and
 does not establish causation; increase the sampling frequency before interpreting
 rapid crack/force transients. The report is not a substitute for material
 calibration or experimental validation.
+
+
+## Particle-resolution sensitivity study
+
+Run a same-physical-domain study before treating a single lattice as predictive:
+
+```bash
+python scripts/validate_dem3d_resolution.py \
+  --nx 5 --ny 4 --nz 3 --steps 200 --factors 1 2 \
+  --sample-every 10 --output results-dem3d-resolution
+```
+
+The integer refinement factor preserves each initial block extent using
+`n'=(n-1)m+1` and `r'=r/m`, and keeps the indenter radius, speed, and nominal
+block dimensions fixed. The protocol scales bond and contact stiffness by `1/m`
+and viscous damping coefficients by `1/m²`. The nominal `dt` scales as `1/m`,
+but is reduced further when the solver's coordination-dependent stability bound
+requires it; the step count is adjusted so every level reaches the same physical
+final time. These are explicit continuum-like scaling assumptions, not universally
+valid material laws. The script rejects invalid schedules.
+
+Outputs:
+
+- `resolution_sensitivity_3d.json`: protocol, assumptions, common end time, and
+  per-level comparisons against the finest resolution.
+- `resolution_levels_3d.csv`: lattice dimensions, particle/bond counts, physical
+  extents, peak/final reaction, broken-bond count, and energy residual metrics.
+- `resolution_history_3d.csv`: sampled force, damage, energy, and time history for
+  each refinement level.
+
+Particle count grows approximately cubically with the refinement factor, so start
+with factors `1 2` before attempting `1 2 4`. Discrete bond topology changes with
+resolution; fracture counts need not converge monotonically. Treat this as a
+sensitivity screen, then calibrate the scaling against measured stiffness,
+fracture energy, and load-displacement data before engineering prediction.
