@@ -132,6 +132,54 @@ def _plot_history(plt: Any, case_dir: Path, output: Path) -> bool:
     return False
 
 
+def _plot_fracture_events(plt: Any, case_dir: Path, output: Path) -> bool:
+    """Plot exported broken-bond midpoints, grouped by recorded failure mode."""
+    path = case_dir / "fracture_events_3d.csv"
+    if not path.is_file():
+        return False
+    required = (
+        "final_midpoint_x_m", "final_midpoint_y_m", "final_midpoint_z_m",
+        "failure_mode_label",
+    )
+    with path.open(newline="", encoding="utf-8") as stream:
+        reader = csv.DictReader(stream)
+        if not reader.fieldnames or any(key not in reader.fieldnames for key in required):
+            return False
+        rows = list(reader)
+    if not rows:
+        return False
+    groups: dict[str, list[tuple[float, float, float]]] = {}
+    for row in rows:
+        try:
+            xyz = tuple(float(row[key]) for key in required[:3])
+        except (TypeError, ValueError):
+            continue
+        if not all(math.isfinite(value) for value in xyz):
+            continue
+        mode = row["failure_mode_label"].strip() or "unknown"
+        groups.setdefault(mode, []).append(xyz)
+    if not groups:
+        return False
+    fig = plt.figure(figsize=(9, 7), constrained_layout=True)
+    ax = fig.add_subplot(111, projection="3d")
+    all_points = []
+    for mode in sorted(groups):
+        points = groups[mode]
+        all_points.extend(points)
+        xs, ys, zs = zip(*points)
+        ax.scatter(xs, ys, zs, s=30, depthshade=False, label=f"{mode} ({len(points)})")
+    points_tensor = torch.tensor(all_points, dtype=torch.float64)
+    _axes_equal(ax, points_tensor)
+    ax.set_xlabel("x (m)")
+    ax.set_ylabel("y (m)")
+    ax.set_zlabel("z (m)")
+    ax.set_title(f"DEM3D fracture event locations | {len(all_points)} broken bonds")
+    ax.legend(loc="best")
+    fig.savefig(output / "fracture_crack_map.png", dpi=160)
+    plt.close(fig)
+    return True
+
+
 def visualize_case(case_dir: Path, output: Path, *, make_gif: bool = True) -> dict[str, Any]:
     import matplotlib
     matplotlib.use("Agg")
@@ -191,6 +239,8 @@ def visualize_case(case_dir: Path, output: Path, *, make_gif: bool = True) -> di
         report["particle_count"] = int(payload["initial_positions"].shape[0])
     if _plot_history(plt, case_dir, output):
         report["outputs"].append("force_history.png")
+    if _plot_fracture_events(plt, case_dir, output):
+        report["outputs"].append("fracture_crack_map.png")
     (output / "visualization_manifest.json").write_text(
         json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
@@ -215,6 +265,7 @@ def main(argv: list[str] | None = None) -> int:
         "cases_with_clouds": sum(any(name.startswith(("damage_", "displacement_")) for name in row["outputs"]) for row in reports),
         "cases_with_gif": sum("damage_evolution.gif" in row["outputs"] for row in reports),
         "cases_with_history_plot": sum("force_history.png" in row["outputs"] for row in reports),
+        "cases_with_crack_map": sum("fracture_crack_map.png" in row["outputs"] for row in reports),
         "cases": reports,
     }
     args.output.mkdir(parents=True, exist_ok=True)
