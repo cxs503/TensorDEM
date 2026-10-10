@@ -11,9 +11,9 @@ from scripts.visualize_dem3d_benchmarks import visualize_case
 
 
 class DEM3DFractureDiagnosticEdgeCases(unittest.TestCase):
-    def _write_trajectory(self, case: Path, alive_frames: list[list[bool]]) -> None:
+    def _write_trajectory(self, case: Path, alive_frames: list[list[bool]], bond_count: int = 3) -> None:
         initial = torch.tensor([[0., 0., 0.], [1., 0., 0.], [0., 1., 0.]], dtype=torch.float64)
-        pairs = torch.tensor([[0, 1], [0, 2], [1, 2]], dtype=torch.long)
+        pairs = torch.tensor([[0, 1]] * bond_count, dtype=torch.long)
         frames = [
             {
                 "step": index,
@@ -28,7 +28,7 @@ class DEM3DFractureDiagnosticEdgeCases(unittest.TestCase):
             "format": "tensordem-dem3d-visualization-trajectory-v1",
             "initial_positions": initial,
             "pairs": pairs,
-            "rest_lengths": torch.ones(3),
+            "rest_lengths": torch.ones(bond_count),
             "frames": frames,
         }, case / "visualization_trajectory_3d.pt")
 
