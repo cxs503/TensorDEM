@@ -26,8 +26,9 @@ class DEM3DBendingLoadConvergenceTests(unittest.TestCase):
             saved = json.loads(
                 (root / "campaign" / "bending_load_convergence.json").read_text()
             )
-            self.assertEqual(saved["protocol"], "tensordem-dem3d-bending-load-convergence-v1")
-            self.assertIn("not demonstrate time-step convergence", saved["interpretation"])
+            self.assertEqual(saved["protocol"], "tensordem-dem3d-bending-load-sensitivity-v1")
+            self.assertIn("effective loading rate", saved["interpretation"])
+            self.assertGreater(report["runs"][1]["ramp_duration_s"], report["runs"][0]["ramp_duration_s"])
 
     def test_invalid_campaign_parameters_are_rejected(self):
         with tempfile.TemporaryDirectory() as tmp:
