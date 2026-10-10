@@ -35,7 +35,7 @@ def run_convergence_study(
     refinement_factors: Sequence[int] = (1, 2, 4),
 ) -> dict[str, Any]:
     """Run integer-refinement levels to the same final physical time."""
-    if isinstance(base_steps, bool) or base_steps < 1:
+    if isinstance(base_steps, bool) or not isinstance(base_steps, int) or base_steps < 1:
         raise ValueError("base_steps must be a positive integer")
     factors = tuple(refinement_factors)
     if len(factors) < 2 or any(
@@ -61,6 +61,23 @@ def run_convergence_study(
         level_config = replace(config, dt=dt)
         steps = int(round(final_time / dt))
         sim = EnergyAuditedIceDEM3D(level_config)
+        initial = sim.diagnostics()
+        history.append({
+            "refinement_factor": factor,
+            "step": 0,
+            "time_s": float(initial["time"]),
+            "dt_s": dt,
+            "reaction_x_N": float(initial["reaction_x"]),
+            "reaction_y_N": float(initial["reaction_y"]),
+            "reaction_z_N": float(initial["reaction_z"]),
+            "reaction_magnitude_N": math.sqrt(
+                float(initial["reaction_x"]) ** 2
+                + float(initial["reaction_y"]) ** 2 + float(initial["reaction_z"]) ** 2
+            ),
+            "broken_bonds": int(initial["broken_bonds"]),
+            "mechanical_energy_J": float(initial["mechanical_energy_J"]),
+            "energy_balance_residual_J": float(initial["energy_balance_residual_J"]),
+        })
         peak_reaction = 0.0
         peak_reaction_signed = 0.0
         max_energy_residual_abs = 0.0
