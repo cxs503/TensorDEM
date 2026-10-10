@@ -20,6 +20,8 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--breaking-strain", type=float, default=0.015)
     parser.add_argument("--shear-breaking-strain", type=float, default=0.03)
     parser.add_argument("--device", choices=("cpu", "cuda"), default="cpu")
+    parser.add_argument("--geometry", choices=("box", "cylinder_xz"), default="box",
+                        help="颗粒几何：规则盒体或 x-z 截面圆柱")
     parser.add_argument("--save-every", type=int, default=20)
     parser.add_argument("--output", type=Path, default=Path("results-3d"))
     parser.add_argument("--restart", type=Path, default=None,
@@ -66,7 +68,7 @@ def main(argv: list[str] | None = None) -> None:
                 tool_speed=args.speed, radius=args.radius, tool_radius=args.tool_radius,
                 breaking_strain=args.breaking_strain,
                 shear_breaking_strain=args.shear_breaking_strain,
-                device=args.device, fix_bottom=args.fix_bottom,
+                device=args.device, geometry=args.geometry, fix_bottom=args.fix_bottom,
                 top_platen_enabled=args.top_platen,
                 bottom_platen_enabled=args.bottom_platen,
                 platen_stiffness=args.platen_stiffness,
