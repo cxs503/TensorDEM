@@ -57,7 +57,8 @@ def analyze_fracture_force(
 ) -> dict[str, Any]:
     """Validate event/history consistency and write interval and summary reports."""
     raw_history = _read_csv(history_path)
-    # A valid no-fracture run writes a header-only event CSV by design.\n    raw_events = _read_csv(events_path, allow_empty=True)
+    # A valid no-fracture run writes a header-only event CSV by design.
+    raw_events = _read_csv(events_path, allow_empty=True)
     history: list[dict[str, float | int]] = []
     for idx, row in enumerate(raw_history, start=2):
         t = _number(row, "time", "history", idx)
@@ -89,7 +90,11 @@ def analyze_fracture_force(
             raise ValueError(f"events row {idx}: invalid or missing bond_id") from exc
         if bond_id < 0:
             raise ValueError(f"events row {idx}: bond_id must be nonnegative")
+        energy = _number(row, "failure_energy_J", "events", idx)
+        if energy < 0:
+            raise ValueError(f"events row {idx}: failure_energy_J must be nonnegative")
         events.append({"failure_time_s": t, "bond_id": bond_id,
+                       "failure_energy_J": energy,
                        "failure_mode_label": row.get("failure_mode_label", "unknown")})
     event_ids = [event["bond_id"] for event in events]
     if len(set(event_ids)) != len(event_ids):
@@ -139,6 +144,9 @@ def analyze_fracture_force(
             "end_step": int(right["step"]),
             "reaction_z_start_N": f0,
             "reaction_z_end_N": f1,
+            "reaction_z_delta_N": f1 - f0,
+            "reaction_z_abs_delta_N": abs(f1) - abs(f0),
+            "reaction_z_slope_N_per_s": (f1 - f0) / dt,
             "reaction_z_mean_trapezoid_N": (f0 + f1) / 2,
             "reaction_z_abs_mean_trapezoid_N": (abs0 + abs1) / 2,
             "reaction_z_peak_sample_abs_N": max(abs0, abs1),
@@ -146,6 +154,9 @@ def analyze_fracture_force(
             "absolute_reaction_impulse_Ns": (abs0 + abs1) * dt / 2,
             "new_fractures": damage_delta,
             "fracture_rate_per_s": rate,
+            "fracture_energy_release_sum_J": sum(
+                float(event["failure_energy_J"]) for event in interval_events
+            ),
             "event_bond_ids": ";".join(str(event["bond_id"]) for event in interval_events),
             "event_failure_modes": ";".join(str(event["failure_mode_label"])
                                              for event in interval_events),
@@ -153,6 +164,12 @@ def analyze_fracture_force(
 
     rates = [float(row["fracture_rate_per_s"]) for row in intervals]
     abs_forces = [float(row["reaction_z_abs_mean_trapezoid_N"]) for row in intervals]
+    peak_row = max(history, key=lambda row: abs(float(row["reaction_z"])))
+    mode_counts: dict[str, int] = {}
+    for event in events:
+        mode = str(event["failure_mode_label"])
+        mode_counts[mode] = mode_counts.get(mode, 0) + 1
+    failure_times = [float(event["failure_time_s"]) for event in events]
     summary: dict[str, Any] = {
         "protocol": "tensordem-dem3d-fracture-force-analysis-v1",
         "interpretation": (
@@ -168,7 +185,15 @@ def analyze_fracture_force(
         "end_time_s": end_time,
         "duration_s": end_time - start_time,
         "total_broken_bonds": final_broken,
-        "peak_sample_abs_reaction_z_N": max(abs(float(row["reaction_z"])) for row in history),
+        "fracture_mode_counts": mode_counts,
+        "first_fracture_time_s": min(failure_times) if failure_times else None,
+        "last_fracture_time_s": max(failure_times) if failure_times else None,
+        "total_fracture_energy_release_J": sum(
+            float(event["failure_energy_J"]) for event in events
+        ),
+        "peak_sample_abs_reaction_z_N": abs(float(peak_row["reaction_z"])),
+        "peak_sample_reaction_z_signed_N": float(peak_row["reaction_z"]),
+        "peak_sample_reaction_time_s": float(peak_row["time"]),
         "maximum_interval_fracture_rate_per_s": max(rates, default=0.0),
         "total_signed_reaction_impulse_Ns": sum(
             float(row["signed_reaction_impulse_Ns"]) for row in intervals
