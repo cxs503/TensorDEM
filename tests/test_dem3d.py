@@ -1,3 +1,4 @@
+import csv
 import math
 import unittest
 import tempfile
@@ -267,6 +268,25 @@ class DEM3DTests(unittest.TestCase):
         resumed = self.model()
         resumed.load_state_dict(snapshot)
         torch.testing.assert_close(resumed.positions, original.positions, atol=0, rtol=0)
+
+    def test_cli_can_run_with_moving_plane_platens(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            output = Path(tmp) / "platen-cli"
+            with redirect_stdout(StringIO()):
+                dem3d_main([
+                    "--nx", "3", "--ny", "3", "--nz", "2",
+                    "--steps", "2", "--save-every", "1",
+                    "--top-platen", "--bottom-platen",
+                    "--top-platen-velocity", "-0.05",
+                    "--bottom-platen-velocity", "0.05",
+                    "--output", str(output),
+                ])
+            with (output / "history.csv").open(newline="", encoding="utf-8") as stream:
+                rows = list(csv.DictReader(stream))
+            self.assertTrue(rows)
+            self.assertIn("top_platen_reaction_z_N", rows[0])
+            self.assertIn("bottom_platen_reaction_z_N", rows[0])
+            self.assertIn("platen_contact_energy_J", rows[0])
 
 if __name__ == "__main__":
     unittest.main()
