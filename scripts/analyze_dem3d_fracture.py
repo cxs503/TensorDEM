@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any, Sequence
 
 
-def _read_csv(path: Path) -> list[dict[str, str]]:
+def _read_csv(path: Path, *, allow_empty: bool = False) -> list[dict[str, str]]:
     if not path.is_file():
         raise FileNotFoundError(f"input file not found: {path}")
     with path.open(newline="", encoding="utf-8-sig") as stream:
@@ -21,7 +21,7 @@ def _read_csv(path: Path) -> list[dict[str, str]]:
         if not reader.fieldnames:
             raise ValueError(f"CSV has no header: {path}")
         rows = list(reader)
-    if not rows:
+    if not rows and not allow_empty:
         raise ValueError(f"CSV has no data rows: {path}")
     return rows
 
@@ -57,7 +57,7 @@ def analyze_fracture_force(
 ) -> dict[str, Any]:
     """Validate event/history consistency and write interval and summary reports."""
     raw_history = _read_csv(history_path)
-    raw_events = _read_csv(events_path)
+    # A valid no-fracture run writes a header-only event CSV by design.\n    raw_events = _read_csv(events_path, allow_empty=True)
     history: list[dict[str, float | int]] = []
     for idx, row in enumerate(raw_history, start=2):
         t = _number(row, "time", "history", idx)
