@@ -12,6 +12,10 @@ dependencies = [
 test = [
     "pytest>=8.3",
 ]
+viz = [
+    "matplotlib>=3.8",
+    "pillow>=10.0",
+]
 
 [project.scripts]
 tensordem = "tensordem.cli:main"
