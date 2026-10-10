@@ -16,8 +16,8 @@ class DEM3DMechanicsBenchmarkTests(unittest.TestCase):
             report = run_mechanics_benchmarks(output)
             self.assertEqual(report["protocol"], "tensordem-dem3d-mechanics-v1")
             self.assertEqual(report["verdict"], "PASS", report["cases"])
-            self.assertEqual(report["case_count"], 6)
-            self.assertEqual(report["pass_count"], 6)
+            self.assertEqual(report["case_count"], 7)
+            self.assertEqual(report["pass_count"], 7)
             self.assertEqual(report["fail_count"], 0)
             self.assertTrue((output / "mechanics_benchmark_report.json").is_file())
             self.assertTrue((output / "mechanics_benchmark_report.csv").is_file())
@@ -31,6 +31,7 @@ class DEM3DMechanicsBenchmarkTests(unittest.TestCase):
                     "bond_axial_spring",
                     "linear_contact_penalty",
                     "force_balance",
+                    "single_bond_shear_failure",
                     "irreversible_tensile_failure",
                     "rigid_rotation_objectivity",
                     "timestep_guard",
