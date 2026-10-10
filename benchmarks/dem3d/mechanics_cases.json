@@ -39,6 +39,7 @@
       "id": "timestep_guard",
       "kind": "invariant",
       "purpose": "Reject an explicitly supplied time step above the solver's conservative recommended bound.",
+      "parameters": {"dt_factor": 1.01},
       "acceptance": {"oversized_dt_rejected": true}
     }
   ],
