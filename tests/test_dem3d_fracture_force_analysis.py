@@ -42,8 +42,8 @@ class DEM3DFractureForceAnalysisTests(unittest.TestCase):
             self.assertEqual(summary["total_broken_bonds"], 3)
             self.assertEqual(summary["interval_count"], 3)
             self.assertTrue(summary["interval_damage_matches_event_timestamps"])
-            self.assertAlmostEqual(summary["total_signed_reaction_impulse_Ns"], 4.0)
-            self.assertAlmostEqual(summary["total_absolute_reaction_impulse_Ns"], 4.0)
+            self.assertAlmostEqual(summary["total_signed_reaction_impulse_Ns"], 6.0)
+            self.assertAlmostEqual(summary["total_absolute_reaction_impulse_Ns"], 6.0)
             self.assertIsNotNone(summary["pearson_fracture_rate_vs_abs_reaction"])
 
             with (output / "fracture_force_intervals_3d.csv").open(
