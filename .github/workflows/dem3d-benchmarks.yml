@@ -12,6 +12,9 @@ on:
     branches: [main]
     paths:
       - "benchmarks/dem3d/**"
+      - "scripts/benchmark_dem3d_energy_timestep.py"
+      - "tests/test_dem3d_energy_timestep.py"
+      - "docs/dem3d_energy_timestep_campaign.md"
       - "scripts/validate_dem3d_fracture.py"
       - "tests/test_dem3d_fracture_objectivity.py"
       - "docs/dem3d_fracture_objectivity_energy.md"
@@ -36,6 +39,9 @@ on:
     branches: [main]
     paths:
       - "benchmarks/dem3d/**"
+      - "scripts/benchmark_dem3d_energy_timestep.py"
+      - "tests/test_dem3d_energy_timestep.py"
+      - "docs/dem3d_energy_timestep_campaign.md"
       - "scripts/validate_dem3d_fracture.py"
       - "tests/test_dem3d_fracture_objectivity.py"
       - "docs/dem3d_fracture_objectivity_energy.md"
@@ -118,5 +124,6 @@ jobs:
             results-dem3d-ucs-sensitivity/
             results-dem3d-ucs-fracture-threshold/
             results-dem3d-fracture-validation/
+            results-dem3d-energy-timestep/
           if-no-files-found: warn
           retention-days: 30
