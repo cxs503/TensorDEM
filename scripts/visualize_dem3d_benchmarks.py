@@ -241,9 +241,6 @@ def visualize_case(case_dir: Path, output: Path, *, make_gif: bool = True) -> di
         report["outputs"].append("force_history.png")
     if _plot_fracture_events(plt, case_dir, output):
         report["outputs"].append("fracture_crack_map.png")
-    report["fracture_event_count"] = sum(
-        1 for name in report["outputs"] if name == "fracture_crack_map.png"
-    )
     (output / "visualization_manifest.json").write_text(
         json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
