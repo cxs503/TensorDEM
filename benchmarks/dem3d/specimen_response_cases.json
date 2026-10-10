@@ -1,0 +1,25 @@
+{
+  "protocol": "tensordem-dem3d-specimen-response-v1",
+  "units": "SI",
+  "scope": "Kinematic affine-compression patch test; not a standard UCS test or experimental validation.",
+  "cases": [
+    {
+      "id": "affine_compression_patch",
+      "kind": "kinematic_patch",
+      "purpose": "Check small-strain axial force response, stress-strain output, repeatability, and absence of unintended damage.",
+      "config": {"nx": 5, "ny": 5, "nz": 4, "radius_m": 0.025, "density_kg_m3": 917.0, "bond_stiffness_N_m": 2000.0},
+      "strain_levels": [0.0001, 0.0002, 0.0004],
+      "acceptance": {
+        "minimum_stress_Pa": 0.0,
+        "maximum_secant_modulus_relative_spread": 0.01,
+        "maximum_broken_bonds": 0,
+        "repeat_relative_tolerance": 1e-12
+      }
+    }
+  ],
+  "not_yet_supported": [
+    {"id": "standard_uniaxial_compression", "reason": "Requires platen/contact boundary conditions and a controlled loading protocol with lateral relaxation."},
+    {"id": "brazilian_splitting", "reason": "Requires loading strips/rollers, specimen geometry, and independent reference data."},
+    {"id": "three_point_bending", "reason": "Requires support rollers, loading nose, optional notch generation, and reference load-deflection data."}
+  ]
+}
