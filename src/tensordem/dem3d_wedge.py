@@ -47,7 +47,7 @@ class MovingWedgeBowIceDEM3D(IceDEM3D):
         self.wedge_angle_deg = float(wedge_angle_deg)
         self.initial_gap = float(initial_gap)
         self.tip_height_fraction = float(tip_height_fraction)
-        self.bow_start_x = float(self.initial_positions[:, 0].min()) - 3.0 * config.radius - initial_gap
+        self.bow_start_x = float(self.initial_positions[:, 0].min()) - 0.5 * config.radius - initial_gap
         z_min = float(self.initial_positions[:, 2].min())
         z_max = float(self.initial_positions[:, 2].max())
         self.bow_tip_z = z_min + tip_height_fraction * (z_max - z_min)
