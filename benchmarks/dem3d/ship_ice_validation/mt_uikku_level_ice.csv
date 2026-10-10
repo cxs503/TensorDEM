@@ -1,0 +1,11 @@
+test_id,ice_sheet,ice_type,ice_thickness_m,flexural_strength_kPa,compressive_strength_kPa,ice_elastic_modulus_MPa,ice_drift_speed_m_s,measured_mean_resistance_table3_kN,measured_std_kN,measured_max_kN,measured_min_kN,experimental_reference_table8_kN,lindqvist_prediction_kN,riska_prediction_kN,jeong_prediction_kN,keinonen_prediction_kN
+103,I,level,0.77,724,1748,929,0.2,480,130,920,100,470,320,610,330,510
+104,I,level,0.76,844,2192,984,0.5,560,130,990,200,560,380,630,520,600
+205,II,level,0.96,920,1840,1685,0.2,670,220,1410,100,670,510,800,560,740
+206,II,level,0.95,912,1862,1701,0.5,720,193,1390,130,720,560,840,800,810
+301,III,level,1.04,540,2477,1474,0.2,540,88,850,290,539,426,892,459,663
+302,III,level,1.04,669,2485,1273,0.5,830,130,1200,450,829,538,942,765,783
+303,III,level,1.04,592,2397,1390,1.0,780,160,1260,370,781,572,1025,961,847
+401,IV,level,0.63,808,4040,1616,0.2,150,,,,152,251,473,259,425
+402,IV,level,0.63,1029,5389,2058,0.5,290,,,,291,322,501,300,526
+403,IV,level,0.63,903,4616,1805,1.0,390,,,,391,351,548,542,579
