@@ -485,7 +485,13 @@ class IceDEM3D:
             raise ValueError(f"checkpoint is missing keys: {sorted(missing)}")
         if state["dimension"] != 3:
             raise ValueError("checkpoint dimension must be 3")
-        if state["config"] != asdict(self.config):
+        saved_config = state["config"]
+        if not isinstance(saved_config, dict):
+            raise ValueError("checkpoint config must be a dictionary")
+        # Backward compatibility: configs saved before plane-platen support omit
+        # new optional keys, whose defaults preserve the previous solver behavior.
+        normalized_config = {**asdict(DEM3DConfig()), **saved_config}
+        if normalized_config != asdict(self.config):
             raise ValueError("checkpoint config does not match this solver configuration")
         if not math.isfinite(float(state["dt"])) or float(state["dt"]) != self.dt:
             raise ValueError("checkpoint dt does not match this solver")
