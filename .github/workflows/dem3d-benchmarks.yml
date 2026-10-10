@@ -12,6 +12,9 @@ on:
     branches: [main]
     paths:
       - "benchmarks/dem3d/**"
+      - "scripts/validate_dem3d_fracture.py"
+      - "tests/test_dem3d_fracture_objectivity.py"
+      - "docs/dem3d_fracture_objectivity_energy.md"
       - "scripts/calibrate_dem3d_ucs.py"
       - "tests/test_dem3d_ucs_calibration.py"
       - "docs/dem3d_ucs_calibration.md"
@@ -33,6 +36,9 @@ on:
     branches: [main]
     paths:
       - "benchmarks/dem3d/**"
+      - "scripts/validate_dem3d_fracture.py"
+      - "tests/test_dem3d_fracture_objectivity.py"
+      - "docs/dem3d_fracture_objectivity_energy.md"
       - "scripts/benchmark_dem3d.py"
       - "scripts/run_dem3d_benchmark_suite.py"
       - "scripts/run_dem3d_mechanics_benchmarks.py"
@@ -111,5 +117,6 @@ jobs:
             results-dem3d-ucs/
             results-dem3d-ucs-sensitivity/
             results-dem3d-ucs-fracture-threshold/
+            results-dem3d-fracture-validation/
           if-no-files-found: warn
           retention-days: 30
