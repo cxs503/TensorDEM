@@ -52,12 +52,12 @@ class DEM3DFractureDiagnosticEdgeCases(unittest.TestCase):
             root = Path(tmp)
             case = root / "low_activity_case"
             case.mkdir()
-            # One broken bond out of three is above the 1% warning threshold;
-            # a zero-break case is handled by the stronger dedicated warning.
-            self._write_trajectory(case, [[True, True, True], [False, True, True]])
+            # One new break out of 200 bonds is below the 1% threshold.
+            self._write_trajectory(case, [[True] * 200, [False] + [True] * 199], bond_count=200)
             report = visualize_case(case, root / "out", make_gif=False)
-            self.assertIsNone(report["fracture_diagnostics"]["warning"])
-            self.assertAlmostEqual(report["fracture_diagnostics"]["final_broken_fraction"], 1 / 3)
+            self.assertEqual(report["fracture_diagnostics"]["warning"],
+                             "LOW_FRACTURE_ACTIVITY: fewer than 1% of bonds broke")
+            self.assertAlmostEqual(report["fracture_diagnostics"]["newly_broken_fraction"], 0.005)
 
 
 if __name__ == "__main__":
