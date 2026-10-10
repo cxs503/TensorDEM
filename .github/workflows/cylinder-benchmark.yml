@@ -34,7 +34,7 @@ jobs:
           python -m pip install -e ".[test,viz]"
 
       - name: Run end-to-end integration tests
-        run: python -m unittest tests.test_dem3d_cylinder_benchmark -v
+        run: python -m unittest discover -s tests -p 'test_dem3d_cylinder_benchmark.py' -v
 
       - name: Run 4000-step cylinder compression
         run: |
