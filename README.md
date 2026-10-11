@@ -206,3 +206,7 @@ python -m unittest discover -s tests -p test_dem3d_paper_figures.py
 ```
 
 The figure script consumes existing CSV outputs only. It never fabricates absent results; consult `paper_figure_manifest.json` and `paper_figures_index.md` to see which plots were actually generated. Benchmark PASS status means only that the configured software checks passed, not that physical ice properties or full-scale ship resistance have been validated.
+
+## Tensor ecosystem integration
+
+This repository's role, interface boundaries, data-exchange requirements and recommended integration path are documented in [Ecosystem Integration](docs/ecosystem-integration.md).
