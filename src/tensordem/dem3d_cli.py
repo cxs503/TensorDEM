@@ -93,6 +93,9 @@ def main(argv: list[str] | None = None) -> None:
                 sim.step()
             if (step % args.save_every == 0 or step == args.steps) and not (append_history and step == 0):
                 row = sim.diagnostics()
+                # Keep the solver-native ``time`` field while exposing an explicit SI-unit alias for benchmark consumers.
+                if "time_s" not in row and "time" in row:
+                    row["time_s"] = row["time"]
                 if writer is None:
                     writer = csv.DictWriter(stream, fieldnames=list(row))
                     if not append_history:
