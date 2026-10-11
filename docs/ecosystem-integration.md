@@ -27,3 +27,12 @@ External loads must declare shape, units, coordinate frame, physical time and wh
 3. Integrate through TensorPhysics with explicit clocks and deterministic run manifests.
 4. Register trajectories, fracture summaries and validation metadata with TensorPlatform.
 5. Do not interpret prototype ice-breakage or prescribed-hull results as validated ship resistance without calibration, resolution/time-step studies and experimental comparison.
+
+## Repository map
+
+- [TensorPlatform](https://github.com/cxs503/TensorPlatform) — shared data and AI services.
+- [TensorPhysics](https://github.com/cxs503/TensorPhysics) — scientific workflow orchestration and multiphysics coordination.
+- [TensorLBM](https://github.com/cxs503/TensorLBM) — lattice Boltzmann solver.
+- [TensorFVM](https://github.com/cxs503/TensorFVM) — finite-volume solver.
+- [TensorFEM](https://github.com/cxs503/TensorFEM) — finite-element solver.
+- [TensorDEM](https://github.com/cxs503/TensorDEM) — discrete-element solver.
