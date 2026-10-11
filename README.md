@@ -4,6 +4,9 @@
 圆形刚性破冰头向下压入两端固定的冰层，黏结可因轴向拉伸或客观剪切应变超阈值而不可逆断裂；
 断裂后的碎冰仍通过接触力相互作用。所有力和积分均使用 PyTorch 张量。
 
+**System-wide overview:** [Tensor Ecosystem System Overview](https://github.com/cxs503/TensorPhysics/blob/main/docs/SYSTEM_OVERVIEW.md) — architecture, repository boundaries, shared contracts, end-to-end workflow and icebreaker application roadmap.
+
+
 ## 安装与运行
 
 需要 Python 3.10+。在项目根目录执行：
