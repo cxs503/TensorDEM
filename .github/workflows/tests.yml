@@ -19,7 +19,7 @@ jobs:
           python-version: "3.11"
           cache: pip
       - name: Install package and test dependencies
-        run: python -m pip install --upgrade pip && python -m pip install -e ".[test,viz]"
+        run: python -m pip install --upgrade pip && python -m pip install -e ".[test,viz]" && python -m pip install "git+https://github.com/cxs503/TensorPhysics.git"
       - name: Run unit tests
         run: python -m unittest discover -s tests -v
 
@@ -29,8 +29,8 @@ jobs:
           python -m tensordem.dem3d_cli --nx 3 --ny 3 --nz 2 --steps 2 --save-every 1 --output outputs/ci-dem3d
       - name: Build run manifests from actual solver outputs
         run: |
-          python -m tensordem.run_manifest --output outputs/ci-dem2d --run-id ci-dem2d
-          python -m tensordem.run_manifest --output outputs/ci-dem3d --run-id ci-dem3d
+          python -m tensordem.run_manifest --output outputs/ci-dem2d --run-id ci-dem2d --local-artifact-store outputs/artifact-store
+          python -m tensordem.run_manifest --output outputs/ci-dem3d --run-id ci-dem3d --local-artifact-store outputs/artifact-store
       - name: Verify manifest provenance and artifact checksums
         run: |
           python - <<'PY'
@@ -47,10 +47,16 @@ jobs:
               assert manifest["run_id"] == run_name
               assert manifest["status"] == "succeeded"
               assert manifest["validation_status"] == "not_run"
+              assert manifest["metadata"]["artifacts_verified"] is True
+              assert manifest["metadata"]["artifact_storage"] == "tensorphysics.LocalArtifactStore"
               artifacts = {item["metadata"]["filename"]: item for item in manifest["outputs"]}
               assert set(artifacts) == {"history.csv", trajectory_name}
               for filename, record in artifacts.items():
-                  data = (output / filename).read_bytes()
+                  from urllib.parse import unquote, urlsplit
+                  stored_path = Path(unquote(urlsplit(record["uri"]).path))
+                  data = stored_path.read_bytes()
+                  source_data = (output / filename).read_bytes()
+                  assert data == source_data
                   assert record["size_bytes"] == len(data)
                   assert record["checksum_sha256"] == hashlib.sha256(data).hexdigest()
               print(f"{run_name}: verified {len(artifacts)} real solver artifacts")
