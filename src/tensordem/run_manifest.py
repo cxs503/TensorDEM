@@ -13,6 +13,7 @@ import platform
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit
 
 
 def sha256_file(path: Path) -> str:
@@ -21,6 +22,17 @@ def sha256_file(path: Path) -> str:
         for chunk in iter(lambda: stream.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def validate_shared_uri_prefix(value: str) -> str:
+    """Require an absolute non-local URI for artifacts registered on a platform."""
+    prefix = value.strip().rstrip("/")
+    parsed = urlsplit(prefix)
+    if not prefix or not parsed.scheme or not parsed.netloc:
+        raise ValueError("artifact URI prefix must be an absolute shared-storage URI, e.g. s3://bucket/run-id")
+    if parsed.scheme.lower() == "file":
+        raise ValueError("artifact URI prefix must be shared storage, not file://")
+    return prefix
 
 
 def artifact_record(path: Path, uri: str) -> dict[str, Any]:
@@ -105,8 +117,11 @@ def main() -> None:
 
     if args.register_platform and not args.artifact_uri_prefix:
         parser.error("--register-platform requires --artifact-uri-prefix for uploaded shared artifacts")
-    if args.register_platform and args.artifact_uri_prefix.startswith("file://"):
-        parser.error("--artifact-uri-prefix must be shared storage, not file://")
+    if args.register_platform:
+        try:
+            args.artifact_uri_prefix = validate_shared_uri_prefix(args.artifact_uri_prefix)
+        except ValueError as exc:
+            parser.error(str(exc))
 
     manifest = build_manifest(args.output, args.run_id, args.artifact_uri_prefix)
     manifest_path = args.manifest or (args.output / "run_manifest.json")
