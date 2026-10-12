@@ -224,7 +224,7 @@ This repository's role, interface boundaries, data-exchange requirements and rec
 
 ## Run provenance and optional TensorPlatform registration
 
-After a completed run has produced `history.csv` and `trajectory.pt`, create a compact run manifest:
+After a completed 2-D or 3-D run has produced `history.csv` and its trajectory (`trajectory.pt` for 2-D, `trajectory_3d.pt` for 3-D), create a compact run manifest:
 
 ```bash
 python -m tensordem.run_manifest --output results --run-id dem-run-001
