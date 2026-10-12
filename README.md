@@ -7,6 +7,14 @@
 **System-wide overview:** [Tensor Ecosystem System Overview](https://github.com/cxs503/TensorPhysics/blob/main/docs/SYSTEM_OVERVIEW.md) — architecture, repository boundaries, shared contracts, end-to-end workflow and icebreaker application roadmap.
 
 
+## 在 Tensor 系统中的职责
+
+TensorDEM 是 Tensor 工程仿真体系中的**离散元与颗粒断裂求解器**，负责颗粒运动、接触、键合与断裂等数值内核及其独立验证。TensorPhysics 负责工作流编排、与其他求解器的数据交换和运行追溯；TensorPlatform 负责共性数据、实验和模型生命周期服务。
+
+破冰应用的目标链路是：冰层 DEM → 船体/结构 FEM → 流体 TensorLBM 或 TensorFVM → TensorPhysics 协调耦合 → TensorPlatform 归档运行与数据 → 经验证的数据用于 AI 代理模型。每一步都必须先通过各自的数值验收和接口守恒检查。
+
+**成熟度说明：** 本仓库描述的二维黏结颗粒模型是研究原型，不应称为已经验证的工程破冰预测器。晶格方向偏差、材料标定、分辨率敏感性、三维物理验证和流固耦合准确性仍是重要限制；外载荷 API 本身不等于已完成耦合。
+
 ## 安装与运行
 
 需要 Python 3.10+。在项目根目录执行：
