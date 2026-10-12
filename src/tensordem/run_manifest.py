@@ -58,7 +58,7 @@ def build_manifest(output_dir: Path, run_id: str, uri_prefix: str | None) -> dic
         raw_config = payload.get("config", {})
         config = raw_config if isinstance(raw_config, dict) else {}
         dt = float(payload["dt"]) if "dt" in payload else None
-    except (ImportError, RuntimeError, ValueError, KeyError, TypeError):
+    except Exception:  # malformed/untrusted trajectory metadata must not block artifact provenance
         # Provenance remains useful when torch is unavailable; do not guess config.
         config = {"source": "TensorDEM trajectory metadata unavailable"}
     if dt is not None:
