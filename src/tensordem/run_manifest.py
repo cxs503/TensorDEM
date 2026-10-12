@@ -103,6 +103,44 @@ def build_manifest(output_dir: Path, run_id: str, uri_prefix: str | None) -> dic
     }
 
 
+def store_manifest_artifacts(
+    manifest: dict[str, Any], output_dir: Path, store_root: Path, run_id: str
+) -> dict[str, Any]:
+    """Copy solver outputs into TensorPhysics local storage and verify each copy."""
+    try:
+        from tensorphysics import LocalArtifactStore
+    except ImportError as exc:
+        raise RuntimeError(
+            "Local artifact storage requires TensorPhysics to be installed; "
+            "install TensorPhysics alongside TensorDEM first."
+        ) from exc
+
+    store = LocalArtifactStore(store_root)
+    stored_outputs: list[dict[str, Any]] = []
+    for output in manifest["outputs"]:
+        filename = output["metadata"]["filename"]
+        artifact = store.put_file(
+            output_dir / filename,
+            f"{run_id}/{filename}",
+            media_type=output["media_type"],
+        )
+        if not store.verify(artifact):
+            raise RuntimeError(f"Stored artifact failed checksum/size verification: {filename}")
+        record = artifact.to_dict()
+        record["metadata"] = {**dict(record.get("metadata", {})), "filename": filename}
+        stored_outputs.append(record)
+
+    result = dict(manifest)
+    result["outputs"] = stored_outputs
+    result["metadata"] = {
+        **dict(result.get("metadata", {})),
+        "artifact_storage": "tensorphysics.LocalArtifactStore",
+        "artifact_store_root": str(store.root),
+        "artifacts_verified": True,
+    }
+    return result
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, default=Path("results"))
@@ -112,9 +150,20 @@ def main() -> None:
         "--artifact-uri-prefix",
         help="shared storage prefix for already-uploaded history.csv and trajectory.pt, e.g. s3://bucket/run-id",
     )
+    parser.add_argument(
+        "--local-artifact-store",
+        type=Path,
+        default=None,
+        help="copy outputs into a checksum-verified local TensorPhysics artifact store",
+    )
     parser.add_argument("--register-platform", action="store_true")
     args = parser.parse_args()
 
+    if args.local_artifact_store is not None and args.register_platform:
+        parser.error(
+            "--local-artifact-store produces local file:// URIs and cannot be combined "
+            "with --register-platform; use --artifact-uri-prefix for pre-uploaded shared artifacts"
+        )
     if args.register_platform and not args.artifact_uri_prefix:
         parser.error("--register-platform requires --artifact-uri-prefix for uploaded shared artifacts")
     if args.register_platform:
@@ -124,6 +173,13 @@ def main() -> None:
             parser.error(str(exc))
 
     manifest = build_manifest(args.output, args.run_id, args.artifact_uri_prefix)
+    if args.local_artifact_store is not None:
+        try:
+            manifest = store_manifest_artifacts(
+                manifest, args.output, args.local_artifact_store, args.run_id
+            )
+        except (RuntimeError, ValueError, OSError) as exc:
+            parser.error(str(exc))
     manifest_path = args.manifest or (args.output / "run_manifest.json")
     manifest_path.parent.mkdir(parents=True, exist_ok=True)
     manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
