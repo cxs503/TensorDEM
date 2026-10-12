@@ -221,3 +221,22 @@ The figure script consumes existing CSV outputs only. It never fabricates absent
 ## Tensor ecosystem integration
 
 This repository's role, interface boundaries, data-exchange requirements and recommended integration path are documented in [Ecosystem Integration](docs/ecosystem-integration.md).
+
+## Run provenance and optional TensorPlatform registration
+
+After a completed run has produced `history.csv` and `trajectory.pt`, create a compact run manifest:
+
+```bash
+python -m tensordem.run_manifest --output results --run-id dem-run-001
+```
+
+The manifest records SHA-256 checksums and sizes for both outputs. By default the URIs are local `file://` paths and the run is explicitly marked `validation_status=not_run`.
+
+For platform registration, first upload both exact files to shared storage, then register with their common URI prefix:
+
+```bash
+python -m tensordem.run_manifest --output results --run-id dem-run-001 \
+  --artifact-uri-prefix s3://your-bucket/dem-run-001 --register-platform
+```
+
+Set `TENSORPLATFORM_URL`, `TENSORPLATFORM_API_TOKEN`, and `TENSORPLATFORM_ORGANIZATION_ID`; install TensorPhysics in the same Python environment. This command registers metadata only and does not upload or verify remote objects. Set `TENSORDEM_GIT_REVISION` to the actual source commit when running from a Git checkout. This is provenance plumbing, not physical validation.
