@@ -36,8 +36,12 @@ def artifact_record(path: Path, uri: str) -> dict[str, Any]:
 def build_manifest(output_dir: Path, run_id: str, uri_prefix: str | None) -> dict[str, Any]:
     output_dir = output_dir.resolve()
     history = output_dir / "history.csv"
-    trajectory = output_dir / "trajectory.pt"
-    missing = [str(path) for path in (history, trajectory) if not path.is_file()]
+    # 2-D runs write trajectory.pt; the 3-D solver writes trajectory_3d.pt.
+    trajectory_candidates = (output_dir / "trajectory.pt", output_dir / "trajectory_3d.pt")
+    trajectory = next((path for path in trajectory_candidates if path.is_file()), None)
+    missing = [str(history)] if not history.is_file() else []
+    if trajectory is None:
+        missing.append(" or ".join(str(path) for path in trajectory_candidates))
     if missing:
         raise FileNotFoundError("Missing completed TensorDEM outputs: " + ", ".join(missing))
 
@@ -45,8 +49,6 @@ def build_manifest(output_dir: Path, run_id: str, uri_prefix: str | None) -> dic
     outputs = []
     for path in (history, trajectory):
         uri = f"{prefix}/{path.name}" if prefix else path.as_uri()
-        if prefix is None and uri_prefix:
-            raise ValueError("invalid artifact URI prefix")
         outputs.append(artifact_record(path, uri))
 
     config: dict[str, Any] = {}
@@ -109,7 +111,7 @@ def main() -> None:
     manifest = build_manifest(args.output, args.run_id, args.artifact_uri_prefix)
     manifest_path = args.manifest or (args.output / "run_manifest.json")
     manifest_path.parent.mkdir(parents=True, exist_ok=True)
-    manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\\n", encoding="utf-8")
+    manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(f"manifest={manifest_path}")
     print(f"artifacts={len(manifest['outputs'])}")
     print(f"validation_status={manifest['validation_status']}")
