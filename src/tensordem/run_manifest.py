@@ -1,7 +1,7 @@
-"""Create a TensorPhysics-compatible manifest for completed TensorDEM outputs.
+"""Create provenance for completed TensorDEM outputs and optionally store them.
 
-This command does not run the solver or upload files. For platform registration,
-upload the listed artifacts to shared storage first and provide their URI prefix.
+Local mode is the default. S3 uploads are opt-in and require TensorPhysics with
+its optional S3 dependency installed; platform registration sends metadata only.
 """
 from __future__ import annotations
 
@@ -72,8 +72,7 @@ def build_manifest(output_dir: Path, run_id: str, uri_prefix: str | None) -> dic
         raw_config = payload.get("config", {})
         config = raw_config if isinstance(raw_config, dict) else {}
         dt = float(payload["dt"]) if "dt" in payload else None
-    except Exception:  # malformed/untrusted trajectory metadata must not block artifact provenance
-        # Provenance remains useful when torch is unavailable; do not guess config.
+    except Exception:
         config = {"source": "TensorDEM trajectory metadata unavailable"}
     if dt is not None:
         config = {**config, "actual_dt_seconds": dt}
@@ -88,10 +87,7 @@ def build_manifest(output_dir: Path, run_id: str, uri_prefix: str | None) -> dic
             json.dumps(config, sort_keys=True, separators=(",", ":"), allow_nan=False).encode("utf-8")
         ).hexdigest(),
         "code_revisions": {"cxs503/TensorDEM": os.getenv("TENSORDEM_GIT_REVISION", "unknown")},
-        "environment": {
-            "python": platform.python_version(),
-            "platform": platform.platform(),
-        },
+        "environment": {"python": platform.python_version(), "platform": platform.platform()},
         "resources": {"execution": "local", "solver": "TensorDEM", "device": str(config.get("device", "unknown"))},
         "outputs": outputs,
         "validation_status": "not_run",
@@ -103,6 +99,19 @@ def build_manifest(output_dir: Path, run_id: str, uri_prefix: str | None) -> dic
     }
 
 
+def _replace_output_records(
+    manifest: dict[str, Any], stored_outputs: list[dict[str, Any]], storage_name: str
+) -> dict[str, Any]:
+    result = dict(manifest)
+    result["outputs"] = stored_outputs
+    result["metadata"] = {
+        **dict(result.get("metadata", {})),
+        "artifact_storage": storage_name,
+        "artifacts_verified": True,
+    }
+    return result
+
+
 def store_manifest_artifacts(
     manifest: dict[str, Any], output_dir: Path, store_root: Path, run_id: str
 ) -> dict[str, Any]:
@@ -111,34 +120,57 @@ def store_manifest_artifacts(
         from tensorphysics import LocalArtifactStore
     except ImportError as exc:
         raise RuntimeError(
-            "Local artifact storage requires TensorPhysics to be installed; "
-            "install TensorPhysics alongside TensorDEM first."
+            "Local artifact storage requires TensorPhysics to be installed; install TensorPhysics alongside TensorDEM."
         ) from exc
 
     store = LocalArtifactStore(store_root)
     stored_outputs: list[dict[str, Any]] = []
     for output in manifest["outputs"]:
         filename = output["metadata"]["filename"]
-        artifact = store.put_file(
-            output_dir / filename,
-            f"{run_id}/{filename}",
-            media_type=output["media_type"],
-        )
+        artifact = store.put_file(output_dir / filename, f"{run_id}/{filename}", media_type=output["media_type"])
         if not store.verify(artifact):
             raise RuntimeError(f"Stored artifact failed checksum/size verification: {filename}")
         record = artifact.to_dict()
         record["metadata"] = {**dict(record.get("metadata", {})), "filename": filename}
         stored_outputs.append(record)
 
-    result = dict(manifest)
-    result["outputs"] = stored_outputs
-    result["metadata"] = {
-        **dict(result.get("metadata", {})),
-        "artifact_storage": "tensorphysics.LocalArtifactStore",
-        "artifact_store_root": str(store.root),
-        "artifacts_verified": True,
-    }
+    result = _replace_output_records(manifest, stored_outputs, "tensorphysics.LocalArtifactStore")
+    result["metadata"]["artifact_store_root"] = str(store.root)
     return result
+
+
+def store_s3_manifest_artifacts(
+    manifest: dict[str, Any], output_dir: Path, bucket: str, prefix: str, run_id: str,
+    endpoint_url: str | None = None,
+) -> tuple[dict[str, Any], Any]:
+    """Upload actual solver outputs to S3 and verify each object using remote HEAD metadata."""
+    try:
+        from tensorphysics import S3ArtifactStore
+    except ImportError as exc:
+        raise RuntimeError(
+            "S3 upload requires TensorPhysics with boto3 installed; install TensorPhysics with its [s3] extra."
+        ) from exc
+
+    store = S3ArtifactStore(
+        bucket, prefix=prefix, endpoint_url=endpoint_url,
+        region_name=os.getenv("AWS_REGION") or os.getenv("AWS_DEFAULT_REGION"),
+    )
+    stored_outputs: list[dict[str, Any]] = []
+    for output in manifest["outputs"]:
+        filename = output["metadata"]["filename"]
+        artifact = store.put_file(
+            output_dir / filename, f"{run_id}/{filename}", media_type=output["media_type"]
+        )
+        if not store.verify(artifact):
+            raise RuntimeError(f"Remote S3 artifact failed checksum/size verification: {filename}")
+        record = artifact.to_dict()
+        record["metadata"] = {**dict(record.get("metadata", {})), "filename": filename}
+        stored_outputs.append(record)
+
+    result = _replace_output_records(manifest, stored_outputs, "tensorphysics.S3ArtifactStore")
+    result["metadata"]["artifact_bucket"] = bucket
+    result["metadata"]["artifact_prefix"] = prefix.strip("/")
+    return result, store
 
 
 def main() -> None:
@@ -146,54 +178,77 @@ def main() -> None:
     parser.add_argument("--output", type=Path, default=Path("results"))
     parser.add_argument("--run-id", required=True)
     parser.add_argument("--manifest", type=Path, default=None)
-    parser.add_argument(
-        "--artifact-uri-prefix",
-        help="shared storage prefix for already-uploaded history.csv and trajectory.pt, e.g. s3://bucket/run-id",
-    )
-    parser.add_argument(
-        "--local-artifact-store",
-        type=Path,
-        default=None,
-        help="copy outputs into a checksum-verified local TensorPhysics artifact store",
-    )
+    parser.add_argument("--artifact-uri-prefix",
+                        help="prefix for already-uploaded artifacts, e.g. s3://bucket/run-id")
+    parser.add_argument("--local-artifact-store", type=Path, default=None,
+                        help="copy outputs into a checksum-verified local TensorPhysics artifact store")
+    parser.add_argument("--s3-artifact-store", default=os.getenv("TENSORDEM_S3_BUCKET"),
+                        help="upload outputs to this S3 bucket (or set TENSORDEM_S3_BUCKET)")
+    parser.add_argument("--s3-prefix", default=os.getenv("TENSORDEM_S3_PREFIX", "tensordem"),
+                        help="object-key prefix inside the S3 bucket")
+    parser.add_argument("--s3-endpoint-url", default=os.getenv("TENSORDEM_S3_ENDPOINT_URL"),
+                        help="optional S3-compatible endpoint URL")
     parser.add_argument("--register-platform", action="store_true")
     args = parser.parse_args()
 
-    if args.local_artifact_store is not None and args.register_platform:
-        parser.error(
-            "--local-artifact-store produces local file:// URIs and cannot be combined "
-            "with --register-platform; use --artifact-uri-prefix for pre-uploaded shared artifacts"
-        )
-    if args.register_platform and not args.artifact_uri_prefix:
-        parser.error("--register-platform requires --artifact-uri-prefix for uploaded shared artifacts")
-    if args.register_platform:
+    storage_modes = sum([
+        args.local_artifact_store is not None,
+        args.s3_artifact_store is not None,
+        args.artifact_uri_prefix is not None,
+    ])
+    if storage_modes > 1:
+        parser.error("choose only one of --local-artifact-store, --s3-artifact-store, or --artifact-uri-prefix")
+    if args.register_platform and args.local_artifact_store is not None:
+        parser.error("--local-artifact-store produces file:// URIs and cannot be combined with --register-platform")
+    if args.register_platform and not (args.artifact_uri_prefix or args.s3_artifact_store):
+        parser.error("--register-platform requires --artifact-uri-prefix or --s3-artifact-store")
+    if args.artifact_uri_prefix:
+        try:
+            args.artifact_uri_prefix = validate_shared_uri_prefix(args.artifact_uri_prefix)
+        except ValueError as exc:
+            parser.error(str(exc))
+    if args.register_platform and args.artifact_uri_prefix:
         try:
             args.artifact_uri_prefix = validate_shared_uri_prefix(args.artifact_uri_prefix)
         except ValueError as exc:
             parser.error(str(exc))
 
     manifest = build_manifest(args.output, args.run_id, args.artifact_uri_prefix)
-    if args.local_artifact_store is not None:
-        try:
-            manifest = store_manifest_artifacts(
-                manifest, args.output, args.local_artifact_store, args.run_id
+    s3_store = None
+    try:
+        if args.local_artifact_store is not None:
+            manifest = store_manifest_artifacts(manifest, args.output, args.local_artifact_store, args.run_id)
+        elif args.s3_artifact_store:
+            manifest, s3_store = store_s3_manifest_artifacts(
+                manifest, args.output, args.s3_artifact_store, args.s3_prefix, args.run_id, args.s3_endpoint_url
             )
-        except (RuntimeError, ValueError, OSError) as exc:
-            parser.error(str(exc))
+    except (RuntimeError, ValueError, OSError) as exc:
+        parser.error(str(exc))
+
     manifest_path = args.manifest or (args.output / "run_manifest.json")
     manifest_path.parent.mkdir(parents=True, exist_ok=True)
-    manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True, allow_nan=False) + "\n", encoding="utf-8")
     print(f"manifest={manifest_path}")
     print(f"artifacts={len(manifest['outputs'])}")
     print(f"validation_status={manifest['validation_status']}")
+
+    if s3_store is not None:
+        try:
+            manifest_ref = s3_store.put_file(
+                manifest_path, f"{args.run_id}/run_manifest.json", media_type="application/json"
+            )
+            if not s3_store.verify(manifest_ref):
+                raise RuntimeError("Remote S3 manifest failed checksum/size verification")
+            print(f"remote_manifest_uri={manifest_ref.uri}")
+            print(f"remote_manifest_sha256={manifest_ref.checksum_sha256}")
+        except (RuntimeError, ValueError, OSError) as exc:
+            parser.error(str(exc))
 
     if args.register_platform:
         try:
             from tensorphysics.platform_registry import TensorPlatformRunRegistry
         except ImportError as exc:
-            raise SystemExit(
-                "Install TensorPhysics in this environment to enable --register-platform."
-            ) from exc
+            raise SystemExit("Install TensorPhysics in this environment to enable --register-platform.") from exc
         result = TensorPlatformRunRegistry.from_env().register(manifest)
         print("platform_registration=" + json.dumps(result, sort_keys=True))
 
