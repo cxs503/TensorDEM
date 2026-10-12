@@ -7,6 +7,14 @@
 **System-wide overview:** [Tensor Ecosystem System Overview](https://github.com/cxs503/TensorPhysics/blob/main/docs/SYSTEM_OVERVIEW.md) — architecture, repository boundaries, shared contracts, end-to-end workflow and icebreaker application roadmap.
 
 
+## 面向 Agent 科研工厂的职责
+
+在以 Agent 为科研主体的黑灯科研工厂中，TensorDEM 是一个**可编程、可观测、可验证的离散元数值实验设备**，负责颗粒运动、接触、键合与断裂等数值内核及专项验证。TensorPhysics 负责实验编排与跨求解器协调；TensorPlatform 负责数据、产物、研究记录和模型资产治理。
+
+Agent 可以提出参数扫描、断裂假设和下一轮实验建议，但结果只有在可复现实验、独立基准、敏感性分析及适用范围检查后，才能作为相应等级的科研证据。运行结束、动画合理或接口能够交换载荷，都不等于工程物理预测已经验证。
+
+**系统架构：** [科研工厂架构](https://github.com/cxs503/TensorPhysics/blob/main/docs/SCIENCE_FACTORY_ARCHITECTURE.md) · [系统总览](https://github.com/cxs503/TensorPhysics/blob/main/docs/SYSTEM_OVERVIEW.md)
+
 ## 在 Tensor 系统中的职责
 
 TensorDEM 是 Tensor 工程仿真体系中的**离散元与颗粒断裂求解器**，负责颗粒运动、接触、键合与断裂等数值内核及其独立验证。TensorPhysics 负责工作流编排、与其他求解器的数据交换和运行追溯；TensorPlatform 负责共性数据、实验和模型生命周期服务。
