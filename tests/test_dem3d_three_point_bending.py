@@ -16,8 +16,9 @@ class DEM3DThreePointBendingTests(unittest.TestCase):
     def test_fixed_duration_time_step_refinement_preserves_duration(self):
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp)
-            coarse=run_three_point_bending(root/"coarse",steps=24,duration_s=24*1e-5)
-            fine=run_three_point_bending(root/"fine",steps=48,dt_s=0.5*coarse["dt_s"],duration_s=24*coarse["dt_s"])
+            reference=run_three_point_bending(root/"reference",steps=24)
+            coarse=run_three_point_bending(root/"coarse",dt_s=reference["dt_s"],duration_s=24*reference["dt_s"])
+            fine=run_three_point_bending(root/"fine",dt_s=0.5*coarse["dt_s"],duration_s=24*coarse["dt_s"])
             self.assertEqual(coarse["verdict"],"PASS",coarse)
             self.assertEqual(fine["verdict"],"PASS",fine)
             self.assertAlmostEqual(coarse["simulated_duration_s"],fine["simulated_duration_s"],places=12)
