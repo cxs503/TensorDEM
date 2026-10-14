@@ -13,6 +13,22 @@ class DEM3DThreePointBendingTests(unittest.TestCase):
             self.assertTrue((root/"a"/"three_point_bending_history.csv").is_file())
             saved=json.loads((root/"a"/"three_point_bending_report.json").read_text())
             self.assertEqual(saved["protocol"],"tensordem-dem3d-three-point-bending-v1"); self.assertEqual(len(saved["rows"]),25)
+    def test_fixed_duration_time_step_refinement_preserves_duration(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            coarse=run_three_point_bending(root/"coarse",steps=24,duration_s=24*1e-5)
+            fine=run_three_point_bending(root/"fine",steps=48,dt_s=0.5*coarse["dt_s"],duration_s=24*coarse["dt_s"])
+            self.assertEqual(coarse["verdict"],"PASS",coarse)
+            self.assertEqual(fine["verdict"],"PASS",fine)
+            self.assertAlmostEqual(coarse["simulated_duration_s"],fine["simulated_duration_s"],places=12)
+            self.assertEqual(fine["steps"],2*coarse["steps"])
+            self.assertAlmostEqual(fine["dt_s"],0.5*coarse["dt_s"],places=15)
+
+    def test_duration_must_be_integer_multiple_of_dt(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            with self.assertRaises(ValueError):
+                run_three_point_bending(Path(tmp)/"invalid",dt_s=1e-6,duration_s=1.5e-6)
+
     def test_invalid_inputs_rejected(self):
         with tempfile.TemporaryDirectory() as tmp:
             with self.assertRaises(ValueError): run_three_point_bending(Path(tmp)/"zero",steps=0)
