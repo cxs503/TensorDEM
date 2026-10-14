@@ -13,6 +13,7 @@ class DEM3DThreePointBendingTests(unittest.TestCase):
             self.assertTrue((root/"a"/"three_point_bending_history.csv").is_file())
             saved=json.loads((root/"a"/"three_point_bending_report.json").read_text())
             self.assertEqual(saved["protocol"],"tensordem-dem3d-three-point-bending-v1"); self.assertEqual(len(saved["rows"]),25)
+            self.assertGreater(saved["dt_s"],0); self.assertAlmostEqual(saved["simulated_duration_s"],24*saved["dt_s"],places=15)
     def test_fixed_duration_time_step_refinement_preserves_duration(self):
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp)
