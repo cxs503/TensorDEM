@@ -1,0 +1,58 @@
+{
+  "overall_pass": true,
+  "anchors": {
+    "anchor1_buoyancy_equilibrium": {
+      "passed": true,
+      "target_f_sub": 0.8946341463414634,
+      "measured_f_sub": 0.8946414423887252,
+      "draught_relative_error": 8.155341813893617e-06,
+      "oscillation_decayed": true
+    },
+    "anchor2_restitution_mapping": {
+      "passed": true,
+      "results": {
+        "e_0.5": {
+          "e_target": 0.5,
+          "gamma_n": 43.09075239324936,
+          "e_roundtrip": 0.5,
+          "roundtrip_relative_error": 0.0,
+          "e_measured": 0.4999996084820261,
+          "sim_relative_error": 7.830359477489779e-07,
+          "v_before": -1.0,
+          "v_after": 0.4999996084820261,
+          "passed": true
+        },
+        "e_0.8": {
+          "e_target": 0.8,
+          "gamma_n": 14.17006003907361,
+          "e_roundtrip": 0.8,
+          "roundtrip_relative_error": 0.0,
+          "e_measured": 0.7999999364469831,
+          "sim_relative_error": 7.944127120018685e-08,
+          "v_before": -1.0,
+          "v_after": 0.7999999364469831,
+          "passed": true
+        }
+      }
+    },
+    "anchor3_friction_slip": {
+      "passed": true,
+      "results": {
+        "mu_0.2": {
+          "mu": 0.2,
+          "theta_theory_deg": 11.309932474020215,
+          "theta_measured_deg": 11.309932474020187,
+          "angle_diff_deg": 2.842170943040401e-14,
+          "passed": true
+        },
+        "mu_0.5": {
+          "mu": 0.5,
+          "theta_theory_deg": 26.56505117707799,
+          "theta_measured_deg": 26.56505117707798,
+          "angle_diff_deg": 1.0658141036401503e-14,
+          "passed": true
+        }
+      }
+    }
+  }
+}
