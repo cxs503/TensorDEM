@@ -2,6 +2,7 @@
 
 import argparse
 import csv
+import json
 from dataclasses import asdict
 from pathlib import Path
 
@@ -116,6 +117,15 @@ def main(argv: list[str] | None = None) -> None:
         "hull_profile": None if simulation.hull_profile is None else simulation.hull_profile.cpu(),
         "hull_velocity": simulation.hull_velocity.cpu(),
     }, args.output / "trajectory.pt")
+    accounting_data = dict(simulation.accounting)
+    accounting_data["total_bonds"] = int(simulation.bonded.sum().item())
+    accounting_data["broken_bonds"] = simulation.broken_bonds
+    accounting_data["failure_energy_sum_J"] = float(simulation.failure_energy_J.sum().item())
+    accounting_data["total_mass_kg"] = float(simulation.config.mass * len(simulation.positions))
+    accounting_data["dt"] = simulation.dt
+    accounting_data["steps"] = simulation.step_count
+    with (args.output / "accounting.json").open("w", encoding="utf-8") as f:
+        f.write(json.dumps(accounting_data, indent=2, sort_keys=True, allow_nan=False))
     print(
         f"完成: t={simulation.time:.6f} s, dt={simulation.dt:.6g} s, "
         f"断键={simulation.broken_bonds}/{int(simulation.bonded.sum().item())}; "

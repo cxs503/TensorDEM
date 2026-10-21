@@ -372,6 +372,7 @@ class IceDEM:
     ) -> dict[str, float | int]:
         force, reaction = self.forces(external_forces=external_forces)
         boundary_reaction = -force[self.fixed].sum(dim=0)
+        acc = self.accounting
         return {
             "time": self.time,
             "tool_x": float(self.tool_position[0].item()),
@@ -384,6 +385,18 @@ class IceDEM:
             "kinetic_energy": float(
                 (0.5 * self.config.mass * self.velocities.square().sum()).item()
             ),
+            "tool_impulse_on_ice_x_Ns": float(acc["tool_impulse_on_ice_Ns"][0]),
+            "tool_impulse_on_ice_y_Ns": float(acc["tool_impulse_on_ice_Ns"][1]),
+            "support_impulse_x_Ns": float(acc["support_impulse_Ns"][0]),
+            "support_impulse_y_Ns": float(acc["support_impulse_Ns"][1]),
+            "drag_impulse_x_Ns": float(acc["drag_impulse_Ns"][0]),
+            "drag_impulse_y_Ns": float(acc["drag_impulse_Ns"][1]),
+            "external_impulse_x_Ns": float(acc["external_impulse_Ns"][0]),
+            "external_impulse_y_Ns": float(acc["external_impulse_Ns"][1]),
+            "fracture_release_J": float(acc["fracture_release_J"]),
+            "tool_work_J": float(acc["tool_work_J"]),
+            "damping_dissipation_J": float(acc["damping_dissipation_J"]),
+            "external_work_J": float(acc["external_work_J"]),
         }
 
     def exchange_state(self) -> dict:
