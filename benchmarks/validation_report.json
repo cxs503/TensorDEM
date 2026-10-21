@@ -54,5 +54,40 @@
         }
       }
     }
+  },
+  "task": "m154 SI-2/DEM fracture generation ledger validation",
+  "timestamp_utc": "2026-10-21T12:45:00Z",
+  "criteria": [
+    {
+      "criterion": "mass_conservation",
+      "expected_mass_kg": 103.71025668030627,
+      "dem_mass_kg": 103.71025668030626,
+      "error_kg": 1.4210854715202004e-14,
+      "tolerance_kg": 1e-12,
+      "passed": true
+    },
+    {
+      "criterion": "energy_accounting",
+      "total_released_energy_J": 3.0,
+      "accounting_total_J": 3.0,
+      "error_J": 0.0,
+      "num_broken_bonds": 9,
+      "unit_bond_energy_J": 0.3333333333333333,
+      "tolerance_J": 1e-12,
+      "passed": true
+    },
+    {
+      "criterion": "bond_breakage_at_faces",
+      "bonds_crossing_faces": 9,
+      "bonds_actually_broken": 9,
+      "all_face_bonds_broken": true,
+      "intact_bonds_remaining": 45,
+      "passed": true
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "total": 3,
+    "all_passed": true
   }
 }
