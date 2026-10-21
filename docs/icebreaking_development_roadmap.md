@@ -40,3 +40,89 @@ TensorLBM adapter code should later map fluid traction to particle nodal forces,
 ## Known limits
 
 This increment implements objective shear-triggered bond failure but does **not** implement explicit shear-bond stiffness, particle rotations/torques or contact friction. The existing force law remains central-force; shear failure is inferred from the local Green-Lagrange strain field. The criterion requires calibration against material tests. These limitations, calibrated material parameters and 3-D geometry remain future work.
+
+## Increment 2.5 — FEM failure surface to DEM ice field generation (SI-2/DEM)
+
+This increment bridges the FEM cohesive failure analysis (SI-2/FEM leg, TensorFEM) and the DEM fracture simulation. It provides initialization capability to generate bonded-particle ice fields from FEM failure surfaces.
+
+### Position in roadmap
+
+This capability sits between step 3 (shear fracture criterion) and step 8 (coupling) in the verification sequence. It enables the DEM side to accept pre-computed fracture patterns from FEM, rather than relying solely on in-situ bond breakage during simulation.
+
+### Input contract (frozen)
+
+The input format is locked for parallel development with TensorFEM SI-2/FEM leg:
+
+```json
+{
+  "faces": [
+    {
+      "id": 0,
+      "area": 0.01,
+      "normal": [0.0, 0.0, 1.0],
+      "centroid": [0.5, 0.5, 0.3],
+      "G": 100.0,
+      "released_energy": 1.0
+    }
+  ],
+  "units": "SI"
+}
+```
+
+Fields:
+- `id`: integer face identifier
+- `area`: face area (m²)
+- `normal`: unit normal vector [x, y, z]
+- `centroid`: face centroid coordinates [x, y, z] (m)
+- `G`: fracture energy release rate (J/m²)
+- `released_energy`: total energy released by this face (J)
+
+### Implementation
+
+Module: `src/tensordem/fracture_gen.py`
+
+Key components:
+- `load_failure_faces(path)`: Parse failure_faces.json
+- `generate_particle_lattice(domain, radius)`: Generate simple cubic lattice
+- `build_bond_topology(positions, radius)`: Build nearest-neighbor bond network
+- `identify_bonds_crossing_face(bonds, positions, face)`: Detect bonds intersecting failure planes
+- `generate_fracture_field(faces, config)`: Complete pipeline from faces to DEM field
+- `FractureLedger`: Mass and energy conservation accounting
+
+### Mass mapping decision (frozen in prereg)
+
+**Choice**: Equal-volume spheres
+
+Each DEM particle has mass = density × (4/3 π r³). Total DEM mass = N_particles × particle_mass.
+
+**Rationale**: This mapping preserves physical meaning in DEM where particles are discrete spheres. It is consistent with the existing IceDEM3D mass property and allows direct comparison with FEM continuum mass when the domain is fully discretized.
+
+Alternative considered: unit material volume equal division (each FEM element's mass divided equally among its constituent particles). Rejected because it breaks the spherical particle assumption and complicates energy accounting.
+
+### Acceptance criteria
+
+1. **Mass conservation** (tolerance 1e-12 kg): |DEM_mass - FEM_mass| < 1e-12
+2. **Energy accounting** (tolerance 1e-12 J): ∑released_energy maps to broken_bond_count × unit_bond_energy
+3. **Bond breakage at faces**: All bonds crossing failure faces are broken; intact region bonds remain unbroken
+4. **Analytical enumeration**: Given face count/area, closed-form particle count and total mass match exactly
+
+### Verification
+
+Benchmark script: `benchmarks/fracture_gen_ledger.py`
+
+Generates `validation_report.json` with machine-readable results for all criteria.
+
+Unit tests: `tests/test_fracture_gen.py`
+
+Covers JSON parsing, lattice generation, bond topology, face intersection detection, mass/energy conservation, and integration with IceDEM3D initial state format.
+
+### Integration with IceDEM3D
+
+The generated `FractureField` can be converted to IceDEM3D initial state via `to_icedem3d_initial_state()`, returning a dict with keys: `positions`, `velocities`, `bond_indices`, `rest_lengths`, `alive`. This allows direct feeding into `IceDEM3D.step(external_forces=...)` for continued simulation with pre-broken bonds.
+
+### Known limits
+
+- Current implementation uses simple cubic lattice; does not support hexagonal close-packed or random packing
+- Bond breakage detection uses plane intersection; does not handle curved failure surfaces
+- Mass mapping assumes uniform density; does not account for FEM element-level density variations
+- Energy accounting is bookkeeping only; does not modify bond stiffness or failure criteria in subsequent simulation
