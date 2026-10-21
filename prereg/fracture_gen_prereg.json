@@ -1,0 +1,38 @@
+{
+  "task": "m154 SI-2/DEM: FEM failure faces → bonded-particle ice field",
+  "timestamp_utc": "2026-10-21T12:37:43Z",
+  "contract": {
+    "input_format": "failure_faces.json = {\"faces\": [{\"id\": int, \"area\": float, \"normal\": [x,y,z], \"centroid\": [x,y,z], \"G\": float, \"released_energy\": float}], \"units\": \"SI\"}",
+    "frozen": true,
+    "rationale": "Parallel development with TensorFEM SI-2/FEM leg; format locked"
+  },
+  "mass_mapping_decision": {
+    "choice": "equal_volume_sphere",
+    "alternatives_considered": ["unit_material_volume_equal_division"],
+    "rationale": "Equal-volume spheres preserve physical meaning in DEM where particles are discrete spheres. Each particle mass = density × (4/3 π r³). Total DEM mass = N × particle_mass. This is consistent with existing IceDEM3D mass property."
+  },
+  "acceptance_criteria": {
+    "c1_mass_conservation": {
+      "description": "FEM core mass vs DEM particle mass sum",
+      "tolerance": 1e-12,
+      "unit": "kg"
+    },
+    "c2_energy_accounting": {
+      "description": "∑released_energy vs broken_bond_count × unit_bond_energy",
+      "tolerance": 1e-12,
+      "unit": "J"
+    },
+    "c3_bond_breakage_at_faces": {
+      "description": "Bonds crossing failure faces are broken; intact region bonds remain"
+    },
+    "c4_analytical_enumeration": {
+      "description": "Given face count/area, closed-form particle count and total mass match exactly"
+    }
+  },
+  "deliverables": [
+    "src/tensordem/fracture_gen.py",
+    "tests/test_fracture_gen.py",
+    "benchmarks/fracture_gen_ledger.py",
+    "docs/icebreaking_development_roadmap.md (append-only section)"
+  ]
+}
