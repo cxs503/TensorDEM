@@ -1,0 +1,196 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "DEM-FEM Coupling Interface v1",
+  "description": "Schema for data exchanged between DEM and FEM solvers in coupled simulations. Defines particle/node state, contact forces, and time-stepping metadata.",
+  "type": "object",
+  "required": [
+    "positions",
+    "velocities",
+    "contact_forces",
+    "dt",
+    "step"
+  ],
+  "properties": {
+    "positions": {
+      "type": "object",
+      "description": "Particle/node positions in global coordinates",
+      "required": [
+        "data",
+        "dtype",
+        "device",
+        "shape"
+      ],
+      "properties": {
+        "data": {
+          "type": "array",
+          "description": "Flattened position array [x0,y0,z0,x1,y1,z1,...]",
+          "items": {
+            "type": "number"
+          }
+        },
+        "dtype": {
+          "type": "string",
+          "enum": [
+            "float32",
+            "float64"
+          ],
+          "description": "Data type of position values"
+        },
+        "device": {
+          "type": "string",
+          "enum": [
+            "cpu",
+            "cuda"
+          ],
+          "description": "Compute device where data resides"
+        },
+        "shape": {
+          "type": "array",
+          "description": "Tensor shape [N, 3]",
+          "items": {
+            "type": "integer"
+          },
+          "minItems": 2,
+          "maxItems": 2
+        }
+      },
+      "additionalProperties": false
+    },
+    "velocities": {
+      "type": "object",
+      "description": "Particle/node velocities in global coordinates",
+      "required": [
+        "data",
+        "dtype",
+        "device",
+        "shape"
+      ],
+      "properties": {
+        "data": {
+          "type": "array",
+          "description": "Flattened velocity array [vx0,vy0,vz0,vx1,vy1,vz1,...]",
+          "items": {
+            "type": "number"
+          }
+        },
+        "dtype": {
+          "type": "string",
+          "enum": [
+            "float32",
+            "float64"
+          ],
+          "description": "Data type of velocity values"
+        },
+        "device": {
+          "type": "string",
+          "enum": [
+            "cpu",
+            "cuda"
+          ],
+          "description": "Compute device where data resides"
+        },
+        "shape": {
+          "type": "array",
+          "description": "Tensor shape [N, 3]",
+          "items": {
+            "type": "integer"
+          },
+          "minItems": 2,
+          "maxItems": 2
+        }
+      },
+      "additionalProperties": false
+    },
+    "contact_forces": {
+      "type": "object",
+      "description": "Contact forces acting on DEM particles from FEM boundary",
+      "required": [
+        "data",
+        "dtype",
+        "device",
+        "shape"
+      ],
+      "properties": {
+        "data": {
+          "type": "array",
+          "description": "Flattened force array [fx0,fy0,fz0,fx1,fy1,fz1,...]",
+          "items": {
+            "type": "number"
+          }
+        },
+        "dtype": {
+          "type": "string",
+          "enum": [
+            "float32",
+            "float64"
+          ],
+          "description": "Data type of force values"
+        },
+        "device": {
+          "type": "string",
+          "enum": [
+            "cpu",
+            "cuda"
+          ],
+          "description": "Compute device where data resides"
+        },
+        "shape": {
+          "type": "array",
+          "description": "Tensor shape [N, 3]",
+          "items": {
+            "type": "integer"
+          },
+          "minItems": 2,
+          "maxItems": 2
+        }
+      },
+      "additionalProperties": false
+    },
+    "dt": {
+      "type": "number",
+      "description": "Coupling time step in seconds",
+      "minimum": 0
+    },
+    "step": {
+      "type": "integer",
+      "description": "Current coupling step number (0-indexed)",
+      "minimum": 0
+    },
+    "timestamp": {
+      "type": "number",
+      "description": "Simulation time in seconds",
+      "minimum": 0
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Optional coupling metadata",
+      "properties": {
+        "dem_solver": {
+          "type": "string"
+        },
+        "fem_solver": {
+          "type": "string"
+        },
+        "coupling_scheme": {
+          "type": "string",
+          "enum": [
+            "explicit",
+            "implicit",
+            "semi_implicit"
+          ]
+        },
+        "energy_dem": {
+          "type": "number"
+        },
+        "energy_fem": {
+          "type": "number"
+        },
+        "momentum_residual": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}
