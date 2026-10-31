@@ -1,0 +1,41 @@
+{
+  "mission_id": 669,
+  "scenario_key": "SIR-PC2_F04_3D_hull_mesh_contact",
+  "branch": "agent/m669",
+  "commit": "813ba9c",
+  "acceptance_criteria": {
+    "sphere_contact_force_error": {
+      "required": "< 0.1 [ratio]",
+      "achieved": 0.0,
+      "method": "Sphere on flat plane at 5 heights; compared mesh contact force to analytical F=k*(R-h)",
+      "status": "PASS"
+    },
+    "contact_detection_complexity": {
+      "required": "<= O(N) [complexity]",
+      "achieved": "O(N) confirmed",
+      "method": "Scaling test: N=100..5000 spheres; time ratio N2/N1 < 2x expected ratio",
+      "status": "PASS"
+    },
+    "pytest_test_hull_mesh_contact": {
+      "required": "PASS [bool]",
+      "achieved": true,
+      "method": "17/17 tests pass (pytest tests/test_hull_mesh_contact.py -v)",
+      "status": "PASS"
+    }
+  },
+  "test_results": {
+    "total": 17,
+    "passed": 17,
+    "failed": 0,
+    "duration_s": 11.65
+  },
+  "files_changed": [
+    "src/tensordem/hull_mesh_contact.py",
+    "tests/test_hull_mesh_contact.py",
+    "docs/m669_hull_mesh_contact.md",
+    "scripts/gen_figures_m669.py",
+    "artifacts/fig1_force_error.png",
+    "artifacts/fig2_complexity.png",
+    "artifacts/fig3_3d_contact.png"
+  ]
+}
