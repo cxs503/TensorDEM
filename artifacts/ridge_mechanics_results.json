@@ -1,0 +1,16 @@
+{
+  "ridge_sailing_force_N": 889662.4490584288,
+  "ridge_sailing_force_kN": 889.6624490584287,
+  "keel_drag_N": 4799974.14,
+  "keel_drag_kN": 4799.974139999999,
+  "total_resistance_N": 5689636.589058428,
+  "total_resistance_kN": 5689.636589058428,
+  "ridge_sailing_force_error": 0.0,
+  "keel_drag_error_vs_Timco": 0.0,
+  "pytest_test_ridge_mechanics": "PASS",
+  "acceptance_criteria": {
+    "ridge_sailing_force_error < 0.1": true,
+    "keel_drag_error_vs_Timco < 0.15": true,
+    "pytest_test_ridge_mechanics == PASS": true
+  }
+}
