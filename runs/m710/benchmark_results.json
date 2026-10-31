@@ -1,0 +1,57 @@
+[
+  {
+    "n_particles": 100,
+    "ref_time_s": 0.0336,
+    "gpu_time_s": 1.5341,
+    "speedup": 0.02,
+    "tensor_assign_time_s": 0.0015,
+    "dict_assign_time_s": 0.0045,
+    "assign_speedup": 3.07,
+    "ref_pairs": 14,
+    "gpu_pairs": 14
+  },
+  {
+    "n_particles": 500,
+    "ref_time_s": 0.08,
+    "gpu_time_s": 4.26,
+    "speedup": 0.02,
+    "tensor_assign_time_s": 0.0012,
+    "dict_assign_time_s": 0.0086,
+    "assign_speedup": 7.05,
+    "ref_pairs": 4,
+    "gpu_pairs": 4
+  },
+  {
+    "n_particles": 1000,
+    "ref_time_s": 0.116,
+    "gpu_time_s": 5.5844,
+    "speedup": 0.02,
+    "tensor_assign_time_s": 0.0175,
+    "dict_assign_time_s": 0.0259,
+    "assign_speedup": 1.49,
+    "ref_pairs": 1,
+    "gpu_pairs": 1
+  },
+  {
+    "n_particles": 2000,
+    "ref_time_s": 0.1159,
+    "gpu_time_s": 5.6906,
+    "speedup": 0.02,
+    "tensor_assign_time_s": 0.0084,
+    "dict_assign_time_s": 0.9533,
+    "assign_speedup": 113.86,
+    "ref_pairs": 0,
+    "gpu_pairs": 0
+  },
+  {
+    "n_particles": 5000,
+    "ref_time_s": 0.1616,
+    "gpu_time_s": 6.965,
+    "speedup": 0.02,
+    "tensor_assign_time_s": 0.0044,
+    "dict_assign_time_s": 0.4537,
+    "assign_speedup": 103.41,
+    "ref_pairs": 1,
+    "gpu_pairs": 1
+  }
+]
