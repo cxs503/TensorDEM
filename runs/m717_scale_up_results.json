@@ -1,0 +1,38 @@
+{
+  "particle_count": 100000,
+  "mass_conservation": 0.0,
+  "wallclock_per_step_last": 0.9684529397636652,
+  "wallclock_per_step_mean": 1.0907837457954883,
+  "wallclock_per_step_max": 1.3090202398598194,
+  "wallclock_per_step_min": 0.9684529397636652,
+  "total_steps": 5,
+  "total_bonds": 1193256,
+  "broken_bonds": 358648,
+  "pre_break_fraction": 0.3,
+  "dt": 3.3717702052221915e-05,
+  "init_time_s": 0.8041477985680103,
+  "per_step_wallclocks": [
+    1.3090202398598194,
+    1.2049960289150476,
+    1.0009916592389345,
+    0.970457861199975,
+    0.9684529397636652
+  ],
+  "acceptance": {
+    "particle_count_100000": {
+      "value": 100000,
+      "criterion": ">= 100000",
+      "pass": true
+    },
+    "mass_conservation_1e8": {
+      "value": 0.0,
+      "criterion": "< 1e-08",
+      "pass": true
+    },
+    "wallclock_per_step_60s": {
+      "value": 1.3090202398598194,
+      "criterion": "< 60",
+      "pass": true
+    }
+  }
+}

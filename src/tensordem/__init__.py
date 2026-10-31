@@ -11,6 +11,7 @@ from .contact_tangential import (
     damping_to_restitution,
 )
 from .dem_export import DemExport, Fragment, save_json, load_json, load_to_tensors
+from .scale_up_ice_field import ScaleUpIceField, ScaleUpIceFieldConfig, run_broken_ice_field
 
 __all__ = [
     "DEMConfig", "IceDEM", "DEM3DConfig", "IceDEM3D",
@@ -19,4 +20,5 @@ __all__ = [
     "integrate_tangential_displacement", "restitution_to_damping",
     "damping_to_restitution",
     "DemExport", "Fragment", "save_json", "load_json", "load_to_tensors",
+    "ScaleUpIceField", "ScaleUpIceFieldConfig", "run_broken_ice_field",
 ]
