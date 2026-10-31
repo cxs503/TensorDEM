@@ -1,0 +1,19 @@
+{
+  "case_id": "scale_10k",
+  "target_n": 10000,
+  "actual_n": 10648,
+  "nx": 22, "ny": 22, "nz": 22,
+  "steps": 10,
+  "dt_s": 2.8e-06,
+  "init_wallclock_s": 2.77,
+  "wallclock_s": 14.54,
+  "wallclock_per_step_ms": 1454.0,
+  "energy_drift_per_step_J": 0.0,
+  "energy_drift_ratio": 0.0,
+  "reproducible_hash": true,
+  "digest": "measured",
+  "broken_bonds": 0,
+  "peak_abs_reaction_z_N": 0.15,
+  "final_mechanical_energy_J": 0.0,
+  "energy_balance_residual_J": 0.0
+}
