@@ -1,0 +1,40 @@
+{
+  "mission_id": 706,
+  "scenario_key": "SIR-PC2|F06",
+  "physical_domain": "fluid_particle_coupling",
+  "acceptance_criteria": {
+    "momentum_exchange_conservation": {
+      "value": 0.0,
+      "threshold": 1e-10,
+      "unit": "kg*m/s",
+      "status": "PASS",
+      "method": "Newton's 3rd law: F_drag on particle = -F_drag on fluid, exact by construction"
+    },
+    "single_particle_settling_vs_stokes": {
+      "value": 0.0007093828630345852,
+      "threshold": 0.05,
+      "unit": "ratio",
+      "status": "PASS",
+      "simulated_v_t": 0.05446133863396461,
+      "analytical_v_t": 0.05449999999999999,
+      "method": "Explicit Euler integration of m dv/dt = (\u03c1_p-\u03c1_f)Vg - 6\u03c0\u03bcRv"
+    },
+    "pytest_test_dem_fluid_coupling": {
+      "value": "PASS",
+      "tests_run": 12,
+      "tests_passed": 12,
+      "tests_failed": 0,
+      "unit": "bool",
+      "status": "PASS"
+    }
+  },
+  "artifacts": [
+    "src/tensordem/dem_fluid_coupling.py",
+    "tests/test_dem_fluid_coupling.py",
+    "artifacts/settling_velocity.png",
+    "artifacts/verification_m706.json",
+    "runs/m706_settling_data.json",
+    "docs/dem-fluid-coupling/README.md"
+  ],
+  "all_criteria_met": true
+}

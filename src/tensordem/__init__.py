@@ -11,6 +11,14 @@ from .contact_tangential import (
     damping_to_restitution,
 )
 from .dem_export import DemExport, Fragment, save_json, load_json, load_to_tensors
+from .dem_fluid_coupling import (
+    FluidGrid3DConfig,
+    FluidGrid3D,
+    DEMFluidCoupling3D,
+    stokes_drag,
+    schiller_naumann_drag,
+    stokes_terminal_velocity,
+)
 
 __all__ = [
     "DEMConfig", "IceDEM", "DEM3DConfig", "IceDEM3D",
@@ -19,4 +27,6 @@ __all__ = [
     "integrate_tangential_displacement", "restitution_to_damping",
     "damping_to_restitution",
     "DemExport", "Fragment", "save_json", "load_json", "load_to_tensors",
+    "FluidGrid3DConfig", "FluidGrid3D", "DEMFluidCoupling3D",
+    "stokes_drag", "schiller_naumann_drag", "stokes_terminal_velocity",
 ]
