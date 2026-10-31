@@ -1,0 +1,33 @@
+{
+    "mission_id": 670,
+    "scenario_key": "SIR-PC2|F05",
+    "acceptance_criteria": {
+        "friction_coefficient_error_vs_experiment": {
+            "value": 0.0,
+            "threshold": 0.1,
+            "unit": "ratio",
+            "status": "PASS"
+        },
+        "rolling_resistance_torque_physical": {
+            "value": true,
+            "expected": true,
+            "unit": "bool",
+            "status": "PASS"
+        },
+        "pytest_test_friction_rolling": {
+            "value": "PASS",
+            "tests_run": 26,
+            "tests_passed": 26,
+            "tests_failed": 0,
+            "unit": "bool",
+            "status": "PASS"
+        }
+    },
+    "artifacts": [
+        "src/tensordem/dem3d.py",
+        "tests/test_friction_rolling.py",
+        "artifacts/friction_rolling_model.png",
+        "artifacts/verification_m670.json"
+    ],
+    "all_criteria_met": true
+}
