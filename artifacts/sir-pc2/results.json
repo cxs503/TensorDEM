@@ -1,0 +1,23 @@
+{
+  "buoyancy_force_error_2d": 2.1472223225142668e-16,
+  "buoyancy_force_error_3d": 2.187076763628482e-16,
+  "equilibrium_error_2d": 2.6762485090556334e-13,
+  "equilibrium_error_3d": 7.179142825879398e-13,
+  "buoyancy_passed_2d": true,
+  "buoyancy_passed_3d": true,
+  "h_eq_2d": -0.33776711458813224,
+  "h_eq_3d": -0.29858100521960296,
+  "f_sub_eq_2d": 0.8946341463417029,
+  "f_sub_eq_3d": 0.8946341463421058,
+  "k_heave_2d": 7414.023683165381,
+  "k_heave_3d": 5081.15151855979,
+  "heave_stable_2d": true,
+  "heave_stable_3d": true,
+  "GM_2d": -5.551115123125783e-17,
+  "GM_3d": -0.11465998534329028,
+  "converged_2d": true,
+  "converged_3d": true,
+  "acceptance_buoyancy_force_error": 2.187076763628482e-16,
+  "acceptance_floating_equilibrium_stable": true,
+  "acceptance_pytest_pass": true
+}
