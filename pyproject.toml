@@ -22,6 +22,7 @@ viz = [
 [project.scripts]
 tensordem = "tensordem.cli:main"
 tensordem-3d = "tensordem.dem3d_cli:main"
+tensordem-formation = "tensordem.formation_cli:main"
 
 [build-system]
 requires = ["setuptools>=82.0.1"]
