@@ -1,0 +1,60 @@
+{
+  "protocol": "tensordem-dem3d-scale-benchmark-v1",
+  "units": "SI",
+  "cases": [
+    {
+      "id": "scale_10k",
+      "title": "10k particle scaling case",
+      "purpose": "Wall-clock baseline for O(N) scaling study.",
+      "config": {
+        "nx": 22, "ny": 22, "nz": 22,
+        "radius": 0.025, "density": 917.0,
+        "bond_stiffness": 2000.0, "contact_stiffness": 5000.0,
+        "contact_damping": 5.0, "drag": 2.0,
+        "tool_radius": 0.1, "tool_speed": 0.01, "tool_gap": 0.01,
+        "breaking_strain": 0.015, "shear_breaking_strain": 0.03,
+        "fix_x_edges": false, "fix_bottom": false
+      },
+      "steps": 10,
+      "sample_every": 5,
+      "verify_repeat": true,
+      "minimum_broken_bonds": 0
+    },
+    {
+      "id": "scale_50k",
+      "title": "50k particle scaling case",
+      "purpose": "Mid-range scaling measurement.",
+      "config": {
+        "nx": 37, "ny": 37, "nz": 37,
+        "radius": 0.025, "density": 917.0,
+        "bond_stiffness": 2000.0, "contact_stiffness": 5000.0,
+        "contact_damping": 5.0, "drag": 2.0,
+        "tool_radius": 0.1, "tool_speed": 0.01, "tool_gap": 0.01,
+        "breaking_strain": 0.015, "shear_breaking_strain": 0.03,
+        "fix_x_edges": false, "fix_bottom": false
+      },
+      "steps": 5,
+      "sample_every": 5,
+      "verify_repeat": true,
+      "minimum_broken_bonds": 0
+    },
+    {
+      "id": "scale_100k",
+      "title": "100k particle scaling case",
+      "purpose": "Large-scale scaling measurement; acceptance threshold for wall-clock ratio.",
+      "config": {
+        "nx": 47, "ny": 47, "nz": 47,
+        "radius": 0.025, "density": 917.0,
+        "bond_stiffness": 2000.0, "contact_stiffness": 5000.0,
+        "contact_damping": 5.0, "drag": 2.0,
+        "tool_radius": 0.1, "tool_speed": 0.01, "tool_gap": 0.01,
+        "breaking_strain": 0.015, "shear_breaking_strain": 0.03,
+        "fix_x_edges": false, "fix_bottom": false
+      },
+      "steps": 1,
+      "sample_every": 1,
+      "verify_repeat": true,
+      "minimum_broken_bonds": 0
+    }
+  ]
+}
