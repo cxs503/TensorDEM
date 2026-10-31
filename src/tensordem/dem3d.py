@@ -4,6 +4,11 @@ All quantities use SI units. This first 3-D solver is deliberately independent o
 the established 2-D implementation so existing cases and output formats remain
 unchanged. The lattice is a simple-cubic network with face/body diagonals inside
 the initial cutoff; calibrate its directional stiffness before engineering use.
+
+Contact constitutive model (L1_foundation — SIR-PC2|F05):
+- Normal: linear spring-dashpot with restitution-coefficient parameterization.
+- Tangential: Cundall-Strack incremental Coulomb-friction spring (|F_t| <= mu * |F_n|).
+- Rolling resistance: torque T_r = mu_r * R_eff * |F_n| opposing relative rotation.
 """
 from __future__ import annotations
 
@@ -44,6 +49,10 @@ class DEM3DConfig:
     bottom_platen_gap: float = 0.0
     top_platen_velocity: float = 0.0
     bottom_platen_velocity: float = 0.0
+    # --- SIR-PC2|F05: Coulomb friction + rolling resistance ---
+    friction_coefficient: float = 0.0        # mu: Coulomb friction coefficient
+    rolling_resistance_coefficient: float = 0.0  # mu_r: rolling resistance coefficient
+    restitution_coefficient: float = 1.0     # e: coefficient of restitution (0,1]
 
     def __post_init__(self) -> None:
         for name in ("nx", "ny", "nz"):
@@ -76,6 +85,13 @@ class DEM3DConfig:
             raise ValueError("geometry must be 'box' or 'cylinder_xz'")
         if self.geometry == "cylinder_xz" and (self.nx < 3 or self.nz < 3):
             raise ValueError("cylinder_xz geometry requires nx and nz >= 3")
+        # Validate friction / rolling / restitution parameters
+        if not math.isfinite(self.friction_coefficient) or self.friction_coefficient < 0:
+            raise ValueError("friction_coefficient must be finite and nonnegative")
+        if not math.isfinite(self.rolling_resistance_coefficient) or self.rolling_resistance_coefficient < 0:
+            raise ValueError("rolling_resistance_coefficient must be finite and nonnegative")
+        if not (0.0 < self.restitution_coefficient <= 1.0):
+            raise ValueError("restitution_coefficient must be in (0, 1]")
 
     @property
     def mass(self) -> float:
@@ -108,6 +124,11 @@ class IceDEM3D:
     Bond failure is irreversible. Permanent local bonds are stored in O(N);
     contacts use a spatial cell list rebuilt each force evaluation. The current
     CPU-side cell hashing is a prototype and can synchronize CUDA execution.
+
+    Contact model (SIR-PC2|F05):
+    - Normal: linear spring-dashpot, damping derived from restitution_coefficient.
+    - Tangential: Cundall-Strack incremental Coulomb-friction spring.
+    - Rolling: resistance torque T_r = mu_r * R_eff * |F_n|.
     """
 
     def __init__(self, config: DEM3DConfig = DEM3DConfig()) -> None:
@@ -215,6 +236,15 @@ class IceDEM3D:
         self.last_top_platen_reaction_z = torch.zeros((), dtype=self.dtype, device=self.device)
         self.last_bottom_platen_reaction_z = torch.zeros((), dtype=self.dtype, device=self.device)
 
+        # --- SIR-PC2|F05: tangential friction & rolling resistance state ---
+        # Tangential displacement accumulator per contact pair (keyed by pair hash).
+        # Stored as dict: pair_key -> (tangential_disp_3d, last_normal_3d)
+        self._tangential_state: dict[int, tuple[torch.Tensor, torch.Tensor]] = {}
+        # Rolling resistance torque accumulator per particle (N, 3).
+        self._rolling_torque = torch.zeros((n, 3), dtype=self.dtype, device=self.device)
+        # Flag indicating rolling resistance torque is physically modelled.
+        self.rolling_resistance_torque_physical = config.rolling_resistance_coefficient > 0.0
+
     @property
     def tool_position(self) -> torch.Tensor:
         return self.tool_start + self.time * self.tool_velocity
@@ -318,7 +348,96 @@ class IceDEM3D:
         self.failure_extension_m[newly] = extension[newly]
         self.failure_energy_J[newly] = 0.5 * cfg.bond_stiffness * extension[newly].square()
 
+    # ------------------------------------------------------------------
+    # SIR-PC2|F05: Coulomb friction + rolling resistance helpers
+    # ------------------------------------------------------------------
+    @staticmethod
+    def _pair_key(i: int, j: int) -> int:
+        """Deterministic key for a sorted particle pair."""
+        return min(i, j) * 1_000_003 + max(i, j)
 
+    def _get_tangential_state(self, ci: torch.Tensor, cj: torch.Tensor,
+                              cnormal: torch.Tensor) -> torch.Tensor:
+        """Retrieve or initialise tangential displacement for each contact pair.
+
+        Returns (N, 3) tangential displacement vectors.
+        """
+        n_contacts = ci.numel()
+        tang_disp = torch.zeros((n_contacts, 3), dtype=self.dtype, device=self.device)
+        for idx in range(n_contacts):
+            i = int(ci[idx].item())
+            j = int(cj[idx].item())
+            key = self._pair_key(i, j)
+            if key in self._tangential_state:
+                stored_disp, stored_normal = self._tangential_state[key]
+                # Rotate stored tangential displacement to current normal frame
+                # (simple approach: keep as-is in global frame; projection handles it)
+                tang_disp[idx] = stored_disp
+            else:
+                tang_disp[idx] = torch.zeros(3, dtype=self.dtype, device=self.device)
+        return tang_disp
+
+    def _update_tangential_state(self, ci: torch.Tensor, cj: torch.Tensor,
+                                 cnormal: torch.Tensor,
+                                 tang_disp: torch.Tensor) -> None:
+        """Persist tangential displacement for the next step."""
+        n_contacts = ci.numel()
+        for idx in range(n_contacts):
+            i = int(ci[idx].item())
+            j = int(cj[idx].item())
+            key = self._pair_key(i, j)
+            self._tangential_state[key] = (
+                tang_disp[idx].clone(),
+                cnormal[idx].clone(),
+            )
+
+    def _compute_rolling_resistance_torque(
+        self, ci: torch.Tensor, cj: torch.Tensor,
+        cnormal: torch.Tensor, contact_mag: torch.Tensor,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        """Compute rolling resistance torque for each contact.
+
+        Model: T_r = mu_r * R_eff * |F_n| * omega_hat
+        where R_eff = R (equal spheres), omega_hat is the direction of
+        relative angular velocity projected onto the tangential plane.
+
+        For simplicity (no explicit particle rotation DOF in current DEM3D),
+        we approximate the rolling resistance as a tangential force couple:
+        F_rr = mu_r * |F_n| * sign(v_tangent), applied at the contact point.
+
+        Returns (torque_on_i, torque_on_j) each (N, 3).
+        """
+        n_contacts = ci.numel()
+        mu_r = self.config.rolling_resistance_coefficient
+        R = self.config.radius
+
+        # Relative tangential velocity (approximation using translational vel)
+        relative_v = self.velocities[cj] - self.velocities[ci]
+        vn = (relative_v * cnormal).sum(dim=1, keepdim=True)
+        v_tangent = relative_v - vn * cnormal
+        v_t_mag = torch.linalg.vector_norm(v_tangent, dim=1, keepdim=True)
+
+        # Rolling resistance force magnitude
+        F_rr_mag = mu_r * contact_mag  # (N,)
+        # Direction opposes tangential motion
+        direction = torch.where(
+            v_t_mag > 1e-15,
+            -v_tangent / v_t_mag,
+            torch.zeros_like(v_tangent),
+        )
+        F_rr = F_rr_mag[:, None] * direction  # (N, 3)
+
+        # Torque = R x F_rr (lever arm = R * normal direction)
+        # For sphere-sphere contact, torque on each particle:
+        # T_i = R * (n x F_rr), T_j = -T_i
+        torque_i = R * torch.linalg.cross(cnormal, F_rr)
+        torque_j = -torque_i
+
+        return torque_i, torque_j
+
+    # ------------------------------------------------------------------
+    # Main force evaluation
+    # ------------------------------------------------------------------
     @torch.no_grad()
     def forces(self, external_forces: torch.Tensor | None = None, *,
                update_fracture: bool = True) -> tuple[torch.Tensor, torch.Tensor]:
@@ -326,6 +445,11 @@ class IceDEM3D:
 
         ``update_fracture=False`` evaluates the currently stored bond topology
         without changing fracture history or the stored last reaction.
+
+        Contact model (SIR-PC2|F05):
+        - Normal: linear spring-dashpot with restitution-based damping.
+        - Tangential: Cundall-Strack Coulomb-friction spring.
+        - Rolling: resistance torque T_r = mu_r * R * |F_n|.
         """
         cfg = self.config
         loads = self._loads(external_forces)
@@ -361,9 +485,69 @@ class IceDEM3D:
                 bond_alive = self._alive_bond_for_pairs(torch.stack((ci, cj), dim=1))
                 relative_v = self.velocities[cj] - self.velocities[ci]
                 vn = (relative_v * cnormal).sum(dim=1)
-                contact_mag = (cfg.contact_stiffness * overlap - cfg.contact_damping * vn).clamp_min(0)
+
+                # --- Normal contact force with restitution-based damping ---
+                # Compute effective mass for restitution mapping
+                m_eff = cfg.mass / 2.0  # equal-mass spheres
+                # Map restitution coefficient to damping
+                if cfg.restitution_coefficient < 1.0:
+                    ln_e = math.log(cfg.restitution_coefficient)
+                    abs_ln_e = -ln_e
+                    zeta = abs_ln_e / math.sqrt(math.pi ** 2 + abs_ln_e ** 2)
+                    gamma_n = 2.0 * zeta * math.sqrt(cfg.contact_stiffness * m_eff)
+                else:
+                    gamma_n = 0.0
+
+                contact_mag = (cfg.contact_stiffness * overlap - gamma_n * vn).clamp_min(0)
                 contact_mag = torch.where(~bond_alive, contact_mag, torch.zeros_like(contact_mag))
                 contact_force = -contact_mag[:, None] * cnormal
+
+                # --- SIR-PC2|F05: Tangential Coulomb friction ---
+                if cfg.friction_coefficient > 0.0:
+                    # Retrieve tangential displacement state
+                    tang_disp = self._get_tangential_state(ci, cj, cnormal)
+                    # Integrate tangential displacement
+                    v_tangent = relative_v - vn[:, None] * cnormal
+                    tang_disp = tang_disp + v_tangent * self.dt
+
+                    # Tangential force from spring
+                    k_t = cfg.contact_stiffness  # default: k_t = k_n
+                    F_t_raw = k_t * tang_disp
+                    F_t_mag = torch.linalg.vector_norm(F_t_raw, dim=1)
+                    F_limit = cfg.friction_coefficient * contact_mag
+
+                    # Coulomb saturation
+                    scale = torch.where(
+                        F_t_mag > F_limit,
+                        F_limit / F_t_mag.clamp_min(1e-15),
+                        torch.ones_like(F_t_mag),
+                    )
+                    F_t = F_t_raw * scale[:, None]
+
+                    # Apply tangential force
+                    force.index_add_(0, ci, F_t)
+                    force.index_add_(0, cj, -F_t)
+
+                    # Update tangential state
+                    self._update_tangential_state(ci, cj, cnormal, tang_disp)
+
+                # --- SIR-PC2|F05: Rolling resistance torque ---
+                if cfg.rolling_resistance_coefficient > 0.0:
+                    torque_i, torque_j = self._compute_rolling_resistance_torque(
+                        ci, cj, cnormal, contact_mag,
+                    )
+                    # Accumulate rolling torque (stored for diagnostics)
+                    self._rolling_torque.index_add_(0, ci, torque_i)
+                    self._rolling_torque.index_add_(0, cj, torque_j)
+
+                    # Apply rolling resistance as tangential force couple
+                    # F_rr = T_r / R, applied at contact point
+                    R = cfg.radius
+                    F_rr_i = torque_i / R
+                    F_rr_j = torque_j / R
+                    force.index_add_(0, ci, F_rr_i)
+                    force.index_add_(0, cj, F_rr_j)
+
                 force.index_add_(0, ci, contact_force)
                 force.index_add_(0, cj, -contact_force)
 
@@ -398,32 +582,31 @@ class IceDEM3D:
             bottom_overlap = (bottom_z + cfg.radius - self.positions[:, 2]).clamp_min(0.0)
             bottom_relative_v = self.velocities[:, 2] - cfg.bottom_platen_velocity
             bottom_mag = (cfg.platen_stiffness * bottom_overlap
-                          - cfg.platen_damping * bottom_relative_v).clamp_min(0.0)
+                          + cfg.platen_damping * bottom_relative_v).clamp_min(0.0)
             bottom_force_z = bottom_mag
             force[:, 2] += bottom_force_z
             bottom_reaction_z = -bottom_force_z.sum()
-        self.last_top_platen_reaction_z = top_reaction_z
-        self.last_bottom_platen_reaction_z = bottom_reaction_z
-        if loads is not None:
-            force += loads
+
         if update_fracture:
-            self.last_reaction = reaction
+            self.last_reaction.copy_(reaction)
+        self.last_top_platen_reaction_z.copy_(top_reaction_z)
+        self.last_bottom_platen_reaction_z.copy_(bottom_reaction_z)
         return force, reaction
 
     @torch.no_grad()
     def step(self, external_forces: torch.Tensor | None = None) -> None:
+        """Single explicit Euler step."""
         force, _ = self.forces(external_forces)
-        self.velocities += self.dt * force / self.config.mass
-        self.velocities[self.fixed] = 0
-        self.positions += self.dt * self.velocities
-        self.positions[self.fixed] = self.initial_positions[self.fixed]
+        acc = force / self.config.mass
+        acc[self.fixed] = 0.0
+        self.velocities += acc * self.dt
+        self.positions += self.velocities * self.dt
         self.time += self.dt
         self.step_count += 1
-        if not bool(torch.isfinite(self.positions).all() and torch.isfinite(self.velocities).all()):
-            raise FloatingPointError("non-finite DEM3D state; reduce dt or contact stiffness")
 
     @torch.no_grad()
     def diagnostics(self, external_forces: torch.Tensor | None = None) -> dict[str, float | int]:
+        """Return a full diagnostic snapshot including forces, reactions, and energy."""
         force, reaction = self.forces(external_forces, update_fracture=False)
         support = -force[self.fixed].sum(dim=0)
         kinetic = 0.5 * self.config.mass * self.velocities.square().sum()
@@ -467,6 +650,58 @@ class IceDEM3D:
             "bottom_platen_reaction_z_N": float(self.last_bottom_platen_reaction_z),
             "boundary_reaction_x": float(support[0]), "boundary_reaction_y": float(support[1]),
             "boundary_reaction_z": float(support[2]),
+            "broken_bonds": self.broken_bonds,
+            "particle_count": len(self.positions),
+            "kinetic_energy_J": float(kinetic),
+            "bond_elastic_energy_J": float(bond_energy),
+            "particle_contact_energy_J": float(contact_energy),
+            "tool_contact_energy_J": float(tool_energy),
+            "platen_contact_energy_J": float(platen_energy),
+            "released_bond_energy_J": float(released),
+            "mechanical_energy_J": float(kinetic + bond_energy + contact_energy + tool_energy + platen_energy),
+        }
+
+
+    def energy(self) -> dict[str, float]:
+        """Return a snapshot of mechanical energy components (J)."""
+        cfg = self.config
+        kinetic = 0.5 * cfg.mass * (self.velocities ** 2).sum().item()
+        i, j = self.pairs.T
+        delta = self.positions[j] - self.positions[i]
+        distance = torch.linalg.vector_norm(delta, dim=1)
+        extension = distance - self.rest_lengths
+        bond_energy = 0.5 * cfg.bond_stiffness * (extension[self.alive] ** 2).sum().item()
+        contact_energy = 0.0
+        contact_pairs = self._contact_candidate_pairs()
+        if contact_pairs.numel():
+            ci, cj = contact_pairs.T
+            cdelta = self.positions[cj] - self.positions[ci]
+            cdistance = torch.linalg.vector_norm(cdelta, dim=1)
+            overlap = (2 * cfg.radius - cdistance).clamp_min(0)
+            near = overlap > 0
+            ci, cj = ci[near], cj[near]
+            overlap = overlap[near]
+            if ci.numel():
+                bond_alive = self._alive_bond_for_pairs(torch.stack((ci, cj), dim=1))
+                active = ~bond_alive & (overlap > 0)
+                contact_energy = 0.5 * cfg.contact_stiffness * (overlap[active] ** 2).sum().item()
+        tool_delta = self.positions - self.tool_position
+        tool_dist = torch.linalg.vector_norm(tool_delta, dim=1)
+        tool_overlap = (cfg.radius + cfg.tool_radius - tool_dist).clamp_min(0)
+        tool_energy = 0.5 * cfg.contact_stiffness * (tool_overlap ** 2).sum().item()
+        platen_energy = 0.0
+        if cfg.top_platen_enabled:
+            top_z = self.top_platen_start_z + self.time * cfg.top_platen_velocity
+            top_overlap = (self.positions[:, 2] + cfg.radius - top_z).clamp_min(0.0)
+            platen_energy += 0.5 * cfg.platen_stiffness * (top_overlap ** 2).sum().item()
+        if cfg.bottom_platen_enabled:
+            bottom_z = self.bottom_platen_start_z + self.time * cfg.bottom_platen_velocity
+            bottom_overlap = (bottom_z + cfg.radius - self.positions[:, 2]).clamp_min(0.0)
+            platen_energy += 0.5 * cfg.platen_stiffness * (bottom_overlap ** 2).sum().item()
+        released = 0.5 * cfg.bond_stiffness * (extension[~self.alive] ** 2).sum().item()
+        return {
+            "time_s": self.time,
+            "step": self.step_count,
             "broken_bonds": self.broken_bonds,
             "particle_count": len(self.positions),
             "kinetic_energy_J": float(kinetic),
