@@ -7,6 +7,16 @@
 **System-wide overview:** [Tensor Ecosystem System Overview](https://github.com/cxs503/TensorPhysics/blob/main/docs/SYSTEM_OVERVIEW.md) — architecture, repository boundaries, shared contracts, end-to-end workflow and icebreaker application roadmap.
 
 
+## 冰脊触底与海底管道（ridge keel grounding）
+
+`tensordem.ridge_dem` / `ridge_geotech` / `ridge_grounding` 组成二维平面应变
+DEM–Mohr-Coulomb 地基–Winkler 弹性地基梁耦合流程：冰脊龙骨参数化（龙骨深度、翼缘宽度、
+孔隙率、冻结黏结率）、管道刚体圆柱接触、海床 Mohr-Coulomb/Drucker-Prager 等效承载力与
+峰后残余弹簧、管道竖向自由度与土体动力平衡，输出载荷–位移曲线、极限承载力包络、
+管道弯矩/应力分布与 DNV-OS-F101 组合载荷利用率。方法、验证判据与局限见
+`docs/ice_ridge_pipeline_grounding.md`；工件见 `artifacts/ridge_grounding/`；
+运行 `python scripts/run_ice_ridge_grounding.py`。
+
 ## 面向 Agent 科研工厂的职责
 
 在以 Agent 为科研主体的黑灯科研工厂中，TensorDEM 是一个**可编程、可观测、可验证的离散元数值实验设备**，负责颗粒运动、接触、键合与断裂等数值内核及专项验证。TensorPhysics 负责实验编排与跨求解器协调；TensorPlatform 负责数据、产物、研究记录和模型资产治理。
