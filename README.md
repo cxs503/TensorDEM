@@ -226,33 +226,6 @@ python -m unittest discover -s tests -p test_dem3d_paper_figures.py
 
 The figure script consumes existing CSV outputs only. It never fabricates absent results; consult `paper_figure_manifest.json` and `paper_figures_index.md` to see which plots were actually generated. Benchmark PASS status means only that the configured software checks passed, not that physical ice properties or full-scale ship resistance have been validated.
 
-## Hull-ice friction temperature calibration (hull → ice resistance)
-
-`src/tensordem/hull_ice_friction.py` calibrates the ice/steel friction
-coefficient against temperature with a bonded-particle DEM sliding experiment
-(five temperatures, ten repeats, mean ± standard deviation) and identifies the
-parametric law `mu(T) = mu0 + alpha*|T - T_melt|^beta`.
-`src/tensordem/md_interface_friction.py` adds a reduced Lennard-Jones + Coulomb
-molecular-dynamics ice/iron interface shear experiment for a cross-scale check,
-`src/tensordem/ice_resistance.py` embeds `mu(T)` in a Lindqvist-type level-ice
-resistance decomposition with an explicit hull-friction term, and
-`src/tensordem/api_hull_ice_friction.py` exposes
-`POST /calculations/hull-ice-friction` (framework-free handler +
-`create_router()` for mounting in the ship platform).
-
-```bash
-python scripts/calibrate_hull_ice_friction.py --output artifacts/hull_ice_friction
-python scripts/render_hull_ice_friction_report.py
-python -m pytest tests/test_hull_ice_friction_temperature.py \
-                 tests/test_md_interface_friction.py \
-                 tests/test_ice_resistance_hull_friction.py
-```
-
-The physics, the acceptance criteria, the generated results tables and the
-limitations (reduced water model, shared interfacial law, withheld absolute
-resistance validation) are documented in
-[docs/hull_ice_friction_temperature.md](docs/hull_ice_friction_temperature.md)
-and [docs/hull_ice_friction_temperature_results.md](docs/hull_ice_friction_temperature_results.md).
 ## Tensor ecosystem integration
 
 This repository's role, interface boundaries, data-exchange requirements and recommended integration path are documented in [Ecosystem Integration](docs/ecosystem-integration.md).
