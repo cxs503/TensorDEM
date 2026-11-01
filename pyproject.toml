@@ -5,9 +5,7 @@ description = "A PyTorch bonded-particle DEM prototype for ice breaking"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "torch>=2.4.0",
-    "scipy>=1.10",
-    "numpy>=1.24",
+    "torch==2.14.1",
 ]
 
 [project.optional-dependencies]
@@ -22,7 +20,6 @@ viz = [
 [project.scripts]
 tensordem = "tensordem.cli:main"
 tensordem-3d = "tensordem.dem3d_cli:main"
-tensordem-formation = "tensordem.formation_cli:main"
 
 [build-system]
 requires = ["setuptools>=82.0.1"]
