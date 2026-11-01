@@ -467,6 +467,11 @@ class IceDEM3D:
         bond_mag = cfg.bond_stiffness * extension
         bond_force = bond_mag[:, None] * normal
         force = -cfg.drag * self.velocities
+        if loads is not None:
+            # External nodal loads enter the force balance here. Dropping this
+            # term silently removes every externally applied load from the
+            # simulation (no error, zero response), so it must stay explicit.
+            force = force + loads
         active_bond_force = torch.where(self.alive[:, None], bond_force, torch.zeros_like(bond_force))
         force.index_add_(0, i, active_bond_force)
         force.index_add_(0, j, -active_bond_force)
@@ -581,8 +586,11 @@ class IceDEM3D:
             bottom_z = self.bottom_platen_start_z + self.time * cfg.bottom_platen_velocity
             bottom_overlap = (bottom_z + cfg.radius - self.positions[:, 2]).clamp_min(0.0)
             bottom_relative_v = self.velocities[:, 2] - cfg.bottom_platen_velocity
+            # Damper opposes relative normal approach: with the bottom platen
+            # normal +z the damping term is -c*(v_z - v_platen). Using +c turns
+            # the damper into a negative-damping (energy-injecting) term.
             bottom_mag = (cfg.platen_stiffness * bottom_overlap
-                          + cfg.platen_damping * bottom_relative_v).clamp_min(0.0)
+                          - cfg.platen_damping * bottom_relative_v).clamp_min(0.0)
             bottom_force_z = bottom_mag
             force[:, 2] += bottom_force_z
             bottom_reaction_z = -bottom_force_z.sum()
@@ -598,11 +606,17 @@ class IceDEM3D:
         """Single explicit Euler step."""
         force, _ = self.forces(external_forces)
         acc = force / self.config.mass
+        # Fixed particles are hard supports: they neither accelerate nor move
+        # away from their initial position.
         acc[self.fixed] = 0.0
         self.velocities += acc * self.dt
+        self.velocities[self.fixed] = 0.0
         self.positions += self.velocities * self.dt
+        self.positions[self.fixed] = self.initial_positions[self.fixed]
         self.time += self.dt
         self.step_count += 1
+        if not bool(torch.isfinite(self.positions).all() and torch.isfinite(self.velocities).all()):
+            raise FloatingPointError("non-finite DEM3D state; reduce dt or contact stiffness")
 
     @torch.no_grad()
     def diagnostics(self, external_forces: torch.Tensor | None = None) -> dict[str, float | int]:
