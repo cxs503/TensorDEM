@@ -1,17 +1,13 @@
-"""Pytest bootstrap: always test the sources of *this* working tree.
+"""Make the tests import the package from this checkout.
 
-The package is also installed editable from another checkout, so the shared
-``site-packages`` path would otherwise shadow the local ``src`` tree.  Keeping
-this explicit makes the suite worktree-local and reproducible.
+Several worktrees of this repository can share one Python environment, and the
+installed ``tensordem`` may therefore point at a different checkout.  Prepending
+this repository's ``src`` directory guarantees that the tests exercise the code
+in the tree they belong to.
 """
-from __future__ import annotations
-
-from pathlib import Path
 import sys
+from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-for candidate in (ROOT / "src", ROOT):
-    text = str(candidate)
-    if text in sys.path:
-        sys.path.remove(text)
-    sys.path.insert(0, text)
+SRC = Path(__file__).resolve().parents[1] / "src"
+if str(SRC) not in sys.path:
+    sys.path.insert(0, str(SRC))
