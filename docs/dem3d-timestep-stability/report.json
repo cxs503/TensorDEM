@@ -1,0 +1,661 @@
+{
+  "chain_reference": {
+    "conservativeness_ratio": 1.0012059964703925,
+    "energy_vs_dt": [
+      {
+        "dt_over_crit": 0.25,
+        "final_energy_ratio": 1.3329291239069976,
+        "peak_energy_ratio": 1.3331978103806816
+      },
+      {
+        "dt_over_crit": 0.5,
+        "final_energy_ratio": 1.0002236876878492,
+        "peak_energy_ratio": 1.9998495227085062
+      },
+      {
+        "dt_over_crit": 0.8,
+        "final_energy_ratio": 4.531922770569543,
+        "peak_energy_ratio": 4.99811183024279
+      },
+      {
+        "dt_over_crit": 0.9,
+        "final_energy_ratio": 8.559906469493699,
+        "peak_energy_ratio": 9.99597068310162
+      }
+    ],
+    "gershgorin_upper_rad_s": 2.0,
+    "mass_kg": 1.0,
+    "n_particles": 32,
+    "omega_max_exact_rad_s": 1.9975909124103448,
+    "stiffness_N_per_m": 1.0
+  },
+  "closed_form": {
+    "dt_crit_damping": "2 * m / c",
+    "dt_crit_elastic": "2 / omega_max",
+    "growth_factor": "spectral radius of [[1-d^2, dt(1-g)],[-dt*w^2, 1-g]]",
+    "omega_upper": "sqrt(2 * max_i S_i / m)  (Gershgorin row bound)"
+  },
+  "engine_closed_system_energy": {
+    "broken_bonds": 0,
+    "dt_over_crit": 0.02219247080235443,
+    "final_over_initial": 0.06807597778832587,
+    "growth_factor_at_dt": 0.9994380443501147,
+    "initial_energy_J": 7.316336540439551e-06,
+    "peak_over_initial": 1.0,
+    "simulated_time_s": 0.06743540410444632,
+    "steps": 2000
+  },
+  "engine_dt_sweep": {
+    "critical_dt_s": 0.001519330693391957,
+    "rows": [
+      {
+        "dt_over_crit": 0.2,
+        "dt_over_crit_engine_limit": 0.02219247080235443,
+        "engine_recommended_dt_s": 3.3717702052221915e-05,
+        "runnable": false
+      },
+      {
+        "dt_over_crit": 0.4,
+        "dt_over_crit_engine_limit": 0.02219247080235443,
+        "engine_recommended_dt_s": 3.3717702052221915e-05,
+        "runnable": false
+      },
+      {
+        "dt_over_crit": 0.6,
+        "dt_over_crit_engine_limit": 0.02219247080235443,
+        "engine_recommended_dt_s": 3.3717702052221915e-05,
+        "runnable": false
+      },
+      {
+        "dt_over_crit": 0.8,
+        "dt_over_crit_engine_limit": 0.02219247080235443,
+        "engine_recommended_dt_s": 3.3717702052221915e-05,
+        "runnable": false
+      },
+      {
+        "dt_over_crit": 0.9,
+        "dt_over_crit_engine_limit": 0.02219247080235443,
+        "engine_recommended_dt_s": 3.3717702052221915e-05,
+        "runnable": false
+      },
+      {
+        "dt_over_crit": 0.95,
+        "dt_over_crit_engine_limit": 0.02219247080235443,
+        "engine_recommended_dt_s": 3.3717702052221915e-05,
+        "runnable": false
+      }
+    ]
+  },
+  "engine_sweep": [
+    {
+      "binding_limit": "elastic",
+      "case": "baseline 9x5x3",
+      "critical_dt_s": 0.001519330693391957,
+      "dt_s": 3.3717702052221915e-05,
+      "engine_recommended_dt_s": 3.3717702052221915e-05,
+      "growth_factor_at_dt": 0.9994380443501147,
+      "guard_is_inside_limit": true,
+      "is_stable": true,
+      "margin_factor": 45.0603273923834,
+      "omega_upper_rad_s": 1316.3691148336723
+    },
+    {
+      "binding_limit": "elastic",
+      "case": "small 3x3x3",
+      "critical_dt_s": 0.001519330693391957,
+      "dt_s": 3.3717702052221915e-05,
+      "engine_recommended_dt_s": 3.3717702052221915e-05,
+      "growth_factor_at_dt": 0.9994380443501147,
+      "guard_is_inside_limit": true,
+      "is_stable": true,
+      "margin_factor": 45.0603273923834,
+      "omega_upper_rad_s": 1316.3691148336723
+    },
+    {
+      "binding_limit": "elastic",
+      "case": "large 12x6x3",
+      "critical_dt_s": 0.001519330693391957,
+      "dt_s": 3.3717702052221915e-05,
+      "engine_recommended_dt_s": 3.3717702052221915e-05,
+      "growth_factor_at_dt": 0.9994380443501147,
+      "guard_is_inside_limit": true,
+      "is_stable": true,
+      "margin_factor": 45.0603273923834,
+      "omega_upper_rad_s": 1316.3691148336723
+    },
+    {
+      "binding_limit": "elastic",
+      "case": "platens on",
+      "critical_dt_s": 0.001519330693391957,
+      "dt_s": 3.3717702052221915e-05,
+      "engine_recommended_dt_s": 3.3717702052221915e-05,
+      "growth_factor_at_dt": 0.9994380443501147,
+      "guard_is_inside_limit": true,
+      "is_stable": true,
+      "margin_factor": 45.0603273923834,
+      "omega_upper_rad_s": 1316.3691148336723
+    },
+    {
+      "binding_limit": "elastic",
+      "case": "platen damping 50",
+      "critical_dt_s": 0.001519330693391957,
+      "dt_s": 2.4530317296848098e-05,
+      "engine_recommended_dt_s": 2.4530317296848098e-05,
+      "growth_factor_at_dt": 0.999591197094043,
+      "guard_is_inside_limit": true,
+      "is_stable": true,
+      "margin_factor": 61.9368545056356,
+      "omega_upper_rad_s": 1316.3691148336723
+    },
+    {
+      "binding_limit": "elastic",
+      "case": "cylinder_xz 5x3x5",
+      "critical_dt_s": 0.001519330693391957,
+      "dt_s": 3.3717702052221915e-05,
+      "engine_recommended_dt_s": 3.3717702052221915e-05,
+      "growth_factor_at_dt": 0.9994380443501147,
+      "guard_is_inside_limit": true,
+      "is_stable": true,
+      "margin_factor": 45.0603273923834,
+      "omega_upper_rad_s": 1316.3691148336723
+    },
+    {
+      "binding_limit": "elastic",
+      "case": "bond k = 2e5",
+      "critical_dt_s": 0.00015193306933919572,
+      "dt_s": 1.1286968471747222e-05,
+      "engine_recommended_dt_s": 1.1286968471747222e-05,
+      "growth_factor_at_dt": 0.9998119210534157,
+      "guard_is_inside_limit": true,
+      "is_stable": true,
+      "margin_factor": 13.460927947083784,
+      "omega_upper_rad_s": 13163.691148336722
+    },
+    {
+      "binding_limit": "elastic",
+      "case": "contact k = 2e5",
+      "critical_dt_s": 0.001519330693391957,
+      "dt_s": 1.1286968471747222e-05,
+      "engine_recommended_dt_s": 1.1286968471747222e-05,
+      "growth_factor_at_dt": 0.9998119210534157,
+      "guard_is_inside_limit": true,
+      "is_stable": true,
+      "margin_factor": 134.60927947083783,
+      "omega_upper_rad_s": 1316.3691148336723
+    },
+    {
+      "binding_limit": "elastic",
+      "case": "contact damping 500",
+      "critical_dt_s": 0.001519330693391957,
+      "dt_s": 3.396961153099106e-07,
+      "engine_recommended_dt_s": 3.396961153099106e-07,
+      "growth_factor_at_dt": 0.99999434003379,
+      "guard_is_inside_limit": true,
+      "is_stable": true,
+      "margin_factor": 4472.617215554101,
+      "omega_upper_rad_s": 1316.3691148336723
+    },
+    {
+      "binding_limit": "damping",
+      "case": "drag 100",
+      "critical_dt_s": 0.0012003501930591002,
+      "dt_s": 2.4664729994365073e-05,
+      "engine_recommended_dt_s": 2.4664729994365073e-05,
+      "growth_factor_at_dt": 0.9792364931869324,
+      "guard_is_inside_limit": true,
+      "is_stable": true,
+      "margin_factor": 48.666666666666664,
+      "omega_upper_rad_s": 1316.3691148336723
+    },
+    {
+      "binding_limit": "elastic",
+      "case": "radius 5 mm",
+      "critical_dt_s": 0.00013589306842905227,
+      "dt_s": 2.697416164177753e-07,
+      "engine_recommended_dt_s": 2.697416164177753e-07,
+      "growth_factor_at_dt": 0.9994380443501147,
+      "guard_is_inside_limit": true,
+      "is_stable": true,
+      "margin_factor": 503.78977568882567,
+      "omega_upper_rad_s": 14717.45412124659
+    }
+  ],
+  "environment": {
+    "device": "cpu",
+    "torch": "2.7.1"
+  },
+  "growth_factor_verification": {
+    "max_rel_error": 4.1166795959774174e-16,
+    "omega_rad_s": 50.0,
+    "rows": [
+      {
+        "analytic_rho": 1.0,
+        "damping_gamma": 0.0,
+        "dt_over_crit": 0.1,
+        "measured_rho": 1.0,
+        "rel_error": 0.0
+      },
+      {
+        "analytic_rho": 0.9113835714721703,
+        "damping_gamma": 0.5,
+        "dt_over_crit": 0.1,
+        "measured_rho": 0.9113835714721703,
+        "rel_error": 0.0
+      },
+      {
+        "analytic_rho": 0.9735724578008521,
+        "damping_gamma": 1.5,
+        "dt_over_crit": 0.1,
+        "measured_rho": 0.9735724578008521,
+        "rel_error": 0.0
+      },
+      {
+        "analytic_rho": 1.0101004974373191,
+        "damping_gamma": 1.99,
+        "dt_over_crit": 0.1,
+        "measured_rho": 1.0101004974373191,
+        "rel_error": 0.0
+      },
+      {
+        "analytic_rho": 1.020199980003999,
+        "damping_gamma": 2.0,
+        "dt_over_crit": 0.1,
+        "measured_rho": 1.020199980003999,
+        "rel_error": 0.0
+      },
+      {
+        "analytic_rho": 1.1211422358558332,
+        "damping_gamma": 2.1,
+        "dt_over_crit": 0.1,
+        "measured_rho": 1.1211422358558332,
+        "rel_error": 0.0
+      },
+      {
+        "analytic_rho": 1.0,
+        "damping_gamma": 0.0,
+        "dt_over_crit": 0.25,
+        "measured_rho": 1.0,
+        "rel_error": 0.0
+      },
+      {
+        "analytic_rho": 0.7071067811865476,
+        "damping_gamma": 0.5,
+        "dt_over_crit": 0.25,
+        "measured_rho": 0.7071067811865476,
+        "rel_error": 0.0
+      },
+      {
+        "analytic_rho": 0.8430703308172536,
+        "damping_gamma": 1.5,
+        "dt_over_crit": 0.25,
+        "measured_rho": 0.8430703308172536,
+        "rel_error": 0.0
+      },
+      {
+        "analytic_rho": 1.122197585309404,
+        "damping_gamma": 1.99,
+        "dt_over_crit": 0.25,
+        "measured_rho": 1.122197585309404,
+        "rel_error": 0.0
+      },
+      {
+        "analytic_rho": 1.1327822185373186,
+        "damping_gamma": 2.0,
+        "dt_over_crit": 0.25,
+        "measured_rho": 1.1327822185373186,
+        "rel_error": 0.0
+      },
+      {
+        "analytic_rho": 1.238308515906837,
+        "damping_gamma": 2.1,
+        "dt_over_crit": 0.25,
+        "measured_rho": 1.238308515906837,
+        "rel_error": 0.0
+      },
+      {
+        "analytic_rho": 1.0,
+        "damping_gamma": 0.0,
+        "dt_over_crit": 0.45,
+        "measured_rho": 1.0,
+        "rel_error": 0.0
+      },
+      {
+        "analytic_rho": 0.7071067811865476,
+        "damping_gamma": 0.5,
+        "dt_over_crit": 0.45,
+        "measured_rho": 0.7071067811865476,
+        "rel_error": 0.0
+      },
+      {
+        "analytic_rho": 0.8788957107208194,
+        "damping_gamma": 1.5,
+        "dt_over_crit": 0.45,
+        "measured_rho": 0.8788957107208194,
+        "rel_error": 0.0
+      },
+      {
+        "analytic_rho": 1.472380529476361,
+        "damping_gamma": 1.99,
+        "dt_over_crit": 0.45,
+        "measured_rho": 1.472380529476361,
+        "rel_error": 0.0
+      },
+      {
+        "analytic_rho": 1.4838999026786501,
+        "damping_gamma": 2.0,
+        "dt_over_crit": 0.45,
+        "measured_rho": 1.4838999026786501,
+        "rel_error": 0.0
+      },
+      {
+        "analytic_rho": 1.598251940737474,
+        "damping_gamma": 2.1,
+        "dt_over_crit": 0.45,
+        "measured_rho": 1.598251940737474,
+        "rel_error": 0.0
+      },
+      {
+        "analytic_rho": 1.0,
+        "damping_gamma": 0.0,
+        "dt_over_crit": 0.75,
+        "measured_rho": 1.0,
+        "rel_error": 0.0
+      },
+      {
+        "analytic_rho": 0.7071067811865476,
+        "damping_gamma": 0.5,
+        "dt_over_crit": 0.75,
+        "measured_rho": 0.7071067811865476,
+        "rel_error": 0.0
+      },
+      {
+        "analytic_rho": 2.0,
+        "damping_gamma": 1.5,
+        "dt_over_crit": 0.75,
+        "measured_rho": 2.0,
+        "rel_error": 0.0
+      },
+      {
+        "analytic_rho": 2.6181321704042,
+        "damping_gamma": 1.99,
+        "dt_over_crit": 0.75,
+        "measured_rho": 2.6181321704041998,
+        "rel_error": 1.6962062300372787e-16
+      },
+      {
+        "analytic_rho": 2.630199322349037,
+        "damping_gamma": 2.0,
+        "dt_over_crit": 0.75,
+        "measured_rho": 2.630199322349037,
+        "rel_error": 0.0
+      },
+      {
+        "analytic_rho": 2.75,
+        "damping_gamma": 2.1,
+        "dt_over_crit": 0.75,
+        "measured_rho": 2.75,
+        "rel_error": 0.0
+      },
+      {
+        "analytic_rho": 1.0,
+        "damping_gamma": 0.0,
+        "dt_over_crit": 0.95,
+        "measured_rho": 1.0,
+        "rel_error": 0.0
+      },
+      {
+        "analytic_rho": 1.8379591304787242,
+        "damping_gamma": 0.5,
+        "dt_over_crit": 0.95,
+        "measured_rho": 1.8379591304787242,
+        "rel_error": 0.0
+      },
+      {
+        "analytic_rho": 3.2632227606492075,
+        "damping_gamma": 1.5,
+        "dt_over_crit": 0.95,
+        "measured_rho": 3.2632227606492075,
+        "rel_error": 0.0
+      },
+      {
+        "analytic_rho": 3.856696380120313,
+        "damping_gamma": 1.99,
+        "dt_over_crit": 0.95,
+        "measured_rho": 3.856696380120313,
+        "rel_error": 0.0
+      },
+      {
+        "analytic_rho": 3.8684982432752397,
+        "damping_gamma": 2.0,
+        "dt_over_crit": 0.95,
+        "measured_rho": 3.8684982432752397,
+        "rel_error": 0.0
+      },
+      {
+        "analytic_rho": 3.9859680898596297,
+        "damping_gamma": 2.1,
+        "dt_over_crit": 0.95,
+        "measured_rho": 3.98596808985963,
+        "rel_error": 1.114131372450856e-16
+      },
+      {
+        "analytic_rho": 1.0,
+        "damping_gamma": 0.0,
+        "dt_over_crit": 0.995,
+        "measured_rho": 1.0,
+        "rel_error": 0.0
+      },
+      {
+        "analytic_rho": 2.2365404383549814,
+        "damping_gamma": 0.5,
+        "dt_over_crit": 0.995,
+        "measured_rho": 2.2365404383549805,
+        "rel_error": 3.971215563414528e-16
+      },
+      {
+        "analytic_rho": 3.599026458519476,
+        "damping_gamma": 1.5,
+        "dt_over_crit": 0.995,
+        "measured_rho": 3.5990264585194756,
+        "rel_error": 1.2339148238236255e-16
+      },
+      {
+        "analytic_rho": 4.186570405173781,
+        "damping_gamma": 1.99,
+        "dt_over_crit": 0.995,
+        "measured_rho": 4.18657040517378,
+        "rel_error": 2.1214940482130926e-16
+      },
+      {
+        "analytic_rho": 4.19829209735998,
+        "damping_gamma": 2.0,
+        "dt_over_crit": 0.995,
+        "measured_rho": 4.198292097359979,
+        "rel_error": 2.1155708061824478e-16
+      },
+      {
+        "analytic_rho": 4.315023304548657,
+        "damping_gamma": 2.1,
+        "dt_over_crit": 0.995,
+        "measured_rho": 4.315023304548655,
+        "rel_error": 4.1166795959774174e-16
+      },
+      {
+        "analytic_rho": 1.0,
+        "damping_gamma": 0.0,
+        "dt_over_crit": 1.0,
+        "measured_rho": 1.0,
+        "rel_error": 0.0
+      },
+      {
+        "analytic_rho": 2.2807764064044154,
+        "damping_gamma": 0.5,
+        "dt_over_crit": 1.0,
+        "measured_rho": 2.2807764064044154,
+        "rel_error": 0.0
+      },
+      {
+        "analytic_rho": 3.6374586088176875,
+        "damping_gamma": 1.5,
+        "dt_over_crit": 1.0,
+        "measured_rho": 3.6374586088176875,
+        "rel_error": 0.0
+      },
+      {
+        "analytic_rho": 4.224355287970045,
+        "damping_gamma": 1.99,
+        "dt_over_crit": 1.0,
+        "measured_rho": 4.224355287970045,
+        "rel_error": 0.0
+      },
+      {
+        "analytic_rho": 4.23606797749979,
+        "damping_gamma": 2.0,
+        "dt_over_crit": 1.0,
+        "measured_rho": 4.23606797749979,
+        "rel_error": 0.0
+      },
+      {
+        "analytic_rho": 4.3527157879338905,
+        "damping_gamma": 2.1,
+        "dt_over_crit": 1.0,
+        "measured_rho": 4.3527157879338905,
+        "rel_error": 0.0
+      },
+      {
+        "analytic_rho": 1.2213010931647297,
+        "damping_gamma": 0.0,
+        "dt_over_crit": 1.005,
+        "measured_rho": 1.2213010931647297,
+        "rel_error": 0.0
+      },
+      {
+        "analytic_rho": 2.325050949051705,
+        "damping_gamma": 0.5,
+        "dt_over_crit": 1.005,
+        "measured_rho": 2.325050949051705,
+        "rel_error": 0.0
+      },
+      {
+        "analytic_rho": 3.676113221013405,
+        "damping_gamma": 1.5,
+        "dt_over_crit": 1.005,
+        "measured_rho": 3.676113221013405,
+        "rel_error": 0.0
+      },
+      {
+        "analytic_rho": 4.262365398981638,
+        "damping_gamma": 1.99,
+        "dt_over_crit": 1.005,
+        "measured_rho": 4.262365398981638,
+        "rel_error": 0.0
+      },
+      {
+        "analytic_rho": 4.274069077669928,
+        "damping_gamma": 2.0,
+        "dt_over_crit": 1.005,
+        "measured_rho": 4.274069077669928,
+        "rel_error": 0.0
+      },
+      {
+        "analytic_rho": 4.390633332375718,
+        "damping_gamma": 2.1,
+        "dt_over_crit": 1.005,
+        "measured_rho": 4.390633332375718,
+        "rel_error": 0.0
+      },
+      {
+        "analytic_rho": 3.4719798993705915,
+        "damping_gamma": 0.0,
+        "dt_over_crit": 1.2,
+        "measured_rho": 3.4719798993705915,
+        "rel_error": 0.0
+      },
+      {
+        "analytic_rho": 4.139203822413246,
+        "damping_gamma": 0.5,
+        "dt_over_crit": 1.2,
+        "measured_rho": 4.139203822413246,
+        "rel_error": 0.0
+      },
+      {
+        "analytic_rho": 5.353398612028727,
+        "damping_gamma": 1.5,
+        "dt_over_crit": 1.2,
+        "measured_rho": 5.353398612028727,
+        "rel_error": 0.0
+      },
+      {
+        "analytic_rho": 5.917305868909304,
+        "damping_gamma": 1.99,
+        "dt_over_crit": 1.2,
+        "measured_rho": 5.917305868909305,
+        "rel_error": 1.5009844672163905e-16
+      },
+      {
+        "analytic_rho": 5.9286718419665965,
+        "damping_gamma": 2.0,
+        "dt_over_crit": 1.2,
+        "measured_rho": 5.9286718419665965,
+        "rel_error": 0.0
+      },
+      {
+        "analytic_rho": 6.04205719741781,
+        "damping_gamma": 2.1,
+        "dt_over_crit": 1.2,
+        "measured_rho": 6.04205719741781,
+        "rel_error": 0.0
+      },
+      {
+        "analytic_rho": 6.25,
+        "damping_gamma": 0.0,
+        "dt_over_crit": 1.45,
+        "measured_rho": 6.25,
+        "rel_error": 0.0
+      },
+      {
+        "analytic_rho": 6.836867087867292,
+        "damping_gamma": 0.5,
+        "dt_over_crit": 1.45,
+        "measured_rho": 6.836867087867292,
+        "rel_error": 0.0
+      },
+      {
+        "analytic_rho": 7.972713902208568,
+        "damping_gamma": 1.5,
+        "dt_over_crit": 1.45,
+        "measured_rho": 7.972713902208568,
+        "rel_error": 0.0
+      },
+      {
+        "analytic_rho": 8.516248370981447,
+        "damping_gamma": 1.99,
+        "dt_over_crit": 1.45,
+        "measured_rho": 8.516248370981447,
+        "rel_error": 0.0
+      },
+      {
+        "analytic_rho": 8.527270815208135,
+        "damping_gamma": 2.0,
+        "dt_over_crit": 1.45,
+        "measured_rho": 8.527270815208135,
+        "rel_error": 0.0
+      },
+      {
+        "analytic_rho": 8.637353819581435,
+        "damping_gamma": 2.1,
+        "dt_over_crit": 1.45,
+        "measured_rho": 8.637353819581435,
+        "rel_error": 0.0
+      }
+    ]
+  },
+  "marginal_step_dt_equals_crit": {
+    "energy_1000": 40020005000.0,
+    "energy_2000": 160040005000.0,
+    "energy_500": 10010005000.0,
+    "ratio_1000_over_500": 3.9980005004992507,
+    "ratio_2000_over_1000": 3.999000125062453
+  },
+  "scheme": "semi-implicit (symplectic) Euler: v += dt*f/m; x += dt*v"
+}
