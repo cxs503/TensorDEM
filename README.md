@@ -1,5 +1,9 @@
 # TensorDEM
 
+**Tensor ecosystem vision:** [AI-era ecosystem vision](https://github.com/cxs503/TensorPlatform/blob/main/docs/architecture/TENSOR_ECOSYSTEM_AI_ERA_VISION.md).
+
+**Project charter:** [docs/PROJECT_CHARTER.md](docs/PROJECT_CHARTER.md) — mission, ownership, non-goals, integration, quality gates, and agent rules.
+
 基于 **PyTorch** 的二维黏结颗粒离散元（DEM）破冰原型，支持 CPU / CUDA。
 圆形刚性破冰头向下压入两端固定的冰层，黏结可因轴向拉伸或客观剪切应变超阈值而不可逆断裂；
 断裂后的碎冰仍通过接触力相互作用。所有力和积分均使用 PyTorch 张量。
