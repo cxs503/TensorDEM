@@ -2,9 +2,11 @@
 import argparse
 import csv
 from dataclasses import asdict
+import json
 from pathlib import Path
 import torch
 from .dem3d import DEM3DConfig, IceDEM3D
+from .stability import stability_report
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -41,6 +43,8 @@ def main(argv: list[str] | None = None) -> None:
                         help="上压板 z 向速度 (m/s)，向下为负")
     parser.add_argument("--bottom-platen-velocity", type=float, default=0.0,
                         help="下压板 z 向速度 (m/s)，向上为正")
+    parser.add_argument("--stability-report", action="store_true",
+                        help="只输出显式时间步稳定性审计 (CFL 类判据) 的 JSON，不推进求解")
     args = parser.parse_args(argv)
     if args.steps < 1 or args.save_every < 1:
         parser.error("--steps and --save-every must be positive")
@@ -83,6 +87,14 @@ def main(argv: list[str] | None = None) -> None:
     if sim.device.type == "cpu":
         torch.set_num_threads(1)
     args.output.mkdir(parents=True, exist_ok=True)
+    if args.stability_report:
+        # Read-only audit: report the explicit step against the CFL-class limits
+        # without advancing the solver, so it cannot perturb any benchmark.
+        report = stability_report(sim)
+        (args.output / "stability_report.json").write_text(
+            json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        print(json.dumps(report, indent=2, sort_keys=True))
+        return
     frames, velocities, alive_frames, times, tool_positions = [], [], [], [], []
     history = args.output / "history.csv"
     append_history = args.restart is not None and history.exists()
