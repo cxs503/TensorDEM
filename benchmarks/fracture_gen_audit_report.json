@@ -125,7 +125,7 @@
           "num_broken_bonds": 0,
           "bond_count_relative_error": 1.0,
           "unit_bond_energy_J": 0.0,
-          "unit_bond_energy_relative_error": 1.0
+          "unit_bond_energy_relative_error": NaN
         },
         "plane_overbreaks_factor": Infinity,
         "full_cross_section_m2": 1.0
@@ -226,7 +226,7 @@
         "full_cross_section_m2": 1.0
       }
     ],
-    "disc_max_unit_energy_relative_error": 1.0,
+    "disc_max_unit_energy_relative_error": 0.2500000000000001,
     "disc_max_bond_count_relative_error": 1.0
   },
   "a4_legacy_fixture": {

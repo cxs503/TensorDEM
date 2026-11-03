@@ -165,7 +165,7 @@ quantisation error of the exact mapping when the domain edge is not a multiple o
 | `mass_mapping` ("equal_volume_spheres" default, "cell_volume" opt-in) | `src/tensordem/fracture_gen.py` | yes, frozen default kept |
 | `face_extent` ("plane" default, "disc" opt-in) threaded through config, field, ledger | `src/tensordem/fracture_gen.py` | yes |
 | `FractureLedger.mass_accounting()` and falsifiable keys in `energy_accounting()` (analytic bond count, `G*(2r)^2`, input consistency) | `src/tensordem/fracture_gen.py` | yes, superset of old keys |
-| vectorised nearest-neighbour search (`torch.cdist`, falls back to the incremental loop above 5000 particles) | `src/tensordem/fracture_gen.py` | yes, identical bond list (verified against brute force) |
+| vectorised nearest-neighbour search (chunked distance blocks, lexicographic `(i, j)` order, ~24 MB per block) | `src/tensordem/fracture_gen.py` | yes, identical bond list (verified against brute force) |
 | degenerate/zero face normal and unknown enum values now raise `ValueError` | `src/tensordem/fracture_gen.py` | yes |
 | audit driver + report JSON | `benchmarks/fracture_gen_audit.py` | new |
 | figures | `scripts/plot_fracture_gen_audit.py` | new |
@@ -203,3 +203,76 @@ shipped ledger cannot detect either.
   unchanged by this audit and remain uncalibrated (see
   `docs/dem3d_material_calibration_roadmap.md`).
 
+## Source closure (2026-11-03): the audit is reproducible from `main` again
+
+Status before this pass: the doc, the driver (`benchmarks/fracture_gen_audit.py`),
+the plotting script and `tests/test_fracture_gen_audit.py` were all merged, but
+the `src` hunks were filtered out of the merge commit, so the driver failed with
+`ImportError: cannot import name ...` and 14 of the 16 audit tests failed. The
+published table above was therefore *unbacked*: `REAL` numbers in the document,
+`STUB` code behind them. This section records the restore, and the evidence that
+the restore is the intended contract and not a rewrite.
+
+Restored in `src/tensordem/fracture_gen.py` (additive, default behaviour of the
+frozen SI-2 pipeline untouched):
+
+* `FractureGenConfig.mass_mapping` — audit vocabulary
+  (`equal_volume_spheres` / `cell_volume`) aliasing the existing `mass_mode`
+  (`sphere` / `cell`); `None` (default) defers to `mass_mode`, so the two
+  vocabularies can no longer drift, and an unknown name raises `ValueError`.
+* `FractureGenConfig.face_extent` (`plane` default / `disc`) threaded through
+  `generate_fracture_field` → `identify_bonds_crossing_face` →
+  `FractureField.face_extent` → `FractureLedger.check_bonds_at_faces`.
+* `face_footprint_radius(face)` = `face.extent_radius` or the equal-area
+  `sqrt(area/pi)`; non-positive radius and degenerate face normals raise
+  `ValueError` (a zero normal used to silently break nothing).
+* `FractureField.mass_mapping`, `.volume_fraction` (`pi/6` vs `1.0`),
+  `.domain_volume`; `domain_bounds`/`face_extent` carried on the field.
+* `FractureLedger.mass_accounting(domain_volume=None)` — DEM mass vs
+  `rho * V`, reporting the mapping name, `N h^3` actually discretised, the
+  volume fraction and the signed relative error; non-positive volume rejected.
+* `FractureLedger.energy_accounting()` — old keys unchanged, plus
+  `analytic_bond_count`, `analytic_unit_bond_energy`, both relative errors,
+  `input_consistency_error` and `face_extent`. Undefined ratios (no broken bond)
+  are reported as `nan` instead of a fabricated finite error.
+* `build_bond_topology` — the O(n^2) per-pair Python loop replaced by chunked
+  distance blocks that emit the same lexicographic `(i, j)` bond list. This is
+  what made the audit runnable: the 16 audit tests took minutes of wall clock and
+  now take 5.3 s, while `tests/test_fracture_gen_audit.py::test_vectorised_topology_matches_brute_force`
+  still checks the vectorised result against a brute-force pair loop.
+
+Reproduction and reproduction *fidelity* (the check that matters):
+
+```
+$ python benchmarks/fracture_gen_audit.py          # 6 s, rewrites the report JSON
+$ python scripts/plot_fracture_gen_audit.py        # 4 figures, docs/figures/fracture_gen_audit/
+$ python -m pytest tests/test_fracture_gen_audit.py -q      # 16 passed in 5.3 s
+$ python -m pytest tests/test_fracture_gen.py tests/test_fracture_gen_mass_mapping.py -q   # 32 passed
+```
+
+Every audited scalar in the regenerated `benchmarks/fracture_gen_audit_report.json`
+is identical to the committed one (mass mapping rows, `0/4/12/24/52/88` disc bond
+counts, `100` plane counts, `9` folded-plane count, `3.0 J` input inconsistency,
+invariance rows, lattice `all_exact = True`): the restore is pinned by the
+already-merged numbers, not chosen freely. Exactly one scalar differs, and it is
+the one that was wrong: for the `A = 0.01 m^2` disc face no bond is cut, so the
+per-bond energy is undefined; the committed report stored `1.0` (a 100 % error)
+where the regenerated one stores `nan`, which also drops the reported
+`disc_max_unit_energy_relative_error` from `1.0` to `0.25`.
+
+## Honest debt that this pass does not close
+
+* `tests/test_fracture_gen_mass_footprint.py` and
+  `benchmarks/fracture_gen_mass_footprint_audit.py` (a *second*, competing audit
+  of the same module, merged from another branch) still fail at collection:
+  they want `MASS_RADIUS_FACTOR`, `footprint_aware=` and a positional
+  `mass_accounting(volume)` whose `relative_error` is *signed*. That is
+  incompatible with the contract landed here, where the same key is the unsigned
+  error and the footprint switch is `face_extent="disc"`. Both cannot be true at
+  once; the vocabulary landed here is the one that every merged artefact
+  (doc + driver + plot script + 16 tests) agrees on. Reconciliation is an owner
+  decision, not a code fix, so the module is left red on purpose rather than
+  papered over.
+* The audit verifies *counting and bookkeeping*, not physics: `bond_stiffness`,
+  the fracture-energy → bond-strength mapping and the ice material parameters
+  remain uncalibrated (see `docs/dem3d_material_calibration_roadmap.md`).
