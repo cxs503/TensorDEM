@@ -42,7 +42,7 @@ Three evidence levels, evaluated on the same two-sphere normal impact:
 | `reference` | the clamped 1-D impact model the solver is supposed to reproduce | RK4 on `m_eff δ̈ = -max(k δ + γ δ̇, 0)`, event-located at separation |
 | `solver` | the shipped `IceDEM3D` | two-sphere impact carved out of a 2×2×2 box, all bonds severed, non-pair particles frozen, tool parked ≥1 m away |
 
-Setup (`outputs/dem3d_restitution/dem3d_restitution_verification.json`):
+Setup (`docs/m2254/outputs/dem3d_restitution/dem3d_restitution_verification.json`):
 
 | quantity | value |
 |---|---|
