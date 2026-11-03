@@ -916,7 +916,13 @@ class IceDEM3D:
                 bottom_overlap, *self._hertz_rigid_params).sum().item())
                 if cfg.contact_model == "hertz"
                 else 0.5 * cfg.platen_stiffness * (bottom_overlap ** 2).sum().item())
-        released = 0.5 * cfg.bond_stiffness * (extension[~self.alive] ** 2).sum().item()
+        # Released energy is an irreversible accumulator written at the instant a
+        # bond breaks.  Recomputing it from the *current* length of dead bonds
+        # (0.5*k*sum(extension^2 over dead bonds)) is unbounded: after breakage the
+        # two particles fly apart, so that expression grows with no bond event at
+        # all and can exceed the mechanical energy by orders of magnitude.  Keep
+        # the single source of truth used by ``diagnostics()``.
+        released = self.failure_energy_J.sum().item()
         return {
             "time_s": self.time,
             "step": self.step_count,
