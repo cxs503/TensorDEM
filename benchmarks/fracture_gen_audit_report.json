@@ -50,7 +50,7 @@
         "num_particles": 27,
         "dem_mass_kg": 103.71025668030626,
         "fem_continuum_mass_kg": 198.07199999999997,
-        "relative_error": 0.476401224401701
+        "relative_error": -0.4764012244017011
       },
       {
         "mass_mapping": "cell_volume",
@@ -58,7 +58,7 @@
         "num_particles": 27,
         "dem_mass_kg": 198.07200000000006,
         "fem_continuum_mass_kg": 198.07199999999997,
-        "relative_error": 4.304754245487097e-16
+        "relative_error": 4.440892098500626e-16
       }
     ],
     "equal_sphere_deficit_fraction": 0.4764012244017012,
@@ -144,7 +144,7 @@
           "num_broken_bonds": 4,
           "bond_count_relative_error": 2.2204460492503136e-16,
           "unit_bond_energy_J": 5.0,
-          "unit_bond_energy_relative_error": 1.77635683940025e-16
+          "unit_bond_energy_relative_error": 2.220446049250313e-16
         },
         "plane_overbreaks_factor": 25.0,
         "full_cross_section_m2": 1.0
@@ -182,7 +182,7 @@
           "num_broken_bonds": 24,
           "bond_count_relative_error": 0.03999999999999986,
           "unit_bond_energy_J": 5.208333333333333,
-          "unit_bond_energy_relative_error": 0.04166666666666642
+          "unit_bond_energy_relative_error": 0.04166666666666652
         },
         "plane_overbreaks_factor": 4.166666666666667,
         "full_cross_section_m2": 1.0
@@ -201,7 +201,7 @@
           "num_broken_bonds": 52,
           "bond_count_relative_error": 0.06122448979591852,
           "unit_bond_energy_J": 4.711538461538462,
-          "unit_bond_energy_relative_error": 0.057692307692307834
+          "unit_bond_energy_relative_error": 0.05769230769230782
         },
         "plane_overbreaks_factor": 1.9230769230769231,
         "full_cross_section_m2": 1.0
@@ -214,13 +214,13 @@
           "num_broken_bonds": 100,
           "bond_count_relative_error": 1.4210854715202006e-16,
           "unit_bond_energy_J": 5.0,
-          "unit_bond_energy_relative_error": 1.77635683940025e-16
+          "unit_bond_energy_relative_error": 2.220446049250313e-16
         },
         "disc": {
           "num_broken_bonds": 88,
           "bond_count_relative_error": 0.11999999999999987,
           "unit_bond_energy_J": 5.681818181818182,
-          "unit_bond_energy_relative_error": 0.13636363636363613
+          "unit_bond_energy_relative_error": 0.13636363636363602
         },
         "plane_overbreaks_factor": 1.1363636363636365,
         "full_cross_section_m2": 1.0

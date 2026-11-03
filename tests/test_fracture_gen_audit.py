@@ -126,7 +126,9 @@ class MassMappingAudit(unittest.TestCase):
         acc = FractureLedger(field, []).mass_accounting(domain_volume=0.5**3)
         self.assertEqual(acc["num_particles"], 8)
         self.assertAlmostEqual(acc["lattice_volume_covered"], 0.4**3)
-        self.assertAlmostEqual(acc["relative_error"], abs(0.4**3 - 0.5**3) / 0.5**3)
+        # `relative_error` is signed (DEM minus continuum) platform-wide; the
+        # magnitude is the lattice-quantisation error of the frozen case.
+        self.assertAlmostEqual(abs(acc["relative_error"]), abs(0.4**3 - 0.5**3) / 0.5**3)
 
     def test_mass_accounting_reports_mapping_name(self):
         acc = FractureLedger(self._field("cell_volume"), []).mass_accounting()

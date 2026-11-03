@@ -81,7 +81,9 @@ def enumerate_footprint(radius):
 
 def run_audit(write_artifacts: bool = True):
     faces = [_face()]
-    frozen = _field(faces)
+    # frozen prereg mapping requested explicitly: the merged platform default is
+    # the volume-consistent lattice-cell mapping (doc §2, m2633 reconciliation)
+    frozen = _field(faces, mass_mapping="equal_volume_sphere")
     corrected = _field(faces, mass_mapping="lattice_cell")
     frozen_acct = FractureLedger(frozen, faces).mass_accounting(CONTINUUM_VOLUME)
     corrected_acct = FractureLedger(corrected, faces).mass_accounting(CONTINUUM_VOLUME)
