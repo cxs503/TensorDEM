@@ -135,7 +135,7 @@ class TangentialContactConfig:
     """Tangential contact model parameters."""
     mu: float = 0.0           # Coulomb friction coefficient
     k_t: Optional[float] = None  # tangential stiffness (defaults to k_n if None)
-    rolling_mu: float = 0.0   # rolling-resistance coefficient (placeholder, not yet used)
+    rolling_mu: float = 0.0   # legacy placeholder; use tensordem.rolling_resistance
 
 
 def compute_tangential_force(
