@@ -1,0 +1,180 @@
+{
+  "generated_at": "2026-11-03T14:30:06.548447+00:00",
+  "platform": "Linux-6.6.52-1.7.lns23.loongarch64-loongarch64-with-glibc2.38",
+  "setup": {
+    "radius": 0.025,
+    "density": 917.0,
+    "stiffness": 5000.0,
+    "impact_speed": 0.5,
+    "mass": 0.06001750965295501,
+    "m_eff_pair": 0.030008754826477507,
+    "restitution_reference": "tensordem.restitution.unilateral_restitution"
+  },
+  "rows": [
+    {
+      "study": "dashpot",
+      "damping": 0.0,
+      "target": null,
+      "measured": 0.9998659529756567,
+      "reference": 0.9999999999999972,
+      "rel_error": -0.00013404702434050047,
+      "bilateral_prediction": 1.0,
+      "duration_s": 0.007648468255718608,
+      "peak_overlap_m": 0.0024497956276769775
+    },
+    {
+      "study": "dashpot",
+      "damping": 1.0,
+      "target": null,
+      "measured": 0.8825198598567295,
+      "reference": 0.8824905624388456,
+      "rel_error": 3.319856226333707e-05,
+      "bilateral_prediction": 0.8795514309616644,
+      "duration_s": 0.007648468255718608,
+      "peak_overlap_m": 0.0022987150714403257
+    },
+    {
+      "study": "dashpot",
+      "damping": 2.0,
+      "target": null,
+      "measured": 0.783325751984794,
+      "reference": 0.7835326864847841,
+      "rel_error": -0.000264104489269594,
+      "bilateral_prediction": 0.7731118840167528,
+      "duration_s": 0.007648468255718608,
+      "peak_overlap_m": 0.002163719765389052
+    },
+    {
+      "study": "dashpot",
+      "damping": 5.0,
+      "target": null,
+      "measured": 0.5663608842203779,
+      "reference": 0.5659411428957505,
+      "rel_error": 0.0007416695709375705,
+      "bilateral_prediction": 0.5194588746041029,
+      "duration_s": 0.0078022762548841515,
+      "peak_overlap_m": 0.0018375088447165622
+    },
+    {
+      "study": "dashpot",
+      "damping": 10.0,
+      "target": null,
+      "measured": 0.3548068316176639,
+      "reference": 0.35746998677251623,
+      "rel_error": -0.007450010499894309,
+      "bilateral_prediction": 0.24543650352060273,
+      "duration_s": 0.008162381312801881,
+      "peak_overlap_m": 0.0014496012445502568
+    },
+    {
+      "study": "dashpot",
+      "damping": 20.0,
+      "target": null,
+      "measured": 0.17495345374523452,
+      "reference": 0.17540438884465528,
+      "rel_error": -0.002570831336609986,
+      "bilateral_prediction": 0.011784862844903812,
+      "duration_s": 0.009182678976902116,
+      "peak_overlap_m": 0.0010213869441420137
+    },
+    {
+      "study": "target",
+      "damping": 0.8394441697462691,
+      "target": 0.9,
+      "measured": 0.900088268529209,
+      "reference": 0.9,
+      "rel_error": 9.807614356550765e-05,
+      "bilateral_prediction": 0.9021110998532655,
+      "bilateral_rel_error": 0.0023456665036283545,
+      "duration_s": 0.007648468255718608,
+      "peak_overlap_m": 0.0023214317829681197
+    },
+    {
+      "study": "target",
+      "damping": 2.9940751610956076,
+      "target": 0.7,
+      "measured": 0.6997066139273092,
+      "reference": 0.7,
+      "rel_error": -0.00041912296098686345,
+      "bilateral_prediction": 0.7178492694299058,
+      "bilateral_rel_error": 0.025498956328436906,
+      "duration_s": 0.007648468255718608,
+      "peak_overlap_m": 0.0020430490219415023
+    },
+    {
+      "study": "target",
+      "damping": 6.253863188278553,
+      "target": 0.5,
+      "measured": 0.49860274222854123,
+      "reference": 0.5,
+      "rel_error": -0.0027945155429175417,
+      "bilateral_prediction": 0.5455856854793095,
+      "bilateral_rel_error": 0.09117137095861905,
+      "duration_s": 0.007782651909327707,
+      "peak_overlap_m": 0.0017189226805714025
+    },
+    {
+      "study": "target",
+      "damping": 12.181600944118177,
+      "target": 0.3,
+      "measured": 0.296896178430567,
+      "reference": 0.3,
+      "rel_error": -0.010346071898110026,
+      "bilateral_prediction": 0.39477422675362406,
+      "bilateral_rel_error": 0.3159140891787469,
+      "duration_s": 0.0083193865237641,
+      "peak_overlap_m": 0.001318434845486459
+    }
+  ],
+  "sensitivity": [
+    {
+      "kind": "dt_scale",
+      "value": 1.0,
+      "measured": 0.5663608842203779,
+      "reference": 0.5659411428957505,
+      "rel_error": 0.0007416695709375705
+    },
+    {
+      "kind": "dt_scale",
+      "value": 0.5,
+      "measured": 0.5643018016279009,
+      "reference": 0.5659411428957505,
+      "rel_error": -0.0028966638817979843
+    },
+    {
+      "kind": "dt_scale",
+      "value": 0.25,
+      "measured": 0.5660840859590169,
+      "reference": 0.5659411428957505,
+      "rel_error": 0.0002525758465536849
+    },
+    {
+      "kind": "impact_speed",
+      "value": 0.1,
+      "measured": 0.5627546134619319,
+      "reference": 0.5659411428957507,
+      "rel_error": -0.005630496163460204
+    },
+    {
+      "kind": "impact_speed",
+      "value": 0.5,
+      "measured": 0.5663608842203779,
+      "reference": 0.5659411428957505,
+      "rel_error": 0.0007416695709375705
+    },
+    {
+      "kind": "impact_speed",
+      "value": 2.0,
+      "measured": 0.5693970939551073,
+      "reference": 0.5659411428957505,
+      "rel_error": 0.006106555606955431
+    }
+  ],
+  "summary": {
+    "worst_dashpot_rel_error": 0.007450010499894309,
+    "worst_target_rel_error": 0.010346071898110026,
+    "worst_bilateral_rel_error": 0.3159140891787469,
+    "dashpot_under_3pct": true,
+    "target_under_3pct": true
+  }
+}

@@ -383,6 +383,27 @@ class IceDEM3D:
         return int((self.bonded & ~self.alive).sum().item())
 
     @torch.no_grad()
+    def _linear_restitution_damping(self, m_eff: float) -> float:
+        """Dashpot coefficient that realises ``restitution_coefficient``.
+
+        The engine clips the normal force at zero (unilateral contact), so the
+        bilateral textbook mapping under-prescribes the dashpot. The exact
+        inverse of the clipped law lives in :mod:`tensordem.restitution`; it is
+        a numerical solve, so it is cached per (e, k_n, m_eff) triple instead of
+        running per contact pair per time step.
+        """
+        cfg = self.config
+        key = (cfg.restitution_coefficient, cfg.contact_stiffness, m_eff)
+        cache = getattr(self, "_restitution_damping_cache", None)
+        if cache is not None and cache[0] == key:
+            return cache[1]
+        from .restitution import damping_for_restitution
+
+        value = damping_for_restitution(
+            cfg.restitution_coefficient, cfg.contact_stiffness, m_eff)
+        self._restitution_damping_cache = (key, value)
+        return value
+
     def _contact_candidate_pairs(self) -> torch.Tensor:
         """Build current overlap candidates with a uniform spatial cell list.
 
@@ -636,7 +657,7 @@ class IceDEM3D:
                 relative_v = self.velocities[cj] - self.velocities[ci]
                 vn = (relative_v * cnormal).sum(dim=1)
 
-                # --- Normal contact force with restitution-based damping ---
+                # --- Normal contact force with damping ---
                 # Compute effective mass for restitution mapping
                 m_eff = cfg.mass / 2.0  # equal-mass spheres
                 # Hertz: the elastic stiffness is the per-contact secant
@@ -649,10 +670,25 @@ class IceDEM3D:
                     ln_e = math.log(cfg.restitution_coefficient)
                     abs_ln_e = -ln_e
                     zeta = abs_ln_e / math.sqrt(math.pi ** 2 + abs_ln_e ** 2)
-                    gamma_n = (2.0 * zeta * torch.sqrt(k_local * m_eff) if hertz
-                               else 2.0 * zeta * math.sqrt(cfg.contact_stiffness * m_eff))
+                    if hertz:
+                        # Hertzian: the bilateral small-damping law evaluated at
+                        # the local secant stiffness (documented limitation).
+                        gamma_n = 2.0 * zeta * torch.sqrt(k_local * m_eff)
+                    else:
+                        # Linear contacts use the *clipped-law* inversion: the
+                        # bilateral formula above under-prescribes the dashpot by
+                        # up to 32 % because the clip removes dissipation, which
+                        # made a requested e = 0.5 rebound at 0.549 (9.8 % high).
+                        gamma_n = self._linear_restitution_damping(m_eff)
                 else:
-                    gamma_n = 0.0
+                    # No restitution target: the raw dashpot coefficient governs
+                    # the unbonded pair contact, exactly as it governs the tool
+                    # branch and as the analytic impact anchor documents. This
+                    # must not fall back to zero: with the default
+                    # ``restitution_coefficient = 1.0`` that made every free
+                    # pair perfectly elastic (e ~ 1.0) and silently turned
+                    # ``contact_damping`` into a no-op (regression of m670).
+                    gamma_n = cfg.contact_damping
 
                 contact_mag = (k_local * overlap - gamma_n * vn).clamp_min(0)
                 contact_mag = torch.where(~bond_alive, contact_mag, torch.zeros_like(contact_mag))
