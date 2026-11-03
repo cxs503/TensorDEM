@@ -81,7 +81,9 @@ def enumerate_footprint(radius):
 
 def run_audit(write_artifacts: bool = True):
     faces = [_face()]
-    frozen = _field(faces)
+    # The repository default is the mass-conserving cell mapping; the frozen
+    # legacy mapping under audit must be selected explicitly.
+    frozen = _field(faces, mass_mapping="equal_volume_spheres")
     corrected = _field(faces, mass_mapping="lattice_cell")
     frozen_acct = FractureLedger(frozen, faces).mass_accounting(CONTINUUM_VOLUME)
     corrected_acct = FractureLedger(corrected, faces).mass_accounting(CONTINUUM_VOLUME)
