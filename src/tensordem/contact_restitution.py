@@ -256,6 +256,14 @@ def measure_dem3d_impact(
         nx=2, ny=2, nz=2,
         radius=radius, density=density,
         contact_stiffness=k_n, contact_damping=gamma_n,
+        # The clipped law F = max(k*delta - gamma*v_n, 0) implemented by
+        # ``dem3d`` is only reached with the "absolute" dashpot convention: the
+        # default "restitution" convention derives the pair damper from
+        # ``restitution_coefficient`` (default 1.0) and ignores ``contact_damping``
+        # entirely, so without this the harness measures a perfectly elastic
+        # impact (e = 1) for every ``gamma_n`` and any calibration done against
+        # it is meaningless.
+        contact_damping_model="absolute",
         drag=drag, fix_x_edges=False,
         tool_speed=1e-3, tool_gap=1.0,
     )

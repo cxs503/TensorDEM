@@ -317,6 +317,12 @@ def _build_pair(k_n: float, c_n: float, radius: float, density: float, dt_scale:
         nx=2, ny=2, nz=2,
         radius=radius, density=density,
         contact_stiffness=k_n, contact_damping=c_n,
+        # Absolute dashpot convention: only this makes ``c_n`` enter the pair
+        # law, whose clipped form F = max(k*delta - c*v_n, 0) is the reference
+        # these impacts are measured against. The default "restitution"
+        # convention derives the damper from restitution_coefficient (=1.0 here)
+        # and returns a perfectly elastic rebound for every ``c_n``.
+        contact_damping_model="absolute",
         drag=0.0,
         bond_stiffness=1.0, breaking_strain=1e-12, shear_breaking_strain=1e-12,
         fix_x_edges=False, fix_bottom=False,
