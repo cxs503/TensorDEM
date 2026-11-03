@@ -115,3 +115,33 @@ python -m pytest tests/test_dem3d_hertz_contact.py tests/test_dem3d_restitution.
     tests/test_friction_cone_verification.py tests/test_tangential_friction_verification.py -q
 python scripts/verify_salvaged_analytic_laws.py
 ```
+## 6. Follow-up (m2942): Collection error fixed for `test_fracture_gen_mass_footprint`
+
+The fifth contract (`tests/test_fracture_gen_mass_footprint.py`) was left red because the
+only available implementation (branch `721041a`) would silently delete the audited
+`pi/6 - 1` mass-mapping deficit.  The owner decision was to "keep the deficit and fix
+only the two missing names".
+
+This commit adds the two missing symbols to `src/tensordem/fracture_gen.py`:
+
+* `MASS_RADIUS_FACTOR: float = (6.0 / math.pi) ** (1.0 / 3.0)` — the ratio of the
+  "mass radius" (sphere with volume equal to the lattice cell) to the geometric
+  particle radius.
+* `face_footprint_radius(face: FailureFace) -> float` — returns `face.extent_radius`
+  if present, otherwise `sqrt(face.area / pi)`.
+
+With these additions the test module **collects** (16 tests).  The 13 tests that
+exercise `FractureGenConfig(mass_mapping=...)`, `footprint_aware`, and
+`on_plane_tolerance` still fail because the corresponding implementation hunks
+are not yet merged.  They are marked as **honest debt** in the docstring of
+`test_fracture_gen_mass_footprint.py` and will be addressed in a future PR
+once the owner decides whether to adopt the compensated mapping or keep the
+deficit.
+
+| test module | status | notes |
+|---|---|---|
+| `tests/test_dem3d_hertz_contact.py` | ✅ 8 passed | Hertz normal contact restored |
+| `tests/test_dem3d_restitution.py` | ✅ 8 passed | Restitution inversion restored |
+| `tests/test_friction_cone_verification.py` | ✅ 15 passed | Cundall–Strack tangential contact restored |
+| `tests/test_tangential_friction_verification.py` | ✅ 28 passed | Tangential verification harness restored |
+| `tests/test_fracture_gen_mass_footprint.py` | ⚠️ 16 collected, 13 fail | Collection error fixed; implementation debt remains |
