@@ -31,6 +31,9 @@ from .fracture_mass_mapping import (
     particle_mass as _particle_mass,
 )
 
+# Volume-equivalent radius factor: r_eq / r = (3/(4π))^(1/3) ≈ 0.6203505
+MASS_RADIUS_FACTOR: float = (3.0 / (4.0 * math.pi)) ** (1.0 / 3.0)
+
 
 @dataclass
 class FailureFace:
@@ -424,3 +427,11 @@ class FractureLedger:
             'bonds_actually_broken': bonds_actually_broken.sum().item(),
             'all_face_bonds_broken': torch.all(bonds_should_break == bonds_actually_broken).item()
         }
+
+def face_footprint_radius(face: FailureFace) -> float:
+    """Return the effective radius of a failure face for bond-cutting."""
+    if face.extent_radius is not None:
+        if face.extent_radius < 0:
+            raise ValueError("extent_radius must be non-negative")
+        return face.extent_radius
+    return math.sqrt(face.area / math.pi)
