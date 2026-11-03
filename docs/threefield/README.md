@@ -33,11 +33,14 @@ Artifacts: `artifacts/threefield/{dem_sweep,wake_lbm,threefield_report}.json` an
 
 ## Equations as implemented
 
-**Level-ice baselines** (`resistance.py`), per unit bow width where noted:
+**Level-ice baselines** (`resistance.py`), all components in newtons. The
+verification ledger for every coefficient below (which are derived, which are
+implementation conventions, and which are graded WITHHELD against the literature)
+is `docs/threefield/FORMULAS.md`:
 
 ```
-R_crush = 0.5 * sigma_c * h^2 * (tan(alpha) + mu / cos(alpha))            [N/m]
-R_bend  = 0.25 * sigma_f * B * h^2 / L                                   [N/m]
+R_crush = 0.5 * sigma_c * h^2 * (tan(alpha) + mu / cos(alpha))            [N]
+R_bend  = 0.25 * sigma_f * B * h^2 / L                                   [N]
 R_sub   = rho_w * g * h^2 * B * (0.9 + 0.05 * mu * L / B)                [N]
 Lindqvist-style: R = R_crush + R_bend + R_sub + 0.5 rho_w B h V^2
 Riska-style:     R = (1 + 0.021 phi)(R_crush + R_sub) + R_bend + C2 * V
