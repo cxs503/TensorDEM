@@ -32,6 +32,32 @@ from .fracture_mass_mapping import (
 )
 
 
+# ---------------------------------------------------------------------------
+# Analytic constants & helpers required by the frozen verification contracts
+# ---------------------------------------------------------------------------
+
+#: Ratio of the "mass radius" (sphere with volume equal to the lattice cell)
+#: to the geometric particle radius.  Derivation:
+#:   4/3 π r_m³ = h³ = (2 r)³  →  r_m = r · (6/π)^(1/3)
+MASS_RADIUS_FACTOR: float = (6.0 / math.pi) ** (1.0 / 3.0)
+
+
+def face_footprint_radius(face: FailureFace) -> float:
+    """Return the effective footprint radius of a failure face.
+
+    If the face carries an explicit ``extent_radius`` that value is used;
+    otherwise the radius of a circle with the same area is returned.
+    """
+    if face.extent_radius is not None:
+        if face.extent_radius < 0:
+            raise ValueError(f"extent_radius must be non-negative, got {face.extent_radius}")
+        return face.extent_radius
+    if face.area <= 0:
+        raise ValueError(f"area must be positive when extent_radius is absent, got {face.area}")
+    return math.sqrt(face.area / math.pi)
+
+
+
 @dataclass
 class FailureFace:
     """A single FEM failure face."""
@@ -41,6 +67,7 @@ class FailureFace:
     centroid: torch.Tensor  # shape [3]
     G: float  # fracture energy release rate (J/m²)
     released_energy: float  # total energy released (J)
+    extent_radius: float | None = None
 
 
 @dataclass
