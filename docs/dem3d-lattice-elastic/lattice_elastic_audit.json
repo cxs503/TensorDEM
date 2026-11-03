@@ -1,0 +1,463 @@
+{
+  "acceptance": {
+    "criterion": "affine constants must match the analytic lattice sum to 1e-9 relative",
+    "extrapolated_tension_modulus_vs_analytic_E100_relative_difference": 0.006213850369030549,
+    "extrapolated_tension_modulus_within_3_percent": true,
+    "max_affine_relative_error": 2.220446049250313e-16,
+    "pass": true,
+    "previous_reference": {
+      "affine": 4.440892098500626e-16
+    },
+    "relaxed_shear_to_affine_ratio_at_largest_specimen": 0.5450544480606817,
+    "relaxed_vs_affine_note": "relaxed values are finite-specimen estimates; the 1/n extrapolation is reported with its fit residual, not as a converged bulk modulus."
+  },
+  "affine": {
+    "analytic": {
+      "C11_Pa": 173333.33333333328,
+      "C12_Pa": 93333.3333333333,
+      "C44_Pa": 93333.3333333333
+    },
+    "bond_count": 468,
+    "core_particles": 8,
+    "max_relative_error": 4.440892098500626e-16,
+    "measured": {
+      "C11_Pa": 173333.33333333328,
+      "C12_Pa": 93333.33333333334,
+      "C44_Pa": 93333.33333333333
+    },
+    "particle_count": 64,
+    "relative_error": {
+      "C11": 0.0,
+      "C12": 4.440892098500626e-16,
+      "C44": 2.220446049250313e-16
+    },
+    "size_sweep": [
+      {
+        "edge_particles": 6,
+        "max_relative_error": 2.220446049250313e-16
+      },
+      {
+        "edge_particles": 8,
+        "max_relative_error": 8.881784197001252e-16
+      },
+      {
+        "edge_particles": 10,
+        "max_relative_error": 1.1102230246251565e-15
+      },
+      {
+        "edge_particles": 12,
+        "max_relative_error": 1.1102230246251565e-16
+      }
+    ],
+    "strain": 1e-06
+  },
+  "analytic": {
+    "C11_Pa": 173333.33333333328,
+    "C12_Pa": 93333.3333333333,
+    "C13_Pa": 93333.3333333333,
+    "C22_Pa": 173333.33333333328,
+    "C23_Pa": 93333.3333333333,
+    "C33_Pa": 173333.33333333328,
+    "C44_Pa": 93333.3333333333,
+    "C66_Pa": 93333.3333333333,
+    "E_over_k_over_a": 2.6999999999999993,
+    "bond_stiffness_N_per_m": 2000.0,
+    "bonds_per_particle": 26,
+    "cauchy_relation_relative_deviation": 0.0,
+    "coefficient_over_k_per_a": {
+      "C11": 4.333333333333333,
+      "C12": 2.3333333333333326,
+      "C13": 2.3333333333333326,
+      "C22": 4.333333333333333,
+      "C23": 2.3333333333333326,
+      "C33": 4.333333333333333,
+      "C44": 2.3333333333333326,
+      "C66": 2.3333333333333326
+    },
+    "coordination_number": 26,
+    "cubic_symmetry_relative_deviation": {
+      "C13_vs_C12": 0.0,
+      "C22_vs_C11": 0.0,
+      "C23_vs_C12": 0.0,
+      "C33_vs_C11": 0.0,
+      "C66_vs_C44": 0.0
+    },
+    "half_space_offset_count": 13,
+    "model": "affine (Born) central-force lattice sum; intact interior network",
+    "offsets": [
+      [
+        1,
+        0,
+        0
+      ],
+      [
+        -1,
+        1,
+        0
+      ],
+      [
+        0,
+        1,
+        0
+      ],
+      [
+        1,
+        1,
+        0
+      ],
+      [
+        -1,
+        -1,
+        1
+      ],
+      [
+        0,
+        -1,
+        1
+      ],
+      [
+        1,
+        -1,
+        1
+      ],
+      [
+        -1,
+        0,
+        1
+      ],
+      [
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        0,
+        1
+      ],
+      [
+        -1,
+        1,
+        1
+      ],
+      [
+        0,
+        1,
+        1
+      ],
+      [
+        1,
+        1,
+        1
+      ]
+    ],
+    "poisson_100": 0.35,
+    "radius_m": 0.025,
+    "shear_modulus_isotropic_equivalent_Pa": 39999.999999999985,
+    "shear_to_isotropic_ratio": 2.3333333333333335,
+    "spacing_m": 0.05,
+    "unit_coefficients": {
+      "C11": 0.010833333333333334,
+      "C12": 0.005833333333333333,
+      "C13": 0.005833333333333333,
+      "C22": 0.010833333333333334,
+      "C23": 0.005833333333333333,
+      "C33": 0.010833333333333334,
+      "C44": 0.005833333333333333,
+      "C66": 0.005833333333333333
+    },
+    "young_100_Pa": 107999.99999999997,
+    "zener_anisotropy_C44_over_half_C11_minus_C12": 2.333333333333333
+  },
+  "bond_classes": [
+    {
+      "C11_share": 0.23076923076923073,
+      "class": "axial",
+      "count": 3,
+      "offsets": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ]
+    },
+    {
+      "C11_share": 0.4615384615384614,
+      "class": "face diagonal",
+      "count": 6,
+      "offsets": [
+        [
+          -1.0,
+          1.0,
+          0.0
+        ],
+        [
+          1.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          -1.0,
+          1.0
+        ],
+        [
+          -1.0,
+          0.0,
+          1.0
+        ],
+        [
+          1.0,
+          0.0,
+          1.0
+        ],
+        [
+          0.0,
+          1.0,
+          1.0
+        ]
+      ]
+    },
+    {
+      "C11_share": 0.30769230769230776,
+      "class": "body diagonal",
+      "count": 4,
+      "offsets": [
+        [
+          -1.0,
+          -1.0,
+          1.0
+        ],
+        [
+          1.0,
+          -1.0,
+          1.0
+        ],
+        [
+          -1.0,
+          1.0,
+          1.0
+        ],
+        [
+          1.0,
+          1.0,
+          1.0
+        ]
+      ]
+    }
+  ],
+  "calibration": {
+    "achieved_poisson_100": 0.35,
+    "achieved_shear_modulus_Pa": 7777777777.777777,
+    "achieved_young_100_Pa": 9000000000.000002,
+    "isotropic_shear_modulus_for_target_Pa": 3461538461.538461,
+    "note": "Scalar bond_stiffness sets E and leaves nu locked at the lattice value 0.35; the Cauchy-constrained C44=7k/(3a) cannot match an isotropic shear modulus. Both need tangential/angular stiffness.",
+    "poisson_absolute_error": 0.04999999999999999,
+    "poisson_is_stiffness_independent": true,
+    "radius_m": 0.025,
+    "required_bond_stiffness_N_per_m": 166666666.6666667,
+    "shear_relative_error": 1.2469135802469133,
+    "spacing_m": 0.05,
+    "target_poisson": 0.3,
+    "target_young_modulus_Pa": 9000000000.0,
+    "young_relative_error": 2.220446049250313e-16,
+    "zener_anisotropy": 2.3333333333333326
+  },
+  "case": "dem3d lattice elastic constants audit",
+  "config_inputs": {
+    "bond_stiffness_N_per_m": 2000.0,
+    "radius_m": 0.025,
+    "strain": 1e-06
+  },
+  "figures": [
+    {
+      "caption": "Affine constants reproduced to machine precision and non-affine softening of E and C44 with specimen size",
+      "name": "fig1_lattice_elastic_constants.png"
+    },
+    {
+      "caption": "Bond direction multiplicities and each class's share of the C11 lattice sum",
+      "name": "fig2_bond_direction_classes.png"
+    },
+    {
+      "caption": "Shear-modulus consequence of a scalar bond stiffness and the closed-form calibration rule k = E a / 2.7",
+      "name": "fig3_stiffness_calibration.png"
+    }
+  ],
+  "hessian_cross_check": {
+    "amplitude_ratio_of_spacing": 1e-05,
+    "criterion": "relative differences below 1e-4 are consistent with linearisation error",
+    "energy_relative_difference": 1.4216302144376414e-06,
+    "force_relative_difference": 1.4525573308439168e-05,
+    "linearisation_error_estimate": 1.0000000000000002e-10,
+    "pass": true,
+    "quadratic_form_energy_J": 9.533725943421303e-07,
+    "solver_bond_energy_J": 9.53373949685416e-07
+  },
+  "relaxed": {
+    "axial_boundary": "x faces kinematically driven, lateral faces free",
+    "equilibrium_note": "free-DOF residual is the max |K u| on free dofs (N)",
+    "extrapolated": {
+      "poisson_ratio": {
+        "intercept": 0.2816980640457807,
+        "max_abs_residual": 0.0010932039673485217,
+        "sizes": [
+          4,
+          6,
+          8,
+          10,
+          12
+        ],
+        "slope_per_inverse_size": -0.42107996916375084
+      },
+      "shear_stiffness_Pa": {
+        "intercept": 40304.42488624513,
+        "max_abs_residual": 1625.8752272988277,
+        "sizes": [
+          4,
+          6,
+          8,
+          10,
+          12
+        ],
+        "slope_per_inverse_size": 112191.06404658992
+      },
+      "young_modulus_Pa": {
+        "intercept": 107328.90416014467,
+        "max_abs_residual": 3089.652678294544,
+        "sizes": [
+          4,
+          6,
+          8,
+          10,
+          12
+        ],
+        "slope_per_inverse_size": 226796.09521866665
+      }
+    },
+    "isotropy_check": {
+      "extrapolated_relaxed_C44_Pa": 40304.42488624513,
+      "isotropic_shear_from_relaxed_E_and_nu_Pa": 41869.80817516122,
+      "note": "Affine anisotropy (Zener A = 2.33) is largely a non-affine artifact: after internal relaxation the shear stiffness approaches the isotropic value implied by the relaxed E and nu. Both numbers come from separate 1/n extrapolations of a free-surface specimen, so this is an estimate.",
+      "relative_difference": 0.03738692287214096
+    },
+    "runs": [
+      {
+        "axial_affine_same_specimen_Pa": 173333.33333333328,
+        "axial_free_dof_count": 96,
+        "axial_free_dof_residual_N": 6.505213034913027e-19,
+        "core_particles": 8,
+        "edge_particles": 4,
+        "particle_count": 64,
+        "poisson_ratio_relaxed": 0.17577253321932085,
+        "shear_affine_same_specimen_Pa": 93333.33333333333,
+        "shear_free_dof_residual_N": 6.505213034913027e-19,
+        "shear_ratio_to_affine_same_specimen": 0.7430263008141073,
+        "shear_ratio_to_analytic_C44": 0.7430263008141076,
+        "shear_stiffness_relaxed_Pa": 69349.12140931668,
+        "young_modulus_relaxed_Pa": 165869.46238821626,
+        "young_ratio_to_affine_same_specimen": 0.9569392060858632,
+        "young_ratio_to_analytic_E100": 1.5358283554464471
+      },
+      {
+        "axial_affine_same_specimen_Pa": 173333.3333333333,
+        "axial_free_dof_count": 432,
+        "axial_free_dof_residual_N": 2.6020852139652106e-18,
+        "core_particles": 64,
+        "edge_particles": 6,
+        "particle_count": 216,
+        "poisson_ratio_relaxed": 0.21261127315250405,
+        "shear_affine_same_specimen_Pa": 93333.3333333333,
+        "shear_free_dof_residual_N": 2.168404344971009e-18,
+        "shear_ratio_to_affine_same_specimen": 0.6147542178576211,
+        "shear_ratio_to_analytic_C44": 0.6147542178576211,
+        "shear_stiffness_relaxed_Pa": 57377.06033337795,
+        "young_modulus_relaxed_Pa": 142038.60068496122,
+        "young_ratio_to_affine_same_specimen": 0.819453465490161,
+        "young_ratio_to_analytic_E100": 1.315172228564456
+      },
+      {
+        "axial_affine_same_specimen_Pa": 173333.3333333333,
+        "axial_free_dof_count": 1152,
+        "axial_free_dof_residual_N": 4.336808689942018e-18,
+        "core_particles": 216,
+        "edge_particles": 8,
+        "particle_count": 512,
+        "poisson_ratio_relaxed": 0.22957219883656485,
+        "shear_affine_same_specimen_Pa": 93333.33333333333,
+        "shear_free_dof_residual_N": 3.469446951953614e-18,
+        "shear_ratio_to_affine_same_specimen": 0.573154688619178,
+        "shear_ratio_to_analytic_C44": 0.5731546886191781,
+        "shear_stiffness_relaxed_Pa": 53494.4376044566,
+        "young_modulus_relaxed_Pa": 134283.3555324928,
+        "young_ratio_to_affine_same_specimen": 0.7747116665336125,
+        "young_ratio_to_analytic_E100": 1.2433644030786375
+      },
+      {
+        "axial_affine_same_specimen_Pa": 173333.3333333333,
+        "axial_free_dof_count": 2400,
+        "axial_free_dof_residual_N": 7.806255641895632e-18,
+        "core_particles": 512,
+        "edge_particles": 10,
+        "particle_count": 1000,
+        "poisson_ratio_relaxed": 0.2394066053072543,
+        "shear_affine_same_specimen_Pa": 93333.33333333331,
+        "shear_free_dof_residual_N": 5.204170427930421e-18,
+        "shear_ratio_to_affine_same_specimen": 0.5546601217734487,
+        "shear_ratio_to_analytic_C44": 0.5546601217734488,
+        "shear_stiffness_relaxed_Pa": 51768.27803218854,
+        "young_modulus_relaxed_Pa": 130529.08416439785,
+        "young_ratio_to_affine_same_specimen": 0.753052408640757,
+        "young_ratio_to_analytic_E100": 1.2086026311518323
+      },
+      {
+        "axial_affine_same_specimen_Pa": 173333.33333333328,
+        "axial_free_dof_count": 4320,
+        "axial_free_dof_residual_N": 1.0408340855860843e-17,
+        "core_particles": 1000,
+        "edge_particles": 12,
+        "particle_count": 1728,
+        "poisson_ratio_relaxed": 0.24584473206954047,
+        "shear_affine_same_specimen_Pa": 93333.3333333333,
+        "shear_free_dof_residual_N": 1.214306433183765e-17,
+        "shear_ratio_to_affine_same_specimen": 0.5450544480606817,
+        "shear_ratio_to_analytic_C44": 0.5450544480606817,
+        "shear_stiffness_relaxed_Pa": 50871.74848566361,
+        "young_modulus_relaxed_Pa": 128351.1870641885,
+        "young_ratio_to_affine_same_specimen": 0.7404876176780109,
+        "young_ratio_to_analytic_E100": 1.188436917261005
+      }
+    ],
+    "shear_boundary": "y faces kinematically driven, other faces free"
+  },
+  "sha256": "e10b942d2893d4dc3456c3274fed5c8a2ea85f7522bb4f4e7a5a3d48154ee74f",
+  "solver_energy_cross_check": {
+    "manual_bond_elastic_energy_J": 1.6166666666666665e-09,
+    "relative_difference": 4.0380045507326656e-07,
+    "solver_bond_elastic_energy_J": 1.6166673194774022e-09
+  },
+  "solver_versions": {
+    "numpy_probe": "matplotlib",
+    "python": "3.11.6",
+    "torch": "2.7.1"
+  },
+  "topology_check": {
+    "analytic_directions_missing_from_solver": [],
+    "core_particle_index": 62,
+    "direction_sets_identical": true,
+    "expected_coordination_number": 26,
+    "interior_coordination_number": 26,
+    "solver_directions_missing_from_analytic": [],
+    "total_bonds": 1036
+  }
+}
