@@ -1,0 +1,612 @@
+{
+  "comparison": [
+    {
+      "dt_scale": 1.0,
+      "e_classic": 1.0,
+      "e_measured": 1.00006553966833,
+      "e_reference": 1.0,
+      "error_vs_classic_relative": 6.55396683300058e-05,
+      "error_vs_reference_relative": 6.55396683300058e-05,
+      "gamma_n": 0.0,
+      "zeta": 0.0
+    },
+    {
+      "dt_scale": 0.5,
+      "e_classic": 1.0,
+      "e_measured": 1.0000245881654102,
+      "e_reference": 1.0,
+      "error_vs_classic_relative": 2.458816541017761e-05,
+      "error_vs_reference_relative": 2.458816541017761e-05,
+      "gamma_n": 0.0,
+      "zeta": 0.0
+    },
+    {
+      "dt_scale": 1.0,
+      "e_classic": 0.9132783847506777,
+      "e_measured": 0.9158079205427032,
+      "e_reference": 0.914802194221567,
+      "error_vs_classic_relative": 0.0027697313702613074,
+      "error_vs_reference_relative": 0.0010993921172127935,
+      "gamma_n": 1.0,
+      "zeta": 0.028863302213324196
+    },
+    {
+      "dt_scale": 0.5,
+      "e_classic": 0.9132783847506777,
+      "e_measured": 0.9152161622988312,
+      "e_reference": 0.914802194221567,
+      "error_vs_classic_relative": 0.002121781901892383,
+      "error_vs_reference_relative": 0.00045252195488707187,
+      "gamma_n": 1.0,
+      "zeta": 0.028863302213324196
+    },
+    {
+      "dt_scale": 1.0,
+      "e_classic": 0.8338878139670046,
+      "e_measured": 0.8411006659762778,
+      "e_reference": 0.8394764660709507,
+      "error_vs_classic_relative": 0.008649667123638443,
+      "error_vs_reference_relative": 0.001934777174789501,
+      "gamma_n": 2.0,
+      "zeta": 0.05772660442664839
+    },
+    {
+      "dt_scale": 0.5,
+      "e_classic": 0.8338878139670046,
+      "e_measured": 0.8401785010235946,
+      "e_reference": 0.8394764660709507,
+      "error_vs_classic_relative": 0.0075438049953790096,
+      "error_vs_reference_relative": 0.0008362771096248173,
+      "gamma_n": 2.0,
+      "zeta": 0.05772660442664839
+    },
+    {
+      "dt_scale": 1.0,
+      "e_classic": 0.7610503189778797,
+      "e_measured": 0.7746976268747942,
+      "e_reference": 0.7726069843431095,
+      "error_vs_classic_relative": 0.01793220179612217,
+      "error_vs_reference_relative": 0.0027059586232736307,
+      "gamma_n": 3.0,
+      "zeta": 0.08658990663997258
+    },
+    {
+      "dt_scale": 0.5,
+      "e_classic": 0.7610503189778797,
+      "e_measured": 0.7735015315602727,
+      "e_reference": 0.7726069843431095,
+      "error_vs_classic_relative": 0.01636056417283351,
+      "error_vs_reference_relative": 0.001157829576086174,
+      "gamma_n": 3.0,
+      "zeta": 0.08658990663997258
+    },
+    {
+      "dt_scale": 1.0,
+      "e_classic": 0.632433556089091,
+      "e_measured": 0.6583275339744095,
+      "e_reference": 0.6597215484878951,
+      "error_vs_classic_relative": 0.04094339656080923,
+      "error_vs_reference_relative": -0.0021130346836188267,
+      "gamma_n": 5.0,
+      "zeta": 0.144316511066621
+    },
+    {
+      "dt_scale": 0.5,
+      "e_classic": 0.632433556089091,
+      "e_measured": 0.6602880541144287,
+      "e_reference": 0.6597215484878951,
+      "error_vs_classic_relative": 0.044043358795803386,
+      "error_vs_reference_relative": 0.0008587041424250101,
+      "gamma_n": 5.0,
+      "zeta": 0.144316511066621
+    },
+    {
+      "dt_scale": 1.0,
+      "e_classic": 0.4744675742390441,
+      "e_measured": 0.5287394122160789,
+      "e_reference": 0.529953170195491,
+      "error_vs_classic_relative": 0.11438471441188894,
+      "error_vs_reference_relative": -0.0022903117627627533,
+      "gamma_n": 8.0,
+      "zeta": 0.23090641770659356
+    },
+    {
+      "dt_scale": 0.5,
+      "e_classic": 0.4744675742390441,
+      "e_measured": 0.5304409836438144,
+      "e_reference": 0.529953170195491,
+      "error_vs_classic_relative": 0.11797098989228298,
+      "error_vs_reference_relative": 0.0009204840649286722,
+      "gamma_n": 8.0,
+      "zeta": 0.23090641770659356
+    },
+    {
+      "dt_scale": 1.0,
+      "e_classic": 0.38787386479365504,
+      "e_measured": 0.4632251035103522,
+      "e_reference": 0.4627636341548702,
+      "error_vs_classic_relative": 0.19426737802193306,
+      "error_vs_reference_relative": 0.0009972031538838081,
+      "gamma_n": 10.0,
+      "zeta": 0.288633022133242
+    },
+    {
+      "dt_scale": 0.5,
+      "e_classic": 0.38787386479365504,
+      "e_measured": 0.4624470348003242,
+      "e_reference": 0.4627636341548702,
+      "error_vs_classic_relative": 0.19226139416828536,
+      "error_vs_reference_relative": -0.000684149166397284,
+      "gamma_n": 10.0,
+      "zeta": 0.288633022133242
+    },
+    {
+      "dt_scale": 1.0,
+      "e_classic": 0.22115281598579029,
+      "e_measured": 0.33806501447502424,
+      "e_reference": 0.34000924326116416,
+      "error_vs_classic_relative": 0.5286489252605578,
+      "error_vs_reference_relative": -0.005718164504858897,
+      "gamma_n": 15.0,
+      "zeta": 0.43294953319986296
+    },
+    {
+      "dt_scale": 0.5,
+      "e_classic": 0.22115281598579029,
+      "e_measured": 0.3392871444167792,
+      "e_reference": 0.34000924326116416,
+      "error_vs_classic_relative": 0.5341751037824425,
+      "error_vs_reference_relative": -0.0021237623938073487,
+      "gamma_n": 15.0,
+      "zeta": 0.43294953319986296
+    }
+  ],
+  "drag_effect": [
+    {
+      "contact_time_s": 0.011003059595946068,
+      "drag": 0.0,
+      "e_measured": 0.8411006659762778,
+      "gamma_n": 2.0
+    },
+    {
+      "contact_time_s": 0.011003059595946068,
+      "drag": 0.5,
+      "e_measured": 0.8033112469811224,
+      "gamma_n": 2.0
+    },
+    {
+      "contact_time_s": 0.011003059595946068,
+      "drag": 2.0,
+      "e_measured": 0.7013504718390352,
+      "gamma_n": 2.0
+    },
+    {
+      "contact_time_s": 0.011043221776143721,
+      "drag": 0.0,
+      "e_measured": 0.6583275339744095,
+      "gamma_n": 5.0
+    },
+    {
+      "contact_time_s": 0.011089327942499635,
+      "drag": 0.5,
+      "e_measured": 0.6283956949265234,
+      "gamma_n": 5.0
+    },
+    {
+      "contact_time_s": 0.011107136526683232,
+      "drag": 2.0,
+      "e_measured": 0.5475764124673055,
+      "gamma_n": 5.0
+    }
+  ],
+  "dt_refinement": [
+    {
+      "e_dt_full": 1.00006553966833,
+      "e_dt_half": 1.0000245881654102,
+      "gamma_n": 0.0,
+      "relative_change": -4.094881914780273e-05
+    },
+    {
+      "e_dt_full": 0.9158079205427032,
+      "e_dt_half": 0.9152161622988312,
+      "gamma_n": 1.0,
+      "relative_change": -0.0006461597793578357
+    },
+    {
+      "e_dt_full": 0.8411006659762778,
+      "e_dt_half": 0.8401785010235946,
+      "gamma_n": 2.0,
+      "relative_change": -0.0010963788164556824
+    },
+    {
+      "e_dt_full": 0.7746976268747942,
+      "e_dt_half": 0.7735015315602727,
+      "gamma_n": 3.0,
+      "relative_change": -0.0015439511791802407
+    },
+    {
+      "e_dt_full": 0.6583275339744095,
+      "e_dt_half": 0.6602880541144287,
+      "gamma_n": 5.0,
+      "relative_change": 0.002978031509913193
+    },
+    {
+      "e_dt_full": 0.5287394122160789,
+      "e_dt_half": 0.5304409836438144,
+      "gamma_n": 8.0,
+      "relative_change": 0.0032181664321254506
+    },
+    {
+      "e_dt_full": 0.4632251035103522,
+      "e_dt_half": 0.4624470348003242,
+      "gamma_n": 10.0,
+      "relative_change": -0.0016796773407393997
+    },
+    {
+      "e_dt_full": 0.33806501447502424,
+      "e_dt_half": 0.3392871444167792,
+      "gamma_n": 15.0,
+      "relative_change": 0.0036150736971490354
+    }
+  ],
+  "mass_convention": {
+    "equal_mass_pair_m_eff_kg": 0.030008754826477507,
+    "wall_impact_m_eff_kg": 0.06001750965295501
+  },
+  "pair_impact": [
+    {
+      "e_classic": 0.7731118840167528,
+      "e_measured": 0.786561862534374,
+      "e_reference": 0.7835326652961063,
+      "gamma_n": 2.0,
+      "m_eff": 0.030008754826477507,
+      "zeta": 0.0816377468899129
+    },
+    {
+      "e_classic": 0.5194588746041029,
+      "e_measured": 0.5631508247221758,
+      "e_reference": 0.5659411396217537,
+      "gamma_n": 5.0,
+      "m_eff": 0.030008754826477507,
+      "zeta": 0.20409436722478225
+    }
+  ],
+  "protocol": "tensordem-dem3d-restitution-verification-v1",
+  "reference_runs": [
+    {
+      "contact_time_reference_s": 0.010884384019440217,
+      "e_classic": 1.0,
+      "e_reference": 1.0,
+      "gamma_n": 0.0,
+      "release_overlap_m": 0.0,
+      "zeta": 0.0
+    },
+    {
+      "contact_time_reference_s": 0.010888809536741793,
+      "e_classic": 0.9132783847506777,
+      "e_reference": 0.914802194221567,
+      "gamma_n": 1.0,
+      "release_overlap_m": 0.00018078625925003892,
+      "zeta": 0.028863302213324196
+    },
+    {
+      "contact_time_reference_s": 0.010901673814028205,
+      "e_classic": 0.8338878139670046,
+      "e_reference": 0.8394764660709507,
+      "gamma_n": 2.0,
+      "release_overlap_m": 0.0003343158237804314,
+      "zeta": 0.05772660442664839
+    },
+    {
+      "contact_time_reference_s": 0.010922402234802106,
+      "e_classic": 0.7610503189778797,
+      "e_reference": 0.7726069843431095,
+      "gamma_n": 3.0,
+      "release_overlap_m": 0.0004624547210766042,
+      "zeta": 0.08658990663997258
+    },
+    {
+      "contact_time_reference_s": 0.010985411368478184,
+      "e_classic": 0.632433556089091,
+      "e_reference": 0.6597215484878951,
+      "gamma_n": 5.0,
+      "release_overlap_m": 0.0006590545902179498,
+      "zeta": 0.144316511066621
+    },
+    {
+      "contact_time_reference_s": 0.011127279102865003,
+      "e_classic": 0.4744675742390441,
+      "e_reference": 0.529953170195491,
+      "gamma_n": 8.0,
+      "release_overlap_m": 0.000846865639668891,
+      "zeta": 0.23090641770659356
+    },
+    {
+      "contact_time_reference_s": 0.011249164798919457,
+      "e_classic": 0.38787386479365504,
+      "e_reference": 0.4627636341548702,
+      "gamma_n": 10.0,
+      "release_overlap_m": 0.0009243418448380737,
+      "zeta": 0.288633022133242
+    },
+    {
+      "contact_time_reference_s": 0.011632778260528014,
+      "e_classic": 0.22115281598579029,
+      "e_reference": 0.34000924326116416,
+      "gamma_n": 15.0,
+      "release_overlap_m": 0.0010195995347595927,
+      "zeta": 0.43294953319986296
+    }
+  ],
+  "setup": {
+    "case": "two-sphere normal impact carved out of a 2x2x2 box",
+    "density_kg_per_m3": 917.0,
+    "drag": 0.0,
+    "initial_gap_m": 0.01,
+    "integrator": "semi-implicit (symplectic) Euler",
+    "k_n_N_per_m": 5000.0,
+    "measured_e_definition": "|relative normal velocity at first separation| / |at first overlap|",
+    "particle_mass_kg": 0.06001750965295501,
+    "radius_m": 0.025,
+    "v_in_m_per_s": 0.5
+  },
+  "solver": "IceDEM3D",
+  "solver_runs": [
+    {
+      "contact_time_s": 0.011003059595946068,
+      "drag": 0.0,
+      "dt": 0.0001341836536090984,
+      "dt_scale": 1.0,
+      "e_measured": 1.00006553966833,
+      "gamma_n": 0.0,
+      "max_overlap_m": 0.0017323642533442207,
+      "zeta": 0.0
+    },
+    {
+      "contact_time_s": 0.01093596776914152,
+      "drag": 0.0,
+      "dt": 6.70918268045492e-05,
+      "dt_scale": 0.5,
+      "e_measured": 1.0000245881654102,
+      "gamma_n": 0.0,
+      "max_overlap_m": 0.0017323410123158203,
+      "zeta": 0.0
+    },
+    {
+      "contact_time_s": 0.011003059595946068,
+      "drag": 0.0,
+      "dt": 0.0001341836536090984,
+      "dt_scale": 1.0,
+      "e_measured": 0.9158079205427032,
+      "gamma_n": 1.0,
+      "max_overlap_m": 0.0016578006567923645,
+      "zeta": 0.028863302213324196
+    },
+    {
+      "contact_time_s": 0.01093596776914152,
+      "drag": 0.0,
+      "dt": 6.70918268045492e-05,
+      "dt_scale": 0.5,
+      "e_measured": 0.9152161622988312,
+      "gamma_n": 1.0,
+      "max_overlap_m": 0.0016571555897715862,
+      "zeta": 0.028863302213324196
+    },
+    {
+      "contact_time_s": 0.011003059595946068,
+      "drag": 0.0,
+      "dt": 0.0001341836536090984,
+      "dt_scale": 1.0,
+      "e_measured": 0.8411006659762778,
+      "gamma_n": 2.0,
+      "max_overlap_m": 0.0015886942524161451,
+      "zeta": 0.05772660442664839
+    },
+    {
+      "contact_time_s": 0.01093596776914152,
+      "drag": 0.0,
+      "dt": 6.70918268045492e-05,
+      "dt_scale": 0.5,
+      "e_measured": 0.8401785010235946,
+      "gamma_n": 2.0,
+      "max_overlap_m": 0.001587669948490196,
+      "zeta": 0.05772660442664839
+    },
+    {
+      "contact_time_s": 0.011003059595946068,
+      "drag": 0.0,
+      "dt": 0.0001341836536090984,
+      "dt_scale": 1.0,
+      "e_measured": 0.7746976268747942,
+      "gamma_n": 3.0,
+      "max_overlap_m": 0.0015244235537927517,
+      "zeta": 0.08658990663997258
+    },
+    {
+      "contact_time_s": 0.01093596776914152,
+      "drag": 0.0,
+      "dt": 6.70918268045492e-05,
+      "dt_scale": 0.5,
+      "e_measured": 0.7735015315602727,
+      "gamma_n": 3.0,
+      "max_overlap_m": 0.0015233266024139436,
+      "zeta": 0.08658990663997258
+    },
+    {
+      "contact_time_s": 0.011043221776143721,
+      "drag": 0.0,
+      "dt": 0.00012003501930591002,
+      "dt_scale": 1.0,
+      "e_measured": 0.6583275339744095,
+      "gamma_n": 5.0,
+      "max_overlap_m": 0.0014011959710387503,
+      "zeta": 0.144316511066621
+    },
+    {
+      "contact_time_s": 0.011043221776143721,
+      "drag": 0.0,
+      "dt": 6.001750965295501e-05,
+      "dt_scale": 0.5,
+      "e_measured": 0.6602880541144287,
+      "gamma_n": 5.0,
+      "max_overlap_m": 0.00140679459690414,
+      "zeta": 0.144316511066621
+    },
+    {
+      "contact_time_s": 0.01117826117286287,
+      "drag": 0.0,
+      "dt": 7.502188706619376e-05,
+      "dt_scale": 1.0,
+      "e_measured": 0.5287394122160789,
+      "gamma_n": 8.0,
+      "max_overlap_m": 0.001255930890328473,
+      "zeta": 0.23090641770659356
+    },
+    {
+      "contact_time_s": 0.011140750229329774,
+      "drag": 0.0,
+      "dt": 3.751094353309688e-05,
+      "dt_scale": 0.5,
+      "e_measured": 0.5304409836438144,
+      "gamma_n": 8.0,
+      "max_overlap_m": 0.0012611071562871612,
+      "zeta": 0.23090641770659356
+    },
+    {
+      "contact_time_s": 0.011283291814755542,
+      "drag": 0.0,
+      "dt": 6.001750965295501e-05,
+      "dt_scale": 1.0,
+      "e_measured": 0.4632251035103522,
+      "gamma_n": 10.0,
+      "max_overlap_m": 0.0011776439547608528,
+      "zeta": 0.288633022133242
+    },
+    {
+      "contact_time_s": 0.011253283059929065,
+      "drag": 0.0,
+      "dt": 3.0008754826477505e-05,
+      "dt_scale": 0.5,
+      "e_measured": 0.4624470348003242,
+      "gamma_n": 10.0,
+      "max_overlap_m": 0.001176630688055208,
+      "zeta": 0.288633022133242
+    },
+    {
+      "contact_time_s": 0.011643396872673272,
+      "drag": 0.0,
+      "dt": 4.001167310197001e-05,
+      "dt_scale": 1.0,
+      "e_measured": 0.33806501447502424,
+      "gamma_n": 15.0,
+      "max_overlap_m": 0.001002908946469372,
+      "zeta": 0.43294953319986296
+    },
+    {
+      "contact_time_s": 0.011643396872673272,
+      "drag": 0.0,
+      "dt": 2.0005836550985004e-05,
+      "dt_scale": 0.5,
+      "e_measured": 0.3392871444167792,
+      "gamma_n": 15.0,
+      "max_overlap_m": 0.0010072502332874253,
+      "zeta": 0.43294953319986296
+    }
+  ],
+  "summary": {
+    "classic_formula_within_3pct_max_zeta": 0.08658990663997258,
+    "max_abs_dt_refinement_change": 0.0036150736971490354,
+    "max_abs_error_vs_clamped_reference": 0.005718164504858897,
+    "max_abs_error_vs_clamped_reference_case": {
+      "dt_scale": 1.0,
+      "e_classic": 0.22115281598579029,
+      "e_measured": 0.33806501447502424,
+      "e_reference": 0.34000924326116416,
+      "error_vs_classic_relative": 0.5286489252605578,
+      "error_vs_reference_relative": -0.005718164504858897,
+      "gamma_n": 15.0,
+      "zeta": 0.43294953319986296
+    },
+    "max_abs_error_vs_classic_formula": 0.5341751037824425,
+    "max_abs_error_vs_classic_formula_case": {
+      "dt_scale": 0.5,
+      "e_classic": 0.22115281598579029,
+      "e_measured": 0.3392871444167792,
+      "e_reference": 0.34000924326116416,
+      "error_vs_classic_relative": 0.5341751037824425,
+      "error_vs_reference_relative": -0.0021237623938073487,
+      "gamma_n": 15.0,
+      "zeta": 0.43294953319986296
+    },
+    "max_current_drag_on_particle_N": null,
+    "verdict": "The solver reproduces the clamped reference model to well under 1 % for every damping ratio tested, so the contact law is implemented as documented. The closed-form restitution mapping, however, is only within 3 % for damping ratios up to about 0.09; beyond that the compressive-only clamp raises the observed rebound by 4-20 % and the mapping must be replaced by damping_for_target_restitution."
+  },
+  "target_mapping": [
+    {
+      "clamped_mapping_error_relative": 0.0012783271661653828,
+      "classic_mapping_error_relative": 0.003514517529167316,
+      "e_measured_clamped_mapping": 0.9011504944495489,
+      "e_measured_classic_mapping": 0.9031630657762506,
+      "e_target": 0.9,
+      "gamma_clamped": 1.1871547025388218,
+      "gamma_classic": 1.1612825468806967,
+      "zeta_clamped": 0.034265204953347006,
+      "zeta_classic": 0.03351844910567637
+    },
+    {
+      "clamped_mapping_error_relative": 0.002457628374877424,
+      "classic_mapping_error_relative": 0.012509447908091442,
+      "e_measured_clamped_mapping": 0.801966102699902,
+      "e_measured_classic_mapping": 0.8100075583264732,
+      "e_target": 0.8,
+      "gamma_clamped": 2.576111987550395,
+      "gamma_classic": 2.454684487302404,
+      "zeta_clamped": 0.07435509883203431,
+      "zeta_classic": 0.07085030019536805
+    },
+    {
+      "clamped_mapping_error_relative": 0.0036109018342827303,
+      "classic_mapping_error_relative": 0.029530798925668792,
+      "e_measured_clamped_mapping": 0.7025276312839979,
+      "e_measured_classic_mapping": 0.7206715592479681,
+      "e_target": 0.7,
+      "gamma_clamped": 4.234260860785626,
+      "gamma_classic": 3.9083695226496094,
+      "zeta_clamped": 0.12221475087490577,
+      "zeta_classic": 0.11280845069358131
+    },
+    {
+      "clamped_mapping_error_relative": -0.004190172090450436,
+      "classic_mapping_error_relative": 0.05491124158735391,
+      "e_measured_clamped_mapping": 0.5974858967457297,
+      "e_measured_classic_mapping": 0.6329467449524123,
+      "e_target": 0.6,
+      "gamma_clamped": 6.266029791850557,
+      "gamma_classic": 5.560453390887314,
+      "zeta_clamped": 0.18085831155987553,
+      "zeta_classic": 0.16049304666428385
+    },
+    {
+      "clamped_mapping_error_relative": -0.003771474484104087,
+      "classic_mapping_error_relative": 0.09636000770732034,
+      "e_measured_clamped_mapping": 0.49811426275794796,
+      "e_measured_classic_mapping": 0.5481800038536602,
+      "e_target": 0.5,
+      "gamma_clamped": 8.844297825214884,
+      "gamma_classic": 7.464626201598882,
+      "zeta_clamped": 0.25527564099382316,
+      "zeta_classic": 0.2154537619662468
+    },
+    {
+      "clamped_mapping_error_relative": 0.0001872438689920486,
+      "classic_mapping_error_relative": 0.18087442612722812,
+      "e_measured_clamped_mapping": 0.40007489754759684,
+      "e_measured_classic_mapping": 0.47234977045089127,
+      "e_target": 0.4,
+      "gamma_clamped": 12.282299371735013,
+      "gamma_classic": 9.700830184488932,
+      "zeta_clamped": 0.3545077186409096,
+      "zeta_classic": 0.27999799333504155
+    }
+  ]
+}
