@@ -407,3 +407,154 @@ def make_flat_mesh(
             faces_list.append([v00, v11, v01])
     faces = torch.tensor(faces_list, dtype=torch.int64)
     return verts, faces
+# ---------------------------------------------------------------------------
+# Curved-surface discretisation metrics and generators
+# ---------------------------------------------------------------------------
+#
+# A triangulated hull is an *inscribed* polyhedron: for a convex surface the
+# facet planes lie inside the true surface, so the distance from an exterior
+# sphere centre to the facet is larger than to the surface it replaces.  For a
+# circular section of radius ``R`` discretised into ``facets`` equal chords the
+# bias is the classical sagitta
+#
+#     s = R (1 - cos(pi / facets)) ,     delta_facet = delta_true - s ,
+#
+# independent of the sphere radius and of the overlap ``delta``.  The penalty
+# force therefore underestimates the contact load by ``-s / delta`` and the
+# contact is lost entirely once ``delta <= s``.  These helpers expose the
+# closed-form metrics so that a mesh resolution can be chosen from the physics
+# rather than by inspection; ``scripts/audit_hull_mesh_curvature_sagitta.py``
+# verifies them against the contact kernel itself.
+
+
+def facet_sagitta(radius: float, facets: int) -> float:
+    """Sagitta ``R (1 - cos(pi / facets))`` of an inscribed circular section.
+
+    Parameters
+    ----------
+    radius : float
+        Radius of curvature of the (convex) surface to be discretised, in metres.
+    facets : int
+        Number of equal chords (facets) around a full 2*pi revolution.
+
+    Returns
+    -------
+    float
+        The mean bias between a facet plane and the true surface, in metres.
+        It vanishes as ``facets`` grows like ``R pi**2 / (2 facets**2)``
+        (second order, so doubling the facet count quarters the bias).
+    """
+    if not math.isfinite(radius) or radius <= 0.0:
+        raise ValueError("radius must be finite and positive")
+    if isinstance(facets, bool) or int(facets) != facets or int(facets) < 3:
+        raise ValueError("facets must be an integer >= 3")
+    return radius * (1.0 - math.cos(math.pi / float(facets)))
+
+
+def required_facets(radius: float, overlap: float, tolerance: float) -> int:
+    """Minimum facets for a relative force error of ``tolerance`` at ``overlap``.
+
+    Solving ``s / delta <= tolerance`` for ``facets`` gives the closed form
+
+        facets >= pi / arccos(1 - overlap * tolerance / radius) .
+
+    Returns the smallest integer satisfying the bound (at least 3).  The
+    criterion is the 3-D counterpart of the 2-D bow-polyline resolution rule in
+    ``docs/dem2d_hull_polyline_geometry_audit.md``.
+    """
+    for name, value in (("radius", radius), ("overlap", overlap), ("tolerance", tolerance)):
+        if not math.isfinite(value) or value <= 0.0:
+            raise ValueError(f"{name} must be finite and positive")
+    if tolerance >= 1.0:
+        return 3
+    argument = 1.0 - overlap * tolerance / radius
+    if argument <= -1.0:
+        return 3
+    return max(3, int(math.ceil(math.pi / math.acos(argument))))
+
+
+def make_cylinder_mesh(
+    radius: float,
+    length: float,
+    facets: int,
+    *,
+    closed: bool = False,
+    dtype: torch.dtype = torch.float64,
+) -> tuple[torch.Tensor, torch.Tensor]:
+    """Triangulated circular cylinder about the z axis (curved-hull test body).
+
+    Vertices lie exactly on the circle of ``radius``, hence every side facet is
+    an inscribed chord with sagitta :func:`facet_sagitta`.  This is the 3-D
+    analogue of the polyline bow used in the 2-D hull contact tests: the same
+    section, meshed as planar triangles instead of line segments.
+
+    Parameters
+    ----------
+    radius, length : float
+        Cylinder radius (m) and axial length (m).
+    facets : int
+        Number of chords around the circumference (>= 3).
+    closed : bool
+        If True, add one-vertex-fan end caps so the body is watertight.  Side
+        contact studies do not need them.
+
+    Returns
+    -------
+    vertices : (V, 3) float tensor
+    faces : (F, 3) int64 tensor of 0-based triangle indices
+    """
+    if not math.isfinite(radius) or radius <= 0.0:
+        raise ValueError("radius must be finite and positive")
+    if not math.isfinite(length) or length <= 0.0:
+        raise ValueError("length must be finite and positive")
+    if isinstance(facets, bool) or int(facets) != facets or int(facets) < 3:
+        raise ValueError("facets must be an integer >= 3")
+
+    angles = 2.0 * math.pi * torch.arange(facets, dtype=dtype) / float(facets)
+    ring = torch.stack([radius * torch.cos(angles),
+                        radius * torch.sin(angles)], dim=-1)
+    # Convention (right-handed): bottom ring at -length/2, top ring at +length/2.
+    bottom = torch.cat([ring, torch.full((facets, 1), -0.5 * length, dtype=dtype)], dim=-1)
+    top = torch.cat([ring, torch.full((facets, 1), 0.5 * length, dtype=dtype)], dim=-1)
+    verts = [bottom, top]
+
+    faces_list: list[list[int]] = []
+    for k in range(facets):
+        k_next = (k + 1) % facets
+        b0, b1 = k, k_next
+        t0, t1 = facets + k, facets + k_next
+        faces_list.append([b0, b1, t1])
+        faces_list.append([b0, t1, t0])
+
+    if closed:
+        cap_bottom = 2 * facets
+        cap_top = 2 * facets + 1
+        verts.append(torch.tensor([[0.0, 0.0, -0.5 * length]], dtype=dtype))
+        verts.append(torch.tensor([[0.0, 0.0, 0.5 * length]], dtype=dtype))
+        for k in range(facets):
+            k_next = (k + 1) % facets
+            faces_list.append([cap_bottom, k_next, k])
+            faces_list.append([cap_top, facets + k, facets + k_next])
+
+    return torch.cat(verts, dim=0), torch.tensor(faces_list, dtype=torch.int64)
+
+
+def analytic_cylinder_penetration(
+    point_radius: float,
+    particle_radius: float,
+    cylinder_radius: float,
+) -> float:
+    """Exact overlap of a sphere outside a circular cylinder's lateral surface.
+
+    ``point_radius`` is the sphere centre's radial distance from the cylinder
+    axis.  For a centre outside the cylinder the penetration is
+    ``particle_radius - (point_radius - cylinder_radius)``; the result is
+    clamped at zero (no contact).  Used as the independent reference in the
+    curvature audit and tests; it never calls the contact kernel.
+    """
+    for name, value in (("point_radius", point_radius),
+                        ("particle_radius", particle_radius),
+                        ("cylinder_radius", cylinder_radius)):
+        if not math.isfinite(value) or value <= 0.0:
+            raise ValueError(f"{name} must be finite and positive")
+    return max(0.0, particle_radius - (point_radius - cylinder_radius))

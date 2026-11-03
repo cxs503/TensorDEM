@@ -1,0 +1,93 @@
+{
+  "protocol": "tensordem-dem3d-hull-mesh-curvature-v1",
+  "parameters": {
+    "R_over_particle_radius": [
+      2.0,
+      5.0,
+      10.0,
+      20.0
+    ],
+    "facets": [
+      4,
+      8,
+      16,
+      32,
+      64,
+      128,
+      256,
+      512
+    ],
+    "delta_over_particle_radius": [
+      0.002,
+      0.005,
+      0.01,
+      0.02,
+      0.05,
+      0.1,
+      0.2
+    ],
+    "psi_over_facet_half_angle": [
+      0.0,
+      0.25,
+      0.5,
+      0.75,
+      1.0
+    ],
+    "particle_radius_m": 1.0,
+    "stiffness_N_per_m": 1.0
+  },
+  "records": {
+    "sweep": 224,
+    "angular": 1120,
+    "offset": 119,
+    "dropout": 16,
+    "criterion": 28
+  },
+  "dropout_samples_in_sweep": 301,
+  "checks": [
+    {
+      "name": "kernel_geometry_matches_closed_form_penetration",
+      "max_abs_deviation_m": 3.677613769070831e-15,
+      "tolerance_m": 1e-09,
+      "pass": true
+    },
+    {
+      "name": "3d_mesh_kernel_equals_2d_polyline_kernel",
+      "max_abs_difference_N": 3.665470704738993e-15,
+      "tolerance_N": 1e-09,
+      "pass": true
+    },
+    {
+      "name": "dropout_threshold_equals_sagitta",
+      "max_relative_difference": 9.216958564666065e-14,
+      "tolerance": 0.0001,
+      "pass": true
+    },
+    {
+      "name": "worst_mid_chord_underestimate_over_sweep",
+      "value": -1.0,
+      "note": "most negative relative force error found (systematic underload)",
+      "pass": true
+    },
+    {
+      "name": "hull_radius_s_offset_cancels_mid_chord_bias",
+      "max_abs_mid_chord_error_after_offset": 6.115108419635362e-13,
+      "tolerance": 1e-09,
+      "pass": true
+    },
+    {
+      "name": "required_facets_criterion_delivers_3pct",
+      "cases": 28,
+      "max_abs_error_at_required": 0.02999333413644567,
+      "pass": true
+    },
+    {
+      "name": "analytic_reference_consistency",
+      "note": "delta_facet = delta_true - s (cases with delta > s)",
+      "max_abs_deviation_m": 4.3298697960381105e-15,
+      "tolerance_m": 1e-12,
+      "pass": true
+    }
+  ],
+  "all_checks_pass": true
+}

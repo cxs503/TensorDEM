@@ -16,6 +16,13 @@ This module implements penalty contact detection between DEM spheres and 3D tria
 | `contact_detection_complexity` | ≤ O(N) | O(N) confirmed by scaling test | ✅ PASS |
 | `pytest_test_hull_mesh_contact` | PASS | 17/17 tests pass | ✅ PASS |
 
+> **Scope of the error figure (added 2026-11-03, audit m2429):** the 0.0 force error is a
+> *flat-plate* result, where a triangle mesh is exact. On a curved hull the inscribed
+> facets bias the penetration by the sagitta `s = R (1 - cos(pi/N))`, i.e. the force by
+> `-s/delta`, and contact is lost for `delta <= s`. See
+> `docs/dem3d_hull_mesh_curvature_sagitta.md` for the closed-form bound, the verified
+> `hull_radius = s` correction and the mesh-resolution criterion.
+
 ## Files
 
 - `src/tensordem/hull_mesh_contact.py` — Core module
