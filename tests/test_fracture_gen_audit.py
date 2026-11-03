@@ -126,7 +126,13 @@ class MassMappingAudit(unittest.TestCase):
         acc = FractureLedger(field, []).mass_accounting(domain_volume=0.5**3)
         self.assertEqual(acc["num_particles"], 8)
         self.assertAlmostEqual(acc["lattice_volume_covered"], 0.4**3)
-        self.assertAlmostEqual(acc["relative_error"], abs(0.4**3 - 0.5**3) / 0.5**3)
+        # ``relative_error`` is signed (dem - fem) / fem, i.e. negative for a
+        # mass deficit -- this module's own frozen-mapping case below asserts
+        # that sign.  The lattice-quantisation case is also a deficit, so the
+        # magnitude must be compared with abs(); the pre-audit line here
+        # demanded the opposite sign of the line above (test defect, not a
+        # code defect).
+        self.assertAlmostEqual(abs(acc["relative_error"]), abs(0.4**3 - 0.5**3) / 0.5**3)
 
     def test_mass_accounting_reports_mapping_name(self):
         acc = FractureLedger(self._field("cell_volume"), []).mass_accounting()

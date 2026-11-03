@@ -1,0 +1,93 @@
+{
+  "mass": {
+    "frozen_mapping": {
+      "measured_relative_error": -0.4764012244017012,
+      "analytic_pi_over_6_minus_1": -0.4764012244017012,
+      "abs_deviation": 0.0,
+      "within_15pct_flag": false
+    },
+    "lattice_cell_mapping": {
+      "measured_relative_error": 0.0,
+      "abs_deviation_from_zero": 0.0,
+      "within_15pct_flag": true,
+      "mass_radius_over_radius": 1.2407009817988002,
+      "analytic_mass_radius_factor": 1.2407009817988002,
+      "particle_mass": 14.328125,
+      "analytic_particle_mass": 14.328125
+    },
+    "quantisation_negative_control": {
+      "measured_relative_error": -0.4879999999999999,
+      "analytic": -0.4879999999999999,
+      "abs_deviation": 0.0
+    }
+  },
+  "footprint": {
+    "full_plane": {
+      "module_broken_bonds": 64,
+      "analytic_area_over_spacing_squared": 64.0,
+      "absolute_deviation": 0.0
+    },
+    "disc_sweep": [
+      {
+        "extent_radius_over_spacing": 0.5,
+        "extent_radius": 0.125,
+        "footprint_radius": 0.125,
+        "enumerated_columns": 0,
+        "module_broken_bonds": 0,
+        "absolute_deviation": 0,
+        "plane_over_disc_oversevering": 64.0
+      },
+      {
+        "extent_radius_over_spacing": 1.0,
+        "extent_radius": 0.25,
+        "footprint_radius": 0.25,
+        "enumerated_columns": 4,
+        "module_broken_bonds": 4,
+        "absolute_deviation": 0,
+        "plane_over_disc_oversevering": 16.0
+      },
+      {
+        "extent_radius_over_spacing": 2.0,
+        "extent_radius": 0.5,
+        "footprint_radius": 0.5,
+        "enumerated_columns": 12,
+        "module_broken_bonds": 12,
+        "absolute_deviation": 0,
+        "plane_over_disc_oversevering": 5.333333333333333
+      },
+      {
+        "extent_radius_over_spacing": 3.0,
+        "extent_radius": 0.75,
+        "footprint_radius": 0.75,
+        "enumerated_columns": 32,
+        "module_broken_bonds": 32,
+        "absolute_deviation": 0,
+        "plane_over_disc_oversevering": 2.0
+      },
+      {
+        "extent_radius_over_spacing": 5.0,
+        "extent_radius": 1.25,
+        "footprint_radius": 1.25,
+        "enumerated_columns": 64,
+        "module_broken_bonds": 64,
+        "absolute_deviation": 0,
+        "plane_over_disc_oversevering": 1.0
+      },
+      {
+        "extent_radius_over_spacing": 10.0,
+        "extent_radius": 2.5,
+        "footprint_radius": 2.5,
+        "enumerated_columns": 64,
+        "module_broken_bonds": 64,
+        "absolute_deviation": 0,
+        "plane_over_disc_oversevering": 1.0
+      }
+    ],
+    "disc_covers_section_control": {
+      "extent_radius": 3.0,
+      "module_broken_bonds": 64,
+      "plane_broken_bonds": 64,
+      "absolute_deviation": 0
+    }
+  }
+}
