@@ -42,3 +42,14 @@ Choose DEMConfig.tool_speed consistently with the prescribed hull speed because
 the conservative time-step estimate currently uses tool_speed. This API does
 not yet expose the hull profile in the command-line interface or write an
 explicit hull-x column to the CSV history.
+
+## Discretization error (verified)
+
+The kernel is a polygon approximation of the hull, so its accuracy is set by the
+chord sagitta `R (1 - cos(pi/M))`. Verified against an exact circular hull in
+`docs/polyline_hull_contact_verification.md`: the force-magnitude error equals
+`sagitta / penetration` (second order in `M`, contact lost entirely once the
+sagitta exceeds the penetration) while the force direction is only first order
+(`180/M` degrees). For a 5 m bow radius and 10 mm penetration, less than 50
+segments lose contact over most of the bow; 143 segments are needed for a 5 %
+force error.
