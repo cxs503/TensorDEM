@@ -1,0 +1,216 @@
+{
+  "schema": "tensordem.rolling-resistance-validation/1",
+  "generated_by": "scripts/validate_rolling_resistance.py",
+  "environment": {
+    "python": "3.11.6",
+    "torch": "2.7.1",
+    "device": "cpu"
+  },
+  "harness": {
+    "radius_m": 0.01,
+    "k_n_N_m": 20000.0,
+    "dt_s": 0.0001,
+    "duration_s": 0.1,
+    "settle_time_s": 0.03,
+    "sliding_friction_mu": 0.9,
+    "drift_tolerance_over_radius": 0.001,
+    "rolling_stiffness_rule": "k_r = 2.25 * mu_r * k_n * R^2"
+  },
+  "analytic_references": {
+    "critical_angle_deg": "arctan(mu_r)",
+    "rolling_acceleration": "g (sin t - mu_r cos t) / (1 + I/(m R^2)), I/mR^2 = 2/5"
+  },
+  "acceleration_parity": {
+    "supercritical_rows": 27,
+    "comparable_rows": 27,
+    "min_analytic_reference_m_s2": 0.05,
+    "regimes": [
+      "rolling",
+      "sliding"
+    ],
+    "max_relative_error": 0.00011067109809732975,
+    "min_fit_r_squared": 0.9968232847151425,
+    "passes_3pct": true
+  },
+  "motion_detector": {
+    "criterion": "late-window acceleration > MOTION_TOL_ACCEL",
+    "motion_tol_accel_m_s2": 0.001,
+    "threshold_duration_s": 0.12,
+    "threshold_settle_s": 0.06
+  },
+  "threshold": {
+    "0.05": {
+      "theta_c_analytic_deg": 2.862405226111748,
+      "theta_transition_measured_deg": 2.8981852914381445,
+      "grid_cell_deg": 0.07156013065279376,
+      "relative_error": 0.012499999999999935,
+      "within_one_grid_cell": true
+    },
+    "0.1": {
+      "theta_c_analytic_deg": 5.710593137499643,
+      "theta_transition_measured_deg": 5.781975551718388,
+      "grid_cell_deg": 0.14276482843749072,
+      "relative_error": 0.01249999999999997,
+      "within_one_grid_cell": true
+    },
+    "0.2": {
+      "theta_c_analytic_deg": 11.309932474020215,
+      "theta_transition_measured_deg": 11.451306629945467,
+      "grid_cell_deg": 0.2827483118505043,
+      "relative_error": 0.012499999999999952,
+      "within_one_grid_cell": true
+    },
+    "0.3": {
+      "theta_c_analytic_deg": 16.69924423399362,
+      "theta_transition_measured_deg": 16.90798478691854,
+      "grid_cell_deg": 0.4174811058498413,
+      "relative_error": 0.012499999999999917,
+      "within_one_grid_cell": true
+    },
+    "0.5": {
+      "theta_c_analytic_deg": 26.56505117707799,
+      "theta_transition_measured_deg": 26.897114316791466,
+      "grid_cell_deg": 0.6641262794269487,
+      "relative_error": 0.012500000000000048,
+      "within_one_grid_cell": true
+    }
+  },
+  "bisection": {
+    "iteration": 6,
+    "result": "transition",
+    "theta_deg": 11.3364401282562,
+    "theta_c_analytic_deg": 11.309932474020215,
+    "relative_error": 0.0023437500000000108
+  },
+  "model_character": [
+    {
+      "case": "subcritical",
+      "model": "cdt",
+      "theta_deg": 2.4330444421949857,
+      "theta_over_theta_c": 0.85,
+      "a_late_m_s2": -6.720909011846815e-05,
+      "a_analytic_m_s2": null,
+      "fit_r_squared": 0.0011288764358603487,
+      "displacement_over_radius": 0.0012502490455161108,
+      "end_speed_m_s": 0.00015426179370230914
+    },
+    {
+      "case": "subcritical",
+      "model": "viscous",
+      "theta_deg": 2.4330444421949857,
+      "theta_over_theta_c": 0.85,
+      "a_late_m_s2": 0.01412520060268839,
+      "a_analytic_m_s2": null,
+      "fit_r_squared": 0.9331710502724188,
+      "displacement_over_radius": 0.07815159797820129,
+      "end_speed_m_s": 0.008371800197842887
+    },
+    {
+      "case": "subcritical",
+      "model": "epsd",
+      "theta_deg": 2.4330444421949857,
+      "theta_over_theta_c": 0.85,
+      "a_late_m_s2": 0.00033873848656360293,
+      "a_analytic_m_s2": null,
+      "fit_r_squared": 0.010758528367525999,
+      "displacement_over_radius": 0.0003021769774372682,
+      "end_speed_m_s": 5.353718901795081e-05
+    },
+    {
+      "case": "supercritical",
+      "model": "cdt",
+      "theta_deg": 4.293607839167622,
+      "theta_over_theta_c": 1.5000000000000002,
+      "a_late_m_s2": 0.1752371679560014,
+      "a_analytic_m_s2": 0.17523323788010547,
+      "fit_r_squared": 0.9997007960646284,
+      "displacement_over_radius": 0.12795006764478034,
+      "end_speed_m_s": 0.021093963751048925
+    },
+    {
+      "case": "supercritical",
+      "model": "viscous",
+      "theta_deg": 4.293607839167622,
+      "theta_over_theta_c": 1.5000000000000002,
+      "a_late_m_s2": 0.02505140531103546,
+      "a_analytic_m_s2": 0.17523323788010547,
+      "fit_r_squared": 0.9334020747499352,
+      "displacement_over_radius": 0.13801464474732078,
+      "end_speed_m_s": 0.014790782766909453
+    },
+    {
+      "case": "supercritical",
+      "model": "epsd",
+      "theta_deg": 4.293607839167622,
+      "theta_over_theta_c": 1.5000000000000002,
+      "a_late_m_s2": 0.1752333625391584,
+      "a_analytic_m_s2": 0.17523323788010547,
+      "fit_r_squared": 0.999819309538019,
+      "displacement_over_radius": 0.13170089466572057,
+      "end_speed_m_s": 0.021463621844209493
+    }
+  ],
+  "torque_laws": [
+    {
+      "omega_rad_s": 0.05,
+      "limit_Nm": 0.0007500000000000001,
+      "cdt": 0.0007500000000000001,
+      "viscous": 3.750000000000001e-05,
+      "epsd": 0.00044999999999999614
+    },
+    {
+      "omega_rad_s": 0.2,
+      "limit_Nm": 0.0007500000000000001,
+      "cdt": 0.0007500000000000001,
+      "viscous": 0.00015000000000000004,
+      "epsd": 0.0007500000000000001
+    },
+    {
+      "omega_rad_s": 0.5,
+      "limit_Nm": 0.0007500000000000001,
+      "cdt": 0.0007500000000000001,
+      "viscous": 0.00037500000000000006,
+      "epsd": 0.0007500000000000001
+    },
+    {
+      "omega_rad_s": 1.0,
+      "limit_Nm": 0.0007500000000000001,
+      "cdt": 0.0007500000000000001,
+      "viscous": 0.0007500000000000001,
+      "epsd": 0.0007500000000000001
+    },
+    {
+      "omega_rad_s": 2.0,
+      "limit_Nm": 0.0007500000000000001,
+      "cdt": 0.0007500000000000001,
+      "viscous": 0.0015000000000000002,
+      "epsd": 0.0007500000000000001
+    },
+    {
+      "omega_rad_s": 5.0,
+      "limit_Nm": 0.0007500000000000001,
+      "cdt": 0.0007500000000000001,
+      "viscous": 0.0037500000000000007,
+      "epsd": 0.0007500000000000001
+    },
+    {
+      "omega_rad_s": 10.0,
+      "limit_Nm": 0.0007500000000000001,
+      "cdt": 0.0007500000000000001,
+      "viscous": 0.0075000000000000015,
+      "epsd": 0.0007500000000000001
+    }
+  ],
+  "figures": [
+    "fig_torque_laws.png",
+    "fig_acceleration_parity.png",
+    "fig_threshold.png",
+    "fig_history.png"
+  ],
+  "limitations": [
+    "The validation harness is an independent rigid-body integration of a single sphere, not the bonded-particle solver: IceDEM3D tracks no particle rotation, so wiring rolling resistance into DEM3D requires adding angular degrees of freedom (not part of this change).",
+    "Only the rolling component of the relative spin is resisted; drilling/spin friction about the contact normal is out of scope.",
+    "k_r is a modelling choice (scaled with k_n), not a measured material constant; no experimental ice repose-angle calibration is included because no such dataset exists in this repository.",
+    "The CDT and viscous branches have no static branch, so a resting particle creeps; only EPSD reproduces a true static equilibrium."
+  ]
+}
