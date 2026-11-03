@@ -50,7 +50,20 @@ def polyline_contact_forces(positions, velocities, hull_vertices, hull_velocity,
     d = delta[rows, nearest]
     distance = torch.sqrt(distance_sq[rows, nearest])
     tangent = segments[nearest] / torch.sqrt(length_sq[nearest])[:, None]
-    fallback = torch.stack((-tangent[:, 1], tangent[:, 0]), dim=1)
+    # Degenerate case: a particle centre lying exactly on the hull polyline has no
+    # well-defined radial direction.  Take the segment normal of a *canonical*
+    # tangent (first non-zero component made positive) so that the response of a
+    # given geometry cannot depend on the order in which the same polyline was
+    # digitized, and orient it against the relative approach velocity so the
+    # penalty force never drives the disk further along its own approach path.
+    canonical = torch.where(
+        ((tangent[:, 0] < 0) | ((tangent[:, 0] == 0) & (tangent[:, 1] < 0)))[:, None],
+        -tangent,
+        tangent,
+    )
+    fallback = torch.stack((-canonical[:, 1], canonical[:, 0]), dim=1)
+    approach = ((v - hv) * fallback).sum(dim=1)
+    fallback = torch.where((approach > 0)[:, None], -fallback, fallback)
     normal = d / distance.clamp_min(torch.finfo(dtype).eps)[:, None]
     normal = torch.where((distance > torch.finfo(dtype).eps)[:, None], normal, fallback)
 
