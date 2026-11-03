@@ -8,6 +8,11 @@ import torch
 from .hull_contact import polyline_contact_forces
 
 
+# Ledger channels introduced after the first release; older checkpoints that
+# predate them restore with a zero value instead of failing.
+ADDITIVE_ACCOUNTING_KEYS = frozenset({"pair_contact_acquired_J"})
+
+
 @dataclass(frozen=True)
 class DEMConfig:
     nx: int = 21
@@ -131,6 +136,7 @@ class IceDEM:
         self.time = 0.0
         self.step_count = 0
         self.accounting = dict(external_work_J=0.0, fracture_release_J=0.0,
+                               pair_contact_acquired_J=0.0,
                                tool_work_J=0.0, damping_dissipation_J=0.0,
                                external_impulse_Ns=[0.0, 0.0],
                                support_impulse_Ns=[0.0, 0.0], drag_impulse_Ns=[0.0, 0.0],
@@ -260,6 +266,14 @@ class IceDEM:
         )
         released = self.failure_energy_J[newly_broken].sum()
         self.accounting["fracture_release_J"] += float(released)
+        # A broken bond immediately acts as a repulsive pair contact. When the
+        # pair is still overlapping at failure, part of the released bond energy
+        # is retained as pair-contact potential and never leaves the system, so
+        # it must be credited back to the ledger to close the energy balance.
+        acquired = 0.5 * cfg.contact_stiffness * (
+            (2 * cfg.radius - distance[newly_broken]).clamp_min(0).square()
+        )
+        self.accounting["pair_contact_acquired_J"] += float(acquired.sum())
         normal_speed = ((self.velocities[j] - self.velocities[i]) * normal).sum(dim=1)
         overlap = (2 * cfg.radius - distance).clamp_min(0)
         repulsion = (
@@ -394,6 +408,7 @@ class IceDEM:
             "external_impulse_x_Ns": float(acc["external_impulse_Ns"][0]),
             "external_impulse_y_Ns": float(acc["external_impulse_Ns"][1]),
             "fracture_release_J": float(acc["fracture_release_J"]),
+            "pair_contact_acquired_J": float(acc["pair_contact_acquired_J"]),
             "tool_work_J": float(acc["tool_work_J"]),
             "damping_dissipation_J": float(acc["damping_dissipation_J"]),
             "external_work_J": float(acc["external_work_J"]),
@@ -555,7 +570,11 @@ class IceDEM:
         if not torch.equal(result.positions[result.fixed], result.initial_positions[result.fixed]) or bool((result.velocities[result.fixed] != 0).any()):
             raise ValueError("fixed particle state mismatch")
         accounting = state["accounting"]
-        if set(accounting) != set(result.accounting):
+        missing = set(result.accounting) - set(accounting)
+        # Additive ledger channels default to zero so older checkpoints restore.
+        if missing - ADDITIVE_ACCOUNTING_KEYS:
+            raise ValueError("restart accounting fields mismatch")
+        if set(accounting) - set(result.accounting):
             raise ValueError("restart accounting fields mismatch")
         for key, value in accounting.items():
             tensor = torch.as_tensor(value, dtype=torch.float64)
@@ -568,6 +587,8 @@ class IceDEM:
         import json
         json.dumps(state["last_step"], allow_nan=False)
         result.accounting = copy.deepcopy(accounting)
+        for key in missing:
+            result.accounting[key] = 0.0
         result.last_step = copy.deepcopy(state["last_step"])
         result.time, result.step_count = state["time_s"], count
         return result
