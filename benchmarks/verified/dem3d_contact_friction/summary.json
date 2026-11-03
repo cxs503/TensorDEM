@@ -1,0 +1,56 @@
+{
+  "buoyancy_max_abs_err_at_800_steps": 0.014406961974,
+  "buoyancy_max_abs_err_over_all": 0.014406961974,
+  "buoyancy_period_max_abs_err": NaN,
+  "buoyancy_within_3pct": true,
+  "command": "PYTHONPATH=src python scripts/benchmark_contact_friction_tables.py",
+  "commit": "3ba5a1a6bbd18f11bbb35b120c447864d5fe03f5",
+  "friction_kernel_max_abs_err": 2.22044604925e-16,
+  "hertz_contact_time_coefficient_exact": 2.9432751843247043,
+  "hertz_contact_time_coefficient_measured": {
+    "ice_E1GPa": 2.868207656271549,
+    "soft_E100MPa": 2.868207656271552,
+    "stiff_E10GPa": 2.8682076562715544
+  },
+  "hertz_max_abs_err_F_max_at_160_steps": 2.81935679756e-05,
+  "hertz_max_abs_err_F_max_at_40_steps": 0.000479681219164,
+  "hertz_max_abs_err_d_max_at_160_steps": 1.8795623665e-05,
+  "hertz_max_abs_err_t_c_at_160_steps": 2.02362437338e-05,
+  "hertz_observed_order_d_max": {
+    "ice_E1GPa": 2.0370108548447226,
+    "soft_E100MPa": 2.0370108548364168,
+    "stiff_E10GPa": 2.0370108548147887
+  },
+  "hertz_within_3pct_F_max_at_160_steps": true,
+  "hertz_within_3pct_F_max_at_80_steps": true,
+  "incline_dynamic_within_3pct_a": false,
+  "incline_max_abs_err_a": 1.03731668778,
+  "incline_max_abs_err_a_dynamic_angles": 0.0500128017922,
+  "incline_max_abs_err_mu": 2.59570143157e-13,
+  "incline_max_abs_err_mu_r": 9.42364178538,
+  "incline_static_angle_max_abs_err_a": 0.10953852165906,
+  "incline_static_angle_max_rel_err_a": 1.03731668778,
+  "incline_static_reference_accel_range": [
+    -0.105597955715,
+    0.174517016086
+  ],
+  "incline_within_3pct_a": false,
+  "incline_worst_case": "kn2e+04_e0.2_mu0.4_mr0.05_a2",
+  "incline_worst_dynamic_case": "kn2e+04_e0.2_mu0.4_mr0.05_a4",
+  "restitution_damping_correction_ratio_range": [
+    1.01061254998,
+    1.60378891743
+  ],
+  "restitution_max_abs_err_vs_clipped_law": 0.0140685939799,
+  "restitution_max_abs_err_vs_clipped_law_e_ge_0p5": 0.00890961190521,
+  "restitution_max_abs_err_vs_target": 0.647166109984,
+  "restitution_min_max_e_measured": [
+    0.328348898085,
+    0.951579165085
+  ],
+  "restitution_target_worst_case": "kn2e+04_e0.2",
+  "restitution_within_3pct_vs_clipped_law": true,
+  "restitution_within_3pct_vs_target": false,
+  "restitution_worst_case": "kn2e+04_e0.2",
+  "torch_version": "2.7.1"
+}
