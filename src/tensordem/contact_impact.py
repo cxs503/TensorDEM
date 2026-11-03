@@ -317,6 +317,11 @@ def _build_pair(k_n: float, c_n: float, radius: float, density: float, dt_scale:
         nx=2, ny=2, nz=2,
         radius=radius, density=density,
         contact_stiffness=k_n, contact_damping=c_n,
+        # The harness injects the dashpot absolutely, i.e. it integrates
+        # F_n = max(0, k*delta - c*v_n).  Since the engine's default pair branch
+        # derives gamma_n from restitution_coefficient and ignores
+        # contact_damping, the convention must be requested explicitly (m2626).
+        contact_damping_model="absolute",
         drag=0.0,
         bond_stiffness=1.0, breaking_strain=1e-12, shear_breaking_strain=1e-12,
         fix_x_edges=False, fix_bottom=False,
