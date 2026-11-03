@@ -99,3 +99,14 @@ The campaign currently automates steps 1–4 and supplies evidence useful for st
     python -m unittest discover -s tests
 
 The tests check data validation, interpolation, quadrature, force metrics, parameter-grid construction, repeatable short runs, report round-tripping, digest tampering detection and invalid reference handling. Passing these tests verifies the analysis and reporting code paths; it is not a physical validation result.
+## Analytic buoyancy / wet-drag verification
+
+`docs/buoyancy_free_float_verification.md` (protocol
+`tensordem-buoyancy-free-float-verification-v1`) verifies the 2-D
+`tensordem.buoyancy_wet` force law against closed-form references: submerged-area
+geometry vs an angle-substituted quadrature, `dF_b/dh` vs the chord-width identity,
+the Archimedes draft reached by free float, damped heave frequency / envelope /
+waveform vs the linearised oscillator, and pure-drag exponential decay. Run it with
+`PYTHONPATH=src python scripts/verify_buoyancy_free_float.py`; the accompanying test
+module is `tests/test_buoyancy_free_float_verification.py`. This is code-versus-analytic
+verification, not a physical validation.
