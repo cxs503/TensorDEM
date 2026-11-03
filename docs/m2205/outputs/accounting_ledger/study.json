@@ -1,0 +1,84 @@
+{
+  "schema": "tensordem.accounting-ledger-validation/1",
+  "case": {
+    "nx": 7,
+    "ny": 3,
+    "duration_s": 0.12,
+    "tool_speed_m_s": 0.2
+  },
+  "momentum_balance": {
+    "dt": 0.0003479275921910436,
+    "steps": 345,
+    "max_relative_error": 8.415649762683422e-08,
+    "mean_relative_error": 1.7524746703214953e-08,
+    "min_relative_error": 0.0
+  },
+  "energy_cases": [
+    {
+      "dt": 0.0003479275921910436,
+      "steps": 345,
+      "broken_bonds": 21,
+      "delta_mechanical_J": 0.08235043521963968,
+      "tool_work_J": 0.10314339773363697,
+      "external_work_J": 0.0,
+      "damping_dissipation_J": 0.012655470771832456,
+      "fracture_release_J": 0.0132970286279955,
+      "pair_contact_acquired_J": 0.0047985204205663115,
+      "analytic_pair_contact_acquired_J": 0.004798520420566312,
+      "retained_fraction_of_release": 0.36087163191207466,
+      "scale_J": 0.1981493037251091,
+      "raw_residual_J": 0.0051595368858306685,
+      "raw_residual_relative": 0.02603863242935464,
+      "closed_residual_J": 0.000361016465264357,
+      "closed_residual_relative": 0.0018219416292534249
+    },
+    {
+      "dt": 0.0001739637960955218,
+      "steps": 690,
+      "broken_bonds": 21,
+      "delta_mechanical_J": 0.08244153818204535,
+      "tool_work_J": 0.10333574404880841,
+      "external_work_J": 0.0,
+      "damping_dissipation_J": 0.01262769162622109,
+      "fracture_release_J": 0.013253844510158755,
+      "pair_contact_acquired_J": 0.004807740894130377,
+      "analytic_pair_contact_acquired_J": 0.004807740894130376,
+      "retained_fraction_of_release": 0.3627431188320761,
+      "scale_J": 0.19840497385707484,
+      "raw_residual_J": 0.004987330269616782,
+      "raw_residual_relative": 0.025137123191324374,
+      "closed_residual_J": 0.00017958937548640495,
+      "closed_residual_relative": 0.0009051656921452781
+    },
+    {
+      "dt": 8.69818980477609e-05,
+      "steps": 1380,
+      "broken_bonds": 21,
+      "delta_mechanical_J": 0.08248589041784651,
+      "tool_work_J": 0.10346800483508856,
+      "external_work_J": 0.0,
+      "damping_dissipation_J": 0.012656857475982587,
+      "fracture_release_J": 0.01319275992486809,
+      "pair_contact_acquired_J": 0.004777836496306012,
+      "analytic_pair_contact_acquired_J": 0.0047778364963060125,
+      "retained_fraction_of_release": 0.3621559494385921,
+      "scale_J": 0.19861075272891765,
+      "raw_residual_J": 0.004867502983608635,
+      "raw_residual_relative": 0.024507751552869113,
+      "closed_residual_J": 8.966648730262313e-05,
+      "closed_residual_relative": 0.0004514684430253797
+    }
+  ],
+  "raw_residual_ratios": [
+    1.0345288174041698,
+    1.024617814598505
+  ],
+  "closed_residual_ratios": [
+    2.01023286754336,
+    2.0028594951009215
+  ],
+  "figures": [
+    "ledger_validation.png",
+    "momentum_balance.png"
+  ]
+}
