@@ -31,6 +31,50 @@ from .fracture_mass_mapping import (
     particle_mass as _particle_mass,
 )
 
+#: Mass radius of a lattice particle relative to its contact radius, for
+#: spacing ``h = 2 r``:  ``r_eq / r = (3 h^3 / (4 pi))^{1/3} / r = 2 (3/4pi)^{1/3}``
+#: ``= 1.240701``.  A sphere of radius ``MASS_RADIUS_FACTOR * r`` at the field
+#: density carries exactly the mass of the cubic cell ``h^3`` the particle owns,
+#: which is what ``mass_mode="cell"`` assigns (see
+#: ``docs/dem3d_fracture_mass_mapping_audit.md``).
+MASS_RADIUS_FACTOR = 2.0 * (3.0 / (4.0 * math.pi)) ** (1.0 / 3.0)
+
+#: Accepted ``mass_mapping`` spellings -> canonical ``mass_mode``.
+MASS_MAPPING_ALIASES = {
+    "cell": "cell",
+    "lattice_cell": "cell",
+    "lattice-cell": "cell",
+    "volume_cell": "cell",
+    "sphere": "sphere",
+    "equal_volume_sphere": "sphere",
+    "equal-volume-sphere": "sphere",
+    "frozen": "sphere",
+}
+
+#: Geometric tolerance (m) applied to the in-plane footprint radius test.
+_FOOTPRINT_TOLERANCE = 1e-12
+
+
+def normalise_mass_mapping(value: str, name: str = "mass_mapping") -> str:
+    """Canonicalise a mass-mapping spelling onto ``VALID_MASS_MODES``.
+
+    Both the descriptive spellings used by the validation-debt audit
+    (``"lattice_cell"``, ``"equal_volume_sphere"``) and the canonical
+    ``mass_mode`` values (``"cell"``, ``"sphere"``) are accepted so that the
+    published audit tables stay reproducible through a single keyword.
+    """
+    if not isinstance(value, str):
+        raise ValueError(
+            f"{name}/mass_mode must be a string, got {type(value).__name__}"
+        )
+    key = value.strip().lower()
+    if key not in MASS_MAPPING_ALIASES:
+        raise ValueError(
+            f"{name}/mass_mode must be one of {sorted(MASS_MAPPING_ALIASES)} "
+            f"(canonical mass_mode values {VALID_MASS_MODES}), got {value!r}"
+        )
+    return MASS_MAPPING_ALIASES[key]
+
 
 @dataclass
 class FailureFace:
@@ -41,6 +85,9 @@ class FailureFace:
     centroid: torch.Tensor  # shape [3]
     G: float  # fracture energy release rate (J/m²)
     released_energy: float  # total energy released (J)
+    #: In-plane extent of the face (m).  ``None`` means "derive from
+    #: ``area`` as ``sqrt(area/pi)``", i.e. an equal-area disc.
+    extent_radius: float | None = None
 
 
 @dataclass
@@ -56,6 +103,17 @@ class FractureGenConfig:
     #             frozen "equal-volume spheres" intent)
     # "sphere" -> m = density * (4/3) pi r^3, legacy pre-audit mapping that
     #             under-counts mass by 1 - pi/6 = 47.64 %
+    mass_mapping: str | None = None
+    # Descriptive alias of ``mass_mode`` (accepts "lattice_cell",
+    # "equal_volume_sphere", ...).  When given it wins over ``mass_mode``.
+    footprint_aware: bool = False
+    # True  -> break only bonds whose crossing point projects inside the face
+    #          footprint disc (radius ``face_footprint_radius(face)``)
+    # False -> frozen SI-2 criterion: every bond crossing the *infinite* plane
+    on_plane_tolerance: float = 0.0
+    # > 0 -> endpoints within this distance of the face plane count as lying on
+    #        it, so a plane coincident with a particle layer severs the two
+    #        bonds per column that touch it instead of nothing.
 
     def __post_init__(self):
         if self.density <= 0:
@@ -64,10 +122,12 @@ class FractureGenConfig:
             raise ValueError("particle_radius must be positive")
         if self.bond_stiffness <= 0:
             raise ValueError("bond_stiffness must be positive")
-        if self.mass_mode not in VALID_MASS_MODES:
-            raise ValueError(
-                f"mass_mode must be one of {VALID_MASS_MODES}, got {self.mass_mode!r}"
-            )
+        if self.mass_mapping is not None:
+            self.mass_mode = normalise_mass_mapping(self.mass_mapping, "mass_mapping")
+        else:
+            self.mass_mode = normalise_mass_mapping(self.mass_mode, "mass_mode")
+        if not math.isfinite(self.on_plane_tolerance) or self.on_plane_tolerance < 0.0:
+            raise ValueError("on_plane_tolerance must be non-negative and finite")
 
 
 class FractureField:
@@ -87,12 +147,14 @@ class FractureField:
         density: float,
         bond_stiffness: float,
         mass_mode: str = "cell",
+        footprint_aware: bool = False,
+        on_plane_tolerance: float = 0.0,
     ):
-        if mass_mode not in VALID_MASS_MODES:
-            raise ValueError(
-                f"mass_mode must be one of {VALID_MASS_MODES}, got {mass_mode!r}"
-            )
-        self.mass_mode = mass_mode
+        self.mass_mode = normalise_mass_mapping(mass_mode, "mass_mode")
+        if not math.isfinite(on_plane_tolerance) or on_plane_tolerance < 0.0:
+            raise ValueError("on_plane_tolerance must be non-negative and finite")
+        self.footprint_aware = bool(footprint_aware)
+        self.on_plane_tolerance = on_plane_tolerance
         self.positions = positions
         self.velocities = velocities
         self.bond_indices = bond_indices
@@ -110,6 +172,18 @@ class FractureField:
     def particle_mass(self) -> float:
         """Mass of a single particle for the configured mass mapping."""
         return _particle_mass(self.density, self.particle_radius, self.mass_mode)
+
+    @property
+    def mass_radius(self) -> float:
+        """Radius of the sphere that carries ``particle_mass`` at ``density``.
+
+        ``mass_mode="cell"``   -> ``MASS_RADIUS_FACTOR * r`` (volume-equivalent
+        radius ``r_eq = (3 h^3 / 4 pi)^{1/3}``, larger than the contact radius);
+        ``mass_mode="sphere"`` -> ``r`` (the mass *is* the inscribed sphere's).
+        """
+        if self.mass_mode == "cell":
+            return MASS_RADIUS_FACTOR * self.particle_radius
+        return self.particle_radius
 
     @property
     def particle_cell_volume(self) -> float:
@@ -249,16 +323,57 @@ def build_bond_topology(
     return bond_indices, rest_lengths
 
 
+def face_footprint_radius(face: FailureFace) -> float:
+    """In-plane radius of a failure face, in metres.
+
+    Uses the explicit ``extent_radius`` when the FEM side provides it, otherwise
+    the equal-area disc radius ``sqrt(area / pi)``.  The footprint is what the
+    DEM field may legitimately sever: a face of area ``A`` releases its energy
+    over ``~pi R^2`` of lattice cross-section, not over the whole plane.
+    """
+    if face.extent_radius is not None:
+        radius = float(face.extent_radius)
+        if not math.isfinite(radius) or radius <= 0.0:
+            raise ValueError("face extent_radius must be positive and finite")
+        return radius
+    area = float(face.area)
+    if not math.isfinite(area) or area <= 0.0:
+        raise ValueError("face area must be positive and finite")
+    return math.sqrt(area / math.pi)
+
+
 def identify_bonds_crossing_face(
     bond_indices: torch.Tensor,
     positions: torch.Tensor,
-    face: FailureFace
+    face: FailureFace,
+    on_plane_tolerance: float = 0.0,
+    footprint_aware: bool = False,
 ) -> torch.Tensor:
     """Identify bonds that cross a failure face.
     
     A bond crosses a face if the two endpoints are on opposite sides of the
     face plane (defined by normal and centroid).
+
+    Three criteria are available, in increasing physical fidelity:
+
+    ``on_plane_tolerance == 0`` and ``footprint_aware is False`` (default)
+        frozen SI-2 contract: strict sign test on the *infinite* plane.  It cuts
+        every bond that straddles the plane, which over-breaks a small face by
+        the ratio of the plane area to the footprint area.
+    ``on_plane_tolerance > 0``
+        endpoints within the tolerance count as lying on the plane: a bond with
+        exactly one endpoint on the plane is severed (a plane coincident with a
+        particle layer then severs the two bonds per column that touch it, i.e.
+        ``2 n^2`` for an ``n x n`` cross-section), while a bond lying *inside*
+        the plane (both endpoints on it) stays intact.
+    ``footprint_aware is True``
+        additionally restricts breakage to the disc of radius
+        ``face_footprint_radius(face)`` around the face centroid, measured on
+        the in-plane projection of the bond midpoint.  The severed count then
+        tracks ``pi R^2 / h^2`` instead of the whole plane.
     """
+    if on_plane_tolerance < 0.0:
+        raise ValueError("on_plane_tolerance must be non-negative")
     if len(bond_indices) == 0:
         return torch.empty(0, dtype=torch.bool, device=positions.device)
     
@@ -276,6 +391,21 @@ def identify_bonds_crossing_face(
     
     # Bond crosses face if signs are opposite (one positive, one negative)
     crosses = (dist_i * dist_j) < 0
+
+    if on_plane_tolerance > 0.0:
+        on_i = dist_i.abs() <= on_plane_tolerance
+        on_j = dist_j.abs() <= on_plane_tolerance
+        # exactly one endpoint on the plane -> severed; both on it -> coplanar
+        crosses = crosses | (on_i != on_j)
+
+    if footprint_aware:
+        radius = face_footprint_radius(face)
+        unit = normal / torch.linalg.norm(normal)
+        midpoint = 0.5 * (pos_i + pos_j)
+        offset = midpoint - centroid
+        offset = offset - torch.sum(offset * unit, dim=1, keepdim=True) * unit
+        radial = torch.linalg.norm(offset, dim=1)
+        crosses = crosses & (radial <= radius + _FOOTPRINT_TOLERANCE)
     
     return crosses
 
@@ -308,7 +438,13 @@ def generate_fracture_field(
     
     # Break bonds at failure faces
     for face in failure_faces:
-        crosses = identify_bonds_crossing_face(bond_indices, positions, face)
+        crosses = identify_bonds_crossing_face(
+            bond_indices,
+            positions,
+            face,
+            on_plane_tolerance=config.on_plane_tolerance,
+            footprint_aware=config.footprint_aware,
+        )
         alive &= ~crosses
     
     return FractureField(
@@ -320,7 +456,9 @@ def generate_fracture_field(
         particle_radius=config.particle_radius,
         density=config.density,
         bond_stiffness=config.bond_stiffness,
-        mass_mode=config.mass_mode
+        mass_mode=config.mass_mode,
+        footprint_aware=config.footprint_aware,
+        on_plane_tolerance=config.on_plane_tolerance,
     )
 
 
@@ -340,6 +478,35 @@ class FractureLedger:
         """Compute mass conservation error: |DEM_mass - FEM_mass|."""
         dem_mass = self.field.total_mass
         return abs(dem_mass - fem_mass)
+
+    def mass_accounting(
+        self,
+        continuum_volume: float,
+        tolerance: float = 0.15,
+    ) -> dict[str, Any]:
+        """Compare the DEM mass with the continuum mass of a reference volume.
+
+        ``continuum_volume`` is the solid ice volume the field is meant to
+        represent (m³), so the reference mass is ``density * continuum_volume``.
+        The acceptance bar is the platform's 15 % material-mapping bar; a
+        mapping that fails it is reported as such and never silently rounded.
+        """
+        if not math.isfinite(continuum_volume) or continuum_volume <= 0.0:
+            raise ValueError("continuum_volume must be positive and finite")
+        continuum_mass = self.field.density * continuum_volume
+        dem_mass = self.field.total_mass
+        relative_error = (dem_mass - continuum_mass) / continuum_mass
+        return {
+            "mass_mapping": self.field.mass_mode,
+            "particle_mass": self.field.particle_mass,
+            "mass_radius": self.field.mass_radius,
+            "dem_mass": dem_mass,
+            "continuum_volume": continuum_volume,
+            "continuum_mass": continuum_mass,
+            "relative_error": relative_error,
+            "tolerance": tolerance,
+            "within_15pct": abs(relative_error) <= tolerance,
+        }
 
     def mass_mapping_report(
         self,
@@ -413,7 +580,9 @@ class FractureLedger:
             crosses = identify_bonds_crossing_face(
                 self.field.bond_indices, 
                 self.field.positions, 
-                face
+                face,
+                on_plane_tolerance=self.field.on_plane_tolerance,
+                footprint_aware=self.field.footprint_aware,
             )
             bonds_should_break |= crosses
         
