@@ -110,7 +110,8 @@ Alternative considered: unit material volume equal division (each FEM element's 
 
 Benchmark script: `benchmarks/fracture_gen_ledger.py`
 
-Generates `validation_report.json` with machine-readable results for all criteria.
+Generates `fracture_gen_ledger_report.json` with machine-readable results for all criteria
+(`validation_report.json` belongs to the ice-floe physics benchmark).
 
 Unit tests: `tests/test_fracture_gen.py`
 
