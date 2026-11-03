@@ -7,8 +7,18 @@ the initial cutoff; calibrate its directional stiffness before engineering use.
 
 Contact constitutive model (L1_foundation — SIR-PC2|F05):
 - Normal: linear spring-dashpot with restitution-coefficient parameterization.
-- Tangential: Cundall-Strack incremental Coulomb-friction spring (|F_t| <= mu * |F_n|).
-- Rolling resistance: torque T_r = mu_r * R_eff * |F_n| opposing relative rotation.
+- Tangential: Cundall-Strack incremental Coulomb-friction spring (|F_t| <= mu * |F_n|),
+  integrated with the *projected* state machine of
+  :func:`tensordem.contact_tangential.advance_tangential_contact`: the stored
+  state is the clamped displacement, it is projected onto the current tangent
+  plane, and it is reset when the contact disappears.
+- Rolling resistance: an *effective* (lumped) rolling resistance for a
+  translational-only model, applied as the antisymmetric pair force
+  ``F = mu_r * |F_n|`` opposing the relative tangential velocity.  The particles
+  carry no spin degree of freedom, so a true rolling moment cannot be applied;
+  see :meth:`IceDEM3D._rolling_resistance_force` and
+  :mod:`tensordem.rolling_resistance` (CDT / viscous / EPSD laws) for the
+  spin-resolved formulation.
 """
 from __future__ import annotations
 
@@ -17,6 +27,8 @@ import math
 from typing import Any
 
 import torch
+
+from .contact_tangential import advance_tangential_contact, tangent_plane_projection
 
 
 @dataclass(frozen=True)
@@ -127,8 +139,10 @@ class IceDEM3D:
 
     Contact model (SIR-PC2|F05):
     - Normal: linear spring-dashpot, damping derived from restitution_coefficient.
-    - Tangential: Cundall-Strack incremental Coulomb-friction spring.
-    - Rolling: resistance torque T_r = mu_r * R_eff * |F_n|.
+    - Tangential: Cundall-Strack incremental Coulomb-friction spring with a
+      projected (clamped, tangent-plane, contact-reset) state.
+    - Rolling: effective dissipative resistance mu_r * |F_n| opposing relative
+      sliding; a true rolling moment needs a spin DOF which this solver lacks.
     """
 
     def __init__(self, config: DEM3DConfig = DEM3DConfig()) -> None:
@@ -238,8 +252,11 @@ class IceDEM3D:
 
         # --- SIR-PC2|F05: tangential friction & rolling resistance state ---
         # Tangential displacement accumulator per contact pair (keyed by pair hash).
-        # Stored as dict: pair_key -> (tangential_disp_3d, last_normal_3d)
+        # Stored as dict: pair_key -> (clamped_tangential_disp_3d, last_normal_3d).
+        # Only live contacts may appear: ``_prune_tangential_state`` discards the
+        # history of pairs whose contact vanished, so re-contact starts from zero.
         self._tangential_state: dict[int, tuple[torch.Tensor, torch.Tensor]] = {}
+        self._tangential_seen: set[int] = set()
         # Rolling resistance torque accumulator per particle (N, 3).
         self._rolling_torque = torch.zeros((n, 3), dtype=self.dtype, device=self.device)
         # Flag indicating rolling resistance torque is physically modelled.
@@ -358,7 +375,15 @@ class IceDEM3D:
 
     def _get_tangential_state(self, ci: torch.Tensor, cj: torch.Tensor,
                               cnormal: torch.Tensor) -> torch.Tensor:
-        """Retrieve or initialise tangential displacement for each contact pair.
+        """Retrieve the stored tangential displacement for each contact pair.
+
+        Unseen pairs start from zero.  The stored value is *not* rotated here:
+        :func:`advance_tangential_contact` projects it onto the current tangent
+        plane, which is the frame-consistent operation (a global-frame vector
+        cannot be reused directly once the contact normal has rotated).
+
+        Every visited pair is registered in ``_tangential_seen`` so that
+        :meth:`_prune_tangential_state` can drop histories of vanished contacts.
 
         Returns (N, 3) tangential displacement vectors.
         """
@@ -368,14 +393,24 @@ class IceDEM3D:
             i = int(ci[idx].item())
             j = int(cj[idx].item())
             key = self._pair_key(i, j)
-            if key in self._tangential_state:
-                stored_disp, stored_normal = self._tangential_state[key]
-                # Rotate stored tangential displacement to current normal frame
-                # (simple approach: keep as-is in global frame; projection handles it)
-                tang_disp[idx] = stored_disp
-            else:
-                tang_disp[idx] = torch.zeros(3, dtype=self.dtype, device=self.device)
+            self._tangential_seen.add(key)
+            stored = self._tangential_state.get(key)
+            if stored is not None:
+                tang_disp[idx] = stored[0]
         return tang_disp
+
+    def _prune_tangential_state(self) -> int:
+        """Discard tangential history of contacts that no longer exist.
+
+        Returns the number of dropped pair histories.  Without this reset a
+        contact that separates and re-forms (or a bond that breaks and leaves an
+        overlapping pair) would inherit stale elastic slip and produce a
+        spurious ``mu*|F_n|`` force spike on the first step after re-contact.
+        """
+        stale = [key for key in self._tangential_state if key not in self._tangential_seen]
+        for key in stale:
+            del self._tangential_state[key]
+        return len(stale)
 
     def _update_tangential_state(self, ci: torch.Tensor, cj: torch.Tensor,
                                  cnormal: torch.Tensor,
@@ -391,49 +426,61 @@ class IceDEM3D:
                 cnormal[idx].clone(),
             )
 
-    def _compute_rolling_resistance_torque(
+    def _rolling_resistance_force(
         self, ci: torch.Tensor, cj: torch.Tensor,
         cnormal: torch.Tensor, contact_mag: torch.Tensor,
-    ) -> tuple[torch.Tensor, torch.Tensor]:
-        """Compute rolling resistance torque for each contact.
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        """Effective rolling resistance as a dissipative contact pair force.
 
-        Model: T_r = mu_r * R_eff * |F_n| * omega_hat
-        where R_eff = R (equal spheres), omega_hat is the direction of
-        relative angular velocity projected onto the tangential plane.
+        The particles of this solver carry **no rotational degree of freedom**,
+        so the rolling moment ``M_r = mu_r * |F_n| * R_eff`` of a spin-resolved
+        DEM cannot be transferred to translation: a moment acting on a point
+        mass produces no motion.  What *can* be represented is the equivalent
+        lumped resistance acting on the relative sliding of the pair, i.e.
 
-        For simplicity (no explicit particle rotation DOF in current DEM3D),
-        we approximate the rolling resistance as a tangential force couple:
-        F_rr = mu_r * |F_n| * sign(v_tangent), applied at the contact point.
+            F_rr(on i) = +mu_r * |F_n| * v_hat_t ,   F_rr(on j) = -F_rr(on i)
 
-        Returns (torque_on_i, torque_on_j) each (N, 3).
+        with ``v_t`` the relative tangential velocity.  This is a modelling
+        choice, and it is the one that keeps the model admissible:
+
+        * dissipative: the pair power ``F_i.v_i + F_j.v_j =
+          -mu_r*|F_n|*|v_t| <= 0`` (energy is never injected);
+        * momentum conserving: the pair force is antisymmetric, ``F_i + F_j = 0``;
+        * vanishing at rest: ``v_t = 0 => F_rr = 0`` (no spurious creep force).
+
+        The previous implementation applied the *transverse* force
+        ``n x (-v_hat_t)`` instead, which is orthogonal to the sliding velocity:
+        it did exactly zero work (so it could not dissipate energy at all) while
+        injecting a lateral acceleration of magnitude ``mu_r*|F_n|`` and a net
+        torque ``2*R*mu_r*|F_n|`` on the pair.
+
+        Returns ``(force_on_i, force_on_j, moment_on_i)``; the third return value
+        is the equivalent contact moment ``R * (n x F_i)`` kept for diagnostics
+        (``mu_r * |F_n| * R`` in magnitude).
         """
-        n_contacts = ci.numel()
         mu_r = self.config.rolling_resistance_coefficient
         R = self.config.radius
 
-        # Relative tangential velocity (approximation using translational vel)
+        # Relative tangential velocity of the pair (j minus i).
         relative_v = self.velocities[cj] - self.velocities[ci]
-        vn = (relative_v * cnormal).sum(dim=1, keepdim=True)
-        v_tangent = relative_v - vn * cnormal
+        v_tangent = tangent_plane_projection(relative_v, cnormal)
         v_t_mag = torch.linalg.vector_norm(v_tangent, dim=1, keepdim=True)
 
-        # Rolling resistance force magnitude
+        # Resistance magnitude mu_r * |F_n| opposing the relative sliding.
+        # Pair convention (identical to the tangential friction term): the force
+        # on particle i points along v_t and the force on particle j against it,
+        # so the pair power is -mu_r*|F_n|*|v_t| <= 0 and no energy is injected.
         F_rr_mag = mu_r * contact_mag  # (N,)
-        # Direction opposes tangential motion
         direction = torch.where(
             v_t_mag > 1e-15,
-            -v_tangent / v_t_mag,
+            v_tangent / v_t_mag.clamp_min(torch.finfo(self.dtype).eps),
             torch.zeros_like(v_tangent),
         )
-        F_rr = F_rr_mag[:, None] * direction  # (N, 3)
+        force_i = F_rr_mag[:, None] * direction  # (N, 3)
+        force_j = -force_i
 
-        # Torque = R x F_rr (lever arm = R * normal direction)
-        # For sphere-sphere contact, torque on each particle:
-        # T_i = R * (n x F_rr), T_j = -T_i
-        torque_i = R * torch.linalg.cross(cnormal, F_rr)
-        torque_j = -torque_i
-
-        return torque_i, torque_j
+        moment_i = R * torch.linalg.cross(cnormal, force_i)
+        return force_i, force_j, moment_i
 
     # ------------------------------------------------------------------
     # Main force evaluation
@@ -449,11 +496,14 @@ class IceDEM3D:
         Contact model (SIR-PC2|F05):
         - Normal: linear spring-dashpot with restitution-based damping.
         - Tangential: Cundall-Strack Coulomb-friction spring.
-        - Rolling: resistance torque T_r = mu_r * R * |F_n|.
+        - Rolling: effective dissipative resistance mu_r * |F_n| (no spin DOF).
         """
         cfg = self.config
         loads = self._loads(external_forces)
         eps = torch.finfo(self.dtype).eps
+        # Contact pairs visited by *this* evaluation; used to prune vanished
+        # tangential histories at the end of the contact pass.
+        self._tangential_seen = set()
         # Permanent bond interactions retain compact topology and failure history.
         i, j = self.pairs.T
         delta = self.positions[j] - self.positions[i]
@@ -509,52 +559,50 @@ class IceDEM3D:
 
                 # --- SIR-PC2|F05: Tangential Coulomb friction ---
                 if cfg.friction_coefficient > 0.0:
-                    # Retrieve tangential displacement state
+                    # Retrieve the stored (already clamped) tangential state.
                     tang_disp = self._get_tangential_state(ci, cj, cnormal)
-                    # Integrate tangential displacement
-                    v_tangent = relative_v - vn[:, None] * cnormal
-                    tang_disp = tang_disp + v_tangent * self.dt
-
-                    # Tangential force from spring
-                    k_t = cfg.contact_stiffness  # default: k_t = k_n
-                    F_t_raw = k_t * tang_disp
-                    F_t_mag = torch.linalg.vector_norm(F_t_raw, dim=1)
-                    F_limit = cfg.friction_coefficient * contact_mag
-
-                    # Coulomb saturation
-                    scale = torch.where(
-                        F_t_mag > F_limit,
-                        F_limit / F_t_mag.clamp_min(1e-15),
-                        torch.ones_like(F_t_mag),
+                    # Projected Cundall-Strack update: tangent-plane projection,
+                    # velocity increment, cone clamp, contact-loss reset.
+                    # ``contact_mag`` is zero for pairs held by an alive bond, so a
+                    # bonded pair never accumulates tangential contact history; if
+                    # the bond later breaks the contact starts from delta_t = 0
+                    # instead of firing a saturated force from stale slip.
+                    k_t = cfg.contact_stiffness  # k_t = k_n (documented default)
+                    F_t, tang_disp_new, _sliding = advance_tangential_contact(
+                        tang_disp, relative_v, cnormal, contact_mag,
+                        k_t, cfg.friction_coefficient, self.dt,
                     )
-                    F_t = F_t_raw * scale[:, None]
-
                     # Apply tangential force
                     force.index_add_(0, ci, F_t)
                     force.index_add_(0, cj, -F_t)
 
-                    # Update tangential state
-                    self._update_tangential_state(ci, cj, cnormal, tang_disp)
+                    # Commit the *clamped* state (never the raw trial value) so
+                    # sliding cannot accumulate unbounded elastic memory.  A
+                    # read-only evaluation (update_fracture=False, used by
+                    # diagnostics) must not advance the history, otherwise each
+                    # diagnostics() call double-counts one time increment.
+                    if update_fracture:
+                        self._update_tangential_state(ci, cj, cnormal, tang_disp_new)
 
-                # --- SIR-PC2|F05: Rolling resistance torque ---
+                # --- SIR-PC2|F05: Effective rolling resistance ---
                 if cfg.rolling_resistance_coefficient > 0.0:
-                    torque_i, torque_j = self._compute_rolling_resistance_torque(
+                    F_rr_i, F_rr_j, moment_i = self._rolling_resistance_force(
                         ci, cj, cnormal, contact_mag,
                     )
-                    # Accumulate rolling torque (stored for diagnostics)
-                    self._rolling_torque.index_add_(0, ci, torque_i)
-                    self._rolling_torque.index_add_(0, cj, torque_j)
+                    # Accumulate the equivalent contact moment (diagnostics only).
+                    self._rolling_torque.index_add_(0, ci, moment_i)
+                    self._rolling_torque.index_add_(0, cj, -moment_i)
 
-                    # Apply rolling resistance as tangential force couple
-                    # F_rr = T_r / R, applied at contact point
-                    R = cfg.radius
-                    F_rr_i = torque_i / R
-                    F_rr_j = torque_j / R
+                    # Dissipative pair force opposing the relative sliding.
                     force.index_add_(0, ci, F_rr_i)
                     force.index_add_(0, cj, F_rr_j)
 
                 force.index_add_(0, ci, contact_force)
                 force.index_add_(0, cj, -contact_force)
+
+        if cfg.friction_coefficient > 0.0:
+            # Contacts that vanished during this evaluation lose their history.
+            self._prune_tangential_state()
 
         tool_delta = self.positions - self.tool_position
         tool_dist = torch.linalg.vector_norm(tool_delta, dim=1)
@@ -639,6 +687,13 @@ class IceDEM3D:
             broken_or_unbonded = ~self._alive_bond_for_pairs(contact_pairs)
             contact_energy = (0.5 * self.config.contact_stiffness
                               * overlap.square() * broken_or_unbonded).sum()
+        # Tangential spring energy of the live contacts (zero without friction).
+        tangential_energy = torch.zeros((), dtype=self.dtype, device=self.device)
+        if self.config.friction_coefficient > 0.0 and self._tangential_state:
+            tangential_energy = 0.5 * self.config.contact_stiffness * sum(
+                stored_disp.square().sum()
+                for stored_disp, _normal in self._tangential_state.values()
+            )
         tool_overlap = (self.config.radius + self.config.tool_radius
                         - torch.linalg.vector_norm(self.positions - self.tool_position, dim=1)).clamp_min(0)
         tool_energy = (0.5 * self.config.contact_stiffness * tool_overlap.square()).sum()
@@ -669,10 +724,12 @@ class IceDEM3D:
             "kinetic_energy_J": float(kinetic),
             "bond_elastic_energy_J": float(bond_energy),
             "particle_contact_energy_J": float(contact_energy),
+            "particle_tangential_energy_J": float(tangential_energy),
             "tool_contact_energy_J": float(tool_energy),
             "platen_contact_energy_J": float(platen_energy),
             "released_bond_energy_J": float(released),
-            "mechanical_energy_J": float(kinetic + bond_energy + contact_energy + tool_energy + platen_energy),
+            "mechanical_energy_J": float(kinetic + bond_energy + contact_energy
+                                         + tangential_energy + tool_energy + platen_energy),
         }
 
 
@@ -699,6 +756,15 @@ class IceDEM3D:
                 bond_alive = self._alive_bond_for_pairs(torch.stack((ci, cj), dim=1))
                 active = ~bond_alive & (overlap > 0)
                 contact_energy = 0.5 * cfg.contact_stiffness * (overlap[active] ** 2).sum().item()
+        # Tangential spring energy of the live contacts.  Without this term the
+        # ledger of a frictional run shows unexplained losses: the spring stores
+        # k_t*delta_t^2/2 on top of the genuine friction dissipation.
+        tangential_energy = 0.0
+        if cfg.friction_coefficient > 0.0 and self._tangential_state:
+            tangential_energy = 0.5 * cfg.contact_stiffness * sum(
+                float((stored_disp ** 2).sum().item())
+                for stored_disp, _normal in self._tangential_state.values()
+            )
         tool_delta = self.positions - self.tool_position
         tool_dist = torch.linalg.vector_norm(tool_delta, dim=1)
         tool_overlap = (cfg.radius + cfg.tool_radius - tool_dist).clamp_min(0)
@@ -721,10 +787,12 @@ class IceDEM3D:
             "kinetic_energy_J": float(kinetic),
             "bond_elastic_energy_J": float(bond_energy),
             "particle_contact_energy_J": float(contact_energy),
+            "particle_tangential_energy_J": float(tangential_energy),
             "tool_contact_energy_J": float(tool_energy),
             "platen_contact_energy_J": float(platen_energy),
             "released_bond_energy_J": float(released),
-            "mechanical_energy_J": float(kinetic + bond_energy + contact_energy + tool_energy + platen_energy),
+            "mechanical_energy_J": float(kinetic + bond_energy + contact_energy
+                                         + tangential_energy + tool_energy + platen_energy),
         }
 
     def state_dict(self) -> dict[str, Any]:
