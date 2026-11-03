@@ -1,0 +1,79 @@
+{
+  "protocol": "tensordem-dem3d-brazilian-v1",
+  "units": "SI",
+  "scope": "Diametral (Brazilian) compression of a bonded-sphere cylinder loaded by two opposed infinite platens. Numerical verification of the apparatus against the analytical Hondros point-load field; no laboratory calibration and no certified ice tensile strength.",
+  "reference": {
+    "name": "Hondros (1959) / ASTM D3967 indirect-tension (Brazilian) disc solution",
+    "split_stress_formula": "sigma_t = 2 P / (pi D t)",
+    "centre_tension_to_load_ratio": 2.0,
+    "centre_principal_stress_ratio": -3.0,
+    "centre_tension_scaled_formula": "sigma_xx(0,0) = 2 P / (pi D t)",
+    "centre_compression_formula": "sigma_zz(0,0) = -6 P / (pi D t)"
+  },
+  "cases": [
+    {
+      "id": "brazil_elastic_field",
+      "purpose": "Elastic stress field only: tensile fracture disabled so the continuum field can be compared with the Hondros solution over a long quasi-static ramp.",
+      "config": {
+        "nx": 15,
+        "ny": 3,
+        "nz": 15,
+        "geometry": "cylinder_xz",
+        "radius_m": 0.01,
+        "density_kg_m3": 917.0,
+        "bond_stiffness_N_m": 2000.0,
+        "contact_stiffness_N_m": 5000.0,
+        "breaking_strain": 0.5,
+        "platen_stiffness_N_m": 5000.0,
+        "platen_damping_Ns_m": 0.5,
+        "loading_speed_m_s": 0.002,
+        "drag_Ns_m": 5.0,
+        "contact_damping_Ns_m": 0.5,
+        "dt_factor": 0.5,
+        "probe_every": 1000
+      },
+      "steps": 40000
+    },
+    {
+      "id": "brazil_split_smoke",
+      "purpose": "Tensile splitting regime: same lattice with a low breaking strain so the diametral tensile stress reaches the bond limit and the crack pattern can be audited.",
+      "config": {
+        "nx": 15,
+        "ny": 3,
+        "nz": 15,
+        "geometry": "cylinder_xz",
+        "radius_m": 0.01,
+        "density_kg_m3": 917.0,
+        "bond_stiffness_N_m": 2000.0,
+        "contact_stiffness_N_m": 5000.0,
+        "breaking_strain": 0.0015,
+        "platen_stiffness_N_m": 5000.0,
+        "platen_damping_Ns_m": 0.5,
+        "loading_speed_m_s": 0.002,
+        "drag_Ns_m": 5.0,
+        "contact_damping_Ns_m": 0.5,
+        "dt_factor": 0.5,
+        "probe_every": 250
+      },
+      "steps": 40000
+    }
+  ],
+  "acceptance": {
+    "reaction_symmetry_rel_tol": 1e-06,
+    "split_stress_rel_tol": 1e-12,
+    "minimum_peak_load_N": 0.0,
+    "quasi_static_energy_ratio_max": 0.01,
+    "minimum_particles": 200,
+    "contact_arc_ratio_max": 0.2,
+    "centre_principal_ratio_tol": 0.15,
+    "centre_tension_rel_tol": 0.15,
+    "axial_uniformity_rel_tol": 0.25
+  },
+  "interpretation_limits": [
+    "The specimen is a staircase-digitised bonded-sphere cylinder, not a machined rock or ice disc.",
+    "Platens are infinite frictionless half-spaces with prescribed constant velocity; the nominal line load is a finite-width contact patch.",
+    "The bond model is a central-force (normal only) spring network, so its macroscopic elasticity is not the isotropic continuum assumed by the Hondros solution.",
+    "Agreement or disagreement with the analytical field measures the apparatus, not the physical tensile strength of ice.",
+    "Peak split stress is a discrete-lattice output and is not a calibrated ice tensile strength."
+  ]
+}
