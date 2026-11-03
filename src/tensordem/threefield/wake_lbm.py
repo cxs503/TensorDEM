@@ -141,7 +141,20 @@ class LBMConfig:
 class WakeLBM:
     """D3Q19 + Smagorinsky propeller-race solver (lattice units)."""
 
-    def __init__(self, config: LBMConfig = LBMConfig(), *, seed: int = 20261031) -> None:
+    def __init__(
+        self,
+        config: LBMConfig = LBMConfig(),
+        *,
+        seed: int = 20261031,
+        periodic: bool = False,
+    ) -> None:
+        # ``periodic`` is a verification switch: it wraps every face of the box
+        # instead of applying the inlet / zero-gradient-outlet / free-slip wall
+        # set, so the shipped collision, equilibrium and streaming kernels can be
+        # exercised against exact Navier-Stokes solutions (see
+        # ``tensordem.threefield.lbm_verification``). The propeller-race solver
+        # never sets it, so production behaviour is unchanged.
+        self.periodic = bool(periodic)
         self.config = config
         self.dtype = torch.float64 if config.dtype == "float64" else torch.float32
         self.nx, self.ny, self.nz = config.nx, config.ny, config.nz
@@ -229,11 +242,15 @@ class WakeLBM:
         discriminant = tau0 * tau0 + 18.0 * math.sqrt(2.0) * cs * cs * pi_norm / rho
         return 0.5 * (tau0 + torch.sqrt(discriminant.clamp_min(1e-30)))
 
-    def _stream(self, f: torch.Tensor) -> torch.Tensor:
+    def _stream(self, f: torch.Tensor, *, periodic: bool | None = None) -> torch.Tensor:
+        wrap = self.periodic if periodic is None else bool(periodic)
         out = torch.zeros_like(f)
         nx, ny, nz = self.nx, self.ny, self.nz
         for i in range(len(self._cx)):
             cx, cy, cz = self._cx[i], self._cy[i], self._cz[i]
+            if wrap:
+                out[:, :, :, i] = torch.roll(f[:, :, :, i], shifts=(cx, cy, cz), dims=(0, 1, 2))
+                continue
             src = (
                 slice(max(-cx, 0), nx - max(cx, 0)),
                 slice(max(-cy, 0), ny - max(cy, 0)),
@@ -248,6 +265,8 @@ class WakeLBM:
         return out
 
     def _apply_boundaries(self, f: torch.Tensor) -> torch.Tensor:
+        if self.periodic:
+            return f
         config = self.config
         u_in = config.inflow_velocity
         f[0, :, :, :] = self._inlet_populations()
@@ -305,18 +324,45 @@ class WakeLBM:
         return force
 
     # -- public API --------------------------------------------------------
-    def step(self, n: int = 1, *, accumulate: bool = False) -> None:
+    def step(
+        self,
+        n: int = 1,
+        *,
+        accumulate: bool = False,
+        body_force: torch.Tensor | None = None,
+    ) -> None:
+        """Advance ``n`` iterations.
+
+        ``body_force`` replaces the actuator-disk controller with a prescribed
+        force density of shape ``(3,)`` or ``(nx, ny, nz, 3)`` (verification hook
+        used for the momentum-impulse audit); it is booked through the same
+        ``thrust_impulse`` / ``forcing_work`` accumulators.
+        """
         for _ in range(int(n)):
             rho, u = self._macroscopic(self.f)
-            force = self._disk_force(rho, u)
+            if body_force is None:
+                force = self._disk_force(rho, u)
+            else:
+                force = torch.as_tensor(body_force, dtype=self.dtype)
+                force = force.reshape((1, 1, 1, 3)) if force.dim() == 1 else force
+                force = force.expand_as(u).contiguous()
             self.thrust_impulse += float(force[:, :, :, 0].sum().item())
             self.forcing_work += float((force * u).sum().item())
             u_forced = u + 0.5 * force / rho.unsqueeze(-1)
             tau = self._effective_tau(self.f, rho, u)
             feq = self._equilibrium(rho.unsqueeze(-1), u_forced)
             omega = 1.0 / tau.unsqueeze(-1)
-            forcing_term = 3.0 * self.w.view(1, 1, 1, -1) * torch.einsum(
-                "ia,...a->...i", self.c, force
+            # Guo forcing: the discrete forcing term carries the (1 - omega/2)
+            # weight so that the collision momentum leak 0.5*omega*F is cancelled
+            # and the post-step first moment grows by exactly sum(F). Without the
+            # weight the solver injected (1 + 1/(2 tau)) x the booked impulse
+            # (1.999x at the default tau0 = 0.5006); see
+            # docs/threefield/lbm_core_verification.md.
+            forcing_term = (
+                (1.0 - 0.5 * omega)
+                * 3.0
+                * self.w.view(1, 1, 1, -1)
+                * torch.einsum("ia,...a->...i", self.c, force)
             )
             self.f = (
                 self.f
