@@ -167,6 +167,14 @@ solver does not provide. A cross-section convergence study with a fixed `h/a = 2
 and no fracture is the natural next step, and at `21x21x3` = 1323 particles it is
 cheap.
 
+**Follow-up (closed 2026-11-03):** that study was run over `5x5x3 … 41x41x3` and
+is reported in `docs/dem3d_shear_cross_section_convergence.md`. Summary: the
+`1/n` extrapolation of the free-surface bias recovers `C44` to 0.14 %
+(quadratic) / 1.47 % (linear) and an interior window (margin 3 sites) to 0.19 %
+for `h/L <= 0.06`; the edge relaxation is a `0.63 a` layer. For `h/L >= 0.12`
+the relaxation length grows with `h/L` and no window recovers `C44`, so a thick
+specimen's modulus stays a specimen property (down to `0.790 C44` at `h/L = 0.24`).
+
 Also unchanged: mode-II fracture energy remains NOT_SUPPORTED (no tangential bond
 stiffness), and the `shear_breaking_strain → macro strain` mapping of §3.2 of the
 specimen page is untouched.
