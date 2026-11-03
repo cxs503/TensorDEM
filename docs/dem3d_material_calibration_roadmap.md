@@ -61,9 +61,15 @@ properties.
 - Objectivity under rigid-body rotation is covered by
   `tests/test_dem3d_fracture_objectivity.py` and by the rotation probe in
   `docs/dem3d_shear_specimen.md`.
-- Still open: quasi-static apparent modulus of a driven block, mode-II energy
-  release rate (model change), fracture-energy calibration from measured crack
-  growth, independent shear-specimen data.
+- Quasi-static apparent modulus of a driven block: **closed as a rate-free static
+  reference** in `docs/dem3d_shear_static_reference.md` (sparse equilibrium of the
+  same boundary conditions, `G_eff/C44 = 0.8442` for the default 9x5x3 block,
+  reproduced by the solver's dynamics to 2.6 %). The driven-ramp modulus is shown
+  to be protocol-limited (cross-section census bias `0.7873`, transient hump), not
+  rate-limited; a material shear modulus still needs a cross-section convergence
+  study or periodic boundaries.
+- Still open: mode-II energy release rate (model change), fracture-energy
+  calibration from measured crack growth, independent shear-specimen data.
 
 ## Acceptance philosophy
 
