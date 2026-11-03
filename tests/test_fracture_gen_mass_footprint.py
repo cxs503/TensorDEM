@@ -21,6 +21,15 @@ Reference lattice used below: radius r = 0.125 m, spacing s = 0.25 m, domain
 (0, 2)^3 -> n = 8 layers per axis, N = 512 particles, 1344 nearest-neighbour
 bonds (3 n^2 (n - 1)). All coordinates are exactly representable in binary, so
 plane alignment is not decided by floating-point noise.
+
+Mapping selection: the three defects above are properties of the *frozen* SI-2
+contract, which trunk keeps available as ``mass_mapping="sphere"`` /
+``"equal_volume_sphere"``. Trunk's default is the corrected volume-consistent
+``mass_mode="cell"`` mapping (``docs/dem3d_fracture_mass_mapping_audit.md``),
+so the two tests that assert the frozen π/6 - 1 deficit request that mapping
+explicitly; every asserted number is unchanged. The complementary contract --
+"the default mapping is volume consistent" -- is pinned in
+``tests/test_fracture_gen_footprint_breakage.py``.
 """
 
 from __future__ import annotations
@@ -97,7 +106,9 @@ class TestMassMappingAudit(unittest.TestCase):
         self.assertEqual(f.bond_indices.shape[0], N_BONDS)
 
     def test_frozen_mapping_deficit_is_exactly_pi_over_six(self):
-        f = field_for([face()])
+        # the frozen mapping is opt-in: trunk's default is the corrected
+        # volume-consistent cell mapping (asserted separately below)
+        f = field_for([face()], mass_mapping="sphere")
         ledger = FractureLedger(f, [face()])
         accounting = ledger.mass_accounting(CONTINUUM_VOLUME)
         self.assertAlmostEqual(accounting["relative_error"], math.pi / 6 - 1, places=12)
@@ -107,7 +118,7 @@ class TestMassMappingAudit(unittest.TestCase):
 
     def test_frozen_mapping_tolerance_against_its_own_formula_is_vacuous(self):
         """The prereg criterion 1 cannot detect the deficit it is named after."""
-        f = field_for([face()])
+        f = field_for([face()], mass_mapping="sphere")
         ledger = FractureLedger(f, [face()])
         sphere_mass = N_PARTICLES * DENSITY * (4.0 / 3.0) * math.pi * RADIUS**3
         self.assertAlmostEqual(ledger.mass_conservation_error(sphere_mass), 0.0, places=9)
