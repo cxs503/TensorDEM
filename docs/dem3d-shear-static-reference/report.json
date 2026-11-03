@@ -1,0 +1,257 @@
+{
+  "schema": "tensordem-dem3d-shear-static-reference-v1",
+  "C44_default_config_Pa": 93333.33333333331,
+  "bond_census": [
+    {
+      "bond_count": 325.0,
+      "node_count": 45.0,
+      "weight": 0.20666666666666667,
+      "weight_per_node": 0.0045925925925925926,
+      "lattice_spacing_m": 0.05,
+      "nominal_area_m2": 0.1125,
+      "nx": 9,
+      "ny": 5,
+      "nz": 3,
+      "area_ratio": 0.7873015873015872
+    },
+    {
+      "bond_count": 325.0,
+      "node_count": 45.0,
+      "weight": 0.20666666666666667,
+      "weight_per_node": 0.0045925925925925926,
+      "lattice_spacing_m": 0.05,
+      "nominal_area_m2": 0.1125,
+      "nx": 9,
+      "ny": 5,
+      "nz": 5,
+      "area_ratio": 0.7873015873015872
+    },
+    {
+      "bond_count": 325.0,
+      "node_count": 45.0,
+      "weight": 0.20666666666666667,
+      "weight_per_node": 0.0045925925925925926,
+      "lattice_spacing_m": 0.05,
+      "nominal_area_m2": 0.1125,
+      "nx": 9,
+      "ny": 5,
+      "nz": 9,
+      "area_ratio": 0.7873015873015872
+    },
+    {
+      "bond_count": 1813.0,
+      "node_count": 221.0,
+      "weight": 1.16,
+      "weight_per_node": 0.005248868778280543,
+      "lattice_spacing_m": 0.05,
+      "nominal_area_m2": 0.5525000000000001,
+      "nx": 17,
+      "ny": 13,
+      "nz": 3,
+      "area_ratio": 0.8998060762766642
+    },
+    {
+      "bond_count": 3721.0,
+      "node_count": 441.0,
+      "weight": 2.3833333333333337,
+      "weight_per_node": 0.005404383975812548,
+      "lattice_spacing_m": 0.05,
+      "nominal_area_m2": 1.1025,
+      "nx": 21,
+      "ny": 21,
+      "nz": 3,
+      "area_ratio": 0.9264658244250082
+    }
+  ],
+  "static_equilibrium": [
+    {
+      "gamma": 0.001,
+      "C44_Pa": 93333.33333333331,
+      "height_m": 0.1,
+      "area_nominal_m2": 0.1125,
+      "area_effective_m2": 0.08857142857142856,
+      "area_ratio": 0.7873015873015872,
+      "reaction_N": -6.978323691647194,
+      "tau_nominal_Pa": 62.02954392575283,
+      "tau_effective_Pa": 78.78752555085542,
+      "G_nominal_over_C44": 0.6646022563473519,
+      "G_effective_over_C44": 0.8441520594734512,
+      "affine_traction_over_C44": 0.8441520594734511,
+      "max_free_displacement_over_gamma_h": 0.5145869479138714,
+      "solver_reaction_N": 6.978325285239473,
+      "reaction_relative_error": 2.283631927949891e-07,
+      "free_residual_over_bond_force": 0.006534874518729953,
+      "particle_count": 135,
+      "nx": 9,
+      "ny": 5,
+      "nz": 3,
+      "height_over_a": 2
+    },
+    {
+      "gamma": 0.001,
+      "C44_Pa": 93333.33333333331,
+      "height_m": 0.2,
+      "area_nominal_m2": 0.1125,
+      "area_effective_m2": 0.08857142857142856,
+      "area_ratio": 0.7873015873015872,
+      "reaction_N": -5.0164333523651035,
+      "tau_nominal_Pa": 44.59051868768981,
+      "tau_effective_Pa": 56.637150752509235,
+      "G_nominal_over_C44": 0.4777555573681052,
+      "G_effective_over_C44": 0.6068266152054562,
+      "affine_traction_over_C44": 0.6068266152054562,
+      "max_free_displacement_over_gamma_h": 0.7388480766013362,
+      "solver_reaction_N": 5.016434613054398,
+      "reaction_relative_error": 2.5131187952429606e-07,
+      "free_residual_over_bond_force": 0.018674842465291393,
+      "particle_count": 225,
+      "nx": 9,
+      "ny": 5,
+      "nz": 5,
+      "height_over_a": 4
+    },
+    {
+      "gamma": 0.001,
+      "C44_Pa": 93333.33333333331,
+      "height_m": 0.4,
+      "area_nominal_m2": 0.1125,
+      "area_effective_m2": 0.08857142857142856,
+      "area_ratio": 0.7873015873015872,
+      "reaction_N": -2.315975711518954,
+      "tau_nominal_Pa": 20.586450769057368,
+      "tau_effective_Pa": 26.14811287198819,
+      "G_nominal_over_C44": 0.22056911538275753,
+      "G_effective_over_C44": 0.2801583521998735,
+      "affine_traction_over_C44": 0.2801583521998735,
+      "max_free_displacement_over_gamma_h": 0.8389362658659476,
+      "solver_reaction_N": 2.315976215941952,
+      "reaction_relative_error": 2.178015060904665e-07,
+      "free_residual_over_bond_force": 0.03982833668032827,
+      "particle_count": 405,
+      "nx": 9,
+      "ny": 5,
+      "nz": 9,
+      "height_over_a": 8
+    },
+    {
+      "gamma": 0.001,
+      "C44_Pa": 93333.33333333331,
+      "height_m": 0.1,
+      "area_nominal_m2": 0.5525000000000001,
+      "area_effective_m2": 0.49714285714285705,
+      "area_ratio": 0.8998060762766642,
+      "reaction_N": -42.83601746684482,
+      "tau_nominal_Pa": 77.53125333365577,
+      "tau_effective_Pa": 86.16440295054994,
+      "G_nominal_over_C44": 0.8306920000034548,
+      "G_effective_over_C44": 0.9231900316130353,
+      "affine_traction_over_C44": 0.9231900316130353,
+      "max_free_displacement_over_gamma_h": 0.5151044033537248,
+      "solver_reaction_N": 42.8360253600449,
+      "reaction_relative_error": 1.8426549768908922e-07,
+      "free_residual_over_bond_force": 0.0106256428096383,
+      "particle_count": 663,
+      "nx": 17,
+      "ny": 13,
+      "nz": 3,
+      "height_over_a": 2
+    },
+    {
+      "gamma": 0.001,
+      "C44_Pa": 93333.33333333331,
+      "height_m": 0.1,
+      "area_nominal_m2": 1.1025,
+      "area_effective_m2": 1.0214285714285716,
+      "area_ratio": 0.9264658244250082,
+      "reaction_N": -89.49622625979106,
+      "tau_nominal_Pa": 81.1757154283819,
+      "tau_effective_Pa": 87.61868305154368,
+      "G_nominal_over_C44": 0.869739808161235,
+      "G_effective_over_C44": 0.9387716041236825,
+      "affine_traction_over_C44": 0.9387716041236825,
+      "max_free_displacement_over_gamma_h": 0.5156706708202998,
+      "solver_reaction_N": 89.49624198179094,
+      "reaction_relative_error": 1.7567221037036802e-07,
+      "free_residual_over_bond_force": 0.013462983176612394,
+      "particle_count": 1323,
+      "nx": 21,
+      "ny": 21,
+      "nz": 3,
+      "height_over_a": 2
+    }
+  ],
+  "linearity_in_gamma": [
+    {
+      "gamma": 1e-05,
+      "G_effective_over_C44": 0.8441520594734512,
+      "G_nominal_over_C44": 0.664602256347352
+    },
+    {
+      "gamma": 0.0001,
+      "G_effective_over_C44": 0.844152059473451,
+      "G_nominal_over_C44": 0.6646022563473518
+    },
+    {
+      "gamma": 0.001,
+      "G_effective_over_C44": 0.8441520594734512,
+      "G_nominal_over_C44": 0.6646022563473519
+    },
+    {
+      "gamma": 0.005,
+      "G_effective_over_C44": 0.8441520594734513,
+      "G_nominal_over_C44": 0.664602256347352
+    }
+  ],
+  "driven_protocol": [
+    {
+      "velocity_m_per_s": 0.1,
+      "steps": 741,
+      "G_over_C44_nominal": 0.6690810016267232,
+      "G_over_C44_effective": 0.8498425017486639,
+      "fit_relative_residual": 0.11116858881865474,
+      "first_failure_gamma": null
+    },
+    {
+      "velocity_m_per_s": 0.05,
+      "steps": 1483,
+      "G_over_C44_nominal": 0.7499921624705577,
+      "G_over_C44_effective": 0.9526129334060175,
+      "fit_relative_residual": 0.028730775250225733,
+      "first_failure_gamma": null
+    }
+  ],
+  "relaxation_verification": [
+    {
+      "drag_Ns_per_m": 50.0,
+      "area_nominal_m2": 0.1125,
+      "area_effective_m2": 0.08857142857142856,
+      "C44_Pa": 93333.33333333331,
+      "gamma": 0.001,
+      "G_nominal_over_C44": 0.6472517759201906,
+      "G_effective_over_C44": 0.8221141508663712,
+      "kinetic_energy_J": 0.02171805983687947,
+      "broken_bonds": 0,
+      "static_G_effective_over_C44": 0.8441520594734512,
+      "deviation_vs_static": -0.026106562626674545,
+      "relative_trace_drift": 0.018648895010447863
+    },
+    {
+      "drag_Ns_per_m": 300.0,
+      "area_nominal_m2": 0.1125,
+      "area_effective_m2": 0.08857142857142856,
+      "C44_Pa": 93333.33333333331,
+      "gamma": 0.001,
+      "G_nominal_over_C44": 0.5750985083978857,
+      "G_effective_over_C44": 0.7304678634892501,
+      "kinetic_energy_J": 0.003237450678393499,
+      "broken_bonds": 0,
+      "static_G_effective_over_C44": 0.8441520594734512,
+      "deviation_vs_static": -0.13467265134093598,
+      "relative_trace_drift": 0.20406933691589235
+    }
+  ],
+  "notes": [
+    "G_effective uses the bond-census area A_eff = sum l^2 nx^2 nz^2 / (7a^2/3), which makes the affine reaction equal C44*gamma exactly.",
+    "G_nominal uses nx*a*ny*a, the convention of the legacy driven test."
+  ]
+}
