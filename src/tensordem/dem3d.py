@@ -369,10 +369,13 @@ class IceDEM3D:
             j = int(cj[idx].item())
             key = self._pair_key(i, j)
             if key in self._tangential_state:
-                stored_disp, stored_normal = self._tangential_state[key]
-                # Rotate stored tangential displacement to current normal frame
-                # (simple approach: keep as-is in global frame; projection handles it)
-                tang_disp[idx] = stored_disp
+                stored_disp, _stored_normal = self._tangential_state[key]
+                # The contact normal rotates as the pair moves, so the stored
+                # global-frame displacement can acquire a component along the
+                # current normal. Left unprojected it acts as a spurious
+                # normal-direction force inside the friction spring.
+                n = cnormal[idx]
+                tang_disp[idx] = stored_disp - (stored_disp * n).sum() * n
             else:
                 tang_disp[idx] = torch.zeros(3, dtype=self.dtype, device=self.device)
         return tang_disp
@@ -380,59 +383,66 @@ class IceDEM3D:
     def _update_tangential_state(self, ci: torch.Tensor, cj: torch.Tensor,
                                  cnormal: torch.Tensor,
                                  tang_disp: torch.Tensor) -> None:
-        """Persist tangential displacement for the next step."""
-        n_contacts = ci.numel()
-        for idx in range(n_contacts):
-            i = int(ci[idx].item())
-            j = int(cj[idx].item())
-            key = self._pair_key(i, j)
-            self._tangential_state[key] = (
-                tang_disp[idx].clone(),
-                cnormal[idx].clone(),
-            )
+        """Rebuild tangential memory from the contacts active in this step.
+
+        Only pairs that are in contact right now are retained. Persistent
+        friction memory across a separation (and the unbounded growth of the
+        pair dictionary) is not part of the Cundall-Strack model: contact
+        memory dies with the contact.
+        """
+        state: dict[int, tuple[torch.Tensor, torch.Tensor]] = {}
+        for idx in range(ci.numel()):
+            key = self._pair_key(int(ci[idx].item()), int(cj[idx].item()))
+            state[key] = (tang_disp[idx].clone(), cnormal[idx].clone())
+        self._tangential_state = state
+
+    def _rolling_resistance_force(
+        self, cnormal: torch.Tensor, contact_mag: torch.Tensor,
+        v_tangent: torch.Tensor,
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        """Resisting couple for rolling resistance, reduced to translation.
+
+        The two spheres have no rotational degree of freedom in this solver, so
+        a pure torque cannot dissipate energy: a couple whose net force is zero
+        and whose applied force is perpendicular to the relative velocity does
+        no work. The resisting couple ``T_r = mu_r * R * |F_n|`` is therefore
+        reduced to an equivalent tangential force pair of magnitude
+        ``mu_r * |F_n|`` acting against the relative tangential motion.
+
+        Sign convention: the force returned acts on particle ``ci`` and is
+        parallel to the relative velocity ``v_j - v_i``; with the opposite
+        force on ``cj`` the pair then dissipates at rate
+        ``-mu_r * |F_n| * |v_rel|``.
+
+        Returns ``(force_on_ci, torque_i, torque_j)`` with each array ``(N, 3)``.
+        The torques are the couple produced by that force at the contact point
+        (lever arm ``R`` along the contact normal) and are diagnostics only.
+        """
+        cfg = self.config
+        eps = torch.finfo(self.dtype).eps
+        rr = cfg.rolling_resistance_coefficient
+        v_mag = torch.linalg.vector_norm(v_tangent, dim=1, keepdim=True)
+        v_hat = torch.where(v_mag > eps, v_tangent / v_mag.clamp_min(eps),
+                            torch.zeros_like(v_tangent))
+        force = rr * contact_mag[:, None] * v_hat
+        torque_i = cfg.radius * torch.linalg.cross(cnormal, force)
+        return force, torque_i, -torque_i
 
     def _compute_rolling_resistance_torque(
         self, ci: torch.Tensor, cj: torch.Tensor,
         cnormal: torch.Tensor, contact_mag: torch.Tensor,
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        """Compute rolling resistance torque for each contact.
+        """Diagnostic torques for the rolling-resistance couple.
 
-        Model: T_r = mu_r * R_eff * |F_n| * omega_hat
-        where R_eff = R (equal spheres), omega_hat is the direction of
-        relative angular velocity projected onto the tangential plane.
-
-        For simplicity (no explicit particle rotation DOF in current DEM3D),
-        we approximate the rolling resistance as a tangential force couple:
-        F_rr = mu_r * |F_n| * sign(v_tangent), applied at the contact point.
-
-        Returns (torque_on_i, torque_on_j) each (N, 3).
+        Kept for backward compatibility; ``forces`` uses
+        :meth:`_rolling_resistance_force`, which also returns the force pair
+        that actually enters the equations of motion.
         """
-        n_contacts = ci.numel()
-        mu_r = self.config.rolling_resistance_coefficient
-        R = self.config.radius
-
-        # Relative tangential velocity (approximation using translational vel)
         relative_v = self.velocities[cj] - self.velocities[ci]
         vn = (relative_v * cnormal).sum(dim=1, keepdim=True)
         v_tangent = relative_v - vn * cnormal
-        v_t_mag = torch.linalg.vector_norm(v_tangent, dim=1, keepdim=True)
-
-        # Rolling resistance force magnitude
-        F_rr_mag = mu_r * contact_mag  # (N,)
-        # Direction opposes tangential motion
-        direction = torch.where(
-            v_t_mag > 1e-15,
-            -v_tangent / v_t_mag,
-            torch.zeros_like(v_tangent),
-        )
-        F_rr = F_rr_mag[:, None] * direction  # (N, 3)
-
-        # Torque = R x F_rr (lever arm = R * normal direction)
-        # For sphere-sphere contact, torque on each particle:
-        # T_i = R * (n x F_rr), T_j = -T_i
-        torque_i = R * torch.linalg.cross(cnormal, F_rr)
-        torque_j = -torque_i
-
+        _force, torque_i, torque_j = self._rolling_resistance_force(
+            cnormal, contact_mag, v_tangent)
         return torque_i, torque_j
 
     # ------------------------------------------------------------------
@@ -477,6 +487,9 @@ class IceDEM3D:
         force.index_add_(0, j, -active_bond_force)
 
         contact_pairs = self._contact_candidate_pairs()
+        # Friction memory is only meaningful while a contact is active.
+        if not contact_pairs.numel():
+            self._tangential_state.clear()
         if contact_pairs.numel():
             ci, cj = contact_pairs.T
             cdelta = self.positions[cj] - self.positions[ci]
@@ -521,13 +534,18 @@ class IceDEM3D:
                     F_t_mag = torch.linalg.vector_norm(F_t_raw, dim=1)
                     F_limit = cfg.friction_coefficient * contact_mag
 
-                    # Coulomb saturation
+                    # Coulomb saturation. The *displacement* is clamped, not
+                    # only the force: persisting an unclamped delta lets the
+                    # spring ratchet without bound while sliding, so a later
+                    # velocity reversal keeps a sticking force in the old
+                    # direction for as long as the surplus takes to unwind.
                     scale = torch.where(
                         F_t_mag > F_limit,
-                        F_limit / F_t_mag.clamp_min(1e-15),
+                        F_limit / F_t_mag.clamp_min(eps),
                         torch.ones_like(F_t_mag),
                     )
-                    F_t = F_t_raw * scale[:, None]
+                    tang_disp = tang_disp * scale[:, None]
+                    F_t = k_t * tang_disp
 
                     # Apply tangential force
                     force.index_add_(0, ci, F_t)
@@ -536,25 +554,26 @@ class IceDEM3D:
                     # Update tangential state
                     self._update_tangential_state(ci, cj, cnormal, tang_disp)
 
-                # --- SIR-PC2|F05: Rolling resistance torque ---
+                # --- SIR-PC2|F05: Rolling resistance ---
                 if cfg.rolling_resistance_coefficient > 0.0:
-                    torque_i, torque_j = self._compute_rolling_resistance_torque(
-                        ci, cj, cnormal, contact_mag,
+                    v_tangent_rr = relative_v - vn[:, None] * cnormal
+                    F_rr, torque_i, torque_j = self._rolling_resistance_force(
+                        cnormal, contact_mag, v_tangent_rr,
                     )
                     # Accumulate rolling torque (stored for diagnostics)
                     self._rolling_torque.index_add_(0, ci, torque_i)
                     self._rolling_torque.index_add_(0, cj, torque_j)
 
-                    # Apply rolling resistance as tangential force couple
-                    # F_rr = T_r / R, applied at contact point
-                    R = cfg.radius
-                    F_rr_i = torque_i / R
-                    F_rr_j = torque_j / R
-                    force.index_add_(0, ci, F_rr_i)
-                    force.index_add_(0, cj, F_rr_j)
+                    # No rotational degree of freedom exists, so the resisting
+                    # couple is reduced to an equivalent tangential force pair
+                    # that must oppose the relative tangential motion.
+                    force.index_add_(0, ci, F_rr)
+                    force.index_add_(0, cj, -F_rr)
 
                 force.index_add_(0, ci, contact_force)
                 force.index_add_(0, cj, -contact_force)
+            else:
+                self._tangential_state.clear()
 
         tool_delta = self.positions - self.tool_position
         tool_dist = torch.linalg.vector_norm(tool_delta, dim=1)
