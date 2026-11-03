@@ -1,0 +1,1049 @@
+{
+  "affine_probe": {
+    "closed_form_invariant_at_0_02": 0.011547775158493133,
+    "isotropy_absolute_spread": 1.231653667943533e-16,
+    "isotropy_at_gamma_0_02": {
+      "xy": 0.011547775158493416,
+      "xz": 0.011547775158493293,
+      "yz": 0.011547775158493413
+    },
+    "max_relative_error": 2.1069958735629162e-13,
+    "plane": "xz",
+    "rotation_invariant": 3.7818034182810344e-15,
+    "rows": [
+      {
+        "closed_form": 0.0005773503654146626,
+        "gamma": 0.001,
+        "max_relative_error": 2.1069958735629162e-13,
+        "measured_max": 0.0005773503654147241,
+        "measured_min": 0.000577350365414541,
+        "particle_spread": 1.831217469328017e-16
+      },
+      {
+        "closed_form": 0.00577359891613926,
+        "gamma": 0.01,
+        "max_relative_error": 1.9379535334145343e-14,
+        "measured_max": 0.005773598916139333,
+        "measured_min": 0.0057735989161391485,
+        "particle_spread": 1.8474805019152996e-16
+      },
+      {
+        "closed_form": 0.017323105957073634,
+        "gamma": 0.03,
+        "max_relative_error": 1.1215600123375528e-14,
+        "measured_max": 0.01732310595707383,
+        "measured_min": 0.017323105957073502,
+        "particle_spread": 3.2612801348363973e-16
+      },
+      {
+        "closed_form": 0.02887953908527243,
+        "gamma": 0.05,
+        "max_relative_error": 2.5228375624658485e-15,
+        "measured_max": 0.028879539085272504,
+        "measured_min": 0.028879539085272396,
+        "particle_spread": 1.0755285551056204e-16
+      },
+      {
+        "closed_form": 0.011547775158493133,
+        "gamma": -0.02,
+        "max_relative_error": 1.3820372980893032e-14,
+        "measured_max": 0.011547775158493293,
+        "measured_min": 0.011547775158493033,
+        "particle_spread": 2.6020852139652106e-16
+      }
+    ]
+  },
+  "checks": [
+    {
+      "baseline": 0.0,
+      "check": "affine invariant vs closed form",
+      "passed": true,
+      "tolerance": 1e-12,
+      "value": 2.1069958735629162e-13
+    },
+    {
+      "baseline": 0.0,
+      "check": "{100} plane isotropy spread",
+      "passed": true,
+      "tolerance": 1e-12,
+      "value": 1.231653667943533e-16
+    },
+    {
+      "baseline": 0.0,
+      "check": "rigid rotation invariant",
+      "passed": true,
+      "tolerance": 1e-12,
+      "value": 3.7818034182810344e-15
+    },
+    {
+      "baseline": 0.0,
+      "check": "shear onset gamma vs closed form (max over thresholds)",
+      "passed": true,
+      "tolerance": 1e-09,
+      "value": 4.0639462009147795e-12
+    },
+    {
+      "baseline": 0.0,
+      "check": "uniaxial onset vs closed form (max over thresholds)",
+      "passed": true,
+      "tolerance": 1e-09,
+      "value": 7.418102873849516e-14
+    },
+    {
+      "baseline": 0.0,
+      "check": "quasi-static limit: tau(gamma_max) deviation, v=0.2 vs 0.1 m/s",
+      "passed": false,
+      "tolerance": 0.03,
+      "value": 0.20219113888044704
+    },
+    {
+      "baseline": 1.0,
+      "check": "local criterion honoured at first event (local invariant / s)",
+      "passed": true,
+      "tolerance": 0.01,
+      "value": 1.0008812056774807
+    }
+  ],
+  "closed_form_verdict": "FAIL",
+  "figures": [
+    "shear_specimen_response.png",
+    "shear_specimen_criterion.png"
+  ],
+  "geometry_series": [
+    {
+      "apparent_shear_modulus_Pa": 57536.183291099784,
+      "broken_bonds": 0,
+      "extent_x_over_height": 1.25,
+      "extent_y_over_height": 1.25,
+      "first_failure_gamma": null,
+      "fit_relative_residual": 0.023520672759237582,
+      "height_m": 0.2,
+      "nx": 5,
+      "ny": 5,
+      "nz": 5,
+      "particle_count": 125,
+      "ratio_to_C44": 0.616459106690355,
+      "value": 5,
+      "varied_axis": "nx"
+    },
+    {
+      "apparent_shear_modulus_Pa": 86405.5771981081,
+      "broken_bonds": 0,
+      "extent_x_over_height": 2.25,
+      "extent_y_over_height": 1.25,
+      "first_failure_gamma": null,
+      "fit_relative_residual": 0.007416260856482841,
+      "height_m": 0.2,
+      "nx": 9,
+      "ny": 5,
+      "nz": 5,
+      "particle_count": 225,
+      "ratio_to_C44": 0.9257740414083013,
+      "value": 9,
+      "varied_axis": "nx"
+    },
+    {
+      "apparent_shear_modulus_Pa": 97891.86131007294,
+      "broken_bonds": 0,
+      "extent_x_over_height": 3.25,
+      "extent_y_over_height": 1.25,
+      "first_failure_gamma": null,
+      "fit_relative_residual": 0.006125273353575851,
+      "height_m": 0.2,
+      "nx": 13,
+      "ny": 5,
+      "nz": 5,
+      "particle_count": 325,
+      "ratio_to_C44": 1.0488413711793532,
+      "value": 13,
+      "varied_axis": "nx"
+    },
+    {
+      "apparent_shear_modulus_Pa": 91141.34382325009,
+      "broken_bonds": 0,
+      "extent_x_over_height": 2.25,
+      "extent_y_over_height": 1.75,
+      "first_failure_gamma": null,
+      "fit_relative_residual": 0.0057897247021332565,
+      "height_m": 0.2,
+      "nx": 9,
+      "ny": 7,
+      "nz": 5,
+      "particle_count": 315,
+      "ratio_to_C44": 0.9765143981062512,
+      "value": 7,
+      "varied_axis": "ny"
+    }
+  ],
+  "interpretation": {
+    "apparent_modulus": "The driven block with a clamped bottom and free lateral faces carries less shear traction than C44*gamma; the deficit is a specimen-boundary effect, not a bond-law error, and it does not vanish over the tested aspect ratios (see geometry_series).",
+    "closed_form": "gamma_c = sqrt(1.5*(sqrt(1+4s^2)-1)); to first order sqrt(3)*s.",
+    "mode_ii_energy": "The bond stores only axial elastic energy, so a shear-broken bond records a near-zero release energy; the model has no mode-II energy release rate and cannot be calibrated to G_IIc.",
+    "not_validation": "No experimental shear specimen is compared here; this is a criterion-and-protocol audit of the solver's own model."
+  },
+  "model": {
+    "C44_Pa": 93333.33333333331,
+    "bond_law": "central linear spring, no tangential bond stiffness",
+    "lattice": "simple-cubic with face and body diagonals (Z = 26, 13 half-space bonds)",
+    "shear_criterion": "0.5*(J2_i + J2_j) > shear_breaking_strain with J2 = sqrt(2/3 dev(E):dev(E)) from a least-squares local F"
+  },
+  "protocol": "tensordem-dem3d-shear-specimen-v1",
+  "rate_series": [
+    {
+      "apparent_shear_modulus_Pa": 18723.80922175319,
+      "max_kinetic_over_elastic": 0.3344793939956867,
+      "ratio_to_C44": 0.20061224166164135,
+      "steps": 382,
+      "tau_at_gamma_max_Pa": 232.70574919343477,
+      "tau_relative_deviation_from_reference": 0.0,
+      "velocity_m_per_s": 0.4
+    },
+    {
+      "apparent_shear_modulus_Pa": 87216.69282088871,
+      "max_kinetic_over_elastic": 0.3343930361750521,
+      "modulus_relative_deviation_from_reference": 3.658063526921701,
+      "ratio_to_C44": 0.9344645659380936,
+      "steps": 764,
+      "tau_at_gamma_max_Pa": 1098.0271231206355,
+      "tau_relative_deviation_from_reference": 3.718521682108977,
+      "velocity_m_per_s": 0.2
+    },
+    {
+      "apparent_shear_modulus_Pa": 60245.88400666622,
+      "max_kinetic_over_elastic": 0.33387044269095284,
+      "modulus_relative_deviation_from_previous_rate": 0.3092390681404384,
+      "modulus_relative_deviation_from_reference": 2.2176083025174695,
+      "ratio_to_C44": 0.6454916143571382,
+      "steps": 1527,
+      "tau_at_gamma_max_Pa": 1320.0384776660176,
+      "tau_relative_deviation_from_previous_rate": 0.20219113888044704,
+      "tau_relative_deviation_from_reference": 4.672564954846673,
+      "velocity_m_per_s": 0.1
+    }
+  ],
+  "shear_to_failure": {
+    "C44_Pa": 93333.33333333331,
+    "affine_onset_gamma": 0.051938178290956295,
+    "concentration": {
+      "concentration_factor": 1.3052678716097872,
+      "gamma_before_event": 0.039284188136479645,
+      "global_affine_estimate": 0.022680736595492426,
+      "max_local_invariant_before_event": 0.02960443678254061
+    },
+    "energy_ledger_at_event": {
+      "bond_elastic_after_J": 1.1689321379005302,
+      "bond_elastic_before_J": 1.1140309208885049,
+      "elastic_drop_J": -0.05490121701202533,
+      "recorded_over_elastic_drop": null,
+      "released_recorded_after_J": 0.0
+    },
+    "failure_mode_counts": {
+      "2": 778
+    },
+    "failure_mode_energy": {
+      "2": {
+        "count": 778,
+        "max_recorded_release_J": 0.005346755517992373,
+        "mean_recorded_release_J": 0.0008811681845109056
+      }
+    },
+    "final": {
+      "bond_elastic_energy_J": 0.40754094159865006,
+      "broken_bonds": 778,
+      "gamma": 0.06000659737847266,
+      "released_bond_energy_J": 0.6855488475494845,
+      "tau_Pa": 2276.364321475572
+    },
+    "first_failure": {
+      "broken_bonds": 2,
+      "failure_mode_codes": [
+        2
+      ],
+      "gamma": 0.039906187781973905,
+      "max_bond_invariant": 0.03002643617032442,
+      "time_s": 0.03990618778197347
+    },
+    "first_failure_local_invariant_over_threshold": 1.0008812056774807,
+    "history": [
+      {
+        "bond_elastic_energy_J": 0.0033259417992191308,
+        "broken_bonds": 0,
+        "gamma": 0.0009821047034119911,
+        "kinetic_energy_J": 5.11084254696505e-05,
+        "max_alive_bond_invariant": 0.0023209640680245114,
+        "max_bond_invariant": 0.0023209640680245114,
+        "released_bond_energy_J": 0.0,
+        "tau_Pa": 1.0729616185909958e-05,
+        "time_s": 0.0009821047034119918
+      },
+      {
+        "bond_elastic_energy_J": 0.012116521701841453,
+        "broken_bonds": 0,
+        "gamma": 0.0019642094068239822,
+        "kinetic_energy_J": 0.0006648760226894229,
+        "max_alive_bond_invariant": 0.004452262907587998,
+        "max_bond_invariant": 0.004452262907587998,
+        "released_bond_energy_J": 0.0,
+        "tau_Pa": 0.0011499397966842411,
+        "time_s": 0.0019642094068239835
+      },
+      {
+        "bond_elastic_energy_J": 0.024656198386890017,
+        "broken_bonds": 0,
+        "gamma": 0.002946314110235974,
+        "kinetic_energy_J": 0.002690730412469077,
+        "max_alive_bond_invariant": 0.00638841055425172,
+        "max_bond_invariant": 0.00638841055425172,
+        "released_bond_energy_J": 0.0,
+        "tau_Pa": 0.017437230018374623,
+        "time_s": 0.0029463141102359755
+      },
+      {
+        "bond_elastic_energy_J": 0.03915440270546616,
+        "broken_bonds": 0,
+        "gamma": 0.0039284188136479645,
+        "kinetic_energy_J": 0.006611503721345883,
+        "max_alive_bond_invariant": 0.00808361238646292,
+        "max_bond_invariant": 0.00808361238646292,
+        "released_bond_energy_J": 0.0,
+        "tau_Pa": 0.11701645604303179,
+        "time_s": 0.003928418813647967
+      },
+      {
+        "bond_elastic_energy_J": 0.05434746063698721,
+        "broken_bonds": 0,
+        "gamma": 0.004910523517059956,
+        "kinetic_energy_J": 0.012245538639912285,
+        "max_alive_bond_invariant": 0.009524129823798373,
+        "max_bond_invariant": 0.009524129823798373,
+        "released_bond_energy_J": 0.0,
+        "tau_Pa": 0.4992161883450731,
+        "time_s": 0.004910523517059946
+      },
+      {
+        "bond_elastic_energy_J": 0.06962648228116244,
+        "broken_bonds": 0,
+        "gamma": 0.005892628220471948,
+        "kinetic_energy_J": 0.018922174028659304,
+        "max_alive_bond_invariant": 0.010721350058205478,
+        "max_bond_invariant": 0.010721350058205478,
+        "released_bond_energy_J": 0.0,
+        "tau_Pa": 1.5926549778497534,
+        "time_s": 0.005892628220471925
+      },
+      {
+        "bond_elastic_energy_J": 0.08484054471505392,
+        "broken_bonds": 0,
+        "gamma": 0.006874732923883938,
+        "kinetic_energy_J": 0.02585935932272571,
+        "max_alive_bond_invariant": 0.011703404135050725,
+        "max_bond_invariant": 0.011703404135050725,
+        "released_bond_energy_J": 0.0,
+        "tau_Pa": 4.144787935494032,
+        "time_s": 0.006874732923883904
+      },
+      {
+        "bond_elastic_energy_J": 0.10003366990581622,
+        "broken_bonds": 0,
+        "gamma": 0.007856837627295929,
+        "kinetic_energy_J": 0.032460391751268636,
+        "max_alive_bond_invariant": 0.012507414431466532,
+        "max_bond_invariant": 0.012507414431466532,
+        "released_bond_energy_J": 0.0,
+        "tau_Pa": 9.26875916595011,
+        "time_s": 0.007856837627295884
+      },
+      {
+        "bond_elastic_energy_J": 0.11528268838785208,
+        "broken_bonds": 0,
+        "gamma": 0.00883894233070792,
+        "kinetic_energy_J": 0.03841155799072605,
+        "max_alive_bond_invariant": 0.013173384948459044,
+        "max_bond_invariant": 0.013173384948459044,
+        "released_bond_energy_J": 0.0,
+        "tau_Pa": 18.4195883198127,
+        "time_s": 0.008838942330707863
+      },
+      {
+        "bond_elastic_energy_J": 0.1306567365846668,
+        "broken_bonds": 0,
+        "gamma": 0.009821047034119911,
+        "kinetic_energy_J": 0.04362526494410383,
+        "max_alive_bond_invariant": 0.013739833018345901,
+        "max_bond_invariant": 0.013739833018345901,
+        "released_bond_energy_J": 0.0,
+        "tau_Pa": 33.28667095399977,
+        "time_s": 0.009821047034119842
+      },
+      {
+        "bond_elastic_energy_J": 0.14623705002455611,
+        "broken_bonds": 0,
+        "gamma": 0.010803151737531902,
+        "kinetic_energy_J": 0.048132855664052725,
+        "max_alive_bond_invariant": 0.014240855524587077,
+        "max_bond_invariant": 0.014240855524587077,
+        "released_bond_energy_J": 0.0,
+        "tau_Pa": 55.60948282110771,
+        "time_s": 0.01080315173753182
+      },
+      {
+        "bond_elastic_energy_J": 0.16213689824351216,
+        "broken_bonds": 0,
+        "gamma": 0.011785256440943895,
+        "kinetic_energy_J": 0.05200112311072631,
+        "max_alive_bond_invariant": 0.014704346636505845,
+        "max_bond_invariant": 0.014704346636505845,
+        "released_bond_energy_J": 0.0,
+        "tau_Pa": 86.94326922532595,
+        "time_s": 0.0117852564409438
+      },
+      {
+        "bond_elastic_energy_J": 0.17850011167446503,
+        "broken_bonds": 0,
+        "gamma": 0.012767361144355885,
+        "kinetic_energy_J": 0.0552915258640921,
+        "max_alive_bond_invariant": 0.015151228973546569,
+        "max_bond_invariant": 0.015151228973546569,
+        "released_bond_energy_J": 0.0,
+        "tau_Pa": 128.41632456103156,
+        "time_s": 0.012767361144355779
+      },
+      {
+        "bond_elastic_energy_J": 0.1954864914705493,
+        "broken_bonds": 0,
+        "gamma": 0.013749465847767876,
+        "kinetic_energy_J": 0.058048155042434824,
+        "max_alive_bond_invariant": 0.015595598766639702,
+        "max_bond_invariant": 0.015595598766639702,
+        "released_bond_energy_J": 0.0,
+        "tau_Pa": 180.526295315268,
+        "time_s": 0.013749465847767758
+      },
+      {
+        "bond_elastic_energy_J": 0.21325831835586379,
+        "broken_bonds": 0,
+        "gamma": 0.014731570551179867,
+        "kinetic_energy_J": 0.0602968366895227,
+        "max_alive_bond_invariant": 0.016045601380160188,
+        "max_bond_invariant": 0.016045601380160188,
+        "released_bond_energy_J": 0.0,
+        "tau_Pa": 243.01796429498737,
+        "time_s": 0.014731570551179737
+      },
+      {
+        "bond_elastic_energy_J": 0.23197337497365106,
+        "broken_bonds": 0,
+        "gamma": 0.015713675254591858,
+        "kinetic_energy_J": 0.062047840834229734,
+        "max_alive_bond_invariant": 0.01650475190258992,
+        "max_bond_invariant": 0.01650475190258992,
+        "released_bond_energy_J": 0.0,
+        "tau_Pa": 314.8700335795536,
+        "time_s": 0.015713675254591716
+      },
+      {
+        "bond_elastic_energy_J": 0.25178090287291033,
+        "broken_bonds": 0,
+        "gamma": 0.01669577995800385,
+        "kinetic_energy_J": 0.0633026784146149,
+        "max_alive_bond_invariant": 0.016973382984064277,
+        "max_bond_invariant": 0.016973382984064277,
+        "released_bond_energy_J": 0.0,
+        "tau_Pa": 394.396867723728,
+        "time_s": 0.016695779958003695
+      },
+      {
+        "bond_elastic_energy_J": 0.27281546238342896,
+        "broken_bonds": 0,
+        "gamma": 0.01767788466141584,
+        "kinetic_energy_J": 0.06406561334355915,
+        "max_alive_bond_invariant": 0.017449953226879172,
+        "max_bond_invariant": 0.017449953226879172,
+        "released_bond_energy_J": 0.0,
+        "tau_Pa": 479.44803584598475,
+        "time_s": 0.017677884661415674
+      },
+      {
+        "bond_elastic_energy_J": 0.2951884887604198,
+        "broken_bonds": 0,
+        "gamma": 0.018659989364827833,
+        "kinetic_energy_J": 0.06435607830219671,
+        "max_alive_bond_invariant": 0.01793205486308031,
+        "max_bond_invariant": 0.01793205486308031,
+        "released_bond_energy_J": 0.0,
+        "tau_Pa": 567.6692556595208,
+        "time_s": 0.018659989364827653
+      },
+      {
+        "bond_elastic_energy_J": 0.3189822110135982,
+        "broken_bonds": 0,
+        "gamma": 0.019642094068239822,
+        "kinetic_energy_J": 0.06421556843278954,
+        "max_alive_bond_invariant": 0.018417081519446585,
+        "max_bond_invariant": 0.018417081519446585,
+        "released_bond_energy_J": 0.0,
+        "tau_Pa": 656.7774279101136,
+        "time_s": 0.01964209406823963
+      },
+      {
+        "bond_elastic_energy_J": 0.34425049987692435,
+        "broken_bonds": 0,
+        "gamma": 0.02062419877165181,
+        "kinetic_energy_J": 0.06370526998261093,
+        "max_alive_bond_invariant": 0.0189026206798462,
+        "max_bond_invariant": 0.0189026206798462,
+        "released_bond_energy_J": 0.0,
+        "tau_Pa": 744.8021244137609,
+        "time_s": 0.02062419877165161
+      },
+      {
+        "bond_elastic_energy_J": 0.37102647451876825,
+        "broken_bonds": 0,
+        "gamma": 0.021606303475063805,
+        "kinetic_energy_J": 0.06289658827497316,
+        "max_alive_bond_invariant": 0.01939686404095055,
+        "max_bond_invariant": 0.01939686404095055,
+        "released_bond_energy_J": 0.0,
+        "tau_Pa": 830.255731434667,
+        "time_s": 0.02160630347506359
+      },
+      {
+        "bond_elastic_energy_J": 0.39933204356756835,
+        "broken_bonds": 0,
+        "gamma": 0.022588408178475797,
+        "kinetic_energy_J": 0.061860735421164825,
+        "max_alive_bond_invariant": 0.01993083259635525,
+        "max_bond_invariant": 0.01993083259635525,
+        "released_bond_energy_J": 0.0,
+        "tau_Pa": 912.2115613382576,
+        "time_s": 0.02258840817847557
+      },
+      {
+        "bond_elastic_energy_J": 0.42918415892146816,
+        "broken_bonds": 0,
+        "gamma": 0.02357051288188779,
+        "kinetic_energy_J": 0.06066252833039193,
+        "max_alive_bond_invariant": 0.020455717751732078,
+        "max_bond_invariant": 0.020455717751732078,
+        "released_bond_energy_J": 0.0,
+        "tau_Pa": 990.2891596861134,
+        "time_s": 0.023570512881887547
+      },
+      {
+        "bond_elastic_energy_J": 0.46059616932082187,
+        "broken_bonds": 0,
+        "gamma": 0.024552617585299776,
+        "kinetic_energy_J": 0.05935918058522452,
+        "max_alive_bond_invariant": 0.02097054981510131,
+        "max_bond_invariant": 0.02097054981510131,
+        "released_bond_energy_J": 0.0,
+        "tau_Pa": 1064.5639596822425,
+        "time_s": 0.024552617585299526
+      },
+      {
+        "bond_elastic_energy_J": 0.493576475104311,
+        "broken_bonds": 0,
+        "gamma": 0.02553472228871177,
+        "kinetic_energy_J": 0.05800139242852926,
+        "max_alive_bond_invariant": 0.02147631786489386,
+        "max_bond_invariant": 0.02147631786489386,
+        "released_bond_energy_J": 0.0,
+        "tau_Pa": 1135.4305022797653,
+        "time_s": 0.025534722288711505
+      },
+      {
+        "bond_elastic_energy_J": 0.5281275141416932,
+        "broken_bonds": 0,
+        "gamma": 0.026516826992123762,
+        "kinetic_energy_J": 0.05663397567926119,
+        "max_alive_bond_invariant": 0.0219760612152652,
+        "max_bond_invariant": 0.0219760612152652,
+        "released_bond_energy_J": 0.0,
+        "tau_Pa": 1203.4525985139258,
+        "time_s": 0.026516826992123484
+      },
+      {
+        "bond_elastic_energy_J": 0.5642461898555124,
+        "broken_bonds": 0,
+        "gamma": 0.02749893169553575,
+        "kinetic_energy_J": 0.05529547601730881,
+        "max_alive_bond_invariant": 0.02247458016961422,
+        "max_bond_invariant": 0.02247458016961422,
+        "released_bond_energy_J": 0.0,
+        "tau_Pa": 1269.230161634127,
+        "time_s": 0.027498931695535463
+      },
+      {
+        "bond_elastic_energy_J": 0.6019248184368075,
+        "broken_bonds": 0,
+        "gamma": 0.028481036398947744,
+        "kinetic_energy_J": 0.054017934950705775,
+        "max_alive_bond_invariant": 0.02297777575911104,
+        "max_bond_invariant": 0.02297777575911104,
+        "released_bond_energy_J": 0.0,
+        "tau_Pa": 1333.3029633727595,
+        "time_s": 0.028481036398947442
+      },
+      {
+        "bond_elastic_energy_J": 0.6411514676958969,
+        "broken_bonds": 0,
+        "gamma": 0.029463141102359734,
+        "kinetic_energy_J": 0.05282762072472947,
+        "max_alive_bond_invariant": 0.023491746465985584,
+        "max_bond_invariant": 0.023491746465985584,
+        "released_bond_energy_J": 0.0,
+        "tau_Pa": 1396.0994007986872,
+        "time_s": 0.02946314110235942
+      },
+      {
+        "bond_elastic_energy_J": 0.6819097748643368,
+        "broken_bonds": 0,
+        "gamma": 0.030445245805771723,
+        "kinetic_energy_J": 0.05174620211857591,
+        "max_alive_bond_invariant": 0.024021845802930826,
+        "max_bond_invariant": 0.024021845802930826,
+        "released_bond_energy_J": 0.0,
+        "tau_Pa": 1457.9268219790843,
+        "time_s": 0.0304452458057714
+      },
+      {
+        "bond_elastic_energy_J": 0.7241792408186183,
+        "broken_bonds": 0,
+        "gamma": 0.031427350509183716,
+        "kinetic_energy_J": 0.05079121150161642,
+        "max_alive_bond_invariant": 0.024571913140476992,
+        "max_bond_invariant": 0.024571913140476992,
+        "released_bond_energy_J": 0.0,
+        "tau_Pa": 1518.9916871981125,
+        "time_s": 0.03142735050918338
+      },
+      {
+        "bond_elastic_energy_J": 0.767936623482997,
+        "broken_bonds": 0,
+        "gamma": 0.03240945521259571,
+        "kinetic_energy_J": 0.04997535030481757,
+        "max_alive_bond_invariant": 0.025143834455529333,
+        "max_bond_invariant": 0.025143834455529333,
+        "released_bond_energy_J": 0.0,
+        "tau_Pa": 1579.4342100501442,
+        "time_s": 0.03240945521259536
+      },
+      {
+        "bond_elastic_energy_J": 0.8131579662854207,
+        "broken_bonds": 0,
+        "gamma": 0.0333915599160077,
+        "kinetic_energy_J": 0.049305331687250875,
+        "max_alive_bond_invariant": 0.025737494356609526,
+        "max_bond_invariant": 0.025737494356609526,
+        "released_bond_energy_J": 0.0,
+        "tau_Pa": 1639.3630828731525,
+        "time_s": 0.03339155991600734
+      },
+      {
+        "bond_elastic_energy_J": 0.8598202057658846,
+        "broken_bonds": 0,
+        "gamma": 0.03437366461941969,
+        "kinetic_energy_J": 0.048781350230731456,
+        "max_alive_bond_invariant": 0.026351078931097144,
+        "max_bond_invariant": 0.026351078931097144,
+        "released_bond_energy_J": 0.0,
+        "tau_Pa": 1698.880230038857,
+        "time_s": 0.03437366461941932
+      },
+      {
+        "bond_elastic_energy_J": 0.9079017246085888,
+        "broken_bonds": 0,
+        "gamma": 0.03535576932283168,
+        "kinetic_energy_J": 0.04839766573588529,
+        "max_alive_bond_invariant": 0.02698161030963945,
+        "max_bond_invariant": 0.02698161030963945,
+        "released_bond_energy_J": 0.0,
+        "tau_Pa": 1758.0913953843751,
+        "time_s": 0.0353557693228313
+      },
+      {
+        "bond_elastic_energy_J": 0.9573821256799431,
+        "broken_bonds": 0,
+        "gamma": 0.03633787402624367,
+        "kinetic_energy_J": 0.04814390548500701,
+        "max_alive_bond_invariant": 0.027625557217745962,
+        "max_bond_invariant": 0.027625557217745962,
+        "released_bond_energy_J": 0.0,
+        "tau_Pa": 1817.103870266707,
+        "time_s": 0.03633787402624328
+      },
+      {
+        "bond_elastic_energy_J": 1.0082420303679778,
+        "broken_bonds": 0,
+        "gamma": 0.037319978729655666,
+        "kinetic_energy_J": 0.048006338608197203,
+        "max_alive_bond_invariant": 0.028279376003830285,
+        "max_bond_invariant": 0.028279376003830285,
+        "released_bond_energy_J": 0.0,
+        "tau_Pa": 1876.0164008998597,
+        "time_s": 0.03731997872965526
+      },
+      {
+        "bond_elastic_energy_J": 1.0604634849397732,
+        "broken_bonds": 0,
+        "gamma": 0.03830208343306765,
+        "kinetic_energy_J": 0.047968719681164645,
+        "max_alive_bond_invariant": 0.028939884477340194,
+        "max_bond_invariant": 0.028939884477340194,
+        "released_bond_energy_J": 0.0,
+        "tau_Pa": 1934.9076416243836,
+        "time_s": 0.038302083433067236
+      },
+      {
+        "bond_elastic_energy_J": 1.1140309208885049,
+        "broken_bonds": 0,
+        "gamma": 0.039284188136479645,
+        "kinetic_energy_J": 0.04801287235481419,
+        "max_alive_bond_invariant": 0.02960443678254061,
+        "max_bond_invariant": 0.02960443678254061,
+        "released_bond_energy_J": 0.0,
+        "tau_Pa": 1993.828601686152,
+        "time_s": 0.039284188136479214
+      },
+      {
+        "bond_elastic_energy_J": 1.1689321379005302,
+        "broken_bonds": 2,
+        "gamma": 0.04026629283989164,
+        "kinetic_energy_J": 0.048119452178725444,
+        "max_alive_bond_invariant": 0.0299377832094054,
+        "max_bond_invariant": 0.030270928690843475,
+        "released_bond_energy_J": 0.0,
+        "tau_Pa": 2052.8021176751254,
+        "time_s": 0.04026629283989119
+      },
+      {
+        "bond_elastic_energy_J": 1.2251587693579546,
+        "broken_bonds": 4,
+        "gamma": 0.04124839754330362,
+        "kinetic_energy_J": 0.04826913973716034,
+        "max_alive_bond_invariant": 0.029616553211977464,
+        "max_bond_invariant": 0.03093770128727934,
+        "released_bond_energy_J": 0.0,
+        "tau_Pa": 2111.82948968069,
+        "time_s": 0.04124839754330317
+      },
+      {
+        "bond_elastic_energy_J": 1.2827060382339204,
+        "broken_bonds": 6,
+        "gamma": 0.042230502246715616,
+        "kinetic_energy_J": 0.04844411426757933,
+        "max_alive_bond_invariant": 0.029851399919763787,
+        "max_bond_invariant": 0.03160341970200682,
+        "released_bond_energy_J": 0.0,
+        "tau_Pa": 2170.9019932090823,
+        "time_s": 0.04223050224671515
+      },
+      {
+        "bond_elastic_energy_J": 1.3415719953299927,
+        "broken_bonds": 10,
+        "gamma": 0.04321260695012761,
+        "kinetic_energy_J": 0.04862938414048827,
+        "max_alive_bond_invariant": 0.03001046757855891,
+        "max_bond_invariant": 0.0322669861134874,
+        "released_bond_energy_J": 0.0,
+        "tau_Pa": 2230.0136452458946,
+        "time_s": 0.04321260695012713
+      },
+      {
+        "bond_elastic_energy_J": 1.4017566098486391,
+        "broken_bonds": 25,
+        "gamma": 0.044194711653539595,
+        "kinetic_energy_J": 0.04881356881813229,
+        "max_alive_bond_invariant": 0.030010220906778226,
+        "max_bond_invariant": 0.032927514138157574,
+        "released_bond_energy_J": 0.0,
+        "tau_Pa": 2289.1715525955674,
+        "time_s": 0.04419471165353911
+      },
+      {
+        "bond_elastic_energy_J": 1.4632610168214903,
+        "broken_bonds": 55,
+        "gamma": 0.045176816356951595,
+        "kinetic_energy_J": 0.048988970026178996,
+        "max_alive_bond_invariant": 0.029991321596217507,
+        "max_bond_invariant": 0.03358435851534028,
+        "released_bond_energy_J": 0.0,
+        "tau_Pa": 2348.4011951000016,
+        "time_s": 0.04517681635695109
+      },
+      {
+        "bond_elastic_energy_J": 1.3993459534662998,
+        "broken_bonds": 140,
+        "gamma": 0.04615892106036358,
+        "kinetic_energy_J": 0.04566359924008445,
+        "max_alive_bond_invariant": 0.03002289351528746,
+        "max_bond_invariant": 0.03423717070880624,
+        "released_bond_energy_J": 0.12444306321934062,
+        "tau_Pa": 2407.745621445262,
+        "time_s": 0.04615892106036307
+      },
+      {
+        "bond_elastic_energy_J": 1.3380567643372863,
+        "broken_bonds": 238,
+        "gamma": 0.04714102576377558,
+        "kinetic_energy_J": 0.04150368922468612,
+        "max_alive_bond_invariant": 0.03001360643110582,
+        "max_bond_invariant": 0.03491739458878969,
+        "released_bond_energy_J": 0.23163013773163135,
+        "tau_Pa": 2467.2569655671637,
+        "time_s": 0.047141025763775046
+      },
+      {
+        "bond_elastic_energy_J": 1.2471449516384623,
+        "broken_bonds": 317,
+        "gamma": 0.048123130467187566,
+        "kinetic_energy_J": 0.042319446608720925,
+        "max_alive_bond_invariant": 0.029941543327551334,
+        "max_bond_invariant": 0.03675302519492864,
+        "released_bond_energy_J": 0.34475373589393243,
+        "tau_Pa": 2526.9429488435403,
+        "time_s": 0.048123130467187025
+      },
+      {
+        "bond_elastic_energy_J": 1.1872251700822791,
+        "broken_bonds": 386,
+        "gamma": 0.04910523517059955,
+        "kinetic_energy_J": 0.05555094613191929,
+        "max_alive_bond_invariant": 0.030007889866807944,
+        "max_bond_invariant": 0.04122459548459499,
+        "released_bond_energy_J": 0.4038829224924946,
+        "tau_Pa": 2586.5680803985856,
+        "time_s": 0.049105235170599004
+      },
+      {
+        "bond_elastic_energy_J": 1.0845663581977991,
+        "broken_bonds": 443,
+        "gamma": 0.05008733987401155,
+        "kinetic_energy_J": 0.07381922178130754,
+        "max_alive_bond_invariant": 0.030027247708155798,
+        "max_bond_invariant": 0.046687975627187406,
+        "released_bond_energy_J": 0.48595890557124466,
+        "tau_Pa": 2645.2843866929697,
+        "time_s": 0.05008733987401098
+      },
+      {
+        "bond_elastic_energy_J": 0.9411125624345875,
+        "broken_bonds": 491,
+        "gamma": 0.05106944457742354,
+        "kinetic_energy_J": 0.09236141010275892,
+        "max_alive_bond_invariant": 0.029976726204030954,
+        "max_bond_invariant": 0.0525599286134142,
+        "released_bond_energy_J": 0.5896364884043411,
+        "tau_Pa": 2701.1972596058235,
+        "time_s": 0.05106944457742296
+      },
+      {
+        "bond_elastic_energy_J": 0.8873436935328677,
+        "broken_bonds": 510,
+        "gamma": 0.05205154928083553,
+        "kinetic_energy_J": 0.1113278671095923,
+        "max_alive_bond_invariant": 0.029986985516974908,
+        "max_bond_invariant": 0.058521762454223455,
+        "released_bond_energy_J": 0.5929509347441496,
+        "tau_Pa": 2750.9941952353506,
+        "time_s": 0.05205154928083494
+      },
+      {
+        "bond_elastic_energy_J": 0.821105771966921,
+        "broken_bonds": 543,
+        "gamma": 0.053033653984247524,
+        "kinetic_energy_J": 0.1244595483149595,
+        "max_alive_bond_invariant": 0.030024223259967314,
+        "max_bond_invariant": 0.06439918506077957,
+        "released_bond_energy_J": 0.609583088472381,
+        "tau_Pa": 2789.777269213852,
+        "time_s": 0.05303365398424692
+      },
+      {
+        "bond_elastic_energy_J": 0.7408099492002607,
+        "broken_bonds": 582,
+        "gamma": 0.05401575868765951,
+        "kinetic_energy_J": 0.1306040349317012,
+        "max_alive_bond_invariant": 0.029998612871083224,
+        "max_bond_invariant": 0.07010919460436227,
+        "released_bond_energy_J": 0.6446772992228416,
+        "tau_Pa": 2811.3956171923405,
+        "time_s": 0.0540157586876589
+      },
+      {
+        "bond_elastic_energy_J": 0.6877615255231225,
+        "broken_bonds": 601,
+        "gamma": 0.0549978633910715,
+        "kinetic_energy_J": 0.13483689105250948,
+        "max_alive_bond_invariant": 0.02998131911399074,
+        "max_bond_invariant": 0.07560902905968653,
+        "released_bond_energy_J": 0.6536990271832988,
+        "tau_Pa": 2809.163386629148,
+        "time_s": 0.05499786339107088
+      },
+      {
+        "bond_elastic_energy_J": 0.6382669508143783,
+        "broken_bonds": 623,
+        "gamma": 0.055979968094483495,
+        "kinetic_energy_J": 0.14111426980879455,
+        "max_alive_bond_invariant": 0.030044422206188817,
+        "max_bond_invariant": 0.08086770115411684,
+        "released_bond_energy_J": 0.6586583012694236,
+        "tau_Pa": 2776.842308226884,
+        "time_s": 0.05597996809448286
+      },
+      {
+        "bond_elastic_energy_J": 0.5824702003505481,
+        "broken_bonds": 656,
+        "gamma": 0.05696207279789549,
+        "kinetic_energy_J": 0.14904219364189092,
+        "max_alive_bond_invariant": 0.03002856248728168,
+        "max_bond_invariant": 0.08583864427574568,
+        "released_bond_energy_J": 0.666546730112919,
+        "tau_Pa": 2709.7872230729704,
+        "time_s": 0.056962072797894836
+      },
+      {
+        "bond_elastic_energy_J": 0.5189725316677185,
+        "broken_bonds": 708,
+        "gamma": 0.057944177501307474,
+        "kinetic_energy_J": 0.15915344212322877,
+        "max_alive_bond_invariant": 0.030026190166301786,
+        "max_bond_invariant": 0.09055094441729616,
+        "released_bond_energy_J": 0.6798768546677032,
+        "tau_Pa": 2605.9377225777334,
+        "time_s": 0.057944177501306815
+      },
+      {
+        "bond_elastic_energy_J": 0.46624212613782323,
+        "broken_bonds": 744,
+        "gamma": 0.05892628220471947,
+        "kinetic_energy_J": 0.16890526303739245,
+        "max_alive_bond_invariant": 0.0296077895691187,
+        "max_bond_invariant": 0.0948695360416013,
+        "released_bond_energy_J": 0.6821328174418237,
+        "tau_Pa": 2466.315223809222,
+        "time_s": 0.058926282204718794
+      },
+      {
+        "bond_elastic_energy_J": 0.4135528453314743,
+        "broken_bonds": 772,
+        "gamma": 0.05990838690813146,
+        "kinetic_energy_J": 0.1754091315429676,
+        "max_alive_bond_invariant": 0.03003870069836473,
+        "max_bond_invariant": 0.0988232929601721,
+        "released_bond_energy_J": 0.6845148633464347,
+        "tau_Pa": 2294.9984487530137,
+        "time_s": 0.05990838690813077
+      },
+      {
+        "bond_elastic_energy_J": 0.40754094159865006,
+        "broken_bonds": 778,
+        "gamma": 0.06000659737847266,
+        "kinetic_energy_J": 0.1757712114126344,
+        "max_alive_bond_invariant": 0.0299971068413458,
+        "max_bond_invariant": 0.09920140464496294,
+        "released_bond_energy_J": 0.6855488475494845,
+        "tau_Pa": 2276.364321475572,
+        "time_s": 0.06000659737847197
+      }
+    ],
+    "macro_over_affine_onset": 0.7683401516014,
+    "protocol": {
+      "dt_s": 3.273682344706637e-05,
+      "gamma_max": 0.06,
+      "lattice_spacing_m": 0.05,
+      "particle_count": 225,
+      "sample_every": 30,
+      "specimen_area_m2": 0.1125,
+      "specimen_height_m": 0.2,
+      "steps": 1833,
+      "velocity_m_per_s": 0.2
+    },
+    "specimen": {
+      "area_m2": 0.1125,
+      "height_in_lattices": 4.0,
+      "height_m": 0.2,
+      "lattice_spacing_m": 0.05
+    }
+  },
+  "thresholds": {
+    "mapping": [
+      {
+        "closed_form_gamma": 0.005196129040367798,
+        "closed_form_uniaxial": 0.004489920307814588,
+        "first_order_gamma": 0.005196152422706632,
+        "gamma_relative_error": 4.0639462009147795e-12,
+        "measured_onset_gamma": 0.005196129040388915,
+        "measured_uniaxial_onset": 0.004489920307814255,
+        "onset_broken_bonds": 2,
+        "onset_failure_modes": [
+          2
+        ],
+        "onset_local_bond_invariant": 0.0030000000000000243,
+        "shear_breaking_strain": 0.003,
+        "uniaxial_failure_modes": [
+          2
+        ],
+        "uniaxial_relative_error": 7.418102873849516e-14
+      },
+      {
+        "closed_form_gamma": 0.017319642201799414,
+        "closed_form_uniaxial": 0.014889156509221957,
+        "first_order_gamma": 0.017320508075688773,
+        "gamma_relative_error": 2.451899998690519e-13,
+        "measured_onset_gamma": 0.01731964220180366,
+        "measured_uniaxial_onset": 0.014889156509221624,
+        "onset_broken_bonds": 8,
+        "onset_failure_modes": [
+          2
+        ],
+        "onset_local_bond_invariant": 0.010000000000000037,
+        "shear_breaking_strain": 0.01,
+        "uniaxial_failure_modes": [
+          2
+        ],
+        "uniaxial_relative_error": 2.2369763336240972e-14
+      },
+      {
+        "closed_form_gamma": 0.051938178290956295,
+        "closed_form_uniaxial": 0.04403065089105507,
+        "first_order_gamma": 0.05196152422706631,
+        "gamma_relative_error": 9.35193703854034e-15,
+        "measured_onset_gamma": 0.05193817829095678,
+        "measured_uniaxial_onset": 0.04403065089105474,
+        "onset_broken_bonds": 6,
+        "onset_failure_modes": [
+          2
+        ],
+        "onset_local_bond_invariant": 0.03000000000000001,
+        "shear_breaking_strain": 0.03,
+        "uniaxial_failure_modes": [
+          2
+        ],
+        "uniaxial_relative_error": 7.406840618608558e-15
+      },
+      {
+        "closed_form_gamma": 0.08649475803846973,
+        "closed_form_uniaxial": 0.07238052947636087,
+        "first_order_gamma": 0.08660254037844387,
+        "gamma_relative_error": 5.936523328509208e-15,
+        "measured_onset_gamma": 0.08649475803847025,
+        "measured_uniaxial_onset": 0.07238052947636055,
+        "onset_broken_bonds": 14,
+        "onset_failure_modes": [
+          2
+        ],
+        "onset_local_bond_invariant": 0.050000000000000044,
+        "shear_breaking_strain": 0.05,
+        "uniaxial_failure_modes": [
+          2
+        ],
+        "uniaxial_relative_error": 4.409875444251595e-15
+      }
+    ],
+    "reference": 0.03
+  },
+  "units": "SI",
+  "verdict": "INCOMPLETE"
+}

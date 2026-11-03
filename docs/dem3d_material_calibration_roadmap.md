@@ -45,8 +45,25 @@ properties.
   term to particles that never intersected the plane, adding a fictitious load
   `n gamma_p |v_p|` to every platen benchmark. Fixed and covered by
   `tests/test_dem3d_platen_contact_mask.py`.
-- Still open: shear specimen protocol, objectivity under rigid-body rotation,
-  fracture-energy calibration from measured crack growth.
+- **Shear specimen protocol added** (`src/tensordem/shear_specimen.py`,
+  `scripts/benchmark_dem3d_shear_specimen.py`,
+  `tests/test_dem3d_shear_specimen.py`, `docs/dem3d_shear_specimen.md`): the
+  `shear_breaking_strain` threshold is now calibrated to a macroscopic
+  engineering shear strain by closed form (`gamma_c = sqrt(1.5*(sqrt(1+4s^2)-1))`,
+  verified against the solver to 4e-12), the criterion is shown to be
+  *deviatoric* rather than mode-II specific (uniaxial onset `sqrt(1+3s)-1`,
+  verified to 7e-14), and a driven block is taken to its first mode-II bond event
+  (local invariant = threshold to 0.09 %; macroscopic onset 0.77x the affine
+  value, explained by a measured 1.305 strain concentration). The driven
+  specimen's *apparent modulus* is recorded as WITHHELD: the ramp is still 20 %
+  from rate convergence. Mode-II fracture energy remains not representable in a
+  bond law with no tangential stiffness.
+- Objectivity under rigid-body rotation is covered by
+  `tests/test_dem3d_fracture_objectivity.py` and by the rotation probe in
+  `docs/dem3d_shear_specimen.md`.
+- Still open: quasi-static apparent modulus of a driven block, mode-II energy
+  release rate (model change), fracture-energy calibration from measured crack
+  growth, independent shear-specimen data.
 
 ## Acceptance philosophy
 
