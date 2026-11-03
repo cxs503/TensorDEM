@@ -86,6 +86,11 @@ def _build_engine(damping: float, *, platen: bool, dt_scale: float = 1.0) -> Ice
         drag=0.0, fix_x_edges=False, fix_bottom=False,
         bottom_platen_enabled=platen, top_platen_enabled=False,
         tool_gap=100.0, tool_speed=1e-9,
+        # The audit sweeps ``contact_damping`` as an absolute dashpot
+        # c_n [N s/m]; the clipped-law reference in tensordem.restitution uses
+        # the same convention. Without this opt-in the legacy pair law derives
+        # gamma_n from restitution_coefficient and ignores contact_damping.
+        contact_damping_model="absolute",
     )
     if dt_scale != 1.0:
         kwargs["dt"] = DEM3DConfig(**kwargs).recommended_dt * dt_scale
@@ -208,7 +213,13 @@ def build_audit(damping_values: list[float], targets: list[float],
         for label, runner, m_eff in (("pair", measure_pair, m_pair),
                                      ("platen", measure_platen, m_wall)):
             measured = runner(c)
-            ref = unilateral_contact_detail(c, STIFFNESS, m_eff, IMPACT_SPEED)
+            # The pair case closes at 2*IMPACT_SPEED (both spheres move), the
+            # platen case at IMPACT_SPEED (one body moves). The reference must
+            # see the same closing rate, otherwise peak overlap and duration are
+            # compared at two different velocity scales (restitution is
+            # speed-independent for this law, overlap is not).
+            closing_speed = 2.0 * IMPACT_SPEED if label == "pair" else IMPACT_SPEED
+            ref = unilateral_contact_detail(c, STIFFNESS, m_eff, closing_speed)
             bilateral = classical_restitution(c, STIFFNESS, m_eff)
             row[label] = {
                 "e_engine": measured["restitution"],
