@@ -138,6 +138,15 @@ class DEM3DConfig:
     young_modulus: float = 1.0e9             # Pa, used only by contact_model="hertz"
     poisson_ratio: float = 0.3               # used only by contact_model="hertz"
     hertz_stability_overlap_fraction: float = 0.1  # delta_ref / radius for the dt bound
+    # --- Normal dashpot convention for particle-particle contacts ---
+    # "restitution" (default, bit-for-bit legacy): the pair dashpot is derived
+    #   from restitution_coefficient and contact_damping does not enter the pair
+    #   law (it still sets the tool branch and the recommended_dt bound).
+    # "absolute": gamma_n = contact_damping, the same convention the tool and
+    #   platen branches already use, so the pair law is the clipped
+    #   F = max(k*delta - c*delta_dot, 0) whose reference solution is
+    #   tensordem.restitution.unilateral_restitution(c, k, m_eff).
+    contact_damping_model: str = "restitution"  # "restitution" | "absolute"
 
     def __post_init__(self) -> None:
         for name in ("nx", "ny", "nz"):
@@ -177,6 +186,14 @@ class DEM3DConfig:
             raise ValueError("rolling_resistance_coefficient must be finite and nonnegative")
         if not (0.0 < self.restitution_coefficient <= 1.0):
             raise ValueError("restitution_coefficient must be in (0, 1]")
+        if self.contact_damping_model not in ("restitution", "absolute"):
+            raise ValueError(
+                "contact_damping_model must be 'restitution' or 'absolute'")
+        if (self.contact_damping_model == "absolute"
+                and self.restitution_coefficient < 1.0):
+            raise ValueError(
+                "contact_damping_model='absolute' and restitution_coefficient < 1 "
+                "specify the same dashpot twice; pick one convention")
         if self.contact_model not in ("linear", "hertz"):
             raise ValueError("contact_model must be 'linear' or 'hertz'")
         if not math.isfinite(self.young_modulus) or self.young_modulus <= 0.0:
@@ -645,7 +662,14 @@ class IceDEM3D:
                 k_local = (hertz_secant_stiffness(overlap, e_star_pairs, r_eff_pairs)
                            if hertz else cfg.contact_stiffness)
                 # Map restitution coefficient to damping
-                if cfg.restitution_coefficient < 1.0:
+                if cfg.contact_damping_model == "absolute":
+                    # Absolute dashpot convention shared with the tool/platen
+                    # branches: gamma_n = c_n [N s/m], no mass/stiffness mapping.
+                    # This is the branch that makes contact_damping observable in
+                    # the pair law; the reference solution is the clipped-law
+                    # RK4 integration in tensordem.restitution.
+                    gamma_n = cfg.contact_damping
+                elif cfg.restitution_coefficient < 1.0:
                     ln_e = math.log(cfg.restitution_coefficient)
                     abs_ln_e = -ln_e
                     zeta = abs_ln_e / math.sqrt(math.pi ** 2 + abs_ln_e ** 2)
