@@ -1,0 +1,263 @@
+{
+  "module": "tensordem.fracture_gen",
+  "increment": "SI-2/DEM 2.5 (FEM failure faces -> DEM bonded-particle field)",
+  "a1_lattice_enumeration": {
+    "criterion": "c4_lattice_enumeration",
+    "rows": [
+      {
+        "n_per_axis": 2,
+        "num_particles": 8,
+        "num_bonds": 12,
+        "analytic_bonds": 12,
+        "particle_count_exact": true,
+        "bond_count_exact": true
+      },
+      {
+        "n_per_axis": 3,
+        "num_particles": 27,
+        "num_bonds": 54,
+        "analytic_bonds": 54,
+        "particle_count_exact": true,
+        "bond_count_exact": true
+      },
+      {
+        "n_per_axis": 4,
+        "num_particles": 64,
+        "num_bonds": 144,
+        "analytic_bonds": 144,
+        "particle_count_exact": true,
+        "bond_count_exact": true
+      },
+      {
+        "n_per_axis": 5,
+        "num_particles": 125,
+        "num_bonds": 300,
+        "analytic_bonds": 300,
+        "particle_count_exact": true,
+        "bond_count_exact": true
+      }
+    ],
+    "all_exact": true
+  },
+  "a2_mass_mapping": {
+    "criterion": "c1_mass_conservation",
+    "domain_volume_m3": 0.21599999999999997,
+    "fem_continuum_mass_kg": 198.07199999999997,
+    "rows": [
+      {
+        "mass_mapping": "equal_volume_spheres",
+        "volume_fraction": 0.5235987755982988,
+        "num_particles": 27,
+        "dem_mass_kg": 103.71025668030626,
+        "fem_continuum_mass_kg": 198.07199999999997,
+        "relative_error": 0.476401224401701
+      },
+      {
+        "mass_mapping": "cell_volume",
+        "volume_fraction": 1.0,
+        "num_particles": 27,
+        "dem_mass_kg": 198.07200000000006,
+        "fem_continuum_mass_kg": 198.07199999999997,
+        "relative_error": 4.304754245487097e-16
+      }
+    ],
+    "equal_sphere_deficit_fraction": 0.4764012244017012,
+    "quantisation_sweep": [
+      {
+        "domain_length_m": 0.4,
+        "particles_per_axis": 2,
+        "covered_length_m": 0.4,
+        "cell_mass_relative_error": 0.0
+      },
+      {
+        "domain_length_m": 0.5,
+        "particles_per_axis": 2,
+        "covered_length_m": 0.4,
+        "cell_mass_relative_error": 0.4879999999999999
+      },
+      {
+        "domain_length_m": 0.6000000000000001,
+        "particles_per_axis": 3,
+        "covered_length_m": 0.6000000000000001,
+        "cell_mass_relative_error": 0.0
+      },
+      {
+        "domain_length_m": 0.7000000000000001,
+        "particles_per_axis": 4,
+        "covered_length_m": 0.8,
+        "cell_mass_relative_error": 0.49271137026239065
+      },
+      {
+        "domain_length_m": 0.8,
+        "particles_per_axis": 4,
+        "covered_length_m": 0.8,
+        "cell_mass_relative_error": 0.0
+      },
+      {
+        "domain_length_m": 1.0,
+        "particles_per_axis": 5,
+        "covered_length_m": 1.0,
+        "cell_mass_relative_error": 0.0
+      }
+    ]
+  },
+  "a3_energy_and_faces": {
+    "criterion": "c2_energy_accounting",
+    "lattice": {
+      "particle_radius_m": 0.05,
+      "particles_per_axis": 10,
+      "num_particles": 1000,
+      "domain_side_m": 1.0,
+      "bond_spacing_sq_m2": 0.010000000000000002
+    },
+    "rows": [
+      {
+        "face_area_m2": 0.01,
+        "analytic_bonds": 0.9999999999999998,
+        "analytic_unit_bond_energy_J": 5.000000000000001,
+        "plane": {
+          "num_broken_bonds": 100,
+          "bond_count_relative_error": 99.00000000000003,
+          "unit_bond_energy_J": 0.05,
+          "unit_bond_energy_relative_error": 0.99
+        },
+        "disc": {
+          "num_broken_bonds": 0,
+          "bond_count_relative_error": 1.0,
+          "unit_bond_energy_J": 0.0,
+          "unit_bond_energy_relative_error": 1.0
+        },
+        "plane_overbreaks_factor": Infinity,
+        "full_cross_section_m2": 1.0
+      },
+      {
+        "face_area_m2": 0.04,
+        "analytic_bonds": 3.999999999999999,
+        "analytic_unit_bond_energy_J": 5.000000000000001,
+        "plane": {
+          "num_broken_bonds": 100,
+          "bond_count_relative_error": 24.000000000000007,
+          "unit_bond_energy_J": 0.2,
+          "unit_bond_energy_relative_error": 0.96
+        },
+        "disc": {
+          "num_broken_bonds": 4,
+          "bond_count_relative_error": 2.2204460492503136e-16,
+          "unit_bond_energy_J": 5.0,
+          "unit_bond_energy_relative_error": 1.77635683940025e-16
+        },
+        "plane_overbreaks_factor": 25.0,
+        "full_cross_section_m2": 1.0
+      },
+      {
+        "face_area_m2": 0.09,
+        "analytic_bonds": 8.999999999999998,
+        "analytic_unit_bond_energy_J": 5.000000000000001,
+        "plane": {
+          "num_broken_bonds": 100,
+          "bond_count_relative_error": 10.111111111111112,
+          "unit_bond_energy_J": 0.45,
+          "unit_bond_energy_relative_error": 0.91
+        },
+        "disc": {
+          "num_broken_bonds": 12,
+          "bond_count_relative_error": 0.3333333333333336,
+          "unit_bond_energy_J": 3.75,
+          "unit_bond_energy_relative_error": 0.2500000000000001
+        },
+        "plane_overbreaks_factor": 8.333333333333334,
+        "full_cross_section_m2": 1.0
+      },
+      {
+        "face_area_m2": 0.25,
+        "analytic_bonds": 24.999999999999996,
+        "analytic_unit_bond_energy_J": 5.000000000000001,
+        "plane": {
+          "num_broken_bonds": 100,
+          "bond_count_relative_error": 3.0000000000000004,
+          "unit_bond_energy_J": 1.25,
+          "unit_bond_energy_relative_error": 0.75
+        },
+        "disc": {
+          "num_broken_bonds": 24,
+          "bond_count_relative_error": 0.03999999999999986,
+          "unit_bond_energy_J": 5.208333333333333,
+          "unit_bond_energy_relative_error": 0.04166666666666642
+        },
+        "plane_overbreaks_factor": 4.166666666666667,
+        "full_cross_section_m2": 1.0
+      },
+      {
+        "face_area_m2": 0.49,
+        "analytic_bonds": 48.99999999999999,
+        "analytic_unit_bond_energy_J": 5.000000000000001,
+        "plane": {
+          "num_broken_bonds": 100,
+          "bond_count_relative_error": 1.0408163265306125,
+          "unit_bond_energy_J": 2.45,
+          "unit_bond_energy_relative_error": 0.51
+        },
+        "disc": {
+          "num_broken_bonds": 52,
+          "bond_count_relative_error": 0.06122448979591852,
+          "unit_bond_energy_J": 4.711538461538462,
+          "unit_bond_energy_relative_error": 0.057692307692307834
+        },
+        "plane_overbreaks_factor": 1.9230769230769231,
+        "full_cross_section_m2": 1.0
+      },
+      {
+        "face_area_m2": 1.0,
+        "analytic_bonds": 99.99999999999999,
+        "analytic_unit_bond_energy_J": 5.000000000000001,
+        "plane": {
+          "num_broken_bonds": 100,
+          "bond_count_relative_error": 1.4210854715202006e-16,
+          "unit_bond_energy_J": 5.0,
+          "unit_bond_energy_relative_error": 1.77635683940025e-16
+        },
+        "disc": {
+          "num_broken_bonds": 88,
+          "bond_count_relative_error": 0.11999999999999987,
+          "unit_bond_energy_J": 5.681818181818182,
+          "unit_bond_energy_relative_error": 0.13636363636363613
+        },
+        "plane_overbreaks_factor": 1.1363636363636365,
+        "full_cross_section_m2": 1.0
+      }
+    ],
+    "disc_max_unit_energy_relative_error": 1.0,
+    "disc_max_bond_count_relative_error": 1.0
+  },
+  "a4_legacy_fixture": {
+    "criterion": "input_consistency",
+    "declared_released_energy_J": 1.0,
+    "G_times_area_J": 4.0,
+    "input_consistency_error_J": 3.0,
+    "relative_inconsistency": 0.75,
+    "num_broken_bonds_plane": 9,
+    "analytic_bonds_for_declared_area": 0.9999999999999998,
+    "implied_unit_bond_energy_J": 0.1111111111111111,
+    "analytic_unit_bond_energy_J": 4.000000000000001,
+    "unit_bond_energy_relative_error": 0.9722222222222222
+  },
+  "a5_invariance": {
+    "criterion": "in_plane_translation_invariance",
+    "rows": [
+      {
+        "in_plane_shift_m": 0.0,
+        "num_broken_bonds": 9
+      },
+      {
+        "in_plane_shift_m": 0.05,
+        "num_broken_bonds": 9
+      },
+      {
+        "in_plane_shift_m": 0.1,
+        "num_broken_bonds": 9
+      }
+    ],
+    "invariant": true,
+    "analytic_bonds": 8.999999999999998
+  }
+}
