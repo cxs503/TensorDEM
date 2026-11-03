@@ -1,0 +1,333 @@
+{
+  "controls": {
+    "chain": [
+      {
+        "affine_closed_Pa": 1.0,
+        "affine_machinery_Pa": 1.0,
+        "internal_strain_closed": 0.0,
+        "internal_strain_machinery": 0.0,
+        "k1": 1.0,
+        "k2": 1.0,
+        "ratio_closed": 1.0,
+        "ratio_machinery": 1.0,
+        "relaxed_closed_Pa": 1.0,
+        "relaxed_machinery_Pa": 1.0
+      },
+      {
+        "affine_closed_Pa": 3.5,
+        "affine_machinery_Pa": 3.5,
+        "internal_strain_closed": 0.07142857142857142,
+        "internal_strain_machinery": 0.07142857142857142,
+        "k1": 4.0,
+        "k2": 3.0,
+        "ratio_closed": 0.9795918367346939,
+        "ratio_machinery": 0.9795918367346939,
+        "relaxed_closed_Pa": 3.4285714285714284,
+        "relaxed_machinery_Pa": 3.4285714285714284
+      },
+      {
+        "affine_closed_Pa": 1.5,
+        "affine_machinery_Pa": 1.5,
+        "internal_strain_closed": 0.16666666666666666,
+        "internal_strain_machinery": 0.16666666666666666,
+        "k1": 2.0,
+        "k2": 1.0,
+        "ratio_closed": 0.8888888888888888,
+        "ratio_machinery": 0.8888888888888888,
+        "relaxed_closed_Pa": 1.3333333333333333,
+        "relaxed_machinery_Pa": 1.3333333333333333
+      },
+      {
+        "affine_closed_Pa": 2.0,
+        "affine_machinery_Pa": 2.0,
+        "internal_strain_closed": 0.25,
+        "internal_strain_machinery": 0.25,
+        "k1": 3.0,
+        "k2": 1.0,
+        "ratio_closed": 0.75,
+        "ratio_machinery": 0.75,
+        "relaxed_closed_Pa": 1.5,
+        "relaxed_machinery_Pa": 1.5
+      },
+      {
+        "affine_closed_Pa": 3.0,
+        "affine_machinery_Pa": 3.0,
+        "internal_strain_closed": 0.3333333333333333,
+        "internal_strain_machinery": 0.3333333333333333,
+        "k1": 5.0,
+        "k2": 1.0,
+        "ratio_closed": 0.5555555555555556,
+        "ratio_machinery": 0.5555555555555556,
+        "relaxed_closed_Pa": 1.6666666666666667,
+        "relaxed_machinery_Pa": 1.6666666666666667
+      },
+      {
+        "affine_closed_Pa": 2.6,
+        "affine_machinery_Pa": 2.5999999999999996,
+        "internal_strain_closed": 0.4615384615384615,
+        "internal_strain_machinery": 0.4615384615384615,
+        "k1": 5.0,
+        "k2": 0.2,
+        "ratio_closed": 0.14792899408284022,
+        "ratio_machinery": 0.14792899408284024,
+        "relaxed_closed_Pa": 0.3846153846153846,
+        "relaxed_machinery_Pa": 0.3846153846153846
+      }
+    ],
+    "max_abs_error": 2.220446049250313e-16,
+    "three_dimensional_two_basis": {
+      "xx_affine_Pa": 1.5,
+      "xx_internal_strain_m": 0.16666666666666666,
+      "xx_ratio": 0.8888888888888888,
+      "xx_relaxed_Pa": 1.3333333333333333,
+      "yy_affine_Pa": 0.7,
+      "yy_ratio": 1.0,
+      "yy_relaxed_Pa": 0.7
+    }
+  },
+  "free_surface_ladder": [
+    {
+      "affine_same_specimen_Pa": 93333.33333333333,
+      "core_rms_m": 0.056313029728772036,
+      "deviation_from_documented": 3.5398134733855e-05,
+      "documented_ratio": 0.743,
+      "free_dof_residual_N": 2.846463805402285e-13,
+      "max_free_displacement_m": 0.07136778077704639,
+      "particles": 64,
+      "penetration_quotient": 0.8700181362405768,
+      "ratio": 0.7430263008141073,
+      "relaxed_Pa": 69349.12140931668,
+      "size": 4,
+      "solve_method": "spsolve",
+      "surface_rms_m": 0.06472627107764153
+    },
+    {
+      "affine_same_specimen_Pa": 93333.33333333333,
+      "core_rms_m": 0.07637703270877817,
+      "deviation_from_documented": null,
+      "documented_ratio": null,
+      "free_dof_residual_N": 1.1036208983720522e-12,
+      "max_free_displacement_m": 0.10631259802337796,
+      "particles": 125,
+      "penetration_quotient": 0.8961003080941826,
+      "ratio": 0.6581859764659241,
+      "relaxed_Pa": 61430.69113681959,
+      "size": 5,
+      "solve_method": "spsolve",
+      "surface_rms_m": 0.08523268212150947
+    },
+    {
+      "affine_same_specimen_Pa": 98277.77777777778,
+      "core_rms_m": 0.10955026562424545,
+      "deviation_from_documented": 0.11770790383795027,
+      "documented_ratio": 0.6148,
+      "free_dof_residual_N": 2.208822754331171e-11,
+      "max_free_displacement_m": 0.20155644370746312,
+      "particles": 216,
+      "penetration_quotient": 0.9965693518296473,
+      "ratio": 0.6871668192795718,
+      "relaxed_Pa": 67533.22796142014,
+      "size": 6,
+      "solve_method": "lsqr",
+      "surface_rms_m": 0.1099273878161285
+    },
+    {
+      "affine_same_specimen_Pa": 93333.33333333333,
+      "core_rms_m": 0.11623505443193922,
+      "deviation_from_documented": null,
+      "documented_ratio": null,
+      "free_dof_residual_N": 2.7294185119292214e-12,
+      "max_free_displacement_m": 0.17493848692977576,
+      "particles": 343,
+      "penetration_quotient": 0.9182930223264913,
+      "ratio": 0.5893261376222074,
+      "relaxed_Pa": 55003.77284473936,
+      "size": 7,
+      "solve_method": "spsolve",
+      "surface_rms_m": 0.12657730332901607
+    },
+    {
+      "affine_same_specimen_Pa": 93333.33333333333,
+      "core_rms_m": 0.13612971728137793,
+      "deviation_from_documented": -7.904986186724194e-05,
+      "documented_ratio": 0.5732,
+      "free_dof_residual_N": 5.302499180478056e-12,
+      "max_free_displacement_m": 0.2089100992477297,
+      "particles": 512,
+      "penetration_quotient": 0.9240081885752167,
+      "ratio": 0.5731546886191777,
+      "relaxed_Pa": 53494.43760445659,
+      "size": 8,
+      "solve_method": "spsolve",
+      "surface_rms_m": 0.14732522824422634
+    },
+    {
+      "affine_same_specimen_Pa": 93249.99999999997,
+      "core_rms_m": 0.1881802196731658,
+      "deviation_from_documented": -0.6546225801039437,
+      "documented_ratio": 0.5547,
+      "free_dof_residual_N": 8.899896044720027e-11,
+      "max_free_displacement_m": 0.32015621187165216,
+      "particles": 1000,
+      "penetration_quotient": 0.9608876723629499,
+      "ratio": 0.19158085481634243,
+      "relaxed_Pa": 17864.914711623926,
+      "size": 10,
+      "solve_method": "lsqr",
+      "surface_rms_m": 0.19583997701875575
+    },
+    {
+      "affine_same_specimen_Pa": 93333.33333333333,
+      "core_rms_m": 0.2156546525473163,
+      "deviation_from_documented": -8.356620678551252e-05,
+      "documented_ratio": 0.5451,
+      "free_dof_residual_N": 1.9545803888657057e-11,
+      "max_free_displacement_m": 0.34491559275859174,
+      "particles": 1728,
+      "penetration_quotient": 0.9355789949445752,
+      "ratio": 0.5450544480606813,
+      "relaxed_Pa": 50871.748485663586,
+      "size": 12,
+      "solve_method": "spsolve",
+      "surface_rms_m": 0.23050394858436507
+    }
+  ],
+  "free_surface_null_space": {
+    "free_dofs": 432,
+    "load_along_null_abs": 2.466723925743035e-13,
+    "load_along_null_relative": 4.190117634373297e-17,
+    "load_norm": 5887.003996039302,
+    "max_eigenvalue": 35776.82826621085,
+    "min_eigenvalue": -2.798748183936846e-12,
+    "null_dim": 17,
+    "size": 6
+  },
+  "module": "tensordem.born_huang",
+  "parameters": {
+    "bond_stiffness_N_per_m": 2000.0,
+    "radius_m": 0.025,
+    "spacing_m": 0.05
+  },
+  "scope": "linear small-strain elasticity of the intact bond network; no fracture/contact/dynamics",
+  "sha256_of_body": "02cff963fad9b0b0d36a5b6f7222bd75538d7f3367989dccc01fd950c260e940",
+  "solver_lattice": {
+    "affine_force_relative": {
+      "biaxial": 8.210716057672268e-15,
+      "shear": 0.0,
+      "xx": 1.6421432115344536e-14
+    },
+    "affine_measured_Pa": {
+      "C11": 173333.33333333334,
+      "C12": 93333.33333333334,
+      "C44": 93333.33333333333
+    },
+    "affine_relative_error": {
+      "C11": 2.220446049250313e-16,
+      "C12": 2.220446049250313e-16,
+      "C44": 2.220446049250313e-16
+    },
+    "atoms": 27,
+    "bonds": 351,
+    "closed_form_Pa": {
+      "C11": 173333.3333333333,
+      "C12": 93333.33333333331,
+      "C44": 93333.33333333331
+    },
+    "internal_strain_max_m": {
+      "biaxial": 2.8685950785527213e-18,
+      "shear": 0.0,
+      "xx": 3.868669164894879e-18
+    },
+    "mode_affine_Pa": {
+      "biaxial": 533333.3333333334,
+      "shear": 93333.33333333333,
+      "xx": 173333.33333333334
+    },
+    "mode_relaxed_Pa": {
+      "biaxial": 533333.3333333334,
+      "shear": 93333.33333333333,
+      "xx": 173333.33333333334
+    },
+    "network": {
+      "bonds_per_cell": 13.0,
+      "cell": [
+        [
+          0.05,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.05,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.05
+        ]
+      ],
+      "cells": 27,
+      "coordination_number": 26
+    },
+    "ratio_relaxed_to_affine": {
+      "biaxial": 1.0,
+      "shear": 1.0,
+      "xx": 1.0
+    },
+    "relaxed_k0_Pa": {
+      "C11": 173333.33333333334,
+      "C12": 93333.33333333334,
+      "C44": 93333.33333333333
+    },
+    "relaxed_relative_error": {
+      "C11": 2.220446049250313e-16,
+      "C12": 2.220446049250313e-16,
+      "C44": 2.220446049250313e-16
+    }
+  },
+  "surface_fit": {
+    "fits": {
+      "order_1": {
+        "coefficients": [
+          1.199609642955389
+        ],
+        "dof": 3,
+        "intercept": 0.42952634609999646,
+        "max_abs_residual": 0.015560631714402362,
+        "rms_residual": 0.012064651546628807
+      },
+      "order_2": {
+        "coefficients": [
+          -0.22065164972231383,
+          4.214609165760517
+        ],
+        "dof": 2,
+        "intercept": 0.5344800586057807,
+        "max_abs_residual": 0.0007481188258144922,
+        "rms_residual": 0.00045377244427998115
+      }
+    },
+    "sizes": [
+      4,
+      5,
+      7,
+      8,
+      12
+    ]
+  },
+  "verdict": {
+    "documented_sizes_not_reproduced": [
+      6,
+      10
+    ],
+    "documented_sizes_reproduced": [
+      4,
+      8,
+      12
+    ],
+    "engine_validated_max_abs_error": 2.220446049250313e-16,
+    "internal_strain_zero_for_one_atom_basis": true,
+    "relaxed_equals_affine_periodic": 2.220446049250313e-16
+  }
+}
