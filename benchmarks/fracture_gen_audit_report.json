@@ -50,7 +50,7 @@
         "num_particles": 27,
         "dem_mass_kg": 103.71025668030626,
         "fem_continuum_mass_kg": 198.07199999999997,
-        "relative_error": 0.476401224401701
+        "relative_error": -0.476401224401701
       },
       {
         "mass_mapping": "cell_volume",
