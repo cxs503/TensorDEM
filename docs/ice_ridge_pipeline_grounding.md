@@ -53,9 +53,15 @@ alone is monotone and can never produce it.
 Ultimate bearing capacity uses Vesic (1973) factors for drained conditions and
 Skempton (1951) embedment factors for the undrained total-stress case:
 `N_q = exp(pi tan phi) tan^2(45 + phi/2)`, `N_c = (N_q - 1)/tan phi`,
-`N_gamma = 2 (N_q + 1) tan phi`, `N_c^undrained = 5.14 (1 + 0.2 z/B)` capped at
-9. Pore pressure enters as an effective unit weight reduced by `(1 - r_u)`; it
-is not a coupled seepage solution.
+`N_gamma = 2 (N_q + 1) tan phi`,
+`N_c^undrained = min(5.14 (1 + 0.2 z/B), 7.5)` for a strip footing
+(square/circular: `min(6.2 (1 + 0.2 z/B), 9.0)`), with the embedment enhancement
+applied **once** — it lives inside Skempton's `N_c`. Pore pressure enters as an
+effective unit weight reduced by `(1 - r_u)`; it is not a coupled seepage
+solution. The capacity formulas are checked against Prandtl/Skempton/Vesic table
+values in `docs/ridge_geotech_capacity_verification.md` (43 reference checks,
+worst error 0.071 %); that verification found and removed a double embedment
+factor which had over-predicted undrained capacity by 20 % at `z/B = 1`.
 
 ## 2. From DEM load to pipe stress
 
@@ -170,3 +176,32 @@ ever disagree.
 * (e) `pytest tests/test_ridge_grounding.py` — 24 tests, all green.
 * (f) complete Beaufort-like case with curve, stress distribution and DEM field
   cloud — produced.
+
+## 8. Status after the subgrade-capacity correction (2026-11-03)
+
+The undrained capacity formula was wrong (Skempton's embedment factor applied
+twice, see `docs/ridge_geotech_capacity_verification.md`). Consequences for the
+numbers in section 7, all of them regenerated or recomputed programmatically:
+
+| quantity | before the fix | after the fix | source |
+|---|---|---|---|
+| subgrade `p_ult`, `D = 0.914 m`, cover `0.5 m`, `s_u = 30 kPa` | 221.46 kN/m | 184.55 kN/m (-16.7 %) | `artifacts/ridge_geotech_capacity/verification.json` (`impact`) |
+| seabed-limited capacity, `s_u = 10 / 30 / 60 kPa` | 73.8 / 221.5 / 442.9 kN/m | 61.5 / 184.5 / 369.1 kN/m | analytic sweep; `p_ult` is exactly linear in `s_u` (verified) |
+| coupled peak load (Beaufort main case) | not reproduced here | 174.4 kN/m | `artifacts/ridge_grounding/main_case.json` |
+| post-peak softening of the coupled record | 15.5 % | 19.7 % | `main_case.json` (`metrics.softening_ratio`) |
+| pipe moment / deflection vs Hetenyi | 0.55 % / 0.11 % | 0.55 % / 0.11 % | `main_case.json` (`pipe_profile`) |
+| load-displacement shape criteria (a) | passed | passed | `main_case.json` (`metrics.checks`) |
+
+The physical classification is unchanged: the seabed is still 5-7 times weaker
+than the ice side, so the coupled system remains subgrade-governed, and softening
+still comes from rubble crushing plus the peak-to-residual spring.
+
+Honest gap: the DEM keel-depth / keel-width sweep, the capacity envelope, the
+rate study and the biaxial calibration artifacts were **not** regenerated in this
+round (machine load average was ~130 on 128 cores, so no further heavy runs were
+started); their JSON files on disk are the pre-fix ones and section 7 (d) therefore
+still quotes pre-fix DEM capacities. Re-running
+`python scripts/run_ice_ridge_grounding.py` regenerates every artifact and the
+`build_ridge_report.py` report; the trends (keel depth and width nearly flat,
+monotone in `s_u`) are not affected by the correction because it is a common
+factor on the subgrade branch.
