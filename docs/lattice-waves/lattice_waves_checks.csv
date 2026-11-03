@@ -1,0 +1,16 @@
+id,description,value,tolerance,rule,status
+closed_form_vs_assembled,closed-form [100] branches match the all-pairs dynamical matrix,2.990621891556959e-16,1e-10,max,PASS
+c_L_matches_sqrt_C11_over_rho,long-wave longitudinal speed matches sqrt(C11/rho),1.2509192057518275e-13,1e-08,max,PASS
+c_T_matches_sqrt_C44_over_rho,long-wave transverse speed matches sqrt(C44/rho),1.2511439809362818e-13,1e-08,max,PASS
+phonon_zone_edge,corrected max_phonon_frequency equals the closed-form zone-edge frequency,1.4958675106150403e-16,1e-06,max,PASS
+phonon_prior_under_report,the prior implementation under-reported omega_max by 1/sqrt(2),0.0,1e-06,max,PASS
+recommended_dt_below_corrected_bound,recommended_dt stays below the corrected central-difference bound,0.04289082234592191,1.0,max,PASS
+response_rms_thin,thin-bar station velocity matches the exact modal response (normalised RMS),0.00035003186184155954,0.05,max,PASS
+response_correlation_thin,thin-bar station velocity correlates with the exact modal response,0.9999999387556759,0.99,min,PASS
+pulse_elastic_thin,thin-bar run stays elastic (no broken bonds),0.0,0.0,max,PASS
+pulse_energy_thin,thin-bar mechanical energy is conserved to 1 % (undamped bond network),0.0023831982112690114,0.01,max,PASS
+response_rms_thick,thick-bar station velocity matches the exact modal response (normalised RMS),0.0010601794045240053,0.05,max,PASS
+response_correlation_thick,thick-bar station velocity correlates with the exact modal response,0.9999994381562206,0.99,min,PASS
+mode_frequency_21_dt1.13e-04,exact normal-mode frequency reproduced by the explicit integrator,7.526718710027216e-07,0.01,max,PASS
+mode_frequency_21_dt5.64e-05,exact normal-mode frequency reproduced by the explicit integrator,7.529355601597847e-07,0.01,max,PASS
+mode_dt_convergence,frequency error does not grow when the step is halved,2.636891570631142e-10,1e-06,max,PASS
