@@ -10,6 +10,14 @@ Anchor 2 — Coefficient-of-restitution mapping:
     Free-fall rebound for e in {0.5, 0.8}.  Measured rebound velocity ratio
     vs target e.  Criterion: relative error < 3% per档.
 
+    Scope note (added by the restitution audit): this anchor verifies the
+    algebra of the *bilateral* mass-spring-dashpot mapping and integrates that
+    bilateral ODE inside the benchmark; it does not run IceDEM3D.  The engine
+    implements a clipped (unilateral) dashpot, whose measured restitution
+    differs by up to 0.16 in e; use tensordem.restitution.damping_for_restitution
+    to set DEM3DConfig.contact_damping from a target e and see
+    docs/dem3d_contact_restitution.md.
+
 Anchor 3 — Friction-angle slip:
     Particle on an inclined plane; slip onset angle vs arctan(mu).
     mu in {0.2, 0.5}.  Criterion: angle difference < 2 degrees per档.

@@ -1,0 +1,375 @@
+{
+  "case": "TensorDEM3D contact-law restitution audit",
+  "damping_sweep": [
+    {
+      "contact_damping": 0.0,
+      "pair": {
+        "abs_err_vs_bilateral": -0.0001340470243430536,
+        "abs_err_vs_unilateral": -0.00013404702434027804,
+        "detached_reference": true,
+        "duration_engine_s": 0.007648468255718608,
+        "duration_err_vs_reference": -0.00672725821423706,
+        "duration_reference_s": 0.0077002699600592596,
+        "e_bilateral_classical": 1.0,
+        "e_engine": 0.999865952975657,
+        "e_reference_unilateral": 0.9999999999999972,
+        "err_vs_bilateral": -0.0001340470243430536,
+        "err_vs_unilateral": -0.00013404702434027842,
+        "peak_overlap_engine_m": 0.0024497956276769775,
+        "peak_overlap_reference_m": 0.0012249235655027095
+      },
+      "platen": {
+        "abs_err_vs_bilateral": -1.2795113275565484e-06,
+        "abs_err_vs_unilateral": -1.2795113280006376e-06,
+        "detached_reference": true,
+        "duration_engine_s": 0.010868875942336969,
+        "duration_err_vs_reference": -0.001923838701019918,
+        "duration_reference_s": 0.010889826211449937,
+        "e_bilateral_classical": 1.0,
+        "e_engine": 0.9999987204886724,
+        "e_reference_unilateral": 1.0000000000000004,
+        "err_vs_bilateral": -1.2795113275565484e-06,
+        "err_vs_unilateral": -1.279511328000637e-06,
+        "peak_overlap_engine_m": 0.001732306377661658,
+        "peak_overlap_reference_m": 0.0017323035192043424
+      }
+    },
+    {
+      "contact_damping": 2.0,
+      "pair": {
+        "abs_err_vs_bilateral": 0.010213867968041135,
+        "abs_err_vs_unilateral": -0.00020693449999020785,
+        "detached_reference": true,
+        "duration_engine_s": 0.007648468255718608,
+        "duration_err_vs_reference": 0.044423939208256186,
+        "duration_reference_s": 0.007323145294349211,
+        "e_bilateral_classical": 0.7731118840167528,
+        "e_engine": 0.7833257519847939,
+        "e_reference_unilateral": 0.7835326864847841,
+        "err_vs_bilateral": 0.013211371056637137,
+        "err_vs_unilateral": -0.0002641044892697357,
+        "peak_overlap_engine_m": 0.002163719765389052,
+        "peak_overlap_reference_m": 0.0010842702316194233
+      },
+      "platen": {
+        "abs_err_vs_bilateral": 0.005034471242539973,
+        "abs_err_vs_unilateral": -0.0005541863120749335,
+        "detached_reference": true,
+        "duration_engine_s": 0.010868875942336969,
+        "duration_err_vs_reference": 0.03479295272500468,
+        "duration_reference_s": 0.01050343057875981,
+        "e_bilateral_classical": 0.8338878139670046,
+        "e_engine": 0.8389222852095446,
+        "e_reference_unilateral": 0.8394764715216195,
+        "err_vs_bilateral": 0.006037348379741615,
+        "err_vs_unilateral": -0.0006601570512993958,
+        "peak_overlap_engine_m": 0.0015286684340369836,
+        "peak_overlap_reference_m": 0.001587187509138599
+      }
+    },
+    {
+      "contact_damping": 5.0,
+      "pair": {
+        "abs_err_vs_bilateral": 0.04690200961627489,
+        "abs_err_vs_unilateral": 0.0004197413246272985,
+        "detached_reference": true,
+        "duration_engine_s": 0.0078022762548841515,
+        "duration_err_vs_reference": 0.14161456066377137,
+        "duration_reference_s": 0.006834422513275985,
+        "e_bilateral_classical": 0.5194588746041029,
+        "e_engine": 0.5663608842203778,
+        "e_reference_unilateral": 0.5659411428957505,
+        "err_vs_bilateral": 0.09029013057486117,
+        "err_vs_unilateral": 0.0007416695709373743,
+        "peak_overlap_engine_m": 0.0018375088447165622,
+        "peak_overlap_reference_m": 0.0009214984492773393
+      },
+      "platen": {
+        "abs_err_vs_bilateral": 0.02435560815647031,
+        "abs_err_vs_unilateral": -0.0029324094403839762,
+        "detached_reference": true,
+        "duration_engine_s": 0.01101497824218939,
+        "duration_err_vs_reference": 0.10299543415623573,
+        "duration_reference_s": 0.0099864223378364,
+        "e_bilateral_classical": 0.632433556089091,
+        "e_engine": 0.6567891642455613,
+        "e_reference_unilateral": 0.6597215736859453,
+        "err_vs_bilateral": 0.03851093592674474,
+        "err_vs_unilateral": -0.0044449197318199634,
+        "peak_overlap_engine_m": 0.0012797945278371424,
+        "peak_overlap_reference_m": 0.0014070328422669943
+      }
+    },
+    {
+      "contact_damping": 10.0,
+      "pair": {
+        "abs_err_vs_bilateral": 0.10937032809706118,
+        "abs_err_vs_unilateral": -0.002663155154852326,
+        "detached_reference": true,
+        "duration_engine_s": 0.008162381312801881,
+        "duration_err_vs_reference": 0.32154811658032445,
+        "duration_reference_s": 0.006176378453720695,
+        "e_bilateral_classical": 0.24543650352060273,
+        "e_engine": 0.3548068316176639,
+        "e_reference_unilateral": 0.35746998677251623,
+        "err_vs_bilateral": 0.4456155727784,
+        "err_vs_unilateral": -0.007450010499894309,
+        "peak_overlap_engine_m": 0.0014496012445502568,
+        "peak_overlap_reference_m": 0.0007323670007388841
+      },
+      "platen": {
+        "abs_err_vs_bilateral": 0.07311860958263844,
+        "abs_err_vs_unilateral": -0.0017711205670148389,
+        "detached_reference": true,
+        "duration_engine_s": 0.011226804746846878,
+        "duration_err_vs_reference": 0.21348213743059613,
+        "duration_reference_s": 0.009251726416524185,
+        "e_bilateral_classical": 0.38787386479365504,
+        "e_engine": 0.4609924743762935,
+        "e_reference_unilateral": 0.4627635949433083,
+        "err_vs_bilateral": 0.18851130797775403,
+        "err_vs_unilateral": -0.0038272685802603233,
+        "peak_overlap_engine_m": 0.0009731364980186671,
+        "peak_overlap_reference_m": 0.0011784293985331405
+      }
+    },
+    {
+      "contact_damping": 20.0,
+      "pair": {
+        "abs_err_vs_bilateral": 0.1631685909003307,
+        "abs_err_vs_unilateral": -0.0004509350994207628,
+        "detached_reference": true,
+        "duration_engine_s": 0.009182678976902116,
+        "duration_err_vs_reference": 0.757157818851508,
+        "duration_reference_s": 0.0052258703676963895,
+        "e_bilateral_classical": 0.011784862844903812,
+        "e_engine": 0.17495345374523452,
+        "e_reference_unilateral": 0.17540438884465528,
+        "err_vs_bilateral": 13.84560796741818,
+        "err_vs_unilateral": -0.002570831336609986,
+        "peak_overlap_engine_m": 0.0010213869441420137,
+        "peak_overlap_reference_m": 0.0005130139475766875
+      },
+      "platen": {
+        "abs_err_vs_bilateral": 0.15052542855003975,
+        "abs_err_vs_unilateral": 1.650018315058066e-05,
+        "detached_reference": true,
+        "duration_engine_s": 0.012074110765476832,
+        "duration_err_vs_reference": 0.48900112849214605,
+        "duration_reference_s": 0.008108866094482962,
+        "e_bilateral_classical": 0.10850539103458225,
+        "e_engine": 0.259030819584622,
+        "e_reference_unilateral": 0.2590143194014714,
+        "err_vs_bilateral": 1.3872622098754992,
+        "err_vs_unilateral": 6.37037488456591e-05,
+        "peak_overlap_engine_m": 0.0005806862035764543,
+        "peak_overlap_reference_m": 0.000881628987892873
+      }
+    },
+    {
+      "contact_damping": 40.0,
+      "pair": {
+        "abs_err_vs_bilateral": 0.06554543241916784,
+        "abs_err_vs_unilateral": -0.0007165415267149922,
+        "detached_reference": true,
+        "duration_engine_s": 0.012048515062830717,
+        "duration_err_vs_reference": 1.9565055752348055,
+        "duration_reference_s": 0.0040752553161932815,
+        "e_bilateral_classical": 0.0,
+        "e_engine": 0.06554543241916784,
+        "e_reference_unilateral": 0.06626197394588283,
+        "err_vs_bilateral": NaN,
+        "err_vs_unilateral": -0.010813766690684503,
+        "peak_overlap_engine_m": 0.0006231326258130249,
+        "peak_overlap_reference_m": 0.0003153124800260962
+      },
+      "platen": {
+        "abs_err_vs_bilateral": 0.11037739865200014,
+        "abs_err_vs_unilateral": -0.0007565358258214,
+        "detached_reference": true,
+        "duration_engine_s": 0.014576311351743412,
+        "duration_err_vs_reference": 1.2098925413989499,
+        "duration_reference_s": 0.006595936715780772,
+        "e_bilateral_classical": 0.0,
+        "e_engine": 0.11037739865200014,
+        "e_reference_unilateral": 0.11113393447782154,
+        "err_vs_bilateral": NaN,
+        "err_vs_unilateral": -0.006807424117359745,
+        "peak_overlap_engine_m": 0.00018763777245747566,
+        "peak_overlap_reference_m": 0.0005774937764244649
+      }
+    }
+  ],
+  "environment": {
+    "device": "cpu",
+    "python": "3.11.6",
+    "torch": "2.7.1"
+  },
+  "figures": [
+    "outputs/dem3d_restitution/fig1_restitution_vs_damping.png",
+    "outputs/dem3d_restitution/fig2_closure_and_error.png"
+  ],
+  "generated_utc": "2026-11-03T00:21:14+00:00",
+  "impact_speed_study": [
+    {
+      "impact_speed": 0.1,
+      "reference": 0.35746998677251685,
+      "restitution": 0.3573633378741474
+    },
+    {
+      "impact_speed": 0.5,
+      "reference": 0.35746998677251623,
+      "restitution": 0.3548068316176639
+    },
+    {
+      "impact_speed": 2.0,
+      "reference": 0.35746998677251623,
+      "restitution": 0.3584037473786066
+    }
+  ],
+  "mapping_closure": [
+    {
+      "pair": {
+        "contact_damping": 0.8394441697462691,
+        "contact_damping_bilateral": 0.8211507637729253,
+        "e_engine": 0.900088268529209,
+        "e_engine_with_bilateral_damping": 0.9021110998532657,
+        "rel_error": 9.807614356550765e-05,
+        "rel_error_with_bilateral_damping": 0.0023456665036284776
+      },
+      "platen": {
+        "contact_damping": 1.1871533297101964,
+        "contact_damping_bilateral": 1.1612825468806967,
+        "e_engine": 0.8997623649340559,
+        "e_engine_with_bilateral_damping": 0.9017776403520503,
+        "rel_error": -0.0002640389621601081,
+        "rel_error_with_bilateral_damping": 0.0019751559467225586
+      },
+      "target": 0.9
+    },
+    {
+      "pair": {
+        "contact_damping": 2.9940751610956076,
+        "contact_damping_bilateral": 2.7636345928483688,
+        "e_engine": 0.6997066139273093,
+        "e_engine_with_bilateral_damping": 0.7178492694299058,
+        "rel_error": -0.0004191229609867049,
+        "rel_error_with_bilateral_damping": 0.025498956328436906
+      },
+      "platen": {
+        "contact_damping": 4.234261699585819,
+        "contact_damping_bilateral": 3.9083695226496094,
+        "e_engine": 0.7004479003658937,
+        "e_engine_with_bilateral_damping": 0.7162144234625576,
+        "rel_error": 0.0006398576655624362,
+        "rel_error_with_bilateral_damping": 0.023163462089368054
+      },
+      "target": 0.7
+    },
+    {
+      "pair": {
+        "contact_damping": 6.253863188278553,
+        "contact_damping_bilateral": 5.27828780617335,
+        "e_engine": 0.49931521358888575,
+        "e_engine_with_bilateral_damping": 0.5455856854793097,
+        "rel_error": -0.001369572822228493,
+        "rel_error_with_bilateral_damping": 0.09117137095861949
+      },
+      "platen": {
+        "contact_damping": 8.844298138089371,
+        "contact_damping_bilateral": 7.464626201598882,
+        "e_engine": 0.5008334251348828,
+        "e_engine_with_bilateral_damping": 0.5514576713628992,
+        "rel_error": 0.0016668502697656518,
+        "rel_error_with_bilateral_damping": 0.1029153427257985
+      },
+      "target": 0.5
+    },
+    {
+      "pair": {
+        "contact_damping": 12.181600944118177,
+        "contact_damping_bilateral": 8.766952644733836,
+        "e_engine": 0.299806612063913,
+        "e_engine_with_bilateral_damping": 0.3947742267536241,
+        "rel_error": -0.0006446264536232501,
+        "rel_error_with_bilateral_damping": 0.3159140891787471
+      },
+      "platen": {
+        "contact_damping": 17.22738526658882,
+        "contact_damping_bilateral": 12.398343330865265,
+        "e_engine": 0.2991623478430729,
+        "e_engine_with_bilateral_damping": 0.3969171017053156,
+        "rel_error": -0.0027921738564236818,
+        "rel_error_with_bilateral_damping": 0.32305700568438533
+      },
+      "target": 0.3
+    }
+  ],
+  "reference_model": "rk4 solution of d2(delta)/dt2 = -max(0, k delta + c d(delta)/dt)/m_eff with detach/exit event localisation",
+  "summary": {
+    "default_config_restitution": {
+      "note": "TensorDEM3D defaults: contact_damping=5 N*s/m, contact_stiffness=5000 N/m, radius=0.025 m, density=917 kg/m^3",
+      "pair": {
+        "abs_err_vs_bilateral": 0.04690200961627489,
+        "abs_err_vs_unilateral": 0.0004197413246272985,
+        "detached_reference": true,
+        "duration_engine_s": 0.0078022762548841515,
+        "duration_err_vs_reference": 0.14161456066377137,
+        "duration_reference_s": 0.006834422513275985,
+        "e_bilateral_classical": 0.5194588746041029,
+        "e_engine": 0.5663608842203778,
+        "e_reference_unilateral": 0.5659411428957505,
+        "err_vs_bilateral": 0.09029013057486117,
+        "err_vs_unilateral": 0.0007416695709373743,
+        "peak_overlap_engine_m": 0.0018375088447165622,
+        "peak_overlap_reference_m": 0.0009214984492773393
+      },
+      "platen": {
+        "abs_err_vs_bilateral": 0.02435560815647031,
+        "abs_err_vs_unilateral": -0.0029324094403839762,
+        "detached_reference": true,
+        "duration_engine_s": 0.01101497824218939,
+        "duration_err_vs_reference": 0.10299543415623573,
+        "duration_reference_s": 0.0099864223378364,
+        "e_bilateral_classical": 0.632433556089091,
+        "e_engine": 0.6567891642455613,
+        "e_reference_unilateral": 0.6597215736859453,
+        "err_vs_bilateral": 0.03851093592674474,
+        "err_vs_unilateral": -0.0044449197318199634,
+        "peak_overlap_engine_m": 0.0012797945278371424,
+        "peak_overlap_reference_m": 0.0014070328422669943
+      }
+    },
+    "density_kg_per_m3": 917.0,
+    "dt_refinement_spread": 0.0025524933619918144,
+    "duration_max_rel_error": 1.9565055752348055,
+    "impact_speed_m_per_s": 0.5,
+    "m_eff_pair_kg": 0.030008754826477507,
+    "m_eff_wall_kg": 0.06001750965295501,
+    "max_abs_err_vs_bilateral": 0.1631685909003307,
+    "max_abs_err_vs_unilateral": 0.0029324094403839762,
+    "max_closure_rel_error": 0.0027921738564236818,
+    "max_closure_rel_error_bilateral_damping": 0.32305700568438533,
+    "max_rel_err_vs_unilateral": 0.010813766690684503,
+    "particle_mass_kg": 0.06001750965295501,
+    "radius_m": 0.025,
+    "speed_spread": 0.003596915760942676,
+    "stiffness_N_per_m": 5000.0
+  },
+  "timestep_refinement": [
+    {
+      "dt": 6.001750965295501e-05,
+      "dt_scale": 1.0,
+      "reference": 0.35746998677251623,
+      "restitution": 0.3548068316176639,
+      "steps_in_contact": 136
+    },
+    {
+      "dt": 3.0008754826477505e-05,
+      "dt_scale": 0.5,
+      "reference": 0.35746998677251623,
+      "restitution": 0.3573593249796557,
+      "steps_in_contact": 272
+    }
+  ]
+}
