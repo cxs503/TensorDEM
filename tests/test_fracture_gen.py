@@ -207,13 +207,11 @@ class TestFractureFieldGeneration(unittest.TestCase):
         return field, faces, config
 
     def test_mass_conservation(self):
-        """Test that total mass is conserved (criterion c1)."""
+        """Total mass equals rho * N * h^3 (criterion c1, volume-consistent)."""
         field, faces, config = self._make_field_and_faces()
 
-        # 3x3x3 = 27 particles
-        expected_mass = (
-            27 * 917.0 * (4.0 / 3.0) * math.pi * 0.1**3
-        )
+        # 3x3x3 = 27 particles, h = 2r = 0.2 m, so each particle owns 8e-3 m^3
+        expected_mass = 27 * 917.0 * 0.2**3
 
         mass_error = abs(field.total_mass - expected_mass)
         self.assertLess(
@@ -299,9 +297,7 @@ class TestFractureFieldGeneration(unittest.TestCase):
         field = generate_fracture_field(faces, config)
 
         expected_particles = 27
-        expected_mass = (
-            expected_particles * density * (4.0 / 3.0) * math.pi * radius**3
-        )
+        expected_mass = expected_particles * density * (2.0 * radius) ** 3
 
         self.assertEqual(
             field.num_particles,
@@ -353,9 +349,7 @@ class TestFractureLedger(unittest.TestCase):
         field = self._make_field()
         ledger = FractureLedger(field, [])
 
-        expected_mass = (
-            8 * 917.0 * (4.0 / 3.0) * math.pi * 0.1**3
-        )
+        expected_mass = 8 * 917.0 * 0.2**3
 
         error = ledger.mass_conservation_error(expected_mass)
         self.assertLess(error, 1e-12)
