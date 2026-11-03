@@ -27,6 +27,8 @@ from typing import Any
 
 import torch
 
+from .hertz_restitution import tsuji_damping_alpha
+
 
 # --------------------------------------------------------------------------
 # Hertz contact law primitives
@@ -138,6 +140,16 @@ class DEM3DConfig:
     young_modulus: float = 1.0e9             # Pa, used only by contact_model="hertz"
     poisson_ratio: float = 0.3               # used only by contact_model="hertz"
     hertz_stability_overlap_fraction: float = 0.1  # delta_ref / radius for the dt bound
+    # Mapping from restitution_coefficient to the Hertz/Tsuji dashpot:
+    #   "exact"          -- universal alpha(e) of tensordem.hertz_restitution, so
+    #                       the realised restitution equals the requested value
+    #                       and is independent of the impact speed (verified in
+    #                       docs/dem3d_hertz_restitution_mapping.md).
+    #   "linear_formula" -- legacy 2*zeta of the *linear* spring-dashpot, which
+    #                       for a Hertz law over-predicts e (up to +44 % at
+    #                       e=0.3); kept only to reproduce pre-fix numbers.
+    # Ignored for contact_model="linear", where the legacy mapping is exact.
+    hertz_damping_mapping: str = "exact"     # "exact" | "linear_formula"
     # --- Normal dashpot convention for particle-particle contacts ---
     # "restitution" (default, bit-for-bit legacy): the pair dashpot is derived
     #   from restitution_coefficient and contact_damping does not enter the pair
@@ -196,6 +208,9 @@ class DEM3DConfig:
                 "specify the same dashpot twice; pick one convention")
         if self.contact_model not in ("linear", "hertz"):
             raise ValueError("contact_model must be 'linear' or 'hertz'")
+        if self.hertz_damping_mapping not in ("exact", "linear_formula"):
+            raise ValueError(
+                "hertz_damping_mapping must be 'exact' or 'linear_formula'")
         if not math.isfinite(self.young_modulus) or self.young_modulus <= 0.0:
             raise ValueError("young_modulus must be finite and positive")
         if not (math.isfinite(self.poisson_ratio) and 0.0 <= self.poisson_ratio < 0.5):
@@ -377,6 +392,18 @@ class IceDEM3D:
         self._rolling_torque = torch.zeros((n, 3), dtype=self.dtype, device=self.device)
         # Flag indicating rolling resistance torque is physically modelled.
         self.rolling_resistance_torque_physical = config.rolling_resistance_coefficient > 0.0
+
+    @property
+    def _hertz_damping_alpha(self) -> float:
+        """Tsuji dashpot coefficient for the configured restitution (Hertz only).
+
+        ``"exact"`` uses the universal Hertz/Tsuji map of
+        :mod:`tensordem.hertz_restitution`; ``"linear_formula"`` reproduces the
+        legacy linear spring-dashpot mapping. Cached by the module's lru_cache,
+        so the per-step cost is one dict lookup.
+        """
+        return tsuji_damping_alpha(self.config.restitution_coefficient,
+                                   mapping=self.config.hertz_damping_mapping)
 
     @property
     def _hertz_pair_params(self) -> tuple[float, float]:
@@ -669,12 +696,20 @@ class IceDEM3D:
                     # the pair law; the reference solution is the clipped-law
                     # RK4 integration in tensordem.restitution.
                     gamma_n = cfg.contact_damping
+                elif hertz:
+                    # Hertz/Tsuji dashpot: gamma = alpha * sqrt(k_local m_eff)
+                    # with k_local the local secant stiffness, i.e. gamma is
+                    # proportional to delta^(1/4). alpha comes from the universal
+                    # alpha(e) map (hertz_damping_mapping="exact") so the realised
+                    # restitution matches restitution_coefficient and is impact
+                    # -speed independent; "linear_formula" keeps the legacy
+                    # linear-law 2*zeta.
+                    gamma_n = self._hertz_damping_alpha * torch.sqrt(k_local * m_eff)
                 elif cfg.restitution_coefficient < 1.0:
                     ln_e = math.log(cfg.restitution_coefficient)
                     abs_ln_e = -ln_e
                     zeta = abs_ln_e / math.sqrt(math.pi ** 2 + abs_ln_e ** 2)
-                    gamma_n = (2.0 * zeta * torch.sqrt(k_local * m_eff) if hertz
-                               else 2.0 * zeta * math.sqrt(cfg.contact_stiffness * m_eff))
+                    gamma_n = 2.0 * zeta * math.sqrt(cfg.contact_stiffness * m_eff)
                 else:
                     gamma_n = 0.0
 

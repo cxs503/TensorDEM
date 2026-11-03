@@ -1,0 +1,343 @@
+{
+  "config": {
+    "young_modulus": 1000000000.0,
+    "poisson_ratio": 0.3,
+    "radius": 0.05,
+    "density": 900.0,
+    "m_eff": 0.23561944901923454,
+    "k_h": 115834346.52631426,
+    "e_targets": [
+      0.3,
+      0.5,
+      0.7,
+      0.85,
+      0.95
+    ],
+    "speeds": [
+      0.1,
+      0.5,
+      2.0,
+      5.0
+    ]
+  },
+  "reference": {
+    "elastic_contact_time_constant_numeric": 2.943275184332682,
+    "elastic_contact_time_constant_textbook": 2.94,
+    "elastic_anchor_rel_error": 0.0011140082764224957,
+    "e_of_alpha_zero_minus_one": -1.0919487536398265e-10,
+    "dimensionless_contact_time_alpha0": 3.2906816943280504
+  },
+  "map_table": [
+    {
+      "e_target": 0.3,
+      "alpha_exact": 1.1118680350482464,
+      "e_roundtrip": 0.29999999951965944,
+      "alpha_legacy": 0.7157142610066334,
+      "e_at_legacy_alpha": 0.43117755608364666,
+      "legacy_bias": 0.43725852027882217,
+      "contact_time_reference": 0.0009987717000684935,
+      "peak_overlap_fraction": 0.6178022900704118
+    },
+    {
+      "e_target": 0.5,
+      "alpha_exact": 0.5708165429532528,
+      "e_roundtrip": 0.5000000008639935,
+      "alpha_legacy": 0.4309075239324936,
+      "e_at_legacy_alpha": 0.5822802020588629,
+      "legacy_bias": 0.16456040411772577,
+      "contact_time_reference": 0.0010820365975933248,
+      "peak_overlap_fraction": 0.757859193794844
+    },
+    {
+      "e_target": 0.7,
+      "alpha_exact": 0.27328167483210564,
+      "e_roundtrip": 0.700000000931941,
+      "alpha_legacy": 0.22561690138716262,
+      "e_at_legacy_alpha": 0.7422214465884018,
+      "legacy_bias": 0.060316352269145446,
+      "contact_time_reference": 0.00114272813305705,
+      "peak_overlap_fraction": 0.867040663017361
+    },
+    {
+      "e_target": 0.85,
+      "alpha_exact": 0.11958305910229683,
+      "e_roundtrip": 0.8499999981639711,
+      "alpha_legacy": 0.10332460094039327,
+      "e_at_legacy_alpha": 0.8684498493081899,
+      "legacy_bias": 0.021705705068458814,
+      "contact_time_reference": 0.0011833941560955212,
+      "peak_overlap_fraction": 0.9370605997009892
+    },
+    {
+      "e_target": 0.95,
+      "alpha_exact": 0.036891307681798935,
+      "e_roundtrip": 0.9500000001625147,
+      "alpha_legacy": 0.03264997383331294,
+      "e_at_legacy_alpha": 0.9555671385137934,
+      "legacy_bias": 0.005860145803993078,
+      "contact_time_reference": 0.0012124396419442578,
+      "peak_overlap_fraction": 0.9796918058666051
+    }
+  ],
+  "engine_exact": [
+    {
+      "e_target": 0.3,
+      "restitution": 0.2991926784162195,
+      "contact_time": 0.0013284372817730658,
+      "contact_time_force": 0.0008639487217125532,
+      "contact_steps": 286,
+      "force_steps": 186,
+      "peak_overlap": 0.00022459930676128892,
+      "dt": 4.644885600605125e-06,
+      "momentum_drift": 0.0,
+      "e_error_vs_target": -0.0026910719459349863,
+      "e_error_vs_reference": -0.0026910703491086485,
+      "contact_time_reference": 0.0008694812660988546,
+      "contact_time_rel_error": -0.006363040357527772,
+      "geometric_contact_time_rel_error": 0.5278503788050919
+    },
+    {
+      "e_target": 0.5,
+      "restitution": 0.4995419916199547,
+      "contact_time": 0.001184445828154307,
+      "contact_time_force": 0.0009382668913222353,
+      "contact_steps": 255,
+      "force_steps": 202,
+      "peak_overlap": 0.00027602160385656327,
+      "dt": 4.644885600605125e-06,
+      "momentum_drift": 0.0,
+      "e_error_vs_target": -0.0009160167600905655,
+      "e_error_vs_reference": -0.0009160184864948073,
+      "contact_time_reference": 0.0009419675695418904,
+      "contact_time_rel_error": -0.003928668395085877,
+      "geometric_contact_time_rel_error": 0.2574167799963025
+    },
+    {
+      "e_target": 0.7,
+      "restitution": 0.6998299869784967,
+      "contact_time": 0.0011194174297458352,
+      "contact_time_force": 0.0009940055185294967,
+      "contact_steps": 241,
+      "force_steps": 214,
+      "peak_overlap": 0.0003160901446309511,
+      "dt": 4.644885600605125e-06,
+      "momentum_drift": 0.0,
+      "e_error_vs_target": -0.0002428757450045893,
+      "e_error_vs_reference": -0.00024287707602566044,
+      "contact_time_reference": 0.000994802619927143,
+      "contact_time_rel_error": -0.0008012658809690709,
+      "geometric_contact_time_rel_error": 0.12526586412470309
+    },
+    {
+      "e_target": 0.85,
+      "restitution": 0.8499523145685959,
+      "contact_time": 0.0010915481161422045,
+      "contact_time_force": 0.0010311646033343378,
+      "contact_steps": 235,
+      "force_steps": 222,
+      "peak_overlap": 0.0003417706432592288,
+      "dt": 4.644885600605125e-06,
+      "momentum_drift": 0.0,
+      "e_error_vs_target": -5.610050753424023e-05,
+      "e_error_vs_reference": -5.609834762143606e-05,
+      "contact_time_reference": 0.0010302044491902974,
+      "contact_time_rel_error": 0.00093200349192335,
+      "geometric_contact_time_rel_error": 0.05954513883154067
+    },
+    {
+      "e_target": 0.95,
+      "restitution": 0.9499956044718215,
+      "contact_time": 0.001077613459340389,
+      "contact_time_force": 0.0010543890313373635,
+      "contact_steps": 232,
+      "force_steps": 227,
+      "peak_overlap": 0.00035740532504945077,
+      "dt": 4.644885600605125e-06,
+      "momentum_drift": 0.0,
+      "e_error_vs_target": -4.6268717667219406e-06,
+      "e_error_vs_reference": -4.627042834215445e-06,
+      "contact_time_reference": 0.0010554900132571246,
+      "contact_time_rel_error": -0.001043100271847841,
+      "geometric_contact_time_rel_error": 0.020960355669300768
+    }
+  ],
+  "engine_legacy": [
+    {
+      "e_target": 0.3,
+      "restitution": 0.4306021892095803,
+      "contact_time": 0.0012216049129591478,
+      "contact_time_force": 0.0009196873489198148,
+      "contact_steps": 263,
+      "force_steps": 198,
+      "peak_overlap": 0.00026002219151848027,
+      "dt": 4.644885600605125e-06,
+      "momentum_drift": 0.0,
+      "e_error_vs_target": 0.4353406306986012,
+      "e_error_vs_reference": -0.001334408217562033,
+      "contact_time_reference": 0.0009203124393560032,
+      "contact_time_rel_error": -0.0006792154592910604,
+      "geometric_contact_time_rel_error": 0.3273806380515476
+    },
+    {
+      "e_target": 0.5,
+      "restitution": 0.581949452689851,
+      "contact_time": 0.001151931628950071,
+      "contact_time_force": 0.0009614913193252609,
+      "contact_steps": 248,
+      "force_steps": 207,
+      "peak_overlap": 0.0002935034927972896,
+      "dt": 4.644885600605125e-06,
+      "momentum_drift": 0.0,
+      "e_error_vs_target": 0.16389890537970198,
+      "e_error_vs_reference": -0.0005680244113442923,
+      "contact_time_reference": 0.0009650911898369226,
+      "contact_time_rel_error": -0.00373008328080382,
+      "geometric_contact_time_rel_error": 0.19359874080367456
+    },
+    {
+      "e_target": 0.7,
+      "restitution": 0.7420948469875035,
+      "contact_time": 0.001110127658544625,
+      "contact_time_force": 0.001003295289730707,
+      "contact_steps": 239,
+      "force_steps": 216,
+      "peak_overlap": 0.0003236265134125421,
+      "dt": 4.644885600605125e-06,
+      "momentum_drift": 0.0,
+      "e_error_vs_target": 0.06013549569643373,
+      "e_error_vs_reference": -0.0001705685028103865,
+      "contact_time_reference": 0.001004872994807559,
+      "contact_time_rel_error": -0.0015700542108350035,
+      "geometric_contact_time_rel_error": 0.10474424557227047
+    },
+    {
+      "e_target": 0.85,
+      "restitution": 0.8684110767063695,
+      "contact_time": 0.0010915481161422045,
+      "contact_time_force": 0.0010358094889349428,
+      "contact_steps": 235,
+      "force_steps": 223,
+      "peak_overlap": 0.0003447404107789209,
+      "dt": 4.644885600605125e-06,
+      "momentum_drift": 0.0,
+      "e_error_vs_target": 0.0216600902427877,
+      "e_error_vs_reference": -4.464575801499393e-05,
+      "contact_time_reference": 0.00103460991951773,
+      "contact_time_rel_error": 0.0011594412489026595,
+      "geometric_contact_time_rel_error": 0.05503349189906803
+    },
+    {
+      "e_target": 0.95,
+      "restitution": 0.9555574274103513,
+      "contact_time": 0.001077613459340389,
+      "contact_time_force": 0.0010543890313373635,
+      "contact_steps": 232,
+      "force_steps": 227,
+      "peak_overlap": 0.0003582438429941964,
+      "dt": 4.644885600605125e-06,
+      "momentum_drift": 0.0,
+      "e_error_vs_target": 0.0058499235898434865,
+      "e_error_vs_reference": -1.0162659483170522e-05,
+      "contact_time_reference": 0.0010570859764660208,
+      "contact_time_rel_error": -0.0025513015863417587,
+      "geometric_contact_time_rel_error": 0.019418934061536053
+    }
+  ],
+  "speed_sweep": [
+    {
+      "e_target": 0.5,
+      "v0": 0.1,
+      "e_measured": 0.49985546144454307,
+      "e_error_vs_target": -0.0002890771109138601,
+      "contact_time": 0.0012959230825688299,
+      "contact_time_reference": 0.0012996605958314755
+    },
+    {
+      "e_target": 0.5,
+      "v0": 0.5,
+      "e_measured": 0.4995419916199547,
+      "e_error_vs_target": -0.0009160167600905655,
+      "contact_time": 0.0009382668913222353,
+      "contact_time_reference": 0.0009419675695418904
+    },
+    {
+      "e_target": 0.5,
+      "v0": 2.0,
+      "e_measured": 0.49986413212838443,
+      "e_error_vs_target": -0.00027173574323113847,
+      "contact_time": 0.0007106674968925842,
+      "contact_time_reference": 0.0007138779251350894
+    },
+    {
+      "e_target": 0.5,
+      "v0": 5.0,
+      "e_measured": 0.4999939907014664,
+      "e_error_vs_target": -1.2018597067231518e-05,
+      "contact_time": 0.0005899004712768509,
+      "contact_time_reference": 0.000594341356264613
+    },
+    {
+      "e_target": 0.85,
+      "v0": 0.1,
+      "e_measured": 0.8500304833045441,
+      "e_error_vs_target": 3.586271122846263e-05,
+      "contact_time": 0.0014213349937851683,
+      "contact_time_reference": 0.001421403635917166
+    },
+    {
+      "e_target": 0.85,
+      "v0": 0.5,
+      "e_measured": 0.8499523145685959,
+      "e_error_vs_target": -5.610050753424023e-05,
+      "contact_time": 0.0010311646033343378,
+      "contact_time_reference": 0.0010302044491902974
+    },
+    {
+      "e_target": 0.85,
+      "v0": 2.0,
+      "e_measured": 0.8500989661942654,
+      "e_error_vs_target": 0.00011643081678291978,
+      "contact_time": 0.000780340780901661,
+      "contact_time_reference": 0.0007807489752652267
+    },
+    {
+      "e_target": 0.85,
+      "v0": 5.0,
+      "e_measured": 0.850173855281237,
+      "e_error_vs_target": 0.0002045356249846808,
+      "contact_time": 0.0006456390984841124,
+      "contact_time_reference": 0.0006500150635327902
+    }
+  ],
+  "anchors": {
+    "engine_elastic": {
+      "e_measured": 1.0000000461360152,
+      "contact_time": 0.0010729685737397839,
+      "contact_time_textbook": 0.0010726569447216245,
+      "contact_time_rel_error": 0.00029052067363455336,
+      "peak_overlap": 0.00036485221435973714,
+      "peak_overlap_analytic": 0.00036484930092572264,
+      "peak_overlap_rel_error": 7.985307926006158e-06,
+      "dt": 4.644885600605125e-06,
+      "contact_steps": 231
+    }
+  },
+  "speed_spread": {
+    "0.5": 0.0009048269997200542,
+    "0.85": 0.0002606507551585757
+  },
+  "gates": {
+    "elastic_anchor": true,
+    "e_roundtrip": true,
+    "engine_e_exact": true,
+    "engine_tc_exact": true,
+    "speed_independence": true
+  },
+  "gate_limits": {
+    "e": 0.02,
+    "contact_time": 0.05,
+    "elastic_anchor": 0.01,
+    "speed_spread": 0.02
+  },
+  "pass": true
+}
