@@ -1,0 +1,6 @@
+case,analytic_final_force_N,analytic_force_N,analytic_friction_work_J,analytic_minus_saturation_travel_m,analytic_onset_travel_m,analytic_zero_crossing_travel_m,below_cone,case,displacement_unchanged,final_force_N,final_force_rel_error,force_ceiling_respected,force_rel_error,friction_work_J,friction_work_rel_error,max_force_over_saturation,measured_force_N,measured_minus_saturation_travel_m,measured_onset_travel_m,measured_zero_crossing_travel_m,minus_saturation_rel_error,onset_travel_rel_error,saturation_level_offset,sliding_reported,stepper,steps,travel_m,zero_crossing_rel_error
+stick_no_slip,,10.0,,,,,True,stick_no_slip,True,,,,0.0,,,,10.0,,,,,,,False,,,,
+monotonic_sliding,30.0,,0.315,,0.003,,,monotonic_sliding,,30.0,0.0,True,,0.31503000000001835,9.523809529634502e-05,1.0,,,0.003001999999999946,,,0.0006666666666486852,,,friction_cone_projected,6000,0.012,
+velocity_reversal,,,,0.006,,0.003,,velocity_reversal,,,,,,,,,,0.005997000000000254,,0.003,0.0004999999999577102,,0.001,,friction_cone_projected,,,0.0
+monotonic_sliding,30.0,,0.315,,,,,monotonic_sliding,,30.0,0.0,True,,0.31503000000001835,9.523809529634502e-05,1.0000000000000002,,,,,,,,,legacy_stateless,6000,0.012,
+velocity_reversal,,,,0.006,,0.003,,velocity_reversal,,,,,,,,,,0.014997000000001395,,0.012000000000000944,1.4995000000002323,,0.001,,legacy_stateless,,,3.000000000000315
