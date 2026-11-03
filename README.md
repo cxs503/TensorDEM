@@ -21,6 +21,10 @@ DEM–Mohr-Coulomb 地基–Winkler 弹性地基梁耦合流程：冰脊龙骨�
 `docs/ice_ridge_pipeline_grounding.md`；工件见 `artifacts/ridge_grounding/`；
 运行 `python scripts/run_ice_ridge_grounding.py`。
 
+## 颗粒气体 Haff 定律验证
+
+无摩擦周期颗粒气体的统计冷却（Haff 1983：`T ∝ (1+t/τ)⁻²`）基准，用于在**多体层面**验证法向接触本构与接触检测：`src/tensordem/granular_gas.py`，方法/数据/误差判定见 `docs/granular_gas_haff_law.md`，运行 `python scripts/run_granular_gas_haff.py`（单线程 ~1 min）。
+
 ## 面向 Agent 科研工厂的职责
 
 在以 Agent 为科研主体的黑灯科研工厂中，TensorDEM 是一个**可编程、可观测、可验证的离散元数值实验设备**，负责颗粒运动、接触、键合与断裂等数值内核及专项验证。TensorPhysics 负责实验编排与跨求解器协调；TensorPlatform 负责数据、产物、研究记录和模型资产治理。
