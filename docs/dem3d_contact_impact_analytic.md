@@ -180,3 +180,20 @@ identity while the solver truncates the force at zero, so a requested
    it documents.
 
 Figure: `artifacts/dem3d_contact_impact/contact_impact_benchmark.png`.
+
+## Verification-status addendum (2026-11-03)
+
+The solver-baseline tables of this document were produced by a harness
+(`src/tensordem/contact_impact.py::_build_pair`) that installed an *absolute*
+dashpot `c_n` [N s/m] but left `DEM3DConfig.contact_damping_model` at its
+default `"restitution"`, which ignores `contact_damping` on the particle-particle
+branch. The published run therefore measured a purely elastic impact
+(`e_measured ~ 1.0002`) and its contact-duration baselines were not reproducible:
+`tests/test_dem3d_contact_impact.py::test_contact_durations` failed on `HEAD`
+(12.17 % at `e_target=0.5`). The harness now declares
+`contact_damping_model="absolute"`; see
+`docs/dem3d_contact_impact_dashpot_convention.md` for the re-derived tables
+(worst `|delta e| = 0.73 %`, worst force-duration residual `1.46 %`, both under the
+3 % band) and the `dt`-convergence evidence. The *derivation-level* claims of this
+document (clamped vs unclamped closed forms, RK4 cross-check) are unaffected;
+only the solver-side numbers of the earlier version were, and are superseded.
