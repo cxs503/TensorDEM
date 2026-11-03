@@ -202,6 +202,15 @@ robustness, not about accuracy.
    the lattice, which this repository does not have (§ `dem3d_material_calibration_roadmap.md`);
    the Gershgorin bound is rigorous and needs no such calibration, so it was
    preferred and the Rayleigh estimate was not implemented.
+> **Closure (Rayleigh-wave audit).** Limitations 2 and 4 above are now
+> addressed by measurement, without relaxing the public guard:
+> `docs/dem3d_rayleigh_timestep_audit.md` derives `c_R` from the closed-form
+> lattice constants (so no calibrated shear modulus is needed), shows that the
+> classical `2r/c_R` criterion is *not* conservative for this `Z = 26` bonded
+> lattice (measured `dt_R/dt_crit = 1.52–1.63`), and bisects the real engine to
+> locate the instability threshold at `dt/dt_crit = 1.000001` vs the predicted
+> `2/omega_max`.
+
 5. **Accuracy vs stability.** Passing the stability audit says nothing about
    spatial resolution, calibration, or physical fidelity; see
    `docs/dem3d_mechanics_benchmark_protocol.md` and the energy-ledger caveats in
