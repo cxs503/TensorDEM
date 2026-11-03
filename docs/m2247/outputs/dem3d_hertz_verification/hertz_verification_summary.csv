@@ -1,0 +1,9 @@
+case,metric,error,tolerance,passed
+hertz_force_vs_independent_closed_form,worst relative error vs closed form,0.000000000000e+00,1.000e-12,True
+reduced_modulus_mapping,relative error of E* mapping,0.000000000000e+00,1.000e-12,True
+hertz_exponent_three_halves,absolute error of log-log slope vs 1.5,2.220446049250e-16,1.000e-10,True
+contact_potential_matches_force_integral,relative error, potential vs integral,3.122762002437e-11,1.000e-10,True
+secant_stiffness_identity,relative error of secant stiffness identity,0.000000000000e+00,1.000e-12,True
+solver_static_hertz_indentation,worst relative error, solver vs closed form,1.500057411619e-12,1.000e-09,True
+solver_dynamic_hertz_impact_force,relative error of peak force vs closed form,3.882673614800e-06,3.000e-02,True
+legacy_linear_penalty_vs_hertz,max relative error of the legacy linear law vs Hertz,9.997841745497e-01,3.000e-02,True
