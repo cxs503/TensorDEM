@@ -391,49 +391,60 @@ class IceDEM3D:
                 cnormal[idx].clone(),
             )
 
-    def _compute_rolling_resistance_torque(
+    def _rolling_resistance_couple(
         self, ci: torch.Tensor, cj: torch.Tensor,
         cnormal: torch.Tensor, contact_mag: torch.Tensor,
-    ) -> tuple[torch.Tensor, torch.Tensor]:
-        """Compute rolling resistance torque for each contact.
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+        """Rolling resistance as a momentum-conserving couple (rotationless DEM).
 
-        Model: T_r = mu_r * R_eff * |F_n| * omega_hat
-        where R_eff = R (equal spheres), omega_hat is the direction of
-        relative angular velocity projected onto the tangential plane.
+        Declared law (see ``forces``): ``T_r = mu_r * R * |F_n|``. The 3-D
+        bonded-sphere model carries no rotational degree of freedom, so the
+        torque cannot act on a particle orientation; it is realised as an
+        equal-and-opposite couple of tangential contact forces
 
-        For simplicity (no explicit particle rotation DOF in current DEM3D),
-        we approximate the rolling resistance as a tangential force couple:
-        F_rr = mu_r * |F_n| * sign(v_tangent), applied at the contact point.
+            ``f_j = -mu_r |F_n| v_hat_rel``, ``f_i = -f_j``,
 
-        Returns (torque_on_i, torque_on_j) each (N, 3).
+        where ``v_hat_rel`` is the unit relative-slip direction
+        ``(v_j - v_i)_t / |(v_j - v_i)_t|`` in the contact tangent plane. Consequences, both verified analytically in
+        ``docs/dem3d_rolling_resistance_verification.md``:
+
+        * ``f_i + f_j = 0`` -- the couple conserves linear momentum;
+        * ``f_j . v_rel <= 0`` -- the couple is strictly dissipative (it can
+          never inject energy), and it vanishes as ``|v_t| -> 0``.
+
+        The returned torques are diagnostic only: they are the moment of the
+        couple force about each particle centre with lever arm ``R``, so
+        ``|T| = mu_r R |F_n|`` reproduces the declared law. The equivalent
+        rolling coefficient in the equal-sphere convention of Ai et al. (2011),
+        ``M_lim = mu_r R* |F_n|`` with ``R* = R/2``, is therefore
+        ``mu_r_Ai = 2 * mu_r_impl``.
+
+        Returns ``(f_i, f_j, torque_i, torque_j)``, each ``(N, 3)``.
         """
         n_contacts = ci.numel()
         mu_r = self.config.rolling_resistance_coefficient
         R = self.config.radius
 
-        # Relative tangential velocity (approximation using translational vel)
         relative_v = self.velocities[cj] - self.velocities[ci]
         vn = (relative_v * cnormal).sum(dim=1, keepdim=True)
         v_tangent = relative_v - vn * cnormal
         v_t_mag = torch.linalg.vector_norm(v_tangent, dim=1, keepdim=True)
 
-        # Rolling resistance force magnitude
-        F_rr_mag = mu_r * contact_mag  # (N,)
-        # Direction opposes tangential motion
-        direction = torch.where(
+        # Kinetic resistance opposes the *relative* slip velocity
+        # v_rel = v_j - v_i: the force on j is -|f| * v_rel_hat and the force on
+        # i is its reaction.  No force when there is no slip (v_t == 0).
+        slip_hat = torch.where(
             v_t_mag > 1e-15,
-            -v_tangent / v_t_mag,
+            v_tangent / v_t_mag.clamp_min(torch.finfo(self.dtype).eps),
             torch.zeros_like(v_tangent),
         )
-        F_rr = F_rr_mag[:, None] * direction  # (N, 3)
+        f_mag = (mu_r * contact_mag)[:, None]
+        force_j = -f_mag * slip_hat
+        force_i = -force_j
 
-        # Torque = R x F_rr (lever arm = R * normal direction)
-        # For sphere-sphere contact, torque on each particle:
-        # T_i = R * (n x F_rr), T_j = -T_i
-        torque_i = R * torch.linalg.cross(cnormal, F_rr)
+        torque_i = R * torch.linalg.cross(cnormal, force_i)
         torque_j = -torque_i
-
-        return torque_i, torque_j
+        return force_i, force_j, torque_i, torque_j
 
     # ------------------------------------------------------------------
     # Main force evaluation
@@ -449,7 +460,9 @@ class IceDEM3D:
         Contact model (SIR-PC2|F05):
         - Normal: linear spring-dashpot with restitution-based damping.
         - Tangential: Cundall-Strack Coulomb-friction spring.
-        - Rolling: resistance torque T_r = mu_r * R * |F_n|.
+        - Rolling: rotationless rolling-resistance surrogate, |f| = mu_r * |F_n|
+          applied as an equal-and-opposite tangential couple along the slip
+          direction (equivalent torque T_r = mu_r * R * |F_n|).
         """
         cfg = self.config
         loads = self._loads(external_forces)
@@ -538,20 +551,15 @@ class IceDEM3D:
 
                 # --- SIR-PC2|F05: Rolling resistance torque ---
                 if cfg.rolling_resistance_coefficient > 0.0:
-                    torque_i, torque_j = self._compute_rolling_resistance_torque(
+                    rr_i, rr_j, torque_i, torque_j = self._rolling_resistance_couple(
                         ci, cj, cnormal, contact_mag,
                     )
-                    # Accumulate rolling torque (stored for diagnostics)
+                    # Accumulate rolling torque (diagnostic only)
                     self._rolling_torque.index_add_(0, ci, torque_i)
                     self._rolling_torque.index_add_(0, cj, torque_j)
-
-                    # Apply rolling resistance as tangential force couple
-                    # F_rr = T_r / R, applied at contact point
-                    R = cfg.radius
-                    F_rr_i = torque_i / R
-                    F_rr_j = torque_j / R
-                    force.index_add_(0, ci, F_rr_i)
-                    force.index_add_(0, cj, F_rr_j)
+                    # Apply the equal-and-opposite couple along the slip direction
+                    force.index_add_(0, ci, rr_i)
+                    force.index_add_(0, cj, rr_j)
 
                 force.index_add_(0, ci, contact_force)
                 force.index_add_(0, cj, -contact_force)
