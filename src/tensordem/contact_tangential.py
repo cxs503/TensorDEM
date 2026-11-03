@@ -151,16 +151,50 @@ def compute_tangential_force(
         F_t_raw = k_t * delta_t
         |F_t| = min(|F_t_raw|, mu * |F_n|)
 
+    State projection (required for hysteresis):
+    ------------------------------------------
+    The sliding part of the tangential history must be forgotten, i.e. the
+    stored displacement has to be projected back onto the friction cone
+    (``delta_t <- F_t / k_t``) after every increment.  That projection is what
+    makes the contact dissipative: reusing the raw displacement as state makes
+    the force a single-valued function of the driver, the steady-state loop has
+    zero area, and the Coulomb model dissipates exactly zero energy per cycle
+    (closed-form anchor ``4 * mu * F_n * (a - mu * F_n / k_t)``, see
+    :func:`tangential_cycle_dissipated_work` and
+    ``tests/test_tangential_friction_verification.py``).
+    This stateless helper does not project: it returns the raw spring force as
+    its second value.  For time stepping use :func:`advance_tangential_contact`,
+    which projects the stored state (see
+    ``docs/dem3d_coulomb_friction_cone_verification.md``).
+
     Args:
-        normal:            (N, 2) contact normal vectors (unit).
-        tangential_disp:   (N, 2) accumulated tangential displacement.
+        normal:            (N, D) contact normal vectors (unit).
+        tangential_disp:   (N, D) accumulated tangential displacement.
         normal_force_mag:  (N,) magnitude of normal repulsion force.
-        k_t:               Tangential stiffness, N/m.
-        mu:                Coulomb friction coefficient.
+        k_t:               Tangential stiffness, N/m (positive).
+        mu:                Coulomb friction coefficient (>= 0).
 
     Returns:
-        (tangential_force, updated_tangential_disp) each (N, 2).
+        (tangential_force, tangential_disp_next): the saturated force and the
+        projected displacement state ``F_t / k_t`` to feed back in on the next
+        step, each (N, D), D = 2 or 3.
+
+    Note:
+        The second return value is the *projected* state, not the raw spring
+        displacement ``k_t * delta_t``.  Feeding an unprojected ``delta_t`` back
+        into the next step lets the stored displacement grow without bound while
+        the pair keeps sliding, so a later velocity reversal needs an
+        unphysically long backtrack before the friction force changes sign and
+        the hysteresis loop collapses to zero area.  For full time stepping
+        (velocity integration included) use :func:`advance_tangential_contact`,
+        which applies the same projection (see
+        docs/dem3d_coulomb_friction_cone_verification.md).
     """
+    if k_t <= 0:
+        raise ValueError(f"k_t must be positive, got {k_t}")
+    if mu < 0:
+        raise ValueError(f"mu must be nonnegative, got {mu}")
+
     # Raw tangential force from spring
     F_t_raw = k_t * tangential_disp  # (N, 2)
 
@@ -174,7 +208,52 @@ def compute_tangential_force(
     scale = torch.where(F_t_mag > F_limit, F_limit / F_t_mag.clamp_min(1e-15), torch.ones_like(F_t_mag))
     F_t = F_t_raw * scale[:, None]
 
-    return F_t, F_t_raw  # return raw as the "updated" disp proxy (displacement = F_t_raw / k_t)
+    # Project the displacement state onto the friction cone (Cundall-Strack).
+    return F_t, F_t / k_t
+
+
+def tangential_cycle_dissipated_work(
+    mu: float,
+    normal_force_mag: float,
+    k_t: float,
+    amplitude: float,
+) -> float:
+    """Closed-form frictional work dissipated per steady stick-slip cycle.
+
+    For a contact under a constant normal force ``F_n`` whose tangential
+    displacement is driven harmonically with amplitude ``a`` (full peak-to-peak
+    2a), the Cundall-Strack / Coulomb loop is a parallelogram in the
+    (delta, F_t) plane:
+
+      - sticking branches of slope ``k_t`` up to ``|F_t| = mu * F_n``,
+      - friction plateaus at ``+-mu * F_n`` while sliding.
+
+    The hysteresis loop encloses the area
+
+        W = 4 * mu * F_n * (a - mu * F_n / k_t)      for  a >= mu * F_n / k_t
+
+    and ``W = 0`` below the shakedown (pure-stick) amplitude
+    ``a_stick = mu * F_n / k_t``.  This is the analytic anchor used by
+    ``tests/test_tangential_friction_verification.py``.
+
+    Args:
+        mu:                Coulomb friction coefficient (>= 0).
+        normal_force_mag:  Normal force magnitude, N (>= 0).
+        k_t:               Tangential stiffness, N/m (positive).
+        amplitude:         Tangential displacement amplitude, m (>= 0).
+
+    Returns:
+        Dissipated work per cycle, J (>= 0).
+    """
+    if k_t <= 0:
+        raise ValueError(f"k_t must be positive, got {k_t}")
+    if mu < 0 or normal_force_mag < 0 or amplitude < 0:
+        raise ValueError("mu, normal_force_mag and amplitude must be nonnegative")
+
+    a_stick = mu * normal_force_mag / k_t
+    if amplitude <= a_stick:
+        return 0.0
+    return 4.0 * mu * normal_force_mag * (amplitude - a_stick)
 
 
 def integrate_tangential_displacement(
@@ -201,3 +280,138 @@ def integrate_tangential_displacement(
     vn = (relative_velocity * normal).sum(dim=1, keepdim=True)  # (N, 1)
     v_tangent = relative_velocity - vn * normal  # tangential component
     return tangential_disp + v_tangent * dt
+
+
+# ===================================================================
+# Part 3 — Coulomb friction cone with persistent (projected) state
+# ===================================================================
+#
+# The stateless functions in Part 2 clamp the *force* but keep the raw spring
+# displacement.  Correct Cundall-Strack (1979) sliding requires the *state* to be
+# projected onto the Coulomb cone after each increment:
+#
+#     delta_t <- delta_t + v_t * dt
+#     |delta_t| <= delta_s,      delta_s = mu * |F_n| / k_t        (cone radius)
+#     F_t = k_t * delta_t
+#
+# The projected state makes sliding history-consistent: while a contact slides,
+# the elastic part of the tangential displacement stays at delta_s, so reversing
+# the relative velocity re-sticks the contact after the tangential travel
+#
+#     s_zero = delta_s            (force passes through zero)
+#     s_neg  = 2 * delta_s        (force reaches -mu*|F_n|)
+#
+# These two lengths are the analytic anchors used by
+# scripts/verify_coulomb_friction_cone.py.
+
+def saturation_displacement(
+    normal_force_mag: torch.Tensor,
+    k_t: float,
+    mu: float,
+) -> torch.Tensor:
+    """Coulomb cone radius in displacement space: ``delta_s = mu * |F_n| / k_t``.
+
+    Args:
+        normal_force_mag: (N,) magnitude of the normal contact force.
+        k_t:              Tangential stiffness, N/m (positive).
+        mu:               Coulomb friction coefficient (>= 0).
+
+    Returns:
+        (N,) tangential displacement at sliding onset, m.
+    """
+    if k_t <= 0:
+        raise ValueError(f"k_t must be positive, got {k_t}")
+    if mu < 0:
+        raise ValueError(f"mu must be nonnegative, got {mu}")
+    return mu * normal_force_mag / k_t
+
+
+def project_tangential_displacement(
+    tangential_disp: torch.Tensor,
+    normal_force_mag: torch.Tensor,
+    k_t: float,
+    mu: float,
+) -> tuple[torch.Tensor, torch.Tensor]:
+    """Project stored tangential displacement onto the Coulomb cone.
+
+    Args:
+        tangential_disp:  (N, D) accumulated tangential displacement (D = 2 or 3).
+        normal_force_mag: (N,) normal force magnitude (>= 0).
+        k_t:              Tangential stiffness, N/m.
+        mu:               Coulomb friction coefficient.
+
+    Returns:
+        (projected_disp, sliding_mask): (N, D) and boolean (N,).
+        ``sliding_mask`` is True where the increment had to be truncated.
+    """
+    disp = torch.as_tensor(tangential_disp)
+    limit = saturation_displacement(torch.as_tensor(normal_force_mag).to(disp.dtype), k_t, mu)
+    mag = torch.linalg.vector_norm(disp, dim=1)
+    sliding = mag > limit
+    tiny = torch.finfo(disp.dtype).tiny
+    scale = torch.where(sliding, limit / mag.clamp_min(tiny), torch.ones_like(mag))
+    return disp * scale[:, None], sliding
+
+
+def reset_tangential_displacement(
+    tangential_disp: torch.Tensor,
+    active: torch.Tensor,
+) -> torch.Tensor:
+    """Zero the stored tangential displacement for inactive (new or lost) contacts.
+
+    A freshly formed contact must start with ``delta_t = 0``; carrying the old
+    history over is a silent source of spurious tangential forces.
+
+    Args:
+        tangential_disp: (N, D) stored tangential displacement.
+        active:          (N,) boolean mask, True where the contact exists.
+
+    Returns:
+        (N, D) displacement with inactive rows zeroed.
+    """
+    disp = torch.as_tensor(tangential_disp)
+    active = torch.as_tensor(active).to(torch.bool)
+    return torch.where(active[:, None], disp, torch.zeros_like(disp))
+
+
+def advance_tangential_contact(
+    tangential_disp: torch.Tensor,
+    relative_velocity: torch.Tensor,
+    normal: torch.Tensor,
+    normal_force_mag: torch.Tensor,
+    k_t: float,
+    mu: float,
+    dt: float,
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    """One friction-cone-correct Cundall-Strack time increment.
+
+    Performs ``delta_t += v_t * dt`` and then projects the stored state onto
+    ``|delta_t| <= mu * |F_n| / k_t``.  Contacts with zero normal force are
+    treated as inactive: their stored displacement is reset to zero and no
+    tangential force is reported.
+
+    Args:
+        tangential_disp:  (N, D) stored tangential displacement from the previous step.
+        relative_velocity: (N, D) relative velocity of the pair.
+        normal:           (N, D) unit contact normal.
+        normal_force_mag: (N,) normal force magnitude (>= 0).
+        k_t:              Tangential stiffness, N/m.
+        mu:               Coulomb friction coefficient.
+        dt:               Time step, s.
+
+    Returns:
+        (tangential_force, updated_tangential_disp, sliding_mask)
+        with shapes (N, D), (N, D), (N,).
+    """
+    if dt <= 0:
+        raise ValueError(f"dt must be positive, got {dt}")
+    disp = torch.as_tensor(tangential_disp)
+    f_n = torch.as_tensor(normal_force_mag).to(disp.dtype)
+    active = f_n > 0
+
+    disp_active = reset_tangential_displacement(disp, active)
+    disp_raw = integrate_tangential_displacement(disp_active, relative_velocity, normal, dt)
+    disp_new, sliding = project_tangential_displacement(disp_raw, f_n, k_t, mu)
+    disp_new = reset_tangential_displacement(disp_new, active)
+    sliding = sliding & active
+    return k_t * disp_new, disp_new, sliding
