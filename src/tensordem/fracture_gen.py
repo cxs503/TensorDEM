@@ -4,8 +4,15 @@ This module implements the DEM side of SI-2 campaign: converting FEM cohesive
 failure surfaces into a DEM ice field with pre-broken bonds. The input contract
 is frozen and shared with TensorFEM SI-2/FEM leg.
 
-Mass mapping: equal-volume spheres (frozen in prereg). Each DEM particle has
-mass = density × (4/3 π r³). Total DEM mass = N_particles × particle_mass.
+Mass mapping: equal-volume spheres (frozen in prereg). A particle on the
+simple-cubic lattice of spacing h = 2 r owns a cell of volume h³, so the
+"equal-volume sphere" is the sphere that has that cell's volume: the volume
+consistent particle mass is density × h³ (``mass_mode="cell"``, the default).
+The inscribed-sphere mapping density × (4/3 π r³) is kept as
+``mass_mode="sphere"`` for reproducing the original pre-audit numbers; it
+under-counts the mass of the represented ice volume by 1 - π/6 = 47.64 %.
+See ``tensordem.fracture_mass_mapping`` and
+``docs/dem3d_fracture_mass_mapping_audit.md``.
 """
 
 from __future__ import annotations
@@ -16,6 +23,13 @@ import math
 from typing import Any
 
 import torch
+
+from .fracture_mass_mapping import (
+    VALID_MASS_MODES,
+    mass_mapping_report,
+    particle_cell_volume,
+    particle_mass as _particle_mass,
+)
 
 
 @dataclass
@@ -37,7 +51,12 @@ class FractureGenConfig:
     bond_stiffness: float = 2000.0  # bond stiffness (N/m)
     domain_bounds: tuple[float, float, float, float, float, float] | None = None
     # (xmin, xmax, ymin, ymax, zmin, zmax)
-    
+    mass_mode: str = "cell"
+    # "cell"   -> m = density * h^3, volume consistent (default, fulfils the
+    #             frozen "equal-volume spheres" intent)
+    # "sphere" -> m = density * (4/3) pi r^3, legacy pre-audit mapping that
+    #             under-counts mass by 1 - pi/6 = 47.64 %
+
     def __post_init__(self):
         if self.density <= 0:
             raise ValueError("density must be positive")
@@ -45,6 +64,10 @@ class FractureGenConfig:
             raise ValueError("particle_radius must be positive")
         if self.bond_stiffness <= 0:
             raise ValueError("bond_stiffness must be positive")
+        if self.mass_mode not in VALID_MASS_MODES:
+            raise ValueError(
+                f"mass_mode must be one of {VALID_MASS_MODES}, got {self.mass_mode!r}"
+            )
 
 
 class FractureField:
@@ -63,7 +86,13 @@ class FractureField:
         particle_radius: float,
         density: float,
         bond_stiffness: float,
+        mass_mode: str = "cell",
     ):
+        if mass_mode not in VALID_MASS_MODES:
+            raise ValueError(
+                f"mass_mode must be one of {VALID_MASS_MODES}, got {mass_mode!r}"
+            )
+        self.mass_mode = mass_mode
         self.positions = positions
         self.velocities = velocities
         self.bond_indices = bond_indices
@@ -79,8 +108,18 @@ class FractureField:
     
     @property
     def particle_mass(self) -> float:
-        """Mass of a single particle (equal-volume sphere)."""
-        return self.density * (4.0 / 3.0) * math.pi * self.particle_radius**3
+        """Mass of a single particle for the configured mass mapping."""
+        return _particle_mass(self.density, self.particle_radius, self.mass_mode)
+
+    @property
+    def particle_cell_volume(self) -> float:
+        """Volume of the lattice cell owned by one particle, h^3."""
+        return particle_cell_volume(self.particle_radius)
+
+    @property
+    def represented_volume(self) -> float:
+        """Ice volume represented by the lattice, N * h^3."""
+        return self.num_particles * self.particle_cell_volume
     
     @property
     def total_mass(self) -> float:
@@ -158,6 +197,12 @@ def generate_particle_lattice(
     Particles are placed at grid points with spacing 2*particle_radius.
     """
     xmin, xmax, ymin, ymax, zmin, zmax = domain_bounds
+    for lo, hi in ((xmin, xmax), (ymin, ymax), (zmin, zmax)):
+        if hi - lo < particle_radius:
+            raise ValueError(
+                "each domain extent must be at least one particle radius "
+                f"({particle_radius} m); got {hi - lo} m"
+            )
     spacing = 2.0 * particle_radius
     
     # Generate grid points (offset by radius to center particles in domain)
@@ -274,7 +319,8 @@ def generate_fracture_field(
         alive=alive,
         particle_radius=config.particle_radius,
         density=config.density,
-        bond_stiffness=config.bond_stiffness
+        bond_stiffness=config.bond_stiffness,
+        mass_mode=config.mass_mode
     )
 
 
@@ -294,6 +340,39 @@ class FractureLedger:
         """Compute mass conservation error: |DEM_mass - FEM_mass|."""
         dem_mass = self.field.total_mass
         return abs(dem_mass - fem_mass)
+
+    def mass_mapping_report(
+        self,
+        fem_mass: float | None = None,
+        tolerance: float = 0.01,
+        domain_bounds: tuple[float, float, float, float, float, float] | None = None,
+    ) -> dict[str, Any]:
+        """Audit the DEM mass against the FEM ice mass or rho * V_domain.
+
+        Uses ``domain_bounds`` when given, otherwise the bounding box of the
+        realised particle positions.  See
+        ``tensordem.fracture_mass_mapping.mass_mapping_report``.
+        """
+        if domain_bounds is None:
+            # Centres span only (N-1) h per axis; each particle also owns a
+            # half-cell of half-width r on both sides, so expanding the centre
+            # bounding box by r recovers the lattice extent N h.
+            pos = self.field.positions
+            lo = pos.min(dim=0).values.tolist()
+            hi = pos.max(dim=0).values.tolist()
+            r = self.field.particle_radius
+            domain_bounds = (
+                lo[0] - r, hi[0] + r, lo[1] - r, hi[1] + r, lo[2] - r, hi[2] + r
+            )
+        return mass_mapping_report(
+            density=self.field.density,
+            particle_radius=self.field.particle_radius,
+            domain_bounds=domain_bounds,
+            mass_mode=self.field.mass_mode,
+            fem_mass=fem_mass,
+            tolerance=tolerance,
+            num_particles=self.field.num_particles,
+        )
     
     def energy_accounting(self) -> dict[str, float]:
         """Account for fracture energy.
