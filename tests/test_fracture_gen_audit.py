@@ -110,7 +110,8 @@ class MassMappingAudit(unittest.TestCase):
         fem_mass = self.density * self.side**3
         rel = abs(field.total_mass - fem_mass) / fem_mass
         self.assertLess(rel, 1e-12)
-        self.assertEqual(field.volume_fraction, 1.0)
+        # exact lattice/domain match, up to float round-off in N*h^3 vs L^3
+        self.assertAlmostEqual(field.volume_fraction, 1.0, places=12)
         self.assertAlmostEqual(field.particle_mass, self.density * (2 * self.radius) ** 3)
 
     def test_lattice_quantisation_is_reported(self):
@@ -126,7 +127,12 @@ class MassMappingAudit(unittest.TestCase):
         acc = FractureLedger(field, []).mass_accounting(domain_volume=0.5**3)
         self.assertEqual(acc["num_particles"], 8)
         self.assertAlmostEqual(acc["lattice_volume_covered"], 0.4**3)
-        self.assertAlmostEqual(acc["relative_error"], abs(0.4**3 - 0.5**3) / 0.5**3)
+        # mass_accounting() reports the signed (DEM - continuum) error, so an
+        # under-covering lattice is negative; the magnitude is the claim.
+        self.assertAlmostEqual(
+            acc["relative_error"], -abs(0.4**3 - 0.5**3) / 0.5**3
+        )
+        self.assertAlmostEqual(abs(acc["relative_error"]), abs(0.4**3 - 0.5**3) / 0.5**3)
 
     def test_mass_accounting_reports_mapping_name(self):
         acc = FractureLedger(self._field("cell_volume"), []).mass_accounting()
