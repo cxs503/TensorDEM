@@ -17,6 +17,17 @@ analytic baselines:
    through a particle layer severs nothing (0 % of the analytic count).
    ``on_plane_tolerance > 0`` restores the expected ``2 n^2`` bonds.
 
+Default-mapping note (supersession): this module originally assumed the
+legacy equal-volume-sphere mapping was the *default*, with the corrected
+``lattice_cell`` mapping opt-in.  The later merged audit
+(``docs/dem3d_fracture_mass_mapping_audit.md``) made the volume-consistent
+mapping the default, because a -47.64 % mass deficit is a first-order physics
+bug, not a preference.  The legacy-deficit assertions below are therefore
+selected explicitly with ``mass_mapping="equal_volume_sphere"`` (they are *not*
+weakened: the deficit is still pinned to 1e-12), and
+``test_default_mapping_is_volume_consistent`` pins the default so the decision
+cannot silently regress again.
+
 Reference lattice used below: radius r = 0.125 m, spacing s = 0.25 m, domain
 (0, 2)^3 -> n = 8 layers per axis, N = 512 particles, 1344 nearest-neighbour
 bonds (3 n^2 (n - 1)). All coordinates are exactly representable in binary, so
@@ -39,8 +50,10 @@ from tensordem.fracture_gen import (
     FailureFace,
     FractureGenConfig,
     FractureLedger,
+    build_bond_topology,
     face_footprint_radius,
     generate_fracture_field,
+    generate_particle_lattice,
     identify_bonds_crossing_face,
 )
 
@@ -97,7 +110,7 @@ class TestMassMappingAudit(unittest.TestCase):
         self.assertEqual(f.bond_indices.shape[0], N_BONDS)
 
     def test_frozen_mapping_deficit_is_exactly_pi_over_six(self):
-        f = field_for([face()])
+        f = field_for([face()], mass_mapping="equal_volume_sphere")
         ledger = FractureLedger(f, [face()])
         accounting = ledger.mass_accounting(CONTINUUM_VOLUME)
         self.assertAlmostEqual(accounting["relative_error"], math.pi / 6 - 1, places=12)
@@ -107,10 +120,34 @@ class TestMassMappingAudit(unittest.TestCase):
 
     def test_frozen_mapping_tolerance_against_its_own_formula_is_vacuous(self):
         """The prereg criterion 1 cannot detect the deficit it is named after."""
-        f = field_for([face()])
+        f = field_for([face()], mass_mapping="equal_volume_sphere")
         ledger = FractureLedger(f, [face()])
         sphere_mass = N_PARTICLES * DENSITY * (4.0 / 3.0) * math.pi * RADIUS**3
         self.assertAlmostEqual(ledger.mass_conservation_error(sphere_mass), 0.0, places=9)
+
+    def test_default_mapping_is_volume_consistent(self):
+        """Trunk default must stay the corrected mapping (anti-regression pin).
+
+        The frozen contract compared the DEM mass with the sphere formula used
+        to build it; that is why the -47.64 % deficit survived review.  If a
+        future edit reverts the default, this test fails instead of the deficit
+        silently returning.
+        """
+        self.assertEqual(FractureGenConfig().mass_mode, "cell")
+        default = field_for([face()])
+        accounting = FractureLedger(default, [face()]).mass_accounting(
+            CONTINUUM_VOLUME
+        )
+        self.assertTrue(accounting["within_15pct"])
+        self.assertAlmostEqual(accounting["relative_error"], 0.0, places=12)
+        self.assertAlmostEqual(default.mass_radius, RADIUS * MASS_RADIUS_FACTOR, places=12)
+        # both declared vocabularies are accepted and land on the same mode
+        self.assertEqual(
+            field_for([face()], mass_mapping="lattice_cell").mass_mode, "cell"
+        )
+        self.assertEqual(
+            field_for([face()], mass_mapping="equal_volume_sphere").mass_mode, "sphere"
+        )
 
     def test_lattice_cell_mapping_hits_continuum_mass(self):
         f = field_for([face()], mass_mapping="lattice_cell")
@@ -218,6 +255,62 @@ class TestLayerCoincidentPlane(unittest.TestCase):
     def test_negative_tolerance_rejected(self):
         with self.assertRaises(ValueError):
             field_for([face()], on_plane_tolerance=-1e-9)
+
+
+class TestTopologyAndCriterionWiring(unittest.TestCase):
+    """Regression pins for the parts of the contract that are easy to break
+    while keeping the audit numbers green."""
+
+    def test_vectorised_topology_matches_brute_force(self):
+        """The blocked distance-matrix search must equal the pairwise loop.
+
+        ``build_bond_topology`` was an O(N^2) Python loop (6.8 s for 512
+        particles); it is now a row-blocked ``cdist`` search.  Bond *order* is
+        part of the contract (regression artefacts index into it), so the
+        brute-force reference is compared element-wise, not as a set.
+        """
+        positions = generate_particle_lattice((0.0, 1.0, 0.0, 1.0, 0.0, 1.0), RADIUS)
+        self.assertEqual(len(positions), 4**3)
+        spacing = 2.0 * RADIUS
+        pairs = [
+            [i, j]
+            for i in range(len(positions))
+            for j in range(i + 1, len(positions))
+            if float(torch.linalg.norm(positions[j] - positions[i])) <= spacing * 1.01
+        ]
+        expected = torch.tensor(pairs, dtype=torch.long)
+        actual, rest = build_bond_topology(positions, RADIUS)
+        self.assertTrue(torch.equal(actual, expected))
+        self.assertEqual(rest.shape[0], expected.shape[0])
+
+        # the reference lattice of this module stays at the analytic count
+        big, _ = build_bond_topology(
+            generate_particle_lattice(DOMAIN, RADIUS), RADIUS
+        )
+        self.assertEqual(big.shape[0], N_BONDS)
+
+    def test_degenerate_lattices_return_empty_topology(self):
+        for n in (0, 1):
+            positions = torch.zeros((n, 3), dtype=torch.float64)
+            bonds, rest = build_bond_topology(positions, RADIUS)
+            self.assertEqual(bonds.shape, (0, 2))
+            self.assertEqual(rest.shape, (0,))
+
+    def test_ledger_reidentifies_with_the_configured_criterion(self):
+        """``check_bonds_at_faces`` must not re-cut with a stricter criterion.
+
+        With ``footprint_aware=True`` the field breaks a subset of the bonds the
+        infinite-plane criterion would break; if the ledger re-identified with
+        the frozen criterion it would report a mismatch and silently invalidate
+        every footprint-aware audit.
+        """
+        radius = 0.5
+        faces = [face(area=math.pi * radius**2, extent_radius=radius)]
+        aware = field_for(faces, footprint_aware=True)
+        check = FractureLedger(aware, faces).check_bonds_at_faces()
+        self.assertTrue(check["all_face_bonds_broken"])
+        self.assertEqual(check["bonds_crossing_faces"], aware.num_broken_bonds)
+        self.assertLess(check["bonds_crossing_faces"], N_LAYERS**2)
 
 
 class TestAuditReproducibility(unittest.TestCase):

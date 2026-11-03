@@ -1,0 +1,178 @@
+# Closing the fracture-field audit debt for good (m2794)
+
+Scope: `src/tensordem/fracture_gen.py`, `benchmarks/fracture_gen_mass_footprint_audit.py`,
+`tests/test_fracture_gen_mass_footprint.py`, new
+`scripts/plot_fracture_gen_bond_topology_scaling.py`, artifacts under
+`artifacts/fracture_gen_audit/`.
+Predecessor documents: `docs/fracture_gen_mass_footprint_audit.md` (the contract),
+`docs/dem_analytic_verification_debt_restoration.md` (four sibling restorations).
+
+## 1. Case: a contract that kept being "restored" and never stayed green
+
+A pristine checkout collected **1070 tests with exactly one collection error**:
+
+```
+ImportError: cannot import name 'MASS_RADIUS_FACTOR' from 'tensordem.fracture_gen'
+```
+
+The documentation (`docs/fracture_gen_mass_footprint_audit.md`, §3–§4), the
+benchmark script and the test module were all merged; the `src` hunks that back
+them were not. The published audit tables therefore had **no executable
+evidence** — an evidence grade of `MOCK` behind a `REAL` claim.
+
+This is not a new finding: **four** predecessor branches had already restored
+it, each with a large rewrite of the same file.
+
+| commit | mission | `fracture_gen.py` diff | merged? |
+|---|---|---|---|
+| `63f7765` | m2617 | +444 / −93 | no |
+| `3b457c8` | m2633 | +302 | no |
+| `7cc4462` | m2697 | +363 | no |
+| `317de3f` | m2753 | +11 (exports only) | no |
+
+So a fifth straight re-implementation would have been the fifth wasted unit.
+The question worth answering was *why the restore never sticks*. Three causes,
+all verified in the tree:
+
+1. **Three mutually incompatible dialects.** The merged test module uses
+   `mass_mapping="equal_volume_sphere" | "lattice_cell"`; the merged
+   `src` uses `mass_mode="sphere" | "cell"`; the third merged module
+   (`tests/test_fracture_gen_audit.py`) uses `"equal_volume_spheres"` /
+   `"cell_volume"` plus a `face_extent=` config keyword. Each predecessor
+   implemented *its own* dialect, so each merge would have broken the other two.
+2. **A direct default-value contradiction.** `docs/fracture_gen_mass_footprint_audit.md`
+   states the legacy −47.64 % mapping is the *default* and the fix is opt-in;
+   the later-merged `docs/dem3d_fracture_mass_mapping_audit.md` made the
+   volume-consistent mapping the default. Both documents and both test modules
+   were on trunk simultaneously, so *no* `src` implementation could satisfy
+   both. This is the actual blocker: the conflict is in the contract, not in
+   the code.
+3. **CI budget.** The generator's bond search was an O(N²) Python loop:
+   **6.8 s** to build the 512-particle reference lattice. The orphaned module
+   builds ~20 fields, so it could not finish inside a normal test budget — any
+   restore that did land looked "slow/flaky" and got dropped again.
+
+## 2. Method
+
+Minimal, additive, default-off. No fourth copy of the physics.
+
+1. **Compatibility layer instead of a re-implementation** (`fracture_gen.py`,
+   +205 lines, all additive). The declared vocabulary is now translated onto the
+   canonical math that already lives in `tensordem.fracture_mass_mapping`:
+   `MASS_MAPPING_ALIASES = {"equal_volume_sphere": "sphere", "lattice_cell": "cell"}`.
+   New surface: `MASS_RADIUS_FACTOR = 2(3/4π)^{1/3} = 1.240701`,
+   `face_footprint_radius(face)`, `FailureFace.extent_radius`,
+   `FractureGenConfig.{mass_mapping, footprint_aware, on_plane_tolerance}`,
+   `FractureField.{mass_radius, footprint_aware, on_plane_tolerance}`,
+   `FractureLedger.{lattice_volume, mass_accounting}`.
+   `mass_mode`/`mass_mapping_report` and every frozen default path are untouched.
+2. **Cut criterion made explicit and re-usable.** `identify_bonds_crossing_face`
+   gained `on_plane_tolerance` (exactly one endpoint on the plane) and
+   `footprint_aware` (sever only if the segment/plane intersection lies inside
+   the equal-area footprint disc). `FractureLedger.check_bonds_at_faces`
+   re-identifies with the *same* knobs the field was built with — otherwise it
+   would silently re-cut with the stricter frozen criterion and report a false
+   mismatch on footprint-aware fields.
+3. **Supersession, stated rather than fudged.** Where the two merged audits
+   disagree, the later decision wins: trunk default stays volume-consistent
+   (`mass_mode="cell"`). The orphaned legacy assertions were re-pointed at an
+   explicit `mass_mapping="equal_volume_sphere"` — *not weakened* (the deficit is
+   still pinned to 1e-12) — and `test_default_mapping_is_volume_consistent` now
+   pins the default so the decision cannot silently flip back.
+4. **Bond search vectorised** (semantics-preserving): row-blocked `cdist`,
+   block size bounded to ~4·10⁶ temporary entries, output verified element-wise
+   against the brute-force loop, bond *order* preserved because regression
+   artefacts index into it.
+
+## 3. Results
+
+### 3.1 The published table now reproduces from code, digit for digit
+
+Regenerated by `python3 benchmarks/fracture_gen_mass_footprint_audit.py`
+(`artifacts/fracture_gen_audit/audit.json`), compared with
+`docs/fracture_gen_mass_footprint_audit.md` §3:
+
+| quantity | published | regenerated | identical |
+|---|---|---|---|
+| DEM mass, legacy mapping (kg) | 3841.120618 | 3841.120618 | yes |
+| continuum mass (kg) | 7336.000000 | 7336.000000 | yes |
+| relative error, legacy | −47.6401 % | −47.6401 % | yes |
+| relative error, `lattice_cell` | +0.000000 % | +0.000000 % | yes |
+| full-plane severed bonds | 64 (= n²) | 64 | yes |
+| layer-coincident, strict / tolerant | 0 / 128 | 0 / 128 | yes |
+| footprint R = 0.25/0.50/0.75/1.00/1.25 (aware) | 4/12/32/52/64 | 4/12/32/52/64 | yes |
+| over-break factor, R = 0.25 m | 16.00× | 16.00× | yes |
+
+### 3.2 Bond-topology cost (`artifacts/fracture_gen_audit/bond_topology_scaling.{json,png}`)
+
+| n | N | bonds | loop (s) | blocked cdist (s) | speedup | identical to loop |
+|---|---|---|---|---|---|---|
+| 3 | 27 | 54 | 0.0134 | 0.0056 | 2.4× | yes |
+| 4 | 64 | 144 | 0.0715 | 0.0140 | 5.1× | yes |
+| 5 | 125 | 300 | 0.2897 | 0.0073 | 39.6× | yes |
+| 6 | 216 | 540 | 0.9591 | 0.0621 | 15.4× | yes |
+| 7 | 343 | 882 | 2.5377 | 0.2645 | 9.6× | yes |
+| 8 | 512 | 1344 | 4.7133 | 0.3043 | 15.5× | yes |
+
+Single-run timings on a loaded shared node (load15 ≈ 43–58, nproc 128), so the
+absolute values are noise-limited; the *identity* of the output is not, it is
+asserted. Bond counts equal the analytic `3n²(n−1)` at every n.
+
+### 3.3 Test outcome
+
+```
+tests/test_fracture_gen_mass_footprint.py     20 passed   (was: 1 collection error, 0 runnable)
+```
+
+## 4. Error judgement against the platform bar (>15 % unacceptable)
+
+| key quantity | baseline | measured error | < 3 % ? |
+|---|---|---|---|
+| DEM mass, trunk default (`cell`) | ρV = 7336.000000 kg | 0.0 % (≤1e−16) | **yes** |
+| DEM mass, legacy `equal_volume_sphere` | ρV = 7336.000000 kg | −47.6401 % (≡ π/6 − 1) | **no** — deliberately retained as the pinned FAIL case |
+| severed bonds, full plane | A/s² = 64 | 0 % | **yes** |
+| severed bonds, footprint R = 0.5 m, `footprint_aware` | exact lattice enumeration = 12 | 0 % (12/12); −4.5 % vs πR²/s² | **yes** |
+| severed bonds, footprint R = 0.5 m, frozen infinite plane | 12 | +433 % | **no** |
+| severed bonds, plane on a particle layer | 2n² = 128 | −100 % strict; 0 % with `on_plane_tolerance=1e-12` | **no** by default, **yes** opt-in |
+
+The two FAILs are *properties of the frozen contract*, retained on purpose: an
+audit that cannot show a failure is not an audit. Nothing here is a regression
+from trunk.
+
+## 5. Notes, caveats, limits
+
+- **Deliberately not fixed: the third dialect.** `tests/test_fracture_gen_audit.py`
+  (14 tests, 261 lines) is a separate merged contract using
+  `mass_mapping="cell_volume"|"equal_volume_spheres"`, a `face_extent=`
+  config keyword (values `"plane"`/`"disc"`, rejecting `"box"`), and a
+  `FractureLedger` energy field `input_consistency_error` (declared face area vs
+  footprint/energetics, fixture value 3.0). Its semantics need an independent
+  physics decision, not a naming alias, so it is out of this unit's scope and
+  has been dispatched as follow-up work.
+- **42 pre-existing failures are untouched.** Whole-suite A/B (my diff stashed
+  vs applied) over the five failing modules:
+  `42 failed, 21 passed` **both ways**. Distribution:
+  `test_ice_floe_physics.py` 16, `test_fracture_gen_audit.py` 14,
+  `test_dem3d_contact_impact.py` 5, `test_dem3d_restitution_verification.py` 4,
+  `test_dem3d_platen_contact_mask.py` 3. Full suite with this change:
+  `42 failed, 1043 passed, 2 skipped, 114 subtests passed in 440 s`.
+  Trunk is therefore **not** green; it is green *in the module this unit owns*,
+  and one collection error fewer.
+- Footprint shape stays a disc: exact for disc faces, O(perimeter) bias for
+  elongated cohesive faces. The equal-area derivation is a fallback, not a
+  measurement.
+- The bond-cut criterion remains a geometric zero-level-set test: curved
+  surfaces, sub-particle cracks and duplicated-node separation are not modelled,
+  and severed bonds leave both sides sharing the on-plane particles, so momentum
+  bookkeeping at the cut stays approximate (unchanged from the predecessor audit).
+- `mass_mapping` is an alias, not a second code path: there is one mass kernel
+  (`tensordem.fracture_mass_mapping`), so the two vocabularies cannot drift.
+
+## 6. Reproduce
+
+```bash
+cd TensorDEM
+python3 -m pytest tests/test_fracture_gen_mass_footprint.py -q          # 20 passed
+python3 benchmarks/fracture_gen_mass_footprint_audit.py                 # published table
+python3 scripts/plot_fracture_gen_bond_topology_scaling.py              # speedup evidence
+```

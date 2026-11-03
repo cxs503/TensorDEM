@@ -81,7 +81,10 @@ def enumerate_footprint(radius):
 
 def run_audit(write_artifacts: bool = True):
     faces = [_face()]
-    frozen = _field(faces)
+    # The legacy mapping is selected explicitly: trunk's *default* is the
+    # volume-consistent one (docs/dem3d_fracture_mass_mapping_audit.md), so the
+    # frozen number must be reproduced by asking for it, not by relying on it.
+    frozen = _field(faces, mass_mapping="equal_volume_sphere")
     corrected = _field(faces, mass_mapping="lattice_cell")
     frozen_acct = FractureLedger(frozen, faces).mass_accounting(CONTINUUM_VOLUME)
     corrected_acct = FractureLedger(corrected, faces).mass_accounting(CONTINUUM_VOLUME)
@@ -100,6 +103,8 @@ def run_audit(write_artifacts: bool = True):
     mass = {
         "density_kg_m3": DENSITY,
         "frozen_mapping": "equal_volume_sphere",
+        "frozen_mapping_selected_explicitly": True,
+        "trunk_default_mapping": "cell",
         "frozen_dem_mass_kg": frozen.total_mass,
         "frozen_relative_error": frozen_acct["relative_error"],
         "frozen_within_15pct": frozen_acct["within_15pct"],

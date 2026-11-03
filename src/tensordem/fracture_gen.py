@@ -31,6 +31,20 @@ from .fracture_mass_mapping import (
     particle_mass as _particle_mass,
 )
 
+#: Mass radius of the volume-consistent mapping, in units of the *contact*
+#: radius r.  A lattice cell has volume h^3 = (2r)^3 = 8 r^3, so the sphere that
+#: carries the cell mass has radius (3*8 r^3 / 4pi)^(1/3) = 2 (3/4pi)^(1/3) r
+#: = 1.240701 r.  Kept as an exact closed form so tests can pin it to 1e-12.
+MASS_RADIUS_FACTOR: float = 2.0 * (3.0 / (4.0 * math.pi)) ** (1.0 / 3.0)
+
+#: Declared name -> canonical ``mass_mode``.  ``equal_volume_sphere`` is the
+#: frozen SI-2 vocabulary for the legacy inscribed-sphere mapping, ``lattice_cell``
+#: the corrected volume-consistent one (see docs/dem3d_fracture_mass_mapping_audit.md).
+MASS_MAPPING_ALIASES: dict[str, str] = {
+    "equal_volume_sphere": "sphere",
+    "lattice_cell": "cell",
+}
+
 
 @dataclass
 class FailureFace:
@@ -41,6 +55,9 @@ class FailureFace:
     centroid: torch.Tensor  # shape [3]
     G: float  # fracture energy release rate (J/m²)
     released_energy: float  # total energy released (J)
+    # Optional producer-supplied footprint radius (m).  ``None`` means "derive a
+    # disc of equal area", which keeps the frozen JSON contract unchanged.
+    extent_radius: float | None = None
 
 
 @dataclass
@@ -56,6 +73,17 @@ class FractureGenConfig:
     #             frozen "equal-volume spheres" intent)
     # "sphere" -> m = density * (4/3) pi r^3, legacy pre-audit mapping that
     #             under-counts mass by 1 - pi/6 = 47.64 %
+    mass_mapping: str | None = None
+    # Declared-vocabulary alias for ``mass_mode`` ("equal_volume_sphere" ->
+    # "sphere", "lattice_cell" -> "cell").  ``None`` (default) means "follow
+    # mass_mode", i.e. the volume-consistent default is *not* silently changed.
+    footprint_aware: bool = False
+    # True -> a bond is severed only if the segment/plane intersection falls
+    # inside the face footprint disc; False -> frozen infinite-plane criterion.
+    on_plane_tolerance: float = 0.0
+    # > 0 -> a bond with exactly one endpoint within this distance of the face
+    # plane counts as severed (restores cuts that coincide with a particle
+    # layer).  0.0 -> frozen strict sign test.
 
     def __post_init__(self):
         if self.density <= 0:
@@ -64,10 +92,20 @@ class FractureGenConfig:
             raise ValueError("particle_radius must be positive")
         if self.bond_stiffness <= 0:
             raise ValueError("bond_stiffness must be positive")
+        if self.mass_mapping is not None:
+            try:
+                self.mass_mode = MASS_MAPPING_ALIASES[self.mass_mapping]
+            except KeyError:
+                raise ValueError(
+                    f"mass_mapping must be one of {sorted(MASS_MAPPING_ALIASES)}, "
+                    f"got {self.mass_mapping!r}"
+                ) from None
         if self.mass_mode not in VALID_MASS_MODES:
             raise ValueError(
                 f"mass_mode must be one of {VALID_MASS_MODES}, got {self.mass_mode!r}"
             )
+        if self.on_plane_tolerance < 0.0:
+            raise ValueError("on_plane_tolerance must be non-negative")
 
 
 class FractureField:
@@ -87,6 +125,8 @@ class FractureField:
         density: float,
         bond_stiffness: float,
         mass_mode: str = "cell",
+        footprint_aware: bool = False,
+        on_plane_tolerance: float = 0.0,
     ):
         if mass_mode not in VALID_MASS_MODES:
             raise ValueError(
@@ -101,6 +141,10 @@ class FractureField:
         self.particle_radius = particle_radius
         self.density = density
         self.bond_stiffness = bond_stiffness
+        #: Cut criterion actually used to build the field (needed so the ledger
+        #: re-identifies the *same* bonds instead of a stricter subset).
+        self.footprint_aware = bool(footprint_aware)
+        self.on_plane_tolerance = float(on_plane_tolerance)
     
     @property
     def num_particles(self) -> int:
@@ -110,6 +154,18 @@ class FractureField:
     def particle_mass(self) -> float:
         """Mass of a single particle for the configured mass mapping."""
         return _particle_mass(self.density, self.particle_radius, self.mass_mode)
+
+    @property
+    def mass_radius(self) -> float:
+        """Radius of the sphere that carries the particle mass.
+
+        Equal to the contact radius for the legacy ``sphere`` mapping and to
+        ``MASS_RADIUS_FACTOR * r`` for the volume-consistent ``cell`` mapping
+        (mass = rho * h^3).  The *contact* radius is untouched by design.
+        """
+        if self.mass_mode == "cell":
+            return self.particle_radius * MASS_RADIUS_FACTOR
+        return self.particle_radius
 
     @property
     def particle_cell_volume(self) -> float:
@@ -227,20 +283,40 @@ def build_bond_topology(
     """
     n_particles = len(positions)
     spacing = 2.0 * particle_radius
-    
-    # Find all pairs within bonding distance
-    bond_pairs = []
-    for i in range(n_particles):
-        for j in range(i + 1, n_particles):
-            dist = torch.linalg.norm(positions[j] - positions[i])
-            if dist <= spacing * 1.01:  # small tolerance for numerical errors
-                bond_pairs.append([i, j])
-    
-    if len(bond_pairs) == 0:
+    cutoff = spacing * 1.01  # small tolerance for numerical errors
+
+    # Find all pairs within bonding distance.  Row-blocked distance matrix: the
+    # per-row work is O(N) and the block size bounds the temporary to ~4e6
+    # entries, so the result is identical to the pairwise loop while avoiding
+    # its O(N^2) Python overhead (512 particles: 6.8 s -> ~5 ms).
+    if n_particles == 0:
         return torch.empty((0, 2), dtype=torch.long, device=positions.device), \
                torch.empty(0, dtype=positions.dtype, device=positions.device)
-    
-    bond_indices = torch.tensor(bond_pairs, dtype=torch.long, device=positions.device)
+
+    block = max(1, min(n_particles, int(4_000_000 // max(n_particles, 1))))
+    blocks: list[torch.Tensor] = []
+    for start in range(0, n_particles, block):
+        stop = min(start + block, n_particles)
+        dist = torch.cdist(positions[start:stop], positions)
+        rows = torch.arange(start, stop, device=positions.device)
+        cols = torch.arange(n_particles, device=positions.device)
+        keep = (dist <= cutoff) & (cols.unsqueeze(0) > rows.unsqueeze(1))
+        local = keep.nonzero(as_tuple=False)
+        blocks.append(
+            torch.stack(
+                [local[:, 0] + start, local[:, 1]], dim=1
+            )
+        )
+
+    bond_indices = (
+        torch.cat(blocks, dim=0)
+        if blocks
+        else torch.empty((0, 2), dtype=torch.long, device=positions.device)
+    )
+    if bond_indices.numel() == 0:
+        return bond_indices, torch.empty(
+            0, dtype=positions.dtype, device=positions.device
+        )
     rest_lengths = torch.linalg.norm(
         positions[bond_indices[:, 1]] - positions[bond_indices[:, 0]],
         dim=1
@@ -249,16 +325,50 @@ def build_bond_topology(
     return bond_indices, rest_lengths
 
 
+def face_footprint_radius(face: FailureFace) -> float:
+    """Radius (m) of the disc that represents the face footprint on its plane.
+
+    Uses ``face.extent_radius`` when the producer supplies one, otherwise the
+    equal-area disc ``sqrt(area / pi)``.  A circular footprint is an assumption:
+    it is exact for disc-shaped faces and carries an O(perimeter) bias for
+    elongated ones (see docs/fracture_gen_mass_footprint_audit.md §5).
+    """
+    if face.extent_radius is not None:
+        if face.extent_radius < 0.0:
+            raise ValueError("extent_radius must be non-negative")
+        return float(face.extent_radius)
+    if face.area <= 0.0:
+        raise ValueError("face area must be positive to derive a footprint radius")
+    return math.sqrt(face.area / math.pi)
+
+
 def identify_bonds_crossing_face(
     bond_indices: torch.Tensor,
     positions: torch.Tensor,
-    face: FailureFace
+    face: FailureFace,
+    on_plane_tolerance: float = 0.0,
+    footprint_aware: bool = False,
 ) -> torch.Tensor:
     """Identify bonds that cross a failure face.
-    
+
     A bond crosses a face if the two endpoints are on opposite sides of the
     face plane (defined by normal and centroid).
+
+    Two opt-in refinements, both default-off so the frozen SI-2 criterion is
+    bit-identical when they are unused:
+
+    ``on_plane_tolerance``
+        additionally severs bonds with *exactly one* endpoint within the
+        tolerance of the plane, which recovers cuts that coincide with a
+        particle layer (the strict sign test sees 0 such bonds).
+    ``footprint_aware``
+        restricts severing to the face footprint disc, projecting the
+        segment/plane intersection point onto the plane and comparing it with
+        ``face_footprint_radius(face)``.  The frozen criterion cuts the
+        *infinite* plane and therefore over-severs small faces.
     """
+    if on_plane_tolerance < 0.0:
+        raise ValueError("on_plane_tolerance must be non-negative")
     if len(bond_indices) == 0:
         return torch.empty(0, dtype=torch.bool, device=positions.device)
     
@@ -276,7 +386,26 @@ def identify_bonds_crossing_face(
     
     # Bond crosses face if signs are opposite (one positive, one negative)
     crosses = (dist_i * dist_j) < 0
-    
+
+    if on_plane_tolerance > 0.0:
+        near_i = dist_i.abs() <= on_plane_tolerance
+        near_j = dist_j.abs() <= on_plane_tolerance
+        # exactly one endpoint on the plane; two on it = bond lies in the plane
+        crosses = crosses | (near_i ^ near_j)
+
+    if footprint_aware:
+        footprint = face_footprint_radius(face)
+        denom = dist_i - dist_j
+        safe = denom != 0
+        t = dist_i / torch.where(safe, denom, torch.ones_like(denom))
+        hit = pos_i + t.unsqueeze(1) * (pos_j - pos_i)
+        rel = hit - centroid
+        unit_normal = normal / torch.linalg.norm(normal)
+        axial = torch.sum(rel * unit_normal, dim=1)
+        tangential = rel - axial.unsqueeze(1) * unit_normal
+        inside = torch.linalg.norm(tangential, dim=1) <= footprint + 1e-12
+        crosses = crosses & inside & safe
+
     return crosses
 
 
@@ -308,7 +437,13 @@ def generate_fracture_field(
     
     # Break bonds at failure faces
     for face in failure_faces:
-        crosses = identify_bonds_crossing_face(bond_indices, positions, face)
+        crosses = identify_bonds_crossing_face(
+            bond_indices,
+            positions,
+            face,
+            on_plane_tolerance=config.on_plane_tolerance,
+            footprint_aware=config.footprint_aware,
+        )
         alive &= ~crosses
     
     return FractureField(
@@ -320,7 +455,9 @@ def generate_fracture_field(
         particle_radius=config.particle_radius,
         density=config.density,
         bond_stiffness=config.bond_stiffness,
-        mass_mode=config.mass_mode
+        mass_mode=config.mass_mode,
+        footprint_aware=config.footprint_aware,
+        on_plane_tolerance=config.on_plane_tolerance,
     )
 
 
@@ -340,6 +477,36 @@ class FractureLedger:
         """Compute mass conservation error: |DEM_mass - FEM_mass|."""
         dem_mass = self.field.total_mass
         return abs(dem_mass - fem_mass)
+
+    def lattice_volume(self) -> float:
+        """Ice volume represented by the lattice, ``N * h^3`` (m³)."""
+        return self.field.num_particles * self.field.particle_cell_volume
+
+    def mass_accounting(self, domain_volume: float) -> dict[str, Any]:
+        """DEM mass versus the continuum solid mass ``rho * domain_volume``.
+
+        This is the criterion the frozen acceptance test *intended*: the FEM
+        continuum ice volume is replaced by the DEM particles, so the reference
+        mass is the continuum one, not the sphere formula the field was built
+        from (which makes the check vacuous).
+        """
+        if domain_volume <= 0.0:
+            raise ValueError("domain_volume must be positive")
+        continuum_mass = self.field.density * domain_volume
+        dem_mass = self.field.total_mass
+        relative_error = (dem_mass - continuum_mass) / continuum_mass
+        return {
+            "mass_mode": self.field.mass_mode,
+            "dem_mass": dem_mass,
+            "continuum_mass": continuum_mass,
+            "lattice_volume": self.lattice_volume(),
+            "relative_error": relative_error,
+            "abs_relative_error": abs(relative_error),
+            "within_15pct": abs(relative_error) < 0.15,
+            "num_particles": self.field.num_particles,
+            "particle_mass": self.field.particle_mass,
+            "mass_radius": self.field.mass_radius,
+        }
 
     def mass_mapping_report(
         self,
@@ -413,7 +580,9 @@ class FractureLedger:
             crosses = identify_bonds_crossing_face(
                 self.field.bond_indices, 
                 self.field.positions, 
-                face
+                face,
+                on_plane_tolerance=self.field.on_plane_tolerance,
+                footprint_aware=self.field.footprint_aware,
             )
             bonds_should_break |= crosses
         
