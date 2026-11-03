@@ -276,3 +276,16 @@ Still open:
   corresponding energy term) — a model change, not a verification task;
 * comparison against a measured ice shear specimen (no source-traceable
   shear-strength dataset has been adopted for this lattice).
+
+## 8. Update: the apparent modulus is no longer withheld
+
+`docs/dem3d_shear_static_reference.md` replaces the WITHHELD driven-ramp modulus
+with a rate-free reference obtained by one sparse equilibrium solve of the *same*
+boundary conditions, and decomposes the scatter: the nominal area
+`nx*a*ny*a` misses the lateral boundary bonds (exact factor `0.7873` for the
+default 9x5 block, closed form in `tensordem.shear_static.affine_effective_area`),
+the remaining free-surface shear lag is geometry (not rate), and the ramp startup
+hump is a protocol artefact. For the default 9x5x3 block the census-corrected
+static value is `G_eff/C44 = 0.8442`, which a displacement-controlled relaxation
+with `drag = 50 N s/m` reproduces to `-2.61 %` and which is linear in `gamma` to
+`1e-4` over `1e-5 .. 5e-3`.
