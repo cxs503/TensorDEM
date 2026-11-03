@@ -81,7 +81,9 @@ def enumerate_footprint(radius):
 
 def run_audit(write_artifacts: bool = True):
     faces = [_face()]
-    frozen = _field(faces)
+    # The frozen prereg mapping is requested explicitly: the shipped default is
+    # the corrected lattice-cell mapping (docs/dem3d_fracture_mass_mapping_audit.md).
+    frozen = _field(faces, mass_mapping="equal_volume_sphere")
     corrected = _field(faces, mass_mapping="lattice_cell")
     frozen_acct = FractureLedger(frozen, faces).mass_accounting(CONTINUUM_VOLUME)
     corrected_acct = FractureLedger(corrected, faces).mass_accounting(CONTINUUM_VOLUME)

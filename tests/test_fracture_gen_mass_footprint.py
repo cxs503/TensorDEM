@@ -97,7 +97,10 @@ class TestMassMappingAudit(unittest.TestCase):
         self.assertEqual(f.bond_indices.shape[0], N_BONDS)
 
     def test_frozen_mapping_deficit_is_exactly_pi_over_six(self):
-        f = field_for([face()])
+        # The frozen prereg mapping is the inscribed-sphere formula; the merged
+        # platform default has since been corrected to the cell mapping, so the
+        # frozen case is requested explicitly instead of relying on the default.
+        f = field_for([face()], mass_mapping="equal_volume_sphere")
         ledger = FractureLedger(f, [face()])
         accounting = ledger.mass_accounting(CONTINUUM_VOLUME)
         self.assertAlmostEqual(accounting["relative_error"], math.pi / 6 - 1, places=12)
@@ -107,7 +110,10 @@ class TestMassMappingAudit(unittest.TestCase):
 
     def test_frozen_mapping_tolerance_against_its_own_formula_is_vacuous(self):
         """The prereg criterion 1 cannot detect the deficit it is named after."""
-        f = field_for([face()])
+        # The frozen prereg mapping is the inscribed-sphere formula; the merged
+        # platform default has since been corrected to the cell mapping, so the
+        # frozen case is requested explicitly instead of relying on the default.
+        f = field_for([face()], mass_mapping="equal_volume_sphere")
         ledger = FractureLedger(f, [face()])
         sphere_mass = N_PARTICLES * DENSITY * (4.0 / 3.0) * math.pi * RADIUS**3
         self.assertAlmostEqual(ledger.mass_conservation_error(sphere_mass), 0.0, places=9)
