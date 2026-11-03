@@ -198,10 +198,14 @@ class TestFractureFieldGeneration(unittest.TestCase):
                 released_energy=1.0,
             )
         ]
+        # Criterion c1 is only meaningful under the volume-consistent mapping;
+        # the repository default stays the frozen legacy "equal_volume_spheres"
+        # (docs/dem3d_fracture_gen_audit.md, config table), which loses 47.64 %.
         config = FractureGenConfig(
             density=917.0,
             particle_radius=0.1,
             domain_bounds=(0.0, 0.6, 0.0, 0.6, 0.0, 0.6),
+            mass_mapping="cell_volume",
         )
         field = generate_fracture_field(faces, config)
         return field, faces, config
@@ -240,10 +244,14 @@ class TestFractureFieldGeneration(unittest.TestCase):
                 released_energy=2.0,
             ),
         ]
+        # Criterion c1 is only meaningful under the volume-consistent mapping;
+        # the repository default stays the frozen legacy "equal_volume_spheres"
+        # (docs/dem3d_fracture_gen_audit.md, config table), which loses 47.64 %.
         config = FractureGenConfig(
             density=917.0,
             particle_radius=0.1,
             domain_bounds=(0.0, 0.6, 0.0, 0.6, 0.0, 0.6),
+            mass_mapping="cell_volume",
         )
         field = generate_fracture_field(faces, config)
 
@@ -293,6 +301,7 @@ class TestFractureFieldGeneration(unittest.TestCase):
             density=density,
             particle_radius=radius,
             domain_bounds=domain,
+            mass_mapping="cell_volume",
         )
         field = generate_fracture_field(faces, config)
 
@@ -341,6 +350,7 @@ class TestFractureLedger(unittest.TestCase):
             particle_radius=radius,
             density=density,
             bond_stiffness=2000.0,
+            mass_mapping="cell_volume",
         )
         return field
 
@@ -382,10 +392,14 @@ class TestIntegrationWithIceDEM3D(unittest.TestCase):
             )
         ]
 
+        # Criterion c1 is only meaningful under the volume-consistent mapping;
+        # the repository default stays the frozen legacy "equal_volume_spheres"
+        # (docs/dem3d_fracture_gen_audit.md, config table), which loses 47.64 %.
         config = FractureGenConfig(
             density=917.0,
             particle_radius=0.1,
             domain_bounds=(0.0, 0.6, 0.0, 0.6, 0.0, 0.6),
+            mass_mapping="cell_volume",
         )
         field = generate_fracture_field(faces, config)
 
