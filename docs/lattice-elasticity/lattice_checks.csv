@@ -1,0 +1,15 @@
+id,description,value,tolerance,kind,verdict
+closed_form_vs_voigt_sum,"C11/C12/C44 from the Voigt sum match the closed form (13/3, 7/3, 7/3) k/a",1.679067141734637e-16,1e-12,max,PASS
+cubic_symmetry,off-pattern cubic entries vanish,8.540177112501216e-19,1e-14,max,PASS
+matrix_symmetry,C is symmetric (Maxwell/Betti),8.540177112501216e-19,1e-14,max,PASS
+cauchy_relation,|C12 - C44| / C44 vanishes for a central-force lattice,0.0,1e-14,max,PASS
+positive_definite,smallest eigenvalue of C is positive (stable lattice),80000.0,0.0,min_positive,PASS
+voigt_reuss_ordering,G_Reuss <= G_Hill <= G_Voigt (must be >= 0),0.0,1e-09,max,PASS
+axis_only_shear_mechanism,nearest-neighbour-only lattice has C44 = 0 (shear mechanism; the diagonals remove it),0.0,1e-14,max,PASS
+bond_count_9x5x3,solver bond count equals the lattice table count for grid 9x5x3,0.0,0.0,max,PASS
+virial_vs_affine_9x5x3,solver force virial under affine strain reproduces the affine stiffness,1.5696630854995908e-06,0.0001,max,PASS
+bond_count_6x5x4,solver bond count equals the lattice table count for grid 6x5x4,0.0,0.0,max,PASS
+virial_vs_affine_6x5x4,solver force virial under affine strain reproduces the affine stiffness,1.5856387543252247e-06,0.0001,max,PASS
+bond_count_12x12x12,solver bond count equals the lattice table count for grid 12x12x12,0.0,0.0,max,PASS
+virial_vs_affine_12x12x12,solver force virial under affine strain reproduces the affine stiffness,1.6311215030274088e-06,0.0001,max,PASS
+recommended_dt_within_elastic_bound,"configured dt and the conservative recommended dt stay below 2/omega_max of the bond lattice, including the post-fracture contact spring",0.030328391331468883,1.0,max,PASS
