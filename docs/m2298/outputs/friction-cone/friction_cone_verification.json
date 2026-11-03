@@ -1,0 +1,92 @@
+{
+  "parameters": {
+    "normal_force_N": 100.0,
+    "k_t_N_per_m": 10000.0,
+    "mu": 0.3,
+    "dt_s": 0.0001,
+    "speed_m_per_s": 0.02,
+    "slide_time_s": 0.6,
+    "delta_s_m": 0.003,
+    "f_sat_N": 30.0
+  },
+  "tolerance_relative": 0.03,
+  "cases": {
+    "stick_no_slip": {
+      "case": "stick_no_slip",
+      "analytic_force_N": 10.0,
+      "measured_force_N": 10.0,
+      "force_rel_error": 0.0,
+      "displacement_unchanged": true,
+      "sliding_reported": false,
+      "below_cone": true
+    },
+    "monotonic_sliding": {
+      "case": "monotonic_sliding",
+      "stepper": "friction_cone_projected",
+      "analytic_onset_travel_m": 0.003,
+      "measured_onset_travel_m": 0.003001999999999946,
+      "onset_travel_rel_error": 0.0006666666666486852,
+      "max_force_over_saturation": 1.0,
+      "force_ceiling_respected": true,
+      "final_force_N": 30.0,
+      "analytic_final_force_N": 30.0,
+      "final_force_rel_error": 0.0,
+      "travel_m": 0.012,
+      "friction_work_J": 0.31503000000001835,
+      "analytic_friction_work_J": 0.315,
+      "friction_work_rel_error": 9.523809529634502e-05,
+      "steps": 6000
+    },
+    "velocity_reversal": {
+      "case": "velocity_reversal",
+      "stepper": "friction_cone_projected",
+      "analytic_zero_crossing_travel_m": 0.003,
+      "measured_zero_crossing_travel_m": 0.003,
+      "zero_crossing_rel_error": 0.0,
+      "analytic_minus_saturation_travel_m": 0.006,
+      "measured_minus_saturation_travel_m": 0.005997000000000254,
+      "minus_saturation_rel_error": 0.0004999999999577102,
+      "saturation_level_offset": 0.001
+    },
+    "legacy_monotonic_sliding": {
+      "case": "monotonic_sliding",
+      "stepper": "legacy_stateless",
+      "analytic_onset_travel_m": null,
+      "measured_onset_travel_m": null,
+      "onset_travel_rel_error": null,
+      "max_force_over_saturation": 1.0000000000000002,
+      "force_ceiling_respected": true,
+      "final_force_N": 30.0,
+      "analytic_final_force_N": 30.0,
+      "final_force_rel_error": 0.0,
+      "travel_m": 0.012,
+      "friction_work_J": 0.31503000000001835,
+      "analytic_friction_work_J": 0.315,
+      "friction_work_rel_error": 9.523809529634502e-05,
+      "steps": 6000
+    },
+    "legacy_velocity_reversal": {
+      "case": "velocity_reversal",
+      "stepper": "legacy_stateless",
+      "analytic_zero_crossing_travel_m": 0.003,
+      "measured_zero_crossing_travel_m": 0.012000000000000944,
+      "zero_crossing_rel_error": 3.000000000000315,
+      "analytic_minus_saturation_travel_m": 0.006,
+      "measured_minus_saturation_travel_m": 0.014997000000001395,
+      "minus_saturation_rel_error": 1.4995000000002323,
+      "saturation_level_offset": 0.001
+    }
+  },
+  "error_budget": {
+    "stick_force_rel_error": 0.0,
+    "onset_travel_rel_error": 0.0006666666666486852,
+    "final_force_rel_error": 0.0,
+    "friction_work_rel_error": 9.523809529634502e-05,
+    "zero_crossing_rel_error": 0.0,
+    "minus_saturation_rel_error": 0.0004999999999577102
+  },
+  "max_relative_error": 0.0006666666666486852,
+  "legacy_max_relative_error": 3.000000000000315,
+  "verdict": "PASS",
+  "reference": "Analytic Coulomb/Cundall-Strack anchors: delta_s = mu*N/k_t, s_zero = delta_s, s_neg = 2*delta_s, W = k_t*delta_s^2/2 + mu*N*(s-delta_s)"
+}
