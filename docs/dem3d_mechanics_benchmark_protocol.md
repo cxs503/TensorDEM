@@ -98,3 +98,27 @@ For every published benchmark run, preserve the Git commit, Python/PyTorch versi
 device, complete configuration, case manifest, output report, and raw force/damage
 history. CPU deterministic signatures are useful regression guards but are not a
 substitute for physical validation.
+
+## Bond stiffness reference (added after this protocol)
+
+The protocol above exercises the implemented laws but deliberately left the
+absolute stiffness of the bond network uncalibrated: `bond_stiffness` was a free
+parameter with no reference value, and the note "calibrate its directional
+stiffness before engineering use" in `tensordem.dem3d` had no companion
+reference. [dem3d_lattice_elasticity.md](dem3d_lattice_elasticity.md) supplies
+one, protocol `tensordem-dem3d-lattice-elasticity-v1`:
+
+- closed-form cubic constants of the 13-neighbour lattice,
+  `C11 = 13/3 k/a` and `C12 = C44 = 7/3 k/a` (Cauchy relation);
+- the same constants recomputed by Voigt summation and, third, through the
+  solver's own force virial under affine strain (agreement to `O(1e-6)`);
+- the anisotropy (`Zener = 7/3`, `E_111 / E_100 = 2.06`) and the finite-specimen
+  surface bond deficiency, which explains part of the direction dependence
+  flagged below for the simple-cubic prism specimen;
+- the explicit stability bound `dt_crit = 2 / omega_max` from the lattice phonon
+  spectrum, compared with `DEM3DConfig.recommended_dt`.
+
+This addendum does not change the boundaries of this protocol: it is still a
+software-level check of implemented laws, not an experimental calibration, and it
+does not add Hertz-Mindlin contact, tangential friction history, particle
+rotation or rolling resistance to the 3-D solver.
