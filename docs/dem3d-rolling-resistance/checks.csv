@@ -1,0 +1,20 @@
+check,value,target
+L1_rel_err,0.0,0 (<3%)
+L2_cos_to_slip,-1.0,-1
+L3_net_force,0.0,0
+L4_rel_err,1.3877787807814442e-16,0 (<3%)
+L4_impl_over_ai_factor,1.9999999999999998,2 by convention
+L5_rel_err,1.4802973661668738e-16,0 (<3%)
+L6_bit_identical_to_friction_only,True,True
+"I1_a_rel_err[mu=0.00,mu_r=0.05]",0.011499630717142065,<3%
+"I2_t_stop_rel_err[mu=0.00,mu_r=0.05]",0.0034571635551811706,<3%
+"I3_ke_monotone[mu=0.00,mu_r=0.05]",True,True
+"I4_max_abs_vy[mu=0.00,mu_r=0.05]",0.0,~0
+"I1_a_rel_err[mu=0.00,mu_r=0.10]",0.0028512835649795155,<3%
+"I2_t_stop_rel_err[mu=0.00,mu_r=0.10]",0.006123373913381145,<3%
+"I3_ke_monotone[mu=0.00,mu_r=0.10]",True,True
+"I4_max_abs_vy[mu=0.00,mu_r=0.10]",0.0,~0
+"I1_a_rel_err[mu=0.20,mu_r=0.10]",0.00031517707926971865,<3%
+"I2_t_stop_rel_err[mu=0.20,mu_r=0.10]",0.007789554342687796,<3%
+"I3_ke_monotone[mu=0.20,mu_r=0.10]",True,True
+"I4_max_abs_vy[mu=0.20,mu_r=0.10]",0.0,~0
