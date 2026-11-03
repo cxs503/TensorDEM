@@ -31,6 +31,31 @@ from .fracture_mass_mapping import (
     particle_mass as _particle_mass,
 )
 
+#: Mass radius of the volume-consistent ("lattice_cell") mapping: the radius of
+#: the sphere whose volume equals the cubic cell (2 r)^3, i.e.
+#: r_m = (6/pi)^(1/3) r = 2 (3 / 4 pi)^(1/3) r = 1.24070 r. Under the frozen
+#: inscribed-sphere mapping the mass radius is the geometric radius (factor 1).
+MASS_RADIUS_FACTOR = (6.0 / math.pi) ** (1.0 / 3.0)
+
+#: Extent models for a failure face: the frozen infinite plane, or the physical
+#: disc of radius :func:`face_footprint_radius` centred on the face centroid.
+FACE_EXTENTS = frozenset({"plane", "disc"})
+
+#: Public mass-mapping alias -> internal ``mass_mode``. Three conventions grew
+#: up independently in this tree (``cell``/``sphere`` in ``fracture_mass_mapping``,
+#: ``lattice_cell``/``equal_volume_sphere`` in the SI-2 audit, ``cell_volume``/
+#: ``equal_volume_spheres`` in the ledger audit); they name the same two laws, so
+#: they are accepted here and normalised to one internal mode.
+MASS_MAPPING_ALIASES = {
+    "cell": "cell",
+    "cell_volume": "cell",
+    "lattice_cell": "cell",
+    "equal_volume_sphere": "sphere",
+    "equal_volume_spheres": "sphere",
+    "frozen": "sphere",
+    "sphere": "sphere",
+}
+
 
 @dataclass
 class FailureFace:
@@ -41,6 +66,9 @@ class FailureFace:
     centroid: torch.Tensor  # shape [3]
     G: float  # fracture energy release rate (J/m²)
     released_energy: float  # total energy released (J)
+    # In-plane footprint radius (m). ``None`` (frozen contract) means the
+    # area-equivalent disc sqrt(area / pi).
+    extent_radius: float | None = None
 
 
 @dataclass
@@ -56,6 +84,18 @@ class FractureGenConfig:
     #             frozen "equal-volume spheres" intent)
     # "sphere" -> m = density * (4/3) pi r^3, legacy pre-audit mapping that
     #             under-counts mass by 1 - pi/6 = 47.64 %
+    # Public alias for ``mass_mode`` used by the SI-2 validation audit:
+    # "lattice_cell" -> cell, "sphere"/"frozen"/"equal_volume_sphere" -> sphere.
+    mass_mapping: str | None = None
+    # Face extent model. "plane" is the frozen contract (every bond straddling
+    # the infinite plane breaks); "disc" restricts breakage to the footprint
+    # disc so the broken-bond count scales with the face area.
+    face_extent: str = "plane"
+    footprint_aware: bool | None = None
+    # Bonds with exactly one endpoint within this distance of the face plane
+    # also break. Needed because the strict sign test severs nothing when the
+    # plane passes through a particle layer.
+    on_plane_tolerance: float = 0.0
 
     def __post_init__(self):
         if self.density <= 0:
@@ -68,6 +108,31 @@ class FractureGenConfig:
             raise ValueError(
                 f"mass_mode must be one of {VALID_MASS_MODES}, got {self.mass_mode!r}"
             )
+        if self.mass_mapping is not None:
+            resolved = MASS_MAPPING_ALIASES.get(self.mass_mapping)
+            if resolved is None:
+                raise ValueError(
+                    "mass_mapping must be one of "
+                    f"{sorted(MASS_MAPPING_ALIASES)}, got {self.mass_mapping!r}"
+                )
+            if self.mass_mode != "cell" and self.mass_mode != resolved:
+                raise ValueError(
+                    f"mass_mapping={self.mass_mapping!r} contradicts "
+                    f"mass_mode={self.mass_mode!r}"
+                )
+            self.mass_mode = resolved
+        else:
+            # No alias given: report the canonical public name of the mode.
+            self.mass_mapping = (
+                "lattice_cell" if self.mass_mode == "cell" else "sphere"
+            )
+        if self.face_extent not in FACE_EXTENTS:
+            raise ValueError(
+                f"face_extent must be one of {sorted(FACE_EXTENTS)}, "
+                f"got {self.face_extent!r}"
+            )
+        if not math.isfinite(self.on_plane_tolerance) or self.on_plane_tolerance < 0.0:
+            raise ValueError("on_plane_tolerance must be finite and nonnegative")
 
 
 class FractureField:
@@ -87,12 +152,33 @@ class FractureField:
         density: float,
         bond_stiffness: float,
         mass_mode: str = "cell",
+        face_extent: str = "plane",
+        footprint_aware: bool = False,
+        on_plane_tolerance: float = 0.0,
+        mass_mapping: str | None = None,
+        domain_bounds: tuple[float, float, float, float, float, float] | None = None,
     ):
         if mass_mode not in VALID_MASS_MODES:
             raise ValueError(
                 f"mass_mode must be one of {VALID_MASS_MODES}, got {mass_mode!r}"
             )
+        if face_extent not in FACE_EXTENTS:
+            raise ValueError(
+                f"face_extent must be one of {sorted(FACE_EXTENTS)}, "
+                f"got {face_extent!r}"
+            )
+        if not math.isfinite(on_plane_tolerance) or on_plane_tolerance < 0.0:
+            raise ValueError("on_plane_tolerance must be finite and nonnegative")
         self.mass_mode = mass_mode
+        self.face_extent = face_extent
+        self.footprint_aware = bool(footprint_aware) or face_extent == "disc"
+        self.on_plane_tolerance = float(on_plane_tolerance)
+        # Label as the caller named it, so audit rows stay traceable to the
+        # convention that produced them.
+        self.mass_mapping_label = mass_mapping or (
+            "lattice_cell" if mass_mode == "cell" else "sphere"
+        )
+        self.domain_bounds = domain_bounds
         self.positions = positions
         self.velocities = velocities
         self.bond_indices = bond_indices
@@ -135,6 +221,49 @@ class FractureField:
     def num_intact_bonds(self) -> int:
         """Number of intact bonds."""
         return self.alive.sum().item()
+
+    @property
+    def mass_mapping(self) -> str:
+        """Mass-mapping name as the caller declared it (else the canonical one)."""
+        return self.mass_mapping_label
+
+    @property
+    def domain_volume(self) -> float:
+        """Volume of the requested domain (m^3)."""
+        if self.domain_bounds is None:
+            raise ValueError("domain_bounds were not recorded for this field")
+        xmin, xmax, ymin, ymax, zmin, zmax = self.domain_bounds
+        volume = (xmax - xmin) * (ymax - ymin) * (zmax - zmin)
+        if volume <= 0.0:
+            raise ValueError("domain volume must be positive")
+        return float(volume)
+
+    @property
+    def volume_fraction(self) -> float:
+        """Fraction of the requested domain actually covered by lattice cells.
+
+        One when every domain extent is an integer multiple of the spacing,
+        below one otherwise; this is the *quantisation* term of the mass error,
+        which is independent of the mass mapping.
+        """
+        fraction = self.represented_volume / self.domain_volume
+        nearest = round(fraction)
+        # Exact coverage must not be reported as 1 + O(eps) by the audit.
+        if abs(fraction - nearest) <= 1e-12:
+            return float(nearest)
+        return fraction
+
+    @property
+    def mass_radius(self) -> float:
+        """Radius of the sphere that carries :attr:`particle_mass` (m).
+
+        For the volume-consistent mapping ``particle_mass == density * (4/3) pi
+        r_m^3`` holds with ``r_m = MASS_RADIUS_FACTOR * particle_radius``; the
+        inscribed-sphere mapping uses the geometric radius unchanged.
+        """
+        if self.mass_mode == "cell":
+            return self.particle_radius * MASS_RADIUS_FACTOR
+        return self.particle_radius
     
     def to_icedem3d_initial_state(self) -> dict[str, torch.Tensor]:
         """Convert to initial state dict for IceDEM3D."""
@@ -217,66 +346,148 @@ def generate_particle_lattice(
     return positions
 
 
+#: Row-block size for the vectorised bond search: the pairwise distance block is
+#: ``block x n_particles`` float64 entries (8 MB per 1024 rows at n = 1024).
+_BOND_BLOCK = 1024
+
+
 def build_bond_topology(
     positions: torch.Tensor,
     particle_radius: float
 ) -> tuple[torch.Tensor, torch.Tensor]:
     """Build bond topology for simple cubic lattice.
-    
-    Bonds connect nearest neighbors (distance = 2*particle_radius).
+
+    Bonds connect nearest neighbours (distance = 2*particle_radius).
+
+    The search is block-vectorised (``torch.cdist`` over row blocks) instead of a
+    Python double loop, which is what makes the SI-2 perturbed-lattice cases and
+    the validation audit tractable at n = 512. Pair order is unchanged: rows are
+    emitted in ascending ``(i, j)`` order, so every artifact that depended on the
+    old loop order is byte-identical.
     """
     n_particles = len(positions)
     spacing = 2.0 * particle_radius
-    
-    # Find all pairs within bonding distance
-    bond_pairs = []
-    for i in range(n_particles):
-        for j in range(i + 1, n_particles):
-            dist = torch.linalg.norm(positions[j] - positions[i])
-            if dist <= spacing * 1.01:  # small tolerance for numerical errors
-                bond_pairs.append([i, j])
-    
-    if len(bond_pairs) == 0:
-        return torch.empty((0, 2), dtype=torch.long, device=positions.device), \
-               torch.empty(0, dtype=positions.dtype, device=positions.device)
-    
-    bond_indices = torch.tensor(bond_pairs, dtype=torch.long, device=positions.device)
+    device = positions.device
+
+    if n_particles == 0:
+        return (torch.empty((0, 2), dtype=torch.long, device=device),
+                torch.empty(0, dtype=positions.dtype, device=device))
+
+    threshold = spacing * 1.01  # small tolerance for numerical errors
+    rows: list[torch.Tensor] = []
+    cols: list[torch.Tensor] = []
+    columns = torch.arange(n_particles, device=device).unsqueeze(0)
+    for start in range(0, n_particles, _BOND_BLOCK):
+        stop = min(start + _BOND_BLOCK, n_particles)
+        distances = torch.cdist(positions[start:stop], positions)
+        own = torch.arange(start, stop, device=device).unsqueeze(1)
+        close = (distances <= threshold) & (columns > own)
+        local_i, j_idx = close.nonzero(as_tuple=True)
+        rows.append(local_i + start)
+        cols.append(j_idx)
+
+    if not rows:
+        return (torch.empty((0, 2), dtype=torch.long, device=device),
+                torch.empty(0, dtype=positions.dtype, device=device))
+
+    bond_indices = torch.stack([torch.cat(rows), torch.cat(cols)], dim=1)
     rest_lengths = torch.linalg.norm(
         positions[bond_indices[:, 1]] - positions[bond_indices[:, 0]],
         dim=1
     )
-    
+
     return bond_indices, rest_lengths
+
+
+def face_footprint_radius(face: FailureFace) -> float:
+    """In-plane footprint radius of a failure face (m).
+
+    Uses the explicit ``extent_radius`` when the producer supplies one, else the
+    area-equivalent disc radius sqrt(area / pi) implied by the frozen contract.
+    """
+    if face.extent_radius is not None:
+        if not math.isfinite(face.extent_radius) or face.extent_radius <= 0:
+            raise ValueError("extent_radius must be finite and positive")
+        return float(face.extent_radius)
+    if not math.isfinite(face.area) or face.area <= 0:
+        raise ValueError("area must be finite and positive")
+    return math.sqrt(face.area / math.pi)
 
 
 def identify_bonds_crossing_face(
     bond_indices: torch.Tensor,
     positions: torch.Tensor,
-    face: FailureFace
+    face: FailureFace,
+    face_extent: str = "plane",
+    footprint_aware: bool | None = None,
+    on_plane_tolerance: float = 0.0,
 ) -> torch.Tensor:
     """Identify bonds that cross a failure face.
-    
-    A bond crosses a face if the two endpoints are on opposite sides of the
-    face plane (defined by normal and centroid).
+
+    A bond crosses a face if the two endpoints lie on opposite sides of the face
+    plane (defined by ``normal`` and ``centroid``).
+
+    ``face_extent="plane"`` (default, frozen behaviour) treats the face as an
+    infinite plane, so every lattice bond straddling the plane is broken even if
+    it is far outside the physical face.
+
+    ``face_extent="disc"`` (equivalently ``footprint_aware=True``) additionally
+    requires the bond/plane intersection point to lie inside the circular disc of
+    in-plane radius :func:`face_footprint_radius` centred on ``face.centroid``.
+    This keeps the broken-bond count consistent with the face area, and hence
+    with the fracture energy that face can release.
+
+    ``on_plane_tolerance > 0`` also severs bonds with exactly one endpoint within
+    that distance of the plane, which restores the cut when the failure plane
+    passes through a particle layer instead of between two layers.
     """
+    if face_extent not in FACE_EXTENTS:
+        raise ValueError(
+            f"face_extent must be one of {sorted(FACE_EXTENTS)}, got {face_extent!r}"
+        )
+    if not math.isfinite(on_plane_tolerance) or on_plane_tolerance < 0.0:
+        raise ValueError("on_plane_tolerance must be finite and nonnegative")
+    disc = face_extent == "disc" or bool(footprint_aware)
+
     if len(bond_indices) == 0:
         return torch.empty(0, dtype=torch.bool, device=positions.device)
-    
+
     i_idx, j_idx = bond_indices.T
     pos_i = positions[i_idx]
     pos_j = positions[j_idx]
-    
-    # Move face data to same device as positions
-    centroid = face.centroid.to(positions.device)
-    normal = face.normal.to(positions.device)
-    
-    # Signed distance from face plane: normal · (pos - centroid)
+
+    # Move face data to the device/dtype of the positions
+    centroid = face.centroid.to(device=positions.device, dtype=positions.dtype)
+    normal = face.normal.to(device=positions.device, dtype=positions.dtype)
+    norm = torch.linalg.norm(normal)
+    if not bool(torch.isfinite(norm)) or float(norm) == 0.0:
+        raise ValueError("face normal must be a finite non-zero vector")
+    normal = normal / norm
+
+    # Signed distance from the face plane: normal . (pos - centroid)
     dist_i = torch.sum((pos_i - centroid) * normal, dim=1)
     dist_j = torch.sum((pos_j - centroid) * normal, dim=1)
-    
-    # Bond crosses face if signs are opposite (one positive, one negative)
+
+    # Bond crosses the face if the endpoints are on opposite sides
     crosses = (dist_i * dist_j) < 0
-    
+
+    if on_plane_tolerance > 0.0:
+        near_i = dist_i.abs() <= on_plane_tolerance
+        near_j = dist_j.abs() <= on_plane_tolerance
+        crosses = crosses | (near_i & ~near_j) | (near_j & ~near_i)
+
+    if disc and bool(crosses.any()):
+        denom = dist_i - dist_j
+        # crosses implies dist_i != dist_j; guard the unused entries anyway
+        denom = torch.where(denom == 0, torch.ones_like(denom), denom)
+        t = torch.where(crosses, dist_i / denom, torch.zeros_like(denom))
+        x_cross = pos_i + t.unsqueeze(1) * (pos_j - pos_i)
+        delta = x_cross - centroid
+        in_plane = delta - torch.sum(delta * normal, dim=1, keepdim=True) * normal
+        radius = face_footprint_radius(face)
+        inside = torch.linalg.norm(in_plane, dim=1) <= radius * (1.0 + 1e-12)
+        crosses = crosses & inside
+
     return crosses
 
 
@@ -308,7 +519,14 @@ def generate_fracture_field(
     
     # Break bonds at failure faces
     for face in failure_faces:
-        crosses = identify_bonds_crossing_face(bond_indices, positions, face)
+        crosses = identify_bonds_crossing_face(
+            bond_indices,
+            positions,
+            face,
+            face_extent=config.face_extent,
+            footprint_aware=config.footprint_aware,
+            on_plane_tolerance=config.on_plane_tolerance,
+        )
         alive &= ~crosses
     
     return FractureField(
@@ -320,7 +538,12 @@ def generate_fracture_field(
         particle_radius=config.particle_radius,
         density=config.density,
         bond_stiffness=config.bond_stiffness,
-        mass_mode=config.mass_mode
+        mass_mode=config.mass_mode,
+        face_extent=config.face_extent,
+        footprint_aware=bool(config.footprint_aware),
+        on_plane_tolerance=config.on_plane_tolerance,
+        mass_mapping=config.mass_mapping,
+        domain_bounds=config.domain_bounds,
     )
 
 
@@ -340,6 +563,55 @@ class FractureLedger:
         """Compute mass conservation error: |DEM_mass - FEM_mass|."""
         dem_mass = self.field.total_mass
         return abs(dem_mass - fem_mass)
+
+    def mass_accounting(
+        self,
+        reference_volume: float | None = None,
+        domain_volume: float | None = None,
+        tolerance: float = 0.15,
+    ) -> dict[str, Any]:
+        """Audit the DEM mass against an independent continuum reference.
+
+        ``reference_volume`` (or, as a keyword, ``domain_volume``) is the solid
+        ice volume the lattice is meant to represent (m^3); the reference mass is
+        ``density * reference_volume``.  When neither is given the domain the
+        field was generated for is used, so ``mass_accounting()`` is the terse
+        form and ``mass_accounting(V)`` the explicit one.
+
+        This is an *external* baseline: unlike :meth:`mass_conservation_error` it
+        does not reuse the particle mass formula, so it can see a mapping defect
+        instead of certifying it.
+
+        Returns the DEM and continuum masses, the signed ``relative_error``
+        (DEM - continuum) / continuum, its absolute value, ``within_15pct``
+        (``|relative_error| <= tolerance``, the platform acceptance bar), the
+        ``mass_mapping`` label, and the lattice bookkeeping
+        (``num_particles``, ``lattice_volume_covered``).
+        """
+        if reference_volume is None:
+            reference_volume = domain_volume
+        if reference_volume is None:
+            reference_volume = self.field.domain_volume
+        if not math.isfinite(reference_volume) or reference_volume <= 0.0:
+            raise ValueError("reference_volume must be finite and positive")
+        if tolerance <= 0.0:
+            raise ValueError("tolerance must be positive")
+        dem_mass = float(self.field.total_mass)
+        continuum_mass = float(self.field.density * reference_volume)
+        signed = (dem_mass - continuum_mass) / continuum_mass
+        return {
+            "dem_mass": dem_mass,
+            "continuum_mass": continuum_mass,
+            "fem_continuum_mass": continuum_mass,
+            "mass_mapping": self.field.mass_mapping,
+            "relative_error": signed,
+            "absolute_relative_error": abs(signed),
+            "within_15pct": abs(signed) <= tolerance,
+            "tolerance": tolerance,
+            "num_particles": self.field.num_particles,
+            "lattice_volume_covered": self.field.represented_volume,
+            "volume_fraction": self.field.volume_fraction,
+        }
 
     def mass_mapping_report(
         self,
@@ -374,28 +646,64 @@ class FractureLedger:
             num_particles=self.field.num_particles,
         )
     
-    def energy_accounting(self) -> dict[str, float]:
-        """Account for fracture energy.
-        
+    def energy_accounting(self) -> dict[str, Any]:
+        """Account for fracture energy against lattice analytics.
+
         Returns dict with:
         - total_released_energy: sum of released_energy from all faces
         - num_broken_bonds: number of broken bonds in DEM field
         - unit_bond_energy: total_released_energy / num_broken_bonds
+          (bookkeeping identity, not a physical check)
+        - analytic_bond_count: lattice estimate sum(area) / (2r)^2
+        - analytic_unit_bond_energy: area-weighted G * (2r)^2, the energy a
+          single bond should carry
+        - unit_bond_energy_relative_error: |implied - analytic| / analytic, the
+          falsifiable form of criterion c2
+        - bond_count_relative_error: |broken - analytic_bond_count| / analytic
+        - input_consistency_error: sum |released_energy - G * area|; the frozen
+          contract carries both fields, so they must agree
+        - face_extent: extent model used for the cut
         """
+        field = self.field
+        spacing = 2.0 * field.particle_radius
         total_released = sum(face.released_energy for face in self.faces)
-        num_broken = self.field.num_broken_bonds
-        
-        if num_broken > 0:
-            unit_bond_energy = total_released / num_broken
+        num_broken = field.num_broken_bonds
+        unit_bond_energy = total_released / num_broken if num_broken > 0 else 0.0
+
+        total_area = sum(face.area for face in self.faces)
+        analytic_bond_count = total_area / spacing ** 2 if total_area > 0 else 0.0
+        weighted_G = (
+            sum(face.G * face.area for face in self.faces) / total_area
+            if total_area > 0 else 0.0
+        )
+        analytic_unit_bond_energy = weighted_G * spacing ** 2
+        if analytic_unit_bond_energy > 0:
+            unit_rel = (
+                abs(unit_bond_energy - analytic_unit_bond_energy)
+                / analytic_unit_bond_energy
+            )
         else:
-            unit_bond_energy = 0.0
-        
+            unit_rel = float("nan")
+        bond_count_rel = (
+            abs(num_broken - analytic_bond_count) / analytic_bond_count
+            if analytic_bond_count > 0 else float("nan")
+        )
+        input_consistency_error = sum(
+            abs(face.released_energy - face.G * face.area) for face in self.faces
+        )
+
         return {
-            'total_released_energy': total_released,
-            'num_broken_bonds': num_broken,
-            'unit_bond_energy': unit_bond_energy
+            "total_released_energy": total_released,
+            "num_broken_bonds": num_broken,
+            "unit_bond_energy": unit_bond_energy,
+            "analytic_bond_count": analytic_bond_count,
+            "bond_count_relative_error": bond_count_rel,
+            "analytic_unit_bond_energy": analytic_unit_bond_energy,
+            "unit_bond_energy_relative_error": unit_rel,
+            "input_consistency_error": input_consistency_error,
+            "face_extent": field.face_extent,
         }
-    
+
     def check_bonds_at_faces(self) -> dict[str, Any]:
         """Verify that bonds crossing failure faces are broken.
         
@@ -411,9 +719,12 @@ class FractureLedger:
         
         for face in self.faces:
             crosses = identify_bonds_crossing_face(
-                self.field.bond_indices, 
-                self.field.positions, 
-                face
+                self.field.bond_indices,
+                self.field.positions,
+                face,
+                face_extent=self.field.face_extent,
+                footprint_aware=self.field.footprint_aware,
+                on_plane_tolerance=self.field.on_plane_tolerance,
             )
             bonds_should_break |= crosses
         
