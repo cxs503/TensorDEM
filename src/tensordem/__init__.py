@@ -31,9 +31,26 @@ from .contact_tangential import (
     restitution_to_damping,
     damping_to_restitution,
 )
+from .restitution import (
+    RestitutionMeasurement,
+    clamped_contact_restitution,
+    contact_restitution,
+    damping_for_clamped_restitution,
+    damping_for_restitution,
+    damping_ratio,
+    measure_platen_restitution,
+    platen_restitution,
+    restitution_from_damping,
+    restitution_from_damping_clamped,
+)
 from .dem_export import DemExport, Fragment, save_json, load_json, load_to_tensors
 
 __all__ = [
+    "RestitutionMeasurement",
+    "damping_ratio", "restitution_from_damping", "restitution_from_damping_clamped",
+    "damping_for_restitution", "damping_for_clamped_restitution",
+    "contact_restitution", "clamped_contact_restitution", "platen_restitution",
+    "measure_platen_restitution",
     "DEMConfig", "IceDEM", "DEM3DConfig", "IceDEM3D",
     "WetCouplingConfig", "WaveForceConfig",
     "compute_buoyancy_force", "compute_wet_drag_force", "compute_wet_forces",
