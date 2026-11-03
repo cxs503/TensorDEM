@@ -5,7 +5,9 @@ This script validates the three acceptance criteria:
 2. Energy accounting: ∑released_energy vs broken_bonds × unit_bond_energy
 3. Bond breakage at failure faces
 
-Outputs validation_report.json with machine-readable results.
+Outputs fracture_gen_ledger_report.json with machine-readable results.
+(The three-anchor ice-floe physics benchmark owns validation_report.json;
+writing the same path from here used to clobber it.)
 """
 
 import json
@@ -53,8 +55,9 @@ def test_mass_conservation():
     field = generate_fracture_field(faces, config)
     
     # Compute expected mass
-    # 3×3×3 = 27 particles
-    expected_mass = 27 * 917.0 * (4.0 / 3.0) * math.pi * 0.1**3
+    # 3×3×3 = 27 particles on a lattice of spacing h = 2r = 0.2 m; each
+    # particle represents a cell of volume h^3 (volume-consistent mapping).
+    expected_mass = 27 * 917.0 * 0.2**3
     
     # Check mass conservation
     mass_error = abs(field.total_mass - expected_mass)
@@ -222,7 +225,7 @@ def main():
         }
     }
     
-    report_path = Path(__file__).parent / "validation_report.json"
+    report_path = Path(__file__).parent / "fracture_gen_ledger_report.json"
     with open(report_path, 'w') as f:
         json.dump(report, f, indent=2)
     
