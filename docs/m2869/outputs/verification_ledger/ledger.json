@@ -1,0 +1,1950 @@
+{
+  "collection": {
+    "error_modules": [
+      "tests/test_fracture_gen_mass_footprint.py"
+    ],
+    "n_test_modules": 97
+  },
+  "docs": [
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": false,
+      "doc": "docs/DEM3D_BENCHMARK_PAPER.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 0,
+      "scripts": [
+        "scripts/run_dem3d_benchmark_suite.py",
+        "scripts/visualize_dem3d_benchmarks.py",
+        "scripts/run_dem3d_mechanics_benchmarks.py",
+        "scripts/run_dem3d_specimen_response_benchmarks.py",
+        "scripts/benchmark_dem3d_ucs.py",
+        "scripts/benchmark_dem3d_three_point_bending.py",
+        "scripts/benchmark_dem3d_moving_wedge_bow.py",
+        "scripts/benchmark_dem3d_ucs_timestep_convergence.py",
+        "scripts/benchmark_dem3d_bending_load_convergence.py",
+        "scripts/benchmark_dem3d_bending_resolution.py",
+        "scripts/benchmark_dem3d_wedge_resistance_sensitivity.py",
+        "scripts/benchmark_dem3d_ship_ice_formula_baselines.py",
+        "scripts/plot_dem3d_benchmark_paper.py"
+      ],
+      "scripts_present": {
+        "scripts/benchmark_dem3d_bending_load_convergence.py": true,
+        "scripts/benchmark_dem3d_bending_resolution.py": true,
+        "scripts/benchmark_dem3d_moving_wedge_bow.py": true,
+        "scripts/benchmark_dem3d_ship_ice_formula_baselines.py": true,
+        "scripts/benchmark_dem3d_three_point_bending.py": true,
+        "scripts/benchmark_dem3d_ucs.py": true,
+        "scripts/benchmark_dem3d_ucs_timestep_convergence.py": true,
+        "scripts/benchmark_dem3d_wedge_resistance_sensitivity.py": true,
+        "scripts/plot_dem3d_benchmark_paper.py": true,
+        "scripts/run_dem3d_benchmark_suite.py": true,
+        "scripts/run_dem3d_mechanics_benchmarks.py": true,
+        "scripts/run_dem3d_specimen_response_benchmarks.py": true,
+        "scripts/visualize_dem3d_benchmarks.py": true
+      },
+      "symbols": [],
+      "tests": [],
+      "tests_collect": {},
+      "tests_present": {}
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": false,
+      "doc": "docs/DEM3D_CYLINDER_COMPRESSION_BENCHMARK.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 0,
+      "scripts": [
+        "scripts/run_dem3d_cylinder_benchmark.py"
+      ],
+      "scripts_present": {
+        "scripts/run_dem3d_cylinder_benchmark.py": true
+      },
+      "symbols": [],
+      "tests": [],
+      "tests_collect": {},
+      "tests_present": {}
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": false,
+      "doc": "docs/DEM3D_FIXED_DURATION_TIMESTEP_STUDIES.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 2,
+      "scripts": [
+        "scripts/benchmark_dem3d_three_point_bending.py"
+      ],
+      "scripts_present": {
+        "scripts/benchmark_dem3d_three_point_bending.py": true
+      },
+      "symbols": [],
+      "tests": [],
+      "tests_collect": {},
+      "tests_present": {}
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": false,
+      "doc": "docs/PROJECT_CHARTER.md",
+      "grade": "NO_CLAIM",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 0,
+      "scripts": [],
+      "scripts_present": {},
+      "symbols": [],
+      "tests": [],
+      "tests_collect": {},
+      "tests_present": {}
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": false,
+      "doc": "docs/S3_ARTIFACT_STORAGE.md",
+      "grade": "NO_CLAIM",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 0,
+      "scripts": [],
+      "scripts_present": {},
+      "symbols": [
+        "run_manifest",
+        "dem3d_cli"
+      ],
+      "tests": [],
+      "tests_collect": {},
+      "tests_present": {}
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": true,
+      "doc": "docs/TENSORDEM_UPSTREAM_DIFF_M1630.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 1,
+      "scripts": [
+        "scripts/audit_upstream_diff.py",
+        "scripts/render_upstream_diff_report.py"
+      ],
+      "scripts_present": {
+        "scripts/audit_upstream_diff.py": true,
+        "scripts/render_upstream_diff_report.py": true
+      },
+      "symbols": [],
+      "tests": [
+        "tests/test_audit_upstream_diff_m1630.py",
+        "tests/test_accounting_output.py",
+        "tests/test_dem.py"
+      ],
+      "tests_collect": {
+        "tests/test_accounting_output.py": "ok",
+        "tests/test_audit_upstream_diff_m1630.py": "ok",
+        "tests/test_dem.py": "ok"
+      },
+      "tests_present": {
+        "tests/test_accounting_output.py": true,
+        "tests/test_audit_upstream_diff_m1630.py": true,
+        "tests/test_dem.py": true
+      }
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": true,
+      "doc": "docs/THREEFIELD_ICE_HULL_PROPELLER.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 5,
+      "scripts": [],
+      "scripts_present": {},
+      "symbols": [
+        "threefield"
+      ],
+      "tests": [
+        "tests/test_threefield.py"
+      ],
+      "tests_collect": {
+        "tests/test_threefield.py": "ok"
+      },
+      "tests_present": {
+        "tests/test_threefield.py": true
+      }
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": true,
+      "doc": "docs/accounting_ledger_validation.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 3,
+      "scripts": [
+        "scripts/validate_accounting_ledger.py"
+      ],
+      "scripts_present": {
+        "scripts/validate_accounting_ledger.py": true
+      },
+      "symbols": [],
+      "tests": [
+        "tests/test_accounting_output.py",
+        "tests/test_accounting_ledger_validation.py"
+      ],
+      "tests_collect": {
+        "tests/test_accounting_ledger_validation.py": "ok",
+        "tests/test_accounting_output.py": "ok"
+      },
+      "tests_present": {
+        "tests/test_accounting_ledger_validation.py": true,
+        "tests/test_accounting_output.py": true
+      }
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": true,
+      "doc": "docs/buoyancy_free_float_verification.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 1,
+      "scripts": [
+        "scripts/verify_buoyancy_free_float.py"
+      ],
+      "scripts_present": {
+        "scripts/verify_buoyancy_free_float.py": true
+      },
+      "symbols": [
+        "buoyancy_wet"
+      ],
+      "tests": [
+        "tests/test_buoyancy_wet.py",
+        "tests/test_buoyancy_free_float_verification.py"
+      ],
+      "tests_collect": {
+        "tests/test_buoyancy_free_float_verification.py": "ok",
+        "tests/test_buoyancy_wet.py": "ok"
+      },
+      "tests_present": {
+        "tests/test_buoyancy_free_float_verification.py": true,
+        "tests/test_buoyancy_wet.py": true
+      }
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": true,
+      "doc": "docs/dem2d_hull_polyline_geometry_audit.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 1,
+      "scripts": [
+        "scripts/audit_hull_polyline_geometry.py"
+      ],
+      "scripts_present": {
+        "scripts/audit_hull_polyline_geometry.py": true
+      },
+      "symbols": [
+        "hull_contact",
+        "hull_geometry"
+      ],
+      "tests": [],
+      "tests_collect": {},
+      "tests_present": {}
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": true,
+      "doc": "docs/dem2d_lattice_elasticity.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 0,
+      "scripts": [
+        "scripts/validate_lattice_elasticity2d.py"
+      ],
+      "scripts_present": {
+        "scripts/validate_lattice_elasticity2d.py": true
+      },
+      "symbols": [
+        "dem",
+        "calibrated_dem"
+      ],
+      "tests": [
+        "tests/test_lattice_elasticity2d.py"
+      ],
+      "tests_collect": {
+        "tests/test_lattice_elasticity2d.py": "ok"
+      },
+      "tests_present": {
+        "tests/test_lattice_elasticity2d.py": true
+      }
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": false,
+      "doc": "docs/dem3d_benchmark_visualization.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 0,
+      "scripts": [
+        "scripts/run_dem3d_benchmark_suite.py",
+        "scripts/visualize_dem3d_benchmarks.py"
+      ],
+      "scripts_present": {
+        "scripts/run_dem3d_benchmark_suite.py": true,
+        "scripts/visualize_dem3d_benchmarks.py": true
+      },
+      "symbols": [],
+      "tests": [],
+      "tests_collect": {},
+      "tests_present": {}
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": false,
+      "doc": "docs/dem3d_bending_load_convergence.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 0,
+      "scripts": [
+        "scripts/benchmark_dem3d_bending_load_convergence.py"
+      ],
+      "scripts_present": {
+        "scripts/benchmark_dem3d_bending_load_convergence.py": true
+      },
+      "symbols": [],
+      "tests": [],
+      "tests_collect": {},
+      "tests_present": {}
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": false,
+      "doc": "docs/dem3d_bending_resolution_sensitivity.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 0,
+      "scripts": [
+        "scripts/benchmark_dem3d_bending_resolution.py"
+      ],
+      "scripts_present": {
+        "scripts/benchmark_dem3d_bending_resolution.py": true
+      },
+      "symbols": [],
+      "tests": [],
+      "tests_collect": {},
+      "tests_present": {}
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": true,
+      "doc": "docs/dem3d_bond_fracture_energy.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 2,
+      "scripts": [
+        "scripts/benchmark_dem3d_bond_fracture_energy.py",
+        "scripts/render_dem3d_bond_fracture_energy_doc.py"
+      ],
+      "scripts_present": {
+        "scripts/benchmark_dem3d_bond_fracture_energy.py": true,
+        "scripts/render_dem3d_bond_fracture_energy_doc.py": true
+      },
+      "symbols": [
+        "dem3d"
+      ],
+      "tests": [
+        "tests/test_dem3d_bond_fracture_energy.py"
+      ],
+      "tests_collect": {
+        "tests/test_dem3d_bond_fracture_energy.py": "ok"
+      },
+      "tests_present": {
+        "tests/test_dem3d_bond_fracture_energy.py": true
+      }
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": false,
+      "doc": "docs/dem3d_born_huang_internal_strain.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 0,
+      "scripts": [
+        "scripts/audit_dem3d_born_huang.py",
+        "scripts/make_dem3d_born_huang_doc.py"
+      ],
+      "scripts_present": {
+        "scripts/audit_dem3d_born_huang.py": true,
+        "scripts/make_dem3d_born_huang_doc.py": true
+      },
+      "symbols": [],
+      "tests": [
+        "tests/test_dem3d_born_huang.py"
+      ],
+      "tests_collect": {
+        "tests/test_dem3d_born_huang.py": "ok"
+      },
+      "tests_present": {
+        "tests/test_dem3d_born_huang.py": true
+      }
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": true,
+      "doc": "docs/dem3d_brazilian_hondros_closure.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 3,
+      "scripts": [
+        "scripts/brazilian_equilibration.py",
+        "scripts/brazilian_lattice_static.py"
+      ],
+      "scripts_present": {
+        "scripts/brazilian_equilibration.py": true,
+        "scripts/brazilian_lattice_static.py": true
+      },
+      "symbols": [],
+      "tests": [
+        "tests/test_dem3d_brazilian_static.py"
+      ],
+      "tests_collect": {
+        "tests/test_dem3d_brazilian_static.py": "ok"
+      },
+      "tests_present": {
+        "tests/test_dem3d_brazilian_static.py": true
+      }
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": true,
+      "doc": "docs/dem3d_buoyancy_float.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 0,
+      "scripts": [
+        "scripts/audit_dem3d_buoyancy_float.py"
+      ],
+      "scripts_present": {
+        "scripts/audit_dem3d_buoyancy_float.py": true
+      },
+      "symbols": [
+        "buoyancy_wet",
+        "dem3d"
+      ],
+      "tests": [
+        "tests/test_buoyancy_wet3d.py"
+      ],
+      "tests_collect": {
+        "tests/test_buoyancy_wet3d.py": "ok"
+      },
+      "tests_present": {
+        "tests/test_buoyancy_wet3d.py": true
+      }
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": true,
+      "doc": "docs/dem3d_ci_regression_load_balance.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 0,
+      "scripts": [],
+      "scripts_present": {},
+      "symbols": [],
+      "tests": [
+        "tests/test_dem3d_three_point_bending.py",
+        "tests/test_dem3d_bending_resolution.py",
+        "tests/test_dem3d_bending_load_convergence.py",
+        "tests/test_dem3d_external_load_balance.py"
+      ],
+      "tests_collect": {
+        "tests/test_dem3d_bending_load_convergence.py": "ok",
+        "tests/test_dem3d_bending_resolution.py": "ok",
+        "tests/test_dem3d_external_load_balance.py": "ok",
+        "tests/test_dem3d_three_point_bending.py": "ok"
+      },
+      "tests_present": {
+        "tests/test_dem3d_bending_load_convergence.py": true,
+        "tests/test_dem3d_bending_resolution.py": true,
+        "tests/test_dem3d_external_load_balance.py": true,
+        "tests/test_dem3d_three_point_bending.py": true
+      }
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": true,
+      "doc": "docs/dem3d_contact_impact_analytic.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 2,
+      "scripts": [
+        "scripts/benchmark_dem3d_contact_impact.py"
+      ],
+      "scripts_present": {
+        "scripts/benchmark_dem3d_contact_impact.py": true
+      },
+      "symbols": [],
+      "tests": [
+        "tests/test_dem3d_contact_impact.py"
+      ],
+      "tests_collect": {
+        "tests/test_dem3d_contact_impact.py": "ok"
+      },
+      "tests_present": {
+        "tests/test_dem3d_contact_impact.py": true
+      }
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": true,
+      "doc": "docs/dem3d_contact_restitution.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 3,
+      "scripts": [
+        "benchmarks/ice_floe_physics.py",
+        "scripts/verify_dem3d_restitution.py"
+      ],
+      "scripts_present": {
+        "benchmarks/ice_floe_physics.py": true,
+        "scripts/verify_dem3d_restitution.py": true
+      },
+      "symbols": [
+        "contact_tangential",
+        "restitution"
+      ],
+      "tests": [],
+      "tests_collect": {},
+      "tests_present": {}
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": true,
+      "doc": "docs/dem3d_coulomb_friction_cone_verification.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 4,
+      "scripts": [
+        "scripts/verify_coulomb_friction_cone.py"
+      ],
+      "scripts_present": {
+        "scripts/verify_coulomb_friction_cone.py": true
+      },
+      "symbols": [
+        "contact_tangential",
+        "dem3d"
+      ],
+      "tests": [
+        "tests/test_friction_cone_verification.py",
+        "tests/test_contact_tangential.py"
+      ],
+      "tests_collect": {
+        "tests/test_contact_tangential.py": "ok",
+        "tests/test_friction_cone_verification.py": "ok"
+      },
+      "tests_present": {
+        "tests/test_contact_tangential.py": true,
+        "tests/test_friction_cone_verification.py": true
+      }
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": false,
+      "doc": "docs/dem3d_energy_audit.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 0,
+      "scripts": [
+        "scripts/benchmark_dem3d.py",
+        "scripts/analyze_dem3d_fracture.py",
+        "scripts/validate_dem3d_resolution.py",
+        "scripts/compare_dem3d_resolutions.py",
+        "scripts/report_dem3d_engineering_screen.py",
+        "scripts/run_dem3d_validation_campaign.py",
+        "scripts/run_dem3d_benchmark_suite.py",
+        "scripts/run_dem3d_mechanics_benchmarks.py"
+      ],
+      "scripts_present": {
+        "scripts/analyze_dem3d_fracture.py": true,
+        "scripts/benchmark_dem3d.py": true,
+        "scripts/compare_dem3d_resolutions.py": true,
+        "scripts/report_dem3d_engineering_screen.py": true,
+        "scripts/run_dem3d_benchmark_suite.py": true,
+        "scripts/run_dem3d_mechanics_benchmarks.py": true,
+        "scripts/run_dem3d_validation_campaign.py": true,
+        "scripts/validate_dem3d_resolution.py": true
+      },
+      "symbols": [],
+      "tests": [],
+      "tests_collect": {},
+      "tests_present": {}
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": true,
+      "doc": "docs/dem3d_energy_ledger_analytic_verification.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 0,
+      "scripts": [
+        "scripts/verify_dem3d_energy_ledger_analytic.py"
+      ],
+      "scripts_present": {
+        "scripts/verify_dem3d_energy_ledger_analytic.py": true
+      },
+      "symbols": [],
+      "tests": [
+        "tests/test_dem3d_energy_ledger_analytic.py"
+      ],
+      "tests_collect": {
+        "tests/test_dem3d_energy_ledger_analytic.py": "ok"
+      },
+      "tests_present": {
+        "tests/test_dem3d_energy_ledger_analytic.py": true
+      }
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": false,
+      "doc": "docs/dem3d_energy_timestep_campaign.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 0,
+      "scripts": [
+        "scripts/benchmark_dem3d_energy_timestep.py"
+      ],
+      "scripts_present": {
+        "scripts/benchmark_dem3d_energy_timestep.py": true
+      },
+      "symbols": [],
+      "tests": [],
+      "tests_collect": {},
+      "tests_present": {}
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": true,
+      "doc": "docs/dem3d_fracture_gen_audit.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 0,
+      "scripts": [
+        "benchmarks/fracture_gen_audit.py",
+        "scripts/plot_fracture_gen_audit.py",
+        "benchmarks/fracture_gen_ledger.py"
+      ],
+      "scripts_present": {
+        "benchmarks/fracture_gen_audit.py": true,
+        "benchmarks/fracture_gen_ledger.py": true,
+        "scripts/plot_fracture_gen_audit.py": true
+      },
+      "symbols": [],
+      "tests": [
+        "tests/test_fracture_gen_audit.py"
+      ],
+      "tests_collect": {
+        "tests/test_fracture_gen_audit.py": "ok"
+      },
+      "tests_present": {
+        "tests/test_fracture_gen_audit.py": true
+      }
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": true,
+      "doc": "docs/dem3d_fracture_mass_mapping_audit.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 3,
+      "scripts": [
+        "benchmarks/fracture_gen_ledger.py",
+        "scripts/audit_fracture_mass_mapping.py"
+      ],
+      "scripts_present": {
+        "benchmarks/fracture_gen_ledger.py": true,
+        "scripts/audit_fracture_mass_mapping.py": true
+      },
+      "symbols": [
+        "fracture_gen"
+      ],
+      "tests": [
+        "tests/test_fracture_gen_mass_mapping.py",
+        "tests/test_fracture_gen.py"
+      ],
+      "tests_collect": {
+        "tests/test_fracture_gen.py": "ok",
+        "tests/test_fracture_gen_mass_mapping.py": "ok"
+      },
+      "tests_present": {
+        "tests/test_fracture_gen.py": true,
+        "tests/test_fracture_gen_mass_mapping.py": true
+      }
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": false,
+      "doc": "docs/dem3d_fracture_objectivity_energy.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 0,
+      "scripts": [
+        "scripts/validate_dem3d_fracture.py"
+      ],
+      "scripts_present": {
+        "scripts/validate_dem3d_fracture.py": true
+      },
+      "symbols": [],
+      "tests": [],
+      "tests_collect": {},
+      "tests_present": {}
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": true,
+      "doc": "docs/dem3d_hertz_contact_verification.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 1,
+      "scripts": [
+        "scripts/verify_dem3d_hertz_contact.py"
+      ],
+      "scripts_present": {
+        "scripts/verify_dem3d_hertz_contact.py": true
+      },
+      "symbols": [],
+      "tests": [
+        "tests/test_dem3d_hertz_contact.py"
+      ],
+      "tests_collect": {
+        "tests/test_dem3d_hertz_contact.py": "ok"
+      },
+      "tests_present": {
+        "tests/test_dem3d_hertz_contact.py": true
+      }
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": true,
+      "doc": "docs/dem3d_lattice_elastic_constants.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 0,
+      "scripts": [
+        "scripts/audit_dem3d_lattice_elastic.py"
+      ],
+      "scripts_present": {
+        "scripts/audit_dem3d_lattice_elastic.py": true
+      },
+      "symbols": [],
+      "tests": [],
+      "tests_collect": {},
+      "tests_present": {}
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": true,
+      "doc": "docs/dem3d_lattice_elasticity.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 0,
+      "scripts": [
+        "scripts/benchmark_dem3d_lattice_elasticity.py"
+      ],
+      "scripts_present": {
+        "scripts/benchmark_dem3d_lattice_elasticity.py": true
+      },
+      "symbols": [
+        "lattice_elasticity"
+      ],
+      "tests": [
+        "tests/test_lattice_elasticity.py"
+      ],
+      "tests_collect": {
+        "tests/test_lattice_elasticity.py": "ok"
+      },
+      "tests_present": {
+        "tests/test_lattice_elasticity.py": true
+      }
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": true,
+      "doc": "docs/dem3d_lattice_elasticity3d_audit.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 2,
+      "scripts": [
+        "scripts/audit_dem3d_lattice_elasticity3d.py"
+      ],
+      "scripts_present": {
+        "scripts/audit_dem3d_lattice_elasticity3d.py": true
+      },
+      "symbols": [],
+      "tests": [
+        "tests/test_dem3d_lattice_elasticity3d.py"
+      ],
+      "tests_collect": {
+        "tests/test_dem3d_lattice_elasticity3d.py": "ok"
+      },
+      "tests_present": {
+        "tests/test_dem3d_lattice_elasticity3d.py": true
+      }
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": true,
+      "doc": "docs/dem3d_lattice_wave_propagation.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 0,
+      "scripts": [
+        "scripts/benchmark_dem3d_lattice_waves.py"
+      ],
+      "scripts_present": {
+        "scripts/benchmark_dem3d_lattice_waves.py": true
+      },
+      "symbols": [
+        "lattice_elasticity"
+      ],
+      "tests": [
+        "tests/test_lattice_waves.py",
+        "tests/test_lattice_elasticity.py"
+      ],
+      "tests_collect": {
+        "tests/test_lattice_elasticity.py": "ok",
+        "tests/test_lattice_waves.py": "ok"
+      },
+      "tests_present": {
+        "tests/test_lattice_elasticity.py": true,
+        "tests/test_lattice_waves.py": true
+      }
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": true,
+      "doc": "docs/dem3d_material_calibration_roadmap.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 0,
+      "scripts": [
+        "scripts/benchmark_dem3d_brazilian.py",
+        "scripts/benchmark_dem3d_shear_specimen.py"
+      ],
+      "scripts_present": {
+        "scripts/benchmark_dem3d_brazilian.py": true,
+        "scripts/benchmark_dem3d_shear_specimen.py": true
+      },
+      "symbols": [],
+      "tests": [
+        "tests/test_dem3d_platen_contact_mask.py",
+        "tests/test_dem3d_shear_specimen.py",
+        "tests/test_dem3d_fracture_objectivity.py"
+      ],
+      "tests_collect": {
+        "tests/test_dem3d_fracture_objectivity.py": "ok",
+        "tests/test_dem3d_platen_contact_mask.py": "ok",
+        "tests/test_dem3d_shear_specimen.py": "ok"
+      },
+      "tests_present": {
+        "tests/test_dem3d_fracture_objectivity.py": true,
+        "tests/test_dem3d_platen_contact_mask.py": true,
+        "tests/test_dem3d_shear_specimen.py": true
+      }
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": true,
+      "doc": "docs/dem3d_mechanics_benchmark_protocol.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 0,
+      "scripts": [
+        "scripts/run_dem3d_mechanics_benchmarks.py"
+      ],
+      "scripts_present": {
+        "scripts/run_dem3d_mechanics_benchmarks.py": true
+      },
+      "symbols": [
+        "dem3d"
+      ],
+      "tests": [],
+      "tests_collect": {},
+      "tests_present": {}
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": false,
+      "doc": "docs/dem3d_mechanics_validation.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 0,
+      "scripts": [
+        "scripts/validate_dem3d_convergence.py"
+      ],
+      "scripts_present": {
+        "scripts/validate_dem3d_convergence.py": true
+      },
+      "symbols": [],
+      "tests": [
+        "tests/test_dem3d_mechanics_validation.py"
+      ],
+      "tests_collect": {
+        "tests/test_dem3d_mechanics_validation.py": "ok"
+      },
+      "tests_present": {
+        "tests/test_dem3d_mechanics_validation.py": true
+      }
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": false,
+      "doc": "docs/dem3d_moving_wedge_bow.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 0,
+      "scripts": [
+        "scripts/benchmark_dem3d_moving_wedge_bow.py"
+      ],
+      "scripts_present": {
+        "scripts/benchmark_dem3d_moving_wedge_bow.py": true
+      },
+      "symbols": [],
+      "tests": [],
+      "tests_collect": {},
+      "tests_present": {}
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": false,
+      "doc": "docs/dem3d_mt_uikku_formula_baselines.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 0,
+      "scripts": [
+        "scripts/benchmark_dem3d_ship_ice_formula_baselines.py"
+      ],
+      "scripts_present": {
+        "scripts/benchmark_dem3d_ship_ice_formula_baselines.py": true
+      },
+      "symbols": [],
+      "tests": [],
+      "tests_collect": {},
+      "tests_present": {}
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": true,
+      "doc": "docs/dem3d_pair_contact_damping_closure.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 2,
+      "scripts": [
+        "scripts/verify_dem3d_restitution.py"
+      ],
+      "scripts_present": {
+        "scripts/verify_dem3d_restitution.py": true
+      },
+      "symbols": [
+        "restitution"
+      ],
+      "tests": [
+        "tests/test_restitution.py",
+        "tests/test_dem3d_pair_contact_damping.py"
+      ],
+      "tests_collect": {
+        "tests/test_dem3d_pair_contact_damping.py": "ok",
+        "tests/test_restitution.py": "ok"
+      },
+      "tests_present": {
+        "tests/test_dem3d_pair_contact_damping.py": true,
+        "tests/test_restitution.py": true
+      }
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": false,
+      "doc": "docs/dem3d_plane_platen_boundaries.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 0,
+      "scripts": [
+        "scripts/benchmark_dem3d_platen_compression.py"
+      ],
+      "scripts_present": {
+        "scripts/benchmark_dem3d_platen_compression.py": true
+      },
+      "symbols": [
+        "dem3d_cli"
+      ],
+      "tests": [],
+      "tests_collect": {},
+      "tests_present": {}
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": false,
+      "doc": "docs/dem3d_platen_contact_mask_audit.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 1,
+      "scripts": [
+        "scripts/benchmark_dem3d_brazilian.py"
+      ],
+      "scripts_present": {
+        "scripts/benchmark_dem3d_brazilian.py": true
+      },
+      "symbols": [],
+      "tests": [
+        "tests/test_dem3d_platen_contact_mask.py"
+      ],
+      "tests_collect": {
+        "tests/test_dem3d_platen_contact_mask.py": "ok"
+      },
+      "tests_present": {
+        "tests/test_dem3d_platen_contact_mask.py": true
+      }
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": false,
+      "doc": "docs/dem3d_restitution_calibration.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 2,
+      "scripts": [
+        "scripts/calibrate_dem3d_restitution.py"
+      ],
+      "scripts_present": {
+        "scripts/calibrate_dem3d_restitution.py": true
+      },
+      "symbols": [],
+      "tests": [
+        "tests/test_dem3d_restitution.py"
+      ],
+      "tests_collect": {
+        "tests/test_dem3d_restitution.py": "ok"
+      },
+      "tests_present": {
+        "tests/test_dem3d_restitution.py": true
+      }
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": true,
+      "doc": "docs/dem3d_restitution_verification.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 2,
+      "scripts": [
+        "scripts/verify_dem3d_restitution.py",
+        "benchmarks/ice_floe_physics.py"
+      ],
+      "scripts_present": {
+        "benchmarks/ice_floe_physics.py": true,
+        "scripts/verify_dem3d_restitution.py": true
+      },
+      "symbols": [
+        "contact_tangential",
+        "dem",
+        "dem3d"
+      ],
+      "tests": [
+        "tests/test_dem3d_restitution_verification.py"
+      ],
+      "tests_collect": {
+        "tests/test_dem3d_restitution_verification.py": "ok"
+      },
+      "tests_present": {
+        "tests/test_dem3d_restitution_verification.py": true
+      }
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": true,
+      "doc": "docs/dem3d_rolling_resistance.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 0,
+      "scripts": [
+        "scripts/validate_rolling_resistance.py",
+        "scripts/report_rolling_resistance.py"
+      ],
+      "scripts_present": {
+        "scripts/report_rolling_resistance.py": true,
+        "scripts/validate_rolling_resistance.py": true
+      },
+      "symbols": [
+        "contact_tangential"
+      ],
+      "tests": [
+        "tests/test_rolling_resistance.py"
+      ],
+      "tests_collect": {
+        "tests/test_rolling_resistance.py": "ok"
+      },
+      "tests_present": {
+        "tests/test_rolling_resistance.py": true
+      }
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": true,
+      "doc": "docs/dem3d_rolling_resistance_verification.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 0,
+      "scripts": [
+        "scripts/verify_dem3d_rolling_resistance.py"
+      ],
+      "scripts_present": {
+        "scripts/verify_dem3d_rolling_resistance.py": true
+      },
+      "symbols": [
+        "rolling_resistance",
+        "dem3d"
+      ],
+      "tests": [
+        "tests/test_dem3d_rolling_resistance_verification.py"
+      ],
+      "tests_collect": {
+        "tests/test_dem3d_rolling_resistance_verification.py": "ok"
+      },
+      "tests_present": {
+        "tests/test_dem3d_rolling_resistance_verification.py": true
+      }
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": false,
+      "doc": "docs/dem3d_scale_benchmark.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 2,
+      "scripts": [
+        "scripts/benchmark_dem3d_scale.py",
+        "scripts/plot_dem3d_scale_benchmark.py",
+        "scripts/plot_dem3d_energy_drift.py"
+      ],
+      "scripts_present": {
+        "scripts/benchmark_dem3d_scale.py": true,
+        "scripts/plot_dem3d_energy_drift.py": true,
+        "scripts/plot_dem3d_scale_benchmark.py": true
+      },
+      "symbols": [
+        "dem3d",
+        "dem3d_energy"
+      ],
+      "tests": [
+        "tests/test_dem3d_scale_benchmark.py"
+      ],
+      "tests_collect": {
+        "tests/test_dem3d_scale_benchmark.py": "ok"
+      },
+      "tests_present": {
+        "tests/test_dem3d_scale_benchmark.py": true
+      }
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": true,
+      "doc": "docs/dem3d_shear_specimen.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 0,
+      "scripts": [
+        "scripts/benchmark_dem3d_shear_specimen.py"
+      ],
+      "scripts_present": {
+        "scripts/benchmark_dem3d_shear_specimen.py": true
+      },
+      "symbols": [
+        "dem3d",
+        "shear_static"
+      ],
+      "tests": [
+        "tests/test_dem3d_shear_specimen.py"
+      ],
+      "tests_collect": {
+        "tests/test_dem3d_shear_specimen.py": "ok"
+      },
+      "tests_present": {
+        "tests/test_dem3d_shear_specimen.py": true
+      }
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": true,
+      "doc": "docs/dem3d_shear_static_reference.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 0,
+      "scripts": [
+        "scripts/audit_dem3d_shear_static_reference.py"
+      ],
+      "scripts_present": {
+        "scripts/audit_dem3d_shear_static_reference.py": true
+      },
+      "symbols": [
+        "shear_specimen"
+      ],
+      "tests": [
+        "tests/test_dem3d_shear_static_reference.py"
+      ],
+      "tests_collect": {
+        "tests/test_dem3d_shear_static_reference.py": "ok"
+      },
+      "tests_present": {
+        "tests/test_dem3d_shear_static_reference.py": true
+      }
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": false,
+      "doc": "docs/dem3d_specimen_response_benchmarks.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 0,
+      "scripts": [
+        "scripts/run_dem3d_specimen_response_benchmarks.py"
+      ],
+      "scripts_present": {
+        "scripts/run_dem3d_specimen_response_benchmarks.py": true
+      },
+      "symbols": [],
+      "tests": [],
+      "tests_collect": {},
+      "tests_present": {}
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": true,
+      "doc": "docs/dem3d_tangential_friction_verification.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 2,
+      "scripts": [
+        "examples/tangential_friction_verification.py",
+        "benchmarks/ice_floe_physics.py"
+      ],
+      "scripts_present": {
+        "benchmarks/ice_floe_physics.py": true,
+        "examples/tangential_friction_verification.py": true
+      },
+      "symbols": [],
+      "tests": [
+        "tests/test_tangential_friction_verification.py"
+      ],
+      "tests_collect": {
+        "tests/test_tangential_friction_verification.py": "ok"
+      },
+      "tests_present": {
+        "tests/test_tangential_friction_verification.py": true
+      }
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": false,
+      "doc": "docs/dem3d_three_point_bending.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 0,
+      "scripts": [
+        "scripts/benchmark_dem3d_three_point_bending.py"
+      ],
+      "scripts_present": {
+        "scripts/benchmark_dem3d_three_point_bending.py": true
+      },
+      "symbols": [],
+      "tests": [],
+      "tests_collect": {},
+      "tests_present": {}
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": true,
+      "doc": "docs/dem3d_timestep_stability.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 0,
+      "scripts": [
+        "benchmarks/timestep_stability_audit.py"
+      ],
+      "scripts_present": {
+        "benchmarks/timestep_stability_audit.py": true
+      },
+      "symbols": [
+        "dem3d"
+      ],
+      "tests": [
+        "tests/test_dem3d_stability.py"
+      ],
+      "tests_collect": {
+        "tests/test_dem3d_stability.py": "ok"
+      },
+      "tests_present": {
+        "tests/test_dem3d_stability.py": true
+      }
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": false,
+      "doc": "docs/dem3d_ucs_benchmark.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 0,
+      "scripts": [
+        "scripts/benchmark_dem3d_ucs.py"
+      ],
+      "scripts_present": {
+        "scripts/benchmark_dem3d_ucs.py": true
+      },
+      "symbols": [],
+      "tests": [],
+      "tests_collect": {},
+      "tests_present": {}
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": false,
+      "doc": "docs/dem3d_ucs_calibration.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 0,
+      "scripts": [
+        "scripts/calibrate_dem3d_ucs.py"
+      ],
+      "scripts_present": {
+        "scripts/calibrate_dem3d_ucs.py": true
+      },
+      "symbols": [],
+      "tests": [],
+      "tests_collect": {},
+      "tests_present": {}
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": false,
+      "doc": "docs/dem3d_ucs_fracture_threshold.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 0,
+      "scripts": [
+        "scripts/benchmark_dem3d_ucs_fracture_threshold.py"
+      ],
+      "scripts_present": {
+        "scripts/benchmark_dem3d_ucs_fracture_threshold.py": true
+      },
+      "symbols": [],
+      "tests": [],
+      "tests_collect": {},
+      "tests_present": {}
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": false,
+      "doc": "docs/dem3d_ucs_sensitivity.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 0,
+      "scripts": [
+        "scripts/benchmark_dem3d_ucs_sensitivity.py"
+      ],
+      "scripts_present": {
+        "scripts/benchmark_dem3d_ucs_sensitivity.py": true
+      },
+      "symbols": [],
+      "tests": [],
+      "tests_collect": {},
+      "tests_present": {}
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": false,
+      "doc": "docs/dem3d_ucs_timestep_convergence.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 0,
+      "scripts": [
+        "scripts/benchmark_dem3d_ucs_timestep_convergence.py"
+      ],
+      "scripts_present": {
+        "scripts/benchmark_dem3d_ucs_timestep_convergence.py": true
+      },
+      "symbols": [],
+      "tests": [],
+      "tests_collect": {},
+      "tests_present": {}
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": false,
+      "doc": "docs/dem3d_wedge_resistance_sensitivity.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 0,
+      "scripts": [
+        "scripts/benchmark_dem3d_wedge_resistance_sensitivity.py"
+      ],
+      "scripts_present": {
+        "scripts/benchmark_dem3d_wedge_resistance_sensitivity.py": true
+      },
+      "symbols": [],
+      "tests": [],
+      "tests_collect": {},
+      "tests_present": {}
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [
+        "tests/test_fracture_gen_mass_footprint.py"
+      ],
+      "claims_verification": true,
+      "doc": "docs/dem_analytic_verification_debt_restoration.md",
+      "grade": "WITHHELD",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 1,
+      "scripts": [
+        "scripts/verify_salvaged_analytic_laws.py",
+        "scripts/verify_dem3d_restitution.py"
+      ],
+      "scripts_present": {
+        "scripts/verify_dem3d_restitution.py": true,
+        "scripts/verify_salvaged_analytic_laws.py": true
+      },
+      "symbols": [
+        "tangential_verification"
+      ],
+      "tests": [
+        "tests/test_dem3d_hertz_contact.py",
+        "tests/test_dem3d_restitution.py",
+        "tests/test_friction_cone_verification.py",
+        "tests/test_tangential_friction_verification.py",
+        "tests/test_fracture_gen_mass_footprint.py",
+        "tests/test_contact_tangential.py",
+        "tests/test_restitution.py"
+      ],
+      "tests_collect": {
+        "tests/test_contact_tangential.py": "ok",
+        "tests/test_dem3d_hertz_contact.py": "ok",
+        "tests/test_dem3d_restitution.py": "ok",
+        "tests/test_fracture_gen_mass_footprint.py": "error",
+        "tests/test_friction_cone_verification.py": "ok",
+        "tests/test_restitution.py": "ok",
+        "tests/test_tangential_friction_verification.py": "ok"
+      },
+      "tests_present": {
+        "tests/test_contact_tangential.py": true,
+        "tests/test_dem3d_hertz_contact.py": true,
+        "tests/test_dem3d_restitution.py": true,
+        "tests/test_fracture_gen_mass_footprint.py": true,
+        "tests/test_friction_cone_verification.py": true,
+        "tests/test_restitution.py": true,
+        "tests/test_tangential_friction_verification.py": true
+      }
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": false,
+      "doc": "docs/ecosystem-integration.md",
+      "grade": "NO_CLAIM",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 0,
+      "scripts": [],
+      "scripts_present": {},
+      "symbols": [],
+      "tests": [],
+      "tests_collect": {},
+      "tests_present": {}
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": false,
+      "doc": "docs/fracture_event_tracking.md",
+      "grade": "NO_CLAIM",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 0,
+      "scripts": [],
+      "scripts_present": {},
+      "symbols": [],
+      "tests": [],
+      "tests_collect": {},
+      "tests_present": {}
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [
+        "tests/test_fracture_gen_mass_footprint.py"
+      ],
+      "claims_verification": true,
+      "doc": "docs/fracture_gen_mass_footprint_audit.md",
+      "grade": "WITHHELD",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 3,
+      "scripts": [
+        "benchmarks/fracture_gen_mass_footprint_audit.py"
+      ],
+      "scripts_present": {
+        "benchmarks/fracture_gen_mass_footprint_audit.py": true
+      },
+      "symbols": [],
+      "tests": [
+        "tests/test_fracture_gen_mass_footprint.py",
+        "tests/test_fracture_gen.py"
+      ],
+      "tests_collect": {
+        "tests/test_fracture_gen.py": "ok",
+        "tests/test_fracture_gen_mass_footprint.py": "error"
+      },
+      "tests_present": {
+        "tests/test_fracture_gen.py": true,
+        "tests/test_fracture_gen_mass_footprint.py": true
+      }
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": true,
+      "doc": "docs/ice_floe_physics_validation.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 1,
+      "scripts": [
+        "benchmarks/ice_floe_physics.py",
+        "benchmarks/ice_floe_physics_figures.py",
+        "benchmarks/fracture_gen_ledger.py"
+      ],
+      "scripts_present": {
+        "benchmarks/fracture_gen_ledger.py": true,
+        "benchmarks/ice_floe_physics.py": true,
+        "benchmarks/ice_floe_physics_figures.py": true
+      },
+      "symbols": [
+        "buoyancy_wet",
+        "contact_tangential"
+      ],
+      "tests": [
+        "tests/test_ice_floe_physics.py"
+      ],
+      "tests_collect": {
+        "tests/test_ice_floe_physics.py": "ok"
+      },
+      "tests_present": {
+        "tests/test_ice_floe_physics.py": true
+      }
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": true,
+      "doc": "docs/ice_ridge_pipeline_grounding.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 11,
+      "scripts": [
+        "scripts/run_ice_ridge_grounding.py",
+        "scripts/make_ridge_grounding_figures.py",
+        "scripts/build_ridge_report.py"
+      ],
+      "scripts_present": {
+        "scripts/build_ridge_report.py": true,
+        "scripts/make_ridge_grounding_figures.py": true,
+        "scripts/run_ice_ridge_grounding.py": true
+      },
+      "symbols": [
+        "ridge_dem",
+        "ridge_geotech",
+        "ridge_grounding"
+      ],
+      "tests": [
+        "tests/test_ridge_grounding.py"
+      ],
+      "tests_collect": {
+        "tests/test_ridge_grounding.py": "ok"
+      },
+      "tests_present": {
+        "tests/test_ridge_grounding.py": true
+      }
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": false,
+      "doc": "docs/icebreaking_development_roadmap.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 0,
+      "scripts": [
+        "benchmarks/fracture_gen_ledger.py"
+      ],
+      "scripts_present": {
+        "benchmarks/fracture_gen_ledger.py": true
+      },
+      "symbols": [],
+      "tests": [
+        "tests/test_fracture_gen.py"
+      ],
+      "tests_collect": {
+        "tests/test_fracture_gen.py": "ok"
+      },
+      "tests_present": {
+        "tests/test_fracture_gen.py": true
+      }
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": false,
+      "doc": "docs/indentation_benchmark_protocol.md",
+      "grade": "NO_CLAIM",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 0,
+      "scripts": [],
+      "scripts_present": {},
+      "symbols": [],
+      "tests": [],
+      "tests_collect": {},
+      "tests_present": {}
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": false,
+      "doc": "docs/m669_hull_mesh_contact.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 3,
+      "scripts": [],
+      "scripts_present": {},
+      "symbols": [
+        "hull_mesh_contact"
+      ],
+      "tests": [
+        "tests/test_hull_mesh_contact.py"
+      ],
+      "tests_collect": {
+        "tests/test_hull_mesh_contact.py": "ok"
+      },
+      "tests_present": {
+        "tests/test_hull_mesh_contact.py": true
+      }
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": false,
+      "doc": "docs/polyline_hull_contact.md",
+      "grade": "NO_CLAIM",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 0,
+      "scripts": [],
+      "scripts_present": {},
+      "symbols": [],
+      "tests": [],
+      "tests_collect": {},
+      "tests_present": {}
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": true,
+      "doc": "docs/polyline_hull_contact_verification.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 0,
+      "scripts": [
+        "scripts/hull_contact_verification.py"
+      ],
+      "scripts_present": {
+        "scripts/hull_contact_verification.py": true
+      },
+      "symbols": [
+        "hull_contact"
+      ],
+      "tests": [
+        "tests/test_hull_contact_verification.py"
+      ],
+      "tests_collect": {
+        "tests/test_hull_contact_verification.py": "ok"
+      },
+      "tests_present": {
+        "tests/test_hull_contact_verification.py": true
+      }
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": true,
+      "doc": "docs/rudder_ice_load_dem_fsm.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 1,
+      "scripts": [
+        "scripts/benchmark_rudder_ice_load.py"
+      ],
+      "scripts_present": {
+        "scripts/benchmark_rudder_ice_load.py": true
+      },
+      "symbols": [
+        "dem3d"
+      ],
+      "tests": [
+        "tests/test_rudder_ice_load.py"
+      ],
+      "tests_collect": {
+        "tests/test_rudder_ice_load.py": "ok"
+      },
+      "tests_present": {
+        "tests/test_rudder_ice_load.py": true
+      }
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": true,
+      "doc": "docs/tensordem_floe_buoyancy_validation.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 4,
+      "scripts": [
+        "scripts/benchmark_floe_buoyancy.py",
+        "benchmarks/ice_floe_physics.py"
+      ],
+      "scripts_present": {
+        "benchmarks/ice_floe_physics.py": true,
+        "scripts/benchmark_floe_buoyancy.py": true
+      },
+      "symbols": [],
+      "tests": [
+        "tests/test_floe_buoyancy_validation.py"
+      ],
+      "tests_collect": {
+        "tests/test_floe_buoyancy_validation.py": "ok"
+      },
+      "tests_present": {
+        "tests/test_floe_buoyancy_validation.py": true
+      }
+    },
+    {
+      "artifacts_present": 0,
+      "broken_tests": [],
+      "claims_verification": false,
+      "doc": "docs/verification_campaigns.md",
+      "grade": "REAL_BACKED",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 5,
+      "scripts": [
+        "scripts/dem_verification_campaign.py",
+        "scripts/verify_buoyancy_free_float.py"
+      ],
+      "scripts_present": {
+        "scripts/dem_verification_campaign.py": true,
+        "scripts/verify_buoyancy_free_float.py": true
+      },
+      "symbols": [
+        "verification",
+        "buoyancy_wet"
+      ],
+      "tests": [
+        "tests/test_buoyancy_free_float_verification.py"
+      ],
+      "tests_collect": {
+        "tests/test_buoyancy_free_float_verification.py": "ok"
+      },
+      "tests_present": {
+        "tests/test_buoyancy_free_float_verification.py": true
+      }
+    },
+    {
+      "artifacts_present": 1,
+      "broken_tests": [
+        "tests/test_fracture_gen_mass_footprint.py"
+      ],
+      "claims_verification": true,
+      "doc": "docs/verification_evidence_ledger.md",
+      "grade": "WITHHELD",
+      "missing_executables": [],
+      "missing_symbols": [],
+      "n_artifacts": 1,
+      "scripts": [
+        "scripts/verification_evidence_ledger.py"
+      ],
+      "scripts_present": {
+        "scripts/verification_evidence_ledger.py": true
+      },
+      "symbols": [
+        "fracture_gen"
+      ],
+      "tests": [
+        "tests/test_verification_evidence_ledger.py",
+        "tests/test_fracture_gen_mass_footprint.py"
+      ],
+      "tests_collect": {
+        "tests/test_fracture_gen_mass_footprint.py": "error",
+        "tests/test_verification_evidence_ledger.py": "ok"
+      },
+      "tests_present": {
+        "tests/test_fracture_gen_mass_footprint.py": true,
+        "tests/test_verification_evidence_ledger.py": true
+      }
+    }
+  ],
+  "grades": {
+    "NO_CLAIM": 6,
+    "REAL_BACKED": 64,
+    "WITHHELD": 3
+  },
+  "n_docs": 73,
+  "root": "/root/tp-agent/work/m2869",
+  "symbol_status": {
+    "buoyancy_wet": true,
+    "calibrated_dem": true,
+    "contact_tangential": true,
+    "dem": true,
+    "dem3d": true,
+    "dem3d_cli": true,
+    "dem3d_energy": true,
+    "fracture_gen": true,
+    "hull_contact": true,
+    "hull_geometry": true,
+    "hull_mesh_contact": true,
+    "lattice_elasticity": true,
+    "restitution": true,
+    "ridge_dem": true,
+    "ridge_geotech": true,
+    "ridge_grounding": true,
+    "rolling_resistance": true,
+    "run_manifest": true,
+    "shear_specimen": true,
+    "shear_static": true,
+    "tangential_verification": true,
+    "threefield": true,
+    "verification": true
+  }
+}
