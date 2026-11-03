@@ -16,7 +16,7 @@ from tensordem.restitution import (
     clamped_contact_restitution,
     contact_restitution,
     damping_for_clamped_restitution,
-    damping_for_restitution,
+    damping_for_restitution_analytic,
     damping_ratio,
     measure_platen_restitution,
     platen_restitution,
@@ -104,7 +104,7 @@ class RestitutionAnalyticsTests(unittest.TestCase):
 
     def test_calibration_round_trip_unclamped(self):
         target = 0.65
-        damping = damping_for_restitution(STIFFNESS, target, MASS)
+        damping = damping_for_restitution_analytic(STIFFNESS, target, MASS)
         self.assertAlmostEqual(
             restitution_from_damping(STIFFNESS, damping, MASS), target, places=9
         )
