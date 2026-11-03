@@ -1,0 +1,3 @@
+config,omega_max_rad_s,dt_crit_s,measured_onset_ratio,onset_error_pct,growth_predicted,growth_measured,growth_error_pct,marginal_energy_ratio,refined_damping_onset,error_vs_refined_pct,row_sum_over_exact,guard_refused
+cubic4_bond2000,671.684,0.00297759,0.999902,-0.0098,1.040810,1.041027,+0.0209,3.9858,0.990044,+0.4121,1.9598,True
+cubic3_bond1000,427.263,0.00468095,0.999902,-0.0098,1.040810,1.052379,+1.1115,3.9598,0.995924,+0.8740,2.1785,True
