@@ -441,9 +441,13 @@ def max_phonon_frequency(
 ) -> float:
     """Largest phonon angular frequency of the ideal lattice over a q grid.
 
-    ``D(q) = (1/m) sum_b k_b (1 - cos(q . r_b)) n_b (x) n_b``; the largest
-    eigenvalue over the sampled Brillouin zone gives ``omega_max``, hence the
-    explicit central-difference stability bound ``dt_crit = 2 / omega_max``.
+    ``D(q) = (2/m) sum_b k_b (1 - cos(q . r_b)) n_b (x) n_b`` over the 13
+    half-space bond classes ``b``; the factor 2 accounts for the ``-r_b`` partner
+    of every class, which carries the same ``1 - cos`` weight but appears only
+    once in the half-space list.  (Omitting it halves ``D`` and under-reports
+    ``omega_max`` by ``sqrt(2)``, which in turn over-states the stability bound
+    ``dt_crit = 2 / omega_max``.)  The largest eigenvalue over the sampled
+    Brillouin zone gives ``omega_max``, hence ``dt_crit``.
     """
     if mass <= 0:
         raise ValueError("mass must be positive")
@@ -459,7 +463,8 @@ def max_phonon_frequency(
     qz, qy, qx = torch.meshgrid(grid, grid, grid, indexing="ij")
     qs = torch.stack((qx, qy, qz), dim=-1).reshape(-1, 3)
     phase = qs @ vectors.T  # (Q, B)
-    weights = 1.0 - torch.cos(phase)  # (Q, B)
+    # Each half-space class stands for a +/- pair of bonds with identical weight.
+    weights = 2.0 * (1.0 - torch.cos(phase))  # (Q, B)
     dyn = torch.einsum("qb,bij->qij", weights, weighted) / mass
     eigenvalues = torch.linalg.eigvalsh(dyn)
     if bool((eigenvalues < -1e-10 * eigenvalues.abs().max().clamp_min(1e-30)).any()):
