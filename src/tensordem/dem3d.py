@@ -597,11 +597,20 @@ class IceDEM3D:
     # ------------------------------------------------------------------
     @torch.no_grad()
     def forces(self, external_forces: torch.Tensor | None = None, *,
-               update_fracture: bool = True) -> tuple[torch.Tensor, torch.Tensor]:
+               update_fracture: bool = True,
+               update_history: bool = True) -> tuple[torch.Tensor, torch.Tensor]:
         """Evaluate forces; default commits fracture for API compatibility.
 
         ``update_fracture=False`` evaluates the currently stored bond topology
         without changing fracture history or the stored last reaction.
+
+        ``update_history=False`` evaluates the constitutive forces *without*
+        advancing the Cundall-Strack tangential displacement or the diagnostic
+        rolling-torque accumulator, so the call is side-effect free with respect
+        to the friction history.  Probing routines (``diagnostics``, energy
+        audits, invariance checks) must use it: with the default the call adds
+        one ``v_tangent * dt`` slip increment per invocation, so merely
+        monitoring a friction simulation changes its trajectory.
 
         Contact model (SIR-PC2|F05):
         - Normal: linear spring-dashpot with restitution-based damping.
@@ -686,9 +695,12 @@ class IceDEM3D:
                 if cfg.friction_coefficient > 0.0:
                     # Retrieve tangential displacement state
                     tang_disp = self._get_tangential_state(ci, cj, cnormal)
-                    # Integrate tangential displacement
+                    # Integrate tangential displacement.  Only a force
+                    # evaluation that owns the step may advance the history;
+                    # a probe must see the stored state unchanged.
                     v_tangent = relative_v - vn[:, None] * cnormal
-                    tang_disp = tang_disp + v_tangent * self.dt
+                    if update_history:
+                        tang_disp = tang_disp + v_tangent * self.dt
 
                     # Tangential force from spring; k_t = k_n locally, so the
                     # Hertz model uses the same overlap-dependent secant value.
@@ -709,17 +721,21 @@ class IceDEM3D:
                     force.index_add_(0, ci, F_t)
                     force.index_add_(0, cj, -F_t)
 
-                    # Update tangential state
-                    self._update_tangential_state(ci, cj, cnormal, tang_disp)
+                    # Update tangential state (step owner only).
+                    if update_history:
+                        self._update_tangential_state(ci, cj, cnormal, tang_disp)
 
                 # --- SIR-PC2|F05: Rolling resistance torque ---
                 if cfg.rolling_resistance_coefficient > 0.0:
                     rr_i, rr_j, torque_i, torque_j = self._rolling_resistance_couple(
                         ci, cj, cnormal, contact_mag,
                     )
-                    # Accumulate rolling torque (diagnostic only)
-                    self._rolling_torque.index_add_(0, ci, torque_i)
-                    self._rolling_torque.index_add_(0, cj, torque_j)
+                    # Accumulate rolling torque (diagnostic only).  Guarded
+                    # like the friction history so that probing does not inflate
+                    # a running sum that no step ever resets.
+                    if update_history:
+                        self._rolling_torque.index_add_(0, ci, torque_i)
+                        self._rolling_torque.index_add_(0, cj, torque_j)
                     # Apply the equal-and-opposite couple along the slip direction
                     force.index_add_(0, ci, rr_i)
                     force.index_add_(0, cj, rr_j)
@@ -798,7 +814,8 @@ class IceDEM3D:
     @torch.no_grad()
     def diagnostics(self, external_forces: torch.Tensor | None = None) -> dict[str, float | int]:
         """Return a full diagnostic snapshot including forces, reactions, and energy."""
-        force, reaction = self.forces(external_forces, update_fracture=False)
+        force, reaction = self.forces(external_forces, update_fracture=False,
+                                      update_history=False)
         support = -force[self.fixed].sum(dim=0)
         kinetic = 0.5 * self.config.mass * self.velocities.square().sum()
         # Recoverable elastic energy in surviving bonds only. Broken bonds are
