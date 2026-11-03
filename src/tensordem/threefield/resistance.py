@@ -142,7 +142,16 @@ def _entry_terms(hull: HullGeometry) -> tuple[float, float, float]:
 
 
 def crushing_resistance(ice: IceProperties, hull: HullGeometry) -> float:
-    """Crushing term, per unit width, integrated over the bow contact height."""
+    """Crushing term [N], integrated over the bow contact height.
+
+    ``CRUSHING_EFFICIENCY`` is the mean of a triangular contact-pressure profile
+    (zero at the upper ice surface, ``sigma_c`` at the lower one), so the term is
+    a total force in newtons and is added directly to the other components; see
+    ``docs/threefield/FORMULAS.md`` for the derivation ledger.
+    """
+    # The third element returned by _entry_terms (buttock/stem projection) is
+    # not used by either baseline; see docs/threefield/FORMULAS.md, "inert
+    # parameters".
     tan_alpha, mu_over_cos, _ = _entry_terms(hull)
     return (
         CRUSHING_EFFICIENCY
