@@ -14,9 +14,36 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 import math
+from functools import lru_cache
 from typing import Any
 
 import torch
+
+
+@lru_cache(maxsize=256)
+def _normal_damping_from_restitution(
+    e_target: float, k_n: float, m_eff: float, mapping: str
+) -> float:
+    """Normal damping that realises ``e_target`` under the chosen mapping.
+
+    ``"clamped"`` inverts the compressive-only contact law this solver actually
+    integrates (``tensordem.contact_impact.restitution_to_damping_clamped``);
+    ``"classic"`` is the legacy free-oscillator identity kept for back-compat.
+    The result is cached because it is a pure function of the config.
+    """
+    if not (0.0 < e_target <= 1.0):
+        raise ValueError("e_target must be in (0, 1]")
+    if e_target == 1.0:
+        return 0.0
+    if mapping == "classic":
+        ln_e = math.log(e_target)
+        abs_ln_e = -ln_e
+        zeta = abs_ln_e / math.sqrt(math.pi ** 2 + abs_ln_e ** 2)
+        return 2.0 * zeta * math.sqrt(k_n * m_eff)
+    if mapping == "clamped":
+        from .contact_impact import restitution_to_damping_clamped
+        return restitution_to_damping_clamped(e_target, k_n, m_eff)
+    raise ValueError("mapping must be 'clamped' or 'classic'")
 
 
 @dataclass(frozen=True)
@@ -53,6 +80,14 @@ class DEM3DConfig:
     friction_coefficient: float = 0.0        # mu: Coulomb friction coefficient
     rolling_resistance_coefficient: float = 0.0  # mu_r: rolling resistance coefficient
     restitution_coefficient: float = 1.0     # e: coefficient of restitution (0,1]
+    # How ``restitution_coefficient`` is turned into a normal damping coefficient.
+    # "clamped"  : inverse of the compressive-only (F_n >= 0) contact law that this
+    #              solver integrates, so ``restitution_coefficient`` is a *realised*
+    #              rebound target (see tensordem.contact_impact).
+    # "classic"  : legacy free-oscillator identity exp(-pi*zeta/sqrt(1-zeta^2));
+    #              overshoots the target (up to ~+33 % at e=0.3) because the force
+    #              is truncated at zero. Kept for reproducing historical baselines.
+    restitution_mapping: str = "clamped"
 
     def __post_init__(self) -> None:
         for name in ("nx", "ny", "nz"):
@@ -92,10 +127,27 @@ class DEM3DConfig:
             raise ValueError("rolling_resistance_coefficient must be finite and nonnegative")
         if not (0.0 < self.restitution_coefficient <= 1.0):
             raise ValueError("restitution_coefficient must be in (0, 1]")
+        if self.restitution_mapping not in ("clamped", "classic"):
+            raise ValueError("restitution_mapping must be 'clamped' or 'classic'")
 
     @property
     def mass(self) -> float:
         return self.density * (4.0 / 3.0) * math.pi * self.radius**3
+
+    @property
+    def pair_normal_damping(self) -> float:
+        """Normal damping the sphere-sphere branch applies (N s/m).
+
+        Derived once from :attr:`restitution_coefficient` with the selected
+        :attr:`restitution_mapping`; effective mass of an equal-mass pair is
+        ``mass / 2``, which is the convention the solver has always used.
+        """
+        return _normal_damping_from_restitution(
+            self.restitution_coefficient,
+            self.contact_stiffness,
+            self.mass / 2.0,
+            self.restitution_mapping,
+        )
 
     @property
     def recommended_dt(self) -> float:
@@ -106,8 +158,12 @@ class DEM3DConfig:
             self.bond_stiffness, self.contact_stiffness,
             self.platen_stiffness if (self.top_platen_enabled or self.bottom_platen_enabled) else 0.0,
         )
+        # The sphere-sphere branch uses the restitution-derived damping, not
+        # ``contact_damping`` (which only drives the tool branch); the bound must
+        # see the larger of the two or it is optimistic for small e.
+        normal_damping = max(self.contact_damping, self.pair_normal_damping)
         k = (2 * degree_bound + 1) * contact_stiffness
-        c = ((2 * degree_bound + 1) * self.contact_damping + self.drag
+        c = ((2 * degree_bound + 1) * normal_damping + self.drag
              + (2 if (self.top_platen_enabled or self.bottom_platen_enabled) else 0)
              * self.platen_damping)
         elastic = 0.15 * math.sqrt(self.mass / k)
@@ -133,6 +189,7 @@ class IceDEM3D:
 
     def __init__(self, config: DEM3DConfig = DEM3DConfig()) -> None:
         self.config = config
+        self._pair_normal_damping = config.pair_normal_damping
         self.device = torch.device(config.device)
         if self.device.type == "cuda" and not torch.cuda.is_available():
             raise ValueError("CUDA requested but unavailable")
@@ -492,16 +549,9 @@ class IceDEM3D:
                 vn = (relative_v * cnormal).sum(dim=1)
 
                 # --- Normal contact force with restitution-based damping ---
-                # Compute effective mass for restitution mapping
-                m_eff = cfg.mass / 2.0  # equal-mass spheres
-                # Map restitution coefficient to damping
-                if cfg.restitution_coefficient < 1.0:
-                    ln_e = math.log(cfg.restitution_coefficient)
-                    abs_ln_e = -ln_e
-                    zeta = abs_ln_e / math.sqrt(math.pi ** 2 + abs_ln_e ** 2)
-                    gamma_n = 2.0 * zeta * math.sqrt(cfg.contact_stiffness * m_eff)
-                else:
-                    gamma_n = 0.0
+                # Precomputed once per configuration (equal-mass pair convention);
+                # the "clamped" mapping inverts this solver's F_n >= 0 contact law.
+                gamma_n = self._pair_normal_damping
 
                 contact_mag = (cfg.contact_stiffness * overlap - gamma_n * vn).clamp_min(0)
                 contact_mag = torch.where(~bond_alive, contact_mag, torch.zeros_like(contact_mag))

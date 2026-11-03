@@ -218,7 +218,7 @@ def damping_for_target_restitution(
 
 
 def measure_dem3d_impact(
-    gamma_n: float,
+    gamma_n: float | None = None,
     *,
     k_n: float = 5_000.0,
     radius: float = 0.025,
@@ -228,8 +228,19 @@ def measure_dem3d_impact(
     v_in: float = 0.5,
     gap: float = 0.01,
     both_free: bool = False,
+    restitution_coefficient: float | None = None,
+    restitution_mapping: str = "clamped",
 ) -> dict[str, Any]:
     """Closed-loop restitution measurement with the real 3-D solver.
+
+    Two ways to set the normal damping:
+
+    * ``gamma_n`` -- the damping coefficient is imposed directly (this is the
+      historical signature);
+    * ``restitution_coefficient`` (+ ``restitution_mapping``) -- the damping is
+      the one :class:`tensordem.dem3d.DEM3DConfig` derives from the requested
+      coefficient of restitution, so the measured ``e`` tests the mapping that
+      a user actually gets from a configuration.
 
     A two-sphere impact is carved out of a ``2x2x2`` :class:`IceDEM3D` box: all
     bonds are severed and all particles except the pair are frozen, so the pair
@@ -244,7 +255,18 @@ def measure_dem3d_impact(
     """
     from .dem3d import DEM3DConfig, IceDEM3D
 
-    if not math.isfinite(gamma_n) or gamma_n < 0:
+    if restitution_coefficient is not None:
+        if gamma_n is not None:
+            raise ValueError(
+                "pass either gamma_n or restitution_coefficient, not both"
+            )
+        if not (0.0 < restitution_coefficient <= 1.0):
+            raise ValueError("restitution_coefficient must be in (0, 1]")
+        if restitution_mapping not in ("clamped", "classic"):
+            raise ValueError("restitution_mapping must be 'clamped' or 'classic'")
+    elif gamma_n is None:
+        raise ValueError("either gamma_n or restitution_coefficient is required")
+    elif not math.isfinite(gamma_n) or gamma_n < 0:
         raise ValueError(f"gamma_n must be finite and nonnegative, got {gamma_n}")
     if not (0.0 < dt_scale <= 1.0):
         raise ValueError("dt_scale must be in (0, 1]")
@@ -252,13 +274,25 @@ def measure_dem3d_impact(
         raise ValueError("gap must be finite and positive")
 
     torch.set_num_threads(1)
-    config = DEM3DConfig(
-        nx=2, ny=2, nz=2,
-        radius=radius, density=density,
-        contact_stiffness=k_n, contact_damping=gamma_n,
-        drag=drag, fix_x_edges=False,
-        tool_speed=1e-3, tool_gap=1.0,
-    )
+    if restitution_coefficient is None:
+        config = DEM3DConfig(
+            nx=2, ny=2, nz=2,
+            radius=radius, density=density,
+            contact_stiffness=k_n, contact_damping=gamma_n,
+            drag=drag, fix_x_edges=False,
+            tool_speed=1e-3, tool_gap=1.0,
+        )
+    else:
+        config = DEM3DConfig(
+            nx=2, ny=2, nz=2,
+            radius=radius, density=density,
+            contact_stiffness=k_n, contact_damping=0.0,
+            restitution_coefficient=restitution_coefficient,
+            restitution_mapping=restitution_mapping,
+            drag=drag, fix_x_edges=False,
+            tool_speed=1e-3, tool_gap=1.0,
+        )
+    gamma_used = config.pair_normal_damping
     sim = IceDEM3D(config)
     # Carve the two-body impact out of the bonded lattice.
     sim.bonded[:] = False
@@ -305,7 +339,10 @@ def measure_dem3d_impact(
                     "max_overlap_m": max_overlap,
                     "m_eff": m_eff,
                     "mass": config.mass,
-                    "zeta": gamma_n / (2.0 * math.sqrt(k_n * m_eff)),
+                    "gamma_n": gamma_used,
+                    "restitution_coefficient": config.restitution_coefficient,
+                    "restitution_mapping": config.restitution_mapping,
+                    "zeta": gamma_used / (2.0 * math.sqrt(k_n * m_eff)),
                     "steps": sim.step_count,
                     "drag": drag,
                 }
