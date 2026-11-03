@@ -6,6 +6,7 @@ import math
 import torch
 
 from .hull_contact import polyline_contact_forces
+from .hull_geometry import CircularArc, arc_closest_points, arc_hull_contact_forces
 
 
 # Ledger channels introduced after the first release; older checkpoints that
@@ -87,6 +88,7 @@ class IceDEM:
         config: DEMConfig = DEMConfig(),
         *,
         hull_profile: torch.Tensor | None = None,
+        hull_arc: CircularArc | None = None,
         hull_start: tuple[float, float] = (0.0, 0.0),
         hull_velocity: tuple[float, float] = (0.0, 0.0),
     ) -> None:
@@ -155,6 +157,13 @@ class IceDEM:
         self.hull_velocity = torch.tensor(hull_velocity, dtype=torch.float64, device=self.device)
         if not bool(torch.isfinite(self.hull_start).all() and torch.isfinite(self.hull_velocity).all()):
             raise ValueError("hull_start and hull_velocity must be finite")
+        self.hull_arc = None
+        if hull_profile is not None and hull_arc is not None:
+            raise ValueError("hull_profile and hull_arc are mutually exclusive")
+        if hull_arc is not None:
+            if not isinstance(hull_arc, CircularArc):
+                raise TypeError("hull_arc must be a tensordem.hull_geometry.CircularArc")
+            self.hull_arc = hull_arc
         if hull_profile is not None:
             if not isinstance(hull_profile, torch.Tensor):
                 raise TypeError("hull_profile must be a torch.Tensor with shape (M, 2)")
@@ -170,9 +179,32 @@ class IceDEM:
     @property
     def tool_position(self) -> torch.Tensor:
         """Return the circular tool position or prescribed hull translation."""
-        if self.hull_profile is not None:
+        if self.hull_profile is not None or self.hull_arc is not None:
             return self.hull_start + self.time * self.hull_velocity
         return self.tool_start + self.time * self.tool_velocity
+
+    def hull_arcs(self) -> list[CircularArc] | None:
+        """Exact bow arcs rigidly translated to the current tool position.
+
+        ``hull_arc`` is stored in the same reference frame as ``hull_profile``
+        (the configuration at ``hull_start``); the returned pieces are the
+        global geometry at the current time, with the arc centre following the
+        prescribed hull translation.  ``None`` when no arc bow is configured.
+        """
+        if self.hull_arc is None:
+            return None
+        offset = self.tool_position
+        return [
+            CircularArc(
+                center=(
+                    self.hull_arc.center[0] + float(offset[0]),
+                    self.hull_arc.center[1] + float(offset[1]),
+                ),
+                radius=self.hull_arc.radius,
+                start_angle=self.hull_arc.start_angle,
+                span=self.hull_arc.span,
+            )
+        ]
 
     @property
     def broken_bonds(self) -> int:
@@ -290,7 +322,7 @@ class IceDEM:
         force.index_add_(0, i, pair_force)
         force.index_add_(0, j, -pair_force)
 
-        if self.hull_profile is None:
+        if self.hull_profile is None and self.hull_arc is None:
             tool_delta = self.positions - self.tool_position
             tool_distance = torch.linalg.vector_norm(tool_delta, dim=1)
             tool_normal = tool_delta / tool_distance.clamp_min(
@@ -309,6 +341,17 @@ class IceDEM:
             )
             tool_force = tool_magnitude[:, None] * tool_normal
             tool_reaction = -tool_force.sum(dim=0)
+        elif self.hull_arc is not None:
+            tool_force, tool_reaction = arc_hull_contact_forces(
+                self.positions,
+                self.velocities,
+                self.hull_arcs(),
+                self.hull_velocity,
+                particle_radius=cfg.radius,
+                hull_radius=cfg.tool_radius,
+                stiffness=cfg.contact_stiffness,
+                damping=cfg.contact_damping,
+            )
         else:
             vertices = self.hull_profile + self.tool_position
             tool_force, tool_reaction = polyline_contact_forces(
@@ -326,9 +369,15 @@ class IceDEM:
         pair_dissipation = ((repulsion - cfg.contact_stiffness * overlap) * (-normal_speed))
         pair_dissipation = torch.where((overlap > 0) & ~self.alive, pair_dissipation, torch.zeros_like(pair_dissipation))
         # Recover conservative tool force from the same geometry with damping 0.
-        if self.hull_profile is None:
+        if self.hull_profile is None and self.hull_arc is None:
             conservative_tool = cfg.contact_stiffness * tool_overlap[:, None] * tool_normal
             tool_v = self.tool_velocity
+        elif self.hull_arc is not None:
+            conservative_tool, _ = arc_hull_contact_forces(
+                self.positions, self.velocities, self.hull_arcs(), self.hull_velocity,
+                particle_radius=cfg.radius, hull_radius=cfg.tool_radius,
+                stiffness=cfg.contact_stiffness, damping=0.0)
+            tool_v = self.hull_velocity
         else:
             conservative_tool, _ = polyline_contact_forces(
                 self.positions, self.velocities, vertices, self.hull_velocity,
@@ -491,6 +540,9 @@ class IceDEM:
                     tool_start_m=self.tool_start.tolist(),
                     tool_velocity_m_s=self.tool_velocity.tolist(),
                     hull_profile_m=None if self.hull_profile is None else self.hull_profile.tolist(),
+                    hull_arc=None if self.hull_arc is None else dict(
+                        center=list(self.hull_arc.center), radius=self.hull_arc.radius,
+                        start_angle=self.hull_arc.start_angle, span=self.hull_arc.span),
                     hull_start_m=self.hull_start.tolist(), hull_velocity_m_s=self.hull_velocity.tolist(),
                     accounting=copy.deepcopy(self.accounting), last_step=copy.deepcopy(self.last_step))
 
@@ -501,14 +553,23 @@ class IceDEM:
         if not isinstance(state, dict) or state.get("schema") != "tensordem.restart/1":
             raise ValueError("unsupported DEM restart schema")
         required = set(cls(DEMConfig(nx=2, ny=2)).snapshot())
-        if set(state) != required:
+        # ``hull_arc`` is additive: snapshots written before exact-arc bows were
+        # supported restore unchanged onto the polyline path.
+        optional = {"hull_arc"}
+        if not required - optional <= set(state) <= required:
             raise ValueError("restart fields missing or unknown")
         cfg = dict(state["config"])
         if device is not None:
             cfg["device"] = device
         config = DEMConfig(**cfg)
         hull = state["hull_profile_m"]
+        arc = state.get("hull_arc")
         result = cls(config, hull_profile=None if hull is None else torch.tensor(hull, dtype=torch.float64),
+                     hull_arc=None if arc is None else CircularArc(
+                         center=tuple(float(z) for z in arc["center"]),
+                         radius=float(arc["radius"]),
+                         start_angle=float(arc["start_angle"]),
+                         span=float(arc["span"])),
                      hull_start=state["hull_start_m"], hull_velocity=state["hull_velocity_m_s"])
         if state["dt_s"] != result.dt or not math.isfinite(state["time_s"]) or state["time_s"] < 0:
             raise ValueError("invalid restart time or timestep")
@@ -601,8 +662,13 @@ class IceDEM:
         overlap = (2 * self.config.radius - distances).clamp_min(0)
         bond = 0.5 * self.config.bond_stiffness * extension[self.alive].square().sum()
         contact = 0.5 * self.config.contact_stiffness * overlap[~self.alive].square().sum()
-        if self.hull_profile is None:
+        if self.hull_profile is None and self.hull_arc is None:
             distance = torch.linalg.vector_norm(self.positions - self.tool_position, dim=1)
+        elif self.hull_arc is not None:
+            distance = torch.full((len(self.positions),), float("inf"),
+                                  dtype=self.positions.dtype, device=self.device)
+            for arc in self.hull_arcs():
+                distance = torch.minimum(distance, arc_closest_points(self.positions, arc)[0])
         else:
             vertices = self.hull_profile + self.tool_position
             segments = vertices[1:] - vertices[:-1]
