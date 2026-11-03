@@ -142,13 +142,22 @@ absence of tangential/rotational stiffness, not a spurious shear anisotropy.
 
 ## 6. Caveats and scope
 
+- **Correction (see [the periodic k = 0 audit](dem3d_born_huang_internal_strain.md)):** the
+  relaxed/affine ratios of section 4 are a *free-surface specimen* response under mixed
+  boundary conditions, not a bulk non-affine correction. For the periodic lattice the k = 0
+  internal-strain tensor vanishes identically (one atom per primitive cell, inversion
+  symmetry) and the relaxed constants equal the affine ones to 2.2e-16, so the Zener ratio
+  A = 7/3 is exact in the bulk. The 1/n extrapolation of section 4 is a specimen quantity and
+  2 of its 5 points sit on a singular linear system.
 - Linear small-strain elasticity of the intact lattice; no fracture, contacts, drag
   or free-surface reconstruction.
 - Relaxed values come from free-surface specimens of 64 to
   1728 particles with a dense harmonic solve
   (limit 4000 particles). The 1/n extrapolation is an estimate with the fit residual
   quoted above, not a converged bulk modulus. The rigorous alternative is a
-  periodic k = 0 Born-Huang internal-strain calculation; it is not implemented here.
+  periodic k = 0 Born-Huang internal-strain calculation; **now implemented in
+  [dem3d_born_huang_internal_strain.md](dem3d_born_huang_internal_strain.md)**, where the
+  internal-strain tensor is shown to vanish identically for this lattice.
 - The Poisson ratio reported for the relaxed specimen is an effective finite-specimen
   quantity and is not the same object as the affine nu[100].
 - These are lattice-mechanics numbers. They do not calibrate ice, do not validate a
