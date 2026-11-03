@@ -9,6 +9,12 @@ Contact constitutive model (L1_foundation — SIR-PC2|F05):
 - Normal: linear spring-dashpot with restitution-coefficient parameterization.
 - Tangential: Cundall-Strack incremental Coulomb-friction spring (|F_t| <= mu * |F_n|).
 - Rolling resistance: torque T_r = mu_r * R_eff * |F_n| opposing relative rotation.
+- Rotational degrees of freedom (opt-in, ``enable_rotation=True``): the verified
+  rolling-resistance laws of :mod:`tensordem.rolling_resistance` (``cdt``,
+  ``viscous``, ``epsd``) act on particle spin, and plane contacts gain
+  Cundall-Strack tangential friction at the true contact point.  With the flag
+  off the solver keeps the legacy translational surrogate, so existing results
+  and checkpoints are reproduced unchanged.
 """
 from __future__ import annotations
 
@@ -17,6 +23,12 @@ import math
 from typing import Any
 
 import torch
+
+from .rolling_resistance import (
+    MODELS as ROLLING_MODELS,
+    RollingResistanceConfig,
+    rolling_resistance_torque,
+)
 
 
 @dataclass(frozen=True)
@@ -53,6 +65,18 @@ class DEM3DConfig:
     friction_coefficient: float = 0.0        # mu: Coulomb friction coefficient
     rolling_resistance_coefficient: float = 0.0  # mu_r: rolling resistance coefficient
     restitution_coefficient: float = 1.0     # e: coefficient of restitution (0,1]
+    # --- Rotational degrees of freedom (opt-in) ---
+    # ``enable_rotation=True`` gives every particle a spin state integrated from
+    # contact torques.  Rolling resistance then uses the verified laws in
+    # ``tensordem.rolling_resistance`` instead of the legacy translational
+    # surrogate, and plane (platen) contacts can carry tangential friction.
+    enable_rotation: bool = False
+    inertia_factor: float = 0.4              # I / (m R^2): 2/5 solid sphere
+    rolling_model: str = "cdt"               # cdt | viscous | epsd
+    rolling_omega_ref: float = 1.0           # rad/s, viscous reference spin
+    rolling_stiffness: float = 0.0           # N*m/rad, EPSD rolling spring k_r
+    rolling_omega_tol: float = 1.0e-9        # rad/s, CDT dead-zone
+    platen_friction_coefficient: float = 0.0  # mu against platens (needs rotation)
 
     def __post_init__(self) -> None:
         for name in ("nx", "ny", "nz"):
@@ -92,10 +116,49 @@ class DEM3DConfig:
             raise ValueError("rolling_resistance_coefficient must be finite and nonnegative")
         if not (0.0 < self.restitution_coefficient <= 1.0):
             raise ValueError("restitution_coefficient must be in (0, 1]")
+        # Rotational-DOF parameters
+        if not isinstance(self.enable_rotation, bool):
+            raise ValueError("enable_rotation must be a boolean")
+        if not math.isfinite(self.inertia_factor) or self.inertia_factor <= 0.0:
+            raise ValueError("inertia_factor must be finite and positive")
+        if self.rolling_model not in ROLLING_MODELS:
+            raise ValueError(f"rolling_model must be one of {ROLLING_MODELS}")
+        for name in ("rolling_omega_ref", "rolling_stiffness", "rolling_omega_tol"):
+            value = getattr(self, name)
+            if not math.isfinite(value) or value < 0.0:
+                raise ValueError(f"{name} must be finite and nonnegative")
+        if self.rolling_omega_ref <= 0.0:
+            raise ValueError("rolling_omega_ref must be positive")
+        if (not math.isfinite(self.platen_friction_coefficient)
+                or self.platen_friction_coefficient < 0.0):
+            raise ValueError("platen_friction_coefficient must be finite and nonnegative")
+        if self.enable_rotation:
+            if self.rolling_model == "epsd" and self.rolling_stiffness <= 0.0:
+                raise ValueError("rolling_model='epsd' requires a positive rolling_stiffness")
+            if self.rolling_model == "epsd" and self.rolling_resistance_coefficient <= 0.0:
+                raise ValueError("rolling_model='epsd' requires rolling_resistance_coefficient > 0")
+        elif self.platen_friction_coefficient > 0.0:
+            raise ValueError("platen_friction_coefficient requires enable_rotation=True")
 
     @property
     def mass(self) -> float:
         return self.density * (4.0 / 3.0) * math.pi * self.radius**3
+
+    @property
+    def inertia(self) -> float:
+        """Moment of inertia about a centroidal axis, kg*m^2."""
+        return self.inertia_factor * self.mass * self.radius ** 2
+
+    @property
+    def rolling_config(self) -> RollingResistanceConfig:
+        """Rolling-resistance law shared with :mod:`tensordem.rolling_resistance`."""
+        return RollingResistanceConfig(
+            model=self.rolling_model,
+            mu_r=self.rolling_resistance_coefficient,
+            k_r=self.rolling_stiffness if self.rolling_model == "epsd" else None,
+            omega_ref=self.rolling_omega_ref,
+            omega_tol=self.rolling_omega_tol,
+        )
 
     @property
     def recommended_dt(self) -> float:
@@ -244,6 +307,17 @@ class IceDEM3D:
         self._rolling_torque = torch.zeros((n, 3), dtype=self.dtype, device=self.device)
         # Flag indicating rolling resistance torque is physically modelled.
         self.rolling_resistance_torque_physical = config.rolling_resistance_coefficient > 0.0
+
+        # --- Rotational degrees of freedom (opt-in) ---
+        # ``omega`` stays None when rotation is disabled, so the legacy code path
+        # and its numerical results are untouched.
+        self.omega: torch.Tensor | None = None
+        self._torque = torch.zeros((n, 3), dtype=self.dtype, device=self.device)
+        self._rolling_state: dict[int, torch.Tensor] = {}
+        self._platen_tangential_state = torch.zeros((n, 3), dtype=self.dtype, device=self.device)
+        self._platen_rolling_state = torch.zeros((n, 3), dtype=self.dtype, device=self.device)
+        if config.enable_rotation:
+            self.omega = torch.zeros((n, 3), dtype=self.dtype, device=self.device)
 
     @property
     def tool_position(self) -> torch.Tensor:
@@ -464,6 +538,7 @@ class IceDEM3D:
         if update_fracture:
             self._commit_fracture(extension)
 
+        torque = torch.zeros_like(self.positions)
         bond_mag = cfg.bond_stiffness * extension
         bond_force = bond_mag[:, None] * normal
         force = -cfg.drag * self.velocities
@@ -512,7 +587,16 @@ class IceDEM3D:
                     # Retrieve tangential displacement state
                     tang_disp = self._get_tangential_state(ci, cj, cnormal)
                     # Integrate tangential displacement
-                    v_tangent = relative_v - vn[:, None] * cnormal
+                    if self.omega is not None:
+                        # Slip at the true contact point: v + omega x r, with
+                        # r = +R*n measured from particle i's centre.
+                        r_i = cfg.radius * cnormal
+                        slip = (relative_v
+                                + torch.linalg.cross(self.omega[cj], -r_i)
+                                - torch.linalg.cross(self.omega[ci], r_i))
+                        v_tangent = slip - (slip * cnormal).sum(dim=1, keepdim=True) * cnormal
+                    else:
+                        v_tangent = relative_v - vn[:, None] * cnormal
                     tang_disp = tang_disp + v_tangent * self.dt
 
                     # Tangential force from spring
@@ -532,12 +616,48 @@ class IceDEM3D:
                     # Apply tangential force
                     force.index_add_(0, ci, F_t)
                     force.index_add_(0, cj, -F_t)
+                    if self.omega is not None:
+                        # The friction couple acts at the contact point, so it also
+                        # changes spin: tau_i = r_i x F_t and tau_j = -tau_i.
+                        torque_i = torch.linalg.cross(r_i, F_t)
+                        torque.index_add_(0, ci, torque_i)
+                        torque.index_add_(0, cj, -torque_i)
 
                     # Update tangential state
                     self._update_tangential_state(ci, cj, cnormal, tang_disp)
 
                 # --- SIR-PC2|F05: Rolling resistance torque ---
-                if cfg.rolling_resistance_coefficient > 0.0:
+                if cfg.rolling_resistance_coefficient > 0.0 and self.omega is not None:
+                    # Verified law from tensordem.rolling_resistance acting on real
+                    # spin degrees of freedom (cdt / viscous / epsd).
+                    rolling_cfg = cfg.rolling_config
+                    omega_rel = self.omega[cj] - self.omega[ci]
+                    r_eff = torch.full_like(contact_mag, 0.5 * cfg.radius)
+                    if rolling_cfg.model == "epsd":
+                        keys = [self._pair_key(int(a), int(b))
+                                for a, b in zip(ci.tolist(), cj.tolist())]
+                        previous = torch.stack([
+                            self._rolling_state.get(
+                                key, torch.zeros(3, dtype=self.dtype, device=self.device))
+                            for key in keys
+                        ])
+                    else:
+                        keys = []
+                        previous = None
+                    rolling_j, new_state = rolling_resistance_torque(
+                        omega_rel, contact_mag, r_eff, rolling_cfg,
+                        normal=cnormal, torque_state=previous, dt=self.dt,
+                    )
+                    if keys:
+                        for key, row in zip(keys, new_state):
+                            self._rolling_state[key] = row.clone()
+                    self._rolling_torque.index_add_(0, cj, rolling_j)
+                    self._rolling_torque.index_add_(0, ci, -rolling_j)
+                    torque.index_add_(0, cj, rolling_j)
+                    torque.index_add_(0, ci, -rolling_j)
+                elif cfg.rolling_resistance_coefficient > 0.0:
+                    # Legacy translational surrogate (no spin state available).  Its
+                    # measured defect is quantified in docs/dem3d_rotation_rolling.md.
                     torque_i, torque_j = self._compute_rolling_resistance_torque(
                         ci, cj, cnormal, contact_mag,
                     )
@@ -595,6 +715,77 @@ class IceDEM3D:
             force[:, 2] += bottom_force_z
             bottom_reaction_z = -bottom_force_z.sum()
 
+        # --- Plane (platen) tangential friction and rolling resistance ---
+        # Both planes are treated as infinite-mass surfaces: their tangential
+        # velocity is zero and their spin is zero, so the relative slip is
+        # evaluated at the true contact point of the sphere.
+        if self.omega is not None and cfg.platen_friction_coefficient > 0.0:
+            plane_normal = torch.zeros_like(self.positions)
+            plane_active = torch.zeros(len(self.positions), dtype=torch.bool,
+                                       device=self.device)
+            plane_force_mag = torch.zeros(len(self.positions), dtype=self.dtype,
+                                          device=self.device)
+            if cfg.top_platen_enabled:
+                top_z = self.top_platen_start_z + self.time * cfg.top_platen_velocity
+                overlap = (self.positions[:, 2] + cfg.radius - top_z).clamp_min(0.0)
+                magnitude = (cfg.platen_stiffness * overlap
+                             + cfg.platen_damping * (self.velocities[:, 2] - cfg.top_platen_velocity)
+                             ).clamp_min(0.0)
+                plane_active |= overlap > 0.0
+                plane_force_mag = plane_force_mag + magnitude
+                plane_normal[:, 2] = plane_normal[:, 2] - 1.0
+            if cfg.bottom_platen_enabled:
+                bottom_z = self.bottom_platen_start_z + self.time * cfg.bottom_platen_velocity
+                overlap = (bottom_z + cfg.radius - self.positions[:, 2]).clamp_min(0.0)
+                magnitude = (cfg.platen_stiffness * overlap
+                             - cfg.platen_damping * (self.velocities[:, 2] - cfg.bottom_platen_velocity)
+                             ).clamp_min(0.0)
+                plane_active |= overlap > 0.0
+                plane_force_mag = plane_force_mag + magnitude
+                plane_normal[:, 2] = plane_normal[:, 2] + 1.0
+            # Only a single active plane is meaningful for tangential friction; if a
+            # particle is pinched by both platens the net normal direction cancels.
+            contact = plane_active & (plane_normal.norm(dim=1) > 0.5)
+            if bool(contact.any()):
+                normal_hat = torch.zeros_like(plane_normal)
+                normal_hat[contact] = (plane_normal[contact]
+                                       / plane_normal[contact].norm(dim=1)[:, None])
+                r_c = -cfg.radius * normal_hat          # centre -> contact point
+                slip = self.velocities + torch.linalg.cross(self.omega, r_c)
+                slip = slip - (slip * normal_hat).sum(dim=1, keepdim=True) * normal_hat
+                slip = torch.where(contact[:, None], slip, torch.zeros_like(slip))
+                state = self._platen_tangential_state + slip * self.dt
+                state = torch.where(contact[:, None], state, torch.zeros_like(state))
+                limit = cfg.platen_friction_coefficient * plane_force_mag
+                raw = cfg.platen_stiffness * state
+                raw_mag = raw.norm(dim=1)
+                scale = torch.where(raw_mag > limit,
+                                    limit / raw_mag.clamp_min(torch.finfo(self.dtype).tiny),
+                                    torch.ones_like(raw_mag))
+                f_t = -(raw * scale[:, None])
+                f_t = torch.where(contact[:, None], f_t, torch.zeros_like(f_t))
+                self._platen_tangential_state = state
+                force = force + f_t
+                torque = torque + torch.linalg.cross(r_c, f_t)
+                # Rolling resistance of a sphere on a plane (plane spin = 0,
+                # effective radius = R, normal from plane to sphere).
+                if cfg.rolling_resistance_coefficient > 0.0:
+                    rolling_cfg = cfg.rolling_config
+                    previous = self._platen_rolling_state
+                    rolling_t, new_state = rolling_resistance_torque(
+                        self.omega, plane_force_mag, torch.full_like(
+                            plane_force_mag, cfg.radius), rolling_cfg,
+                        normal=normal_hat, torque_state=previous, dt=self.dt,
+                    )
+                    rolling_t = torch.where(contact[:, None], rolling_t,
+                                            torch.zeros_like(rolling_t))
+                    self._platen_rolling_state = torch.where(
+                        contact[:, None], new_state, torch.zeros_like(new_state))
+                    self._rolling_torque += rolling_t
+                    torque = torque + rolling_t
+
+        if self.omega is not None:
+            self._torque.copy_(torque)
         if update_fracture:
             self.last_reaction.copy_(reaction)
         self.last_top_platen_reaction_z.copy_(top_reaction_z)
@@ -611,6 +802,12 @@ class IceDEM3D:
         acc[self.fixed] = 0.0
         self.velocities += acc * self.dt
         self.velocities[self.fixed] = 0.0
+        if self.omega is not None:
+            # Semi-implicit Euler for the rotational degrees of freedom.
+            alpha = self._torque / self.config.inertia
+            alpha[self.fixed] = 0.0
+            self.omega += alpha * self.dt
+            self.omega[self.fixed] = 0.0
         self.positions += self.velocities * self.dt
         self.positions[self.fixed] = self.initial_positions[self.fixed]
         self.time += self.dt
@@ -624,6 +821,8 @@ class IceDEM3D:
         force, reaction = self.forces(external_forces, update_fracture=False)
         support = -force[self.fixed].sum(dim=0)
         kinetic = 0.5 * self.config.mass * self.velocities.square().sum()
+        rotational = (None if self.omega is None
+                      else 0.5 * self.config.inertia * self.omega.square().sum())
         # Recoverable elastic energy in surviving bonds only. Broken bonds are
         # represented separately by their recorded release-energy estimate.
         i, j = self.pairs.T
@@ -672,14 +871,19 @@ class IceDEM3D:
             "tool_contact_energy_J": float(tool_energy),
             "platen_contact_energy_J": float(platen_energy),
             "released_bond_energy_J": float(released),
-            "mechanical_energy_J": float(kinetic + bond_energy + contact_energy + tool_energy + platen_energy),
+            **({} if rotational is None
+               else {"rotational_kinetic_energy_J": float(rotational)}),
+            "mechanical_energy_J": float(kinetic + bond_energy + contact_energy + tool_energy
+                                         + platen_energy
+                                         + (0.0 if rotational is None else rotational)),
         }
-
 
     def energy(self) -> dict[str, float]:
         """Return a snapshot of mechanical energy components (J)."""
         cfg = self.config
         kinetic = 0.5 * cfg.mass * (self.velocities ** 2).sum().item()
+        rotational = (None if self.omega is None
+                      else 0.5 * cfg.inertia * (self.omega ** 2).sum().item())
         i, j = self.pairs.T
         delta = self.positions[j] - self.positions[i]
         distance = torch.linalg.vector_norm(delta, dim=1)
@@ -724,7 +928,11 @@ class IceDEM3D:
             "tool_contact_energy_J": float(tool_energy),
             "platen_contact_energy_J": float(platen_energy),
             "released_bond_energy_J": float(released),
-            "mechanical_energy_J": float(kinetic + bond_energy + contact_energy + tool_energy + platen_energy),
+            **({} if rotational is None
+               else {"rotational_kinetic_energy_J": float(rotational)}),
+            "mechanical_energy_J": float(kinetic + bond_energy + contact_energy + tool_energy
+                                         + platen_energy
+                                         + (0.0 if rotational is None else rotational)),
         }
 
     def state_dict(self) -> dict[str, Any]:
@@ -736,7 +944,9 @@ class IceDEM3D:
             "initial_positions": self.initial_positions.clone(), "fixed": self.fixed.clone(),
             "pairs": self.pairs.clone(), "bonded": self.bonded.clone(), "alive": self.alive.clone(),
             "failure_mode": self.failure_mode.clone(), "failure_time_s": self.failure_time_s.clone(),
-            "failure_extension_m": self.failure_extension_m.clone(), "failure_energy_J": self.failure_energy_J.clone(),
+            "failure_extension_m": self.failure_extension_m.clone(),
+            "failure_energy_J": self.failure_energy_J.clone(),
+            **({} if self.omega is None else {"omega": self.omega.clone()}),
         }
 
     @torch.no_grad()
@@ -814,6 +1024,18 @@ class IceDEM3D:
                      "bonded", "alive", "failure_mode", "failure_time_s",
                      "failure_extension_m", "failure_energy_J"):
             getattr(self, name).copy_(staged[name])
+        if self.omega is not None:
+            saved_omega = state.get("omega")
+            if saved_omega is None:
+                self.omega.zero_()
+            else:
+                if (not isinstance(saved_omega, torch.Tensor)
+                        or tuple(saved_omega.shape) != tuple(self.omega.shape)
+                        or saved_omega.dtype != self.omega.dtype):
+                    raise ValueError("checkpoint omega must match the spin state shape/dtype")
+                if not bool(torch.isfinite(saved_omega).all()):
+                    raise ValueError("checkpoint omega contains non-finite values")
+                self.omega.copy_(saved_omega.to(device=self.device))
         self.time = time_value
         self.step_count = step_value
         self.last_reaction.zero_()
