@@ -53,9 +53,16 @@ alone is monotone and can never produce it.
 Ultimate bearing capacity uses Vesic (1973) factors for drained conditions and
 Skempton (1951) embedment factors for the undrained total-stress case:
 `N_q = exp(pi tan phi) tan^2(45 + phi/2)`, `N_c = (N_q - 1)/tan phi`,
-`N_gamma = 2 (N_q + 1) tan phi`, `N_c^undrained = 5.14 (1 + 0.2 z/B)` capped at
-9. Pore pressure enters as an effective unit weight reduced by `(1 - r_u)`; it
-is not a coupled seepage solution.
+`N_gamma = 2 (N_q + 1) tan phi`. The undrained total-stress branch uses the
+Skempton (1951) embedment factor `N_c = 5.14 (1 + 0.2 z/B)`, which already
+contains the depth effect and is therefore applied **once**, capped at the
+strip-footing limit `7.5` (`9.0` only for a square/circular footing, via the
+`1 + 0.2 B/L` shape factor). Pore pressure enters as an effective unit weight
+reduced by `(1 - r_u)`; it is not a coupled seepage solution. The earlier
+revision applied a second Meyerhof depth factor on top of Skempton and used the
+square-footing cap for the strip model, overstating the undrained capacity by
+20-44 %; the audit, the fix and the reference-case numbers are in
+`docs/ridge_capacity_skempton_audit.md`.
 
 ## 2. From DEM load to pipe stress
 
@@ -162,11 +169,15 @@ ever disagree.
 * (d) sensitivity: the coupled system is subgrade-governed, so keel depth and
   width barely change the system capacity (flat within ±1 %); the seabed
   strength scales it monotonically (73.8 / 221.5 / 442.9 kN/m for
-  s_u = 10 / 30 / 60 kPa). The rigid-pipe ice-side study gives 1.45 / 1.41 /
+  s_u = 10 / 30 / 60 kPa). **These three numbers predate the m2983 Skempton fix**
+  (`docs/ridge_capacity_skempton_audit.md`): the subgrade capacity behind them was
+  20 % too high, so the coupled runs must be re-executed rather than rescaled. The rigid-pipe ice-side study gives 1.45 / 1.41 /
   1.30 MN/m at 8 / 12 / 16 m keel depth for a fixed stroke, i.e. the ice side is
   5-7 times stronger than the seabed and is still hardening at the end of the
   stroke, so it is a stroke-dependent resistance rather than a converged
   capacity.
-* (e) `pytest tests/test_ridge_grounding.py` — 24 tests, all green.
+* (e) `pytest tests/test_ridge_grounding.py tests/test_ridge_geotech_capacity_verification.py`
+  — 44 tests, all green (24 protocol/coupling tests plus 20 table-driven
+  capacity verification cases against Prandtl, Vesic and Skempton).
 * (f) complete Beaufort-like case with curve, stress distribution and DEM field
   cloud — produced.
