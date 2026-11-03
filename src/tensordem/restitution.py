@@ -61,15 +61,6 @@ from typing import Optional
 
 from .contact_tangential import damping_to_restitution, restitution_to_damping
 
-__all__ = [
-    "ImpactSolution",
-    "effective_mass",
-    "unilateral_contact_detail",
-    "unilateral_restitution",
-    "damping_for_restitution",
-    "classical_restitution",
-    "classical_damping",
-]
 
 # Samples per contact period used by the reference integrator.  RK4 error is
 # O(h^4); 4000 samples per period gives e to ~1e-9 (checked against a doubled
@@ -295,3 +286,371 @@ def classical_restitution(damping: float, stiffness: float, m_eff: float) -> flo
 def classical_damping(e_target: float, stiffness: float, m_eff: float) -> float:
     """Bilateral (textbook) damping mapping -- *not* the engine's contact law."""
     return restitution_to_damping(e_target, stiffness, m_eff)
+
+
+__all__ = [
+    "ImpactSolution",
+    "effective_mass",
+    "unilateral_contact_detail",
+    "unilateral_restitution",
+    "damping_for_restitution",
+    "damping_for_restitution_analytic",
+    "classical_restitution",
+    "classical_damping",
+    "RestitutionMeasurement",
+    "damping_ratio",
+    "restitution_from_damping",
+    "restitution_from_damping_clamped",
+    "damping_for_clamped_restitution",
+    "contact_restitution",
+    "clamped_contact_restitution",
+    "platen_restitution",
+    "measure_platen_restitution",
+]
+
+"""Coefficient-of-restitution analytics and calibration for DEM contacts.
+
+The 2-D and 3-D engines in this package use a *linear spring-dashpot*
+(Kelvin-Voigt) normal contact law
+
+    F_n = k * delta - c * v_n         (clamped at zero, unilateral)
+
+instead of a restitution coefficient input.  Until this module existed the
+damping coefficient ``c`` was a free knob with no documented link to the
+physical coefficient of restitution ``e``, which made the engine impossible to
+map onto the ice-ice / ice-steel restitution values quoted in the
+ice-mechanics literature.
+
+Both engines clamp the normal force at zero, i.e. the contact can push but not
+pull.  Two closed forms matter:
+
+* **Unclamped (textbook) Kelvin-Voigt** -- the classic single-degree-of-freedom
+  result with the damping ratio ``zeta = c / (2 sqrt(k m))``::
+
+      e_unclamped = exp(-zeta * pi / sqrt(1 - zeta^2))    zeta < 1
+      e_unclamped = 0                                     zeta >= 1
+
+  This solution keeps a *tensile* tail after the particle starts to rebound,
+  which the engine does not allow, so it under-predicts the restitution.
+
+* **Clamped (unilateral) Kelvin-Voigt** -- the form the engine actually
+  integrates.  Starting from zero overlap with approach speed ``v0`` the
+  compression is ``delta(t) = (v0/w_d) exp(-zeta w_n t) sin(w_d t)`` with
+  ``w_n = sqrt(k/m)``, ``w_d = w_n sqrt(1-zeta^2)``.  The contact ends when the
+  total normal force ``k delta + c delta_dot`` first vanishes, which happens at
+  the phase::
+
+      phi = atan2(2 zeta sqrt(1 - zeta^2), -(1 - 2 zeta^2))  in (0, pi)
+
+  and the rebound ratio collapses to the compact form::
+
+      e_clamped = exp(-(zeta / sqrt(1 - zeta^2)) * phi)      zeta < 1
+      e_clamped = 0                                         zeta >= 1
+
+  At ``zeta -> 0`` both forms tend to one, and ``e_clamped > e_unclamped`` for
+  every ``0 < zeta < 1`` because the tensile tail is removed.
+
+Both classes of attainable restitution are ``(0, 1]``; the damping coefficient
+that realises a target ``e`` is
+
+    zeta(e) = -ln(e) / sqrt(pi^2 + ln(e)^2),
+    c(e)    = 2 * zeta(e) * sqrt(k * m)
+
+for the unclamped form, and is obtained by monotone bisection for the clamped
+form (:func:`damping_for_clamped_restitution`).  For ``zeta < 0.05`` the two
+agree to better than 1 %; the difference grows to 16 % at ``zeta ~ 0.29``
+(see ``docs/dem3d_restitution_calibration.md``), so the clamped inverse is the
+correct calibration target for this engine.
+
+Because the law is linear, ``e`` is *independent of impact velocity*.  That is
+the standard limitation of a linear dashpot: real ice restitution varies with
+impact speed and temperature (see ``docs/dem3d_restitution_calibration.md``).
+
+The helpers below also provide :func:`measure_platen_restitution`, a
+discrete-element experiment that bounces a bonded particle block on a rigid
+platen of the same spring-dashpot form and measures the realised restitution.
+It is used as the verification probe for the analytic relation.
+"""
+
+from dataclasses import dataclass
+import math
+
+import torch
+
+from .dem3d import DEM3DConfig, IceDEM3D
+
+
+def damping_ratio(stiffness: float, damping: float, mass: float) -> float:
+    """Return ``zeta = c / (2 sqrt(k m))`` with argument validation."""
+    for name, value in (("stiffness", stiffness), ("mass", mass)):
+        if not math.isfinite(value) or value <= 0.0:
+            raise ValueError(f"{name} must be finite and positive")
+    if not math.isfinite(damping) or damping < 0.0:
+        raise ValueError("damping must be finite and nonnegative")
+    return damping / (2.0 * math.sqrt(stiffness * mass))
+
+
+def restitution_from_damping(stiffness: float, damping: float, mass: float) -> float:
+    """Closed-form Kelvin-Voigt restitution ratio for ``(k, c, m)``.
+
+    Returns ``1.0`` for a frictionless spring, values in ``(0, 1)`` for an
+    underdamped contact and exactly ``0.0`` for a critically/over-damped
+    contact (the model then decays without separating).
+    """
+    zeta = damping_ratio(stiffness, damping, mass)
+    if zeta == 0.0:
+        return 1.0
+    if zeta >= 1.0:
+        return 0.0
+    return math.exp(-zeta * math.pi / math.sqrt(1.0 - zeta * zeta))
+
+
+def restitution_from_damping_clamped(
+    stiffness: float, damping: float, mass: float
+) -> float:
+    """Restitution of a *unilateral* (force-clamped) Kelvin-Voigt contact.
+
+    This is the closed form that matches the normal contact law implemented by
+    :class:`tensordem.dem3d.IceDEM3D`, whose dashpot contribution is clipped at
+    zero so the contact cannot pull.
+    """
+    zeta = damping_ratio(stiffness, damping, mass)
+    if zeta == 0.0:
+        return 1.0
+    if zeta >= 1.0:
+        return 0.0
+    root = math.sqrt(1.0 - zeta * zeta)
+    phase = math.atan2(2.0 * zeta * root, -(1.0 - 2.0 * zeta * zeta))
+    return math.exp(-(zeta / root) * phase)
+
+
+def damping_for_clamped_restitution(
+    stiffness: float, restitution: float, mass: float, *, iterations: int = 200
+) -> float:
+    """Damping coefficient that realises ``restitution`` for the clamped law.
+
+    ``restitution_from_damping_clamped`` is strictly decreasing in the damping
+    coefficient, so a bracketed bisection converges to machine precision in a
+    few dozen iterations.  This is the calibration entry point for the engine:
+    the textbook (unclamped) inverse under-shoots the target by up to 16 % once
+    the damping ratio exceeds ~0.1.
+    """
+    if not math.isfinite(restitution) or not 0.0 < restitution < 1.0:
+        raise ValueError("restitution must lie in (0, 1)")
+    for name, value in (("stiffness", stiffness), ("mass", mass)):
+        if not math.isfinite(value) or value <= 0.0:
+            raise ValueError(f"{name} must be finite and positive")
+    low = 0.0
+    high = 2.0 * math.sqrt(stiffness * mass)
+    while restitution_from_damping_clamped(stiffness, high, mass) > restitution:
+        high *= 2.0
+        if high > 1.0e12:
+            raise ValueError("requested restitution requires an ill-conditioned dashpot")
+    for _ in range(iterations):
+        mid = 0.5 * (low + high)
+        if restitution_from_damping_clamped(stiffness, mid, mass) > restitution:
+            low = mid
+        else:
+            high = mid
+    return 0.5 * (low + high)
+
+
+def clamped_contact_restitution(config: DEM3DConfig) -> float:
+    """Clamped particle-particle restitution implied by ``config``."""
+    return restitution_from_damping_clamped(
+        config.contact_stiffness, config.contact_damping, config.mass
+    )
+
+
+def damping_for_restitution_analytic(stiffness: float, restitution: float, mass: float) -> float:
+    """Inverse of :func:`restitution_from_damping` (analytic, unclamped law).
+
+    ``restitution == 1`` maps to zero damping; ``restitution == 0`` is only
+    reached in the limit of infinite damping and raises ``ValueError`` so the
+    caller cannot silently install a non-physical dashpot.
+    """
+    if not math.isfinite(restitution) or not 0.0 < restitution <= 1.0:
+        raise ValueError("restitution must lie in (0, 1]")
+    for name, value in (("stiffness", stiffness), ("mass", mass)):
+        if not math.isfinite(value) or value <= 0.0:
+            raise ValueError(f"{name} must be finite and positive")
+    if restitution == 1.0:
+        return 0.0
+    log_e = math.log(restitution)
+    zeta = -log_e / math.sqrt(math.pi**2 + log_e * log_e)
+    return 2.0 * zeta * math.sqrt(stiffness * mass)
+
+
+def contact_restitution(config: DEM3DConfig) -> float:
+    """Particle-particle restitution implied by ``config`` (linear law)."""
+    return restitution_from_damping(
+        config.contact_stiffness, config.contact_damping, config.mass
+    )
+
+
+def platen_restitution(config: DEM3DConfig) -> float:
+    """Particle-platen restitution implied by ``config`` (linear law)."""
+    return restitution_from_damping(
+        config.platen_stiffness, config.platen_damping, config.mass
+    )
+
+
+@dataclass(frozen=True)
+class RestitutionMeasurement:
+    """Outcome of the platen bounce verification experiment."""
+
+    stiffness: float
+    damping: float
+    particle_mass: float
+    impact_speed: float
+    particle_count: int
+    dt: float
+    steps: int
+    measured_restitution: float
+    analytic_restitution: float
+    analytic_restitution_clamped: float
+
+    @property
+    def relative_error(self) -> float:
+        """``|measured - analytic| / analytic`` against the unclamped form."""
+        if self.analytic_restitution == 0.0:
+            return abs(self.measured_restitution)
+        return abs(self.measured_restitution - self.analytic_restitution) / self.analytic_restitution
+
+    @property
+    def relative_error_clamped(self) -> float:
+        """``|measured - analytic| / analytic`` against the clamped form."""
+        if self.analytic_restitution_clamped == 0.0:
+            return abs(self.measured_restitution)
+        return abs(
+            self.measured_restitution - self.analytic_restitution_clamped
+        ) / self.analytic_restitution_clamped
+
+    def as_dict(self) -> dict[str, float | int]:
+        payload: dict[str, float | int] = {
+            "stiffness_N_per_m": self.stiffness,
+            "damping_N_s_per_m": self.damping,
+            "damping_ratio": damping_ratio(self.stiffness, self.damping, self.particle_mass),
+            "particle_mass_kg": self.particle_mass,
+            "impact_speed_m_per_s": self.impact_speed,
+            "particle_count": self.particle_count,
+            "dt_s": self.dt,
+            "steps": self.steps,
+            "measured_restitution": self.measured_restitution,
+            "analytic_restitution": self.analytic_restitution,
+            "analytic_restitution_clamped": self.analytic_restitution_clamped,
+            "relative_error": self.relative_error,
+            "relative_error_clamped": self.relative_error_clamped,
+        }
+        return payload
+
+
+def measure_platen_restitution(
+    *,
+    stiffness: float = 5_000.0,
+    damping: float = 0.0,
+    impact_speed: float = 0.5,
+    radius: float = 0.025,
+    density: float = 917.0,
+    bond_stiffness: float = 2.0e5,
+    nx: int = 2,
+    ny: int = 2,
+    nz: int = 2,
+    dt: float | None = None,
+    max_steps: int = 500_000,
+) -> RestitutionMeasurement:
+    """Bounce a single free particle on a rigid platen and measure ``e``.
+
+    The closed forms compared against here describe *one* degree of freedom with
+    mass ``m`` and contact ``(k, c)`` against an infinite-mass wall, i.e. a
+    reduced mass equal to the particle mass.  The probe therefore isolates
+    exactly that configuration: the lattice is generated as usual (so that the
+    solver state has its production layout), every particle except one is parked
+    far away and fixed, and the bonds are broken before the impact.  A
+    multi-particle bonded block is *not* a single degree of freedom -- the bond
+    compliance and the layer-by-layer contact onset add their own dynamics, and
+    the measured restitution then deviates from the single-DOF closed form by
+    more than 10 % at moderate damping -- so the block configuration is
+    deliberately avoided here.
+
+    The free particle is released with normal velocity ``-impact_speed``
+    towards the platen; the experiment stops when it has separated (zero platen
+    overlap, positive normal velocity).  The measured restitution is the
+    outgoing normal velocity divided by the impact speed.
+    """
+    if not math.isfinite(impact_speed) or impact_speed <= 0.0:
+        raise ValueError("impact_speed must be finite and positive")
+    for name, value in (("stiffness", stiffness), ("bond_stiffness", bond_stiffness)):
+        if not math.isfinite(value) or value <= 0.0:
+            raise ValueError(f"{name} must be finite and positive")
+    if not math.isfinite(damping) or damping < 0.0:
+        raise ValueError("damping must be finite and nonnegative")
+
+    config = DEM3DConfig(
+        nx=nx,
+        ny=ny,
+        nz=nz,
+        radius=radius,
+        density=density,
+        bond_stiffness=bond_stiffness,
+        drag=0.0,
+        fix_x_edges=False,
+        fix_bottom=False,
+        bottom_platen_enabled=True,
+        platen_stiffness=stiffness,
+        platen_damping=damping,
+        dt=dt,
+    )
+    sim = IceDEM3D(config)
+    particle_count = int(sim.positions.shape[0])
+
+    # Isolate one free particle; park the rest far away and clamp them so that
+    # the impact probes a single mass-spring-dashpot contact against the platen.
+    probe = 0
+    parked = torch.zeros_like(sim.positions)
+    for index in range(particle_count):
+        parked[index] = torch.tensor(
+            [10.0 * index, 500.0, 500.0], dtype=sim.dtype, device=sim.device
+        )
+    parked[probe] = torch.tensor(
+        [0.0, 0.0, sim.bottom_platen_start_z + config.radius + 1.0e-6],
+        dtype=sim.dtype,
+        device=sim.device,
+    )
+    sim.positions = parked.clone()
+    sim.initial_positions = parked.clone()
+    fixed = torch.ones(particle_count, dtype=torch.bool, device=sim.device)
+    fixed[probe] = False
+    sim.fixed = fixed
+    sim.velocities = torch.zeros_like(sim.positions)
+    sim.velocities[probe, 2] = -impact_speed
+    sim.forces()  # break the lattice bonds so no residual bond force acts
+    if int(sim.alive.sum().item()) != 0:
+        raise RuntimeError("bonds did not break; probe assumption violated")
+
+    for step in range(1, max_steps + 1):
+        sim.step()
+        overlap = (
+            sim.bottom_platen_start_z + config.radius - sim.positions[probe, 2]
+        ).clamp_min(0.0)
+        normal_velocity = sim.velocities[probe, 2]
+        if float(overlap) == 0.0 and float(normal_velocity) > 0.0:
+            outgoing = float(normal_velocity)
+            return RestitutionMeasurement(
+                stiffness=stiffness,
+                damping=damping,
+                particle_mass=config.mass,
+                impact_speed=impact_speed,
+                particle_count=particle_count,
+                dt=sim.dt,
+                steps=step,
+                measured_restitution=outgoing / impact_speed,
+                analytic_restitution=restitution_from_damping(stiffness, damping, config.mass),
+                analytic_restitution_clamped=restitution_from_damping_clamped(
+                    stiffness, damping, config.mass
+                ),
+            )
+    raise RuntimeError(
+        f"probe particle did not separate from the platen within {max_steps} steps "
+        f"(overdamped contact or unstable dt)"
+    )

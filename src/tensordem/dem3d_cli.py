@@ -24,6 +24,12 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--device", choices=("cpu", "cuda"), default="cpu")
     parser.add_argument("--geometry", choices=("box", "cylinder_xz"), default="box",
                         help="颗粒几何：规则盒体或 x-z 截面圆柱")
+    parser.add_argument("--contact-model", choices=("linear", "hertz"), default="linear",
+                        help="法向接触模型：linear=线性罚函数（默认），hertz=赫兹弹性接触")
+    parser.add_argument("--young-modulus", type=float, default=1.0e9,
+                        help="颗粒弹性模量 E (Pa)，仅 hertz 模型使用")
+    parser.add_argument("--poisson-ratio", type=float, default=0.3,
+                        help="颗粒泊松比，仅 hertz 模型使用")
     parser.add_argument("--save-every", type=int, default=20)
     parser.add_argument("--output", type=Path, default=Path("results-3d"))
     parser.add_argument("--restart", type=Path, default=None,
@@ -80,7 +86,10 @@ def main(argv: list[str] | None = None) -> None:
                 top_platen_gap=args.top_platen_gap,
                 bottom_platen_gap=args.bottom_platen_gap,
                 top_platen_velocity=args.top_platen_velocity,
-                bottom_platen_velocity=args.bottom_platen_velocity)
+                bottom_platen_velocity=args.bottom_platen_velocity,
+                contact_model=args.contact_model,
+                young_modulus=args.young_modulus,
+                poisson_ratio=args.poisson_ratio)
             sim = IceDEM3D(config)
     except (ValueError, RuntimeError, TypeError, OSError, KeyError) as exc:
         parser.error(str(exc))

@@ -19,6 +19,89 @@ from typing import Any
 import torch
 
 
+def hertz_reduced_modulus(young_modulus: float, poisson_ratio: float, *,
+                          rigid_counterpart: bool = False) -> float:
+    """Reduced elastic modulus ``E*`` for a Hertzian sphere contact (Pa).
+
+    For two spheres of the same material ``1/E* = (1 - nu^2)/E + (1 - nu^2)/E``,
+    i.e. ``E* = E / (2 (1 - nu^2))``.  For a rigid counter-surface (indenter,
+    platen) the second compliance vanishes and ``E* = E / (1 - nu^2)``.
+    """
+    if not math.isfinite(young_modulus) or young_modulus <= 0:
+        raise ValueError("young_modulus must be finite and positive")
+    if not math.isfinite(poisson_ratio) or not 0.0 <= poisson_ratio < 0.5:
+        raise ValueError("poisson_ratio must be finite and in [0, 0.5)")
+    compliance = (1.0 - poisson_ratio**2) / young_modulus
+    if rigid_counterpart:
+        return 1.0 / compliance
+    return 1.0 / (2.0 * compliance)
+
+
+def hertz_effective_radius(radius: float, *, rigid_counterpart: bool = False) -> float:
+    """Effective radius ``R*``: ``radius/2`` for equal spheres, ``radius`` vs a plane."""
+    if not math.isfinite(radius) or radius <= 0:
+        raise ValueError("radius must be finite and positive")
+    return radius if rigid_counterpart else 0.5 * radius
+
+
+def hertz_normal_force(overlap, reduced_modulus: float, effective_radius: float):
+    """Hertz elastic normal force ``(4/3) E* sqrt(R*) delta^(3/2)`` (N).
+
+    ``overlap`` may be a Python float or a tensor; negative overlap yields zero.
+    """
+    if not math.isfinite(reduced_modulus) or reduced_modulus <= 0:
+        raise ValueError("reduced_modulus must be finite and positive")
+    if not math.isfinite(effective_radius) or effective_radius <= 0:
+        raise ValueError("effective_radius must be finite and positive")
+    factor = (4.0 / 3.0) * reduced_modulus * math.sqrt(effective_radius)
+    if isinstance(overlap, torch.Tensor):
+        return factor * overlap.clamp_min(0.0).pow(1.5)
+    return factor * max(float(overlap), 0.0) ** 1.5
+
+
+def hertz_contact_potential(overlap, reduced_modulus: float, effective_radius: float):
+    """Recoverable Hertz contact energy ``(8/15) E* sqrt(R*) delta^(5/2)`` (J).
+
+    This is the exact integral of :func:`hertz_normal_force` from zero overlap.
+    """
+    if not math.isfinite(reduced_modulus) or reduced_modulus <= 0:
+        raise ValueError("reduced_modulus must be finite and positive")
+    if not math.isfinite(effective_radius) or effective_radius <= 0:
+        raise ValueError("effective_radius must be finite and positive")
+    factor = (8.0 / 15.0) * reduced_modulus * math.sqrt(effective_radius)
+    if isinstance(overlap, torch.Tensor):
+        return factor * overlap.clamp_min(0.0).pow(2.5)
+    return factor * max(float(overlap), 0.0) ** 2.5
+
+
+def hertz_secant_stiffness(overlap, reduced_modulus: float, effective_radius: float):
+    """Secant stiffness ``F/delta = (4/3) E* sqrt(R*) sqrt(delta)`` (N/m)."""
+    if not math.isfinite(reduced_modulus) or reduced_modulus <= 0:
+        raise ValueError("reduced_modulus must be finite and positive")
+    if not math.isfinite(effective_radius) or effective_radius <= 0:
+        raise ValueError("effective_radius must be finite and positive")
+    factor = (4.0 / 3.0) * reduced_modulus * math.sqrt(effective_radius)
+    if isinstance(overlap, torch.Tensor):
+        return factor * overlap.clamp_min(0.0).sqrt()
+    return factor * math.sqrt(max(float(overlap), 0.0))
+
+
+def hertz_equivalent_linear_stiffness(young_modulus: float, poisson_ratio: float,
+                                      radius: float, overlap: float, *,
+                                      rigid_counterpart: bool = False) -> float:
+    """Linear penalty stiffness that reproduces the Hertz force at ``overlap``.
+
+    Use this to seed a ``contact_model="linear"`` run from Hertz parameters; the
+    matching is exact at the chosen overlap only, because the Hertz law is
+    non-linear (relative error grows away from the matching point).
+    """
+    return hertz_secant_stiffness(
+        overlap,
+        hertz_reduced_modulus(young_modulus, poisson_ratio, rigid_counterpart=rigid_counterpart),
+        hertz_effective_radius(radius, rigid_counterpart=rigid_counterpart),
+    )
+
+
 @dataclass(frozen=True)
 class DEM3DConfig:
     """Numerical and physical parameters for the 3-D bonded-sphere model."""
@@ -53,6 +136,11 @@ class DEM3DConfig:
     friction_coefficient: float = 0.0        # mu: Coulomb friction coefficient
     rolling_resistance_coefficient: float = 0.0  # mu_r: rolling resistance coefficient
     restitution_coefficient: float = 1.0     # e: coefficient of restitution (0,1]
+    # --- Optional Hertzian normal law (contact_model="hertz") ---
+    contact_model: str = "linear"
+    young_modulus: float = 1.0e9
+    poisson_ratio: float = 0.3
+    hertz_stability_overlap_fraction: float = 0.1
 
     def __post_init__(self) -> None:
         for name in ("nx", "ny", "nz"):
@@ -92,10 +180,36 @@ class DEM3DConfig:
             raise ValueError("rolling_resistance_coefficient must be finite and nonnegative")
         if not (0.0 < self.restitution_coefficient <= 1.0):
             raise ValueError("restitution_coefficient must be in (0, 1]")
+        # Validate the optional Hertzian normal law
+        if self.contact_model not in ("linear", "hertz"):
+            raise ValueError("contact_model must be 'linear' or 'hertz'")
+        if not math.isfinite(self.young_modulus) or self.young_modulus <= 0:
+            raise ValueError("young_modulus must be finite and positive")
+        if not math.isfinite(self.poisson_ratio) or not 0.0 <= self.poisson_ratio < 0.5:
+            raise ValueError("poisson_ratio must be finite and in [0, 0.5)")
+        if (not math.isfinite(self.hertz_stability_overlap_fraction)
+                or not 0.0 < self.hertz_stability_overlap_fraction <= 1.0):
+            raise ValueError("hertz_stability_overlap_fraction must be in (0, 1]")
 
     @property
     def mass(self) -> float:
         return self.density * (4.0 / 3.0) * math.pi * self.radius**3
+
+    def _bound_stiffness(self, linear_stiffness: float, *, rigid_counterpart: bool) -> float:
+        """Contact stiffness entering the explicit stability bound (N/m).
+
+        The Hertz law is non-linear, so the bound uses the secant stiffness at a
+        reference overlap ``hertz_stability_overlap_fraction * radius``.  Overlaps
+        larger than that reference need a correspondingly smaller time step.
+        """
+        if self.contact_model == "linear":
+            return linear_stiffness
+        return hertz_secant_stiffness(
+            self.hertz_stability_overlap_fraction * self.radius,
+            hertz_reduced_modulus(self.young_modulus, self.poisson_ratio,
+                                  rigid_counterpart=rigid_counterpart),
+            hertz_effective_radius(self.radius, rigid_counterpart=rigid_counterpart),
+        )
 
     @property
     def recommended_dt(self) -> float:
@@ -103,8 +217,10 @@ class DEM3DConfig:
         n = self.nx * self.ny * self.nz
         degree_bound = min(n - 1, 26)
         contact_stiffness = max(
-            self.bond_stiffness, self.contact_stiffness,
-            self.platen_stiffness if (self.top_platen_enabled or self.bottom_platen_enabled) else 0.0,
+            self.bond_stiffness,
+            self._bound_stiffness(self.contact_stiffness, rigid_counterpart=False),
+            self._bound_stiffness(self.platen_stiffness, rigid_counterpart=True)
+            if (self.top_platen_enabled or self.bottom_platen_enabled) else 0.0,
         )
         k = (2 * degree_bound + 1) * contact_stiffness
         c = ((2 * degree_bound + 1) * self.contact_damping + self.drag
@@ -330,6 +446,56 @@ class IceDEM3D:
             raise ValueError("external_forces must contain only finite values")
         return loads
 
+    def _elastic_contact_force(self, overlap: torch.Tensor, *, rigid_counterpart: bool,
+                               linear_stiffness: float) -> torch.Tensor:
+        """Elastic (undamped) normal contact force magnitude in newtons."""
+        cfg = self.config
+        if cfg.contact_model == "linear":
+            return linear_stiffness * overlap
+        return hertz_normal_force(
+            overlap,
+            hertz_reduced_modulus(cfg.young_modulus, cfg.poisson_ratio,
+                                  rigid_counterpart=rigid_counterpart),
+            hertz_effective_radius(cfg.radius, rigid_counterpart=rigid_counterpart),
+        )
+
+    def _elastic_contact_potential(self, overlap: torch.Tensor, *, rigid_counterpart: bool,
+                                   linear_stiffness: float) -> torch.Tensor:
+        """Recoverable elastic energy of the normal contact in joules."""
+        cfg = self.config
+        if cfg.contact_model == "linear":
+            return 0.5 * linear_stiffness * overlap.square()
+        return hertz_contact_potential(
+            overlap,
+            hertz_reduced_modulus(cfg.young_modulus, cfg.poisson_ratio,
+                                  rigid_counterpart=rigid_counterpart),
+            hertz_effective_radius(cfg.radius, rigid_counterpart=rigid_counterpart),
+        )
+
+    def _normal_contact_magnitude(self, overlap: torch.Tensor, closing_velocity: torch.Tensor, *,
+                                  rigid_counterpart: bool,
+                                  linear_stiffness: float) -> torch.Tensor:
+        """Normal contact magnitude with the configured elastic law plus damping."""
+        elastic = self._elastic_contact_force(overlap, rigid_counterpart=rigid_counterpart,
+                                             linear_stiffness=linear_stiffness)
+        return (elastic - self._normal_damping * closing_velocity).clamp_min(0.0)
+
+    @property
+    def _normal_damping(self) -> float:
+        """Normal dashpot coefficient in N*s/m.
+
+        ``restitution_coefficient == 1.0`` is the "not specified" sentinel: the
+        generic ``contact_damping`` is used.  A smaller ``e`` parameterises the
+        dashpot through the restitution identity, targeting the equal-mass pair
+        (``m_eff = m / 2``).
+        """
+        cfg = self.config
+        if cfg.restitution_coefficient >= 1.0:
+            return cfg.contact_damping
+        ln_e = -math.log(cfg.restitution_coefficient)
+        zeta = ln_e / math.sqrt(math.pi ** 2 + ln_e ** 2)
+        return 2.0 * zeta * math.sqrt(cfg.contact_stiffness * (cfg.mass / 2.0))
+
     @torch.no_grad()
     def _commit_fracture(self, extension: torch.Tensor) -> None:
         """Commit irreversible bond events only during an explicit force update."""
@@ -490,20 +656,8 @@ class IceDEM3D:
                 bond_alive = self._alive_bond_for_pairs(torch.stack((ci, cj), dim=1))
                 relative_v = self.velocities[cj] - self.velocities[ci]
                 vn = (relative_v * cnormal).sum(dim=1)
-
-                # --- Normal contact force with restitution-based damping ---
-                # Compute effective mass for restitution mapping
-                m_eff = cfg.mass / 2.0  # equal-mass spheres
-                # Map restitution coefficient to damping
-                if cfg.restitution_coefficient < 1.0:
-                    ln_e = math.log(cfg.restitution_coefficient)
-                    abs_ln_e = -ln_e
-                    zeta = abs_ln_e / math.sqrt(math.pi ** 2 + abs_ln_e ** 2)
-                    gamma_n = 2.0 * zeta * math.sqrt(cfg.contact_stiffness * m_eff)
-                else:
-                    gamma_n = 0.0
-
-                contact_mag = (cfg.contact_stiffness * overlap - gamma_n * vn).clamp_min(0)
+                contact_mag = self._normal_contact_magnitude(
+                    overlap, vn, rigid_counterpart=False, linear_stiffness=cfg.contact_stiffness)
                 contact_mag = torch.where(~bond_alive, contact_mag, torch.zeros_like(contact_mag))
                 contact_force = -contact_mag[:, None] * cnormal
 
@@ -563,7 +717,8 @@ class IceDEM3D:
         tool_normal = torch.where((tool_dist > eps)[:, None], tool_normal, fallback)
         tool_overlap = (cfg.radius + cfg.tool_radius - tool_dist).clamp_min(0)
         tool_vn = ((self.velocities - self.tool_velocity) * tool_normal).sum(dim=1)
-        tool_mag = (cfg.contact_stiffness * tool_overlap - cfg.contact_damping * tool_vn).clamp_min(0)
+        tool_mag = self._normal_contact_magnitude(
+            tool_overlap, tool_vn, rigid_counterpart=True, linear_stiffness=cfg.contact_stiffness)
         tool_mag = torch.where(tool_overlap > 0, tool_mag, torch.zeros_like(tool_mag))
         tool_force = tool_mag[:, None] * tool_normal
         reaction = -tool_force.sum(dim=0)
@@ -577,8 +732,13 @@ class IceDEM3D:
             top_z = self.top_platen_start_z + self.time * cfg.top_platen_velocity
             top_overlap = (self.positions[:, 2] + cfg.radius - top_z).clamp_min(0.0)
             top_relative_v = self.velocities[:, 2] - cfg.top_platen_velocity
-            top_mag = (cfg.platen_stiffness * top_overlap
-                       + cfg.platen_damping * top_relative_v).clamp_min(0.0)
+            top_elastic = self._elastic_contact_force(
+                top_overlap, rigid_counterpart=True, linear_stiffness=cfg.platen_stiffness)
+            top_mag = (top_elastic + cfg.platen_damping * top_relative_v).clamp_min(0.0)
+            # A plane boundary acts only on particles that actually intersect it.
+            # Without this mask the damping term also acts on particles far from
+            # the plane (same convention as the spherical tool contact above).
+            top_mag = torch.where(top_overlap > 0, top_mag, torch.zeros_like(top_mag))
             top_force_z = -top_mag
             force[:, 2] += top_force_z
             top_reaction_z = -top_force_z.sum()
@@ -589,8 +749,11 @@ class IceDEM3D:
             # Damper opposes relative normal approach: with the bottom platen
             # normal +z the damping term is -c*(v_z - v_platen). Using +c turns
             # the damper into a negative-damping (energy-injecting) term.
-            bottom_mag = (cfg.platen_stiffness * bottom_overlap
-                          - cfg.platen_damping * bottom_relative_v).clamp_min(0.0)
+            bottom_elastic = self._elastic_contact_force(
+                bottom_overlap, rigid_counterpart=True, linear_stiffness=cfg.platen_stiffness)
+            bottom_mag = (bottom_elastic - cfg.platen_damping * bottom_relative_v).clamp_min(0.0)
+            # Contact-masked like the top platen: no force on particles outside.
+            bottom_mag = torch.where(bottom_overlap > 0, bottom_mag, torch.zeros_like(bottom_mag))
             bottom_force_z = bottom_mag
             force[:, 2] += bottom_force_z
             bottom_reaction_z = -bottom_force_z.sum()
@@ -637,21 +800,28 @@ class IceDEM3D:
             cdistance = torch.linalg.vector_norm(self.positions[cj] - self.positions[ci], dim=1)
             overlap = (2 * self.config.radius - cdistance).clamp_min(0)
             broken_or_unbonded = ~self._alive_bond_for_pairs(contact_pairs)
-            contact_energy = (0.5 * self.config.contact_stiffness
-                              * overlap.square() * broken_or_unbonded).sum()
+            contact_energy = (self._elastic_contact_potential(
+                overlap, rigid_counterpart=False,
+                linear_stiffness=self.config.contact_stiffness) * broken_or_unbonded).sum()
         tool_overlap = (self.config.radius + self.config.tool_radius
                         - torch.linalg.vector_norm(self.positions - self.tool_position, dim=1)).clamp_min(0)
-        tool_energy = (0.5 * self.config.contact_stiffness * tool_overlap.square()).sum()
+        tool_energy = self._elastic_contact_potential(
+            tool_overlap, rigid_counterpart=True,
+            linear_stiffness=self.config.contact_stiffness).sum()
         top_platen_energy = torch.zeros((), dtype=self.dtype, device=self.device)
         if self.config.top_platen_enabled:
             top_z = self.top_platen_start_z + self.time * self.config.top_platen_velocity
             top_overlap = (self.positions[:, 2] + self.config.radius - top_z).clamp_min(0.0)
-            top_platen_energy = (0.5 * self.config.platen_stiffness * top_overlap.square()).sum()
+            top_platen_energy = self._elastic_contact_potential(
+                top_overlap, rigid_counterpart=True,
+                linear_stiffness=self.config.platen_stiffness).sum()
         bottom_platen_energy = torch.zeros((), dtype=self.dtype, device=self.device)
         if self.config.bottom_platen_enabled:
             bottom_z = self.bottom_platen_start_z + self.time * self.config.bottom_platen_velocity
             bottom_overlap = (bottom_z + self.config.radius - self.positions[:, 2]).clamp_min(0.0)
-            bottom_platen_energy = (0.5 * self.config.platen_stiffness * bottom_overlap.square()).sum()
+            bottom_platen_energy = self._elastic_contact_potential(
+                bottom_overlap, rigid_counterpart=True,
+                linear_stiffness=self.config.platen_stiffness).sum()
         platen_energy = top_platen_energy + bottom_platen_energy
         released = self.failure_energy_J.sum()
         return {
