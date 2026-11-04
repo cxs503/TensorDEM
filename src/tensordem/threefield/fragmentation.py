@@ -105,7 +105,7 @@ def fragment(
     if generator is None:
         generator = torch.Generator().manual_seed(0)
     l_crit = critical_floe_length(u_rms, props)
-    rho_i = 917.0
+    rho_i = props.ice_density_kg_m3
     initial_mass = sum(rho_i * floe_volume_m3(float(s), props) for s in sizes_m)
     active = [float(s) for s in sizes_m if float(s) > 0.0]
     finished: list[float] = []
@@ -253,6 +253,28 @@ def fit_weibull_cdf(samples: Sequence[float]) -> dict[str, float]:
 
 
 def kolmogorov_smirnov(samples: Sequence[float], shape: float, scale: float) -> float:
-    """Two-sided Kolmogorov-Smirnov statistic against a Weibull reference."""
-    pairs = empirical_cdf(samples)
-    return max(abs(f - weibull_cdf(value, shape, scale)) for value, f in pairs)
+    """Two-sided Kolmogorov-Smirnov statistic against a Weibull reference.
+
+    ``D = sup_x |F_n(x) - F(x)|``.  The supremum is taken over both sides of every
+    jump of the empirical CDF, ``i/n`` and ``(i+1)/n``, i.e. the exact statistic
+    of the classical test, so that it can be compared with the Kolmogorov
+    asymptotic critical values ``c_alpha / sqrt(n)`` (``c = 1.358`` at 5 %).
+
+    The earlier implementation evaluated the Weibull plotting positions
+    ``(i+1)/(n+1)`` on one side only; that quantity is systematically below the
+    true statistic (about 15 % at ``n = 20``), which makes any threshold gate
+    built on it under-powered.  See ``docs/fragmentation_statistics_verification.md``.
+    """
+    values = sorted(float(v) for v in samples if float(v) > 0.0)
+    n = len(values)
+    if n == 0:
+        raise ValueError("at least one positive sample is required")
+    deviation = 0.0
+    for rank, value in enumerate(values):
+        reference = weibull_cdf(value, shape, scale)
+        deviation = max(
+            deviation,
+            (rank + 1.0) / n - reference,
+            reference - rank / n,
+        )
+    return deviation
