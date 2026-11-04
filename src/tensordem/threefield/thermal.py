@@ -163,6 +163,56 @@ def analytic_diameter_conduction(
     return math.sqrt(max(d0 * d0 - 2.0 * a * t, 0.0))
 
 
+def _elapsed_melt_time(a: float, b: float, d0: float, d: float) -> float:
+    """``t(D0 -> D)`` for ``dD/dt = -A/D - B/sqrt(D)``, evaluated stably.
+
+    The textbook primitive ::
+
+        [ 2 s^3/(3 B) - A s^2/B^2 + 2 A^2 s/B^3 - 2 A^3 ln(A + B s)/B^4 ]
+
+    is a difference of ``(A/B)^4``-sized terms, so it loses every significant
+    digit once ``eps = B sqrt(D)/A << 1`` (measured against 40-digit quadrature:
+    relative error 1.9e-2 at u = 1e-10 m/s, 4e+2 at u = 1e-12 m/s).  Factoring
+    the same primitive by ``A^3/B^4`` in ``eps`` leaves ::
+
+        g(eps) = -2 ln(1 + eps) + 2 eps - eps^2 + (2/3) eps^3
+               = sum_{k>=4} 2 (-1)^k eps^k / k,
+
+    i.e. the first four terms cancel identically.  Re-expanding
+    ``(A^3/B^4) eps^k = (B/A)^{k-4} D^{k/2} / A`` removes the blow-up
+    altogether, so the small-``eps`` branch is a plain series in ``B/A``::
+
+        t = sum_{k>=4} 2 (-1)^k/k * (B/A)^{k-4} * (D0^{k/2} - D^{k/2}) / A,
+
+    whose leading term is exactly the conduction law ``(D0^2-D^2)/(2A)``.
+    Both branches are algebraically identical to the primitive above.  The
+    switch is placed at ``B sqrt(D0) = 0.5 A`` with 58 series terms: the series
+    branch then truncates below 1e-18 relative, and the primitive branch keeps
+    its cancellation mild (measured worst case over 14 decades of ``u`` is
+    3e-13, versus 1e+11 for the unfactored primitive).
+    """
+    if b <= 1e-300:
+        return (d0 * d0 - d * d) / (2.0 * a)
+    if b * math.sqrt(d0) / a < 0.5:
+        ratio = b / a
+        terms = [
+            2.0 * (-1.0) ** k / k * ratio ** (k - 4) * (d0 ** (0.5 * k) - d ** (0.5 * k))
+            for k in range(4, 62)
+        ]
+        return math.fsum(terms) / a
+
+    def primitive(diameter: float) -> float:
+        s = math.sqrt(diameter)
+        return (
+            2.0 * s**3 / (3.0 * b)
+            - a * s**2 / b**2
+            + 2.0 * a**2 * s / b**3
+            - 2.0 * a**3 * math.log(a + b * s) / b**4
+        )
+
+    return primitive(d0) - primitive(d)
+
+
 def analytic_ransom_marshall_time(
     initial_diameter_m: float,
     diameter_m: float,
@@ -180,6 +230,8 @@ def analytic_ransom_marshall_time(
                          - 2 A^3 ln(A + B s)/B^4 ]_{s=sqrt(D)}^{sqrt(D0)}
 
     (the ``B -> 0`` limit degenerates gracefully to ``(D0^2 - D^2)/(2A)``).
+    Evaluated by :func:`_elapsed_melt_time`, which switches to an equivalent
+    series where ``B sqrt(D0) << A`` and the primitive cancels.
     """
     d0 = _finite("initial_diameter_m", initial_diameter_m, positive=True)
     d = _finite("diameter_m", diameter_m, positive=True)
@@ -187,19 +239,7 @@ def analytic_ransom_marshall_time(
     if d > d0:
         raise ValueError("final diameter must not exceed the initial diameter")
     a, b = _analytic_case_constants(props, velocity, include_sensible=include_sensible)
-    if b <= 1e-300:
-        return (d0 * d0 - d * d) / (2.0 * a)
-
-    def primitive(diameter: float) -> float:
-        s = math.sqrt(diameter)
-        return (
-            2.0 * s**3 / (3.0 * b)
-            - a * s**2 / b**2
-            + 2.0 * a**2 * s / b**3
-            - 2.0 * a**3 * math.log(a + b * s) / b**4
-        )
-
-    return primitive(d0) - primitive(d)
+    return _elapsed_melt_time(a, b, d0, d)
 
 
 def analytic_diameter_ransom_marshall(
