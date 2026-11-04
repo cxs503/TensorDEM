@@ -163,10 +163,17 @@ class RestitutionEngineTests(unittest.TestCase):
 
     def test_unclamped_formula_fails_at_moderate_damping(self):
         # Documents why the clamped form is the calibration benchmark: the
-        # textbook formula is off by ~16 % at c = 10 N.s/m.
+        # textbook formula is off by ~16 % at c = 10 N.s/m, while the engine
+        # lands on the clamped form.  (The engine used to sit slightly *below*
+        # the clamped form only because the platen damper also acted before the
+        # surfaces touched; with the physical contact mask -- see
+        # ``tests/test_dem3d_platen_contact_mask.py`` -- the residual is
+        # discretisation and can have either sign, so the ordering is asserted
+        # on the errors rather than on the raw velocities.)
         measurement = measure_platen_restitution(damping=10.0)
         self.assertGreater(measurement.relative_error, 0.10)
-        self.assertLess(measurement.measured_restitution, measurement.analytic_restitution_clamped)
+        self.assertLess(measurement.relative_error_clamped, measurement.relative_error)
+        self.assertLess(measurement.relative_error_clamped, 0.02)
 
     def test_measured_restitution_is_velocity_independent(self):
         # A linear dashpot has no velocity-dependent restitution.

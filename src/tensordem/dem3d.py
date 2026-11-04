@@ -754,6 +754,10 @@ class IceDEM3D:
                            else cfg.platen_stiffness * top_overlap)
             top_mag = (top_elastic
                        + cfg.platen_damping * top_relative_v).clamp_min(0.0)
+            # A plane boundary acts only on particles that actually intersect it.
+            # Without this mask the damping term also acts on particles far from
+            # the plane (same convention as the spherical tool contact above).
+            top_mag = torch.where(top_overlap > 0, top_mag, torch.zeros_like(top_mag))
             top_force_z = -top_mag
             force[:, 2] += top_force_z
             top_reaction_z = -top_force_z.sum()
@@ -768,6 +772,8 @@ class IceDEM3D:
                               if hertz else cfg.platen_stiffness * bottom_overlap)
             bottom_mag = (bottom_elastic
                           - cfg.platen_damping * bottom_relative_v).clamp_min(0.0)
+            # Contact-masked like the top platen: no force on particles outside.
+            bottom_mag = torch.where(bottom_overlap > 0, bottom_mag, torch.zeros_like(bottom_mag))
             bottom_force_z = bottom_mag
             force[:, 2] += bottom_force_z
             bottom_reaction_z = -bottom_force_z.sum()
