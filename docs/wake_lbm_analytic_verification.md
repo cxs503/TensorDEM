@@ -11,7 +11,7 @@ three-field ice–hull–propeller coupling. Its evidence was conservation-only 
 the excess race momentum flux versus the imposed thrust, and the mean profile
 versus the self-similar Gaussian jet model. Nothing bound the **effective
 viscosity**, the **speed of sound** or the **equilibrium** to a closed-form
-reference, although every lattice-to-SI conversion in `threefield/coupling.py`
+reference, although every lattice-to-SI conversion in `src/tensordem/threefield/coupling.py`
 depends on them. `docs/threefield/FORMULAS.md` did not grade the LBM core at
 all.
 

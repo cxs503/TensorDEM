@@ -15,7 +15,8 @@ FAILED tests/test_dem3d_contact_impact.py::SolverImpactTests::test_contact_durat
 E  AssertionError: 0.12167254282818885 not less than 0.03
 ```
 
-进一步复算（`scripts/_probe_duration.py` 口径，见 §3 的 before 列）显示问题不是"差 12%"
+进一步复算（口径同 `tests/test_contact_impact_dashpot_convention.py` 的 before 列，
+该探针的复现件即该测试）显示问题不是"差 12%"
 这么小：harness 在**任何**目标恢复系数下测得的 `e` 都 ≈ 1.0（`e_target=0.5` →
 `e_measured=1.00021`），说明对心碰撞里**阻尼根本没起作用**，测出来的"接触时长"是
 纯弹性碰撞的时长。因此该套件中 `test_restitution_matches_clamped_analytic`、

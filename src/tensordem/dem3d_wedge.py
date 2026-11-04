@@ -113,8 +113,13 @@ class MovingWedgeBowIceDEM3D(IceDEM3D):
         external_forces: torch.Tensor | None = None,
         *,
         update_fracture: bool = True,
+        update_history: bool = True,
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        force, _ = super().forces(external_forces, update_fracture=update_fracture)
+        force, _ = super().forces(
+            external_forces,
+            update_fracture=update_fracture,
+            update_history=update_history,
+        )
         bow_force, bow_reaction, _ = self._wedge_contact()
         force += bow_force
         self.last_reaction = bow_reaction
