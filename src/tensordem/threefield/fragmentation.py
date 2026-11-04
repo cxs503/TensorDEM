@@ -105,7 +105,9 @@ def fragment(
     if generator is None:
         generator = torch.Generator().manual_seed(0)
     l_crit = critical_floe_length(u_rms, props)
-    rho_i = 917.0
+    # The density must come from the property set: the coupled ledger compares
+    # these masses with an inventory built from `props.ice_density_kg_m3`.
+    rho_i = props.ice_density_kg_m3
     initial_mass = sum(rho_i * floe_volume_m3(float(s), props) for s in sizes_m)
     active = [float(s) for s in sizes_m if float(s) > 0.0]
     finished: list[float] = []
@@ -252,7 +254,37 @@ def fit_weibull_cdf(samples: Sequence[float]) -> dict[str, float]:
     }
 
 
-def kolmogorov_smirnov(samples: Sequence[float], shape: float, scale: float) -> float:
-    """Two-sided Kolmogorov-Smirnov statistic against a Weibull reference."""
+def kolmogorov_smirnov_plotting_position(
+    samples: Sequence[float], shape: float, scale: float
+) -> float:
+    """Largest CDF-plot deviation ``max |F_emp(x_i) - F(x_i)|`` at the sample points.
+
+    ``F_emp`` uses the Weibull plotting positions ``(i + 1)/(n + 1)`` of
+    :func:`empirical_cdf`, i.e. the smoothed curve drawn in the paper figures.
+    This is *not* the Kolmogorov-Smirnov statistic (see
+    :func:`kolmogorov_smirnov`): the plotting positions interpolate between the
+    steps of the empirical CDF, so this quantity is systematically smaller than
+    the true two-sided KS distance for the same sample.
+    """
     pairs = empirical_cdf(samples)
     return max(abs(f - weibull_cdf(value, shape, scale)) for value, f in pairs)
+
+
+def kolmogorov_smirnov(samples: Sequence[float], shape: float, scale: float) -> float:
+    """Two-sided Kolmogorov-Smirnov statistic ``D_n = sup_x |F_n(x) - F(x)|``.
+
+    ``F_n`` is the right-continuous step empirical CDF, so the supremum is
+    ``max_i max(|i/n - F(x_(i))|, |F(x_(i)) - (i-1)/n|)`` over the ordered
+    sample (``F_n`` is ``(i-1)/n`` just below ``x_(i)``). Use this function for
+    hypothesis testing against a Weibull reference; use
+    :func:`kolmogorov_smirnov_plotting_position` for the smooth figure curve.
+    """
+    values = sorted(float(v) for v in samples if float(v) > 0.0)
+    n = len(values)
+    if n == 0:
+        raise ValueError("the KS statistic needs at least one positive sample")
+    statistic = 0.0
+    for index, value in enumerate(values, start=1):
+        cdf = weibull_cdf(value, shape, scale)
+        statistic = max(statistic, abs(index / n - cdf), abs(cdf - (index - 1) / n))
+    return statistic
