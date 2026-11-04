@@ -41,6 +41,30 @@ import torch
 # For two equal spheres of the same material E* = E/(2(1-nu^2)) and R* = R/2;
 # against a rigid counter-surface (indenter, platen) E* = E/(1-nu^2), R* = R.
 
+def _transport_tangential(disp: torch.Tensor, old_normal: torch.Tensor,
+                          new_normal: torch.Tensor) -> torch.Tensor:
+    """Carry a tangential displacement through the minimal rotation n_old -> n_new.
+
+    The Cundall-Strack spring is embedded in the contact frame, so its stored
+    displacement must rotate with that frame.  Fixed-frame storage leaks the
+    old tangential direction into the new normal direction, i.e. it produces a
+    "friction" force that is not in the tangent plane.
+    """
+    cross_prod = torch.linalg.cross(old_normal, new_normal)
+    cos_theta = (old_normal * new_normal).sum(dim=1, keepdim=True)
+    # Rodrigues with the unnormalised quaternion (1, q), q = n_old x n_new:
+    #     R v = v + q x v + q x (q x v) / (1 + cos theta).
+    qxv = torch.linalg.cross(cross_prod, disp)
+    qqxv = torch.linalg.cross(cross_prod, qxv)
+    denom = (1.0 + cos_theta).clamp_min(torch.finfo(disp.dtype).eps)
+    rotated = disp + qxv + qqxv / denom
+    # Antiparallel normals make the minimal rotation undefined; the tangent
+    # plane is then identical, so projecting onto it is exact.
+    degenerate = (1.0 + cos_theta) <= 1.0e-12
+    projected = disp - (disp * new_normal).sum(dim=1, keepdim=True) * new_normal
+    return torch.where(degenerate, projected, rotated)
+
+
 def _hertz_argument(value: float | torch.Tensor) -> torch.Tensor:
     """Promote a scalar overlap to a float64 tensor without changing tensor input."""
     if isinstance(value, torch.Tensor):
@@ -508,19 +532,24 @@ class IceDEM3D:
 
         Returns (N, 3) tangential displacement vectors.
         """
-        n_contacts = ci.numel()
-        tang_disp = torch.zeros((n_contacts, 3), dtype=self.dtype, device=self.device)
+        tang_disp = torch.zeros((n_contacts := ci.numel(), 3),
+                                dtype=self.dtype, device=self.device)
+        if not self._tangential_state:
+            return tang_disp
+        stored = torch.zeros((n_contacts, 3), dtype=self.dtype, device=self.device)
+        old_normal = torch.zeros((n_contacts, 3), dtype=self.dtype, device=self.device)
+        have = torch.zeros(n_contacts, dtype=torch.bool, device=self.device)
         for idx in range(n_contacts):
-            i = int(ci[idx].item())
-            j = int(cj[idx].item())
-            key = self._pair_key(i, j)
-            if key in self._tangential_state:
-                stored_disp, stored_normal = self._tangential_state[key]
-                # Rotate stored tangential displacement to current normal frame
-                # (simple approach: keep as-is in global frame; projection handles it)
-                tang_disp[idx] = stored_disp
-            else:
-                tang_disp[idx] = torch.zeros(3, dtype=self.dtype, device=self.device)
+            key = self._pair_key(int(ci[idx].item()), int(cj[idx].item()))
+            entry = self._tangential_state.get(key)
+            if entry is not None:
+                stored[idx] = entry[0]
+                old_normal[idx] = entry[1]
+                have[idx] = True
+        if bool(have.any()):
+            tang_disp[have] = _transport_tangential(
+                stored[have], old_normal[have], cnormal[have]
+            )
         return tang_disp
 
     def _update_tangential_state(self, ci: torch.Tensor, cj: torch.Tensor,
@@ -528,14 +557,19 @@ class IceDEM3D:
                                  tang_disp: torch.Tensor) -> None:
         """Persist tangential displacement for the next step."""
         n_contacts = ci.numel()
+        active: set[int] = set()
         for idx in range(n_contacts):
-            i = int(ci[idx].item())
-            j = int(cj[idx].item())
-            key = self._pair_key(i, j)
+            key = self._pair_key(int(ci[idx].item()), int(cj[idx].item()))
+            active.add(key)
             self._tangential_state[key] = (
                 tang_disp[idx].clone(),
                 cnormal[idx].clone(),
             )
+        # A separated pair must forget its slip history: inheriting a saturated
+        # spring makes a re-formed contact start with a force it never earned.
+        if len(self._tangential_state) > len(active):
+            for key in [k for k in self._tangential_state if k not in active]:
+                del self._tangential_state[key]
 
     def _rolling_resistance_couple(
         self, ci: torch.Tensor, cj: torch.Tensor,
@@ -648,6 +682,9 @@ class IceDEM3D:
         force.index_add_(0, j, -active_bond_force)
 
         contact_pairs = self._contact_candidate_pairs()
+        if not contact_pairs.numel() and update_history and cfg.friction_coefficient > 0.0:
+            # No candidate pair at all: every tangential spring is extinguished.
+            self._tangential_state.clear()
         if contact_pairs.numel():
             ci, cj = contact_pairs.T
             cdelta = self.positions[cj] - self.positions[ci]
@@ -656,6 +693,9 @@ class IceDEM3D:
             near = overlap > 0
             ci, cj = ci[near], cj[near]
             cdelta, cdistance, overlap = cdelta[near], cdistance[near], overlap[near]
+            if not ci.numel() and update_history and cfg.friction_coefficient > 0.0:
+                # No pair overlaps: every tangential spring is extinguished.
+                self._tangential_state.clear()
             if ci.numel():
                 cnormal = cdelta / cdistance.clamp_min(eps)[:, None]
                 bond_alive = self._alive_bond_for_pairs(torch.stack((ci, cj), dim=1))
@@ -701,6 +741,9 @@ class IceDEM3D:
                     v_tangent = relative_v - vn[:, None] * cnormal
                     if update_history:
                         tang_disp = tang_disp + v_tangent * self.dt
+                        # Keep the state strictly tangential (transport round-off).
+                        tang_disp = (tang_disp - tang_disp.mul(cnormal).sum(dim=1, keepdim=True)
+                                     * cnormal)
 
                     # Tangential force from spring; k_t = k_n locally, so the
                     # Hertz model uses the same overlap-dependent secant value.

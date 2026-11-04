@@ -1,0 +1,118 @@
+{
+  "config": {
+    "contact_stiffness_N_per_m": 5000.0,
+    "mu_leak": 1.0,
+    "mu_ramp": 0.3,
+    "overlap_m": 0.002,
+    "radius_m": 0.025
+  },
+  "contact_loss": {
+    "history_entries_after_separation": 0,
+    "inherited_friction_after_recontact_N": 8.881784197001252e-15,
+    "mu_times_fn_N": 3.0,
+    "saturated_friction_before_loss_N": 3.0000000000000027
+  },
+  "leakage": [
+    {
+      "friction_magnitude_exact_N": 0.002683673072181968,
+      "friction_magnitude_measured_N": 0.002683673072181968,
+      "friction_magnitude_naive_closed_form_N": 0.002683673072181968,
+      "leak_measured_N": -8.881784197001252e-15,
+      "leak_naive_closed_form_N": 0.0,
+      "rotation_deg": 0
+    },
+    {
+      "friction_magnitude_exact_N": 0.002683673072181968,
+      "friction_magnitude_measured_N": 0.0026836730721816306,
+      "friction_magnitude_naive_closed_form_N": 0.0025922291297370897,
+      "leak_measured_N": -4.796163466380676e-14,
+      "leak_naive_closed_form_N": 0.0006945857019094851,
+      "rotation_deg": 15
+    },
+    {
+      "friction_magnitude_exact_N": 0.002683673072181968,
+      "friction_magnitude_measured_N": 0.0026836730721818496,
+      "friction_magnitude_naive_closed_form_N": 0.002324129055961814,
+      "leak_measured_N": 3.019806626980426e-14,
+      "leak_naive_closed_form_N": 0.0013418365360909838,
+      "rotation_deg": 30
+    },
+    {
+      "friction_magnitude_exact_N": 0.002683673072181968,
+      "friction_magnitude_measured_N": 0.002683673072182448,
+      "friction_magnitude_naive_closed_form_N": 0.0018976434278276048,
+      "leak_measured_N": -8.881784197001252e-15,
+      "leak_naive_closed_form_N": 0.0018976434278276044,
+      "rotation_deg": 45
+    },
+    {
+      "friction_magnitude_exact_N": 0.002683673072181968,
+      "friction_magnitude_measured_N": 0.002683673072181263,
+      "friction_magnitude_naive_closed_form_N": 0.0013418365360909842,
+      "leak_measured_N": -1.0658141036401503e-14,
+      "leak_naive_closed_form_N": 0.0023241290559618136,
+      "rotation_deg": 60
+    },
+    {
+      "friction_magnitude_exact_N": 0.002683673072181968,
+      "friction_magnitude_measured_N": 0.002683673072181968,
+      "friction_magnitude_naive_closed_form_N": 1.6432758189027955e-19,
+      "leak_measured_N": -8.881784197001252e-15,
+      "leak_naive_closed_form_N": 0.002683673072181968,
+      "rotation_deg": 90
+    },
+    {
+      "friction_magnitude_exact_N": 0.002683673072181968,
+      "friction_magnitude_measured_N": 0.002683673072182334,
+      "friction_magnitude_naive_closed_form_N": 0.0013418365360909834,
+      "leak_measured_N": -7.105427357601002e-15,
+      "leak_naive_closed_form_N": 0.002324129055961814,
+      "rotation_deg": 120
+    },
+    {
+      "friction_magnitude_exact_N": 0.002683673072181968,
+      "friction_magnitude_measured_N": 0.002683673072181968,
+      "friction_magnitude_naive_closed_form_N": 0.002683673072181968,
+      "leak_measured_N": -8.881784197001252e-15,
+      "leak_naive_closed_form_N": 3.286551637805591e-19,
+      "rotation_deg": 180
+    }
+  ],
+  "ramp": [
+    {
+      "friction_analytic_N": 3.0,
+      "friction_measured_N": 3.0000000000000027,
+      "normal_component_N": -10.000000000000009,
+      "slip_m": 0.000670918268045492,
+      "step": 1
+    },
+    {
+      "friction_analytic_N": 3.0,
+      "friction_measured_N": 3.0000000000000027,
+      "normal_component_N": -10.000000000000009,
+      "slip_m": 0.001341836536090984,
+      "step": 2
+    },
+    {
+      "friction_analytic_N": 3.0,
+      "friction_measured_N": 3.0000000000000027,
+      "normal_component_N": -10.000000000000009,
+      "slip_m": 0.002012754804136476,
+      "step": 3
+    },
+    {
+      "friction_analytic_N": 3.0,
+      "friction_measured_N": 3.0000000000000027,
+      "normal_component_N": -10.000000000000009,
+      "slip_m": 0.002683673072181968,
+      "step": 4
+    },
+    {
+      "friction_analytic_N": 3.0,
+      "friction_measured_N": 3.0000000000000027,
+      "normal_component_N": -10.000000000000009,
+      "slip_m": 0.0033545913402274596,
+      "step": 5
+    }
+  ]
+}
