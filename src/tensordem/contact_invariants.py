@@ -168,6 +168,7 @@ class CaseSpec:
     rolling_resistance_coefficient: float = 0.0
     perturbation: float = 0.6
     pre_fracture: bool = False
+    fracture_fraction: float = 1.0
     breaking_strain: float = 1.0e6
     shear_breaking_strain: float = 1.0e6
     nx: int = 4
@@ -269,9 +270,24 @@ def frozen_state(case: CaseSpec, seed: int) -> FrozenState:
     alive: torch.Tensor | None = None
     broken = 0
     if case.pre_fracture:
-        sim.forces(update_fracture=True)
-        alive = sim.alive.clone()
-        broken = len(sim.pairs) - int(alive.sum())
+        if case.fracture_fraction < 1.0:
+            # Mixed-topology case: start from the intact bond set and kill a
+            # random fraction of the TOTAL bonds, so the frozen state carries
+            # BOTH live bonds and unbonded contact pairs on the same lattice
+            # (the audit's documented "natural next increment").  This is
+            # guaranteed mixed regardless of how many the natural fracture pass
+            # would break.  fracture_fraction=1.0 keeps the original
+            # fully-fractured behaviour bit-for-bit.
+            alive = sim.alive.new_ones(len(sim.pairs))
+            n_kill = int(round(len(sim.pairs) * (1.0 - case.fracture_fraction)))
+            gen = torch.Generator().manual_seed(int(seed) + 1000)
+            perm = torch.randperm(len(sim.pairs), generator=gen)[:n_kill]
+            alive[perm] = False
+            broken = n_kill
+        else:
+            sim.forces(update_fracture=True)
+            alive = sim.alive.clone()
+            broken = len(sim.pairs) - int(alive.sum())
     return FrozenState(sim.positions.clone(), sim.velocities.clone(), alive, broken)
 
 
@@ -691,6 +707,10 @@ DEFAULT_CASES: tuple[CaseSpec, ...] = (
     CaseSpec("linear_friction_rolling_fractured", contact_model="linear", perturbation=1.2,
              pre_fracture=True, breaking_strain=0.015, shear_breaking_strain=0.03,
              friction_coefficient=0.4, rolling_resistance_coefficient=0.2),
+    # Mixed bonded/unbonded topology: half the surviving bonds are killed so the
+    # kernel must handle live bonds and unbonded contact pairs simultaneously.
+    CaseSpec("linear_mixed", contact_model="linear", perturbation=0.6, pre_fracture=True,
+             fracture_fraction=0.5, breaking_strain=0.015, shear_breaking_strain=0.03),
 )
 
 DEFAULT_SEEDS: tuple[int, ...] = (0, 1, 2, 3)
