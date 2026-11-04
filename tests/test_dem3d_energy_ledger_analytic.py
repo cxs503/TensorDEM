@@ -17,9 +17,12 @@ in closed form), and the symplectic-Euler energy oscillation of case B has
 relative amplitude ``dt * omega`` with no secular drift.
 
 Finally ``ShearInvariantProbeTests`` pins the strain measure used by the
-fracture criterion: exact on the full cubic lattice, but rank-deficient
-neighbourhoods (a single bond, i.e. collinear references) report a spurious
-invariant of 1/3 for a rigid, undeformed configuration.
+fracture criterion: exact on the full cubic lattice, and zero on
+rank-deficient neighbourhoods (a single bond, i.e. collinear references),
+where the least-squares deformation gradient is a projection and the
+Green-Lagrange invariant would otherwise be a spurious 1/3 for a rigid,
+undeformed configuration. The shear criterion is skipped there so thin/linear
+specimens do not break on the first step.
 """
 from __future__ import annotations
 
@@ -216,22 +219,28 @@ class ShearInvariantProbeTests(unittest.TestCase):
         self.assertLess(probe["lattice_undeformed_shear"], 1e-10)
         self.assertLess(probe["lattice_rigid_rotation_shear"], 1e-10)
 
-    def test_collinear_neighbourhood_reports_spurious_strain(self):
-        """Known limitation (documented, not fixed here).
+    def test_collinear_neighbourhood_reports_no_spurious_strain(self):
+        """Rank-deficient neighbourhoods are skipped (fixed).
 
         A single bond gives a rank-one reference covariance, so the least-squares
-        deformation gradient is the projection ``e e^T`` rather than the identity
-        and the Green-Lagrange invariant is ``1/3`` for a rigid, undeformed bond.
-        The default 3 % shear limit therefore breaks every bond of a linear
-        (one-particle-wide) specimen in the first step.
+        deformation gradient would be the projection ``e e^T`` rather than the
+        identity and the Green-Lagrange invariant a spurious ``1/3`` for a rigid,
+        undeformed bond. The shear criterion is undefined there and is skipped
+        (reported 0), so a linear (one-particle-wide) specimen does not break on
+        the first step. Full-rank cubic lattices are unaffected.
         """
         probe = _probe()
-        self.assertGreater(probe["collinear_undeformed_shear"], 0.3)
-        self.assertAlmostEqual(probe["collinear_undeformed_shear"], 1.0 / 3.0, places=10)
-        self.assertGreater(probe["collinear_undeformed_shear"],
-                           DEM3DConfig().shear_breaking_strain)
+        self.assertLess(probe["collinear_undeformed_shear"], 1e-6)
+        self.assertLess(probe["collinear_undeformed_shear"],
+                        DEM3DConfig().shear_breaking_strain)
 
-    def test_default_thresholds_break_a_rigid_collinear_bond(self):
+    def test_default_thresholds_keep_a_rigid_collinear_bond(self):
+        """The rank-deficiency skip must not break a rigid single bond.
+
+        With the default breaking/short-shear strains a single collinear bond
+        (rank-one reference covariance) must survive a step: the spurious 1/3
+        shear invariant is skipped, so no shear fracture is triggered.
+        """
         cfg = base_config(drag=0.0)  # default breaking/short-shear strains
         solver = build_subsystem(
             cfg,
@@ -242,8 +251,8 @@ class ShearInvariantProbeTests(unittest.TestCase):
         )
         self.assertTrue(bool(solver.alive[0]))
         solver.step()
-        self.assertFalse(bool(solver.alive[0]),
-                         "expected the spurious 1/3 shear invariant to break the bond")
+        self.assertTrue(bool(solver.alive[0]),
+                         "the rank-deficiency skip must keep the rigid bond alive")
 
 
 class LedgerBookkeepingTests(unittest.TestCase):

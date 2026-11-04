@@ -28,6 +28,16 @@ from typing import Any
 import torch
 
 
+# Rank-deficiency tolerance for the local reference covariance in
+# ``_objective_shear_strain``: a neighbourhood whose smallest eigenvalue is
+# below this fraction of its largest is treated as degenerate (collinear or
+# planar), where the least-squares deformation gradient is a projection and the
+# Green-Lagrange shear invariant is spurious. The shear criterion is skipped
+# (reported 0) there so thin/linear specimens do not break on the first step.
+# Full-rank cubic lattices are unaffected.
+_SHEAR_RANK_TOL = 1e-6
+
+
 # --------------------------------------------------------------------------
 # Hertz contact law primitives
 # --------------------------------------------------------------------------
@@ -464,7 +474,17 @@ class IceDEM3D:
         e = 0.5 * (f.transpose(1, 2) @ f - eye)
         dev = e - torch.diag_embed(e.diagonal(dim1=1, dim2=2).mean(dim=1).unsqueeze(1).expand(-1, 3))
         # sqrt(2/3 devE:devE), invariant under rigid rotation.
-        return torch.sqrt((2.0 / 3.0) * dev.square().sum(dim=(1, 2)).clamp_min(0.0))
+        shear = torch.sqrt((2.0 / 3.0) * dev.square().sum(dim=(1, 2)).clamp_min(0.0))
+        # Rank-deficient reference neighbourhoods (a single collinear bond, or a
+        # planar set) make the least-squares deformation gradient a projection
+        # rather than a frame, so the Green-Lagrange invariant is spurious (1/3
+        # for a rigid, undeformed single bond). The shear criterion is undefined
+        # there; skip it (report 0) so thin/linear specimens do not break on the
+        # first step. Full-rank cubic lattices are unaffected.
+        evals = torch.linalg.eigvalsh(cov)
+        largest = evals[:, 2].clamp_min(torch.finfo(self.dtype).tiny)
+        rank_deficient = evals[:, 0] <= _SHEAR_RANK_TOL * largest
+        return torch.where(rank_deficient, torch.zeros_like(shear), shear)
 
     def _loads(self, external_forces: torch.Tensor | None) -> torch.Tensor | None:
         if external_forces is None:
