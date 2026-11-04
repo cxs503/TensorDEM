@@ -52,6 +52,7 @@ __all__ = [
     "hetenyi_infinite_beam_patch_load",
     "hetenyi_infinite_beam_point_load",
     "hetenyi_verification",
+    "vesic_subgrade_modulus",
     "solve_beam_on_winkler",
 ]
 
@@ -124,6 +125,32 @@ def skempton_undrained_nc(depth_below_mudline: float, width: float, *,
                SKEMPTON_NC_STRIP_MAX * shape)
 
 
+def vesic_subgrade_modulus(young_modulus: float, poisson_ratio: float, width: float,
+                           beam_rigidity: float, *,
+                           coefficient: float = 0.65) -> float:
+    """Vesic (1961) equivalent Winkler modulus of a beam on an elastic half-space.
+
+    ``k_v = C (E_s / (1 - nu_s^2)) (E_s B^4 / (E_p I_p))^(1/12) / B``  [N/m^3]
+
+    ``beam_rigidity = E_p I_p`` is the bending rigidity of the beam [N m^2] and
+    ``width`` its contact width ``B``.  The ``(E_s B^4 / (E_p I_p))^(1/12)`` factor is
+    the beam/s soil rigidity ratio; a stiffer beam (larger ``E_p I_p``) gives a
+    smaller equivalent modulus, a stiffer soil a larger one.  Vesic fitted ``C =
+    0.65`` so that a Winkler beam reproduces the maximum bending moment of the
+    half-space solution (Biot 1937); the fit is a moment fit, not a settlement fit
+    (see ``docs/ridge_winkler_subgrade_modulus_verification.md``).
+    """
+    for name, value in (("young_modulus", young_modulus), ("width", width),
+                        ("beam_rigidity", beam_rigidity), ("coefficient", coefficient)):
+        _require_finite(name, value, positive=True)
+    _require_finite("poisson_ratio", poisson_ratio, nonnegative=True)
+    if poisson_ratio >= 0.5:
+        raise ValueError("poisson_ratio must be < 0.5")
+    rigidity_ratio = young_modulus * width ** 4 / beam_rigidity
+    return (coefficient * young_modulus / (1.0 - poisson_ratio ** 2) / width
+            * rigidity_ratio ** (1.0 / 12.0))
+
+
 @dataclass(frozen=True)
 class MohrCoulombSoil:
     """Effective-stress Mohr-Coulomb subgrade beneath a subsea pipeline.
@@ -145,6 +172,7 @@ class MohrCoulombSoil:
     pore_pressure_ratio: float = 0.0
     undrained: bool = False
     subgrade_modulus_factor: float = 0.65
+    subgrade_modulus_model: str = "width_only"
 
     def __post_init__(self) -> None:
         _require_finite("friction_angle_deg", self.friction_angle_deg, nonnegative=True)
@@ -161,6 +189,8 @@ class MohrCoulombSoil:
         if self.pore_pressure_ratio > 1.0:
             raise ValueError("pore_pressure_ratio must be <= 1")
         _require_finite("subgrade_modulus_factor", self.subgrade_modulus_factor, positive=True)
+        if self.subgrade_modulus_model not in ("width_only", "vesic"):
+            raise ValueError("subgrade_modulus_model must be 'width_only' or 'vesic'")
         if not isinstance(self.undrained, bool):
             raise ValueError("undrained must be a boolean")
         if self.undrained and self.friction_angle_deg != 0.0:
@@ -231,16 +261,34 @@ class MohrCoulombSoil:
         return self.vertical_pressure_capacity(diameter, embedment + diameter,
                                                length_ratio=length_ratio) * diameter
 
-    def subgrade_modulus(self, width: float) -> float:
-        """Elastic subgrade modulus ``k_v`` in N/m^3 (see class docstring)."""
+    def subgrade_modulus(self, width: float, *, beam_ei: float | None = None) -> float:
+        """Elastic subgrade modulus ``k_v`` in N/m^3.
+
+        ``subgrade_modulus_model = "width_only"`` (default, unchanged):
+        ``k_v = factor * E_s / ((1 - nu_s^2) width)``.  The ``0.65`` default is
+        Vesic's (1961) coefficient but the beam rigidity factor is omitted, so the
+        bed stiffness is fixed by the soil alone.  For a 36 in line pipe on a
+        10 MPa seabed that is 1.55x the Vesic modulus and bends the design moment
+        by -12 % (``docs/ridge_winkler_subgrade_modulus_verification.md``).
+
+        ``subgrade_modulus_model = "vesic"``: full Vesic (1961) relation, which needs
+        the beam rigidity ``beam_ei = E_p I_p`` [N m^2].
+        """
         _require_finite("width", width, positive=True)
+        if self.subgrade_modulus_model == "vesic":
+            if beam_ei is None:
+                raise ValueError("subgrade_modulus_model='vesic' requires beam_ei=E_p*I_p")
+            return vesic_subgrade_modulus(self.young_modulus, self.poisson_ratio, width,
+                                          beam_ei,
+                                          coefficient=self.subgrade_modulus_factor)
         return (self.subgrade_modulus_factor * self.young_modulus
                 / ((1.0 - self.poisson_ratio ** 2) * width))
 
-    def initial_vertical_stiffness(self, diameter: float) -> float:
+    def initial_vertical_stiffness(self, diameter: float, *,
+                                   beam_ei: float | None = None) -> float:
         """Initial slope ``dp/dw`` of the vertical reaction curve (N/m per m)."""
         _require_finite("diameter", diameter, positive=True)
-        return self.subgrade_modulus(diameter) * diameter
+        return self.subgrade_modulus(diameter, beam_ei=beam_ei) * diameter
 
     def vertical_reaction(self, displacement: float, diameter: float, embedment: float) -> float:
         """Hyperbolic vertical reaction per unit length (N/m) at ``displacement``."""
