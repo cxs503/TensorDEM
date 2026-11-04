@@ -26,7 +26,12 @@ import torch
 
 from .fracture_mass_mapping import (
     VALID_MASS_MODES,
+    VALID_PACKINGS,
+    expected_lattice_bond_lengths,
     mass_mapping_report,
+    mass_radius_factor,
+    normalise_packing,
+    packing_coordination_number,
     particle_cell_volume,
     particle_mass as _particle_mass,
 )
@@ -38,6 +43,11 @@ from .fracture_mass_mapping import (
 #: which is what ``mass_mode="cell"`` assigns (see
 #: ``docs/dem3d_fracture_mass_mapping_audit.md``).
 MASS_RADIUS_FACTOR = 2.0 * (3.0 / (4.0 * math.pi)) ** (1.0 / 3.0)
+
+#: Same factor for the hexagonal-close-packed lattice (cell ``4 sqrt 2 r^3``),
+#: ``(3 sqrt 2 / pi)^{1/3} = 1.105339``.  Kept as an independent name so the
+#: audited cubic number above cannot drift when a packing is added.
+HCP_MASS_RADIUS_FACTOR = mass_radius_factor("hcp")
 
 #: Accepted ``mass_mapping`` spellings -> canonical ``mass_mode``.
 MASS_MAPPING_ALIASES = {
@@ -146,6 +156,13 @@ class FractureGenConfig:
     # ``"disc"`` == True.  When given it wins, but a ``face_extent="plane"``
     # combined with an explicit ``footprint_aware=True`` is a contradiction and
     # is rejected instead of silently resolved.
+    packing: str = "sc"
+    # Lattice packing used to fill ``domain_bounds``:
+    #   "sc"  -> simple cubic, spacing h = 2 r, coordination number 6 (default,
+    #            reproduces every pre-existing number bit-for-bit)
+    #   "hcp" -> hexagonal close packed (ABAB), nearest-neighbour distance 2 r,
+    #            coordination number 12; the cell volume drops to 4 sqrt 2 r^3
+    #            so ``mass_mode="cell"`` mass follows the denser packing.
     on_plane_tolerance: float = 0.0
     # > 0 -> endpoints within this distance of the face plane count as lying on
     #        it, so a plane coincident with a particle layer severs the two
@@ -165,6 +182,7 @@ class FractureGenConfig:
         if not math.isfinite(self.on_plane_tolerance) or self.on_plane_tolerance < 0.0:
             raise ValueError("on_plane_tolerance must be non-negative and finite")
         self.footprint_aware = normalise_face_extent(self.face_extent, self.footprint_aware)
+        self.packing = normalise_packing(self.packing, "packing")
 
 
 class FractureField:
@@ -188,6 +206,7 @@ class FractureField:
         on_plane_tolerance: float = 0.0,
         face_extent: str | None = None,
         mass_mapping: str | None = None,
+        packing: str = "sc",
     ):
         self.mass_mode = normalise_mass_mapping(mass_mode, "mass_mode")
         # Canonical mode plus the spelling the caller actually asked for, so an
@@ -207,6 +226,7 @@ class FractureField:
         self.rest_lengths = rest_lengths
         self.alive = alive  # boolean mask, False = broken
         self.particle_radius = particle_radius
+        self.packing = normalise_packing(packing, "packing")
         self.density = density
         self.bond_stiffness = bond_stiffness
     
@@ -217,7 +237,9 @@ class FractureField:
     @property
     def particle_mass(self) -> float:
         """Mass of a single particle for the configured mass mapping."""
-        return _particle_mass(self.density, self.particle_radius, self.mass_mode)
+        return _particle_mass(
+            self.density, self.particle_radius, self.mass_mode, self.packing
+        )
 
     @property
     def mass_radius(self) -> float:
@@ -228,7 +250,7 @@ class FractureField:
         ``mass_mode="sphere"`` -> ``r`` (the mass *is* the inscribed sphere's).
         """
         if self.mass_mode == "cell":
-            return MASS_RADIUS_FACTOR * self.particle_radius
+            return mass_radius_factor(self.packing) * self.particle_radius
         return self.particle_radius
 
     @property
@@ -246,8 +268,11 @@ class FractureField:
 
     @property
     def particle_cell_volume(self) -> float:
-        """Volume of the lattice cell owned by one particle, h^3."""
-        return particle_cell_volume(self.particle_radius)
+        """Volume of the lattice cell owned by one particle.
+
+        ``h^3 = 8 r^3`` for ``packing="sc"``, ``4 sqrt 2 r^3`` for ``"hcp"``.
+        """
+        return particle_cell_volume(self.particle_radius, self.packing)
 
     @property
     def represented_volume(self) -> float:
@@ -328,11 +353,26 @@ def generate_particle_lattice(
     domain_bounds: tuple[float, float, float, float, float, float],
     particle_radius: float,
     dtype: torch.dtype = torch.float64,
-    device: torch.device | str = 'cpu'
+    device: torch.device | str = 'cpu',
+    *,
+    packing: str = "sc",
 ) -> torch.Tensor:
-    """Generate a simple cubic lattice of particles.
-    
-    Particles are placed at grid points with spacing 2*particle_radius.
+    """Generate a lattice of touching spheres filling ``domain_bounds``.
+
+    ``packing="sc"``  (default)
+        Simple cubic lattice, spacing ``h = 2 r``, first centre at
+        ``(xmin + r, ymin + r, zmin + r)`` and the half-open convention of
+        ``torch.arange`` for the upper bound -- bit-for-bit the historical
+        behaviour.
+    ``packing="hcp"``
+        Hexagonal close packing (ABAB stacking) of touching spheres with the
+        same contact radius ``r``: in-plane row pitch ``sqrt(3) r``, interlayer
+        pitch ``2 sqrt(2/3) r`` and the B layer shifted by
+        ``(r, r/sqrt(3))``.  Every nearest-neighbour distance is exactly
+        ``2 r`` (coordination number 12 in the bulk), so the contact law and
+        the bond cutoff of :func:`build_bond_topology` are unchanged.  Unlike
+        the cubic branch, centres are trimmed so that *every* sphere lies
+        inside ``domain_bounds`` (``lo + r <= x <= hi - r``).
     """
     xmin, xmax, ymin, ymax, zmin, zmax = domain_bounds
     for lo, hi in ((xmin, xmax), (ymin, ymax), (zmin, zmax)):
@@ -341,6 +381,11 @@ def generate_particle_lattice(
                 "each domain extent must be at least one particle radius "
                 f"({particle_radius} m); got {hi - lo} m"
             )
+    packing = normalise_packing(packing)
+    if packing == "hcp":
+        return _generate_hcp_lattice(
+            (xmin, xmax, ymin, ymax, zmin, zmax), particle_radius, dtype, device
+        )
     spacing = 2.0 * particle_radius
     
     # Generate grid points (offset by radius to center particles in domain)
@@ -353,6 +398,62 @@ def generate_particle_lattice(
     positions = torch.stack([xx.flatten(), yy.flatten(), zz.flatten()], dim=1)
     
     return positions
+
+
+def _generate_hcp_lattice(
+    domain_bounds: tuple[float, float, float, float, float, float],
+    particle_radius: float,
+    dtype: torch.dtype,
+    device: torch.device | str,
+) -> torch.Tensor:
+    """Hexagonal close-packed (ABAB) ordering of touching spheres.
+
+    Row pitch ``sqrt(3) r`` (rows along x spaced ``2 r`` within a row), layer
+    pitch ``2 sqrt(2/3) r``, B layers shifted by ``(r, r/sqrt(3))``.  The four
+    in-plane/interlayer neighbour families then all have length ``2 r``:
+    ``(2r, 0, 0)``, ``(r, sqrt(3) r, 0)``, ``(r, r/sqrt(3), 2 sqrt(2/3) r)`` and
+    their sign/parity images, twelve in total.
+    """
+    xmin, xmax, ymin, ymax, zmin, zmax = domain_bounds
+    a = 2.0 * particle_radius           # in-row nearest-neighbour distance
+    row_pitch = a * math.sqrt(3.0) / 2.0
+    layer_pitch = a * math.sqrt(2.0 / 3.0)
+    b_shift_x = 0.5 * a
+    b_shift_y = a * math.sqrt(3.0) / 6.0
+    scale = max(1.0, abs(xmax - xmin), abs(ymax - ymin), abs(zmax - zmin))
+    tol = 1.0e-12 * scale
+
+    columns: list[float] = []
+    rows_out: list[float] = []
+    layers: list[float] = []
+    layer = 0
+    z = zmin + particle_radius
+    while z <= zmax - particle_radius + tol:
+        odd_layer = layer % 2 == 1
+        shift_x = b_shift_x if odd_layer else 0.0
+        shift_y = b_shift_y if odd_layer else 0.0
+        row = 0
+        y = ymin + particle_radius + shift_y
+        while y <= ymax - particle_radius + tol:
+            x = xmin + particle_radius + shift_x + (0.5 * a if row % 2 else 0.0)
+            while x <= xmax - particle_radius + tol:
+                columns.append(x)
+                rows_out.append(y)
+                layers.append(z)
+                x += a
+            y += row_pitch
+            row += 1
+        z += layer_pitch
+        layer += 1
+
+    if not columns:
+        raise ValueError(
+            "domain_bounds too small for one hexagonally packed particle of "
+            f"radius {particle_radius} m"
+        )
+    return torch.tensor(
+        list(zip(columns, rows_out, layers)), dtype=dtype, device=device
+    )
 
 
 def build_bond_topology(
@@ -512,8 +613,9 @@ def generate_fracture_field(
     
     # Generate particle lattice
     positions = generate_particle_lattice(
-        config.domain_bounds, 
-        config.particle_radius
+        config.domain_bounds,
+        config.particle_radius,
+        packing=config.packing,
     )
     velocities = torch.zeros_like(positions)
     
@@ -548,6 +650,7 @@ def generate_fracture_field(
         footprint_aware=config.footprint_aware,
         on_plane_tolerance=config.on_plane_tolerance,
         face_extent=config.face_extent,
+        packing=config.packing,
     )
 
 
