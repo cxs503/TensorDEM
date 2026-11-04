@@ -1,0 +1,825 @@
+{
+  "module_outcome_counts": {
+    "green": 9,
+    "red": 4
+  },
+  "pattern": "test_dem3d_*.py",
+  "schema": "tensordem.verification-execution-ledger/1",
+  "source_modules": [
+    {
+      "module": "bond_fracture_energy",
+      "outcome": "green",
+      "test_files": [
+        "tests/test_dem3d_bond_fracture_energy.py"
+      ]
+    },
+    {
+      "module": "contact_impact",
+      "outcome": "red",
+      "test_files": [
+        "tests/test_dem3d_contact_impact.py"
+      ]
+    },
+    {
+      "module": "contact_restitution",
+      "outcome": "red",
+      "test_files": [
+        "tests/test_dem3d_restitution_verification.py"
+      ]
+    },
+    {
+      "module": "contact_tangential",
+      "outcome": "red",
+      "test_files": [
+        "tests/test_dem3d_contact_impact.py",
+        "tests/test_dem3d_restitution_verification.py"
+      ]
+    },
+    {
+      "module": "dem3d",
+      "outcome": "red",
+      "test_files": [
+        "tests/test_dem3d_bond_fracture_energy.py",
+        "tests/test_dem3d_energy_audit.py",
+        "tests/test_dem3d_energy_ledger_analytic.py",
+        "tests/test_dem3d_external_load_balance.py",
+        "tests/test_dem3d_hertz_contact.py",
+        "tests/test_dem3d_lattice_elastic.py",
+        "tests/test_dem3d_lattice_elasticity3d.py",
+        "tests/test_dem3d_mechanics_validation.py",
+        "tests/test_dem3d_moving_wedge_bow.py",
+        "tests/test_dem3d_pair_contact_damping.py",
+        "tests/test_dem3d_platen_contact_mask.py",
+        "tests/test_dem3d_resolution_sensitivity.py",
+        "tests/test_dem3d_restitution.py",
+        "tests/test_dem3d_shear_specimen.py",
+        "tests/test_dem3d_shear_static_reference.py",
+        "tests/test_dem3d_stability.py",
+        "tests/test_dem3d_validation_campaign_runner.py"
+      ]
+    },
+    {
+      "module": "dem3d_cli",
+      "outcome": "green",
+      "test_files": [
+        "tests/test_dem3d_stability.py"
+      ]
+    },
+    {
+      "module": "dem3d_energy",
+      "outcome": "green",
+      "test_files": [
+        "tests/test_dem3d_energy_audit.py",
+        "tests/test_dem3d_energy_ledger_analytic.py"
+      ]
+    },
+    {
+      "module": "dem3d_wedge",
+      "outcome": "green",
+      "test_files": [
+        "tests/test_dem3d_moving_wedge_bow.py"
+      ]
+    },
+    {
+      "module": "lattice_elasticity3d",
+      "outcome": "green",
+      "test_files": [
+        "tests/test_dem3d_brazilian_static.py",
+        "tests/test_dem3d_lattice_elasticity3d.py"
+      ]
+    },
+    {
+      "module": "restitution",
+      "outcome": "green",
+      "test_files": [
+        "tests/test_dem3d_pair_contact_damping.py",
+        "tests/test_dem3d_restitution.py"
+      ]
+    },
+    {
+      "module": "shear_specimen",
+      "outcome": "green",
+      "test_files": [
+        "tests/test_dem3d_shear_specimen.py",
+        "tests/test_dem3d_shear_static_reference.py"
+      ]
+    },
+    {
+      "module": "shear_static",
+      "outcome": "green",
+      "test_files": [
+        "tests/test_dem3d_shear_static_reference.py"
+      ]
+    },
+    {
+      "module": "stability",
+      "outcome": "green",
+      "test_files": [
+        "tests/test_dem3d_stability.py"
+      ]
+    }
+  ],
+  "summary": {
+    "n_test_files": 47,
+    "non_green": [
+      "tests/test_dem3d_contact_impact.py [red]",
+      "tests/test_dem3d_platen_contact_mask.py [red]",
+      "tests/test_dem3d_restitution_verification.py [red]"
+    ],
+    "outcome_counts": {
+      "green": 44,
+      "red": 3
+    },
+    "totals": {
+      "declared_tests": 301,
+      "errors": 0,
+      "failed": 12,
+      "passed": 382,
+      "skipped": 0
+    }
+  },
+  "test_dir": "tests",
+  "test_files": [
+    {
+      "declared_tests": 4,
+      "errors": 0,
+      "exit_code": 0,
+      "failed": 0,
+      "failing_ids": [],
+      "log_tail": "    import pynvml  # type: ignore[import]\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n4 passed, 2 warnings in <t>s",
+      "outcome": "green",
+      "passed": 4,
+      "skipped": 0,
+      "source_modules": [],
+      "test_file": "tests/test_dem3d_benchmark_case_suite.py"
+    },
+    {
+      "declared_tests": 2,
+      "errors": 0,
+      "exit_code": 0,
+      "failed": 0,
+      "failing_ids": [],
+      "log_tail": "    import pynvml  # type: ignore[import]\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n2 passed, 2 warnings, 4 subtests passed in <t>s",
+      "outcome": "green",
+      "passed": 2,
+      "skipped": 0,
+      "source_modules": [],
+      "test_file": "tests/test_dem3d_bending_load_convergence.py"
+    },
+    {
+      "declared_tests": 2,
+      "errors": 0,
+      "exit_code": 0,
+      "failed": 0,
+      "failing_ids": [],
+      "log_tail": "    import pynvml  # type: ignore[import]\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n2 passed, 2 warnings in <t>s",
+      "outcome": "green",
+      "passed": 2,
+      "skipped": 0,
+      "source_modules": [],
+      "test_file": "tests/test_dem3d_bending_resolution.py"
+    },
+    {
+      "declared_tests": 11,
+      "errors": 0,
+      "exit_code": 0,
+      "failed": 0,
+      "failing_ids": [],
+      "log_tail": "    import pynvml  # type: ignore[import]\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n11 passed, 2 warnings in <t>s",
+      "outcome": "green",
+      "passed": 11,
+      "skipped": 0,
+      "source_modules": [
+        "bond_fracture_energy",
+        "dem3d"
+      ],
+      "test_file": "tests/test_dem3d_bond_fracture_energy.py"
+    },
+    {
+      "declared_tests": 12,
+      "errors": 0,
+      "exit_code": 0,
+      "failed": 0,
+      "failing_ids": [],
+      "log_tail": "    import pynvml  # type: ignore[import]\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n12 passed, 2 warnings in <t>s",
+      "outcome": "green",
+      "passed": 12,
+      "skipped": 0,
+      "source_modules": [],
+      "test_file": "tests/test_dem3d_born_huang.py"
+    },
+    {
+      "declared_tests": 5,
+      "errors": 0,
+      "exit_code": 0,
+      "failed": 0,
+      "failing_ids": [],
+      "log_tail": "    import pynvml  # type: ignore[import]\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n5 passed, 2 warnings in <t>s",
+      "outcome": "green",
+      "passed": 5,
+      "skipped": 0,
+      "source_modules": [
+        "lattice_elasticity3d"
+      ],
+      "test_file": "tests/test_dem3d_brazilian_static.py"
+    },
+    {
+      "declared_tests": 17,
+      "errors": 0,
+      "exit_code": 1,
+      "failed": 5,
+      "failing_ids": [
+        "FAILED:tests/test_dem3d_contact_impact.py::SolverImpactTests::test_contact_durations",
+        "FAILED:tests/test_dem3d_contact_impact.py::SolverImpactTests::test_corrected_mapping_realises_target",
+        "FAILED:tests/test_dem3d_contact_impact.py::SolverImpactTests::test_force_law_conformance",
+        "FAILED:tests/test_dem3d_contact_impact.py::SolverImpactTests::test_restitution_matches_clamped_analytic",
+        "FAILED:tests/test_dem3d_contact_impact.py::SolverImpactTests::test_timestep_convergence"
+      ],
+      "log_tail": "FAILED tests/test_dem3d_contact_impact.py::SolverImpactTests::test_force_law_conformance\nFAILED tests/test_dem3d_contact_impact.py::SolverImpactTests::test_restitution_matches_clamped_analytic\nFAILED tests/test_dem3d_contact_impact.py::SolverImpactTests::test_timestep_convergence\n5 failed, 12 passed, 2 warnings in <t>s",
+      "outcome": "red",
+      "passed": 12,
+      "skipped": 0,
+      "source_modules": [
+        "contact_impact",
+        "contact_tangential"
+      ],
+      "test_file": "tests/test_dem3d_contact_impact.py"
+    },
+    {
+      "declared_tests": 4,
+      "errors": 0,
+      "exit_code": 0,
+      "failed": 0,
+      "failing_ids": [],
+      "log_tail": "    from _pytest.python import CallSpec2\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n4 passed, 1 warning in <t>s",
+      "outcome": "green",
+      "passed": 4,
+      "skipped": 0,
+      "source_modules": [],
+      "test_file": "tests/test_dem3d_cross_resolution_validation.py"
+    },
+    {
+      "declared_tests": 1,
+      "errors": 0,
+      "exit_code": 0,
+      "failed": 0,
+      "failing_ids": [],
+      "log_tail": "    import pynvml  # type: ignore[import]\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n1 passed, 2 warnings in <t>s",
+      "outcome": "green",
+      "passed": 1,
+      "skipped": 0,
+      "source_modules": [],
+      "test_file": "tests/test_dem3d_cylinder_benchmark.py"
+    },
+    {
+      "declared_tests": 4,
+      "errors": 0,
+      "exit_code": 0,
+      "failed": 0,
+      "failing_ids": [],
+      "log_tail": "    import pynvml  # type: ignore[import]\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n4 passed, 2 warnings in <t>s",
+      "outcome": "green",
+      "passed": 4,
+      "skipped": 0,
+      "source_modules": [
+        "dem3d",
+        "dem3d_energy"
+      ],
+      "test_file": "tests/test_dem3d_energy_audit.py"
+    },
+    {
+      "declared_tests": 17,
+      "errors": 0,
+      "exit_code": 0,
+      "failed": 0,
+      "failing_ids": [],
+      "log_tail": "    import pynvml  # type: ignore[import]\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n17 passed, 2 warnings in <t>s",
+      "outcome": "green",
+      "passed": 17,
+      "skipped": 0,
+      "source_modules": [
+        "dem3d",
+        "dem3d_energy"
+      ],
+      "test_file": "tests/test_dem3d_energy_ledger_analytic.py"
+    },
+    {
+      "declared_tests": 3,
+      "errors": 0,
+      "exit_code": 0,
+      "failed": 0,
+      "failing_ids": [],
+      "log_tail": "    import pynvml  # type: ignore[import]\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n3 passed, 2 warnings in <t>s",
+      "outcome": "green",
+      "passed": 3,
+      "skipped": 0,
+      "source_modules": [],
+      "test_file": "tests/test_dem3d_energy_timestep.py"
+    },
+    {
+      "declared_tests": 5,
+      "errors": 0,
+      "exit_code": 0,
+      "failed": 0,
+      "failing_ids": [],
+      "log_tail": "    from _pytest.python import CallSpec2\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n5 passed, 1 warning in <t>s",
+      "outcome": "green",
+      "passed": 5,
+      "skipped": 0,
+      "source_modules": [],
+      "test_file": "tests/test_dem3d_engineering_screen.py"
+    },
+    {
+      "declared_tests": 6,
+      "errors": 0,
+      "exit_code": 0,
+      "failed": 0,
+      "failing_ids": [],
+      "log_tail": "    import pynvml  # type: ignore[import]\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n6 passed, 2 warnings in <t>s",
+      "outcome": "green",
+      "passed": 6,
+      "skipped": 0,
+      "source_modules": [
+        "dem3d"
+      ],
+      "test_file": "tests/test_dem3d_external_load_balance.py"
+    },
+    {
+      "declared_tests": 2,
+      "errors": 0,
+      "exit_code": 0,
+      "failed": 0,
+      "failing_ids": [],
+      "log_tail": "    import pynvml  # type: ignore[import]\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n2 passed, 2 warnings in <t>s",
+      "outcome": "green",
+      "passed": 2,
+      "skipped": 0,
+      "source_modules": [],
+      "test_file": "tests/test_dem3d_fracture_diagnostics.py"
+    },
+    {
+      "declared_tests": 4,
+      "errors": 0,
+      "exit_code": 0,
+      "failed": 0,
+      "failing_ids": [],
+      "log_tail": "    from _pytest.python import CallSpec2\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n4 passed, 1 warning in <t>s",
+      "outcome": "green",
+      "passed": 4,
+      "skipped": 0,
+      "source_modules": [],
+      "test_file": "tests/test_dem3d_fracture_force_analysis.py"
+    },
+    {
+      "declared_tests": 4,
+      "errors": 0,
+      "exit_code": 0,
+      "failed": 0,
+      "failing_ids": [],
+      "log_tail": "    import pynvml  # type: ignore[import]\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n4 passed, 2 warnings in <t>s",
+      "outcome": "green",
+      "passed": 4,
+      "skipped": 0,
+      "source_modules": [],
+      "test_file": "tests/test_dem3d_fracture_objectivity.py"
+    },
+    {
+      "declared_tests": 17,
+      "errors": 0,
+      "exit_code": 0,
+      "failed": 0,
+      "failing_ids": [],
+      "log_tail": "    import pynvml  # type: ignore[import]\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n17 passed, 2 warnings, 6 subtests passed in <t>s",
+      "outcome": "green",
+      "passed": 17,
+      "skipped": 0,
+      "source_modules": [
+        "dem3d"
+      ],
+      "test_file": "tests/test_dem3d_hertz_contact.py"
+    },
+    {
+      "declared_tests": 18,
+      "errors": 0,
+      "exit_code": 0,
+      "failed": 0,
+      "failing_ids": [],
+      "log_tail": "    import pynvml  # type: ignore[import]\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n18 passed, 2 warnings in <t>s",
+      "outcome": "green",
+      "passed": 18,
+      "skipped": 0,
+      "source_modules": [
+        "dem3d"
+      ],
+      "test_file": "tests/test_dem3d_lattice_elastic.py"
+    },
+    {
+      "declared_tests": 18,
+      "errors": 0,
+      "exit_code": 0,
+      "failed": 0,
+      "failing_ids": [],
+      "log_tail": "    import pynvml  # type: ignore[import]\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n18 passed, 2 warnings in <t>s",
+      "outcome": "green",
+      "passed": 18,
+      "skipped": 0,
+      "source_modules": [
+        "dem3d",
+        "lattice_elasticity3d"
+      ],
+      "test_file": "tests/test_dem3d_lattice_elasticity3d.py"
+    },
+    {
+      "declared_tests": 2,
+      "errors": 0,
+      "exit_code": 0,
+      "failed": 0,
+      "failing_ids": [],
+      "log_tail": "    import pynvml  # type: ignore[import]\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n2 passed, 2 warnings in <t>s",
+      "outcome": "green",
+      "passed": 2,
+      "skipped": 0,
+      "source_modules": [],
+      "test_file": "tests/test_dem3d_mechanics_benchmarks.py"
+    },
+    {
+      "declared_tests": 5,
+      "errors": 0,
+      "exit_code": 0,
+      "failed": 0,
+      "failing_ids": [],
+      "log_tail": "    import pynvml  # type: ignore[import]\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n5 passed, 2 warnings in <t>s",
+      "outcome": "green",
+      "passed": 5,
+      "skipped": 0,
+      "source_modules": [
+        "dem3d"
+      ],
+      "test_file": "tests/test_dem3d_mechanics_validation.py"
+    },
+    {
+      "declared_tests": 5,
+      "errors": 0,
+      "exit_code": 0,
+      "failed": 0,
+      "failing_ids": [],
+      "log_tail": "    import pynvml  # type: ignore[import]\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n5 passed, 2 warnings in <t>s",
+      "outcome": "green",
+      "passed": 5,
+      "skipped": 0,
+      "source_modules": [
+        "dem3d",
+        "dem3d_wedge"
+      ],
+      "test_file": "tests/test_dem3d_moving_wedge_bow.py"
+    },
+    {
+      "declared_tests": 11,
+      "errors": 0,
+      "exit_code": 0,
+      "failed": 0,
+      "failing_ids": [],
+      "log_tail": "    import pynvml  # type: ignore[import]\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n11 passed, 2 warnings in <t>s",
+      "outcome": "green",
+      "passed": 11,
+      "skipped": 0,
+      "source_modules": [
+        "dem3d",
+        "restitution"
+      ],
+      "test_file": "tests/test_dem3d_pair_contact_damping.py"
+    },
+    {
+      "declared_tests": 2,
+      "errors": 0,
+      "exit_code": 0,
+      "failed": 0,
+      "failing_ids": [],
+      "log_tail": "    from _pytest.python import CallSpec2\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n2 passed, 1 warning in <t>s",
+      "outcome": "green",
+      "passed": 2,
+      "skipped": 0,
+      "source_modules": [],
+      "test_file": "tests/test_dem3d_paper_figures.py"
+    },
+    {
+      "declared_tests": 2,
+      "errors": 0,
+      "exit_code": 0,
+      "failed": 0,
+      "failing_ids": [],
+      "log_tail": "    import pynvml  # type: ignore[import]\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n2 passed, 2 warnings in <t>s",
+      "outcome": "green",
+      "passed": 2,
+      "skipped": 0,
+      "source_modules": [],
+      "test_file": "tests/test_dem3d_platen_compression.py"
+    },
+    {
+      "declared_tests": 5,
+      "errors": 0,
+      "exit_code": 1,
+      "failed": 3,
+      "failing_ids": [
+        "FAILED:tests/test_dem3d_platen_contact_mask.py::PlatenContactMaskTests::test_no_contact_gives_zero_reaction",
+        "FAILED:tests/test_dem3d_platen_contact_mask.py::PlatenContactMaskTests::test_reaction_equals_contacted_particle_sum",
+        "FAILED:tests/test_dem3d_platen_contact_mask.py::PlatenContactMaskTests::test_reaction_switches_on_only_when_the_plane_reaches_the_specimen"
+      ],
+      "log_tail": "FAILED tests/test_dem3d_platen_contact_mask.py::PlatenContactMaskTests::test_no_contact_gives_zero_reaction\nFAILED tests/test_dem3d_platen_contact_mask.py::PlatenContactMaskTests::test_reaction_equals_contacted_particle_sum\nFAILED tests/test_dem3d_platen_contact_mask.py::PlatenContactMaskTests::test_reaction_switches_on_only_when_the_plane_reaches_the_specimen\n3 failed, 2 passed, 2 warnings in <t>s",
+      "outcome": "red",
+      "passed": 2,
+      "skipped": 0,
+      "source_modules": [
+        "dem3d"
+      ],
+      "test_file": "tests/test_dem3d_platen_contact_mask.py"
+    },
+    {
+      "declared_tests": 3,
+      "errors": 0,
+      "exit_code": 0,
+      "failed": 0,
+      "failing_ids": [],
+      "log_tail": "    import pynvml  # type: ignore[import]\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n3 passed, 2 warnings in <t>s",
+      "outcome": "green",
+      "passed": 3,
+      "skipped": 0,
+      "source_modules": [
+        "dem3d"
+      ],
+      "test_file": "tests/test_dem3d_resolution_sensitivity.py"
+    },
+    {
+      "declared_tests": 13,
+      "errors": 0,
+      "exit_code": 0,
+      "failed": 0,
+      "failing_ids": [],
+      "log_tail": "    import pynvml  # type: ignore[import]\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n13 passed, 2 warnings, 26 subtests passed in <t>s",
+      "outcome": "green",
+      "passed": 13,
+      "skipped": 0,
+      "source_modules": [
+        "dem3d",
+        "restitution"
+      ],
+      "test_file": "tests/test_dem3d_restitution.py"
+    },
+    {
+      "declared_tests": 9,
+      "errors": 0,
+      "exit_code": 1,
+      "failed": 4,
+      "failing_ids": [
+        "FAILED:tests/test_dem3d_restitution_verification.py::RestitutionVerificationTests::test_classic_mapping_is_within_3pct_only_for_small_damping",
+        "FAILED:tests/test_dem3d_restitution_verification.py::RestitutionVerificationTests::test_equal_mass_pair_uses_reduced_mass",
+        "FAILED:tests/test_dem3d_restitution_verification.py::RestitutionVerificationTests::test_solver_reproduces_clamped_reference_model",
+        "FAILED:tests/test_dem3d_restitution_verification.py::RestitutionVerificationTests::test_target_restitution_mapping_closes_the_loop"
+      ],
+      "log_tail": "FAILED tests/test_dem3d_restitution_verification.py::RestitutionVerificationTests::test_equal_mass_pair_uses_reduced_mass\nFAILED tests/test_dem3d_restitution_verification.py::RestitutionVerificationTests::test_solver_reproduces_clamped_reference_model\nFAILED tests/test_dem3d_restitution_verification.py::RestitutionVerificationTests::test_target_restitution_mapping_closes_the_loop\n4 failed, 5 passed, 2 warnings in <t>s",
+      "outcome": "red",
+      "passed": 5,
+      "skipped": 0,
+      "source_modules": [
+        "contact_restitution",
+        "contact_tangential"
+      ],
+      "test_file": "tests/test_dem3d_restitution_verification.py"
+    },
+    {
+      "declared_tests": 10,
+      "errors": 0,
+      "exit_code": 0,
+      "failed": 0,
+      "failing_ids": [],
+      "log_tail": "    import pynvml  # type: ignore[import]\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n10 passed, 2 warnings in <t>s",
+      "outcome": "green",
+      "passed": 10,
+      "skipped": 0,
+      "source_modules": [],
+      "test_file": "tests/test_dem3d_rolling_resistance_verification.py"
+    },
+    {
+      "declared_tests": 7,
+      "errors": 0,
+      "exit_code": 0,
+      "failed": 0,
+      "failing_ids": [],
+      "log_tail": "    from _pytest.python import CallSpec2\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n7 passed, 1 warning in <t>s",
+      "outcome": "green",
+      "passed": 7,
+      "skipped": 0,
+      "source_modules": [],
+      "test_file": "tests/test_dem3d_scale_benchmark.py"
+    },
+    {
+      "declared_tests": 12,
+      "errors": 0,
+      "exit_code": 0,
+      "failed": 0,
+      "failing_ids": [],
+      "log_tail": "    import pynvml  # type: ignore[import]\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n12 passed, 2 warnings in <t>s",
+      "outcome": "green",
+      "passed": 12,
+      "skipped": 0,
+      "source_modules": [
+        "dem3d",
+        "shear_specimen"
+      ],
+      "test_file": "tests/test_dem3d_shear_specimen.py"
+    },
+    {
+      "declared_tests": 8,
+      "errors": 0,
+      "exit_code": 0,
+      "failed": 0,
+      "failing_ids": [],
+      "log_tail": "    import pynvml  # type: ignore[import]\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n8 passed, 2 warnings in <t>s",
+      "outcome": "green",
+      "passed": 8,
+      "skipped": 0,
+      "source_modules": [
+        "dem3d",
+        "shear_specimen",
+        "shear_static"
+      ],
+      "test_file": "tests/test_dem3d_shear_static_reference.py"
+    },
+    {
+      "declared_tests": 2,
+      "errors": 0,
+      "exit_code": 0,
+      "failed": 0,
+      "failing_ids": [],
+      "log_tail": "    from _pytest.python import CallSpec2\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n2 passed, 1 warning in <t>s",
+      "outcome": "green",
+      "passed": 2,
+      "skipped": 0,
+      "source_modules": [],
+      "test_file": "tests/test_dem3d_ship_ice_formula_baselines.py"
+    },
+    {
+      "declared_tests": 3,
+      "errors": 0,
+      "exit_code": 0,
+      "failed": 0,
+      "failing_ids": [],
+      "log_tail": "    from _pytest.python import CallSpec2\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n3 passed, 1 warning in <t>s",
+      "outcome": "green",
+      "passed": 3,
+      "skipped": 0,
+      "source_modules": [],
+      "test_file": "tests/test_dem3d_ship_ice_reference_data.py"
+    },
+    {
+      "declared_tests": 2,
+      "errors": 0,
+      "exit_code": 0,
+      "failed": 0,
+      "failing_ids": [],
+      "log_tail": "    import pynvml  # type: ignore[import]\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n2 passed, 2 warnings in <t>s",
+      "outcome": "green",
+      "passed": 2,
+      "skipped": 0,
+      "source_modules": [],
+      "test_file": "tests/test_dem3d_specimen_response_benchmarks.py"
+    },
+    {
+      "declared_tests": 22,
+      "errors": 0,
+      "exit_code": 0,
+      "failed": 0,
+      "failing_ids": [],
+      "log_tail": "    import pynvml  # type: ignore[import]\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n115 passed, 2 warnings in <t>s",
+      "outcome": "green",
+      "passed": 115,
+      "skipped": 0,
+      "source_modules": [
+        "dem3d",
+        "dem3d_cli",
+        "stability"
+      ],
+      "test_file": "tests/test_dem3d_stability.py"
+    },
+    {
+      "declared_tests": 4,
+      "errors": 0,
+      "exit_code": 0,
+      "failed": 0,
+      "failing_ids": [],
+      "log_tail": "    import pynvml  # type: ignore[import]\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n4 passed, 2 warnings in <t>s",
+      "outcome": "green",
+      "passed": 4,
+      "skipped": 0,
+      "source_modules": [],
+      "test_file": "tests/test_dem3d_three_point_bending.py"
+    },
+    {
+      "declared_tests": 2,
+      "errors": 0,
+      "exit_code": 0,
+      "failed": 0,
+      "failing_ids": [],
+      "log_tail": "    import pynvml  # type: ignore[import]\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n2 passed, 2 warnings in <t>s",
+      "outcome": "green",
+      "passed": 2,
+      "skipped": 0,
+      "source_modules": [],
+      "test_file": "tests/test_dem3d_ucs_benchmark.py"
+    },
+    {
+      "declared_tests": 3,
+      "errors": 0,
+      "exit_code": 0,
+      "failed": 0,
+      "failing_ids": [],
+      "log_tail": "    import pynvml  # type: ignore[import]\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n3 passed, 2 warnings in <t>s",
+      "outcome": "green",
+      "passed": 3,
+      "skipped": 0,
+      "source_modules": [],
+      "test_file": "tests/test_dem3d_ucs_calibration.py"
+    },
+    {
+      "declared_tests": 2,
+      "errors": 0,
+      "exit_code": 0,
+      "failed": 0,
+      "failing_ids": [],
+      "log_tail": "    import pynvml  # type: ignore[import]\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n2 passed, 2 warnings in <t>s",
+      "outcome": "green",
+      "passed": 2,
+      "skipped": 0,
+      "source_modules": [],
+      "test_file": "tests/test_dem3d_ucs_fracture_threshold.py"
+    },
+    {
+      "declared_tests": 2,
+      "errors": 0,
+      "exit_code": 0,
+      "failed": 0,
+      "failing_ids": [],
+      "log_tail": "    import pynvml  # type: ignore[import]\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n2 passed, 2 warnings in <t>s",
+      "outcome": "green",
+      "passed": 2,
+      "skipped": 0,
+      "source_modules": [],
+      "test_file": "tests/test_dem3d_ucs_sensitivity.py"
+    },
+    {
+      "declared_tests": 3,
+      "errors": 0,
+      "exit_code": 0,
+      "failed": 0,
+      "failing_ids": [],
+      "log_tail": "    import pynvml  # type: ignore[import]\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n3 passed, 2 warnings in <t>s",
+      "outcome": "green",
+      "passed": 3,
+      "skipped": 0,
+      "source_modules": [],
+      "test_file": "tests/test_dem3d_ucs_timestep_convergence.py"
+    },
+    {
+      "declared_tests": 2,
+      "errors": 0,
+      "exit_code": 0,
+      "failed": 0,
+      "failing_ids": [],
+      "log_tail": "    import pynvml  # type: ignore[import]\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n2 passed, 2 warnings in <t>s",
+      "outcome": "green",
+      "passed": 2,
+      "skipped": 0,
+      "source_modules": [
+        "dem3d"
+      ],
+      "test_file": "tests/test_dem3d_validation_campaign_runner.py"
+    },
+    {
+      "declared_tests": 1,
+      "errors": 0,
+      "exit_code": 0,
+      "failed": 0,
+      "failing_ids": [],
+      "log_tail": "    import pynvml  # type: ignore[import]\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n1 passed, 2 warnings in <t>s",
+      "outcome": "green",
+      "passed": 1,
+      "skipped": 0,
+      "source_modules": [],
+      "test_file": "tests/test_dem3d_visualization.py"
+    },
+    {
+      "declared_tests": 3,
+      "errors": 0,
+      "exit_code": 0,
+      "failed": 0,
+      "failing_ids": [],
+      "log_tail": "    import pynvml  # type: ignore[import]\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n3 passed, 2 warnings in <t>s",
+      "outcome": "green",
+      "passed": 3,
+      "skipped": 0,
+      "source_modules": [],
+      "test_file": "tests/test_dem3d_wedge_resistance_sensitivity.py"
+    }
+  ],
+  "timings_included": false
+}
