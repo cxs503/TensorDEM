@@ -1,0 +1,161 @@
+{
+  "equilibrium_moments": {
+    "mass_error": 2.220446049250313e-16,
+    "momentum_error": 4.85722573273506e-17,
+    "moment_flux_error": 1.1102230246251565e-16
+  },
+  "lattice_isotropy": {
+    "zeroth_error": 0.0,
+    "second_error": 1.1102230246251565e-16,
+    "fourth_error": 1.1102230246251565e-16
+  },
+  "viscosity_series": [
+    {
+      "tau0": 0.6,
+      "cs_sgs": 0.0,
+      "amplitude": 0.01,
+      "mode": 1,
+      "wavenumber": 0.20943951023931953,
+      "steps": 2052,
+      "nu_molecular": 0.033333333333333326,
+      "nu_measured": 0.03345064183538147,
+      "relative_error": 0.00351925506144428,
+      "decay_fit_r2": 0.9999999836462896,
+      "mean_effective_tau": 0.599999999999998,
+      "steps_span": 3.00182190154614,
+      "mass_drift": 1.8673951274195133e-13,
+      "x_momentum_drift": 6.7437375128598376e-15
+    },
+    {
+      "tau0": 0.8,
+      "cs_sgs": 0.0,
+      "amplitude": 0.01,
+      "mode": 1,
+      "wavenumber": 0.20943951023931953,
+      "steps": 684,
+      "nu_molecular": 0.10000000000000002,
+      "nu_measured": 0.1002347266716073,
+      "relative_error": 0.002347266716072743,
+      "decay_fit_r2": 0.9999999805837108,
+      "mean_effective_tau": 0.8000000000000046,
+      "steps_span": 3.004746228776094,
+      "mass_drift": 4.929390229335695e-14,
+      "x_momentum_drift": 2.8406096919120216e-15
+    },
+    {
+      "tau0": 1.0,
+      "cs_sgs": 0.0,
+      "amplitude": 0.01,
+      "mode": 1,
+      "wavenumber": 0.20943951023931953,
+      "steps": 411,
+      "nu_molecular": 0.16666666666666666,
+      "nu_measured": 0.16666019352973194,
+      "relative_error": -3.8838821608322416e-05,
+      "decay_fit_r2": 0.9999998300578447,
+      "mean_effective_tau": 1.0,
+      "steps_span": 3.0120570468509738,
+      "mass_drift": 2.098321516541546e-14,
+      "x_momentum_drift": 5.854691731421724e-16
+    },
+    {
+      "tau0": 1.2,
+      "cs_sgs": 0.0,
+      "amplitude": 0.01,
+      "mode": 1,
+      "wavenumber": 0.20943951023931953,
+      "steps": 294,
+      "nu_molecular": 0.2333333333333333,
+      "nu_measured": 0.2324722407574699,
+      "relative_error": -0.003690396753700373,
+      "decay_fit_r2": 0.9999991283805233,
+      "mean_effective_tau": 1.1999999999999935,
+      "steps_span": 3.019367864925855,
+      "mass_drift": 1.199040866595169e-14,
+      "x_momentum_drift": 8.673617379884035e-16
+    },
+    {
+      "tau0": 1.5,
+      "cs_sgs": 0.0,
+      "amplitude": 0.01,
+      "mode": 1,
+      "wavenumber": 0.20943951023931953,
+      "steps": 206,
+      "nu_molecular": 0.3333333333333333,
+      "nu_measured": 0.329435623339187,
+      "relative_error": -0.011693129982438877,
+      "decay_fit_r2": 0.9999953935645755,
+      "mean_effective_tau": 1.5,
+      "steps_span": 3.0266786830007364,
+      "mass_drift": 6.661338147750939e-15,
+      "x_momentum_drift": 6.288372600415926e-16
+    }
+  ],
+  "mode_scaling": {
+    "tau0": 1.0,
+    "cs_sgs": 0.0,
+    "amplitude": 0.01,
+    "mode": 2,
+    "wavenumber": 0.41887902047863906,
+    "steps": 120,
+    "nu_molecular": 0.16666666666666666,
+    "nu_measured": 0.16658927713949465,
+    "relative_error": -0.0004643371630320692,
+    "decay_fit_r2": 0.9999934417485173,
+    "mean_effective_tau": 1.0,
+    "steps_span": 3.538435948242406,
+    "mass_drift": 5.7731597280508156e-15,
+    "x_momentum_drift": 0.06062955362768082
+  },
+  "smagorinsky": {
+    "tau0": 0.5006,
+    "cs_sgs": 0.16,
+    "amplitudes": [
+      0.01,
+      0.05,
+      0.1
+    ],
+    "tau_excess": [
+      0.000134102186919699,
+      0.0006701853670697672,
+      0.0013397088881108438
+    ],
+    "eddy_viscosity": [
+      4.4700728973232996e-05,
+      0.00022339512235658907,
+      0.0004465696293702813
+    ],
+    "molecular_viscosity": 0.00020000000000001497,
+    "eddy_to_molecular": [
+      0.22350364486614824,
+      1.1169756117828618,
+      2.2328481468512393
+    ],
+    "fitted_exponent": 0.9995963588563844,
+    "zero_stress_tau_error": 0.0,
+    "max_relative_error": 0.0,
+    "grading": "implementation consistency against an independent evaluation of the published Hou et al. (1996) closure; the eddy viscosity is evaluated on a known shear mode, not calibrated against a turbulence measurement"
+  },
+  "acoustic": {
+    "wavenumber": 0.39269908169872414,
+    "omega_measured": 0.22626496734831245,
+    "omega_analytic": 0.2267249205292772,
+    "sound_speed_measured": 0.5761790080321636,
+    "sound_speed_analytic": 0.5773502691896257,
+    "relative_error": -0.002028683833656346,
+    "half_period_lattice": 13.884573871100528,
+    "crossings": 29
+  },
+  "verdicts": {
+    "equilibrium_exact": true,
+    "isotropy_exact": true,
+    "viscosity_within_3pct": true,
+    "mode2_within_3pct": true,
+    "smagorinsky_zero_stress_limit": true,
+    "smagorinsky_matches_closed_form": true,
+    "smagorinsky_linear_in_amplitude": true,
+    "sound_speed_within_3pct": true,
+    "conservation_10_12": false
+  },
+  "all_pass": false
+}
