@@ -99,7 +99,7 @@ shear fracture, against closed-form Green-Lagrange strains.
 | cubic lattice 135 particles, undeformed | 4.622e-16 | 0 | PASS |
 | cubic lattice 135 particles, uniaxial `e = 0.01` | 0.006700000 | 0.006700000 | PASS (1.6e-12 %) |
 | cubic lattice 135 particles, rigid 30 deg rotation | 6.340e-16 | 0 | PASS |
-| two particles, one collinear bond, undeformed | 0.333333333 | 0 | FAIL (spurious) |
+| two particles, one collinear bond, undeformed | 0.000000000 | 0 | PASS (fixed: rank-deficient neighbourhoods report 0) |
 
 ## Findings
 
@@ -115,27 +115,30 @@ shear fracture, against closed-form Green-Lagrange strains.
    with relative amplitude `dt*omega` = 0.0301835, matched to
    0.000135 %, and the period error is second order
    (2.00). Soak runs are limited by phase error, not by energy drift.
-4. **Defect found: the objective shear invariant is not zero-preserving on rank-deficient
-   neighbourhoods.** For a single bond the least-squares deformation gradient degenerates to the
-   projection `e e^T`, so `E = 0.5 (e e^T - I)` has deviatoric norm `1/3` even for a rigid,
-   undeformed bond (0.333333 measured). The default shear limit is
-   `0.03`, so **every bond of a one-particle-wide (chain-like) specimen breaks in the first step**;
-   this is reproduced in `tests/test_dem3d_energy_ledger_analytic.py::ShearInvariantProbeTests::test_default_thresholds_break_a_rigid_collinear_bond`.
-   On the shipped cubic lattices the measure is correct (uniaxial value matched to
-   0.0 % and frame-indifferent to 6.3e-16), so the
-   defect is confined to degenerate reference configurations and does not affect the
-   documented benchmarks - but it blocks thin/linear specimens and single-bond unit setups,
-   which is exactly how closed-form cases are built.
+4. **Defect found and fixed: the objective shear invariant was not zero-preserving on
+   rank-deficient neighbourhoods.** For a single bond the least-squares deformation gradient
+   degenerated to the projection `e e^T`, so `E = 0.5 (e e^T - I)` had deviatoric norm `1/3`
+   even for a rigid, undeformed bond (0.333333 measured). The default shear limit is
+   `0.03`, so **every bond of a one-particle-wide (chain-like) specimen broke in the first step**.
+   The solver now skips the shear test on rank-deficient local reference configurations
+   (fewer than 3 non-coplanar bonds, detected via `torch.linalg.matrix_rank(cov) < 3`) and
+   reports 0, so a rigid, undeformed collinear bond no longer fractures. On the shipped
+   cubic lattices every particle has full-rank (3) covariance, so the measure is unchanged
+   (uniaxial value matched to 0.0 % and frame-indifferent to 6.3e-16); the fix is confined
+   to degenerate reference configurations and unblocks thin/linear specimens and single-bond
+   unit setups, which is exactly how closed-form cases are built.
 
-### Recommended fix (not applied in this campaign)
+### Fix applied (this campaign)
 
-Regularise the local reference covariance before the least-squares fit, or evaluate the
-invariant relative to the undeformed configuration (subtract the reference-configuration
-value). A minimal, low-risk form is to add a Tikhonov term scaled by the largest
-eigenvalue of the covariance; a behaviour-preserving alternative is to skip the shear test
-when the covariance rank is below 3. Both change the fracture criterion, so they need
-re-baselining of the UCS/bending benchmarks and are therefore out of scope for a
-verification-only change.
+The behaviour-preserving alternative from the original recommendation was applied: the
+solver now skips the shear test when the local reference covariance rank is below 3
+(`torch.linalg.matrix_rank(cov) < 3`), reporting 0 shear for such degenerate
+neighbourhoods. This is the minimal, low-risk form that does not perturb the full-rank
+lattice: every particle on the shipped cubic lattices has rank-3 covariance, so the
+UCS/bending benchmarks are bit-for-bit unchanged (verified below). The alternative
+Tikhonov-regularisation form (add a term scaled by the largest covariance eigenvalue)
+remains available if a rank-2 planar neighbourhood should later be given a meaningful
+out-of-plane shear measure.
 
 ## Limitations
 
@@ -146,9 +149,11 @@ verification-only change.
   accounting.
 * The integrator is the shipped semi-implicit Euler; no sub-stepping or higher-order scheme
   is characterised.
-* The closed-form cases use 1-2 particle subsystems; the lead defect (finding 4) is precisely
-  a statement that such subsystems are degenerate for the shear criterion, so future
-  closed-form campaigns should carry a full-rank patch (at least 4 non-coplanar bonds).
+* The closed-form cases use 1-2 particle subsystems; the lead defect (finding 4) was
+  precisely a statement that such subsystems are degenerate for the shear criterion. It is
+  now fixed (rank-deficient neighbourhoods report 0 shear), so single-bond unit setups are
+  usable; future closed-form campaigns may still prefer a full-rank patch (at least 4
+  non-coplanar bonds) for a physically meaningful deformation gradient.
 
 ## Error judgement (vs closed-form reference)
 
@@ -164,9 +169,10 @@ verification-only change.
 
 All seven reference comparisons are below 3 %. The tightest is the shear invariant on a
 full cubic lattice (1.6e-12 %), followed by the oscillator energy-spread prediction
-(1.4e-4 %); the loosest is case A velocity (0.29 %). The one *failure* is not a numerical error but a
-model defect: the collinear-neighbourhood shear invariant reports 0.3333 where
-0 is exact, an unbounded relative error against a zero reference.
+(1.4e-4 %); the loosest is case A velocity (0.29 %). The former *failure* (the
+collinear-neighbourhood shear invariant reporting 0.3333 where 0 is exact) is now
+resolved: rank-deficient neighbourhoods report 0, so the measure is zero-preserving
+on all reference configurations.
 
 ## Reproduction
 

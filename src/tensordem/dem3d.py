@@ -459,12 +459,21 @@ class IceDEM3D:
         cross = torch.zeros_like(cov)
         cov.index_add_(0, i, rr); cov.index_add_(0, j, rr)
         cross.index_add_(0, i, qr); cross.index_add_(0, j, qr)
+        # Rank-deficient local reference (fewer than 3 non-coplanar bonds) makes
+        # the least-squares deformation gradient ill-posed: the pseudo-inverse
+        # degenerates to a projection and reports a spurious 1/3 shear invariant
+        # even for a rigid, undeformed bond. Skip the shear test on such
+        # degenerate neighbourhoods (report 0) so thin/linear specimens and
+        # single-bond unit setups do not spuriously fracture. Full-rank lattices
+        # (every particle with >= 3 non-coplanar reference bonds) are unchanged.
+        rank = torch.linalg.matrix_rank(cov)
         f = cross @ torch.linalg.pinv(cov)
         eye = torch.eye(3, dtype=self.dtype, device=self.device)
         e = 0.5 * (f.transpose(1, 2) @ f - eye)
         dev = e - torch.diag_embed(e.diagonal(dim1=1, dim2=2).mean(dim=1).unsqueeze(1).expand(-1, 3))
         # sqrt(2/3 devE:devE), invariant under rigid rotation.
-        return torch.sqrt((2.0 / 3.0) * dev.square().sum(dim=(1, 2)).clamp_min(0.0))
+        shear = torch.sqrt((2.0 / 3.0) * dev.square().sum(dim=(1, 2)).clamp_min(0.0))
+        return torch.where(rank < 3, torch.zeros_like(shear), shear)
 
     def _loads(self, external_forces: torch.Tensor | None) -> torch.Tensor | None:
         if external_forces is None:

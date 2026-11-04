@@ -386,7 +386,7 @@ def probe_shear_invariant() -> dict[str, Any]:
     return {
         "case": "shear_invariant_probe",
         "collinear_undeformed_shear": p1,
-        "collinear_degenerate": p1 > 1e-6,
+        "collinear_degenerate": p1 > 1e-6,  # False after rank-deficiency fix: zero-preserving
         "lattice_undeformed_shear": p2_undeformed,
         "lattice_uniaxial_strain": strain,
         "lattice_uniaxial_shear_code": p2_code,
@@ -524,7 +524,8 @@ def make_figure(decay: dict[str, Any], osc: dict[str, Any], rows: list[dict[str,
 
     fig.suptitle(
         "TensorDEM cumulative energy ledger: closed-form verification "
-        f"(collinear shear artifact = {probe['collinear_undeformed_shear']:.3f})",
+        f"(collinear shear = {probe['collinear_undeformed_shear']:.3e}, "
+        f"zero-preserving after rank-deficiency fix)",
         fontsize=11,
     )
     fig.tight_layout()
