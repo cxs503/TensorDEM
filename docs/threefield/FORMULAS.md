@@ -133,6 +133,15 @@ this platform. Consequences, stated plainly:
   is or is not inside the range that two engineering models span, and even that
   only if both models are structurally appropriate for the geometry.
 
+
+> **Update (literature identifiability audit).** The `WITHHELD` grade below is *partly superseded*: the
+> published Lindqvist and Riska predictions transcribed in
+> `benchmarks/dem3d/ship_ice_validation/mt_uikku_level_ice.csv` are now used as the reference.
+> Result: no admissible hull inside a declared envelope reproduces either published column within the
+> 15 % gate, and the published relative speed dependence `C2/C1` is several times larger than the shipped
+> chain can reach. The coefficient set is therefore graded `REFUTED-IN-ENVELOPE`, not merely unverified.
+> See `docs/threefield/LITERATURE_IDENTIFIABILITY.md` for the tables, grades and limitations. The
+> statements below describe the audit that preceded this one and are kept unchanged.
 ## 7. What this audit does not establish
 
 * No comparison with Lindqvist (1989), Riska (1989) or ice-class rule text: the
