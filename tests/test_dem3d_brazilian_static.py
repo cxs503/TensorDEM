@@ -47,7 +47,16 @@ def _case_copy(**overrides):
 
 @pytest.fixture(scope="module")
 def reference_state():
-    sim, geometry = _build(CASE)
+    # The elastic-field comparison must isolate the static contact law, so the
+    # platen dashpot is switched off for this fixture.  With the platen loading
+    # velocity nonzero the dashpot force c * loading_speed acts on contacting
+    # particles; before the physical platen contact mask it was cancelled to
+    # machine precision by the (spurious) far-field dashpot of the opposite
+    # platen, so the mirror test passed by accident.  tests/test_dem3d_platen_contact_mask.py
+    # pins the masked contract; zero damping here makes the comparison exact
+    # under either convention.  (m2528 rebuild: fixture-only change, the
+    # 1e-10 assertion is untouched.)
+    sim, geometry = _build(_case_copy(platen_damping_Ns_m=0.0))
     radius = float(CASE["config"]["radius_m"])
     positions = sim.positions.detach().cpu().numpy().astype(float).copy()
     rng = np.random.default_rng(20261103)
