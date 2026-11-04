@@ -1,20 +1,20 @@
 {
  "schema": "tensordem.doc-evidence-ledger/1",
  "generated_by": "scripts/audit_doc_evidence.py",
- "documents_scanned": 105,
- "pointers": 512,
+ "documents_scanned": 106,
+ "pointers": 543,
  "counts": {
-  "code:TRACKED": 195,
+  "code:TRACKED": 197,
   "data:MISSING": 35,
-  "data:TRACKED": 26,
-  "doc:TRACKED": 66,
+  "data:TRACKED": 27,
+  "doc:TRACKED": 91,
   "figure:MISSING": 65,
-  "figure:TRACKED": 7,
-  "test:TRACKED": 118
+  "figure:TRACKED": 9,
+  "test:TRACKED": 119
  },
  "remedy": {
   "REGENERABLE": 100,
-  "TRACKED": 412
+  "TRACKED": 443
  },
  "unresolved_per_doc": {
   "docs/TENSORDEM_UPSTREAM_DIFF_M1630.md": 4,
@@ -1468,6 +1468,223 @@
    "line": 91,
    "pointer": "scripts/run_dem3d_validation_campaign.py",
    "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_doc_numeric_consistency_audit.md",
+   "line": 4,
+   "pointer": "scripts/audit_doc_numeric_claims.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_doc_numeric_consistency_audit.md",
+   "line": 5,
+   "pointer": "docs/doc_numeric_claims_ledger.json",
+   "kind": "data",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_doc_numeric_consistency_audit.md",
+   "line": 5,
+   "pointer": "scripts/plot_doc_numeric_claims.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_doc_numeric_consistency_audit.md",
+   "line": 6,
+   "pointer": "tests/test_doc_numeric_claims.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_doc_numeric_consistency_audit.md",
+   "line": 11,
+   "pointer": "docs/dem3d_doc_evidence_pointer_audit.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_doc_numeric_consistency_audit.md",
+   "line": 81,
+   "pointer": "docs/dem3d_energy_ledger_analytic_verification.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_doc_numeric_consistency_audit.md",
+   "line": 82,
+   "pointer": "docs/dem3d_fracture_gen_audit.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_doc_numeric_consistency_audit.md",
+   "line": 83,
+   "pointer": "docs/buoyancy_free_float_verification.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_doc_numeric_consistency_audit.md",
+   "line": 84,
+   "pointer": "docs/dem2d_hull_polyline_geometry_audit.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_doc_numeric_consistency_audit.md",
+   "line": 85,
+   "pointer": "docs/dem3d_bond_fracture_energy.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_doc_numeric_consistency_audit.md",
+   "line": 86,
+   "pointer": "docs/dem3d_tangential_friction_verification.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_doc_numeric_consistency_audit.md",
+   "line": 87,
+   "pointer": "docs/ice_floe_physics_validation.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_doc_numeric_consistency_audit.md",
+   "line": 88,
+   "pointer": "docs/ridge_capacity_skempton_audit.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_doc_numeric_consistency_audit.md",
+   "line": 89,
+   "pointer": "docs/dem3d_buoyancy_float.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_doc_numeric_consistency_audit.md",
+   "line": 90,
+   "pointer": "docs/dem3d_contact_impact_analytic.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_doc_numeric_consistency_audit.md",
+   "line": 91,
+   "pointer": "docs/dem3d_lattice_elasticity.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_doc_numeric_consistency_audit.md",
+   "line": 92,
+   "pointer": "docs/dem3d_rolling_resistance_verification.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_doc_numeric_consistency_audit.md",
+   "line": 93,
+   "pointer": "docs/dem2d_lattice_elasticity.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_doc_numeric_consistency_audit.md",
+   "line": 94,
+   "pointer": "docs/dem3d-rolling-resistance/report.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_doc_numeric_consistency_audit.md",
+   "line": 95,
+   "pointer": "docs/TENSORDEM_UPSTREAM_DIFF_M1630.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_doc_numeric_consistency_audit.md",
+   "line": 96,
+   "pointer": "docs/dem3d_brazilian_hondros_closure.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_doc_numeric_consistency_audit.md",
+   "line": 97,
+   "pointer": "docs/dem3d_integration_order_verification.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_doc_numeric_consistency_audit.md",
+   "line": 98,
+   "pointer": "docs/dem3d_shear_static_reference.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_doc_numeric_consistency_audit.md",
+   "line": 99,
+   "pointer": "docs/dem3d_rolling_resistance.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_doc_numeric_consistency_audit.md",
+   "line": 100,
+   "pointer": "docs/dem_analytic_verification_debt_restoration.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_doc_numeric_consistency_audit.md",
+   "line": 101,
+   "pointer": "docs/fracture_gen_mass_footprint_audit.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_doc_numeric_consistency_audit.md",
+   "line": 102,
+   "pointer": "docs/threefield_lbm_transport_verification.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_doc_numeric_consistency_audit.md",
+   "line": 103,
+   "pointer": "docs/dem3d_scale_benchmark.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_doc_numeric_consistency_audit.md",
+   "line": 105,
+   "pointer": "docs/dem3d_shear_cross_section_convergence.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_doc_numeric_consistency_audit.md",
+   "line": 115,
+   "pointer": "docs/figures/doc_numeric_claims_status.png",
+   "kind": "figure",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_doc_numeric_consistency_audit.md",
+   "line": 119,
+   "pointer": "docs/figures/doc_numeric_claims_recomputability.png",
+   "kind": "figure",
    "status": "TRACKED"
   },
   {
@@ -3455,7 +3672,8 @@
    "status": "MISSING",
    "producers": [
     "scripts/build_ridge_report.py",
-    "scripts/run_ice_ridge_grounding.py"
+    "scripts/run_ice_ridge_grounding.py",
+    "tests/test_doc_numeric_claims.py"
    ],
    "remedy": "REGENERABLE"
   },

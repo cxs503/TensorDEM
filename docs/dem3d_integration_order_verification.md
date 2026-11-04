@@ -114,7 +114,7 @@ from the continuum solution and the exact match with the discrete closed form.
 | quantity | reference | error | < 3% ? |
 |---|---|---|---|
 | ballistic displacement, dt = recommended | discrete closed form | 1.4e-10 | yes (machine precision) |
-| ballistic displacement, dt = recommended | continuum `at^2/2` | 0.93% | no - and it must not be: the O(dt) offset is the scheme's truncation error |
+| ballistic displacement, dt = recommended | continuum `at^2/2` | 0.93% | n/a — an O(dt) truncation offset is *expected* here; this row is not a `< 3 %` tolerance question (verdict belongs to the row above) |
 | oscillator energy, 320 steps/period | exact spring energy `k A^2/2` | 0.99% | yes |
 | oscillator energy at shipped `recommended_dt` | exact spring energy | 0.86% | yes |
 | oscillator period | `2 pi sqrt(m/k)` | 0.00% | yes |
