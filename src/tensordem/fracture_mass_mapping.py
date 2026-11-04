@@ -62,10 +62,106 @@ SIMPLE_CUBIC_PACKING_FRACTION = math.pi / 6.0
 #: Legacy sphere-mapping mass deficit of the represented ice volume.
 SPHERE_MAPPING_DEFICIT = 1.0 - SIMPLE_CUBIC_PACKING_FRACTION
 
+#: Volume ratio of a contact sphere to its hexagonal-close-packed (HCP) cell:
+#: ``(4/3 pi r^3) / (4 sqrt(2) r^3) = pi / (3 sqrt 2) = 0.7404804896930611``.
+HCP_PACKING_FRACTION = math.pi / (3.0 * math.sqrt(2.0))
+
+#: Volume of the HCP cell owned by one contact sphere, ``4 sqrt(2) r^3``.
+HCP_CELL_VOLUME_PER_RADIUS_CUBED = 4.0 * math.sqrt(2.0)
+
+#: Accepted lattice packings of the fracture-field generator.
+#: ``"sc"``  : simple cubic, spacing ``h = 2 r``, coordination number 6
+#: ``"hcp"`` : hexagonal close packed (ABAB), nearest distance ``2 r``,
+#:            coordination number 12
+VALID_PACKINGS = ("sc", "hcp")
+
+#: Accepted ``packing`` spellings -> canonical value.
+PACKING_ALIASES = {
+    "sc": "sc",
+    "simple_cubic": "sc",
+    "simple-cubic": "sc",
+    "simplecubic": "sc",
+    "cubic": "sc",
+    "hcp": "hcp",
+    "hexagonal": "hcp",
+    "hexagonal_close_packed": "hcp",
+    "hexagonal-close-packed": "hcp",
+    "abab": "hcp",
+}
+
 VALID_MASS_MODES = ("sphere", "cell")
 
 #: Spacing / radius ratio at which an inscribed sphere would be volume equal.
 EQUIVALENT_SPACING_PER_RADIUS = (4.0 * math.pi / 3.0) ** (1.0 / 3.0)
+
+
+def normalise_packing(value: str, name: str = "packing") -> str:
+    """Canonicalise a lattice-packing spelling onto ``VALID_PACKINGS``."""
+    if not isinstance(value, str):
+        raise ValueError(f"{name} must be a string, got {type(value).__name__}")
+    key = value.strip().lower()
+    if key not in PACKING_ALIASES:
+        raise ValueError(
+            f"{name} must be one of {sorted(PACKING_ALIASES)} "
+            f"(canonical values {VALID_PACKINGS}), got {value!r}"
+        )
+    return PACKING_ALIASES[key]
+
+
+def packing_fraction(packing: str = "sc") -> float:
+    """Volume fraction of equal contact spheres in the requested lattice.
+
+    ``sc`` -> ``pi/6`` (0.5235987755982988); ``hcp`` -> ``pi/(3 sqrt 2)``
+    (0.7404804896930611).  Both are exact closed forms (Gauss' 1831 sphere
+    packing result for the close-packed density).
+    """
+    packing = normalise_packing(packing)
+    if packing == "hcp":
+        return HCP_PACKING_FRACTION
+    return SIMPLE_CUBIC_PACKING_FRACTION
+
+
+def expected_lattice_bond_lengths(packing: str = "sc") -> dict[str, float]:
+    """Closed-form lattice lengths (in units of the contact radius ``r``).
+
+    * ``sc``  : only one bond length, ``2 r``; cell edge ``2 r``.
+    * ``hcp`` : nearest-neighbour distance ``2 r`` (in-plane and interlayer are
+      equal by construction), in-plane row pitch ``sqrt(3) r``, interlayer
+      pitch ``2 sqrt(2/3) r = 1.632993 r``.
+
+    A touching-sphere HCP lattice is the ABAB stacking whose nearest-neighbour
+    distance equals the sphere diameter, so the *contact* radius and the *cell*
+    volume decouple exactly as in the cubic case.
+    """
+    packing = normalise_packing(packing)
+    if packing == "hcp":
+        return {
+            "bond_length": 2.0,
+            "in_plane_row_pitch": math.sqrt(3.0),
+            "interlayer_pitch": 2.0 * math.sqrt(2.0 / 3.0),
+            "cell_volume": HCP_CELL_VOLUME_PER_RADIUS_CUBED,
+        }
+    return {
+        "bond_length": 2.0,
+        "in_plane_row_pitch": 2.0,
+        "interlayer_pitch": 2.0,
+        "cell_volume": 8.0,
+    }
+
+
+def packing_coordination_number(packing: str = "sc") -> int:
+    """Nearest-neighbour count of the bulk lattice (6 for sc, 12 for hcp)."""
+    packing = normalise_packing(packing)
+    return 12 if packing == "hcp" else 6
+
+
+def mass_radius_factor(packing: str = "sc") -> float:
+    """``r_eq / r``: radius of the sphere carrying the cell mass at the field density.
+
+    ``sc``  -> ``2 (3/4pi)^{1/3} = 1.240701`` (cell ``8 r^3``),
+    ``hcp`` -> ``(3 sqrt 2 / pi)^{1/3} = 1.105634`` (cell ``4 sqrt 2 r^3``).
+    """
+    return (3.0 / (4.0 * math.pi) * expected_lattice_bond_lengths(packing)["cell_volume"]) ** (1.0 / 3.0)
 
 
 def lattice_spacing(particle_radius: float) -> float:
@@ -75,8 +171,16 @@ def lattice_spacing(particle_radius: float) -> float:
     return 2.0 * particle_radius
 
 
-def particle_cell_volume(particle_radius: float) -> float:
-    """Volume of the cubic cell owned by one lattice particle, ``h^3``."""
+def particle_cell_volume(particle_radius: float, packing: str = "sc") -> float:
+    """Volume of the Voronoi cell owned by one lattice particle.
+
+    ``sc``  : ``h^3`` with ``h = 2 r`` (``8 r^3``).
+    ``hcp`` : ``4 sqrt(2) r^3`` (the close-packed cell; note the *contact* radius
+              is unchanged, only the volume each particle represents shrinks).
+    """
+    packing = normalise_packing(packing)
+    if packing == "hcp":
+        return HCP_CELL_VOLUME_PER_RADIUS_CUBED * particle_radius ** 3
     h = lattice_spacing(particle_radius)
     return h ** 3
 
@@ -175,11 +279,20 @@ def analytic_bond_count(counts: tuple[int, int, int]) -> int:
     return nx * ny * (nz - 1) + nx * (ny - 1) * nz + (nx - 1) * ny * nz
 
 
-def particle_mass(density: float, particle_radius: float, mass_mode: str = "cell") -> float:
-    """Particle mass in kg for the requested mapping.
+def particle_mass(
+    density: float,
+    particle_radius: float,
+    mass_mode: str = "cell",
+    packing: str = "sc",
+) -> float:
+    """Particle mass in kg for the requested mapping and lattice packing.
 
-    ``mass_mode='cell'``   -> ``density * h^3``   (volume consistent)
+    ``mass_mode='cell'``   -> ``density * V_cell(packing)`` (volume consistent)
     ``mass_mode='sphere'`` -> ``density * 4/3 pi r^3`` (legacy frozen contract)
+
+    ``packing`` changes the cell volume (``8 r^3`` for sc, ``4 sqrt 2 r^3`` for
+    hcp) and therefore the ``cell`` mass; the ``sphere`` mass is
+    packing-independent by definition.
     """
     if mass_mode not in VALID_MASS_MODES:
         raise ValueError(
@@ -188,7 +301,7 @@ def particle_mass(density: float, particle_radius: float, mass_mode: str = "cell
     if density <= 0.0:
         raise ValueError("density must be positive")
     if mass_mode == "cell":
-        return density * particle_cell_volume(particle_radius)
+        return density * particle_cell_volume(particle_radius, packing)
     return density * particle_sphere_volume(particle_radius)
 
 

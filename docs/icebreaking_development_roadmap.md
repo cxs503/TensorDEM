@@ -123,7 +123,10 @@ The generated `FractureField` can be converted to IceDEM3D initial state via `to
 
 ### Known limits
 
-- Current implementation uses simple cubic lattice; does not support hexagonal close-packed or random packing
+- Current implementation defaults to a simple cubic lattice; hexagonal close
+  packing (HCP) is now supported through ``FractureGenConfig.packing="hcp"``
+  (see ``docs/dem3d_fracture_hcp_packing.md``). Random / polydisperse packing
+  is still not supported.
 - Bond breakage detection uses plane intersection; does not handle curved failure surfaces
 - Mass mapping assumes uniform density; does not account for FEM element-level density variations
 - Energy accounting is bookkeeping only; does not modify bond stiffness or failure criteria in subsequent simulation
