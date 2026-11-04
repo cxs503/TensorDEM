@@ -1,20 +1,20 @@
 {
  "schema": "tensordem.doc-evidence-ledger/1",
  "generated_by": "scripts/audit_doc_evidence.py",
- "documents_scanned": 105,
- "pointers": 512,
+ "documents_scanned": 106,
+ "pointers": 518,
  "counts": {
-  "code:TRACKED": 195,
+  "code:TRACKED": 198,
   "data:MISSING": 35,
   "data:TRACKED": 26,
-  "doc:TRACKED": 66,
+  "doc:TRACKED": 67,
   "figure:MISSING": 65,
-  "figure:TRACKED": 7,
-  "test:TRACKED": 118
+  "figure:TRACKED": 8,
+  "test:TRACKED": 119
  },
  "remedy": {
   "REGENERABLE": 100,
-  "TRACKED": 412
+  "TRACKED": 418
  },
  "unresolved_per_doc": {
   "docs/TENSORDEM_UPSTREAM_DIFF_M1630.md": 4,
@@ -1965,6 +1965,48 @@
    "line": 192,
    "pointer": "tests/test_dem3d_hertz_contact.py",
    "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_hertz_restitution_verification.md",
+   "line": 19,
+   "pointer": "docs/dem3d_contact_impact_analytic.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_hertz_restitution_verification.md",
+   "line": 46,
+   "pointer": "src/tensordem/hertz_restitution.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_hertz_restitution_verification.md",
+   "line": 68,
+   "pointer": "scripts/verify_hertz_restitution.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_hertz_restitution_verification.md",
+   "line": 70,
+   "pointer": "tests/test_dem3d_hertz_restitution.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_hertz_restitution_verification.md",
+   "line": 158,
+   "pointer": "docs/m3608/outputs/hertz_restitution/hertz_restitution_bias.png",
+   "kind": "figure",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_hertz_restitution_verification.md",
+   "line": 213,
+   "pointer": "src/tensordem/dem3d.py",
+   "kind": "code",
    "status": "TRACKED"
   },
   {

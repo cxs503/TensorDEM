@@ -27,6 +27,8 @@ from typing import Any
 
 import torch
 
+from .hertz_restitution import hertz_zeta_for_target
+
 
 # --------------------------------------------------------------------------
 # Hertz contact law primitives
@@ -147,6 +149,14 @@ class DEM3DConfig:
     #   F = max(k*delta - c*delta_dot, 0) whose reference solution is
     #   tensordem.restitution.unilateral_restitution(c, k, m_eff).
     contact_damping_model: str = "restitution"  # "restitution" | "absolute"
+    # Hertzian contacts only: apply the *verified* restitution mapping
+    # (tensordem.hertz_restitution.hertz_zeta_for_target) instead of the linear
+    # free-oscillator identity.  The classical identity overshoots the requested
+    # restitution by +3.2 % at e=0.8 and +16.5 % at e=0.5 on the Hertz branch
+    # (speed independent); the verified mapping reproduces e_target to <0.1 %
+    # in the reference model.  Default False keeps every existing case
+    # bit-for-bit unchanged.
+    hertz_restitution_verified: bool = False
 
     def __post_init__(self) -> None:
         for name in ("nx", "ny", "nz"):
@@ -196,6 +206,16 @@ class DEM3DConfig:
                 "specify the same dashpot twice; pick one convention")
         if self.contact_model not in ("linear", "hertz"):
             raise ValueError("contact_model must be 'linear' or 'hertz'")
+        if not isinstance(self.hertz_restitution_verified, bool):
+            raise ValueError("hertz_restitution_verified must be a boolean")
+        if self.hertz_restitution_verified and self.contact_model != "hertz":
+            raise ValueError(
+                "hertz_restitution_verified applies to contact_model='hertz' only; "
+                "use the clamped linear mapping (tensordem.contact_restitution) instead")
+        if self.hertz_restitution_verified and self.contact_damping_model == "absolute":
+            raise ValueError(
+                "hertz_restitution_verified selects a damping *convention*; it cannot be "
+                "combined with contact_damping_model='absolute'")
         if not math.isfinite(self.young_modulus) or self.young_modulus <= 0.0:
             raise ValueError("young_modulus must be finite and positive")
         if not (math.isfinite(self.poisson_ratio) and 0.0 <= self.poisson_ratio < 0.5):
@@ -682,6 +702,14 @@ class IceDEM3D:
                     ln_e = math.log(cfg.restitution_coefficient)
                     abs_ln_e = -ln_e
                     zeta = abs_ln_e / math.sqrt(math.pi ** 2 + abs_ln_e ** 2)
+                    if hertz and cfg.hertz_restitution_verified:
+                        # The linear identity is only valid for a constant stiffness
+                        # and an unclamped oscillator; on the clipped Hertz law it
+                        # overshoots the requested restitution (see
+                        # tensordem.hertz_restitution).  Use the inverted reference
+                        # solution so that restitution_coefficient is honoured.
+                        zeta = hertz_zeta_for_target(
+                            cfg.restitution_coefficient)["zeta_eff"]
                     gamma_n = (2.0 * zeta * torch.sqrt(k_local * m_eff) if hertz
                                else 2.0 * zeta * math.sqrt(cfg.contact_stiffness * m_eff))
                 else:
