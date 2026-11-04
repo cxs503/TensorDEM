@@ -157,7 +157,7 @@ Findings, with evidence state:
 | Engine step is always inside the audited limit | 【已证实】 | 13 configuration families (platens, cylinder geometry, stiff bond/contact, heavy damping, 5 mm particles): `margin_factor >= 13.5`, `engine recommended_dt <= dt_crit` |
 | Engine closed system conserves bounded energy at the audited step | 【已证实】 | 2000 steps, peak/initial mechanical energy `1.000000`, no bond failure, remaining energy removed by drag |
 | Non-proportional contact damping keeps the row-sum condition sufficient | 【推测】 | random-lattice eigenvalue checks + coupled-chain runs; no proof, and no test at the threshold (see below) |
-| Engine-level threshold crossing verified dynamically | 【未验证】 | `DEM3DConfig.recommended_dt` allows at most `dt/dt_crit = 0.022`, and `IceDEM3D.__init__` refuses larger steps, so the threshold is deliberately unreachable through the public API. The threshold evidence therefore rests on the closed-form scheme and the independent chain/SDOF integrators, which use the same update rule |
+| Engine-level threshold crossing verified dynamically | 【已验证】 | `dt > dt_crit` 只能通过验证专用逃生舱 `DEM3DConfig.allow_dt_above_recommended` 取得；引擎自带力律的每步放大因子与辛 Euler 闭式在 10 个 `dt/dt_crit` 上一致到 ≤7.3e-9，引擎二分把阈值定到 `2/omega_max` 的 4.66e-10，1.05 `dt_crit` 下每步增长 = `rho`（6.6e-10），0.95 `dt_crit` 下 2000 步二次不变量漂移 5.1e-7。见 `docs/dem3d_engine_stability_threshold.md` |
 | Criterion validated against ice experiments | 【未验证】 | no experimental data are involved; this is a numerical-stability statement, not a material-validation statement |
 
 ### Engineering guidance (measured, not assumed)

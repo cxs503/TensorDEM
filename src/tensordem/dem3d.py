@@ -117,6 +117,15 @@ class DEM3DConfig:
     tool_speed: float = 0.5
     tool_gap: float = 0.01
     dt: float | None = None
+    # Verification-only escape hatch. ``IceDEM3D.__init__`` refuses ``dt`` above
+    # ``recommended_dt`` because that heuristic guard exists to keep production
+    # runs far inside the explicit stability limit; consequence: the *failure*
+    # side of the CFL-type threshold (dt > dt_crit) cannot be reached through the
+    # public API at all.  Setting this flag lets a verification harness audit the
+    # step the guard would otherwise forbid (see
+    # ``docs/dem3d_engine_stability_threshold.md``).  It is not a tuning knob:
+    # leave it False in every physical run.
+    allow_dt_above_recommended: bool = False
     device: str = "cpu"
     geometry: str = "box"
     fix_x_edges: bool = True
@@ -173,6 +182,8 @@ class DEM3DConfig:
                 raise ValueError(f"{name} must be a boolean")
         if self.dt is not None and (not math.isfinite(self.dt) or self.dt <= 0):
             raise ValueError("dt must be finite and positive")
+        if not isinstance(self.allow_dt_above_recommended, bool):
+            raise ValueError("allow_dt_above_recommended must be a boolean")
         if self.device not in ("cpu", "cuda"):
             raise ValueError("device must be 'cpu' or 'cuda'")
         if self.geometry not in ("box", "cylinder_xz"):
@@ -271,7 +282,12 @@ class IceDEM3D:
             raise ValueError("CUDA requested but unavailable")
         self.dtype = torch.float64
         self.dt = config.dt if config.dt is not None else config.recommended_dt
-        if self.dt > config.recommended_dt:
+        # The guard is a production safety rail.  It can only be relaxed
+        # explicitly, and the bypass is recorded so an audit can tell a physical
+        # run from a threshold-verification run.
+        self.dt_guard_bypassed = bool(
+            config.allow_dt_above_recommended and self.dt > config.recommended_dt)
+        if not config.allow_dt_above_recommended and self.dt > config.recommended_dt:
             raise ValueError(f"dt exceeds conservative limit {config.recommended_dt:.6g} s")
 
         axes = [torch.arange(v, dtype=self.dtype, device=self.device) for v in
