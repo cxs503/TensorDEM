@@ -36,6 +36,7 @@ import math
 from dataclasses import dataclass, field
 from typing import Iterable, Sequence
 
+import numpy as np
 import torch
 
 from .buoyancy_wet import (
@@ -414,6 +415,219 @@ def log_decrement_damping_ratio(t: Sequence[float], y: Sequence[float],
     return delta / math.sqrt(4.0 * math.pi ** 2 + delta * delta)
 
 
+# ---------------------------------------------------------------------------
+# Finite-amplitude (nonlinear) heave period: exact energy integral
+# ---------------------------------------------------------------------------
+#
+# The small-amplitude anchor in ``benchmarks/ice_floe_physics.py`` (anchor T)
+# compares a measured period with ``2 pi sqrt(m/k)`` at ``2e-3 R``.  That
+# estimate is linearised and the validation document recorded the
+# finite-amplitude period as unverified.  The functions below close that debt
+# without introducing a second physics model: the reference period comes from
+# the *exact* energy integral of the same production force kernel, so the
+# comparison isolates the amplitude effect rather than a reimplementation.
+
+@dataclass
+class HeavePeriodEstimate:
+    """Finite-amplitude heave period from the exact energy integral.
+
+    ``T = 2 (I_up + I_dn)`` with ``I = ∫ dy / sqrt(2 ΔU(y))`` taken over the
+    two half-branches ``[y_eq, y_max]`` and ``[y_min, y_eq]``, where
+    ``ΔU(y) = ∫_y^{y_max} (-a(s)) ds`` is the per-unit-mass energy gained by
+    falling from the release height to ``y`` (so ``ΔU(y_max) = 0`` exactly and
+    no large potentials are ever subtracted from each other).
+
+    At a turning point ``ΔU`` vanishes *linearly* (the release height is a
+    simple root of the energy difference), so the integrand carries an
+    integrable ``1/sqrt(y_end - y)`` singularity.  The quadrature removes it by
+    the substitution ``y = y_end ∓ A u²``: the resulting integrand
+    ``2 A u / sqrt(2 ΔU)`` is finite at ``u -> 0``, so no quadrature node lands
+    on a singular value.
+    """
+    period: float
+    amplitude: float
+    y_eq: float
+    y_min: float
+    y_max: float
+    energy_drop: float
+    n_grid: int
+    n_quad: int
+    period_linear: float = float("nan")
+
+    def as_dict(self) -> dict:
+        return {
+            "period": self.period,
+            "amplitude": self.amplitude,
+            "y_eq": self.y_eq,
+            "y_min": self.y_min,
+            "y_max": self.y_max,
+            "energy_drop": self.energy_drop,
+            "n_grid": self.n_grid,
+            "n_quad": self.n_quad,
+            "period_linear": self.period_linear,
+        }
+
+
+def _simpson_scalar(y_lo: float, y_hi: float, fn, n: int = 256) -> float:
+    """Composite Simpson of ``fn`` on ``[y_lo, y_hi]`` (``n`` even, ``n >= 2``)."""
+    n = n if n % 2 == 0 else n + 1
+    ys = np.linspace(y_lo, y_hi, n + 1)
+    vals = np.asarray(fn(ys), dtype=np.float64)
+    h = (y_hi - y_lo) / n
+    weights = np.ones(n + 1)
+    weights[1:-1:2] = 4.0
+    weights[2:-1:2] = 2.0
+    return float((weights * vals).sum()) * h / 3.0
+
+
+def energy_drop(acceleration, y: float, y_end: float, n_slices: int = 256) -> float:
+    """Per-unit-mass energy gained falling from ``y_end`` to ``y``.
+
+    ``ΔU(y) = ∫_y^{y_end} (-a(s)) ds``: positive between the two turning
+    points, exactly zero at ``y = y_end`` and negative past ``y_min``.
+    """
+    return _simpson_scalar(float(y), float(y_end),
+                           lambda s: -np.asarray(acceleration(s), dtype=np.float64),
+                           n_slices)
+
+
+def finite_amplitude_heave_period(acceleration, y_eq: float, amplitude: float,
+                                  n_grid: int = 4001, n_quad: int = 400,
+                                  linear_period: float = float("nan"),
+                                  span_growth: float = 1.35,
+                                  max_bracket: int = 200) -> HeavePeriodEstimate:
+    """Period of a conservative 1-DOF heave oscillation released at
+    ``y_eq + amplitude`` from rest, from the exact energy integral.
+
+    ``acceleration`` must be a **vectorised** callable mapping an array of
+    heights to an array of accelerations (positive up).  It is the *only*
+    physics input, so the reference period uses the same force law as the
+    solver under test: the comparison verifies the amplitude/integrator
+    bookkeeping, not a second model.
+
+    Damping is excluded by construction; callers must pass a drag-free
+    configuration.
+    """
+    if not amplitude > 0.0:
+        raise ValueError("amplitude must be positive (release above equilibrium)")
+    y_eq = float(y_eq)
+    y_max = y_eq + float(amplitude)
+    a_release = float(np.asarray(acceleration(np.array([y_max])), dtype=np.float64)[0])
+    if not a_release < 0.0:
+        raise ValueError("acceleration at the release point is not restoring "
+                         f"(a(y_max) = {a_release:g} >= 0)")
+
+    # --- lower turning point: bisection on ΔU(y) = 0 -----------------------
+    span = float(amplitude)
+    for _ in range(max_bracket):
+        lo = y_max - span
+        if energy_drop(acceleration, lo, y_max) < 0.0:
+            break
+        span *= span_growth
+    else:  # pragma: no cover - reachable only for a non-confining potential
+        raise RuntimeError("no lower turning point found; potential not confining")
+    hi = y_max - span / span_growth
+    for _ in range(200):
+        mid = 0.5 * (lo + hi)
+        if energy_drop(acceleration, mid, y_max) < 0.0:
+            lo = mid
+        else:
+            hi = mid
+    y_min = 0.5 * (lo + hi)
+
+    # --- dense force grid and cumulative energy drop -----------------------
+    ys = np.linspace(y_min, y_max, int(n_grid))
+    acc = np.asarray(acceleration(ys), dtype=np.float64)
+    seg = 0.5 * ((-acc[1:]) + (-acc[:-1])) * (ys[1:] - ys[:-1])
+    drop = np.concatenate([np.cumsum(seg[::-1])[::-1], [0.0]])
+    drop = np.maximum(drop, 0.0)
+
+    def drop_at(y):
+        return np.interp(y, ys, drop)
+
+    # --- Gauss-Legendre quadrature with the turning-point substitution -----
+    nodes, weights = np.polynomial.legendre.leggauss(int(n_quad))
+    u = 0.5 * (nodes + 1.0)
+    wq = 0.5 * weights
+    half = 0.0
+    for width, anchor, direction in ((y_max - y_eq, y_max, -1.0),
+                                     (y_eq - y_min, y_min, +1.0)):
+        if width <= 0.0:
+            continue
+        y = anchor + direction * width * u ** 2
+        integrand = 2.0 * width * u / np.sqrt(2.0 * drop_at(y))
+        half += float((wq * integrand).sum())
+
+    return HeavePeriodEstimate(period=2.0 * half,
+                               amplitude=float(amplitude),
+                               y_eq=y_eq, y_min=float(y_min), y_max=float(y_max),
+                               energy_drop=energy_drop(acceleration, y_eq, y_max),
+                               n_grid=int(n_grid), n_quad=int(n_quad),
+                               period_linear=float(linear_period))
+
+
+def lattice_heave_acceleration(offsets: torch.Tensor, particle_radius: float,
+                               thickness: float, density_ice: float,
+                               cfg: WetCouplingConfig, chunk: int = 8192):
+    """Vectorised vertical acceleration of a rigid lattice floe.
+
+    Drives the production kernel ``compute_buoyancy_force`` (drag excluded), so
+    the reference period and :class:`RigidHeaveFloe` see identical per-particle
+    submerged fractions.  ``cfg.enabled`` must be true.
+    """
+    off = offsets.double()
+    n_part = int(off.shape[0])
+    mass = density_ice * math.pi * particle_radius ** 2 * thickness * n_part
+    x_off = off[:, 0].contiguous()
+    y_off = off[:, 1].contiguous().numpy()
+
+    def accel(ys):
+        ys = np.atleast_1d(np.asarray(ys, dtype=np.float64))
+        out = np.empty_like(ys)
+        step = int(chunk)
+        for start in range(0, ys.shape[0], step):
+            block = ys[start:start + step]
+            heights = block[:, None] + y_off[None, :]
+            pos = torch.empty((heights.size, 2), dtype=torch.float64)
+            pos[:, 0] = x_off.repeat(block.shape[0])
+            pos[:, 1] = torch.from_numpy(heights.reshape(-1))
+            force = compute_buoyancy_force(pos, particle_radius, thickness,
+                                           density_ice, cfg)
+            fy = force[:, 1].reshape(block.shape[0], n_part).sum(dim=1).numpy()
+            out[start:start + block.shape[0]] = fy / mass - cfg.gravity
+        return out
+
+    return accel
+
+
+def lattice_finite_amplitude_heave_period(offsets: torch.Tensor,
+                                          particle_radius: float,
+                                          thickness: float,
+                                          density_ice: float,
+                                          cfg: WetCouplingConfig,
+                                          y_eq: float, amplitude: float,
+                                          n_grid: int = 4001,
+                                          n_quad: int = 400,
+                                          chunk: int = 8192) -> HeavePeriodEstimate:
+    """Finite-amplitude heave period of a rigid lattice floe.
+
+    The linear reference ``2 pi sqrt(m / K)`` uses the closed-form discrete
+    stiffness :func:`discrete_stiffness` at ``y_eq``, so the returned estimate
+    carries both the nonlinear reference and the linearised one; their
+    difference *is* the amplitude effect.
+    """
+    accel = lattice_heave_acceleration(offsets, particle_radius, thickness,
+                                       density_ice, cfg, chunk=chunk)
+    stiffness = discrete_stiffness(offsets, particle_radius, thickness,
+                                   density_ice, cfg, y_eq)
+    n_part = int(offsets.shape[0])
+    mass = density_ice * math.pi * particle_radius ** 2 * thickness * n_part
+    return finite_amplitude_heave_period(
+        accel, y_eq, amplitude, n_grid=n_grid, n_quad=n_quad,
+        linear_period=analytic_heave_period(mass, stiffness),
+    )
+
+
 __all__ = [
     "HeaveTrajectory",
     "RigidHeaveFloe",
@@ -423,10 +637,15 @@ __all__ = [
     "discrete_buoyancy_potential",
     "discrete_buoyancy_profile",
     "discrete_stiffness",
+    "energy_drop",
     "equilibrium_center_height",
     "body_envelope",
+    "finite_amplitude_heave_period",
+    "HeavePeriodEstimate",
     "hex_lattice_floe",
     "slab_lattice",
+    "lattice_finite_amplitude_heave_period",
+    "lattice_heave_acceleration",
     "linear_heave_stiffness",
     "log_decrement_damping_ratio",
     "mean_period",

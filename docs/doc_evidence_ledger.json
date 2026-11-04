@@ -1,20 +1,20 @@
 {
  "schema": "tensordem.doc-evidence-ledger/1",
  "generated_by": "scripts/audit_doc_evidence.py",
- "documents_scanned": 105,
- "pointers": 512,
+ "documents_scanned": 106,
+ "pointers": 517,
  "counts": {
-  "code:TRACKED": 195,
+  "code:TRACKED": 197,
   "data:MISSING": 35,
   "data:TRACKED": 26,
-  "doc:TRACKED": 66,
+  "doc:TRACKED": 68,
   "figure:MISSING": 65,
   "figure:TRACKED": 7,
-  "test:TRACKED": 118
+  "test:TRACKED": 119
  },
  "remedy": {
   "REGENERABLE": 100,
-  "TRACKED": 412
+  "TRACKED": 417
  },
  "unresolved_per_doc": {
   "docs/TENSORDEM_UPSTREAM_DIFF_M1630.md": 4,
@@ -3273,6 +3273,34 @@
    "status": "TRACKED"
   },
   {
+   "doc": "docs/ice_floe_finite_amplitude_heave.md",
+   "line": 3,
+   "pointer": "docs/ice_floe_physics_validation.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ice_floe_finite_amplitude_heave.md",
+   "line": 8,
+   "pointer": "benchmarks/ice_floe_physics.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ice_floe_finite_amplitude_heave.md",
+   "line": 53,
+   "pointer": "benchmarks/ice_floe_finite_amplitude_heave.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ice_floe_finite_amplitude_heave.md",
+   "line": 165,
+   "pointer": "tests/test_ice_floe_finite_amplitude_heave.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
    "doc": "docs/ice_floe_physics_validation.md",
    "line": 4,
    "pointer": "benchmarks/ice_floe_physics.py",
@@ -3318,6 +3346,13 @@
    "line": 21,
    "pointer": "benchmarks/validation_report.json",
    "kind": "data",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ice_floe_physics_validation.md",
+   "line": 165,
+   "pointer": "docs/ice_floe_finite_amplitude_heave.md",
+   "kind": "doc",
    "status": "TRACKED"
   },
   {
