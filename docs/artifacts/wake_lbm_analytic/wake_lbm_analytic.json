@@ -116,25 +116,145 @@
       0.1
     ],
     "tau_excess": [
-      0.000134102186919699,
-      0.0006701853670697672,
-      0.0013397088881108438
+      0.0001896089221828101,
+      0.000946763548408433,
+      0.0018904654917168556
     ],
     "eddy_viscosity": [
-      4.4700728973232996e-05,
-      0.00022339512235658907,
-      0.0004465696293702813
+      6.320297406093671e-05,
+      0.00031558784946947766,
+      0.0006301551639056185
     ],
     "molecular_viscosity": 0.00020000000000001497,
     "eddy_to_molecular": [
-      0.22350364486614824,
-      1.1169756117828618,
-      2.2328481468512393
+      0.3160148703046599,
+      1.5779392473472702,
+      3.150775819527857
     ],
-    "fitted_exponent": 0.9995963588563844,
+    "fitted_exponent": 0.998789220221714,
     "zero_stress_tau_error": 0.0,
     "max_relative_error": 0.0,
+    "legacy_pi_ratio": 1.4142116809189118,
+    "legacy_max_relative_error": 0.0018277582565809653,
+    "comparison_convention": "full Frobenius norm of the symmetric tensor (off-diagonal weight 2); the pre-m2949 six-slot reference is reported separately as legacy_* and differs by sqrt(2) in |Pi|",
     "grading": "implementation consistency against an independent evaluation of the published Hou et al. (1996) closure; the eddy viscosity is evaluated on a known shear mode, not calibrated against a turbulence measurement"
+  },
+  "smagorinsky_strain_anchor": {
+    "rows": [
+      {
+        "mode": 1,
+        "wavenumber": 0.20943951023931953,
+        "amplitude": 0.01,
+        "sample_row": 8,
+        "pi_measured": 0.0009747372882098185,
+        "pi_analytic": 0.00098189874679036,
+        "relative_deviation": -0.007293479703432637,
+        "shift_smoothing_predicted": -0.007310818074881004,
+        "deviation_over_smoothing": 0.9976283951712682,
+        "strain_magnitude": 0.0020829217868821095,
+        "tau_effective": 0.5009170219019516,
+        "nu_eddy": 0.00010567396731719914,
+        "nu_smagorinsky": 5.332279774418201e-05,
+        "implied_nu_ratio": 1.981778372248465,
+        "implied_nu_ratio_analytic": 1.996338627509723
+      },
+      {
+        "mode": 1,
+        "wavenumber": 0.20943951023931953,
+        "amplitude": 0.1,
+        "sample_row": 8,
+        "pi_measured": 0.009748656612106006,
+        "pi_analytic": 0.009818987467903604,
+        "relative_deviation": -0.007162740152943048,
+        "shift_smoothing_predicted": -0.007310818074881004,
+        "deviation_over_smoothing": 0.9797453690652306,
+        "strain_magnitude": 0.0208292178688211,
+        "tau_effective": 0.5037527881322109,
+        "nu_eddy": 0.0010509293774036237,
+        "nu_smagorinsky": 0.0005332279774418201,
+        "implied_nu_ratio": 1.9708819151716197,
+        "implied_nu_ratio_analytic": 1.9851006754875726
+      },
+      {
+        "mode": 2,
+        "wavenumber": 0.41887902047863906,
+        "amplitude": 0.01,
+        "sample_row": 4,
+        "pi_measured": 0.0019068810555416165,
+        "pi_analytic": 0.00196379749358072,
+        "relative_deviation": -0.028982844832602384,
+        "shift_smoothing_predicted": -0.029243272299524017,
+        "deviation_over_smoothing": 0.9910944485195019,
+        "strain_magnitude": 0.004165843573764219,
+        "tau_effective": 0.501219816093163,
+        "nu_eddy": 0.00020660536438765753,
+        "nu_smagorinsky": 0.00010664559548836402,
+        "implied_nu_ratio": 1.9373079914041083,
+        "implied_nu_ratio_analytic": 1.9951326102680016
+      },
+      {
+        "mode": 2,
+        "wavenumber": 0.41887902047863906,
+        "amplitude": 0.1,
+        "sample_row": 4,
+        "pi_measured": 0.019078423795583714,
+        "pi_analytic": 0.019637974935807205,
+        "relative_deviation": -0.028493321844668684,
+        "shift_smoothing_predicted": -0.029243272299524017,
+        "deviation_over_smoothing": 0.97435476963132,
+        "strain_magnitude": 0.0416584357376422,
+        "tau_effective": 0.5067338067540704,
+        "nu_eddy": 0.002044602251356794,
+        "nu_smagorinsky": 0.0010664559548836403,
+        "implied_nu_ratio": 1.9171933374218704,
+        "implied_nu_ratio_analytic": 1.9734227057112907
+      },
+      {
+        "mode": 3,
+        "wavenumber": 0.6283185307179586,
+        "amplitude": 0.01,
+        "sample_row": 3,
+        "pi_measured": 0.002635256395736681,
+        "pi_analytic": 0.0028169551796480476,
+        "relative_deviation": -0.06450183702747736,
+        "shift_smoothing_predicted": -0.06579736267392905,
+        "deviation_over_smoothing": 0.9803103712093765,
+        "strain_magnitude": 0.005975664329483112,
+        "tau_effective": 0.5014561648190482,
+        "nu_eddy": 0.00028538827301605174,
+        "nu_smagorinsky": 0.00015297700683476767,
+        "implied_nu_ratio": 1.8655631909722428,
+        "implied_nu_ratio_analytic": 1.994192254792306
+      },
+      {
+        "mode": 3,
+        "wavenumber": 0.6283185307179586,
+        "amplitude": 0.1,
+        "sample_row": 3,
+        "pi_measured": 0.02637731435744763,
+        "pi_analytic": 0.02816955179648048,
+        "relative_deviation": -0.06362321459643439,
+        "shift_smoothing_predicted": -0.06579736267392905,
+        "deviation_over_smoothing": 0.9669569115061791,
+        "strain_magnitude": 0.05975664329483112,
+        "tau_effective": 0.5090419825560166,
+        "nu_eddy": 0.0028139941853388604,
+        "nu_smagorinsky": 0.0015297700683476769,
+        "implied_nu_ratio": 1.839488328058536,
+        "implied_nu_ratio_analytic": 1.9644745114710784
+      }
+    ],
+    "shipped_wavenumber_deviation": -0.007293479703432637,
+    "shipped_wavenumber_pi_relative_error": 0.007293479703432637,
+    "shift_smoothing_prediction": -0.007310818074881004,
+    "k2_growth_ratio": 3.9738020822847786,
+    "k3_growth_ratio": 8.843767262027194,
+    "amplitude_ratio": 0.9820744616005366,
+    "negative_control_zero_cs": 0.0,
+    "negative_control_zero_amplitude": 0.0,
+    "implied_nu_ratio": 1.981778372248465,
+    "implied_nu_ratio_analytic": 1.996338627509723,
+    "grading": "analytic Chapman-Enskog anchor for the (Pi, |S|) pair on the shipped lattice; residual is the O(K^2) streaming shift-smoothing, verified by wavenumber doubling. Not a turbulence validation: no reference solution of a turbulent flow is used."
   },
   "acoustic": {
     "wavenumber": 0.39269908169872414,
@@ -154,8 +274,12 @@
     "smagorinsky_zero_stress_limit": true,
     "smagorinsky_matches_closed_form": true,
     "smagorinsky_linear_in_amplitude": true,
+    "smagorinsky_strain_anchor_1pct": true,
+    "smagorinsky_residual_is_shift_smoothing": true,
+    "smagorinsky_negative_controls": true,
+    "smagorinsky_norm_convention_reported": true,
     "sound_speed_within_3pct": true,
-    "conservation_10_12": false
+    "conservation_1e_11": false
   },
   "all_pass": false
 }

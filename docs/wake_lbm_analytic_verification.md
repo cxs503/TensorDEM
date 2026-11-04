@@ -17,7 +17,8 @@ all.
 
 Producing script: `scripts/verify_wake_lbm_analytic.py`
 (all numbers below are emitted by it, never hand-copied).
-Tests: `tests/test_wake_lbm_analytic_verification.py` (7 tests, all green).
+Tests: `tests/test_wake_lbm_analytic_verification.py` (10 tests, all green;
+the three C5b tests and the convention guard were added in m3362).
 Artifacts: `docs/artifacts/wake_lbm_analytic/` (JSON, CSV, 3 PNG).
 
 ## 1. Case and parameters
@@ -184,3 +185,68 @@ propeller-race turbulence data in the repository to calibrate `Cs` against.
    fit sees the fewest e-folds. The error is inside the 3 % band but is the one
    number in this document I would re-measure with a longer run before quoting
    it in a paper.
+## 6. C5b -- analytic strain-rate anchor and the norm-convention repair (m3362)
+
+Pitfall 3 in section 5 predicted that a naive manual check of `|Pi|` shifts
+`tau_eff` by "~1.8e-3 -- an error that would look like physics". The prose was
+right and the code was wrong: after the m2949 kernel fix (full Frobenius norm,
+off-diagonal weight 2) the *reference implementation inside the producing
+script* still summed the six independent slots unweighted, so
+`test_smagorinsky_closure_matches_independent_evaluation` went red with exactly
+`max_relative_error = 1.828e-03` -- the number the doc had warned about. A
+re-implementation that drifts with the kernel is not a reference, so the C5b
+anchor below replaces it with a closed form.
+
+**Repair.** `_manual_pi_norm` now takes `off_diagonal_weight` (default 2.0,
+the shipped convention) and the closure check reports the legacy convention
+separately (`legacy_pi_ratio = 1.414212 ≈ sqrt(2)`, `legacy_max_relative_error
+= 1.828e-3`). Both are gate values in `verdicts`, so the two conventions can
+never again agree silently. With the repaired reference the implementation
+check is exact (`max_relative_error = 0.0`, i.e. bit-identical in float64).
+
+**Anchor.** One streaming step of `u_x(y) = A cos(K y)` leaves
+`f_i = f_i^eq(u(x - c_i))`; expanding to first order in `u` and contracting
+with the D3Q19 fourth moment gives the Chapman-Enskog result
+
+    Pi_ab = -(rho/3)(d_b u_a + d_a u_b) = -(2 rho/3) S_ab
+    =>  |Pi|_Frob = (2 rho/3) sqrt(S_ab S_ab)
+
+with `S` taken from the **analytic** velocity gradient, never from the
+solver's populations. Measured at the strain antinode, `Cs = 0.16`,
+`tau0 = 0.5006`, 12 x 16 x 16, `tau0`-independent one-step field:
+
+| mode | `K` | `A` | `|Pi|` measured | `|Pi|` analytic | deviation | `-c_s^2 K^2/2` |
+|---|---|---|---|---|---|---|
+| 1 | 0.2094 | 0.01 | 9.747373e-04 | 9.818987e-04 | -0.729 % | -0.731 % |
+| 1 | 0.2094 | 0.10 | 9.748657e-03 | 9.818987e-03 | -0.716 % | -0.731 % |
+| 2 | 0.4189 | 0.01 | 1.906881e-03 | 1.963797e-03 | -2.898 % | -2.924 % |
+| 2 | 0.4189 | 0.10 | 1.907842e-02 | 1.963797e-02 | -2.849 % | -2.924 % |
+| 3 | 0.6283 | 0.01 | 2.635256e-03 | 2.816955e-03 | -6.450 % | -6.580 % |
+| 3 | 0.6283 | 0.10 | 2.637731e-02 | 2.816955e-02 | -3.362 % rel. to model | -6.580 % |
+
+The residual is **not** noise and **not** a mismatch of the physical pair: it is
+the discrete shift-smoothing of the mode by the streaming step, whose leading
+order is `- c_s^2 K^2 / 2`. Evidence: doubling the wavenumber multiplies the
+deviation by 3.974 and tripling it by 8.844 (4 and 9 expected), and the
+deviation is amplitude independent (0.1 vs 0.01: ratio 0.982 for `m = 1`), i.e.
+a finite-`K` artefact rather than an `O(u^2)` term. At the shipped operating
+wavenumber the closed form therefore closes to **0.73 %**, the largest
+single-mode deviation in the table being 3.3 % of the smoothing model at
+`m = 3, A = 0.1` where the `O(K^4)` and `O(u^2)` terms stop being negligible.
+Negative controls are exact: `Cs = 0` gives `tau_eff = tau0` to the last bit
+and a zero-amplitude field gives `|Pi| = 0`.
+
+**Convention boundary (not a gate).** The anchor field is a one-streaming-step
+transient, so its `|Pi|` carries no relaxation-time factor; the implied eddy
+viscosity is `nu_t = Cs^2|S|/tau_eff` rather than the steady-state
+`Cs^2|S|`. Measured `nu_t/(Cs^2|S|) = 1.9818` against `1/tau_eff = 1.9963`
+(0.7 %), reported as `implied_nu_ratio` for transparency. This is a property of
+the *test field*, not of the shipped solver, whose closure is evaluated on the
+relaxed field during a run.
+
+**Grading.** The `(Pi, |S|)` pair and the closure algebra are now tied to a
+published closed form (Chapman-Enskog at lattice-quadrature order) and to the
+lattice shift factor, so this is an analytic anchor with an explained residual
+-- still **not** a turbulence validation: no turbulent reference solution is
+involved and no `Cs` calibration against measurement is implied. Figure:
+`docs/artifacts/wake_lbm_analytic/fig4_sgs_strain_anchor.png`.
