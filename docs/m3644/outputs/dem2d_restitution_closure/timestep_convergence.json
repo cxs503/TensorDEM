@@ -1,0 +1,47 @@
+{
+  "stiffness_N_per_m": 2000.0,
+  "rows": [
+    {
+      "damping_N_s_per_m": 5.0,
+      "dt_s": 0.0010143330784563114,
+      "measured_restitution": 0.7633812021489266,
+      "unilateral_prediction": 0.7584495616182146,
+      "relative_error_vs_unilateral": 0.006502265648608027
+    },
+    {
+      "damping_N_s_per_m": 5.0,
+      "dt_s": 0.00025358326961407785,
+      "measured_restitution": 0.7596166018458557,
+      "unilateral_prediction": 0.7584495616182146,
+      "relative_error_vs_unilateral": 0.001538718309957288
+    },
+    {
+      "damping_N_s_per_m": 5.0,
+      "dt_s": 6.339581740351946e-05,
+      "measured_restitution": 0.7587299315851823,
+      "unilateral_prediction": 0.7584495616182146,
+      "relative_error_vs_unilateral": 0.00036966198038203453
+    },
+    {
+      "damping_N_s_per_m": 20.0,
+      "dt_s": 0.0005144357970253288,
+      "measured_restitution": 0.38831639536151,
+      "unilateral_prediction": 0.3848755657077244,
+      "relative_error_vs_unilateral": 0.008940109376542212
+    },
+    {
+      "damping_N_s_per_m": 20.0,
+      "dt_s": 0.0001286089492563322,
+      "measured_restitution": 0.3856952519433964,
+      "unilateral_prediction": 0.3848755657077244,
+      "relative_error_vs_unilateral": 0.00212974350337023
+    },
+    {
+      "damping_N_s_per_m": 20.0,
+      "dt_s": 3.215223731408305e-05,
+      "measured_restitution": 0.38506305561994186,
+      "unilateral_prediction": 0.3848755657077244,
+      "relative_error_vs_unilateral": 0.0004871442328969092
+    }
+  ]
+}

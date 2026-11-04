@@ -1,0 +1,130 @@
+{
+  "protocol": "tensordem-dem2d-restitution-closure-v1",
+  "solver": "tensordem.dem.IceDEM (2-D bonded disks, semi-implicit Euler)",
+  "contact_law": "F_n = max(0, k_n*delta - c_n*v_n), unilateral clip",
+  "probe": "single free particle vs kinematic circular tool (single DOF)",
+  "stiffness_N_per_m": 2000.0,
+  "rows": [
+    {
+      "damping_N_s_per_m": 0.0,
+      "damping_ratio": 0.0,
+      "measured_restitution": 1.000704957206896,
+      "unilateral_prediction": 0.9999999999999983,
+      "classical_prediction": 1.0,
+      "relative_error_vs_unilateral": 0.0007049572068976729,
+      "relative_error_vs_classical": 0.0007049572068960064,
+      "dt_s": 0.0010143330784563114,
+      "steps": 42
+    },
+    {
+      "damping_N_s_per_m": 1.0,
+      "damping_ratio": 0.01863118146479271,
+      "measured_restitution": 0.9451886098616005,
+      "unilateral_prediction": 0.9437939936786691,
+      "classical_prediction": 0.9431388689706086,
+      "relative_error_vs_unilateral": 0.0014776701189795588,
+      "relative_error_vs_classical": 0.0021733182232527995,
+      "dt_s": 0.0010143330784563114,
+      "steps": 42
+    },
+    {
+      "damping_N_s_per_m": 2.0,
+      "damping_ratio": 0.03726236292958542,
+      "measured_restitution": 0.8949676694037737,
+      "unilateral_prediction": 0.8919323845826492,
+      "classical_prediction": 0.8894566391446073,
+      "relative_error_vs_unilateral": 0.003403043631546954,
+      "relative_error_vs_classical": 0.006195951569338344,
+      "dt_s": 0.0010143330784563114,
+      "steps": 42
+    },
+    {
+      "damping_N_s_per_m": 5.0,
+      "damping_ratio": 0.09315590732396356,
+      "measured_restitution": 0.7633812021489266,
+      "unilateral_prediction": 0.7584495616182146,
+      "classical_prediction": 0.7453241271683724,
+      "relative_error_vs_unilateral": 0.006502265648608027,
+      "relative_error_vs_classical": 0.024227144033504525,
+      "dt_s": 0.0010143330784563114,
+      "steps": 42
+    },
+    {
+      "damping_N_s_per_m": 8.0,
+      "damping_ratio": 0.1490494517183417,
+      "measured_restitution": 0.657869217207507,
+      "unilateral_prediction": 0.6515241709682111,
+      "classical_prediction": 0.6227922697977925,
+      "relative_error_vs_unilateral": 0.009738773359500527,
+      "relative_error_vs_classical": 0.056322066137884645,
+      "dt_s": 0.0010143330784563114,
+      "steps": 42
+    },
+    {
+      "damping_N_s_per_m": 10.0,
+      "damping_ratio": 0.18631181464792712,
+      "measured_restitution": 0.5983462042640947,
+      "unilateral_prediction": 0.5917504974061734,
+      "classical_prediction": 0.5511507239681325,
+      "relative_error_vs_unilateral": 0.011146094319873597,
+      "relative_error_vs_classical": 0.08563080522904484,
+      "dt_s": 0.0010143330784563114,
+      "steps": 42
+    },
+    {
+      "damping_N_s_per_m": 15.0,
+      "damping_ratio": 0.2794677219718907,
+      "measured_restitution": 0.4772760574995939,
+      "unilateral_prediction": 0.4725905740245286,
+      "classical_prediction": 0.4007536982613987,
+      "relative_error_vs_unilateral": 0.00991446662840576,
+      "relative_error_vs_classical": 0.19094610872007997,
+      "dt_s": 0.0006859143960337717,
+      "steps": 63
+    },
+    {
+      "damping_N_s_per_m": 20.0,
+      "damping_ratio": 0.37262362929585424,
+      "measured_restitution": 0.38831639536151,
+      "unilateral_prediction": 0.3848755657077244,
+      "classical_prediction": 0.2832344627869778,
+      "relative_error_vs_unilateral": 0.008940109376542212,
+      "relative_error_vs_classical": 0.3710068737417909,
+      "dt_s": 0.0005144357970253288,
+      "steps": 86
+    },
+    {
+      "damping_N_s_per_m": 30.0,
+      "damping_ratio": 0.5589354439437814,
+      "measured_restitution": 0.269587323527721,
+      "unilateral_prediction": 0.2676583842726021,
+      "classical_prediction": 0.12031861323765877,
+      "relative_error_vs_unilateral": 0.007206720836939587,
+      "relative_error_vs_classical": 1.2406119574800945,
+      "dt_s": 0.00034295719801688584,
+      "steps": 136
+    },
+    {
+      "damping_N_s_per_m": 50.0,
+      "damping_ratio": 0.9315590732396356,
+      "measured_restitution": 0.14929269027724343,
+      "unilateral_prediction": 0.14855181641870327,
+      "classical_prediction": 0.00031938325534067803,
+      "relative_error_vs_unilateral": 0.004987309320082334,
+      "relative_error_vs_classical": 466.4405679721584,
+      "dt_s": 0.00020577431881013152,
+      "steps": 254
+    },
+    {
+      "damping_N_s_per_m": 80.0,
+      "damping_ratio": 1.490494517183417,
+      "measured_restitution": 0.07657073700695023,
+      "unilateral_prediction": 0.07632836810645813,
+      "classical_prediction": 0.0,
+      "relative_error_vs_unilateral": 0.003175344979917073,
+      "relative_error_vs_classical": 0.07657073700695023,
+      "dt_s": 0.0001286089492563322,
+      "steps": 490
+    }
+  ]
+}

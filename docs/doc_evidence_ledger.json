@@ -1,20 +1,20 @@
 {
  "schema": "tensordem.doc-evidence-ledger/1",
  "generated_by": "scripts/audit_doc_evidence.py",
- "documents_scanned": 105,
- "pointers": 512,
+ "documents_scanned": 106,
+ "pointers": 523,
  "counts": {
-  "code:TRACKED": 195,
+  "code:TRACKED": 199,
   "data:MISSING": 35,
-  "data:TRACKED": 26,
-  "doc:TRACKED": 66,
+  "data:TRACKED": 29,
+  "doc:TRACKED": 67,
   "figure:MISSING": 65,
-  "figure:TRACKED": 7,
-  "test:TRACKED": 118
+  "figure:TRACKED": 8,
+  "test:TRACKED": 120
  },
  "remedy": {
   "REGENERABLE": 100,
-  "TRACKED": 412
+  "TRACKED": 423
  },
  "unresolved_per_doc": {
   "docs/TENSORDEM_UPSTREAM_DIFF_M1630.md": 4,
@@ -695,6 +695,83 @@
    "line": 60,
    "pointer": "scripts/audit_smooth_plane.py",
    "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem2d_contact_damping_restitution_closure.md",
+   "line": 7,
+   "pointer": "src/tensordem/restitution.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem2d_contact_damping_restitution_closure.md",
+   "line": 14,
+   "pointer": "src/tensordem/dem.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem2d_contact_damping_restitution_closure.md",
+   "line": 27,
+   "pointer": "tests/test_dem.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem2d_contact_damping_restitution_closure.md",
+   "line": 34,
+   "pointer": "src/tensordem/dem2d_restitution.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem2d_contact_damping_restitution_closure.md",
+   "line": 53,
+   "pointer": "scripts/verify_dem2d_restitution_closure.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem2d_contact_damping_restitution_closure.md",
+   "line": 54,
+   "pointer": "tests/test_dem2d_restitution_closure.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem2d_contact_damping_restitution_closure.md",
+   "line": 153,
+   "pointer": "docs/dem3d_energy_ledger_analytic_verification.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem2d_contact_damping_restitution_closure.md",
+   "line": 168,
+   "pointer": "outputs/dem2d_restitution_closure/closure_table.csv",
+   "kind": "data",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem2d_contact_damping_restitution_closure.md",
+   "line": 169,
+   "pointer": "outputs/dem2d_restitution_closure/inverse_map.json",
+   "kind": "data",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem2d_contact_damping_restitution_closure.md",
+   "line": 170,
+   "pointer": "outputs/dem2d_restitution_closure/timestep_convergence.json",
+   "kind": "data",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem2d_contact_damping_restitution_closure.md",
+   "line": 171,
+   "pointer": "outputs/dem2d_restitution_closure/closure.png",
+   "kind": "figure",
    "status": "TRACKED"
   },
   {
