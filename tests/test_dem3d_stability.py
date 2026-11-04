@@ -30,6 +30,16 @@ from tensordem import stability
 # --------------------------------------------------------------------------- #
 # Independent reference implementations (deliberately not importing the module)
 # --------------------------------------------------------------------------- #
+def _coupled_limit(omega: float, damping_rate: float) -> float:
+    """Exact SDOF stability limit ``4 / (sqrt(gamma^2 + 4 w^2) + gamma)``.
+
+    Derived independently here (|tr| <= 1 + det of the amplification matrix) so
+    the assertions below do not borrow the module's own formula.
+    """
+    denominator = math.sqrt(damping_rate * damping_rate + 4.0 * omega * omega) + damping_rate
+    return math.inf if denominator == 0.0 else 4.0 / denominator
+
+
 def _step_scalar(x: float, v: float, dt: float, omega: float, damping_rate: float):
     """One semi-implicit Euler step of ``x'' = -omega^2 x - damping_rate x'``."""
     v_new = v + dt * (-omega * omega * x - damping_rate * v)
@@ -318,11 +328,26 @@ def test_engine_step_is_inside_the_cfl_limit(overrides):
 
 
 def test_engine_limit_scales_like_inverse_sqrt_of_stiffness():
+    """The limit is compared against the exact coupled SDOF formula.
+
+    The bare ``1/sqrt(factor)`` law is the undamped limit; with drag active the
+    exact coupled limit (``d^2 + 2 g <= 4``) departs from it by a fraction of a
+    percent (0.5045 instead of 0.5 for a x4 stiffness boost), so asserting the
+    undamped law would be asserting a sufficient-only bound.
+    """
     reference = stability.stability_report(IceDEM3D(DEM3DConfig(bond_stiffness=1.0e3)))
+    reference_limit = _coupled_limit(reference["omega_upper_rad_s"],
+                                     reference["damping_rate_upper_per_s"])
     for factor in (4.0, 16.0):
         boosted = stability.stability_report(
             IceDEM3D(DEM3DConfig(bond_stiffness=1.0e3 * factor)))
+        boosted_limit = _coupled_limit(boosted["omega_upper_rad_s"],
+                                       boosted["damping_rate_upper_per_s"])
+        assert boosted["critical_dt_s"] == pytest.approx(boosted_limit, rel=1e-12)
         assert boosted["critical_dt_s"] / reference["critical_dt_s"] == pytest.approx(
+            boosted_limit / reference_limit, rel=1e-12)
+        # The elastic axis limit still follows the inverse-square-root law.
+        assert boosted["elastic_dt_limit_s"] / reference["elastic_dt_limit_s"] == pytest.approx(
             1.0 / math.sqrt(factor), rel=1e-12)
 
 
@@ -412,8 +437,14 @@ def test_contact_stiffness_enters_the_limit():
     n = len(model.positions)
     expected_sum = (n - 1) * cfg.contact_stiffness
     assert report["max_stiffness_sum_N_per_m"] == pytest.approx(expected_sum, rel=1e-12)
-    assert report["critical_dt_s"] == pytest.approx(
+    # The elastic axis limit is the pure-stiffness value; the *critical* step also
+    # carries the damping coupling (drag = 2 N s/m acts on every particle here).
+    assert report["elastic_dt_limit_s"] == pytest.approx(
         math.sqrt(2.0 * cfg.mass / expected_sum), rel=1e-12)
+    assert report["critical_dt_s"] == pytest.approx(
+        _coupled_limit(report["omega_upper_rad_s"],
+                       report["damping_rate_upper_per_s"]), rel=1e-12)
+    assert report["critical_dt_s"] <= report["axis_dt_limit_s"] * (1.0 + 1e-12)
 
 
 def test_fixed_particles_are_excluded_from_the_governing_bound():
@@ -463,7 +494,13 @@ def test_negative_stiffness_sum_rejected():
 
 def test_critical_timestep_reports_infinity_without_coupling():
     assert stability.critical_timestep(0.0, 0.0) == math.inf
-    assert stability.critical_timestep(4.0, 1.0) == pytest.approx(0.5)
+    # Single-limit cases reproduce the two axis limits exactly.
+    assert stability.critical_timestep(4.0, 0.0) == pytest.approx(0.5)
+    assert stability.critical_timestep(0.0, 1.0) == pytest.approx(2.0)
+    # Coupled case: strictly below min(2/w, 2/gamma) = 0.5.
+    coupled = _coupled_limit(4.0, 1.0)
+    assert stability.critical_timestep(4.0, 1.0) == pytest.approx(coupled, rel=1e-15)
+    assert coupled < 0.5
 
 
 def test_cli_stability_report_writes_json(tmp_path, capsys):

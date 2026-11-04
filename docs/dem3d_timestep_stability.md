@@ -149,7 +149,7 @@ Findings, with evidence state:
 | Claim | Status | Evidence |
 | --- | --- | --- |
 | Closed-form growth factor equals the reconstructed step-matrix spectral radius | 【已证实】 | max relative error `4.1e-16` over `d in [0.2, 2.9]`, `g in [0, 2.1]` (generated table 1); `test_growth_factor_matches_independent_eigenvalues`, `test_step_matrix_matches_hand_derivation` |
-| Stability region is exactly `d <= 2 and g <= 2` | 【已证实】 | boundary predicates and `test_stability_region_is_exactly_the_closed_form_boundary`; damping decay matches `(1-g)^n` to `1e-12` |
+| Stability region is exactly `0 <= g <= 2` **and** `d^2 + 2 g <= 4` (corrigendum 2026-11-04: the rectangle `d <= 2 and g <= 2` is necessary-only; `d = g = 1.5` has `rho = 2` while passing both axis tests) | 【已更正】 | boundary predicates and `test_stability_region_is_exactly_the_closed_form_boundary`; damping decay matches `(1-g)^n` to `1e-12` |
 | Marginal step `dt = dt_crit` grows algebraically (`E \propto n^2`) | 【已证实】 | `E(1000)/E(500) = 3.998`, `E(2000)/E(1000) = 3.999` (generated table 2); `test_marginal_step_grows_only_polynomially` |
 | Row-sum bound is exact for the infinite simple-cubic lattice | 【已证实】 | dense `lambda_max = 12k/m` matches `sqrt(2*6k/m)^2` to `1e-12`; converged family for finite lattices |
 | Row-sum bound is conservative for finite/random lattices | 【已证实】 | 20 random lattices, bound never below the dense eigenvalue; 1-D chain ratio bound/exact = 1.0012 at N = 32 |
@@ -157,7 +157,7 @@ Findings, with evidence state:
 | Engine step is always inside the audited limit | 【已证实】 | 13 configuration families (platens, cylinder geometry, stiff bond/contact, heavy damping, 5 mm particles): `margin_factor >= 13.5`, `engine recommended_dt <= dt_crit` |
 | Engine closed system conserves bounded energy at the audited step | 【已证实】 | 2000 steps, peak/initial mechanical energy `1.000000`, no bond failure, remaining energy removed by drag |
 | Non-proportional contact damping keeps the row-sum condition sufficient | 【推测】 | random-lattice eigenvalue checks + coupled-chain runs; no proof, and no test at the threshold (see below) |
-| Engine-level threshold crossing verified dynamically | 【未验证】 | `DEM3DConfig.recommended_dt` allows at most `dt/dt_crit = 0.022`, and `IceDEM3D.__init__` refuses larger steps, so the threshold is deliberately unreachable through the public API. The threshold evidence therefore rests on the closed-form scheme and the independent chain/SDOF integrators, which use the same update rule |
+| Engine-level threshold crossing verified dynamically | 【已证实】 | measured engine per-step growth equals the step-matrix spectral radius to 2e-8..6e-7 over `d = 2.01/2.02/2.10`, and `dt = dt_crit` grows algebraically (`E ~ n^2`); `scripts/verify_engine_threshold_crossing.py`, `docs/dem3d_engine_threshold_crossing.md` | `DEM3DConfig.recommended_dt` allows at most `dt/dt_crit = 0.022`, and `IceDEM3D.__init__` refuses larger steps, so the threshold is deliberately unreachable through the public API. The threshold evidence therefore rests on the closed-form scheme and the independent chain/SDOF integrators, which use the same update rule |
 | Criterion validated against ice experiments | 【未验证】 | no experimental data are involved; this is a numerical-stability statement, not a material-validation statement |
 
 ### Engineering guidance (measured, not assumed)
