@@ -58,6 +58,15 @@ FRICTION = CaseSpec(
     shear_breaking_strain=0.03,
     friction_coefficient=0.4,
 )
+MIXED = CaseSpec(
+    "linear_mixed",
+    contact_model="linear",
+    perturbation=1.2,
+    pre_fracture=True,
+    fracture_fraction=0.5,
+    breaking_strain=0.015,
+    shear_breaking_strain=0.03,
+)
 
 
 class KernelInvariantTests(unittest.TestCase):
@@ -136,6 +145,24 @@ class KernelInvariantTests(unittest.TestCase):
                 result = tangent_reciprocity(case, 0)
                 self.assertInvariant(result)
                 self.assertGreater(result.detail["stiffness_scale"], 0.0)
+
+    def test_mixed_topology_exercises_both_bond_and_contact(self):
+        """The mixed case must carry live bonds AND unbonded contacts together."""
+        mixed = brute_force_agreement(MIXED, 0)
+        self.assertGreater(mixed.detail["broken_bonds"], 0.0)
+        self.assertGreater(mixed.detail["unbonded_overlaps"], 10.0)
+        self.assertGreater(mixed.detail["contact_scale"], 0.0)
+        # A mixed topology must still have live bonds (unlike the fully-fractured
+        # cases where every bond is broken) -- otherwise the audit is vacuous.
+        self.assertLess(mixed.detail["broken_bonds"], 326)
+
+    def test_mixed_topology_all_invariants_pass(self):
+        for invariant in ("momentum_closure", "translation", "rotation",
+                          "brute_force", "determinism", "load_superposition"):
+            for seed in self.seeds:
+                with self.subTest(invariant=invariant, seed=seed):
+                    result = getattr(__import__("tensordem.contact_invariants", fromlist=[invariant]), invariant)(MIXED, seed)
+                    self.assertInvariant(result)
 
     def test_audit_summary_has_no_violations(self):
         results = run_audit(seeds=(0, 2), include_reciprocity=False)
