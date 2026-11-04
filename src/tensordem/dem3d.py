@@ -27,6 +27,8 @@ from typing import Any
 
 import torch
 
+from .buoyancy_wet3d import submerged_fraction_sphere_tensor
+
 
 # --------------------------------------------------------------------------
 # Hertz contact law primitives
@@ -147,6 +149,15 @@ class DEM3DConfig:
     #   F = max(k*delta - c*delta_dot, 0) whose reference solution is
     #   tensordem.restitution.unilateral_restitution(c, k, m_eff).
     contact_damping_model: str = "restitution"  # "restitution" | "absolute"
+    # --- Opt-in body forces: gravity + Archimedes buoyancy ---
+    # Both are OFF by default (gravity = 0, water_level = None), so every
+    # pre-existing DEM3D trajectory is bit-for-bit unchanged.  Vertical axis is
+    # +z; see docs/dem3d_buoyancy_wiring.md for the analytic anchors they are
+    # scored against.
+    gravity: float = 0.0                 # m/s^2, body force along -z
+    water_level: float | None = None      # free-surface elevation z (m); None = dry
+    water_density: float = 1025.0         # kg/m^3
+    wet_drag_coefficient: float = 0.0     # N s/m, applied to the submerged fraction only
 
     def __post_init__(self) -> None:
         for name in ("nx", "ny", "nz"):
@@ -203,6 +214,16 @@ class DEM3DConfig:
         if not (math.isfinite(self.hertz_stability_overlap_fraction)
                 and 0.0 < self.hertz_stability_overlap_fraction < 1.0):
             raise ValueError("hertz_stability_overlap_fraction must be in (0, 1)")
+        # Opt-in body forces
+        if not math.isfinite(self.gravity) or self.gravity < 0.0:
+            raise ValueError("gravity must be finite and nonnegative")
+        if self.water_level is not None and not math.isfinite(self.water_level):
+            raise ValueError("water_level must be finite or None")
+        if not math.isfinite(self.water_density) or self.water_density <= 0.0:
+            raise ValueError("water_density must be finite and positive")
+        if (not math.isfinite(self.wet_drag_coefficient)
+                or self.wet_drag_coefficient < 0.0):
+            raise ValueError("wet_drag_coefficient must be finite and nonnegative")
 
     @property
     def mass(self) -> float:
@@ -476,6 +497,76 @@ class IceDEM3D:
             raise ValueError("external_forces must contain only finite values")
         return loads
 
+    # ------------------------------------------------------------------
+    # Opt-in body forces: gravity + Archimedes buoyancy
+    # ------------------------------------------------------------------
+    @property
+    def buoyancy_active(self) -> bool:
+        """True when the Archimedes term is part of the force balance."""
+        return self.config.water_level is not None
+
+    @torch.no_grad()
+    def submerged_fraction(self) -> torch.Tensor:
+        """(N,) submerged volume fraction of every sphere, in [0, 1].
+
+        Uses the verified spherical-cap kernel of :mod:`tensordem.buoyancy_wet3d`
+        against the free surface ``z = water_level`` (the solver's vertical axis is
+        ``+z``; that module names its vertical axis ``y``).  Returns exactly zero
+        for a dry configuration, so the term is provably inert when disabled.
+        """
+        cfg = self.config
+        if cfg.water_level is None:
+            return torch.zeros(len(self.positions), dtype=self.dtype, device=self.device)
+        return submerged_fraction_sphere_tensor(self.positions[:, 2], cfg.radius,
+                                                cfg.water_level)
+
+    @torch.no_grad()
+    def body_forces(self) -> torch.Tensor:
+        """(N, 3) gravity + buoyancy + submerged wet drag, zero when disabled.
+
+        * gravity  ``-m g e_z`` per particle,
+        * buoyancy ``+rho_w g V f_sub e_z`` with ``V = 4/3 pi R^3`` and ``f_sub``
+          the spherical-cap submerged fraction (Archimedes: the force equals the
+          weight of the displaced water, independent of how deep the cap sits),
+        * wet drag ``-C_wet f_sub v`` (linear placeholder, damped only while
+          submerged), only when ``wet_drag_coefficient > 0``.
+
+        No history or fracture state is touched, so probing it is side-effect free.
+        """
+        cfg = self.config
+        body = torch.zeros_like(self.positions)
+        if cfg.water_level is None and cfg.gravity == 0.0:
+            return body
+        if cfg.gravity > 0.0:
+            body[:, 2] -= cfg.mass * cfg.gravity
+        if cfg.water_level is None:
+            return body
+        f_sub = self.submerged_fraction()
+        volume = (4.0 / 3.0) * math.pi * cfg.radius ** 3
+        body[:, 2] += cfg.water_density * cfg.gravity * volume * f_sub
+        if cfg.wet_drag_coefficient > 0.0:
+            body -= cfg.wet_drag_coefficient * f_sub[:, None] * self.velocities
+        return body
+
+    @torch.no_grad()
+    def body_force_ledger(self) -> dict[str, float]:
+        """Vertically summed gravity / buoyancy / wet-drag terms (N) for auditing."""
+        cfg = self.config
+        n = len(self.positions)
+        f_sub = self.submerged_fraction()
+        volume = (4.0 / 3.0) * math.pi * cfg.radius ** 3
+        gravity = -cfg.mass * cfg.gravity * n
+        buoyancy = float((cfg.water_density * cfg.gravity * volume * f_sub).sum())
+        wet_drag = float(-cfg.wet_drag_coefficient
+                         * (f_sub[:, None] * self.velocities)[:, 2].sum())
+        return {
+            "gravity_force_z_N": float(gravity),
+            "buoyancy_force_z_N": float(buoyancy),
+            "wet_drag_force_z_N": float(wet_drag),
+            "net_body_force_z_N": float(gravity + buoyancy + wet_drag),
+            "submerged_volume_m3": float((volume * f_sub).sum()),
+        }
+
     @torch.no_grad()
     def _commit_fracture(self, extension: torch.Tensor) -> None:
         """Commit irreversible bond events only during an explicit force update."""
@@ -638,6 +729,10 @@ class IceDEM3D:
         bond_mag = cfg.bond_stiffness * extension
         bond_force = bond_mag[:, None] * normal
         force = -cfg.drag * self.velocities
+        if cfg.gravity > 0.0 or cfg.water_level is not None:
+            # Opt-in body forces (gravity / Archimedes buoyancy / wet drag).
+            # Disabled by default, so legacy trajectories stay bit-for-bit.
+            force = force + self.body_forces()
         if loads is not None:
             # External nodal loads enter the force balance here. Dropping this
             # term silently removes every externally applied load from the
@@ -886,6 +981,7 @@ class IceDEM3D:
             "platen_contact_energy_J": float(platen_energy),
             "released_bond_energy_J": float(released),
             "mechanical_energy_J": float(kinetic + bond_energy + contact_energy + tool_energy + platen_energy),
+            **self.body_force_ledger(),
         }
 
 
