@@ -119,16 +119,42 @@ def load_obj(path: str | Path) -> tuple[torch.Tensor, torch.Tensor]:
 # Closest point on triangle (Ericson 2005, §5.1.5)
 # ---------------------------------------------------------------------------
 
+def _closest_point_segment_batch(P: torch.Tensor, A: torch.Tensor, B: torch.Tensor) -> torch.Tensor:
+    """Vectorised closest point on the segment AB for each (point, segment) pair.
+
+    Used as the exact fallback for degenerate (zero-area) triangles: a duplicate-vertex
+    or collinear triangle *is* a segment (or a point), and the distance from a query
+    point to it is the minimum over the triangle's three edges.
+    """
+    eps = torch.finfo(P.dtype).eps
+    AB = B - A
+    denom = (AB * AB).sum(dim=-1)
+    t = ((P - A) * AB).sum(dim=-1) / denom.clamp_min(eps)
+    t = torch.where(denom > 0, t.clamp(0.0, 1.0), torch.zeros_like(t))
+    return A + t.unsqueeze(-1) * AB
+
+
 def _closest_point_triangle_batch(
     P: torch.Tensor,   # (N, 3) query points
     A: torch.Tensor,   # (N, 3) triangle vertex 0
     B: torch.Tensor,   # (N, 3) triangle vertex 1
     C: torch.Tensor,   # (N, 3) triangle vertex 2
+    *,
+    relative_area_tolerance: float = 1e-12,
 ) -> torch.Tensor:
     """Vectorised closest point on triangle for each (point, triangle) pair.
 
     All inputs have shape (N, 3).  Returns (N, 3) closest points.
+
+    Degenerate (zero-area) triangles are detected with
+    ``|AB x AC| <= relative_area_tolerance * |AB| |AC|`` and answered by the exact
+    minimum over the three edges.  Without this branch the interior barycentric
+    formula divides by a submitted-to-``eps`` zero area and returns a point far
+    outside the triangle, so sliver triangles (duplicate vertices, collinear
+    vertices -- common in CAD/STL exports) silently drop hull-ice contact.
     """
+    if relative_area_tolerance < 0 or not math.isfinite(relative_area_tolerance):
+        raise ValueError("relative_area_tolerance must be finite and non-negative")
     eps = torch.finfo(P.dtype).eps
     AB = B - A
     AC = C - A
@@ -184,6 +210,18 @@ def _closest_point_triangle_batch(
     result = torch.where(cond_ab.unsqueeze(-1), result_ab, result)
     result = torch.where(cond_b.unsqueeze(-1), B, result)
     result = torch.where(cond_a.unsqueeze(-1), A, result)
+
+    # Degenerate-triangle fallback (exact distance to the degenerate chain of edges).
+    area2 = torch.linalg.vector_norm(torch.linalg.cross(AB, AC), dim=-1)
+    scale = torch.linalg.vector_norm(AB, dim=-1) * torch.linalg.vector_norm(AC, dim=-1)
+    tiny = torch.finfo(P.dtype).tiny
+    degenerate = area2 <= relative_area_tolerance * scale.clamp_min(tiny)
+    if bool(degenerate.any()):
+        for start, end in ((A, B), (B, C), (C, A)):
+            candidate = _closest_point_segment_batch(P, start, end)
+            closer = (torch.linalg.vector_norm(candidate - P, dim=-1, keepdim=True)
+                      < torch.linalg.vector_norm(result - P, dim=-1, keepdim=True))
+            result = torch.where((degenerate & closer.squeeze(-1)).unsqueeze(-1), candidate, result)
 
     return result
 
