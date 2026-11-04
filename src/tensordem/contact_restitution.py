@@ -256,6 +256,11 @@ def measure_dem3d_impact(
         nx=2, ny=2, nz=2,
         radius=radius, density=density,
         contact_stiffness=k_n, contact_damping=gamma_n,
+        # ``contact_damping`` only enters the particle-particle branch when the
+        # absolute convention is selected; the default ``"restitution"`` model
+        # derives gamma_n from ``restitution_coefficient`` (1.0 -> no damping),
+        # which would silently measure an undamped impact.
+        contact_damping_model="absolute",
         drag=drag, fix_x_edges=False,
         tool_speed=1e-3, tool_gap=1.0,
     )
