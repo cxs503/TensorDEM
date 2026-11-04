@@ -375,6 +375,12 @@ class IceDEM3D:
         self._tangential_state: dict[int, tuple[torch.Tensor, torch.Tensor]] = {}
         # Rolling resistance torque accumulator per particle (N, 3).
         self._rolling_torque = torch.zeros((n, 3), dtype=self.dtype, device=self.device)
+        # Power delivered to the particles by the tangential friction force and
+        # by the rolling-resistance couple, published by the step-owner force call
+        # (update_history=True) for the energy-audit ledger.  Probes leave them
+        # untouched so monitoring never clobbers a running accumulation.
+        self._last_friction_power = 0.0
+        self._last_rolling_power = 0.0
         # Flag indicating rolling resistance torque is physically modelled.
         self.rolling_resistance_torque_physical = config.rolling_resistance_coefficient > 0.0
 
@@ -648,6 +654,8 @@ class IceDEM3D:
         force.index_add_(0, j, -active_bond_force)
 
         contact_pairs = self._contact_candidate_pairs()
+        friction_power = torch.zeros((), dtype=self.dtype, device=self.device)
+        rolling_power = torch.zeros((), dtype=self.dtype, device=self.device)
         if contact_pairs.numel():
             ci, cj = contact_pairs.T
             cdelta = self.positions[cj] - self.positions[ci]
@@ -717,6 +725,14 @@ class IceDEM3D:
                     )
                     F_t = F_t_raw * scale[:, None]
 
+                    # Power delivered to the particles by the friction force
+                    # (force on i is F_t, on j is -F_t): P = F_t . (v_i - v_j).
+                    # Negative during stick (energy stored in the tangential
+                    # spring) and during slip (Coulomb dissipation).
+                    friction_power = friction_power + (
+                        F_t * (self.velocities[ci] - self.velocities[cj])
+                    ).sum()
+
                     # Apply tangential force
                     force.index_add_(0, ci, F_t)
                     force.index_add_(0, cj, -F_t)
@@ -730,6 +746,11 @@ class IceDEM3D:
                     rr_i, rr_j, torque_i, torque_j = self._rolling_resistance_couple(
                         ci, cj, cnormal, contact_mag,
                     )
+                    # The couple is strictly dissipative: P = rr_i . (v_i - v_j)
+                    # = -mu_r |F_n| |v_t| <= 0.
+                    rolling_power = rolling_power + (
+                        rr_i * (self.velocities[ci] - self.velocities[cj])
+                    ).sum()
                     # Accumulate rolling torque (diagnostic only).  Guarded
                     # like the friction history so that probing does not inflate
                     # a running sum that no step ever resets.
@@ -742,6 +763,10 @@ class IceDEM3D:
 
                 force.index_add_(0, ci, contact_force)
                 force.index_add_(0, cj, -contact_force)
+
+        if update_history:
+            self._last_friction_power = float(friction_power)
+            self._last_rolling_power = float(rolling_power)
 
         tool_delta = self.positions - self.tool_position
         tool_dist = torch.linalg.vector_norm(tool_delta, dim=1)
