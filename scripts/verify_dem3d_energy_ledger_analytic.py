@@ -159,6 +159,7 @@ def build_subsystem(
     solver.cumulative_drag_dissipation_J = 0.0
     solver.cumulative_particle_damping_J = 0.0
     solver.cumulative_tool_damping_J = 0.0
+    solver.cumulative_friction_dissipation_J = 0.0
     solver.cumulative_fracture_release_J = 0.0
     solver.reference_mechanical_energy_J = solver._mechanical_energy()
     solver.energy_balance_residual_J = 0.0

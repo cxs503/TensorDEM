@@ -373,6 +373,11 @@ class IceDEM3D:
         # Tangential displacement accumulator per contact pair (keyed by pair hash).
         # Stored as dict: pair_key -> (tangential_disp_3d, last_normal_3d)
         self._tangential_state: dict[int, tuple[torch.Tensor, torch.Tensor]] = {}
+        # Instantaneous mechanical power (W) of the tangential friction force
+        # pairs, set on every forces() call.  It is a pure function of the
+        # current state and the stored Cundall-Strack history, so probing
+        # (update_history=False) reports the same value a step owner would.
+        self._friction_power_W = 0.0
         # Rolling resistance torque accumulator per particle (N, 3).
         self._rolling_torque = torch.zeros((n, 3), dtype=self.dtype, device=self.device)
         # Flag indicating rolling resistance torque is physically modelled.
@@ -438,6 +443,8 @@ class IceDEM3D:
         """Return an alive-bond mask aligned with arbitrary sorted node pairs."""
         if pairs.numel() == 0:
             return torch.zeros((0,), dtype=torch.bool, device=self.device)
+        if len(self._bond_keys) == 0:
+            return torch.zeros(pairs.shape[0], dtype=torch.bool, device=self.device)
         keys = pairs[:, 0] * len(self.positions) + pairs[:, 1]
         where = torch.searchsorted(self._bond_keys, keys)
         safe = where.clamp(max=max(len(self._bond_keys) - 1, 0))
@@ -638,6 +645,7 @@ class IceDEM3D:
         bond_mag = cfg.bond_stiffness * extension
         bond_force = bond_mag[:, None] * normal
         force = -cfg.drag * self.velocities
+        self._friction_power_W = 0.0
         if loads is not None:
             # External nodal loads enter the force balance here. Dropping this
             # term silently removes every externally applied load from the
@@ -716,6 +724,13 @@ class IceDEM3D:
                         torch.ones_like(F_t_mag),
                     )
                     F_t = F_t_raw * scale[:, None]
+
+                    # Mechanical power of the tangential force pair (W): the
+                    # rate at which the friction channel does work on the
+                    # relative motion.  This is the ledger term's integrand;
+                    # in the stick regime it equals d/dt(0.5 k_t |delta_t|^2)
+                    # and in the slip regime it reduces to mu |F_n| |v_t|.
+                    self._friction_power_W = float((F_t * v_tangent).sum())
 
                     # Apply tangential force
                     force.index_add_(0, ci, F_t)

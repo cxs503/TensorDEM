@@ -23,6 +23,7 @@ class EnergyAuditedIceDEM3D(IceDEM3D):
         self.cumulative_drag_dissipation_J = 0.0
         self.cumulative_particle_damping_J = 0.0
         self.cumulative_tool_damping_J = 0.0
+        self.cumulative_friction_dissipation_J = 0.0
         self.cumulative_fracture_release_J = 0.0
         self.reference_mechanical_energy_J = self._mechanical_energy()
         self.energy_balance_residual_J = 0.0
@@ -98,6 +99,9 @@ class EnergyAuditedIceDEM3D(IceDEM3D):
         self.cumulative_drag_dissipation_J += drag_rate * self.dt
         self.cumulative_particle_damping_J += particle_rate * self.dt
         self.cumulative_tool_damping_J += tool_rate * self.dt
+        # Tangential friction channel: the power is evaluated by forces() on
+        # the pre-step state, the same convention as the other rates.
+        self.cumulative_friction_dissipation_J += self._friction_power_W * self.dt
         self.cumulative_fracture_release_J = float(self.failure_energy_J.sum())
 
         self.velocities += self.dt * force / self.config.mass
@@ -112,7 +116,8 @@ class EnergyAuditedIceDEM3D(IceDEM3D):
         energy_after = self._mechanical_energy()
         dissipated = (self.cumulative_drag_dissipation_J
                       + self.cumulative_particle_damping_J
-                      + self.cumulative_tool_damping_J)
+                      + self.cumulative_tool_damping_J
+                      + self.cumulative_friction_dissipation_J)
         input_work = self.cumulative_tool_work_J + self.cumulative_external_work_J
         self.energy_balance_residual_J = (
             energy_after - self.reference_mechanical_energy_J - input_work
@@ -128,7 +133,8 @@ class EnergyAuditedIceDEM3D(IceDEM3D):
         energy = self._mechanical_energy()
         dissipated = (self.cumulative_drag_dissipation_J
                       + self.cumulative_particle_damping_J
-                      + self.cumulative_tool_damping_J)
+                      + self.cumulative_tool_damping_J
+                      + self.cumulative_friction_dissipation_J)
         input_work = self.cumulative_tool_work_J + self.cumulative_external_work_J
         self.energy_balance_residual_J = (
             energy - self.reference_mechanical_energy_J - input_work
@@ -140,6 +146,8 @@ class EnergyAuditedIceDEM3D(IceDEM3D):
             "drag_dissipation_cumulative_J": self.cumulative_drag_dissipation_J,
             "particle_damping_cumulative_J": self.cumulative_particle_damping_J,
             "tool_damping_cumulative_J": self.cumulative_tool_damping_J,
+            "friction_dissipation_cumulative_J": self.cumulative_friction_dissipation_J,
+            "friction_power_instantaneous_W": self._friction_power_W,
             "fracture_release_cumulative_J": self.cumulative_fracture_release_J,
             "energy_balance_residual_J": self.energy_balance_residual_J,
             "energy_balance_residual_relative": self.energy_balance_residual_J / max(
@@ -160,6 +168,7 @@ class EnergyAuditedIceDEM3D(IceDEM3D):
             "cumulative_drag_dissipation_J": self.cumulative_drag_dissipation_J,
             "cumulative_particle_damping_J": self.cumulative_particle_damping_J,
             "cumulative_tool_damping_J": self.cumulative_tool_damping_J,
+            "cumulative_friction_dissipation_J": self.cumulative_friction_dissipation_J,
             "cumulative_fracture_release_J": self.cumulative_fracture_release_J,
             "energy_balance_residual_J": self.energy_balance_residual_J,
         }
@@ -178,6 +187,7 @@ class EnergyAuditedIceDEM3D(IceDEM3D):
             self.cumulative_drag_dissipation_J = 0.0
             self.cumulative_particle_damping_J = 0.0
             self.cumulative_tool_damping_J = 0.0
+            self.cumulative_friction_dissipation_J = 0.0
             self.cumulative_fracture_release_J = float(self.failure_energy_J.sum())
             self.energy_balance_residual_J = 0.0
             return
@@ -185,9 +195,12 @@ class EnergyAuditedIceDEM3D(IceDEM3D):
             "reference_mechanical_energy_J", "cumulative_tool_work_J",
             "cumulative_external_work_J", "cumulative_drag_dissipation_J",
             "cumulative_particle_damping_J", "cumulative_tool_damping_J",
+            "cumulative_friction_dissipation_J",
             "cumulative_fracture_release_J", "energy_balance_residual_J",
         )
-        staged = {key: float(audit[key]) for key in keys}
+        # Pre-friction checkpoints lack the friction key; their past friction
+        # work cannot be reconstructed, so the term starts at zero.
+        staged = {key: float(audit.get(key, 0.0)) for key in keys}
         if not all(torch.isfinite(torch.tensor(value)) for value in staged.values()):
             raise ValueError("checkpoint energy audit contains non-finite values")
         for key, value in staged.items():
