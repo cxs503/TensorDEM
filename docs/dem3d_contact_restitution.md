@@ -70,14 +70,14 @@ the result back into the engine:
 
 | target e | pair c_n | pair e measured | rel. error | platen c_n | platen e measured | rel. error |
 | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 0.9 | 0.8394 | 0.90009 | 0.010% | 1.187 | 0.89976 | -0.026% |
-| 0.7 | 2.994 | 0.69971 | -0.042% | 4.234 | 0.70045 | 0.064% |
-| 0.5 | 6.254 | 0.49932 | -0.137% | 8.844 | 0.50083 | 0.167% |
-| 0.3 | 12.18 | 0.29981 | -0.064% | 17.23 | 0.29916 | -0.279% |
+| 0.9 | 0.8394 | 0.90009 | 0.010% | 1.1872 | 0.90000 | 0.001% |
+| 0.7 | 2.994 | 0.69971 | -0.042% | 4.2343 | 0.69653 | -0.495% |
+| 0.5 | 6.254 | 0.49932 | -0.137% | 8.8443 | 0.49845 | -0.309% |
+| 0.3 | 12.18 | 0.29981 | -0.064% | 17.2274 | 0.29929 | -0.235% |
 
 Using the bilateral mapping instead (`restitution.classical_damping`) leaves a
 worst-case closure error of **32.3%** (it under-prescribes `c_n` because the
-clip removes dissipation). The clipped-law inversion stays below **0.28%**.
+clip removes dissipation). The clipped-law inversion stays below **0.50%** (worst case 0.495% at platen target 0.7; the pair branch stays below 0.14%).
 
 ## Practical consequences
 

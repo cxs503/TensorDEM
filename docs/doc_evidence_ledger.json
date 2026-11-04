@@ -5,11 +5,13 @@
  "pointers": 512,
  "counts": {
   "code:TRACKED": 195,
-  "data:MISSING": 35,
+  "data:MISSING": 34,
   "data:TRACKED": 26,
+  "data:UNTRACKED": 1,
   "doc:TRACKED": 66,
-  "figure:MISSING": 65,
+  "figure:MISSING": 63,
   "figure:TRACKED": 7,
+  "figure:UNTRACKED": 2,
   "test:TRACKED": 118
  },
  "remedy": {
@@ -1305,7 +1307,7 @@
    "line": 47,
    "pointer": "outputs/dem3d_restitution/audit.json",
    "kind": "data",
-   "status": "MISSING",
+   "status": "UNTRACKED",
    "producers": [
     "benchmarks/fracture_gen_mass_footprint_audit.py",
     "benchmarks/verification_debt_closure_audit.py",
@@ -1320,7 +1322,7 @@
    "line": 115,
    "pointer": "outputs/dem3d_restitution/fig1_restitution_vs_damping.png",
    "kind": "figure",
-   "status": "MISSING",
+   "status": "UNTRACKED",
    "producers": [
     "scripts/verify_dem3d_restitution.py"
    ],
@@ -1331,7 +1333,7 @@
    "line": 118,
    "pointer": "outputs/dem3d_restitution/fig2_closure_and_error.png",
    "kind": "figure",
-   "status": "MISSING",
+   "status": "UNTRACKED",
    "producers": [
     "scripts/verify_dem3d_restitution.py"
    ],
