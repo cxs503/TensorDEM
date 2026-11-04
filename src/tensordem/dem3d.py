@@ -460,11 +460,21 @@ class IceDEM3D:
         cov.index_add_(0, i, rr); cov.index_add_(0, j, rr)
         cross.index_add_(0, i, qr); cross.index_add_(0, j, qr)
         f = cross @ torch.linalg.pinv(cov)
+        # Rank-deficient reference neighbourhoods (fewer than 3 non-coplanar
+        # bonds) cannot define a full 3-D deformation gradient: the least-squares
+        # fit degenerates to a projection and the Green-Lagrange invariant is
+        # spurious (e.g. 1/3 for a single rigid, undeformed bond). Suppress the
+        # shear criterion there. This is behaviour-preserving: every full-rank
+        # neighbourhood (all shipped cubic lattices) is unchanged.
+        eig = torch.linalg.eigvalsh(cov)
+        max_eig = eig[:, -1].clamp_min(1e-30)
+        full_rank = (eig > 1e-8 * max_eig[:, None]).sum(dim=1) >= 3
         eye = torch.eye(3, dtype=self.dtype, device=self.device)
         e = 0.5 * (f.transpose(1, 2) @ f - eye)
         dev = e - torch.diag_embed(e.diagonal(dim1=1, dim2=2).mean(dim=1).unsqueeze(1).expand(-1, 3))
         # sqrt(2/3 devE:devE), invariant under rigid rotation.
-        return torch.sqrt((2.0 / 3.0) * dev.square().sum(dim=(1, 2)).clamp_min(0.0))
+        shear = torch.sqrt((2.0 / 3.0) * dev.square().sum(dim=(1, 2)).clamp_min(0.0))
+        return shear * full_rank.to(shear.dtype)
 
     def _loads(self, external_forces: torch.Tensor | None) -> torch.Tensor | None:
         if external_forces is None:

@@ -216,22 +216,21 @@ class ShearInvariantProbeTests(unittest.TestCase):
         self.assertLess(probe["lattice_undeformed_shear"], 1e-10)
         self.assertLess(probe["lattice_rigid_rotation_shear"], 1e-10)
 
-    def test_collinear_neighbourhood_reports_spurious_strain(self):
-        """Known limitation (documented, not fixed here).
+    def test_collinear_neighbourhood_is_suppressed(self):
+        """Rank-deficiency fix: a single bond must not report spurious shear.
 
         A single bond gives a rank-one reference covariance, so the least-squares
         deformation gradient is the projection ``e e^T`` rather than the identity
-        and the Green-Lagrange invariant is ``1/3`` for a rigid, undeformed bond.
-        The default 3 % shear limit therefore breaks every bond of a linear
-        (one-particle-wide) specimen in the first step.
+        and the Green-Lagrange invariant would be ``1/3`` for a rigid, undeformed
+        bond. The rank-deficiency guard (``_objective_shear_strain``) suppresses
+        the shear criterion on such neighbourhoods, so the invariant is now 0 and
+        a linear (one-particle-wide) specimen no longer breaks in the first step.
         """
         probe = _probe()
-        self.assertGreater(probe["collinear_undeformed_shear"], 0.3)
-        self.assertAlmostEqual(probe["collinear_undeformed_shear"], 1.0 / 3.0, places=10)
-        self.assertGreater(probe["collinear_undeformed_shear"],
-                           DEM3DConfig().shear_breaking_strain)
+        self.assertLess(probe["collinear_undeformed_shear"], 1e-10)
+        self.assertFalse(probe["collinear_degenerate"])
 
-    def test_default_thresholds_break_a_rigid_collinear_bond(self):
+    def test_default_thresholds_do_not_break_a_rigid_collinear_bond(self):
         cfg = base_config(drag=0.0)  # default breaking/short-shear strains
         solver = build_subsystem(
             cfg,
@@ -242,8 +241,8 @@ class ShearInvariantProbeTests(unittest.TestCase):
         )
         self.assertTrue(bool(solver.alive[0]))
         solver.step()
-        self.assertFalse(bool(solver.alive[0]),
-                         "expected the spurious 1/3 shear invariant to break the bond")
+        self.assertTrue(bool(solver.alive[0]),
+                         "the rank-deficiency guard must keep a rigid collinear bond alive")
 
 
 class LedgerBookkeepingTests(unittest.TestCase):
