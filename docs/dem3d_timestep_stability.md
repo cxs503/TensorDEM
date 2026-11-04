@@ -197,11 +197,20 @@ robustness, not about accuracy.
    bound. Adding a tangential contact model (`contact_tangential.py` exists for
    the 2-D path) will require extending `particle_stiffness_sums` with the
    rotational diagonal.
-4. **No Rayleigh-wave estimate adopted.** Classical DEM practice uses a Rayleigh
-   surface-wave limit `dt ~ r_min/c_R`. It needs a calibrated shear modulus of
-   the lattice, which this repository does not have (§ `dem3d_material_calibration_roadmap.md`);
-   the Gershgorin bound is rigorous and needs no such calibration, so it was
-   preferred and the Rayleigh estimate was not implemented.
+4. **Rayleigh-wave estimate: implemented, audited, not adopted as the guard.**
+   `docs/dem3d_rayleigh_timestep_verification.md`
+   (`src/tensordem/rayleigh_timestep.py`) now implements the classical
+   `dt ~ r_min/c_R` rule and measures it against the *exact* lattice limit
+   `dt = 2/omega_max = sqrt(3 m/(13 k_bond))`, which follows from the closed-form
+   Bloch maximum `omega_max = sqrt(52 k/(3 m))` at the zone boundary. Results: the
+   Gershgorin bound used here is exactly `1/sqrt(3) = 0.5774` of the exact limit
+   (independent of `k`, `m`, `a`), while the Rayleigh rule is
+   0.729x (consistent lattice density) to 0.831x (Reuss shear) of it — but
+   **1.007x i.e. unsafe** if handed the material density `DEM3DConfig.density`,
+   because `rho_lattice = (pi/6) rho_material`. The rule therefore stays out of
+   the engine guard (`recommended_dt`, at 0.312x of the exact limit, is unchanged)
+   and is documented rather than adopted; the density convention, not the wave
+   speed, is what makes it unusable as a safety criterion.
 5. **Accuracy vs stability.** Passing the stability audit says nothing about
    spatial resolution, calibration, or physical fidelity; see
    `docs/dem3d_mechanics_benchmark_protocol.md` and the energy-ledger caveats in
