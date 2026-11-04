@@ -28,10 +28,15 @@ positive value. Use engineering stress in Pa and dimensionless engineering strai
 
 \`\`\`bash
 python scripts/calibrate_dem3d_ucs.py \\
-  --experimental-csv data/ice_ucs_curve.csv \\
+  --experimental-csv <experimental-ucs-curve.csv> \\
   --bond-stiffness-scales 0.5 1.0 2.0 \\
   --breaking-strains 0.01 0.015 0.02 \\
   --output results-dem3d-ucs-calibration
+
+> The repository ships **no** experimental UCS curve: the CSV is a user-supplied input
+> (columns consumed by `scripts/calibrate_dem3d_ucs.py`). The placeholder above keeps this
+> example honest; an earlier revision pointed at a CSV under `data/` that does not exist
+> in the tree (caught by `scripts/audit_doc_evidence.py`).
 \`\`\`
 
 By default, the 3 × 3 grid runs each candidate twice and requires deterministic

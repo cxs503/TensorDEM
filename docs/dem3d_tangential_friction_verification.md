@@ -65,7 +65,7 @@
 
 ## 3. 计算结果
 
-完整的机器生成表见 `outputs/tangential_friction_verification/tables.md`（R1/R2/R3/T1/T2）。
+完整的机器生成表见 `docs/m2220/outputs/tangential_friction_verification/tables.md`（R1/R2/R3/T1/T2）。
 
 **Anchor R（恢复系数）**：目标 e ∈ {0.1, 0.3, 0.5, 0.7, 0.9}，最细 dt = 2.484e-5 s 时
 实测 e 与目标的相对误差分别为 0.0822 % / 0.0194 % / 0.0062 % / 0.0016 % / 0.0001 %，
