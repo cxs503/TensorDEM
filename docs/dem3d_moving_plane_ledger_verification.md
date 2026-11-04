@@ -120,8 +120,10 @@ Jacobian 一致性把参考模型钉在引擎力律上。非自治系统的能�
 - **罚刚度随 E 缩放**：`penalty = 50E/L` 与网络刚度同为 E 量纲，因此**不存在 E→∞ 的刚体极限**
   （本单曾误设该检查，已删除并在 JSON 中改记 `C_stiffness_share`）。罚刚度占右端 x 自由度
   总刚度的绝大部分（见 JSON），故平面力 ~ 罚刚度 × 穿透。
-- **动态 `tool_impulse` 仍为 WITHHELD**：只在冻结极限下与闭式值对上（5.2e-14），动态情形没有
-  独立参考（未做 ∫F dt 的独立数值积分对照）。这不影响 `tool_work` 的 REAL 判定。
+- **动态 `tool_impulse`（本单曾为 WITHHELD，现已解除）**：当单只在冻结极限下与闭式值对上
+  （5.2e-14），动态情形没有独立参考。后续单 `docs/dem3d_moving_plane_dynamic_impulse.md` 补上了
+  该参考：冻结活动集下的**闭式**（模态 + Duhamel 全解析）与**独立 RK4 + Richardson** 两条路线
+  互证到 2.3e-12，引擎账本 `-mean_force·dt` 在 rampp+hold 全窗口对基准偏差 ≤ 2.5e-7。
 - **适用范围**：二维控制体网络（线性中心力弹簧、小应变、冻结法向），不是三维键合 DEM；
   结论不外推到 `IceDEM3D` 的接触/滚阻路径。
 - **平衡残差阶 1.34 < 2**：半步速度（velocity-Verlet 变体）在端点力求均值时对能量平衡只给出
@@ -138,12 +140,13 @@ Jacobian 一致性把参考模型钉在引擎力律上。非自治系统的能�
 | `tool_work`（T = 0.5 s） | 闭式静态功 | 3.17e-04 | **是** |
 | 能量平衡 `W − (ΔKE+ΔU)` | 0（恒等式） | ≤ 1.0e-04（最快升压）/ 2e-10（慢升压） | **是** |
 | `tool_impulse`（冻结网络） | 闭式冲量 | 5.2e-14 | **是** |
-| `tool_impulse`（动态） | 无参考 | — | **WITHHELD（无基准）** |
+| `tool_impulse`（动态） | 闭式 + 独立 RK4（见 `dem3d_moving_plane_dynamic_impulse.md`） | 2.5e-07 | **是**（已解除 WITHHELD） |
 
 ## 7. 复跑
 
 ```bash
 PYTHONPATH=src python3 scripts/verify_moving_plane_ledger.py --out docs/moving-plane-ledger
+PYTHONPATH=src python3 scripts/verify_moving_plane_dynamic_impulse.py --out docs/moving-plane-ledger
 python3 -m pytest tests/test_moving_plane_ledger_verification.py -q
 ```
 
