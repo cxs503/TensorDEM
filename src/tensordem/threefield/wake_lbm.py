@@ -160,6 +160,11 @@ class WakeLBM:
             ],
             dtype=self.dtype,
         )
+        # Weights that turn the six independent tensor slots into the full
+        # double contraction Pi_ab Pi_ab (off-diagonals counted twice).
+        self._outer_norm_weight = torch.tensor(
+            (1.0, 1.0, 1.0, 2.0, 2.0, 2.0), dtype=self.dtype
+        )
         self.generator = torch.Generator().manual_seed(int(seed))
         axis_y = 0.0 if config.quarter_domain else (self.ny - 1) / 2.0
         axis_z = 0.0 if config.quarter_domain else (self.nz - 1) / 2.0
@@ -224,7 +229,14 @@ class WakeLBM:
             return torch.full_like(rho, self.config.tau0)
         f_neq = f - self._equilibrium(rho.unsqueeze(-1), u)
         pi = torch.einsum("ik,...i->...k", self._outer, f_neq)
-        pi_norm = torch.sqrt((pi * pi).sum(dim=-1).clamp_min(0.0))
+        # Frobenius norm of the *full* symmetric tensor: the three off-diagonal
+        # slots (0,1), (0,2), (1,2) each occur twice in Pi_ab Pi_ab, so they carry
+        # weight 2.  Summing the six slots unweighted under-estimates |Pi| by
+        # sqrt(2) in a pure shear and made nu_t = 0.707 Cs^2 |S| there
+        # (docs/threefield_lbm_transport_verification.md, m2949).
+        pi_norm = torch.sqrt(
+            (self._outer_norm_weight * pi * pi).sum(dim=-1).clamp_min(0.0)
+        )
         tau0 = self.config.tau0
         discriminant = tau0 * tau0 + 18.0 * math.sqrt(2.0) * cs * cs * pi_norm / rho
         return 0.5 * (tau0 + torch.sqrt(discriminant.clamp_min(1e-30)))
