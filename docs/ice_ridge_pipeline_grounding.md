@@ -124,7 +124,8 @@ independent reference. Bending moment `M = -EI w''`, extreme-fibre stress
 ```bash
 python scripts/run_ice_ridge_grounding.py            # ~10 min on one CPU core
 python scripts/make_ridge_grounding_figures.py       # figures + dem_field.json
-python -m pytest tests/test_ridge_grounding.py -q
+python scripts/verify_ridge_grounding_rederivation.py   # re-derives every closed form
+python -m pytest tests/test_ridge_grounding.py tests/test_ice_ridge_grounding_rederivation.py -q
 ```
 
 ## 6. Where the numbers live
@@ -140,6 +141,7 @@ python -m pytest tests/test_ridge_grounding.py -q
 | `artifacts/ridge_grounding/beam_verification.json` | beam-on-Winkler FE against the closed-form Hetenyi point and patch solutions |
 | `artifacts/ridge_grounding/envelope.json` | capacity envelope with the governing mechanism and DNV-OS-F101 utilisation |
 | `artifacts/ridge_grounding/ledger.json` | machine-checkable criterion ledger with evidence grades |
+| `artifacts/ridge_grounding/rederivation.json` | closed-form re-derivation of the documented numbers plus the doc-vs-artifact verdict table (`docs/ice_ridge_grounding_rederivation.md`) |
 | `artifacts/ridge_grounding/figures/*.png` | load-displacement, pipe stress, DEM force cloud, envelope, sensitivity, calibration |
 
 ## 7. Outcome of the campaign criteria (recorded honestly)
@@ -152,8 +154,7 @@ report regenerates every one of them programmatically with
 ever disagree.
 
 * (a) load-displacement peak-then-softening: **satisfied** by the machine metrics
-  (peak reached strictly before the end of the record, 15.5 % post-peak
-  softening, predominantly rising pre-peak branch). The softening mechanism is
+  (peak reached strictly before the end of the record, 19.7 % post-peak softening, predominantly rising pre-peak branch). The softening mechanism is
   rubble crushing plus the peak-to-residual subgrade branch; a pure ice
   indentation test of the same material was not run.
 * (b) ultimate capacity against an empirical/limit formula: **not satisfied**
@@ -167,11 +168,13 @@ ever disagree.
 * (c) pipe stress against Winkler theory: **satisfied** (0.55 % moment, 0.11 %
   deflection against the closed-form solution).
 * (d) sensitivity: the coupled system is subgrade-governed, so keel depth and
-  width barely change the system capacity (flat within ±1 %); the seabed
-  strength scales it monotonically (73.8 / 221.5 / 442.9 kN/m for
-  s_u = 10 / 30 / 60 kPa). **These three numbers predate the m2983 Skempton fix**
-  (`docs/ridge_capacity_skempton_audit.md`): the subgrade capacity behind them was
-  20 % too high, so the coupled runs must be re-executed rather than rescaled. The rigid-pipe ice-side study gives 1.45 / 1.41 /
+  width barely change the system capacity (flat within ±0.6 %); the seabed
+  strength scales it monotonically (61.5 / 184.5 / 369.1 kN/m for
+  s_u = 10 / 30 / 60 kPa). **These three numbers are the post-m2983 values**: the campaign was
+  re-executed (not rescaled) after the undrained-capacity fix, and the pre-fix
+  page quoted 73.8 / 221.5 / 442.9 kN/m, i.e. exactly 1.200x these values; the
+  closed-form cross-check and the full verdict table are in
+  `docs/ice_ridge_grounding_rederivation.md`. The rigid-pipe ice-side study gives 1.45 / 1.41 /
   1.30 MN/m at 8 / 12 / 16 m keel depth for a fixed stroke, i.e. the ice side is
   5-7 times stronger than the seabed and is still hardening at the end of the
   stroke, so it is a stroke-dependent resistance rather than a converged
