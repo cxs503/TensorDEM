@@ -105,7 +105,10 @@ def fragment(
     if generator is None:
         generator = torch.Generator().manual_seed(0)
     l_crit = critical_floe_length(u_rms, props)
-    rho_i = 917.0
+    # The mass ledger must use the density the caller configured; hard-coding
+    # 917 kg/m3 here silently ignored ``props.ice_density_kg_m3`` and made the
+    # reported masses inconsistent with ``coupling.fragmentation_stage``.
+    rho_i = props.ice_density_kg_m3
     initial_mass = sum(rho_i * floe_volume_m3(float(s), props) for s in sizes_m)
     active = [float(s) for s in sizes_m if float(s) > 0.0]
     finished: list[float] = []
@@ -136,6 +139,10 @@ def fragment(
         "initial_mass_kg": initial_mass,
         "final_mass_kg": final_mass,
         "mass_error_kg": final_mass - initial_mass,
+        "mass_error_relative": (
+            (final_mass - initial_mass) / initial_mass if initial_mass > 0.0 else 0.0
+        ),
+        "ice_density_kg_m3": rho_i,
     }
 
 

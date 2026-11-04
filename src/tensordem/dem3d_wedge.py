@@ -113,11 +113,26 @@ class MovingWedgeBowIceDEM3D(IceDEM3D):
         external_forces: torch.Tensor | None = None,
         *,
         update_fracture: bool = True,
+        update_history: bool = True,
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        force, _ = super().forces(external_forces, update_fracture=update_fracture)
+        """Nodal forces including the moving bow wedge.
+
+        Signature and keyword semantics follow ``IceDEM3D.forces``: the
+        ``update_history`` keyword must be accepted (and forwarded) because
+        the base ``diagnostics`` probe evaluates the constitutive forces with
+        history updates suppressed.  ``last_reaction`` is only published when
+        the caller supplies ``update_fracture=True`` (the step path), so the
+        probe stays side-effect free.
+        """
+        force, _ = super().forces(
+            external_forces,
+            update_fracture=update_fracture,
+            update_history=update_history,
+        )
         bow_force, bow_reaction, _ = self._wedge_contact()
-        force += bow_force
-        self.last_reaction = bow_reaction
+        force = force + bow_force
+        if update_fracture:
+            self.last_reaction.copy_(bow_reaction)
         return force, bow_reaction
 
     @torch.no_grad()

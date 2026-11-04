@@ -337,6 +337,7 @@ def follower_ship_impact(
     channel_width_m: float,
     ice_thickness_m: float,
     track_length_m: float,
+    ice_density_kg_m3: float = 917.0,
 ) -> dict[str, Any]:
     """Estimate the ice-related impact of the race on a following ship.
 
@@ -353,8 +354,9 @@ def follower_ship_impact(
     total = _finite("initial_mass_kg", initial_mass_kg, positive=True)
     surviving = _finite("surviving_mass_kg", surviving_mass_kg, nonnegative=True)
     melted = _finite("melted_mass_kg", melted_mass_kg, nonnegative=True)
+    density = _finite("ice_density_kg_m3", ice_density_kg_m3, positive=True)
     channel_area = channel_width * track
-    ice_area_equivalent = surviving / (917.0 * thickness)
+    ice_area_equivalent = surviving / (density * thickness)
     return {
         "melted_fraction": melted / total,
         "ice_area_concentration": ice_area_equivalent / channel_area,
