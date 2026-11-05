@@ -372,13 +372,15 @@ def main() -> int:
     parser.add_argument("--remedy-log", default="runs/pr204/doc_evidence_after_fix.log")
     parser.add_argument("--out", default="artifacts/pr204/verify_pr204.json")
     parser.add_argument("--figure", default="artifacts/pr204/fig_pr204_norm_convention.png")
+    parser.add_argument("--mission", type=int, default=4013,
+                        help="mission id recorded in the audit JSON")
     parser.add_argument("--doc", default="docs/pr204_merge_conflict_resolution.md",
                         help="markdown report regenerated from the audit JSON")
     args = parser.parse_args()
 
     root = pathlib.Path(args.root).resolve()
     result = {
-        "mission": 4013,
+        "mission": args.mission,
         "pr": 204,
         "branch": BRANCH_REF,
         "main": MAIN_REF,

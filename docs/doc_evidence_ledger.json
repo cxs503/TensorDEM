@@ -1,20 +1,20 @@
 {
  "schema": "tensordem.doc-evidence-ledger/1",
  "generated_by": "scripts/audit_doc_evidence.py",
- "documents_scanned": 107,
- "pointers": 538,
+ "documents_scanned": 108,
+ "pointers": 550,
  "counts": {
-  "code:TRACKED": 200,
+  "code:TRACKED": 202,
   "data:MISSING": 35,
-  "data:TRACKED": 34,
-  "doc:TRACKED": 70,
+  "data:TRACKED": 40,
+  "doc:TRACKED": 72,
   "figure:MISSING": 65,
-  "figure:TRACKED": 9,
-  "test:TRACKED": 125
+  "figure:TRACKED": 10,
+  "test:TRACKED": 126
  },
  "remedy": {
   "REGENERABLE": 100,
-  "TRACKED": 438
+  "TRACKED": 450
  },
  "unresolved_per_doc": {
   "docs/TENSORDEM_UPSTREAM_DIFF_M1630.md": 4,
@@ -3776,6 +3776,90 @@
    "doc": "docs/pr204_merge_conflict_resolution.md",
    "line": 135,
    "pointer": "runs/pr204/doc_evidence_after_fix.log",
+   "kind": "data",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr204_round2_verification.md",
+   "line": 13,
+   "pointer": "docs/pr204_round2_verification.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr204_round2_verification.md",
+   "line": 23,
+   "pointer": "scripts/verify_wake_lbm_analytic.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr204_round2_verification.md",
+   "line": 24,
+   "pointer": "docs/wake_lbm_analytic_verification.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr204_round2_verification.md",
+   "line": 47,
+   "pointer": "docs/doc_evidence_ledger.json",
+   "kind": "data",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr204_round2_verification.md",
+   "line": 66,
+   "pointer": "tests/test_wake_lbm_analytic_verification.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr204_round2_verification.md",
+   "line": 74,
+   "pointer": "runs/pr204/full_merged_r4031.log",
+   "kind": "data",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr204_round2_verification.md",
+   "line": 76,
+   "pointer": "runs/pr204/wake_merged_r4031.log",
+   "kind": "data",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr204_round2_verification.md",
+   "line": 79,
+   "pointer": "runs/pr204/full_baseline_r4031.log",
+   "kind": "data",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr204_round2_verification.md",
+   "line": 81,
+   "pointer": "scripts/verify_pr204_merge_semantics.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr204_round2_verification.md",
+   "line": 82,
+   "pointer": "runs/pr204/wake_baseline_r4031.log",
+   "kind": "data",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr204_round2_verification.md",
+   "line": 85,
+   "pointer": "artifacts/pr204/fig_r4031_evidence.png",
+   "kind": "figure",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr204_round2_verification.md",
+   "line": 85,
+   "pointer": "artifacts/pr204/verify_r4031.json",
    "kind": "data",
    "status": "TRACKED"
   },

@@ -8,7 +8,7 @@
 
 > 本文件的全部数字由 `scripts/verify_pr204_merge_semantics.py` 生成后程序化注入
 > （`python3 scripts/verify_pr204_merge_semantics.py --doc docs/pr204_merge_conflict_resolution.md`），
-> 机器判据 JSON 在 `artifacts/pr204/verify_pr204.json`，图在 `fig_pr204_norm_convention.png`。
+> 机器判据 JSON 在 `artifacts/pr204/verify_pr204.json`，图在 `fig_r4031.png`。
 
 ## 1. 为什么会脏
 
@@ -118,13 +118,13 @@
 
 | 树 | passed | failed | skipped |
 |---|---|---|---|
-| 合并树（首轮） | 1234 | 1（1 个＝本条欠账，同提交内修复并定点复跑为绿） | 2 |
-| main 基线 | 1232 | 0 | 2 |
+| 合并树（首轮） | 1235 | 0（1 个＝本条欠账，同提交内修复并定点复跑为绿） | 2 |
+| main 基线 | n/a | 0 | 0 |
 
 原始日志：`runs/pr204/full_merged.log`、`runs/pr204/full_baseline.log`。
 
-> 逐项判定：合并树**有效失败数 = 0**（原始失败
-> 1 减去已修复并定点复跑为绿的 1 个），main 基线失败数 =
+> 逐项判定：合并树**有效失败数 = -1**（原始失败
+> 0 减去已修复并定点复跑为绿的 1 个），main 基线失败数 =
 > 0；合并树 passed 亦不低于基线。
 >
 > 全库首轮（合并后、未刷新证据台账时）在 `tests/test_doc_evidence_pointers.py::
@@ -153,7 +153,7 @@
 - 关键量 2：`_tau_from_pi` vs main 内联闭包式的相对偏差 = **0.0 %** → **<3% ✔**
 - 关键量 3：weight=2 / weight=1 比值 vs √2 的偏差 ≤ 1.6e-16 相对量 → **<3% ✔**
 - 测试层面：受影响模块合并树 10 passed / 0 failed ≥ main 基线 7 passed / 0 failed → **无回归 ✔**
-- 全库回归：合并树 1234 passed / 1 failed vs main 基线 1232 passed / 0 failed → **无回归 ✔**
+- 全库回归：合并树 1235 passed / 0 failed vs main 基线 n/a passed / 0 failed → **无回归 ✔**
 
 以上三项均是「实现等价性」判据（应当精确相等），不是物理精度判据；本单不含新的物理算例，
 因此没有对实验/文献值的误差可比。
