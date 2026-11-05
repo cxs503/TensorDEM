@@ -1,9 +1,9 @@
 {
-  "title": "TensorDEM: Restore MASS_RADIUS_FACTOR and face_footprint_radius (m2942)",
-  "summary": "Fixed collection error in test_fracture_gen_mass_footprint.py by adding missing symbols to fracture_gen.py. Collection now passes (16 tests). 13 tests remain failing due to missing implementation hunks (honest debt).",
-  "scenario_key": "m2942",
-  "mission_id": "2942",
-  "tags": ["TensorDEM", "verification-debt", "fracture-gen"],
-  "markdown": "# TensorDEM: Restore MASS_RADIUS_FACTOR and face_footprint_radius\n\n## 1. 案例介绍\n\n**物理背景**：TensorDEM 的 FEM 失效面到 DEM 冰场生成模块（`fracture_gen`）在之前的 PR 中合并了测试和文档，但遗漏了实现代码，导致测试无法收集（collection error）。这是典型的“已验证但未实现”债务（WITHHELD 证据等级）。\n\n**几何/参数**：\n- 粒子半径 r = 0.125 m\n- 晶格间距 h = 2r = 0.25 m\n- 质量映射：`mass_mode=\"cell\"`（体积一致）vs `mass_mode=\"sphere\"`（内切球，欠载 47.64%）\n\n## 2. 怎么做的\n\n**方法/流程**：\n1. 读取 `docs/dem_analytic_verification_debt_restoration.md` 确认债务清单。\n2. 在 `src/tensordem/fracture_gen.py` 中添加两个缺失的符号：\n   - `MASS_RADIUS_FACTOR: float = (6.0 / math.pi) ** (1.0 / 3.0)`：质量半径与几何半径之比。\n   - `face_footprint_radius(face: FailureFace) -> float`：失效面有效足迹半径。\n3. 为 `FailureFace` 数据类添加 `extent_radius` 字段。\n\n**工具链**：Python 3.11, pytest, torch\n\n## 3. 计算结果\n\n| 测试模块 | 收集状态 | 通过数 | 失败数 |\n|---|---|---|---|\n| `test_dem3d_hertz_contact.py` | ✅ | 8 | 0 |\n| `test_dem3d_restitution.py` | ✅ | 8 | 0 |\n| `test_friction_cone_verification.py` | ✅ | 15 | 0 |\n| `test_tangential_friction_verification.py` | ✅ | 28 | 0 |\n| `test_fracture_gen_mass_footprint.py` | ⚠️ | 16 | 13 |\n\n**关键数字**：\n- `MASS_RADIUS_FACTOR = (6/pi)^(1/3) ≈ 1.2407`（质量半径/几何半径）\n- 测试收集：从 1070 tests collected, 1 error → 1070 tests collected, 0 errors\n\n## 4. 结果图\n\n无（本单为代码修复，无场量云图或比较曲线）。\n\n## 5. 注意点\n\n- `test_fracture_gen_mass_footprint.py` 的 13 个失败测试涉及 `FractureGenConfig(mass_mapping=...)`、`footprint_aware` 和 `on_plane_tolerance` 参数，这些实现尚未合并。它们被标记为“诚实债务”（honest debt），将在后续 PR 中处理。\n- 本修复仅解决“缺失名称”问题，不改变质量映射逻辑（欠载保持为 `pi/6 - 1`）。\n\n## 6. 误差判定\n\n- `MASS_RADIUS_FACTOR` 解析解误差：< 1e-15（机器精度）\n- `face_footprint_radius` 解析解误差：< 1e-15（机器精度）\n- 关键量 vs 基准误差：< 3%（解析解验证）\n",
-  "figures": []
+    "title": "TensorDEM PR #310 CI Fix: torch version pin correction",
+    "summary": "Fixed CI unit-tests failure caused by non-existent torch==2.14.1 version pin in pyproject.toml. Changed to torch>=2.4.0. Verified 305 tests passing locally.",
+    "scenario_key": "tensordem_ci_fix",
+    "mission_id": 4507,
+    "tags": ["ci-fix", "pyproject", "torch-version", "pr310"],
+    "markdown": "# TensorDEM PR #310 CI Fix Report\n\n## 问题诊断\n\nPR #310 CI 红（unit-tests=failure）的根因是 `pyproject.toml` 中 torch 版本 pinned 到不存在的 `2.14.1`。\n\nPyPI 上 torch 最新可用版本为 2.13.0，CI 的 `pip install -e \".[test,viz]\"` 步骤会因找不到 torch==2.14.1 而报错退出。\n\n## 修复方案\n\n将 torch 版本约束从 `==2.14.1` 改为 `>=2.4.0`。\n\n## 验证\n\n本地验证（Python 3.11, torch 2.7.1）：305 tests passed, 1 skipped, 0 failures。\n\n## 变更文件\n\n- `pyproject.toml`: 修改 torch 版本约束\n- `docs/m4507_pr310_ci_fix_report.md`: 修复报告",
+    "figures": []
 }
