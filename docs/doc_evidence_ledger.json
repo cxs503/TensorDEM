@@ -2,26 +2,26 @@
  "schema": "tensordem.doc-evidence-ledger/1",
  "generated_by": "scripts/audit_doc_evidence.py",
  "documents_scanned": 105,
- "pointers": 512,
+ "pointers": 518,
  "counts": {
-  "code:TRACKED": 195,
-  "data:MISSING": 35,
-  "data:TRACKED": 26,
-  "doc:TRACKED": 66,
-  "figure:MISSING": 65,
-  "figure:TRACKED": 7,
-  "test:TRACKED": 118
+  "code:TRACKED": 200,
+  "data:MISSING": 36,
+  "data:TRACKED": 28,
+  "doc:TRACKED": 67,
+  "figure:MISSING": 62,
+  "figure:TRACKED": 8,
+  "test:TRACKED": 117
  },
  "remedy": {
-  "REGENERABLE": 100,
-  "TRACKED": 412
+  "REGENERABLE": 98,
+  "TRACKED": 420
  },
  "unresolved_per_doc": {
   "docs/TENSORDEM_UPSTREAM_DIFF_M1630.md": 4,
   "docs/THREEFIELD_ICE_HULL_PROPELLER.md": 4,
   "docs/accounting_ledger_validation.md": 2,
   "docs/buoyancy_free_float_verification.md": 3,
-  "docs/ci_clearance_m3317.md": 1,
+  "docs/ci_forensics_m3231.md": 1,
   "docs/dem2d_lattice_elasticity.md": 1,
   "docs/dem3d_bond_fracture_energy.md": 1,
   "docs/dem3d_brazilian_hondros_closure.md": 2,
@@ -31,7 +31,6 @@
   "docs/dem3d_coulomb_friction_cone_verification.md": 3,
   "docs/dem3d_doc_evidence_pointer_audit.md": 1,
   "docs/dem3d_energy_audit.md": 6,
-  "docs/dem3d_fracture_footprint_breakage.md": 2,
   "docs/dem3d_fracture_gen_audit.md": 4,
   "docs/dem3d_fracture_mass_mapping_audit.md": 2,
   "docs/dem3d_integration_order_verification.md": 1,
@@ -464,201 +463,266 @@
    "status": "TRACKED"
   },
   {
-   "doc": "docs/ci_clearance_m3317.md",
-   "line": 18,
-   "pointer": "src/tensordem/dem3d_wedge.py",
-   "kind": "code",
-   "status": "TRACKED"
-  },
-  {
-   "doc": "docs/ci_clearance_m3317.md",
-   "line": 18,
-   "pointer": "tests/test_dem3d_moving_wedge_bow.py",
+   "doc": "docs/ci_forensics_m3231.md",
+   "line": 28,
+   "pointer": "tests/conftest.py",
    "kind": "test",
    "status": "TRACKED"
   },
   {
-   "doc": "docs/ci_clearance_m3317.md",
-   "line": 19,
-   "pointer": "tests/test_dem3d_restitution_verification.py",
+   "doc": "docs/ci_forensics_m3231.md",
+   "line": 36,
+   "pointer": "tests/test_dem3d_born_huang.py",
    "kind": "test",
    "status": "TRACKED"
   },
   {
-   "doc": "docs/ci_clearance_m3317.md",
-   "line": 20,
-   "pointer": "src/tensordem/contact_restitution.py",
-   "kind": "code",
-   "status": "TRACKED"
-  },
-  {
-   "doc": "docs/ci_clearance_m3317.md",
-   "line": 20,
-   "pointer": "tests/test_dem3d_restitution_verification.py::test_solver_reproduces_clamped_reference_model",
-   "kind": "test",
-   "status": "TRACKED",
-   "resolved": "tests/test_dem3d_restitution_verification.py"
-  },
-  {
-   "doc": "docs/ci_clearance_m3317.md",
-   "line": 21,
-   "pointer": "tests/test_dem3d_wedge_resistance_sensitivity.py",
+   "doc": "docs/ci_forensics_m3231.md",
+   "line": 37,
+   "pointer": "tests/test_dem3d_brazilian_static.py",
    "kind": "test",
    "status": "TRACKED"
   },
   {
-   "doc": "docs/ci_clearance_m3317.md",
-   "line": 22,
-   "pointer": "tests/test_doc_evidence_pointers.py",
+   "doc": "docs/ci_forensics_m3231.md",
+   "line": 38,
+   "pointer": "tests/test_dem3d_lattice_elasticity3d.py",
    "kind": "test",
    "status": "TRACKED"
   },
   {
-   "doc": "docs/ci_clearance_m3317.md",
-   "line": 23,
-   "pointer": "tests/test_fracture_gen_audit.py",
-   "kind": "test",
-   "status": "TRACKED"
-  },
-  {
-   "doc": "docs/ci_clearance_m3317.md",
-   "line": 23,
-   "pointer": "tests/test_fracture_gen_audit.py::MassMappingAudit",
-   "kind": "test",
-   "status": "TRACKED",
-   "resolved": "tests/test_fracture_gen_audit.py"
-  },
-  {
-   "doc": "docs/ci_clearance_m3317.md",
-   "line": 24,
-   "pointer": "tests/test_fracture_gen_audit.py::FaceExtentAudit",
-   "kind": "test",
-   "status": "TRACKED",
-   "resolved": "tests/test_fracture_gen_audit.py"
-  },
-  {
-   "doc": "docs/ci_clearance_m3317.md",
+   "doc": "docs/ci_forensics_m3231.md",
    "line": 39,
-   "pointer": "tests/test_fracture_gen_mass_footprint.py",
+   "pointer": "tests/test_dem3d_shear_cross_section_convergence.py",
    "kind": "test",
    "status": "TRACKED"
   },
   {
-   "doc": "docs/ci_clearance_m3317.md",
-   "line": 43,
-   "pointer": "tests/test_fracture_gen_audit.py::test_vectorised_topology_matches_brute_force",
+   "doc": "docs/ci_forensics_m3231.md",
+   "line": 40,
+   "pointer": "tests/test_dem3d_shear_static_reference.py",
    "kind": "test",
-   "status": "TRACKED",
-   "resolved": "tests/test_fracture_gen_audit.py"
-  },
-  {
-   "doc": "docs/ci_clearance_m3317.md",
-   "line": 49,
-   "pointer": "docs/dem3d_contact_impact_dashpot_convention.md",
-   "kind": "doc",
    "status": "TRACKED"
   },
   {
-   "doc": "docs/ci_clearance_m3317.md",
-   "line": 50,
-   "pointer": "docs/wake_lbm_analytic_verification.md",
-   "kind": "doc",
+   "doc": "docs/ci_forensics_m3231.md",
+   "line": 41,
+   "pointer": "tests/test_lattice_elasticity3d_modulus_factor.py",
+   "kind": "test",
    "status": "TRACKED"
   },
   {
-   "doc": "docs/ci_clearance_m3317.md",
-   "line": 50,
-   "pointer": "src/tensordem/threefield/coupling.py",
-   "kind": "code",
-   "status": "TRACKED"
-  },
-  {
-   "doc": "docs/ci_clearance_m3317.md",
-   "line": 51,
-   "pointer": "artifacts/fracture_gen_audit/footprint_field_map.png",
-   "kind": "figure",
+   "doc": "docs/ci_forensics_m3231.md",
+   "line": 42,
+   "pointer": "runs/ci-m3231/pytest_baseline.log",
+   "kind": "data",
    "status": "MISSING",
    "producers": [
-    "benchmarks/fracture_gen_mass_footprint_audit.py"
+    "scripts/plot_ci_triage_m3231.py"
    ],
    "remedy": "REGENERABLE"
   },
   {
-   "doc": "docs/ci_clearance_m3317.md",
-   "line": 51,
-   "pointer": "benchmarks/fracture_gen_mass_footprint_audit.py",
+   "doc": "docs/ci_forensics_m3231.md",
+   "line": 62,
+   "pointer": "src/tensordem/born_huang.py",
    "kind": "code",
    "status": "TRACKED"
   },
   {
-   "doc": "docs/ci_clearance_m3317.md",
-   "line": 51,
-   "pointer": "docs/dem3d_fracture_footprint_breakage.md",
-   "kind": "doc",
-   "status": "TRACKED"
-  },
-  {
-   "doc": "docs/ci_clearance_m3317.md",
-   "line": 52,
-   "pointer": "docs/doc_evidence_ledger.json",
-   "kind": "data",
-   "status": "TRACKED"
-  },
-  {
-   "doc": "docs/ci_clearance_m3317.md",
-   "line": 52,
-   "pointer": "scripts/audit_doc_evidence.py",
-   "kind": "code",
-   "status": "TRACKED"
-  },
-  {
-   "doc": "docs/ci_clearance_m3317.md",
-   "line": 56,
-   "pointer": "tests/test_wake_lbm_analytic_verification.py",
-   "kind": "test",
-   "status": "TRACKED"
-  },
-  {
-   "doc": "docs/ci_clearance_m3317.md",
-   "line": 56,
-   "pointer": "tests/test_wake_lbm_analytic_verification.py::test_smagorinsky_closure_matches_independent_evaluation",
-   "kind": "test",
-   "status": "TRACKED",
-   "resolved": "tests/test_wake_lbm_analytic_verification.py"
-  },
-  {
-   "doc": "docs/ci_clearance_m3317.md",
+   "doc": "docs/ci_forensics_m3231.md",
    "line": 63,
-   "pointer": "tests/test_ice_floe_physics.py",
-   "kind": "test",
+   "pointer": "scripts/benchmark_dem3d_brazilian.py",
+   "kind": "code",
    "status": "TRACKED"
   },
   {
-   "doc": "docs/ci_clearance_m3317.md",
+   "doc": "docs/ci_forensics_m3231.md",
+   "line": 64,
+   "pointer": "src/tensordem/lattice_elasticity3d.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ci_forensics_m3231.md",
    "line": 65,
+   "pointer": "src/tensordem/shear_convergence.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ci_forensics_m3231.md",
+   "line": 66,
+   "pointer": "src/tensordem/shear_static.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ci_forensics_m3231.md",
+   "line": 67,
+   "pointer": "src/tensordem/shear_specimen.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ci_forensics_m3231.md",
+   "line": 84,
+   "pointer": "src/tensordem/dem3d_lattice_elastic.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ci_forensics_m3231.md",
+   "line": 99,
    "pointer": "benchmarks/ice_floe_physics.py",
    "kind": "code",
    "status": "TRACKED"
   },
   {
-   "doc": "docs/ci_clearance_m3317.md",
-   "line": 77,
-   "pointer": "tests/test_fracture_gen_footprint_breakage.py",
-   "kind": "test",
+   "doc": "docs/ci_forensics_m3231.md",
+   "line": 104,
+   "pointer": "docs/doc_evidence_ledger.json",
+   "kind": "data",
    "status": "TRACKED"
   },
   {
-   "doc": "docs/ci_clearance_m3317.md",
-   "line": 78,
-   "pointer": "tests/test_fracture_gen_mass_mapping.py",
-   "kind": "test",
-   "status": "TRACKED"
-  },
-  {
-   "doc": "docs/ci_clearance_m3317.md",
-   "line": 81,
-   "pointer": "benchmarks/fracture_gen_audit.py",
+   "doc": "docs/ci_forensics_m3231.md",
+   "line": 119,
+   "pointer": "src/tensordem/dem3d_wedge.py",
    "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ci_forensics_m3231.md",
+   "line": 120,
+   "pointer": "src/tensordem/rudder_ice_load.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ci_forensics_m3231.md",
+   "line": 130,
+   "pointer": "docs/wake_lbm_analytic_verification.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ci_forensics_m3231.md",
+   "line": 131,
+   "pointer": "docs/dem3d_contact_impact_dashpot_convention.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ci_forensics_m3231.md",
+   "line": 132,
+   "pointer": "tests/test_contact_impact_dashpot_convention.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ci_forensics_m3231.md",
+   "line": 133,
+   "pointer": "docs/dem3d_fracture_footprint_breakage.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ci_forensics_m3231.md",
+   "line": 135,
+   "pointer": "scripts/audit_doc_evidence.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ci_forensics_m3231.md",
+   "line": 140,
+   "pointer": "tests/test_import_surface.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ci_forensics_m3231.md",
+   "line": 144,
+   "pointer": "tests/test_override_signature_parity.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ci_forensics_m3231.md",
+   "line": 156,
+   "pointer": "docs/ice_floe_physics_validation.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ci_forensics_m3231.md",
+   "line": 194,
+   "pointer": "artifacts/ci_triage_m3231/pytest_baseline.log",
+   "kind": "data",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ci_forensics_m3231.md",
+   "line": 195,
+   "pointer": "artifacts/ci_triage_m3231/pytest_final.log",
+   "kind": "data",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ci_forensics_m3231.md",
+   "line": 196,
+   "pointer": "artifacts/ci_triage_m3231/failure_clusters.png",
+   "kind": "figure",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ci_forensics_m3231.md",
+   "line": 196,
+   "pointer": "scripts/plot_ci_triage_m3231.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ci_forensics_m3231.md",
+   "line": 206,
+   "pointer": "scripts/run_dem3d_benchmark_suite.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ci_forensics_m3231.md",
+   "line": 208,
+   "pointer": "tests/test_dem3d_benchmark_case_suite.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ci_forensics_m3231.md",
+   "line": 208,
+   "pointer": "tests/test_dem3d_visualization.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ci_forensics_m3231.md",
+   "line": 209,
+   "pointer": "tests/test_dem3d_mechanics_benchmarks.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ci_forensics_m3231.md",
+   "line": 209,
+   "pointer": "tests/test_dem3d_specimen_response_benchmarks.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ci_forensics_m3231.md",
+   "line": 210,
+   "pointer": "tests/test_dem3d_platen_compression.py",
+   "kind": "test",
    "status": "TRACKED"
   },
   {
@@ -1178,28 +1242,21 @@
   },
   {
    "doc": "docs/dem3d_contact_impact_dashpot_convention.md",
-   "line": 18,
-   "pointer": "src/tensordem/contact_restitution.py",
-   "kind": "code",
-   "status": "TRACKED"
-  },
-  {
-   "doc": "docs/dem3d_contact_impact_dashpot_convention.md",
-   "line": 27,
+   "line": 28,
    "pointer": "src/tensordem/dem3d.py",
    "kind": "code",
    "status": "TRACKED"
   },
   {
    "doc": "docs/dem3d_contact_impact_dashpot_convention.md",
-   "line": 34,
+   "line": 35,
    "pointer": "scripts/verify_dem3d_restitution.py",
    "kind": "code",
    "status": "TRACKED"
   },
   {
    "doc": "docs/dem3d_contact_impact_dashpot_convention.md",
-   "line": 92,
+   "line": 93,
    "pointer": "artifacts/contact_impact_dashpot/impact_duration_convergence.png",
    "kind": "figure",
    "status": "MISSING",
@@ -1210,16 +1267,9 @@
   },
   {
    "doc": "docs/dem3d_contact_impact_dashpot_convention.md",
-   "line": 108,
+   "line": 109,
    "pointer": "docs/dem3d_contact_impact_analytic.md",
    "kind": "doc",
-   "status": "TRACKED"
-  },
-  {
-   "doc": "docs/dem3d_contact_impact_dashpot_convention.md",
-   "line": 125,
-   "pointer": "tests/test_dem3d_restitution_verification.py",
-   "kind": "test",
    "status": "TRACKED"
   },
   {
@@ -1697,36 +1747,14 @@
   },
   {
    "doc": "docs/dem3d_fracture_footprint_breakage.md",
-   "line": 96,
-   "pointer": "artifacts/fracture_gen_audit/footprint_field_map.png",
-   "kind": "figure",
-   "status": "MISSING",
-   "producers": [
-    "benchmarks/fracture_gen_mass_footprint_audit.py"
-   ],
-   "remedy": "REGENERABLE"
-  },
-  {
-   "doc": "docs/dem3d_fracture_footprint_breakage.md",
-   "line": 103,
-   "pointer": "artifacts/fracture_gen_audit/fracture_gen_audit.png",
-   "kind": "figure",
-   "status": "MISSING",
-   "producers": [
-    "benchmarks/fracture_gen_mass_footprint_audit.py"
-   ],
-   "remedy": "REGENERABLE"
-  },
-  {
-   "doc": "docs/dem3d_fracture_footprint_breakage.md",
-   "line": 149,
+   "line": 147,
    "pointer": "tests/test_fracture_gen_footprint_breakage.py",
    "kind": "test",
    "status": "TRACKED"
   },
   {
    "doc": "docs/dem3d_fracture_footprint_breakage.md",
-   "line": 150,
+   "line": 148,
    "pointer": "tests/test_fracture_gen_mass_mapping.py",
    "kind": "test",
    "status": "TRACKED"
