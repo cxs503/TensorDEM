@@ -15,7 +15,7 @@ FAILED tests/test_dem3d_contact_impact.py::SolverImpactTests::test_contact_durat
 E  AssertionError: 0.12167254282818885 not less than 0.03
 ```
 
-进一步复算（`scripts/_probe_duration.py` 口径，见 §3 的 before 列）显示问题不是"差 12%"
+进一步复算（两球对心碰撞探针，装置与 `src/tensordem/contact_restitution.py` 的 `measure_dem3d_impact` 同构；见 §3 的 before 列）显示问题不是"差 12%"
 这么小：harness 在**任何**目标恢复系数下测得的 `e` 都 ≈ 1.0（`e_target=0.5` →
 `e_measured=1.00021`），说明对心碰撞里**阻尼根本没起作用**，测出来的"接触时长"是
 纯弹性碰撞的时长。因此该套件中 `test_restitution_matches_clamped_analytic`、
@@ -110,6 +110,19 @@ artefact 不受影响）。同时新增
    与闭式预测一致；`damping="clamped_mapping"` 分支则把目标恢复到 <3%。
 4. 适用范围：线性弹簧-阻尼 + 零力钳制 + 自由对心碰撞、`ζ < 1`。Hertz 非线性接触
    （`contact_model="hertz"`）的时长基准是另一条标度律，不在本增量覆盖内。
+
+## 7. 跨模块同源复核（2026-11，CI 清红）
+
+同一个默认值坑在本仓另一处验证装置上复发：`contact_restitution.measure_dem3d_impact`
+构造 `DEM3DConfig(contact_damping=gamma_n)` 时同样没有声明
+`contact_damping_model="absolute"`，因此 §1 的"完全弹性"症状原样出现——该系统在
+`gamma_n ∈ {0, 1, 3, 5, 10} N·s/m` 下测得的 `e` 全为 `1.00007`，与解析钳制参考值
+（`e_reference = 0.9148 / 0.7726 / 0.6597 / 0.4628`）完全无关。
+
+修法同上，一行配置（`measure_dem3d_impact` 内声明装置约定）。修复后该装置与
+`clamped_restitution_ratio` 的偏差为 **0.01 %…0.39 %**（`gamma_n = 0…10`，
+含 `both_free=True` 的折合质量 `m/2` 情形），即 §2 的结论由 `WITHHELD` 升为 REAL。
+回归门禁：`tests/test_dem3d_restitution_verification.py`（9 项）。
 
 ## 6. 复现
 

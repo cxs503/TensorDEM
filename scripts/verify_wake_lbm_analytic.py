@@ -381,13 +381,16 @@ def _manual_pi_norm(f_i, c, rho, u, nx, ny, nz) -> float:
         cu = sum(c[index][a] * u[a] for a in range(3))
         feq = rho * _W[index] * (1.0 + 3.0 * cu + 4.5 * cu * cu - 1.5 * u2)
         neq.append(f_i[index] - feq)
-    # Frobenius norm over the six independent components (a <= b), matching the
-    # shipped kernel: Pi is symmetric, so summing all nine entries would count
-    # every off-diagonal twice.
+    # Frobenius norm Pi_ab Pi_ab over the six independent components (a <= b).
+    # Pi is symmetric, so an off-diagonal slot stands for two entries of the
+    # nine-slot double contraction and carries weight 2; without that weight the
+    # norm is sqrt(2) too small in a pure shear. This is the convention of the
+    # shipped kernel (``WakeLBM._effective_tau`` / ``_outer_norm_weight``, see
+    # docs/threefield_lbm_transport_verification.md, m2949).
     for a in range(3):
         for b in range(a, 3):
             sab = sum(c[i][a] * c[i][b] * neq[i] for i in range(19))
-            total += sab * sab
+            total += (1.0 if a == b else 2.0) * sab * sab
     return math.sqrt(total)
 
 
@@ -433,10 +436,12 @@ def smagorinsky_closure_check(*, tau0: float = 0.5006, cs_sgs: float = 0.16,
         i_x, i_y, i_z = 6, ny // 2, ny // 2
         f_i = [float(f[i_x, i_y, i_z, i].item()) for i in range(19)]
         u_node = [float(u_i[i_x, i_y, i_z, a].item()) for a in range(3)]
-        pi_manual = _manual_pi_norm(f_i, c_list, float(rho_i[i_x, i_y, i_z].item()),
-                                    u_node, 12, ny, ny)
-        tau_manual = 0.5 * (tau0 + math.sqrt(tau0 * tau0
-                                            + 18.0 * math.sqrt(2.0) * cs_sgs ** 2 * pi_manual))
+        rho_node = float(rho_i[i_x, i_y, i_z].item())
+        pi_manual = _manual_pi_norm(f_i, c_list, rho_node, u_node, 12, ny, ny)
+        # same closure algebra as the kernel: tau = (tau0 + sqrt(tau0^2
+        # + 18 sqrt(2) Cs^2 |Pi| / rho)) / 2
+        tau_manual = 0.5 * (tau0 + math.sqrt(
+            tau0 * tau0 + 18.0 * math.sqrt(2.0) * cs_sgs ** 2 * pi_manual / rho_node))
         tau_node = float(tau_code[i_x, i_y, i_z].item())
         max_rel = max(max_rel, abs(tau_node - tau_manual) / tau_manual)
 
