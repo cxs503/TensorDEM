@@ -1,20 +1,20 @@
 {
  "schema": "tensordem.doc-evidence-ledger/1",
  "generated_by": "scripts/audit_doc_evidence.py",
- "documents_scanned": 106,
- "pointers": 521,
+ "documents_scanned": 107,
+ "pointers": 526,
  "counts": {
-  "code:TRACKED": 197,
-  "data:MISSING": 35,
+  "code:TRACKED": 199,
+  "data:MISSING": 36,
   "data:TRACKED": 26,
-  "doc:TRACKED": 68,
+  "doc:TRACKED": 69,
   "figure:MISSING": 65,
   "figure:TRACKED": 7,
-  "test:TRACKED": 123
+  "test:TRACKED": 124
  },
  "remedy": {
-  "REGENERABLE": 100,
-  "TRACKED": 421
+  "REGENERABLE": 101,
+  "TRACKED": 425
  },
  "unresolved_per_doc": {
   "docs/TENSORDEM_UPSTREAM_DIFF_M1630.md": 4,
@@ -40,6 +40,7 @@
   "docs/dem3d_lattice_wave_propagation.md": 3,
   "docs/dem3d_pair_contact_damping_closure.md": 1,
   "docs/dem3d_restitution_calibration.md": 1,
+  "docs/dem3d_restitution_closed_loop_m3274.md": 1,
   "docs/dem3d_rolling_resistance.md": 4,
   "docs/dem3d_rolling_resistance_verification.md": 4,
   "docs/dem3d_scale_benchmark.md": 4,
@@ -2486,6 +2487,45 @@
    "status": "MISSING",
    "producers": [
     "scripts/calibrate_dem3d_restitution.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/dem3d_restitution_closed_loop_m3274.md",
+   "line": 8,
+   "pointer": "docs/dem3d_restitution_verification.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_restitution_closed_loop_m3274.md",
+   "line": 9,
+   "pointer": "tests/test_dem3d_restitution_verification.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_restitution_closed_loop_m3274.md",
+   "line": 26,
+   "pointer": "src/tensordem/contact_restitution.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_restitution_closed_loop_m3274.md",
+   "line": 33,
+   "pointer": "scripts/verify_restitution_closed_loop.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_restitution_closed_loop_m3274.md",
+   "line": 34,
+   "pointer": "artifacts/restitution_closed_loop_m3129/evidence.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "scripts/verify_restitution_closed_loop.py"
    ],
    "remedy": "REGENERABLE"
   },
