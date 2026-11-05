@@ -256,12 +256,15 @@ def measure_dem3d_impact(
         nx=2, ny=2, nz=2,
         radius=radius, density=density,
         contact_stiffness=k_n, contact_damping=gamma_n,
-        # The harness installs an *absolute* dashpot gamma_n [N s/m] under
-        # review.  The engine default (contact_damping_model="restitution")
-        # ignores contact_damping on the particle-particle branch and rebuilds
-        # the damper from restitution_coefficient (default 1.0 -> zero
-        # damping), which would silently make every impact elastic.  The
-        # convention must be explicit, mirroring contact_impact._build_pair.
+        # DEM3DConfig defaults to the legacy "restitution" dashpot convention,
+        # in which ``contact_damping`` does not enter the particle-particle
+        # pair law at all: the damper is rebuilt from
+        # restitution_coefficient (default 1.0 -> zero damping), which would
+        # silently make every impact elastic.  This harness installs and
+        # measures the *absolute* dashpot gamma_n [N s/m], so the pair law
+        # must be the clipped F = max(k delta - gamma_n v_n, 0) the reference
+        # integration in this module solves.  The convention must be explicit,
+        # mirroring contact_impact._build_pair.
         contact_damping_model="absolute",
         drag=drag, fix_x_edges=False,
         tool_speed=1e-3, tool_gap=1.0,
