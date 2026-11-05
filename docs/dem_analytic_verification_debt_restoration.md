@@ -115,3 +115,60 @@ python -m pytest tests/test_dem3d_hertz_contact.py tests/test_dem3d_restitution.
     tests/test_friction_cone_verification.py tests/test_tangential_friction_verification.py -q
 python scripts/verify_salvaged_analytic_laws.py
 ```
+## 6. Follow-up (m2942): Collection error fixed for `test_fracture_gen_mass_footprint`
+
+The fifth contract (`tests/test_fracture_gen_mass_footprint.py`) was left red because the
+only available implementation (branch `721041a`) would silently delete the audited
+`pi/6 - 1` mass-mapping deficit.  The owner decision was to "keep the deficit and fix
+only the two missing names".
+
+This commit adds the two missing symbols to `src/tensordem/fracture_gen.py`:
+
+* `MASS_RADIUS_FACTOR: float = (6.0 / math.pi) ** (1.0 / 3.0)` — the ratio of the
+  "mass radius" (sphere with volume equal to the lattice cell) to the geometric
+  particle radius.
+* `face_footprint_radius(face: FailureFace) -> float` — returns `face.extent_radius`
+  if present, otherwise `sqrt(face.area / pi)`.
+
+With these additions the test module **collects** (16 tests).  The 13 tests that
+exercise `FractureGenConfig(mass_mapping=...)`, `footprint_aware`, and
+`on_plane_tolerance` still fail because the corresponding implementation hunks
+are not yet merged.  They are marked as **honest debt** in the docstring of
+`test_fracture_gen_mass_footprint.py` and will be addressed in a future PR
+once the owner decides whether to adopt the compensated mapping or keep the
+deficit.
+
+| test module | status | notes |
+|---|---|---|
+| `tests/test_dem3d_hertz_contact.py` | ✅ 8 passed | Hertz normal contact restored |
+| `tests/test_dem3d_restitution.py` | ✅ 8 passed | Restitution inversion restored |
+| `tests/test_friction_cone_verification.py` | ✅ 15 passed | Cundall–Strack tangential contact restored |
+| `tests/test_tangential_friction_verification.py` | ✅ 28 passed | Tangential verification harness restored |
+| `tests/test_fracture_gen_mass_footprint.py` | ⚠️ 16 collected, 13 fail | Collection error fixed; implementation debt remains |
+
+## 7. Reconciliation (m3830): the stopgap in §6 is superseded, and the debt is closed
+
+§6 records a *stopgap*: two symbols were added to `src/tensordem/fracture_gen.py` so that
+`tests/test_fracture_gen_mass_footprint.py` would at least **collect**, leaving 13 tests red.
+While `agent/m2942` was open, `main` landed the full implementation of the same contract
+(`footprint_aware` / `face_extent`, `on_plane_tolerance`, `depth_extent`, footprint severing,
+`MASS_RADIUS_FACTOR`, `face_footprint_radius`, `FailureFace.extent_radius`), so the two
+branches touched the same file for the same reason.
+
+Merge rule applied in m3830 (no mechanical overlay, no silent loss):
+
+| symbol | agent/m2942 | main | kept |
+|---|---|---|---|
+| `MASS_RADIUS_FACTOR` | `(6/pi)^(1/3)` | `2 (3/4pi)^(1/3)` | **main's**, plus m2942's derivation kept as a comment (values agree to 1 ulp: abs diff 2.22e-16, rel 1.79e-16) |
+| `face_footprint_radius` | accepts `extent_radius == 0` | rejects `<= 0`, non-finite, `area <= 0` | **main's** (stricter); `tests/test_fracture_gen_footprint_breakage.py::TestFootprintRadiusAnchor::test_invalid_footprints_rejected` requires the rejection |
+| `FailureFace.extent_radius` | added (no docstring) | added (with field docstring) | **main's** (same field, documented) |
+
+Consequence: the 13 "honest debt" tests listed in §6 now **pass** — the debt is closed by the
+merged implementation rather than deferred. Reproduce with
+
+```
+python -m pytest tests/test_fracture_gen_mass_footprint.py \
+                 tests/test_fracture_gen_footprint_breakage.py \
+                 tests/test_fracture_gen_audit.py -q
+python scripts/m3830_merge_cure_evidence.py --out-dir docs/m3830-merge-cure
+```

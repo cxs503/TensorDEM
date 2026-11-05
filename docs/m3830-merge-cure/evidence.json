@@ -1,0 +1,167 @@
+{
+  "module": "tensordem.fracture_gen",
+  "merge": {
+    "repo": "TensorDEM",
+    "mission": "m3830 (cure of PR #166 / branch agent/m2942)",
+    "conflicted_files": [
+      "src/tensordem/fracture_gen.py"
+    ],
+    "auto_merge_hazards_found": [
+      "git text-merge kept BOTH copies of MASS_RADIUS_FACTOR (module-level redefinition, later def silently wins)",
+      "git text-merge kept BOTH copies of face_footprint_radius (different validation: m2942 accepted extent_radius=0.0, main rejects it)"
+    ]
+  },
+  "mass_radius_factor_equivalence": {
+    "MASS_RADIUS_FACTOR_merged": 1.2407009817988002,
+    "form_main_2_(3/4pi)^(1/3)": 1.2407009817988002,
+    "form_m2942_(6/pi)^(1/3)": 1.2407009817988,
+    "abs_diff": 2.220446049250313e-16,
+    "rel_diff": 1.789670582859581e-16,
+    "bit_identical": false
+  },
+  "mass_mapping": [
+    {
+      "quantity": "m_cell = rho h^3",
+      "value_kg": 14.328125,
+      "note": "mass_mode='cell' (default, volume consistent)"
+    },
+    {
+      "quantity": "m_sphere = rho (4/3) pi r^3",
+      "value_kg": 7.502188706619375,
+      "note": "mass_mode='sphere' (legacy, under-counts)"
+    },
+    {
+      "quantity": "m(MASS_RADIUS_FACTOR r)",
+      "value_kg": 14.328125000000004,
+      "note": "sphere carrying the cell mass"
+    },
+    {
+      "quantity": "deficit 1 - pi/6",
+      "value_kg": 0.4764012244017012,
+      "note": "relative mass loss of mass_mode='sphere'"
+    }
+  ],
+  "footprint_contract": [
+    {
+      "area_m2": 1.0,
+      "extent_radius_m": null,
+      "rejected": false,
+      "radius_m": 0.5641895835477563,
+      "note": "equal-area disc, sqrt(A/pi)"
+    },
+    {
+      "area_m2": 0.5,
+      "extent_radius_m": 0.9,
+      "rejected": false,
+      "radius_m": 0.9,
+      "note": "explicit extent_radius wins over area"
+    },
+    {
+      "area_m2": 0.04,
+      "extent_radius_m": 0.0,
+      "rejected": true,
+      "radius_m": null,
+      "note": "degenerate footprint: rejected (main) / accepted as 0.0 (m2942)"
+    },
+    {
+      "area_m2": 0.04,
+      "extent_radius_m": -1.0,
+      "rejected": true,
+      "radius_m": null,
+      "note": "negative footprint: rejected by both, different message"
+    },
+    {
+      "area_m2": 0.0,
+      "extent_radius_m": null,
+      "rejected": true,
+      "radius_m": null,
+      "note": "zero area: rejected by both"
+    },
+    {
+      "area_m2": null,
+      "extent_radius_m": null,
+      "rejected": true,
+      "radius_m": null,
+      "note": "NaN area: rejected by main only"
+    }
+  ],
+  "severing_sweep": [
+    {
+      "footprint_radius_m": 0.25,
+      "face_area_m2": 0.19634954084936207,
+      "plane_criterion_bonds": 121,
+      "footprint_criterion_bonds": 5,
+      "discrete_column_prediction": 5,
+      "relative_diff_vs_discrete": 0.0,
+      "continuum_pi_R2_over_h2": 3.141592653589793,
+      "relative_diff_vs_continuum": 0.5915494309189534,
+      "saturated": false
+    },
+    {
+      "footprint_radius_m": 0.5,
+      "face_area_m2": 0.7853981633974483,
+      "plane_criterion_bonds": 121,
+      "footprint_criterion_bonds": 13,
+      "discrete_column_prediction": 13,
+      "relative_diff_vs_discrete": 0.0,
+      "continuum_pi_R2_over_h2": 12.566370614359172,
+      "relative_diff_vs_continuum": 0.034507130097319726,
+      "saturated": false
+    },
+    {
+      "footprint_radius_m": 0.75,
+      "face_area_m2": 1.7671458676442586,
+      "plane_criterion_bonds": 121,
+      "footprint_criterion_bonds": 29,
+      "discrete_column_prediction": 29,
+      "relative_diff_vs_discrete": 0.0,
+      "continuum_pi_R2_over_h2": 28.274333882308138,
+      "relative_diff_vs_continuum": 0.02566518881443665,
+      "saturated": false
+    },
+    {
+      "footprint_radius_m": 1.0,
+      "face_area_m2": 3.141592653589793,
+      "plane_criterion_bonds": 121,
+      "footprint_criterion_bonds": 49,
+      "discrete_column_prediction": 49,
+      "relative_diff_vs_discrete": 0.0,
+      "continuum_pi_R2_over_h2": 50.26548245743669,
+      "relative_diff_vs_continuum": 0.02517597356214103,
+      "saturated": false
+    },
+    {
+      "footprint_radius_m": 1.5,
+      "face_area_m2": 7.0685834705770345,
+      "plane_criterion_bonds": 121,
+      "footprint_criterion_bonds": 109,
+      "discrete_column_prediction": 109,
+      "relative_diff_vs_discrete": 0.0,
+      "continuum_pi_R2_over_h2": 113.09733552923255,
+      "relative_diff_vs_continuum": 0.03622840016574488,
+      "saturated": false
+    },
+    {
+      "footprint_radius_m": 2.0,
+      "face_area_m2": 12.566370614359172,
+      "plane_criterion_bonds": 121,
+      "footprint_criterion_bonds": 121,
+      "discrete_column_prediction": 121,
+      "relative_diff_vs_discrete": 0.0,
+      "continuum_pi_R2_over_h2": 201.06192982974676,
+      "relative_diff_vs_continuum": 0.39819537143377076,
+      "saturated": true
+    },
+    {
+      "footprint_radius_m": 3.0,
+      "face_area_m2": 28.274333882308138,
+      "plane_criterion_bonds": 121,
+      "footprint_criterion_bonds": 121,
+      "discrete_column_prediction": 121,
+      "relative_diff_vs_discrete": 0.0,
+      "continuum_pi_R2_over_h2": 452.3893421169302,
+      "relative_diff_vs_continuum": 0.732531276192787,
+      "saturated": true
+    }
+  ]
+}

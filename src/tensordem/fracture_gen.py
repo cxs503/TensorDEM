@@ -37,6 +37,8 @@ from .fracture_mass_mapping import (
 #: density carries exactly the mass of the cubic cell ``h^3`` the particle owns,
 #: which is what ``mass_mode="cell"`` assigns (see
 #: ``docs/dem3d_fracture_mass_mapping_audit.md``).
+#: Equivalent derivation (kept from agent/m2942, value-equal up to 1 ulp):
+#:   4/3 pi r_m^3 = h^3 = (2 r)^3  ->  r_m = r (6/pi)^{1/3}
 MASS_RADIUS_FACTOR = 2.0 * (3.0 / (4.0 * math.pi)) ** (1.0 / 3.0)
 
 #: Accepted ``mass_mapping`` spellings -> canonical ``mass_mode``.
