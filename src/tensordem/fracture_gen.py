@@ -58,6 +58,11 @@ MASS_MAPPING_ALIASES = {
     "frozen": "sphere",
 }
 
+#: Canonical descriptive spelling per internal ``mass_mode``: the names the
+#: published audit notes use ("equal_volume_spheres" / "cell_volume").  Reported
+#: by ``FractureField.mass_mapping`` when the caller did not pick a spelling.
+MASS_MODE_TO_MAPPING = {"sphere": "equal_volume_spheres", "cell": "cell_volume"}
+
 #: Geometric tolerance (m) applied to the in-plane footprint radius test.
 _FOOTPRINT_TOLERANCE = 1e-12
 
@@ -67,6 +72,28 @@ _FOOTPRINT_TOLERANCE = 1e-12
 #: bonds whose crossing point projects inside the equal-area footprint disc of
 #: radius ``sqrt(area/pi)``, so the count tracks ``pi R^2 / h^2``.
 FACE_EXTENTS = {"plane": False, "disc": True}
+
+#: Supported ``face_extent`` values, in frozen-contract first order.
+VALID_FACE_EXTENTS = tuple(FACE_EXTENTS)
+
+#: Which point of a bond the footprint disc is tested against:
+#: ``"midpoint"`` (trunk criterion) or ``"crossing"`` (exact plane intersection,
+#: kept from the contract-restoration branch).  Both select a disc of radius
+#: ``face_footprint_radius(face)``; they differ only for faces inclined to the
+#: lattice, by at most half a bond length in plane.
+FOOTPRINT_REFERENCES = {"midpoint": "midpoint", "crossing": "crossing"}
+
+
+def normalise_footprint_reference(value: str | None) -> str:
+    """Canonicalise ``footprint_reference`` onto ``FOOTPRINT_REFERENCES``."""
+    if value is None:
+        return "midpoint"
+    if not isinstance(value, str) or value.strip().lower() not in FOOTPRINT_REFERENCES:
+        raise ValueError(
+            "footprint_reference must be one of "
+            f"{tuple(FOOTPRINT_REFERENCES)}, got {value!r}"
+        )
+    return FOOTPRINT_REFERENCES[value.strip().lower()]
 
 
 def normalise_mass_mapping(value: str, name: str = "mass_mapping") -> str:
@@ -150,6 +177,9 @@ class FractureGenConfig:
     # > 0 -> endpoints within this distance of the face plane count as lying on
     #        it, so a plane coincident with a particle layer severs the two
     #        bonds per column that touch it instead of nothing.
+    footprint_reference: str = "midpoint"
+    # "midpoint" -> the footprint disc contains the bond midpoint (trunk);
+    # "crossing" -> it contains the exact bond/plane intersection point.
 
     def __post_init__(self):
         if self.density <= 0:
@@ -165,6 +195,9 @@ class FractureGenConfig:
         if not math.isfinite(self.on_plane_tolerance) or self.on_plane_tolerance < 0.0:
             raise ValueError("on_plane_tolerance must be non-negative and finite")
         self.footprint_aware = normalise_face_extent(self.face_extent, self.footprint_aware)
+        self.footprint_reference = normalise_footprint_reference(
+            self.footprint_reference
+        )
 
 
 class FractureField:
@@ -188,18 +221,22 @@ class FractureField:
         on_plane_tolerance: float = 0.0,
         face_extent: str | None = None,
         mass_mapping: str | None = None,
+        footprint_reference: str = "midpoint",
     ):
         self.mass_mode = normalise_mass_mapping(mass_mode, "mass_mode")
         # Canonical mode plus the spelling the caller actually asked for, so an
-        # audit can quote "cell_volume" while the physics uses "cell".
+        # audit can quote "cell_volume" while the physics uses "cell".  With no
+        # explicit spelling the canonical descriptive name of the mode is
+        # reported ("cell_volume" / "equal_volume_spheres").
         if mass_mapping is None:
-            self.mass_mapping = self.mass_mode
+            self.mass_mapping = MASS_MODE_TO_MAPPING[self.mass_mode]
         else:
             normalise_mass_mapping(mass_mapping, "mass_mapping")  # validate only
             self.mass_mapping = str(mass_mapping)
         if not math.isfinite(on_plane_tolerance) or on_plane_tolerance < 0.0:
             raise ValueError("on_plane_tolerance must be non-negative and finite")
         self.footprint_aware = normalise_face_extent(face_extent, footprint_aware)
+        self.footprint_reference = normalise_footprint_reference(footprint_reference)
         self.on_plane_tolerance = on_plane_tolerance
         self.positions = positions
         self.velocities = velocities
@@ -428,6 +465,7 @@ def identify_bonds_crossing_face(
     on_plane_tolerance: float = 0.0,
     footprint_aware: bool = False,
     face_extent: str | None = None,
+    footprint_reference: str = "midpoint",
 ) -> torch.Tensor:
     """Identify bonds that cross a failure face.
     
@@ -448,13 +486,19 @@ def identify_bonds_crossing_face(
         the plane (both endpoints on it) stays intact.
     ``footprint_aware is True``
         additionally restricts breakage to the disc of radius
-        ``face_footprint_radius(face)`` around the face centroid, measured on
-        the in-plane projection of the bond midpoint.  The severed count then
-        tracks ``pi R^2 / h^2`` instead of the whole plane.
+        ``face_footprint_radius(face)`` around the face centroid.  The severed
+        count then tracks ``pi R^2 / h^2`` instead of the whole plane.  Which
+        bond point is tested is chosen by ``footprint_reference``:
+        ``"midpoint"`` (default, trunk criterion, in-plane projection of the
+        bond midpoint) or ``"crossing"`` (exact plane-intersection point, the
+        more local criterion kept from the contract-restoration branch).  The
+        two agree on lattice-aligned faces and differ by at most half a bond
+        length in plane on inclined ones.
     """
     if on_plane_tolerance < 0.0:
         raise ValueError("on_plane_tolerance must be non-negative")
     footprint_aware = normalise_face_extent(face_extent, footprint_aware)
+    reference = normalise_footprint_reference(footprint_reference)
     normal_norm = float(torch.linalg.norm(face.normal))
     if not math.isfinite(normal_norm) or normal_norm <= 0.0:
         raise ValueError(
@@ -488,8 +532,18 @@ def identify_bonds_crossing_face(
     if footprint_aware:
         radius = face_footprint_radius(face)
         unit = normal / torch.linalg.norm(normal)
-        midpoint = 0.5 * (pos_i + pos_j)
-        offset = midpoint - centroid
+        if reference == "crossing":
+            # exact plane intersection t = -d_i / (d_j - d_i) along the bond;
+            # t = 0 for a coplanar bond, which the crossing test already rejects
+            span = dist_j - dist_i
+            safe = torch.where(span.abs() > 0.0, span, torch.ones_like(span))
+            fraction = torch.where(
+                span.abs() > 0.0, -dist_i / safe, torch.zeros_like(span)
+            )
+            point = pos_i + fraction.unsqueeze(1) * (pos_j - pos_i)
+        else:
+            point = 0.5 * (pos_i + pos_j)
+        offset = point - centroid
         offset = offset - torch.sum(offset * unit, dim=1, keepdim=True) * unit
         radial = torch.linalg.norm(offset, dim=1)
         crosses = crosses & (radial <= radius + _FOOTPRINT_TOLERANCE)
@@ -531,6 +585,7 @@ def generate_fracture_field(
             face,
             on_plane_tolerance=config.on_plane_tolerance,
             footprint_aware=config.footprint_aware,
+            footprint_reference=config.footprint_reference,
         )
         alive &= ~crosses
     
@@ -548,6 +603,7 @@ def generate_fracture_field(
         footprint_aware=config.footprint_aware,
         on_plane_tolerance=config.on_plane_tolerance,
         face_extent=config.face_extent,
+        footprint_reference=config.footprint_reference,
     )
 
 
@@ -567,6 +623,14 @@ class FractureLedger:
         """Compute mass conservation error: |DEM_mass - FEM_mass|."""
         dem_mass = self.field.total_mass
         return abs(dem_mass - fem_mass)
+
+    def lattice_volume(self) -> float:
+        """Volume physically covered by the realised particle lattice, ``N h^3``.
+
+        Public spelling of ``field.represented_volume`` kept from the contract
+        restoration branch; identical value, so either name may be quoted.
+        """
+        return self.field.represented_volume
 
     def mass_accounting(
         self,
@@ -615,10 +679,15 @@ class FractureLedger:
             "volume_fraction": self.field.volume_fraction,
             "dem_mass": dem_mass,
             "continuum_volume": continuum_volume,
+            # alias: the contract-restoration branch calls this ``domain_volume``
+            "domain_volume": continuum_volume,
             "continuum_mass": continuum_mass,
             "fem_continuum_mass": continuum_mass,
             "relative_error": signed_error,
             "relative_error_magnitude": magnitude,
+            # alias: same quantity under the name the restoration branch
+            # published (``docs/fracture_gen_contract_restoration.md``)
+            "absolute_relative_error": magnitude,
             "tolerance": tolerance,
             "within_15pct": magnitude <= tolerance,
         }
@@ -744,6 +813,7 @@ class FractureLedger:
                 face,
                 on_plane_tolerance=self.field.on_plane_tolerance,
                 footprint_aware=self.field.footprint_aware,
+                footprint_reference=self.field.footprint_reference,
             )
             bonds_should_break |= crosses
         

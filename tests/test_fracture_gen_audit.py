@@ -9,6 +9,7 @@ analytics. See ``docs/dem3d_fracture_gen_audit.md`` and
 
 from __future__ import annotations
 
+import json
 import math
 import sys
 import unittest
@@ -130,6 +131,44 @@ class MassMappingAudit(unittest.TestCase):
         # direction); the magnitude key is what this audit grades.
         self.assertAlmostEqual(acc["relative_error"], -abs(0.4**3 - 0.5**3) / 0.5**3, places=12)
         self.assertAlmostEqual(acc["relative_error_magnitude"], abs(0.4**3 - 0.5**3) / 0.5**3)
+        # the same magnitude is published as ``absolute_relative_error`` by the
+        # contract-restoration note; both spellings must stay in sync
+        self.assertAlmostEqual(
+            acc["absolute_relative_error"], abs(0.4**3 - 0.5**3) / 0.5**3
+        )
+        self.assertEqual(acc["absolute_relative_error"], acc["relative_error_magnitude"])
+        self.assertEqual(acc["domain_volume"], acc["continuum_volume"])
+
+    def test_committed_audit_report_keeps_signed_and_magnitude(self):
+        """The committed report must carry both published error spellings.
+
+        Branch union: the restoration branch publishes the signed
+        ``relative_error`` (DEM mass below the continuum mass is negative), the
+        trunk table publishes its magnitude.  Losing either key silently would
+        make one of the two published tables unreproducible, so both are pinned
+        here against the committed artefact.
+        """
+        report_path = (
+            Path(__file__).resolve().parent.parent
+            / "benchmarks"
+            / "fracture_gen_audit_report.json"
+        )
+        report = json.loads(report_path.read_text())
+        rows = report["a2_mass_mapping"]["rows"]
+        self.assertEqual(len(rows), 2)
+        for row in rows:
+            self.assertLessEqual(row["relative_error"], 1e-12 + abs(row["relative_error"]))
+            self.assertAlmostEqual(
+                row["relative_error_magnitude"], abs(row["relative_error"]), places=15
+            )
+            self.assertEqual(
+                row["absolute_relative_error"], row["relative_error_magnitude"]
+            )
+        frozen = rows[0]
+        self.assertAlmostEqual(frozen["relative_error"], math.pi / 6 - 1, places=12)
+        self.assertAlmostEqual(
+            frozen["relative_error_magnitude"], abs(math.pi / 6 - 1), places=12
+        )
 
     def test_mass_accounting_reports_mapping_name(self):
         acc = FractureLedger(self._field("cell_volume"), []).mass_accounting()

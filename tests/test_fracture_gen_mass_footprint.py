@@ -133,6 +133,36 @@ class TestMassMappingAudit(unittest.TestCase):
         self.assertAlmostEqual(f.mass_radius / RADIUS, MASS_RADIUS_FACTOR, places=12)
         self.assertAlmostEqual(f.particle_mass, DENSITY * SPACING**3, places=12)
 
+    def test_default_mapping_is_volume_consistent(self):
+        """The shipped default must be the volume-consistent mapping."""
+        f = field_for([face()])
+        self.assertEqual(f.mass_mapping, "cell_volume")
+        accounting = FractureLedger(f, [face()]).mass_accounting(CONTINUUM_VOLUME)
+        self.assertAlmostEqual(accounting["relative_error"], 0.0, places=12)
+        self.assertTrue(accounting["within_15pct"])
+        self.assertAlmostEqual(accounting["fem_continuum_mass"], CONTINUUM_VOLUME * DENSITY)
+
+    def test_both_published_spellings_give_the_same_field(self):
+        """Union of the two branches: every documented alias is one mapping."""
+        pairs = (
+            ("sphere", "equal_volume_spheres"),
+            ("equal_volume_sphere", "sphere"),
+            ("cell", "lattice_cell"),
+            ("cell_volume", "volume_cell"),
+        )
+        for first, second in pairs:
+            a = field_for([face()], mass_mapping=first)
+            b = field_for([face()], mass_mapping=second)
+            self.assertEqual(a.mass_mode, b.mass_mode, (first, second))
+            self.assertAlmostEqual(a.particle_mass, b.particle_mass, places=12)
+            # the requested spelling is echoed back, the physics is canonical
+            self.assertEqual(a.mass_mapping, first)
+            self.assertEqual(b.mass_mapping, second)
+            self.assertEqual(a.face_extent, "plane")
+        # unknown spellings still raise
+        with self.assertRaises(ValueError):
+            field_for([face()], mass_mapping="equal_volume_cubes")
+
     def test_mass_mapping_rejects_unknown_value(self):
         with self.assertRaises(ValueError):
             field_for([face()], mass_mapping="unit_solid_volume")
@@ -184,6 +214,67 @@ class TestFootprintAwareBreakage(unittest.TestCase):
         self.assertEqual(face_footprint_radius(face(area=0.04, extent_radius=0.3)), 0.3)
         with self.assertRaises(ValueError):
             face_footprint_radius(face(area=0.04, extent_radius=-1.0))
+
+    def test_footprint_reference_midpoint_and_crossing(self):
+        """Union of the two branches: both footprint reference points survive.
+
+        ``footprint_reference="midpoint"`` is the trunk criterion (bond midpoint
+        inside the disc), ``"crossing"`` the exact plane-intersection point from
+        the contract-restoration branch.  On a lattice-aligned face the two are
+        the same point, so the severed sets must be identical; on an inclined
+        face the exact criterion can only tighten the set.
+        """
+        radius = 0.5
+        aligned = [face(area=math.pi * radius**2, extent_radius=radius)]
+        mid = field_for(aligned, footprint_aware=True)
+        cross = field_for(
+            aligned, footprint_aware=True, footprint_reference="crossing"
+        )
+        self.assertEqual(mid.num_broken_bonds, cross.num_broken_bonds)
+        self.assertTrue(torch.equal(mid.alive, cross.alive))
+
+        inclined_face = FailureFace(
+            id=1,
+            area=math.pi * 0.25**2,
+            normal=torch.tensor([1.0, 0.0, 1.0], dtype=torch.float64),
+            centroid=torch.tensor([0.5, 0.5, 0.5625], dtype=torch.float64),
+            G=100.0,
+            released_energy=1.0,
+            extent_radius=0.25,
+        )
+        frozen = field_for([inclined_face])
+        loose = field_for([inclined_face], footprint_aware=True)
+        tight = field_for(
+            [inclined_face], footprint_aware=True, footprint_reference="crossing"
+        )
+        # both criteria are local: the footprint must cut fewer bonds than the
+        # infinite plane does
+        self.assertLess(loose.num_broken_bonds, frozen.num_broken_bonds)
+        self.assertLess(tight.num_broken_bonds, frozen.num_broken_bonds)
+        # the "crossing" option must sever exactly those bonds whose exact
+        # plane-intersection point lies inside the footprint disc (the midpoint
+        # test is *not* equivalent for an inclined face, hence the option)
+        unit = torch.tensor([1.0, 0.0, 1.0], dtype=torch.float64)
+        unit = unit / torch.linalg.norm(unit)
+        broken = tight.bond_indices[~tight.alive]
+        pos_i = tight.positions[broken[:, 0]]
+        pos_j = tight.positions[broken[:, 1]]
+        d_i = ((pos_i - inclined_face.centroid) * unit).sum(dim=1)
+        d_j = ((pos_j - inclined_face.centroid) * unit).sum(dim=1)
+        fraction = (-d_i / (d_j - d_i)).unsqueeze(1)
+        crossing = pos_i + fraction * (pos_j - pos_i)
+        offset = crossing - inclined_face.centroid
+        offset = offset - (offset * unit).sum(dim=1, keepdim=True) * unit
+        self.assertTrue(bool((torch.linalg.norm(offset, dim=1) <= 0.25 + 1e-12).all()))
+        # the two reference points give different sets on an inclined face, so
+        # neither branch's criterion was silently dropped
+        self.assertNotEqual(
+            sorted(zip(*loose.bond_indices[~loose.alive].T.tolist())),
+            sorted(zip(*tight.bond_indices[~tight.alive].T.tolist())),
+        )
+
+        with self.assertRaises(ValueError):
+            field_for(aligned, footprint_aware=True, footprint_reference="centroid")
 
     def test_offset_face_footprint_breaks_only_local_bonds(self):
         """A face near the domain edge must not cut the far side of the plane."""

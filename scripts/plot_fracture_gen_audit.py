@@ -151,7 +151,11 @@ def plot_mass_error(report: dict) -> Path:
     quant = report["a2_mass_mapping"]["quantisation_sweep"]
     fig, axes = plt.subplots(1, 2, figsize=(9.6, 4.2))
     labels = ["equal_volume\nspheres", "cell_volume"]
-    vals = [r["relative_error"] for r in rows]
+    # the panel is labelled with the magnitude, so plot the magnitude: the
+    # signed residual stays in the report next to it
+    vals = [
+        r.get("relative_error_magnitude", abs(r["relative_error"])) for r in rows
+    ]
     axes[0].bar(labels, vals, color=["#d62728", "#2ca02c"])
     axes[0].axhline(THRESHOLD, color="k", linestyle=":",
                     label="3% acceptance band")
