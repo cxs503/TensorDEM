@@ -160,8 +160,12 @@ identities: a stub provably breaks them.
   disk. No added mass, no free-surface deformation, no wave damping, no surface
   tension. Sub-floe hydrodynamics and floe-floe collision in water are outside
   this harness.
-- **Small-amplitude only.** The period anchor uses `2e-3 R`; the nonlinear
-  (finite-amplitude) heave period is not verified and is expected to differ.
+- **Small-amplitude only -> resolved 2026-11-04.** The period anchor uses
+  `2e-3 R`. The finite-amplitude (nonlinear) heave period is now verified against
+  an independent energy-integral reference in
+  `docs/floe_heave_finite_amplitude_period.md`: worst relative error `4.2e-7`
+  over `A <= 0.85 A_esc = 0.24 R`, while the linear anchor `T0` is biased by up
+  to `2.8 %` at that amplitude. The lattice (7-disk) growth law stays open.
 - **Prescribed normal load.** Anchor F imposes `N = m g cos(theta)` rather than
   resolving the normal contact spring, so it verifies the tangential law in
   isolation. Coupling with a resolved normal force (normal/tangential
