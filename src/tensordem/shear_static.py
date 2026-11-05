@@ -154,7 +154,8 @@ def static_direct_shear(
     *,
     gamma: float = 1.0e-3,
     return_displacement: bool = False,
-) -> dict[str, Any]:
+    include_state: bool = False,
+) -> dict[str, Any] | tuple[dict[str, Any], "IceDEM3D", np.ndarray]:
     """Linear elastic equilibrium of the direct-shear specimen (rate-free limit).
 
     Boundary conditions are the solver's: the bottom layer is a hard support
@@ -162,11 +163,6 @@ def static_direct_shear(
     and the remaining degrees of freedom are free.  Returns tractions normalised
     by the nominal area and by :func:`affine_effective_area`, plus residuals that
     prove the discrete equilibrium was actually reached.
-
-    With ``return_displacement=True`` the nodal displacement field and the
-    undeformed positions are returned as ``(N, 3)`` arrays
-    (``displacement_m`` / ``initial_positions_m``) for boundary-layer analysis;
-    they are omitted by default so the JSON-friendly summary stays unchanged.
     """
     if not np.isfinite(gamma) or gamma <= 0.0:
         raise ValueError("gamma must be finite and positive")
@@ -212,7 +208,7 @@ def static_direct_shear(
     bond_force_scale = cfg.bond_stiffness * gamma * a
 
     displacement = u.reshape(-1, 3)
-    result = {
+    payload = {
         "gamma": gamma,
         "C44_Pa": c44,
         "height_m": height,
@@ -233,9 +229,11 @@ def static_direct_shear(
         "profile": layer_profile(displacement, z, gamma * height),
     }
     if return_displacement:
-        result["displacement_m"] = displacement
-        result["initial_positions_m"] = sim.initial_positions.cpu().numpy()
-    return result
+        payload["displacement_m"] = displacement
+        payload["initial_positions_m"] = sim.initial_positions.cpu().numpy()
+    if include_state:
+        return payload, sim, displacement
+    return payload
 
 
 def layer_profile(displacement: np.ndarray, z: np.ndarray, gamma_h: float) -> list[dict[str, float]]:
@@ -251,3 +249,196 @@ def layer_profile(displacement: np.ndarray, z: np.ndarray, gamma_h: float) -> li
             "mean_uz_over_gamma_h": float(displacement[mask, 2].mean() / gamma_h),
         })
     return rows
+
+def _lattice_indices(sim: IceDEM3D) -> np.ndarray:
+    """Integer ``(nx, ny, nz)`` lattice coordinates of every particle."""
+    a = lattice_spacing(sim.config)
+    p = sim.initial_positions.cpu().numpy()
+    return np.rint((p - p.min(axis=0)) / a).astype(int)
+
+
+def interior_traction(
+    sim: IceDEM3D,
+    displacement: np.ndarray,
+    *,
+    gamma: float,
+    margin: int = 1,
+    layer: int | None = None,
+) -> dict[str, float]:
+    """Shear traction carried by the *interior* bonds crossing the bottom plane.
+
+    The whole-layer reaction of :func:`static_direct_shear` mixes the bulk
+    response with the free-surface boundary layer, so it only approaches
+    ``C44 * gamma`` as the cross-section grows.  This routine measures the same
+    bond network on the sub-window whose nodes sit at least ``margin`` lattice
+    spacings from every lateral face, i.e. outside the boundary layer.  Bond
+    forces are recomputed from the displacement field with the bond law
+    ``f = k * (n . (u_j - u_i)) * n`` (the same law ``IceDEM3D.forces`` uses),
+    and the window area is censused with the affine identity of
+    :func:`affine_effective_area` restricted to the same bonds, so numerator and
+    denominator are consistent -- under affine shear the ratio is again
+    ``C44 * gamma`` exactly.
+    """
+    if margin < 0:
+        raise ValueError("margin must be non-negative")
+    cfg = sim.config
+    a = lattice_spacing(cfg)
+    k = cfg.bond_stiffness
+    idx = _lattice_indices(sim)
+    pairs = sim.pairs.cpu().numpy()
+    alive = sim.alive.cpu().numpy().astype(bool)
+    p0 = sim.initial_positions.cpu().numpy()
+    z = p0[:, 2]
+    z_bottom = z.min()
+    i, j = pairs[:, 0], pairs[:, 1]
+    if layer is None:
+        lower = z_bottom
+    else:
+        levels = np.unique(np.rint((z - z_bottom) / a))
+        if layer < 0 or layer >= len(levels) - 1:
+            raise ValueError("layer index out of range")
+        lower = z_bottom + layer * a
+    cross = np.isclose(idx[i, 2], int(round((lower - z_bottom) / a))) & (
+        idx[j, 2] == int(round((lower - z_bottom) / a)) + 1) & alive
+    # window: both endpoints at least `margin` sites away from every lateral face
+    nx, ny, nz = idx.max(axis=0) + 1
+    keep = np.ones(len(i), dtype=bool)
+    for axis, n_axis in ((0, nx), (1, ny)):
+        lo, hi = margin, n_axis - 1 - margin
+        keep &= (idx[i, axis] >= lo) & (idx[i, axis] <= hi)
+        keep &= (idx[j, axis] >= lo) & (idx[j, axis] <= hi)
+    mask = cross & keep
+    if not mask.any():
+        raise ValueError("no bonds inside the requested interior window")
+    iw, jw = i[mask], j[mask]
+    d = p0[jw] - p0[iw]
+    length = np.linalg.norm(d, axis=1)
+    normal = d / length[:, None]
+    du = displacement[jw] - displacement[iw]
+    extension = np.einsum("bi,bi->b", normal, du)
+    fx = k * extension * normal[:, 0]
+    reaction = float(np.abs(fx.sum()))
+    weight = float(np.sum(length ** 2 * normal[:, 0] ** 2 * normal[:, 2] ** 2))
+    area_window = weight / AFFINE_WEIGHT_PER_NODE
+    c44 = shear_modulus_closed_form(cfg)
+    return {
+        "bond_count": float(int(mask.sum())),
+        "node_count": float(len(np.unique(np.concatenate([iw, jw])))),
+        "area_window_m2": area_window,
+        "tau_window_Pa": abs(reaction) / area_window,
+        "G_window_over_C44": abs(reaction) / area_window / (c44 * gamma),
+        "window_fraction_of_area": area_window / direct_shear_specimen_area(cfg),
+        "margin_sites": float(margin),
+        "layer": -1.0 if layer is None else float(layer),
+        "gamma": gamma,
+    }
+
+
+def cross_section_series(
+    sizes: "list[tuple[int, int, int]]",
+    *,
+    gamma: float = 1.0e-6,
+    margin: int = 1,
+) -> list[dict[str, Any]]:
+    """Static direct-shear modulus of a family of specimens (one sparse solve each).
+
+    Returns one row per ``(nx, ny, nz)`` holding the whole-layer modulus
+    (``G_effective_over_C44``, as in :func:`static_direct_shear`) and the
+    interior-window modulus of :func:`interior_traction`, both normalised by the
+    infinite-lattice ``C44 = 7k/(3a)``.
+    """
+    rows: list[dict[str, Any]] = []
+    for nx, ny, nz in sizes:
+        cfg = replace(DEM3DConfig(), nx=nx, ny=ny, nz=nz)
+        payload, sim, displacement = static_direct_shear(
+            cfg, gamma=gamma, include_state=True)
+        # a margin larger than the specimen would leave no interior bonds
+        margin_used = min(margin, max(0, min(nx, ny) // 2 - 1))
+        interior = interior_traction(sim, displacement, gamma=gamma,
+                                     margin=margin_used)
+        rows.append({
+            "nx": nx,
+            "ny": ny,
+            "nz": nz,
+            "height_over_a": (nz - 1),
+            "particle_count": payload["particle_count"],
+            "reaction_N": payload["reaction_N"],
+            "area_ratio": payload["area_ratio"],
+            "G_nominal_over_C44": payload["G_nominal_over_C44"],
+            "G_effective_over_C44": payload["G_effective_over_C44"],
+            "G_window_over_C44": interior["G_window_over_C44"],
+            "window_margin_used": margin_used,
+            "window_fraction_of_area": interior["window_fraction_of_area"],
+            "window_bond_count": interior["bond_count"],
+            "reaction_relative_error": payload["reaction_relative_error"],
+            "free_residual_over_bond_force": payload["free_residual_over_bond_force"],
+            "linear_gamma_residual": payload["max_free_displacement_over_gamma_h"],
+        })
+    return rows
+
+
+def fit_boundary_bias(
+    rows: "list[dict[str, Any]]",
+    *,
+    key: str = "G_effective_over_C44",
+    degree: int = 1,
+) -> dict[str, float]:
+    """Least-squares extrapolation of the free-surface bias to infinite cross-section.
+
+    The measured deficit ``1 - G/G_inf`` is modelled as a polynomial in
+    ``x = 1/nx + 1/ny`` (the fraction of the cross-section occupied by the
+    free-surface boundary layer), so the intercept is a size-independent
+    residual and the limit is ``1 - intercept``.  ``degree=2`` adds the
+    curvature term for the Richardson-type estimate.
+    """
+    if degree not in (1, 2):
+        raise ValueError("degree must be 1 or 2")
+    x = np.array([1.0 / r["nx"] + 1.0 / r["ny"] for r in rows])
+    y = np.array([1.0 - r[key] for r in rows])
+    design = np.column_stack([np.ones_like(x)] + ([x, x ** 2] if degree == 2 else [x]))
+    coef, *_ = np.linalg.lstsq(design, y, rcond=None)
+    pred = design @ coef
+    ss_res = float(np.sum((y - pred) ** 2))
+    ss_tot = float(np.sum((y - y.mean()) ** 2))
+    return {
+        "degree": float(degree),
+        "intercept": float(coef[0]),
+        "slope": float(coef[1]),
+        "curvature": float(coef[2]) if degree == 2 else 0.0,
+        "limit_over_C44": float(1.0 - coef[0]),
+        "rms_residual": float(np.sqrt(ss_res / len(x))),
+        "r2": float(1.0 - ss_res / ss_tot) if ss_tot > 0 else float("nan"),
+        "n_points": float(len(x)),
+    }
+
+def fit_boundary_layer(
+    margins: "list[int]",
+    values: "list[float]",
+    *,
+    reference: float = 1.0,
+) -> dict[str, float]:
+    """Exponential decay length of the free-surface deficit ``reference - value``.
+
+    ``deficit(m) ~ A exp(-m / lambda)`` is fitted by least squares on
+    ``log(deficit)``; ``decay_length_sites`` is the fitted ``lambda`` in lattice
+    spacings ``a``.  A finite ``lambda`` means the depression is a surface layer,
+    not a bulk material effect.
+    """
+    m = np.asarray(margins, dtype=float)
+    deficit = reference - np.asarray(values, dtype=float)
+    keep = deficit > 0.0
+    dropped = int((~keep).sum())
+    m, deficit = m[keep], deficit[keep]
+    if len(m) < 3:
+        raise ValueError("need >=3 points with positive deficit (reference too low)")
+    slope, intercept = np.polyfit(m, np.log(deficit), 1)
+    pred = intercept + slope * m
+    ss_res = float(np.sum((np.log(deficit) - pred) ** 2))
+    ss_tot = float(np.sum((np.log(deficit) - np.log(deficit).mean()) ** 2))
+    return {
+        "decay_length_sites": float(-1.0 / slope),
+        "amplitude": float(np.exp(intercept)),
+        "r2": float(1.0 - ss_res / ss_tot) if ss_tot > 0 else float("nan"),
+        "n_points": float(len(m)),
+        "dropped_points": float(dropped),
+    }

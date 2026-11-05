@@ -172,7 +172,12 @@ cheap.
 `d(n) = 1.191/n + 1.846/n^2` (RMS 4.7e-4), asymptotic bias `0.10 %`, so
 `G_eff(inf)/C44 = 0.99899` and the material constant `7k/(3a)` *is* recoverable —
 directly to < 3 % at `n >= 45`. The `h/a = 2` restriction is load-bearing (taller
-blocks relax far more).
+blocks relax far more). The study covered `5x5x3 … 41x41x3` with the `1/n`
+extrapolation of the free-surface bias recovering `C44` to 0.14 %
+(quadratic) / 1.47 % (linear) and an interior window (margin 3 sites) to 0.19 %
+for `h/L <= 0.06`; the edge relaxation is a `0.63 a` layer. For `h/L >= 0.12`
+the relaxation length grows with `h/L` and no window recovers `C44`, so a thick
+specimen's modulus stays a specimen property (down to `0.790 C44` at `h/L = 0.24`).
 
 Also unchanged: mode-II fracture energy remains NOT_SUPPORTED (no tangential bond
 stiffness), and the `shear_breaking_strain → macro strain` mapping of §3.2 of the
