@@ -1,20 +1,20 @@
 {
  "schema": "tensordem.doc-evidence-ledger/1",
  "generated_by": "scripts/audit_doc_evidence.py",
- "documents_scanned": 106,
- "pointers": 521,
+ "documents_scanned": 108,
+ "pointers": 542,
  "counts": {
-  "code:TRACKED": 197,
+  "code:TRACKED": 203,
   "data:MISSING": 35,
-  "data:TRACKED": 26,
-  "doc:TRACKED": 68,
+  "data:TRACKED": 29,
+  "doc:TRACKED": 73,
   "figure:MISSING": 65,
-  "figure:TRACKED": 7,
-  "test:TRACKED": 123
+  "figure:TRACKED": 8,
+  "test:TRACKED": 129
  },
  "remedy": {
   "REGENERABLE": 100,
-  "TRACKED": 421
+  "TRACKED": 442
  },
  "unresolved_per_doc": {
   "docs/TENSORDEM_UPSTREAM_DIFF_M1630.md": 4,
@@ -3106,6 +3106,48 @@
    "status": "TRACKED"
   },
   {
+   "doc": "docs/dem3d_wedge_bow_probe_contract.md",
+   "line": 4,
+   "pointer": "src/tensordem/dem3d_wedge.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_wedge_bow_probe_contract.md",
+   "line": 4,
+   "pointer": "tests/test_dem3d_wedge_bow_forces_contract.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_wedge_bow_probe_contract.md",
+   "line": 34,
+   "pointer": "benchmarks/ice_floe_physics.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_wedge_bow_probe_contract.md",
+   "line": 36,
+   "pointer": "docs/dem3d_contact_impact_dashpot_convention.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_wedge_bow_probe_contract.md",
+   "line": 80,
+   "pointer": "docs/dem3d_moving_wedge_bow.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_wedge_bow_probe_contract.md",
+   "line": 80,
+   "pointer": "docs/dem3d_wedge_resistance_sensitivity.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
    "doc": "docs/dem3d_wedge_resistance_sensitivity.md",
    "line": 6,
    "pointer": "scripts/benchmark_dem3d_wedge_resistance_sensitivity.py",
@@ -3665,6 +3707,111 @@
    "line": 90,
    "pointer": "tests/test_fracture_gen_footprint_breakage.py",
    "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr200_merge_conflict_resolution.md",
+   "line": 17,
+   "pointer": "src/tensordem/dem3d_wedge.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr200_merge_conflict_resolution.md",
+   "line": 26,
+   "pointer": "benchmarks/ice_floe_physics.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr200_merge_conflict_resolution.md",
+   "line": 26,
+   "pointer": "docs/doc_evidence_ledger.json",
+   "kind": "data",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr200_merge_conflict_resolution.md",
+   "line": 92,
+   "pointer": "tests/test_doc_evidence_pointers.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr200_merge_conflict_resolution.md",
+   "line": 97,
+   "pointer": "scripts/audit_doc_evidence.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr200_merge_conflict_resolution.md",
+   "line": 106,
+   "pointer": "tests/test_dem3d_wedge_bow_forces_contract.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr200_merge_conflict_resolution.md",
+   "line": 107,
+   "pointer": "docs/dem3d_wedge_bow_probe_contract.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr200_merge_conflict_resolution.md",
+   "line": 112,
+   "pointer": "artifacts/pr200/verify_pr200.json",
+   "kind": "data",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr200_merge_conflict_resolution.md",
+   "line": 112,
+   "pointer": "scripts/verify_pr200_merge.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr200_merge_conflict_resolution.md",
+   "line": 113,
+   "pointer": "artifacts/pr200/pr200_merge_evidence.png",
+   "kind": "figure",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr200_merge_conflict_resolution.md",
+   "line": 118,
+   "pointer": "artifacts/pr200/suite_results.json",
+   "kind": "data",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr200_merge_conflict_resolution.md",
+   "line": 205,
+   "pointer": "tests/test_dem3d_moving_wedge_bow.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr200_merge_conflict_resolution.md",
+   "line": 205,
+   "pointer": "tests/test_dem3d_wedge_resistance_sensitivity.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr200_merge_conflict_resolution.md",
+   "line": 206,
+   "pointer": "tests/test_threefield.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr200_merge_conflict_resolution.md",
+   "line": 237,
+   "pointer": "docs/pr166_merge_conflict_resolution.md",
+   "kind": "doc",
    "status": "TRACKED"
   },
   {
