@@ -173,6 +173,7 @@ def run_audit(write_artifacts: bool = True):
         (OUT_DIR / "audit.json").write_text(json.dumps(audit, indent=2))
         (OUT_DIR / "audit_tables.md").write_text(render_markdown(audit))
         plot(audit)
+        plot_footprint_field_map(audit)
     return audit
 
 
@@ -299,6 +300,80 @@ def plot(audit):
     fig.tight_layout()
     fig.savefig(OUT_DIR / "fracture_gen_audit.png", dpi=160)
     plt.close(fig)
+
+
+def plot_footprint_field_map(audit, extent_radius: float = 0.5):
+    """Bond-level map of the severed field: frozen plane vs footprint disc.
+
+    Writes ``artifacts/fracture_gen_audit/footprint_field_map.png``, the figure
+    ``docs/dem3d_fracture_footprint_breakage.md`` §4 cites: grey dots are the
+    lattice, crosses the midpoints of the severed bonds, the dashed circle the
+    face footprint (``extent_radius``), and the third panel the severed count
+    versus footprint radius against the analytic ``pi R^2 / s^2`` law.
+    """
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    face_kwargs = {"extent_radius": extent_radius}
+
+    def face(extent_radius=None):
+        return FailureFace(
+            id=0,
+            area=PLANE_AREA,
+            normal=torch.tensor([0.0, 0.0, 1.0], dtype=torch.float64),
+            centroid=torch.tensor([1.0, 1.0, 0.5], dtype=torch.float64),
+            G=100.0,
+            released_energy=100.0 * PLANE_AREA,
+            extent_radius=extent_radius,
+        )
+
+    panels = (
+        ("frozen criterion (infinite plane)", _field([face()], footprint_aware=False), "tab:red"),
+        ("footprint_aware (disc)", _field([face(**face_kwargs)], footprint_aware=True), "tab:blue"),
+    )
+
+    fig, axes = plt.subplots(1, 3, figsize=(13.5, 4.2))
+    for ax, (title, field, colour) in zip(axes[:2], panels):
+        positions = field.positions
+        ax.plot(positions[:, 0], positions[:, 1], ".", color="0.7", ms=3, zorder=1)
+        broken = field.bond_indices[~field.alive]
+        if len(broken):
+            midpoints = 0.5 * (positions[broken[:, 0]] + positions[broken[:, 1]])
+            ax.plot(midpoints[:, 0], midpoints[:, 1], "x", color=colour, ms=7, mew=1.6,
+                    label="severed bond midpoints (%d)" % field.num_broken_bonds, zorder=3)
+        circle = plt.Circle((1.0, 1.0), extent_radius, fill=False, ls="--", color="k", lw=1.2)
+        ax.add_patch(circle)
+        ax.set_aspect("equal")
+        ax.set_xlim(DOMAIN[0], DOMAIN[1])
+        ax.set_ylim(DOMAIN[2], DOMAIN[3])
+        ax.set_title("%s\n%d severed bonds" % (title, field.num_broken_bonds), fontsize=9)
+        ax.set_xlabel("x (m)")
+        ax.legend(fontsize=8, loc="upper left")
+
+    rows = audit["footprint"]
+    radii = [row["footprint_radius_m"] for row in rows]
+    axes[2].plot(radii, [row["analytic_pi_r2_over_s2"] for row in rows], "k-", lw=2,
+                 label=r"analytic $\pi R^2/s^2$")
+    axes[2].plot(radii, [row["exact_enumerated"] for row in rows], "ks", ms=6,
+                 label="exact enumeration")
+    axes[2].plot(radii, [row["footprint_aware"] for row in rows], "o", color="tab:blue",
+                 ms=7, label="footprint_aware")
+    axes[2].plot(radii, [row["frozen_infinite_plane"] for row in rows], "x", color="tab:red",
+                 ms=9, mew=2, label="frozen (plane)")
+    axes[2].set_xlabel("face footprint radius R (m)")
+    axes[2].set_ylabel("severed bonds")
+    axes[2].set_title("severed bonds vs footprint radius", fontsize=9)
+    axes[2].grid(alpha=0.3)
+    axes[2].legend(fontsize=8)
+
+    fig.suptitle("SI-2/DEM fracture field: frozen plane vs footprint-aware severing", fontsize=11)
+    fig.tight_layout()
+    target = OUT_DIR / "footprint_field_map.png"
+    fig.savefig(target, dpi=160)
+    plt.close(fig)
+    return target
 
 
 if __name__ == "__main__":

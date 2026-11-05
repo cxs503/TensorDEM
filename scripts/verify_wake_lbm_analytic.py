@@ -391,6 +391,14 @@ def _manual_pi_norm(f_i, c, rho, u, nx, ny, nz, *, off_diagonal_weight: float = 
         cu = sum(c[index][a] * u[a] for a in range(3))
         feq = rho * _W[index] * (1.0 + 3.0 * cu + 4.5 * cu * cu - 1.5 * u2)
         neq.append(f_i[index] - feq)
+    # Frobenius norm Pi_ab Pi_ab over the six independent components (a <= b).
+    # Pi is symmetric, so an off-diagonal slot stands for two entries of the
+    # nine-slot double contraction and carries weight 2; without that weight the
+    # norm is sqrt(2) too small in a pure shear. This is the convention of the
+    # shipped kernel (``WakeLBM._effective_tau`` / ``_outer_norm_weight``, see
+    # docs/threefield_lbm_transport_verification.md, m2949).  The weight stays
+    # parameterised so that the pre-m2949 (weight 1) convention is *reported*
+    # instead of being silently absorbed.
     for a in range(3):
         for b in range(a, 3):
             sab = sum(c[i][a] * c[i][b] * neq[i] for i in range(19))
@@ -449,6 +457,8 @@ def smagorinsky_closure_check(*, tau0: float = 0.5006, cs_sgs: float = 0.16,
         u_node = [float(u_i[i_x, i_y, i_z, a].item()) for a in range(3)]
         rho_node = float(rho_i[i_x, i_y, i_z].item())
         pi_manual = _manual_pi_norm(f_i, c_list, rho_node, u_node, 12, ny, ny)
+        # same closure algebra as the kernel: tau = (tau0 + sqrt(tau0^2
+        # + 18 sqrt(2) Cs^2 |Pi| / rho)) / 2 -- factorised into _tau_from_pi()
         pi_legacy = _manual_pi_norm(f_i, c_list, rho_node, u_node, 12, ny, ny,
                                     off_diagonal_weight=1.0)
         tau_node = float(tau_code[i_x, i_y, i_z].item())

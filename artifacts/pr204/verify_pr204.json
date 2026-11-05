@@ -1,0 +1,256 @@
+{
+  "mission": 4013,
+  "pr": 204,
+  "branch": "origin/agent/m3362",
+  "main": "origin/main",
+  "merge_base": "f5de971c03f6363afa701063a833a3766c874eca",
+  "main_sha": "6c6f98b7ac8fbd889db459e06329901869b89dbb",
+  "branch_sha": "3fcc6e58770726ee21f1bea916cdfcd5a40f61f8",
+  "checks": {
+    "conflict_markers": {
+      "conflict_markers": [],
+      "ok": true
+    },
+    "duplicate_definitions": {
+      "duplicate_top_level_names": {},
+      "ok": true,
+      "top_level_names": 22
+    },
+    "semantic_union": {
+      "ok": true,
+      "manual_pi_norm_max_abs_diff_main_vs_merged_default": 0.0,
+      "manual_pi_norm_max_abs_diff_branch_vs_merged": 0.0,
+      "samples": 24,
+      "pure_shear_convention_ratio": [
+        {
+          "sigma": 0.0001,
+          "norm_weight2": 0.0002828427124746271,
+          "norm_weight1": 0.00020000000000000573,
+          "two_sigma": 0.0002,
+          "ratio": 1.414213562373095,
+          "sqrt2": 1.4142135623730951,
+          "rel_dev": 1.570092458683775e-16
+        },
+        {
+          "sigma": 0.001,
+          "norm_weight2": 0.0028284271247461927,
+          "norm_weight1": 0.0020000000000000018,
+          "two_sigma": 0.002,
+          "ratio": 1.4142135623730951,
+          "sqrt2": 1.4142135623730951,
+          "rel_dev": 0.0
+        },
+        {
+          "sigma": 0.01,
+          "norm_weight2": 0.028284271247461888,
+          "norm_weight1": 0.01999999999999999,
+          "two_sigma": 0.02,
+          "ratio": 1.4142135623730951,
+          "sqrt2": 1.4142135623730951,
+          "rel_dev": 0.0
+        }
+      ],
+      "closure_algebra_sweep": [
+        {
+          "tau0": 0.5006,
+          "cs_sgs": 0.16,
+          "pi_norm": 0.0009747373,
+          "rho": 1.0,
+          "main_inline": 0.5009170219057839,
+          "merged_helper": 0.5009170219057839,
+          "abs_diff": 0.0,
+          "rel_diff": 0.0
+        },
+        {
+          "tau0": 0.5006,
+          "cs_sgs": 0.16,
+          "pi_norm": 0.009748657,
+          "rho": 0.9993,
+          "main_inline": 0.5037549830089646,
+          "merged_helper": 0.5037549830089646,
+          "abs_diff": 0.0,
+          "rel_diff": 0.0
+        },
+        {
+          "tau0": 0.505,
+          "cs_sgs": 0.2,
+          "pi_norm": 0.02637731,
+          "rho": 1.0007,
+          "main_inline": 0.5179545535649364,
+          "merged_helper": 0.5179545535649364,
+          "abs_diff": 0.0,
+          "rel_diff": 0.0
+        },
+        {
+          "tau0": 0.5013,
+          "cs_sgs": 0.1,
+          "pi_norm": 1e-06,
+          "rho": 1.0,
+          "main_inline": 0.5013001269491206,
+          "merged_helper": 0.5013001269491206,
+          "abs_diff": 0.0,
+          "rel_diff": 0.0
+        }
+      ],
+      "preserved_markers": {
+        "main_kernel_convention_note": true,
+        "branch_legacy_ratio_reporting": true,
+        "branch_anchor_helper": true,
+        "branch_offdiag_parameter": true,
+        "main_rho_normalisation": true
+      },
+      "extracted_from_blobs": {
+        "main_lines": 658,
+        "branch_lines": 882,
+        "merged_lines": 892
+      }
+    },
+    "preservation": {
+      "files": {
+        "scripts/verify_wake_lbm_analytic.py": {
+          "main": {
+            "added_since_merge_base": 5,
+            "present_verbatim": 2,
+            "superseded_explicitly": 3,
+            "unexplained_missing": [],
+            "unexplained_missing_count": 0
+          },
+          "branch": {
+            "added_since_merge_base": 201,
+            "present_verbatim": 201,
+            "superseded_explicitly": 0,
+            "unexplained_missing": [],
+            "unexplained_missing_count": 0
+          }
+        },
+        "docs/wake_lbm_analytic_verification.md": {
+          "main": {
+            "added_since_merge_base": 1,
+            "present_verbatim": 1,
+            "superseded_explicitly": 0,
+            "unexplained_missing": [],
+            "unexplained_missing_count": 0
+          },
+          "branch": {
+            "added_since_merge_base": 58,
+            "present_verbatim": 58,
+            "superseded_explicitly": 0,
+            "unexplained_missing": [],
+            "unexplained_missing_count": 0
+          }
+        },
+        "docs/artifacts/wake_lbm_analytic/wake_lbm_analytic.json": {
+          "main": {
+            "added_since_merge_base": 0,
+            "present_verbatim": 0,
+            "superseded_explicitly": 0,
+            "unexplained_missing": [],
+            "unexplained_missing_count": 0
+          },
+          "branch": {
+            "added_since_merge_base": 135,
+            "present_verbatim": 135,
+            "superseded_explicitly": 0,
+            "unexplained_missing": [],
+            "unexplained_missing_count": 0
+          }
+        }
+      },
+      "ok": true,
+      "unexplained_total": 0
+    },
+    "tests": {
+      "ok": true,
+      "merged": {
+        "log": "/root/tp-agent/work/m4013/runs/pr204/wake_merged.log",
+        "found": true,
+        "counts": {
+          "passed": 10,
+          "warnings": 2
+        },
+        "tail": [
+          "    import pynvml  # type: ignore[import]",
+          "-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html",
+          "10 passed, 2 warnings in 118.70s (0:01:58)"
+        ]
+      },
+      "baseline": {
+        "log": "/root/tp-agent/work/m4013/runs/pr204/wake_baseline.log",
+        "found": true,
+        "counts": {
+          "passed": 7,
+          "warnings": 2
+        },
+        "tail": [
+          "    import pynvml  # type: ignore[import]",
+          "-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html",
+          "7 passed, 2 warnings in 110.77s (0:01:50)"
+        ]
+      },
+      "merged_passed": 10,
+      "baseline_passed": 7,
+      "merged_failed": 0,
+      "baseline_failed": 0,
+      "explained_failures": {},
+      "effective_failed": 0,
+      "delta_passed": 3
+    },
+    "tests_full": {
+      "ok": true,
+      "merged": {
+        "log": "/root/tp-agent/work/m4013/runs/pr204/full_merged.log",
+        "found": true,
+        "counts": {
+          "passed": 1234,
+          "failed": 1,
+          "skipped": 2,
+          "warnings": 3
+        },
+        "tail": [
+          "=========================== short test summary info ============================",
+          "FAILED tests/test_doc_evidence_pointers.py::DocumentedEvidenceGateTests::test_committed_ledger_is_current",
+          "1 failed, 1234 passed, 2 skipped, 3 warnings, 152 subtests passed in 623.67s (0:10:23)"
+        ]
+      },
+      "baseline": {
+        "log": "/root/tp-agent/work/m4013/runs/pr204/full_baseline.log",
+        "found": true,
+        "counts": {
+          "passed": 1232,
+          "skipped": 2,
+          "warnings": 3
+        },
+        "tail": [
+          "    \"\"\"Explicit time-step stability limits (CFL-class criteria) for the 3-D DEM.",
+          "-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html",
+          "1232 passed, 2 skipped, 3 warnings, 152 subtests passed in 539.72s (0:08:59)"
+        ]
+      },
+      "merged_passed": 1234,
+      "baseline_passed": 1232,
+      "merged_failed": 1,
+      "baseline_failed": 0,
+      "explained_failures": {
+        "test_doc_evidence_pointers.py::DocumentedEvidenceGateTests::test_committed_ledger_is_current": {
+          "remedy_log": "/root/tp-agent/work/m4013/runs/pr204/doc_evidence_after_fix.log",
+          "green": true,
+          "counts": {
+            "passed": 14,
+            "warning": 1
+          }
+        }
+      },
+      "effective_failed": 0,
+      "delta_passed": 2
+    }
+  },
+  "verdicts": {
+    "conflict_markers": true,
+    "duplicate_definitions": true,
+    "semantic_union": true,
+    "preservation": true,
+    "tests": true,
+    "tests_full": true
+  },
+  "all_green": true
+}

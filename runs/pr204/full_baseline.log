@@ -1,0 +1,37 @@
+......................s................................................. [  5%]
+....................................................s........... [ 11%]
+.................................................................... [ 16%]
+.................................. [ 19%]
+.................................................................. [ 24%]
+............................................................. [ 29%]
+......................................................... [ 34%]
+........................................................................ [ 40%]
+........................................................................ [ 45%]
+........................................................................ [ 51%]
+........................................................................ [ 57%]
+........................................................................ [ 63%]
+........................................................................ [ 69%]
+........................................................................ [ 75%]
+........................................................................ [ 80%]
+........................................................................ [ 86%]
+.................................................. [ 90%]
+........................................................................ [ 96%]
+..........................................                                                       [100%]
+=============================== warnings summary ===============================
+../../usr/lib/python3.11/site-packages/anyio/pytest_plugin.py:14
+  /usr/lib/python3.11/site-packages/anyio/pytest_plugin.py:14: PytestRemovedIn10Warning: _pytest.python.CallSpec2 has been renamed to CallSpec.
+  The CallSpec2 alias will be removed in pytest 10.
+  Update imports to use CallSpec instead.
+  See https://docs.pytest.org/en/stable/deprecations.html#callspec2-renamed
+    from _pytest.python import CallSpec2
+
+../../usr/lib64/python3.11/site-packages/torch/cuda/__init__.py:61
+  /usr/lib64/python3.11/site-packages/torch/cuda/__init__.py:61: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+    import pynvml  # type: ignore[import]
+
+src/tensordem/stability.py:1
+  /tmp/m4013_base/src/tensordem/stability.py:1: DeprecationWarning: invalid escape sequence '\p'
+    """Explicit time-step stability limits (CFL-class criteria) for the 3-D DEM.
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+1232 passed, 2 skipped, 3 warnings, 152 subtests passed in 539.72s (0:08:59)

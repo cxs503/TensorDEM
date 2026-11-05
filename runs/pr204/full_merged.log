@@ -1,0 +1,56 @@
+......................s................................................. [  5%]
+....................................................s........... [ 10%]
+.................................................................... [ 16%]
+.................................. [ 19%]
+.................................................................. [ 24%]
+............................................................. [ 29%]
+......................................................... [ 34%]
+........................................................................ [ 39%]
+........................................................................ [ 45%]
+........................................................................ [ 51%]
+...........F............................................................ [ 57%]
+........................................................................ [ 63%]
+........................................................................ [ 69%]
+........................................................................ [ 74%]
+........................................................................ [ 80%]
+........................................................................ [ 86%]
+.................................................. [ 90%]
+........................................................................ [ 96%]
+.............................................                                                    [100%]
+=================================== FAILURES ===================================
+_________ DocumentedEvidenceGateTests.test_committed_ledger_is_current _________
+
+self = <test_doc_evidence_pointers.DocumentedEvidenceGateTests testMethod=test_committed_ledger_is_current>
+
+    def test_committed_ledger_is_current(self):
+>       self.assertEqual(
+            audit.main(["--check"]),
+            0,
+            "docs/doc_evidence_ledger.json is stale: re-run scripts/audit_doc_evidence.py",
+        )
+E       AssertionError: 1 != 0 : docs/doc_evidence_ledger.json is stale: re-run scripts/audit_doc_evidence.py
+
+tests/test_doc_evidence_pointers.py:43: AssertionError
+----------------------------- Captured stderr call -----------------------------
+ledger is stale; re-run scripts/audit_doc_evidence.py
+  + ('docs/wake_lbm_analytic_verification.md', 'docs/artifacts/wake_lbm_analytic/fig4_sgs_strain_anchor.png', 'TRACKED')
+=============================== warnings summary ===============================
+../../../../usr/lib/python3.11/site-packages/anyio/pytest_plugin.py:14
+  /usr/lib/python3.11/site-packages/anyio/pytest_plugin.py:14: PytestRemovedIn10Warning: _pytest.python.CallSpec2 has been renamed to CallSpec.
+  The CallSpec2 alias will be removed in pytest 10.
+  Update imports to use CallSpec instead.
+  See https://docs.pytest.org/en/stable/deprecations.html#callspec2-renamed
+    from _pytest.python import CallSpec2
+
+../../../../usr/lib64/python3.11/site-packages/torch/cuda/__init__.py:61
+  /usr/lib64/python3.11/site-packages/torch/cuda/__init__.py:61: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+    import pynvml  # type: ignore[import]
+
+src/tensordem/stability.py:1
+  /root/tp-agent/work/m4013/src/tensordem/stability.py:1: DeprecationWarning: invalid escape sequence '\p'
+    """Explicit time-step stability limits (CFL-class criteria) for the 3-D DEM.
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_doc_evidence_pointers.py::DocumentedEvidenceGateTests::test_committed_ledger_is_current
+1 failed, 1234 passed, 2 skipped, 3 warnings, 152 subtests passed in 623.67s (0:10:23)
