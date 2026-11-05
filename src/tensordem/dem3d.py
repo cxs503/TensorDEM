@@ -127,6 +127,13 @@ class DEM3DConfig:
     bottom_platen_enabled: bool = False
     platen_stiffness: float = 5_000.0
     platen_damping: float = 0.0
+    # --- Platen (plane boundary) Coulomb friction ---
+    # Default 0.0 keeps both platens frictionless (legacy behaviour, bit-for-bit).
+    # Positive: Cundall-Strack tangential spring at each plane contact, saturated
+    # at mu_p * N, so a specimen pushed sideways on a loaded platen sticks until
+    # the tangential load reaches mu_p * N and then slides at (F - mu_p N)/m.
+    platen_friction_coefficient: float = 0.0   # mu_p, shared by both platens
+    platen_friction_stiffness: float | None = None  # k_t; None -> platen_stiffness
     top_platen_gap: float = 0.0
     bottom_platen_gap: float = 0.0
     top_platen_velocity: float = 0.0
@@ -176,6 +183,13 @@ class DEM3DConfig:
                 raise ValueError(f"{name} must be finite and nonnegative")
         if not math.isfinite(self.platen_stiffness) or self.platen_stiffness <= 0:
             raise ValueError("platen_stiffness must be finite and positive")
+        if (not math.isfinite(self.platen_friction_coefficient)
+                or self.platen_friction_coefficient < 0):
+            raise ValueError("platen_friction_coefficient must be finite and nonnegative")
+        if self.platen_friction_stiffness is not None and (
+                not math.isfinite(self.platen_friction_stiffness)
+                or self.platen_friction_stiffness <= 0):
+            raise ValueError("platen_friction_stiffness must be finite and positive when given")
         for name in ("top_platen_velocity", "bottom_platen_velocity"):
             if not math.isfinite(getattr(self, name)):
                 raise ValueError(f"{name} must be finite")
@@ -254,10 +268,14 @@ class DEM3DConfig:
         # Conservative explicit stability/travel bound; validate by convergence.
         n = self.nx * self.ny * self.nz
         degree_bound = min(n - 1, 26)
+        # The tangential platen spring is part of the stiff set even when the
+        # friction is switched off, so a later mu_p switch cannot outrun the bound.
+        platen_k = (self.platen_stiffness if self.platen_friction_stiffness is None
+                    else max(self.platen_stiffness, self.platen_friction_stiffness))
         contact_stiffness = max(
             self.bond_stiffness,
             self._bound_stiffness(self.contact_stiffness, rigid_counterpart=False),
-            self._bound_stiffness(self.platen_stiffness, rigid_counterpart=True)
+            self._bound_stiffness(platen_k, rigid_counterpart=True)
             if (self.top_platen_enabled or self.bottom_platen_enabled) else 0.0,
         )
         k = (2 * degree_bound + 1) * contact_stiffness
@@ -398,6 +416,25 @@ class IceDEM3D:
         self._rolling_torque = torch.zeros((n, 3), dtype=self.dtype, device=self.device)
         # Flag indicating rolling resistance torque is physically modelled.
         self.rolling_resistance_torque_physical = config.rolling_resistance_coefficient > 0.0
+        # --- Platen Coulomb friction: one tangential spring per particle and plane ---
+        # A plane contact is unique per particle, so the history is a plain (n, 3)
+        # tensor instead of the pair-keyed dict used for particle contacts.
+        self._top_platen_tang_disp = torch.zeros((n, 3), dtype=self.dtype, device=self.device)
+        self._bottom_platen_tang_disp = torch.zeros((n, 3), dtype=self.dtype, device=self.device)
+        # Last evaluated tangential force (N) at each plane, for diagnostics only.
+        self.last_top_platen_friction = torch.zeros((n, 3), dtype=self.dtype, device=self.device)
+        self.last_bottom_platen_friction = torch.zeros((n, 3), dtype=self.dtype, device=self.device)
+
+    @property
+    def platen_friction_k(self) -> float:
+        """Tangential stiffness used by the platen friction spring (N/m).
+
+        Falls back to ``platen_stiffness``, the same ``k_t = k_n`` convention the
+        particle-particle Cundall-Strack branch uses, and it is also the value
+        the ``recommended_dt`` bound sees even when friction is switched off.
+        """
+        k_t = self.config.platen_friction_stiffness
+        return float(self.config.platen_stiffness if k_t is None else k_t)
 
     @property
     def _hertz_pair_params(self) -> tuple[float, float]:
@@ -627,6 +664,40 @@ class IceDEM3D:
                 tang_disp[idx].clone(),
                 cnormal[idx].clone(),
             )
+
+    def _plane_friction_force(
+        self, mask: torch.Tensor, normal_mag: torch.Tensor,
+        tang_disp: torch.Tensor, *, update_history: bool,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        """Cundall-Strack tangential force at a horizontal plane boundary.
+
+        The planes translate only along ``z`` (normal), so the tangential relative
+        velocity of a particle is just its horizontal velocity.  The tangential
+        displacement accumulates ``v_t dt`` and the spring force ``k_t * delta_t``
+        is saturated at ``mu_p * N`` (Coulomb).  A particle that is not touching
+        the plane loses its history, so the next touchdown starts unloaded.
+
+        ``update_history=False`` (probe calls from diagnostics/energy audits)
+        returns the force implied by the stored state without advancing it.
+        """
+        cfg = self.config
+        eps = torch.finfo(self.dtype).eps
+        mu = cfg.platen_friction_coefficient
+        v_tangent = torch.where(mask[:, None], self.velocities, torch.zeros_like(self.velocities))
+        v_tangent = torch.stack(
+            (v_tangent[:, 0], v_tangent[:, 1], torch.zeros_like(v_tangent[:, 2])), dim=1)
+        if update_history:
+            tang_disp = tang_disp + v_tangent * self.dt
+            tang_disp = torch.where(mask[:, None], tang_disp, torch.zeros_like(tang_disp))
+        # The offset is the particle's own tangential travel relative to the plane
+        # (the plane does not translate tangentially), so the spring pulls the
+        # particle back towards its anchor: F = -k_t * delta, saturated at mu*N.
+        spring = -self.platen_friction_k * tang_disp
+        limit = mu * normal_mag
+        magnitude = torch.linalg.vector_norm(spring, dim=1)
+        scale = torch.where(magnitude > limit, limit / magnitude.clamp_min(eps),
+                            torch.ones_like(magnitude))
+        return spring * scale[:, None], tang_disp
 
     def _rolling_resistance_couple(
         self, ci: torch.Tensor, cj: torch.Tensor,
@@ -872,6 +943,12 @@ class IceDEM3D:
             top_force_z = -top_mag
             force[:, 2] += top_force_z
             top_reaction_z = -top_force_z.sum()
+            if cfg.platen_friction_coefficient > 0.0:
+                top_friction, self._top_platen_tang_disp = self._plane_friction_force(
+                    top_overlap > 0, top_mag, self._top_platen_tang_disp,
+                    update_history=update_history)
+                force += top_friction
+                self.last_top_platen_friction.copy_(top_friction)
         if cfg.bottom_platen_enabled:
             bottom_z = self.bottom_platen_start_z + self.time * cfg.bottom_platen_velocity
             bottom_overlap = (bottom_z + cfg.radius - self.positions[:, 2]).clamp_min(0.0)
@@ -888,6 +965,12 @@ class IceDEM3D:
             bottom_force_z = bottom_mag
             force[:, 2] += bottom_force_z
             bottom_reaction_z = -bottom_force_z.sum()
+            if cfg.platen_friction_coefficient > 0.0:
+                bottom_friction, self._bottom_platen_tang_disp = self._plane_friction_force(
+                    bottom_overlap > 0, bottom_mag, self._bottom_platen_tang_disp,
+                    update_history=update_history)
+                force += bottom_friction
+                self.last_bottom_platen_friction.copy_(bottom_friction)
 
         if update_fracture:
             self.last_reaction.copy_(reaction)
