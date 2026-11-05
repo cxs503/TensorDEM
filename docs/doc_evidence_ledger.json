@@ -4,15 +4,19 @@
  "documents_scanned": 105,
  "pointers": 512,
  "counts": {
+  "code:MISSING": 2,
   "code:TRACKED": 195,
+  "code:UNTRACKED": 1,
   "data:MISSING": 35,
   "data:TRACKED": 26,
+  "data:UNTRACKED": 1,
   "doc:TRACKED": 66,
   "figure:MISSING": 65,
   "figure:TRACKED": 7,
   "test:TRACKED": 118
  },
  "remedy": {
+  "ORPHAN": 3,
   "REGENERABLE": 100,
   "TRACKED": 412
  },
@@ -26,7 +30,7 @@
   "docs/dem3d_bond_fracture_energy.md": 1,
   "docs/dem3d_brazilian_hondros_closure.md": 2,
   "docs/dem3d_contact_impact_analytic.md": 1,
-  "docs/dem3d_contact_impact_dashpot_convention.md": 1,
+  "docs/dem3d_contact_impact_dashpot_convention.md": 2,
   "docs/dem3d_contact_restitution.md": 3,
   "docs/dem3d_coulomb_friction_cone_verification.md": 3,
   "docs/dem3d_doc_evidence_pointer_audit.md": 1,
@@ -40,6 +44,7 @@
   "docs/dem3d_lattice_wave_propagation.md": 3,
   "docs/dem3d_pair_contact_damping_closure.md": 1,
   "docs/dem3d_restitution_calibration.md": 1,
+  "docs/dem3d_restitution_closed_loop_m3274.md": 2,
   "docs/dem3d_rolling_resistance.md": 4,
   "docs/dem3d_rolling_resistance_verification.md": 4,
   "docs/dem3d_scale_benchmark.md": 4,
@@ -53,7 +58,8 @@
   "docs/tensordem_floe_buoyancy_validation.md": 3,
   "docs/threefield/FORMULAS.md": 2,
   "docs/threefield_lbm_transport_verification.md": 3,
-  "docs/verification_campaigns.md": 4
+  "docs/verification_campaigns.md": 4,
+  "docs/wake_lbm_analytic_verification.md": 1
  },
  "historical_quotes": {
   "docs/dem3d_doc_evidence_pointer_audit.md": 10
@@ -1216,13 +1222,7 @@
    "status": "TRACKED"
   },
   {
-   "doc": "docs/dem3d_contact_impact_dashpot_convention.md",
-   "line": 125,
-   "pointer": "tests/test_dem3d_restitution_verification.py",
-   "kind": "test",
-   "status": "TRACKED"
-  },
-  {
+  "docs/dem3d_contact_impact_dashpot_convention.md": 2,
    "doc": "docs/dem3d_contact_invariants.md",
    "line": 5,
    "pointer": "scripts/audit_dem3d_contact_invariants.py",
@@ -2486,6 +2486,49 @@
    "status": "MISSING",
    "producers": [
     "scripts/calibrate_dem3d_restitution.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/dem3d_restitution_closed_loop_m3274.md",
+   "line": 8,
+   "pointer": "docs/dem3d_restitution_verification.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_restitution_closed_loop_m3274.md",
+   "line": 9,
+   "pointer": "tests/test_dem3d_restitution_verification.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_restitution_closed_loop_m3274.md",
+   "line": 26,
+   "pointer": "src/tensordem/contact_restitution.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_restitution_closed_loop_m3274.md",
+   "line": 33,
+   "pointer": "scripts/verify_restitution_closed_loop.py",
+   "kind": "code",
+   "status": "UNTRACKED",
+   "producers": [
+    "scripts/verify_restitution_closed_loop.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/dem3d_restitution_closed_loop_m3274.md",
+   "line": 34,
+   "pointer": "artifacts/restitution_closed_loop_m3129/evidence.json",
+   "kind": "data",
+   "status": "UNTRACKED",
+   "producers": [
+    "scripts/verify_restitution_closed_loop.py"
    ],
    "remedy": "REGENERABLE"
   },
@@ -4153,3 +4196,4 @@
   }
  ]
 }
+
