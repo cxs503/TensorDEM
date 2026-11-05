@@ -1,20 +1,20 @@
 {
  "schema": "tensordem.doc-evidence-ledger/1",
  "generated_by": "scripts/audit_doc_evidence.py",
- "documents_scanned": 106,
- "pointers": 517,
+ "documents_scanned": 107,
+ "pointers": 526,
  "counts": {
-  "code:TRACKED": 197,
+  "code:TRACKED": 199,
   "data:MISSING": 36,
   "data:TRACKED": 26,
-  "doc:TRACKED": 67,
+  "doc:TRACKED": 69,
   "figure:MISSING": 65,
   "figure:TRACKED": 7,
-  "test:TRACKED": 119
+  "test:TRACKED": 124
  },
  "remedy": {
   "REGENERABLE": 101,
-  "TRACKED": 416
+  "TRACKED": 425
  },
  "unresolved_per_doc": {
   "docs/TENSORDEM_UPSTREAM_DIFF_M1630.md": 4,
@@ -3259,6 +3259,34 @@
    "status": "TRACKED"
   },
   {
+   "doc": "docs/dem_analytic_verification_debt_restoration.md",
+   "line": 125,
+   "pointer": "src/tensordem/fracture_gen.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem_analytic_verification_debt_restoration.md",
+   "line": 164,
+   "pointer": "docs/pr166_merge_conflict_resolution.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem_analytic_verification_debt_restoration.md",
+   "line": 171,
+   "pointer": "tests/test_fracture_gen_footprint_breakage.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem_analytic_verification_debt_restoration.md",
+   "line": 172,
+   "pointer": "tests/test_fracture_gen_audit.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
    "doc": "docs/fracture_gen_mass_footprint_audit.md",
    "line": 3,
    "pointer": "src/tensordem/fracture_gen.py",
@@ -3642,6 +3670,41 @@
    "line": 172,
    "pointer": "src/tensordem/hull_contact.py",
    "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr166_merge_conflict_resolution.md",
+   "line": 15,
+   "pointer": "src/tensordem/fracture_gen.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr166_merge_conflict_resolution.md",
+   "line": 24,
+   "pointer": "docs/dem_analytic_verification_debt_restoration.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr166_merge_conflict_resolution.md",
+   "line": 89,
+   "pointer": "tests/test_fracture_gen_mass_footprint.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr166_merge_conflict_resolution.md",
+   "line": 90,
+   "pointer": "tests/test_fracture_gen_audit.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr166_merge_conflict_resolution.md",
+   "line": 90,
+   "pointer": "tests/test_fracture_gen_footprint_breakage.py",
+   "kind": "test",
    "status": "TRACKED"
   },
   {

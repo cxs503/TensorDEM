@@ -37,7 +37,7 @@ from .fracture_mass_mapping import (
 #: density carries exactly the mass of the cubic cell ``h^3`` the particle owns,
 #: which is what ``mass_mode="cell"`` assigns (see
 #: ``docs/dem3d_fracture_mass_mapping_audit.md``).
-MASS_RADIUS_FACTOR = 2.0 * (3.0 / (4.0 * math.pi)) ** (1.0 / 3.0)
+MASS_RADIUS_FACTOR: float = 2.0 * (3.0 / (4.0 * math.pi)) ** (1.0 / 3.0)
 
 #: Accepted ``mass_mapping`` spellings -> canonical ``mass_mode``.
 MASS_MAPPING_ALIASES = {
@@ -105,6 +105,14 @@ def normalise_face_extent(value: str | None, footprint_aware: bool = False) -> b
             "infinite-plane criterion is not footprint aware"
         )
     return aware
+
+
+# ``MASS_RADIUS_FACTOR`` and ``face_footprint_radius`` are defined once, below
+# ``FailureFace`` (they need the dataclass' field set).  PR #166 / branch
+# agent/m2942 also introduced an earlier copy of the same two symbols up here;
+# the merge keeps the single canonical definition and records the fold in
+# docs/pr166_merge_conflict_resolution.md.  Both spellings of the constant are
+# algebraically identical: (6/pi)^(1/3) == 2 (3/(4 pi))^(1/3).
 
 
 @dataclass
