@@ -1,0 +1,94 @@
+{
+  "contract": [
+    {
+      "class": "BowContactDEM",
+      "accepts_update_history": true,
+      "missing_keywords": [],
+      "own_forces_override": true
+    },
+    {
+      "class": "EnergyAuditedIceDEM3D",
+      "accepts_update_history": true,
+      "missing_keywords": [],
+      "own_forces_override": true
+    },
+    {
+      "class": "MovingWedgeBowIceDEM3D",
+      "accepts_update_history": true,
+      "missing_keywords": [],
+      "own_forces_override": true
+    },
+    {
+      "class": "RudderIceLoadDEM",
+      "accepts_update_history": true,
+      "missing_keywords": [],
+      "own_forces_override": true
+    }
+  ],
+  "purity": {
+    "drift": {
+      "positions": 0.0,
+      "velocities": 0.0,
+      "rolling_torque": 0.0,
+      "last_reaction": 0.0,
+      "alive_changes": 0,
+      "time": 0.0
+    },
+    "bow_reaction_x_N": -79.17320487202682
+  },
+  "case": {
+    "case": {
+      "thickness_m": 0.15,
+      "realised_thickness_m": 0.15000000000000002,
+      "layers": 3,
+      "model_width_m": 0.1,
+      "particle_radius_m": 0.025,
+      "particle_count": 30,
+      "bow_speed_m_s": 0.1,
+      "wedge_angle_deg": 45.0,
+      "dt_s": 8.532146180591403e-05,
+      "steps": 40,
+      "simulated_time_s": 0.0034128584722365606,
+      "bow_travel_m": 0.00034128584722365607
+    },
+    "peak_ice_resistance_N": 80.04368670764585,
+    "mean_ice_resistance_N": 66.73850067699513,
+    "fragment_total_mass_kg": 1.8005252895886503,
+    "broken_bonds": 40,
+    "max_contact_pressure_pa": 28825.854612637744
+  },
+  "density_error": [
+    {
+      "density_kg_m3": 880,
+      "induced_mass_error_pct": 4.204545454545454
+    },
+    {
+      "density_kg_m3": 890,
+      "induced_mass_error_pct": 3.033707865168539
+    },
+    {
+      "density_kg_m3": 900,
+      "induced_mass_error_pct": 1.8888888888888888
+    },
+    {
+      "density_kg_m3": 910,
+      "induced_mass_error_pct": 0.7692307692307693
+    },
+    {
+      "density_kg_m3": 917,
+      "induced_mass_error_pct": 0.0
+    },
+    {
+      "density_kg_m3": 925,
+      "induced_mass_error_pct": -0.8648648648648649
+    },
+    {
+      "density_kg_m3": 935,
+      "induced_mass_error_pct": -1.9251336898395723
+    },
+    {
+      "density_kg_m3": 950,
+      "induced_mass_error_pct": -3.4736842105263155
+    }
+  ]
+}

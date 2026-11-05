@@ -766,8 +766,13 @@ class RudderIceLoadDEM(IceDEM3D):
     # -- solver hooks -----------------------------------------------------
     @torch.no_grad()
     def forces(self, external_forces: torch.Tensor | None = None, *,
-               update_fracture: bool = True) -> tuple[torch.Tensor, torch.Tensor]:
-        force, _ = super().forces(external_forces, update_fracture=update_fracture)
+               update_fracture: bool = True,
+               update_history: bool = True) -> tuple[torch.Tensor, torch.Tensor]:
+        # ``update_history`` is part of the base ``IceDEM3D.forces`` contract: the
+        # base ``diagnostics`` probe calls forces() with update_history=False, so
+        # dropping the keyword here makes every diagnostics snapshot raise.
+        force, _ = super().forces(external_forces, update_fracture=update_fracture,
+                                  update_history=update_history)
         nodal, reaction, info = self._blade_contact(update_state=update_fracture)
         force = force + nodal
         if update_fracture:

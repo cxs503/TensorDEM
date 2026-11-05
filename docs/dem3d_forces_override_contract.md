@@ -1,0 +1,189 @@
+# `IceDEM3D.forces()` override contract: the silent regression that killed the DEM stage of the ice–hull–propeller study
+
+**Increment:** m3147 (TensorDEM, platform席 self-start) · **Branch:** `agent/m3147`
+**Evidence class:** REAL (reproduced on the branch tip, measured before/after)
+
+## 1. Case / problem statement
+
+TensorDEM is a PyTorch bonded-particle DEM for ice–structure interaction. The
+3-D solver is one class, `IceDEM3D` (`src/tensordem/dem3d.py`), with four
+subclasses that each add a rigid contact source:
+
+| subclass | module | adds |
+|---|---|---|
+| `EnergyAuditedIceDEM3D` | `dem3d_energy.py` | energy ledger around the base solver |
+| `MovingWedgeBowIceDEM3D` | `dem3d_wedge.py` | prescribed moving wedge bow |
+| `BowContactDEM` | `threefield/hull_ice.py` | finite-width bow + contact-pressure field (subclass of the wedge) |
+| `RudderIceLoadDEM` | `rudder_ice_load.py` | rotating rudder blade + FSM crushing/spall states |
+
+The base solver was later given a *constitutive-probe* API: `diagnostics()` must
+be able to evaluate forces **without mutating state**, so it calls
+
+```python
+force, reaction = self.forces(external_forces, update_fracture=False,
+                              update_history=False)      # dem3d.py:823-824
+```
+
+`update_history=False` suppresses the Cundall–Strack tangential-displacement
+advance and the rolling-torque accumulator (`dem3d.py:702-738`). The keyword was
+added to the base signature only; two of the four subclasses kept the older
+`(self, external_forces, *, update_fracture)` override. Consequence on the
+branch tip (`f5de971`):
+
+* **every** `diagnostics()` call on `MovingWedgeBowIceDEM3D` / `BowContactDEM` /
+  `RudderIceLoadDEM` raised `TypeError: for…forces() got an unexpected keyword
+  argument 'update_history'`;
+* the threefield hull–ice stage (`run_hull_ice_case`, the DEM leg of the coupled
+  ice/hull/propeller study) calls `diagnostics()` at every step, so the merged
+  coupled study was **dead on the tip** — two tests already red:
+  `tests/test_threefield.py::HullIceTests::test_case_runs_and_conserves_ice_mass`
+  and `…::CouplingTests::test_coupled_pass_closes_the_ledger`;
+* the rudder blade-load path was latently broken: its tests never call
+  `diagnostics()`, so the campaign-side probe (`RudderIceLoadDEM.diagnostics`)
+  would have failed on first use.
+
+Second, independent defect found while auditing the same package:
+`threefield/fragmentation.fragment()` hard-coded `rho_i = 917.0` and therefore
+silently ignored `BreakupProperties.ice_density_kg_m3`, while
+`coupling.fragmentation_stage` converts masses back to floe sizes with the
+*configured* density. `coupling.follower_ship_impact` had the same hard code in
+its ice-area equivalent.
+
+Physical/config parameters of the reproduced case (section 3):
+`thickness = 0.15 m`, `r = 0.025 m`, `n_length × n_width = 5 × 2`, 3 particle
+layers, `bond_stiffness = 1200 N/m`, `bow_speed = 0.10 m/s`,
+`wedge_angle = 45°`, `dt = recommended_dt`, 40 steps.
+
+## 2. Method
+
+1. **Static contract probe** — import every solver module, walk
+   `IceDEM3D.__subclasses__()` and compare each `forces` signature with the base
+   keyword set `{external_forces, update_fracture, update_history}`.
+2. **Minimal fix** — add `update_history: bool = True` to the two offending
+   overrides and forward it to `super().forces(...)`; in the wedge override also
+   publish `last_reaction` (via `copy_`, preserving buffer identity) only when
+   `update_fracture=True`, so the probe is side-effect free as documented.
+3. **Purity probe** — step `BowContactDEM` 6 steps, snapshot
+   `{positions, velocities, alive, _rolling_torque, last_reaction, time}`, call
+   `diagnostics()`, re-snapshot, report max |Δ| per component.
+4. **End-to-end reproduction** — run the small threefield hull–ice case, dump the
+   diagnostic history, and re-run the two previously red tests plus the whole
+   threefield/rudder/DEM suites.
+5. **Density audit** — quantify the mass error `(917 − ρ)/ρ` induced by the hard
+   code over `ρ ∈ [880, 950] kg/m³` and grade it against the platform's 3 %
+   acceptance gate; fix `fragment()` and `follower_ship_impact()`.
+6. **Regression guards** — new tests
+   `tests/test_dem3d_forces_contract.py` (signature + base-probe premise +
+   end-to-end stage) and `tests/test_threefield_density_ledger.py`
+   (density-blind ledger).
+
+Toolchain: Python 3.11.6, torch 2.7.1, matplotlib 3.10.8, pytest 8.
+Reproduce: `PYTHONPATH=src python3 scripts/reproduce_forces_contract.py`.
+
+## 3. Results
+
+Baseline (branch tip `f5de971`, clean worktree): contract probe reported
+`MovingWedgeBowIceDEM3D` and `RudderIceLoadDEM` as **missing `update_history`**,
+and `pytest tests/test_threefield.py` gave **2 failed, 23 passed**.
+
+After the fix (`pytest` on the patched tree): `tests/test_threefield.py`
+**25 passed**; the previously red tests are green; new tests
+**15 passed** (`test_dem3d_forces_contract.py` 6, `test_threefield_density_ledger.py` 9).
+
+### Measured numbers (generated by `scripts/reproduce_forces_contract.py`)
+
+### Per-subclass `forces()` keyword contract (live introspection)
+
+| subclass override | `update_history` accepted | missing base keywords |
+|---|---|---|
+| `BowContactDEM` | yes | none |
+| `EnergyAuditedIceDEM3D` | yes | none |
+| `MovingWedgeBowIceDEM3D` | yes | none |
+| `RudderIceLoadDEM` | yes | none |
+
+### `diagnostics()` purity probe on `BowContactDEM` (6 steps, then probe)
+
+| state component | max |delta| after probe |
+|---|---|
+| `positions` | 0.000e+00 |
+| `velocities` | 0.000e+00 |
+| `rolling_torque` | 0.000e+00 |
+| `last_reaction` | 0.000e+00 |
+| `alive_changes` | 0.000e+00 |
+| `time` | 0.000e+00 |
+
+### Bowl-ice stage (thickness 0.15 m, r = 0.025 m, 40 steps)
+
+| quantity | value |
+|---|---|
+| simulated time [s] | 0.0034 |
+| bow travel [m] | 0.0003 |
+| peak ice resistance [N] | 80.044 |
+| mean ice resistance [N] | 70.851 |
+| max contact pressure [Pa] | 2.883e+04 |
+| broken bonds at end | 40 |
+
+### Mass error induced by the 917 kg/m3 hard code
+
+| rho_i [kg/m3] | induced mass error [%] | inside +/-3 % gate |
+|---|---|---|
+| 880 | +4.205 | **no** |
+| 890 | +3.034 | **no** |
+| 900 | +1.889 | yes |
+| 910 | +0.769 | yes |
+| 917 | +0.000 | yes |
+| 925 | -0.865 | yes |
+| 935 | -1.925 | yes |
+| 950 | -3.474 | **no** |
+
+### Error judgement
+
+| quantity | reference / baseline | measured | error | < 3 % ? |
+|---|---|---|---|---|
+| `diagnostics()` purity: positions, velocities, tangential/rolling history, `last_reaction`, `alive`, `time` | unperturbed state (bitwise identical) | max abs Δ = 0 for all six components | **0 %** | **yes** (exact) |
+| residual `TypeError` count on the 4 subclasses | 0 (contract) | 0 | 0 % | **yes** |
+| fragmentation mass ledger with `ρ = 890 kg/m³` | `Σ ρ L² h` with configured ρ | equals the reference to 1e-12 relative | **0 %** | **yes** |
+| former hard-code error at `ρ = 890` / `880` / `950` | configured-density ledger | +3.03 % / +4.21 % / −3.47 % | **above the 3 % gate** → real defect, now removed | n/a (fixed) |
+| ice-mass conservation of the hull–ice case | particle count × particle mass | matches (existing assertion, `places=9`) | 0 % | **yes** |
+
+No claim in this note is a validation of the *physical* model: the DEM micro
+parameters are the repository smoke-test set and, as documented in
+`docs/threefield/README.md`, the absolute resistance transfer to a real hull is
+not meaningful. What is verified here is the solver **API contract**, the
+**diagnostic purity** of the probe, and the **mass ledger** of the
+fragmentation stage — all three are internal-consistency (verification) claims
+with exact references, not validation claims.
+
+## 4. Figures
+
+* `artifacts/forces_contract/fig1_bow_stage.png` — ice resistance and bow advance
+  versus time for the reproduced case, i.e. the stage that previously raised at
+  the first `diagnostics()` call.
+* `artifacts/forces_contract/fig2_density_error.png` — mass error induced by the
+  hard-coded 917 kg/m³ against the ±3 % acceptance band; the curve leaves the
+  band below ρ ≈ 890 (snow/rafted ice) and above ρ ≈ 950 (sediment-laden ice).
+
+## 5. Notes / limitations
+
+* The regression is a **class** of failure, not a one-off: adding a keyword to
+  the base `forces` signature is invisible to subclasses until someone calls the
+  base probe. `tests/test_dem3d_forces_contract.py` now walks the subclass tree
+  and fails at collection-safe speed (no simulation) if any override drifts.
+* The end-to-end test exercises the real solver path
+  (`HullIceCase → BowContactDEM → step/diagnostics`), so it also catches future
+  probe regressions that a signature test cannot see.
+* `update_history` forwarding means the probe is genuinely history-free; before
+  this change the rudder override would also have *committed* blade state on a
+  probe if the keyword had merely been swallowed with `**kwargs` (it is
+  forwarded explicitly, and `_blade_contact(update_state=update_fracture)` keeps
+  the blade bookkeeping on the step path only).
+* Purity was probed on `BowContactDEM` only (the other three subclasses need
+  longer set-ups); the signature test covers all four.
+* The `fragment()` kernel (`~U³` volume weights) remains
+  assumption-limited as documented; only the density bookkeeping changed.
+* Pre-existing, unrelated red test on the tip: 
+  `tests/test_threefield_lbm_transport.py::test_streaming_is_mass_conserving`
+  fails identically on the unmodified base commit `f5de971` (verified in a
+  separate clean worktree) — **not** touched by this increment, reported here as
+  a known debt so it is not mistaken for a m3147 regression.
+* Compute: everything here is CPU-only and takes < 60 s wall clock.
