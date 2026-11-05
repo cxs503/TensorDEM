@@ -171,9 +171,13 @@ validation".
 
 - The counterpart (indenter, platen) is rigid. A finite-modulus indenter changes `E*` and is not
   covered by the tests; the general `E*` helper accepts a second body, the solver does not.
-- Damping remains the legacy absolute `c_n` [N s/m], not the Hertzian coefficient of restitution
-  formulation of Tsuji/Antypov. A velocity-independent Hertz damping law is still missing, so
-  impact restitution is not yet controllable through a physical parameter.
+- Damping in the *pair* branch follows `contact_damping_model` (default `restitution`), so the
+  dashpot is `gamma(delta) = 2 zeta sqrt(m_eff k_s(delta)) ~ delta^(1/4)` (Tsuji-type), not the
+  constant `c_n`; the tool and platen branches still use the absolute `c_n` convention.
+  Engine-level measurement (`docs/dem3d_hertz_restitution_closure.md`) shows the measured `e` is
+  velocity independent to < 0.1 %, but it does **not** equal `restitution_coefficient`: for
+  `e_target = 0.5` the engine returns `e = 0.582` (16.4 % high), so a restitution target is not
+  yet a calibrated physical parameter. See that report for the error budget.
 - Tangential friction, particle rotation and rolling resistance are still absent, so the contact
   model remains normal-only (Hertz, not "Hertz–Mindlin").
 - `hertz_stability_overlap_fraction = 0.1` is a documented engineering choice. Overlaps above
