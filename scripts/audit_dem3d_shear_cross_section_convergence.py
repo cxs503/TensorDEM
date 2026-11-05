@@ -6,13 +6,15 @@ specimen because the 9x5 -> 21x21 trend was too short to separate a lateral
 free-surface boundary layer (``O(1/n)``, extrapolable) from a measurement bias.
 
 Writes ``report.json``, ``series.csv``, ``summary.md`` and
-``figures/convergence.png`` under ``docs/dem3d-shear-cross-section-convergence/``.
+``figures/cross_section_convergence.png`` under ``docs/dem3d-shear-cross-section-convergence/``.
 
     PYTHONPATH=src python scripts/audit_dem3d_shear_cross_section_convergence.py
 """
 from __future__ import annotations
 
+import base64
 import csv
+import io
 import json
 import pathlib
 import sys
@@ -36,6 +38,14 @@ SIZES = [5, 7, 9, 11, 13, 15, 17, 19, 21, 25, 29, 33, 37, 41, 45, 49, 55, 61]
 LAG_SIZES = [17, 41, 61]
 
 
+def _encode_figure(fig: plt.Figure) -> str:
+    """Save figure to PNG and return base64-encoded string."""
+    buf = io.BytesIO()
+    fig.savefig(buf, format="png", dpi=150, bbox_inches="tight")
+    buf.seek(0)
+    return base64.b64encode(buf.read()).decode("ascii")
+
+
 def main() -> int:
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / "figures").mkdir(exist_ok=True)
@@ -49,29 +59,12 @@ def main() -> int:
         writer.writeheader()
         writer.writerows(rows)
 
-    payload = {
-        "schema": "tensordem-dem3d-shear-cross-section-convergence-v1",
-        "description": "Square cross-section series at fixed h/a = 2 (nz = 3), no fracture, "
-                       "linear elastic static equilibrium of the direct-shear specimen.",
-        "config": {
-            "nx": "swept", "ny": "= nx", "nz": 3,
-            "bond_stiffness_N_per_m": DEM3DConfig().bond_stiffness,
-            "radius_m": DEM3DConfig().radius,
-            "density_kg_per_m3": DEM3DConfig().density,
-            "gamma": series["gamma"],
-            "C44_Pa": shear_modulus_closed_form(DEM3DConfig()),
-            "accuracy_gate": ACCURACY_GATE,
-        },
-        "series": series,
-        "surface_lag": profiles,
-    }
-    (OUT / "report.json").write_text(json.dumps(payload, indent=2), encoding="utf-8")
-
     fit = series["fit"]
     model_b = fit["models"]["B"]
     model_c = fit["models"]["C"]
     finite = [row for row in rows if row["deficit"] < ACCURACY_GATE]
 
+    # --- Build the convergence figure ---
     fig, axes = plt.subplots(1, 2, figsize=(11.5, 4.4))
     inv_n = np.array([1.0 / row["n"] for row in rows])
     g_eff = np.array([row["G_effective_over_C44"] for row in rows])
@@ -103,8 +96,42 @@ def main() -> int:
     axes[1].legend(fontsize=8)
     axes[1].grid(alpha=0.3)
     fig.tight_layout()
-    fig.savefig(OUT / "figures" / "convergence.png", dpi=150)
+
+    # Save to disk and encode for report.json
+    fig_path = OUT / "figures" / "cross_section_convergence.png"
+    fig.savefig(fig_path, dpi=150)
+    png_base64 = _encode_figure(fig)
     plt.close(fig)
+
+    payload = {
+        "schema": "tensordem-dem3d-shear-cross-section-convergence-v1",
+        "description": "Square cross-section series at fixed h/a = 2 (nz = 3), no fracture, "
+                       "linear elastic static equilibrium of the direct-shear specimen.",
+        "config": {
+            "nx": "swept", "ny": "= nx", "nz": 3,
+            "bond_stiffness_N_per_m": DEM3DConfig().bond_stiffness,
+            "radius_m": DEM3DConfig().radius,
+            "density_kg_per_m3": DEM3DConfig().density,
+            "gamma": series["gamma"],
+            "C44_Pa": shear_modulus_closed_form(DEM3DConfig()),
+            "accuracy_gate": ACCURACY_GATE,
+        },
+        "series": series,
+        "surface_lag": profiles,
+        "figures": [
+            {
+                "name": "cross_section_convergence",
+                "caption": (
+                    "Left: G_eff/C44 (circles) and A_eff/A_nom (open squares) against 1/n, "
+                    "with fitted two-term law and 3 % gate (red dotted). "
+                    "Right: mid-layer deviation from affine shear against distance from the "
+                    "nearest lateral face for n = 17, 41, 61, showing the ~1.5a boundary layer."
+                ),
+                "png_base64": png_base64,
+            }
+        ],
+    }
+    (OUT / "report.json").write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
     summary = [
         "# DEM3D direct-shear cross-section convergence — generated summary",
@@ -146,7 +173,7 @@ def main() -> int:
             f"{profile['lag_at_center']:.2e} |")
     (OUT / "summary.md").write_text("\n".join(summary) + "\n", encoding="utf-8")
 
-    print(f"wrote {OUT/'report.json'}, series.csv, summary.md, figures/convergence.png")
+    print(f"wrote {OUT/'report.json'}, series.csv, summary.md, figures/cross_section_convergence.png")
     print(f"c1={c1:.4f} c2={c2:.4f} rms={model_b['rms_residual']:.2e} "
           f"c0={model_c['coefficients']['c0']:.2e} Ginf/C44={fit['extrapolated_G_over_C44_model_C']:.5f} "
           f"p={fit['observed_order']:.3f} n_gate={fit['predicted_n_for_gate']:.1f}")
