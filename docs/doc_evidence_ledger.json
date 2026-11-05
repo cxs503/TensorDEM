@@ -1,20 +1,20 @@
 {
  "schema": "tensordem.doc-evidence-ledger/1",
  "generated_by": "scripts/audit_doc_evidence.py",
- "documents_scanned": 105,
- "pointers": 512,
+ "documents_scanned": 108,
+ "pointers": 539,
  "counts": {
-  "code:TRACKED": 195,
+  "code:TRACKED": 201,
   "data:MISSING": 35,
-  "data:TRACKED": 26,
-  "doc:TRACKED": 66,
-  "figure:MISSING": 65,
-  "figure:TRACKED": 7,
-  "test:TRACKED": 118
+  "data:TRACKED": 29,
+  "doc:TRACKED": 78,
+  "figure:MISSING": 67,
+  "figure:TRACKED": 9,
+  "test:TRACKED": 120
  },
  "remedy": {
-  "REGENERABLE": 100,
-  "TRACKED": 412
+  "REGENERABLE": 102,
+  "TRACKED": 437
  },
  "unresolved_per_doc": {
   "docs/TENSORDEM_UPSTREAM_DIFF_M1630.md": 4,
@@ -47,6 +47,7 @@
   "docs/ice_floe_physics_validation.md": 1,
   "docs/ice_ridge_pipeline_grounding.md": 9,
   "docs/m669_hull_mesh_contact.md": 3,
+  "docs/pr149_merge_resolution.md": 2,
   "docs/ridge_capacity_skempton_audit.md": 1,
   "docs/sdaa_coupling/HERTZ.md": 1,
   "docs/sir-pc2/SIR_PC2_DEM_BUOYANCY_WET_COUPLING.md": 7,
@@ -2302,6 +2303,20 @@
    "status": "TRACKED"
   },
   {
+   "doc": "docs/dem3d_material_calibration_roadmap.md",
+   "line": 72,
+   "pointer": "docs/dem3d_shear_cross_section_convergence.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_material_calibration_roadmap.md",
+   "line": 73,
+   "pointer": "docs/dem3d_shear_interior_window_convergence.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
    "doc": "docs/dem3d_mechanics_benchmark_protocol.md",
    "line": 29,
    "pointer": "scripts/run_dem3d_mechanics_benchmarks.py",
@@ -2825,28 +2840,35 @@
   },
   {
    "doc": "docs/dem3d_shear_cross_section_convergence.md",
-   "line": 11,
+   "line": 9,
+   "pointer": "docs/dem3d_shear_interior_window_convergence.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_shear_cross_section_convergence.md",
+   "line": 17,
    "pointer": "docs/dem3d_shear_static_reference.md",
    "kind": "doc",
    "status": "TRACKED"
   },
   {
    "doc": "docs/dem3d_shear_cross_section_convergence.md",
-   "line": 28,
+   "line": 34,
    "pointer": "docs/dem3d_shear_specimen.md",
    "kind": "doc",
    "status": "TRACKED"
   },
   {
    "doc": "docs/dem3d_shear_cross_section_convergence.md",
-   "line": 59,
+   "line": 65,
    "pointer": "docs/dem3d-shear-cross-section-convergence/series.csv",
    "kind": "data",
    "status": "TRACKED"
   },
   {
    "doc": "docs/dem3d_shear_cross_section_convergence.md",
-   "line": 93,
+   "line": 99,
    "pointer": "dem3d-shear-cross-section-convergence/figures/convergence.png",
    "kind": "figure",
    "status": "TRACKED",
@@ -2854,8 +2876,57 @@
   },
   {
    "doc": "docs/dem3d_shear_cross_section_convergence.md",
-   "line": 128,
+   "line": 134,
    "pointer": "docs/dem3d_material_calibration_roadmap.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_shear_interior_window_convergence.md",
+   "line": 3,
+   "pointer": "docs/dem3d_shear_cross_section_convergence.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_shear_interior_window_convergence.md",
+   "line": 10,
+   "pointer": "docs/dem3d_shear_static_reference.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_shear_interior_window_convergence.md",
+   "line": 15,
+   "pointer": "scripts/audit_dem3d_shear_interior_window.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_shear_interior_window_convergence.md",
+   "line": 16,
+   "pointer": "docs/dem3d-shear-interior-window-convergence/report.json",
+   "kind": "data",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_shear_interior_window_convergence.md",
+   "line": 17,
+   "pointer": "docs/dem3d-shear-interior-window-convergence/figures/cross_section_convergence.png",
+   "kind": "figure",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_shear_interior_window_convergence.md",
+   "line": 22,
+   "pointer": "tests/test_dem3d_shear_cross_section_convergence.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_shear_interior_window_convergence.md",
+   "line": 27,
+   "pointer": "docs/dem3d_shear_specimen.md",
    "kind": "doc",
    "status": "TRACKED"
   },
@@ -2948,6 +3019,13 @@
    "doc": "docs/dem3d_shear_static_reference.md",
    "line": 170,
    "pointer": "docs/dem3d_shear_cross_section_convergence.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_shear_static_reference.md",
+   "line": 177,
+   "pointer": "docs/dem3d_shear_interior_window_convergence.md",
    "kind": "doc",
    "status": "TRACKED"
   },
@@ -3603,6 +3681,130 @@
    "pointer": "src/tensordem/hull_contact.py",
    "kind": "code",
    "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr149_merge_resolution.md",
+   "line": 17,
+   "pointer": "docs/dem3d_shear_static_reference.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr149_merge_resolution.md",
+   "line": 23,
+   "pointer": "src/tensordem/shear_convergence.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr149_merge_resolution.md",
+   "line": 23,
+   "pointer": "src/tensordem/shear_static.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr149_merge_resolution.md",
+   "line": 25,
+   "pointer": "scripts/audit_dem3d_shear_cross_section_convergence.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr149_merge_resolution.md",
+   "line": 26,
+   "pointer": "docs/dem3d_shear_cross_section_convergence.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr149_merge_resolution.md",
+   "line": 27,
+   "pointer": "figures/convergence.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "scripts/audit_dem3d_shear_cross_section_convergence.py",
+    "scripts/hull_contact_verification.py",
+    "tests/test_pr149_merge_union_invariants.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/pr149_merge_resolution.md",
+   "line": 27,
+   "pointer": "figures/cross_section_convergence.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "scripts/audit_dem3d_shear_interior_window.py",
+    "tests/test_pr149_merge_union_invariants.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/pr149_merge_resolution.md",
+   "line": 44,
+   "pointer": "tests/test_dem3d_shear_cross_section_convergence.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr149_merge_resolution.md",
+   "line": 45,
+   "pointer": "scripts/audit_dem3d_shear_interior_window.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr149_merge_resolution.md",
+   "line": 46,
+   "pointer": "docs/dem3d_shear_interior_window_convergence.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr149_merge_resolution.md",
+   "line": 47,
+   "pointer": "docs/dem3d-shear-cross-section-convergence/report.json",
+   "kind": "data",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr149_merge_resolution.md",
+   "line": 48,
+   "pointer": "docs/dem3d-shear-cross-section-convergence/summary.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr149_merge_resolution.md",
+   "line": 59,
+   "pointer": "docs/dem3d_material_calibration_roadmap.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr149_merge_resolution.md",
+   "line": 62,
+   "pointer": "docs/doc_evidence_ledger.json",
+   "kind": "data",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr149_merge_resolution.md",
+   "line": 63,
+   "pointer": "scripts/audit_doc_evidence.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr149_merge_resolution.md",
+   "line": 68,
+   "pointer": "figures/pr149_merge_resolution.png",
+   "kind": "figure",
+   "status": "TRACKED",
+   "resolved": "docs/figures/pr149_merge_resolution.png"
   },
   {
    "doc": "docs/ridge_capacity_skempton_audit.md",
