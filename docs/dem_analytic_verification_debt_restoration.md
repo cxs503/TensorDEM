@@ -115,3 +115,66 @@ python -m pytest tests/test_dem3d_hertz_contact.py tests/test_dem3d_restitution.
     tests/test_friction_cone_verification.py tests/test_tangential_friction_verification.py -q
 python scripts/verify_salvaged_analytic_laws.py
 ```
+## 6. Follow-up (m2942): Collection error fixed for `test_fracture_gen_mass_footprint`
+
+The fifth contract (`tests/test_fracture_gen_mass_footprint.py`) was left red because the
+only available implementation (branch `721041a`) would silently delete the audited
+`pi/6 - 1` mass-mapping deficit.  The owner decision was to "keep the deficit and fix
+only the two missing names".
+
+This commit adds the two missing symbols to `src/tensordem/fracture_gen.py`:
+
+* `MASS_RADIUS_FACTOR: float = (6.0 / math.pi) ** (1.0 / 3.0)` — the ratio of the
+  "mass radius" (sphere with volume equal to the lattice cell) to the geometric
+  particle radius.
+* `face_footprint_radius(face: FailureFace) -> float` — returns `face.extent_radius`
+  if present, otherwise `sqrt(face.area / pi)`.
+
+With these additions the test module **collects** (16 tests).  The 13 tests that
+exercise `FractureGenConfig(mass_mapping=...)`, `footprint_aware`, and
+`on_plane_tolerance` still fail because the corresponding implementation hunks
+are not yet merged.  They are marked as **honest debt** in the docstring of
+`test_fracture_gen_mass_footprint.py` and will be addressed in a future PR
+once the owner decides whether to adopt the compensated mapping or keep the
+deficit.
+
+| test module | status | notes |
+|---|---|---|
+| `tests/test_dem3d_hertz_contact.py` | ✅ 8 passed | Hertz normal contact restored |
+| `tests/test_dem3d_restitution.py` | ✅ 8 passed | Restitution inversion restored |
+| `tests/test_friction_cone_verification.py` | ✅ 15 passed | Cundall–Strack tangential contact restored |
+| `tests/test_tangential_friction_verification.py` | ✅ 28 passed | Tangential verification harness restored |
+| `tests/test_fracture_gen_mass_footprint.py` | ⚠️ 16 collected, 13 fail | Collection error fixed; implementation debt remains |
+
+## 7. Debt cleared (m3915, PR #166 merge): the 13 red tests are green
+
+§6 above records the state of branch `agent/m2942` at its own tip: the two missing
+names were added by hand and 13 tests of
+`tests/test_fracture_gen_mass_footprint.py` stayed red as *honest debt*, because the
+implementation hunks (`mass_mapping=` aliasing, `footprint_aware`, `on_plane_tolerance`)
+were still unmerged. **That debt is now cleared by construction, not by weakening a test.**
+
+Trunk independently grew the full implementation of the same contract inside
+`src/tensordem/fracture_gen.py` (`normalise_mass_mapping`, `normalise_face_extent`,
+`FailureFace.extent_radius`, `face_footprint_radius`, `on_plane_tolerance`), which is
+why PR #166 conflicted with `main` at all: both sides introduced the same two symbols.
+The conflict was resolved as a semantic union — one canonical definition of
+`MASS_RADIUS_FACTOR` (with m2942's `float` annotation) and one canonical
+`face_footprint_radius` (trunk's, a strict superset of m2942's validation), see
+`docs/pr166_merge_conflict_resolution.md` for the per-file ledger.
+
+Consequence for the table in §6:
+
+| test module | status after PR #166 merge | notes |
+|---|---|---|
+| `tests/test_fracture_gen_mass_footprint.py` | ✅ 16 passed, 0 failed | §6's "13 fail" was an artefact of the then-missing implementation, not of the audit's reference values. Every asserted number is unchanged: the frozen π/6 − 1 deficit tests still request `mass_mapping="sphere"` explicitly, and trunk's `mass_mode="cell"` default still asserts volume consistency |
+| `tests/test_fracture_gen_footprint_breakage.py` | ✅ 17 passed | pins "default mapping is volume consistent" |
+| `tests/test_fracture_gen_audit.py` | ✅ 16 passed | benchmark-facing alias spellings |
+
+Verified with the merged tree of PR #166:
+
+```bash
+python3 -m pytest tests/test_fracture_gen_mass_footprint.py \
+                 tests/test_fracture_gen_footprint_breakage.py \
+                 tests/test_fracture_gen_audit.py -q   # 49 passed
+```
