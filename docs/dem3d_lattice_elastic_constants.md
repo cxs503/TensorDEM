@@ -2,7 +2,7 @@
 
 ## Why this audit exists
 
-`tensordem/dem3d.py` states that its lattice is a simple-cubic network with face
+`src/tensordem/dem3d.py` states that its lattice is a simple-cubic network with face
 and body diagonals inside the initial cutoff and that its *directional stiffness
 must be calibrated before engineering use*. This page replaces that advice with
 closed-form elastic constants, a machine-precision verification against the

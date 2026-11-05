@@ -373,7 +373,8 @@ It is used as the verification probe for the analytic relation.
 """
 
 from dataclasses import dataclass
-import math
+
+import torch
 
 from .dem3d import DEM3DConfig, IceDEM3D
 
@@ -557,18 +558,24 @@ def measure_platen_restitution(
     dt: float | None = None,
     max_steps: int = 500_000,
 ) -> RestitutionMeasurement:
-    """Bounce a bonded particle block on a rigid platen and measure ``e``.
+    """Bounce a single free particle on a rigid platen and measure ``e``.
 
-    All particles share the same platen contact, so a coherent block behaves as
-    a single degree of freedom with ``N * k`` and ``N * m``; the damping ratio
-    (and hence the analytic restitution) equals the single-particle value.
-    Bond stiffness is set high enough that the block stays effectively rigid so
-    that the experiment probes the contact law, not the lattice.
+    The closed forms compared against here describe *one* degree of freedom with
+    mass ``m`` and contact ``(k, c)`` against an infinite-mass wall, i.e. a
+    reduced mass equal to the particle mass.  The probe therefore isolates
+    exactly that configuration: the lattice is generated as usual (so that the
+    solver state has its production layout), every particle except one is parked
+    far away and fixed, and the bonds are broken before the impact.  A
+    multi-particle bonded block is *not* a single degree of freedom -- the bond
+    compliance and the layer-by-layer contact onset add their own dynamics, and
+    the measured restitution then deviates from the single-DOF closed form by
+    more than 10 % at moderate damping -- so the block configuration is
+    deliberately avoided here.
 
-    The block is released with a uniform normal velocity ``-impact_speed``
-    towards the platen; the experiment stops when every particle has separated
-    (zero platen overlap, positive normal velocity).  The measured restitution
-    is the mean outgoing normal velocity divided by the impact speed.
+    The free particle is released with normal velocity ``-impact_speed``
+    towards the platen; the experiment stops when it has separated (zero platen
+    overlap, positive normal velocity).  The measured restitution is the
+    outgoing normal velocity divided by the impact speed.
     """
     if not math.isfinite(impact_speed) or impact_speed <= 0.0:
         raise ValueError("impact_speed must be finite and positive")
@@ -594,15 +601,40 @@ def measure_platen_restitution(
         dt=dt,
     )
     sim = IceDEM3D(config)
-    sim.velocities[:, 2] = -impact_speed
     particle_count = int(sim.positions.shape[0])
+
+    # Isolate one free particle; park the rest far away and clamp them so that
+    # the impact probes a single mass-spring-dashpot contact against the platen.
+    probe = 0
+    parked = torch.zeros_like(sim.positions)
+    for index in range(particle_count):
+        parked[index] = torch.tensor(
+            [10.0 * index, 500.0, 500.0], dtype=sim.dtype, device=sim.device
+        )
+    parked[probe] = torch.tensor(
+        [0.0, 0.0, sim.bottom_platen_start_z + config.radius + 1.0e-6],
+        dtype=sim.dtype,
+        device=sim.device,
+    )
+    sim.positions = parked.clone()
+    sim.initial_positions = parked.clone()
+    fixed = torch.ones(particle_count, dtype=torch.bool, device=sim.device)
+    fixed[probe] = False
+    sim.fixed = fixed
+    sim.velocities = torch.zeros_like(sim.positions)
+    sim.velocities[probe, 2] = -impact_speed
+    sim.forces()  # break the lattice bonds so no residual bond force acts
+    if int(sim.alive.sum().item()) != 0:
+        raise RuntimeError("bonds did not break; probe assumption violated")
 
     for step in range(1, max_steps + 1):
         sim.step()
-        overlap = (sim.bottom_platen_start_z + config.radius - sim.positions[:, 2]).clamp_min(0.0)
-        normal_velocity = sim.velocities[:, 2]
-        if float(overlap.max()) == 0.0 and float(normal_velocity.min()) > 0.0:
-            outgoing = float(normal_velocity.mean())
+        overlap = (
+            sim.bottom_platen_start_z + config.radius - sim.positions[probe, 2]
+        ).clamp_min(0.0)
+        normal_velocity = sim.velocities[probe, 2]
+        if float(overlap) == 0.0 and float(normal_velocity) > 0.0:
+            outgoing = float(normal_velocity)
             return RestitutionMeasurement(
                 stiffness=stiffness,
                 damping=damping,
@@ -618,6 +650,6 @@ def measure_platen_restitution(
                 ),
             )
     raise RuntimeError(
-        f"block did not separate from the platen within {max_steps} steps "
+        f"probe particle did not separate from the platen within {max_steps} steps "
         f"(overdamped contact or unstable dt)"
     )

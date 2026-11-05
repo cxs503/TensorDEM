@@ -101,7 +101,9 @@ def mass_mapping_audit() -> dict:
                 "num_particles": acc["num_particles"],
                 "dem_mass_kg": acc["dem_mass"],
                 "fem_continuum_mass_kg": fem_mass,
-                "relative_error": acc["relative_error"],
+                # magnitude: the audit grades the size of the mass defect, the
+                # sign of the trunk ``relative_error`` is a display concern
+                "relative_error": acc["relative_error_magnitude"],
             }
         )
     # lattice quantisation: coverage error of the discretised volume

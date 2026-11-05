@@ -167,11 +167,11 @@ tracked particle.
 
 *[100] longitudinal and transverse branches: closed form versus the all-pairs dynamical matrix, with the corrected and the previously reported omega_max.*
 
-![pulse_thin2x2.png](lattice-waves/pulse_thin2x2.png)
+![pulse_thin2x2.png](lattice-waves/figures/pulse_thin2x2.png)
 
 *thin2x2: axial velocity at the two stations of the pulse run versus the exact harmonic (modal) response of the same discrete sample.*
 
-![pulse_thick4x4.png](lattice-waves/pulse_thick4x4.png)
+![pulse_thick4x4.png](lattice-waves/figures/pulse_thick4x4.png)
 
 *thick4x4: axial velocity at the two stations of the pulse run versus the exact harmonic (modal) response of the same discrete sample.*
 
