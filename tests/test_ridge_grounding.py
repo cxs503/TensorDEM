@@ -76,6 +76,10 @@ def test_undrained_vertical_capacity_uses_skempton_embedment():
     # depth factor of 1.2 and capped at the square-footing value 9, inflating the
     # capacity by 20-23 %; see docs/ridge_capacity_skempton_audit.md.
     pressure = soil.vertical_pressure_capacity(0.914, 0.914)
+    # Skempton (1951) strip footing, z/B = 1: N_c = 5.14 (1 + 0.2) = 6.168 with the
+    # embedment enhancement applied once (independent reference, not a re-derivation
+    # of the implementation).
+    assert pressure == pytest.approx(30.0e3 * 6.168, rel=1e-9)
     assert pressure == pytest.approx(30.0e3 * 5.14 * 1.2, rel=1e-12)
     assert pressure < 30.0e3 * 5.14 * 1.2 * 1.2
 

@@ -1,20 +1,20 @@
 {
  "schema": "tensordem.doc-evidence-ledger/1",
  "generated_by": "scripts/audit_doc_evidence.py",
- "documents_scanned": 105,
- "pointers": 512,
+ "documents_scanned": 107,
+ "pointers": 538,
  "counts": {
-  "code:TRACKED": 195,
-  "data:MISSING": 35,
-  "data:TRACKED": 26,
-  "doc:TRACKED": 66,
+  "code:TRACKED": 205,
+  "data:MISSING": 39,
+  "data:TRACKED": 27,
+  "doc:TRACKED": 71,
   "figure:MISSING": 65,
   "figure:TRACKED": 7,
-  "test:TRACKED": 118
+  "test:TRACKED": 124
  },
  "remedy": {
-  "REGENERABLE": 100,
-  "TRACKED": 412
+  "REGENERABLE": 104,
+  "TRACKED": 434
  },
  "unresolved_per_doc": {
   "docs/TENSORDEM_UPSTREAM_DIFF_M1630.md": 4,
@@ -45,9 +45,11 @@
   "docs/dem3d_scale_benchmark.md": 4,
   "docs/fracture_gen_mass_footprint_audit.md": 2,
   "docs/ice_floe_physics_validation.md": 1,
-  "docs/ice_ridge_pipeline_grounding.md": 9,
+  "docs/ice_ridge_pipeline_grounding.md": 10,
+  "docs/m3829-merge/m2937_semantic_union.md": 2,
   "docs/m669_hull_mesh_contact.md": 3,
   "docs/ridge_capacity_skempton_audit.md": 1,
+  "docs/ridge_geotech_capacity_verification.md": 1,
   "docs/sdaa_coupling/HERTZ.md": 1,
   "docs/sir-pc2/SIR_PC2_DEM_BUOYANCY_WET_COUPLING.md": 7,
   "docs/tensordem_floe_buoyancy_validation.md": 3,
@@ -381,7 +383,8 @@
    "kind": "data",
    "status": "MISSING",
    "producers": [
-    "scripts/verify_buoyancy_free_float.py"
+    "scripts/verify_buoyancy_free_float.py",
+    "scripts/verify_ridge_geotech_capacity_embedment.py"
    ],
    "remedy": "REGENERABLE"
   },
@@ -3336,21 +3339,28 @@
   },
   {
    "doc": "docs/ice_ridge_pipeline_grounding.md",
-   "line": 65,
+   "line": 69,
+   "pointer": "docs/ridge_geotech_capacity_verification.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ice_ridge_pipeline_grounding.md",
+   "line": 70,
    "pointer": "docs/ridge_capacity_skempton_audit.md",
    "kind": "doc",
    "status": "TRACKED"
   },
   {
    "doc": "docs/ice_ridge_pipeline_grounding.md",
-   "line": 90,
+   "line": 99,
    "pointer": "tests/test_ridge_grounding.py",
    "kind": "test",
    "status": "TRACKED"
   },
   {
    "doc": "docs/ice_ridge_pipeline_grounding.md",
-   "line": 134,
+   "line": 143,
    "pointer": "artifacts/ridge_grounding/main_case.json",
    "kind": "data",
    "status": "MISSING",
@@ -3363,7 +3373,7 @@
   },
   {
    "doc": "docs/ice_ridge_pipeline_grounding.md",
-   "line": 135,
+   "line": 144,
    "pointer": "artifacts/ridge_grounding/main_case_history.csv",
    "kind": "data",
    "status": "MISSING",
@@ -3374,7 +3384,7 @@
   },
   {
    "doc": "docs/ice_ridge_pipeline_grounding.md",
-   "line": 136,
+   "line": 145,
    "pointer": "artifacts/ridge_grounding/rate_study.json",
    "kind": "data",
    "status": "MISSING",
@@ -3386,7 +3396,7 @@
   },
   {
    "doc": "docs/ice_ridge_pipeline_grounding.md",
-   "line": 137,
+   "line": 146,
    "pointer": "artifacts/ridge_grounding/sensitivity.json",
    "kind": "data",
    "status": "MISSING",
@@ -3399,7 +3409,7 @@
   },
   {
    "doc": "docs/ice_ridge_pipeline_grounding.md",
-   "line": 138,
+   "line": 147,
    "pointer": "artifacts/ridge_grounding/sensitivity_rigid.json",
    "kind": "data",
    "status": "MISSING",
@@ -3411,7 +3421,7 @@
   },
   {
    "doc": "docs/ice_ridge_pipeline_grounding.md",
-   "line": 139,
+   "line": 148,
    "pointer": "artifacts/ridge_grounding/calibration.json",
    "kind": "data",
    "status": "MISSING",
@@ -3424,7 +3434,7 @@
   },
   {
    "doc": "docs/ice_ridge_pipeline_grounding.md",
-   "line": 140,
+   "line": 149,
    "pointer": "artifacts/ridge_grounding/beam_verification.json",
    "kind": "data",
    "status": "MISSING",
@@ -3436,7 +3446,7 @@
   },
   {
    "doc": "docs/ice_ridge_pipeline_grounding.md",
-   "line": 141,
+   "line": 150,
    "pointer": "artifacts/ridge_grounding/envelope.json",
    "kind": "data",
    "status": "MISSING",
@@ -3449,7 +3459,7 @@
   },
   {
    "doc": "docs/ice_ridge_pipeline_grounding.md",
-   "line": 142,
+   "line": 151,
    "pointer": "artifacts/ridge_grounding/ledger.json",
    "kind": "data",
    "status": "MISSING",
@@ -3461,17 +3471,29 @@
   },
   {
    "doc": "docs/ice_ridge_pipeline_grounding.md",
-   "line": 151,
+   "line": 160,
    "pointer": "scripts/build_ridge_report.py",
    "kind": "code",
    "status": "TRACKED"
   },
   {
    "doc": "docs/ice_ridge_pipeline_grounding.md",
-   "line": 179,
+   "line": 188,
    "pointer": "tests/test_ridge_geotech_capacity_verification.py",
    "kind": "test",
    "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ice_ridge_pipeline_grounding.md",
+   "line": 202,
+   "pointer": "artifacts/ridge_geotech_capacity/verification.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "scripts/verify_buoyancy_free_float.py",
+    "scripts/verify_ridge_geotech_capacity_embedment.py"
+   ],
+   "remedy": "REGENERABLE"
   },
   {
    "doc": "docs/icebreaking_development_roadmap.md",
@@ -3500,6 +3522,128 @@
    "pointer": "scripts/benchmark_floe_buoyancy.py",
    "kind": "code",
    "status": "TRACKED"
+  },
+  {
+   "doc": "docs/m3829-merge/m2937_semantic_union.md",
+   "line": 31,
+   "pointer": "src/tensordem/ridge_geotech.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/m3829-merge/m2937_semantic_union.md",
+   "line": 32,
+   "pointer": "docs/ice_ridge_pipeline_grounding.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/m3829-merge/m2937_semantic_union.md",
+   "line": 32,
+   "pointer": "docs/ridge_capacity_skempton_audit.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/m3829-merge/m2937_semantic_union.md",
+   "line": 32,
+   "pointer": "docs/ridge_geotech_capacity_verification.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/m3829-merge/m2937_semantic_union.md",
+   "line": 33,
+   "pointer": "tests/test_ridge_grounding.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/m3829-merge/m2937_semantic_union.md",
+   "line": 34,
+   "pointer": "scripts/build_ridge_capacity_audit.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/m3829-merge/m2937_semantic_union.md",
+   "line": 34,
+   "pointer": "scripts/verify_ridge_geotech_capacity.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/m3829-merge/m2937_semantic_union.md",
+   "line": 34,
+   "pointer": "scripts/verify_ridge_geotech_capacity_embedment.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/m3829-merge/m2937_semantic_union.md",
+   "line": 35,
+   "pointer": "tests/test_ridge_geotech_capacity_embedment_verification.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/m3829-merge/m2937_semantic_union.md",
+   "line": 35,
+   "pointer": "tests/test_ridge_geotech_capacity_verification.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/m3829-merge/m2937_semantic_union.md",
+   "line": 36,
+   "pointer": "docs/doc_evidence_ledger.json",
+   "kind": "data",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/m3829-merge/m2937_semantic_union.md",
+   "line": 36,
+   "pointer": "scripts/audit_doc_evidence.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/m3829-merge/m2937_semantic_union.md",
+   "line": 38,
+   "pointer": "src/tensordem/ridge_geotech_verification.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/m3829-merge/m2937_semantic_union.md",
+   "line": 64,
+   "pointer": "tests/test_doc_evidence_pointers.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/m3829-merge/m2937_semantic_union.md",
+   "line": 75,
+   "pointer": "artifacts/ridge_geotech_capacity/verification.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "scripts/verify_buoyancy_free_float.py",
+    "scripts/verify_ridge_geotech_capacity_embedment.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/m3829-merge/m2937_semantic_union.md",
+   "line": 79,
+   "pointer": "artifacts/ridge_capacity_verification/capacity_verification.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "scripts/build_ridge_capacity_audit.py",
+    "scripts/verify_ridge_geotech_capacity.py"
+   ],
+   "remedy": "REGENERABLE"
   },
   {
    "doc": "docs/m669_hull_mesh_contact.md",
@@ -3689,9 +3833,71 @@
    "status": "MISSING",
    "producers": [
     "scripts/build_ridge_capacity_audit.py",
-    "scripts/verify_ridge_geotech_capacity.py"
+    "scripts/verify_ridge_geotech_capacity.py",
+    "scripts/verify_ridge_geotech_capacity_embedment.py"
    ],
    "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/ridge_geotech_capacity_verification.md",
+   "line": 8,
+   "pointer": "src/tensordem/ridge_geotech.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ridge_geotech_capacity_verification.md",
+   "line": 9,
+   "pointer": "src/tensordem/ridge_geotech_verification.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ridge_geotech_capacity_verification.md",
+   "line": 10,
+   "pointer": "scripts/verify_ridge_geotech_capacity_embedment.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ridge_geotech_capacity_verification.md",
+   "line": 11,
+   "pointer": "tests/test_ridge_geotech_capacity_embedment_verification.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ridge_geotech_capacity_verification.md",
+   "line": 12,
+   "pointer": "tests/test_ridge_grounding.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ridge_geotech_capacity_verification.md",
+   "line": 13,
+   "pointer": "artifacts/ridge_geotech_capacity/verification.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "scripts/verify_buoyancy_free_float.py",
+    "scripts/verify_ridge_geotech_capacity_embedment.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/ridge_geotech_capacity_verification.md",
+   "line": 18,
+   "pointer": "docs/ice_ridge_pipeline_grounding.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ridge_geotech_capacity_verification.md",
+   "line": 125,
+   "pointer": "scripts/run_ice_ridge_grounding.py",
+   "kind": "code",
+   "status": "TRACKED"
   },
   {
    "doc": "docs/rudder_ice_load_dem_fsm.md",
