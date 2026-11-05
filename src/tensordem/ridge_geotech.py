@@ -52,6 +52,7 @@ __all__ = [
     "hetenyi_infinite_beam_patch_load",
     "hetenyi_infinite_beam_point_load",
     "hetenyi_verification",
+    "skempton_nc",
     "solve_beam_on_winkler",
 ]
 
@@ -93,6 +94,8 @@ def bearing_capacity_factors(phi_rad: float) -> tuple[float, float, float]:
 SKEMPTON_NC_STRIP_SURFACE = 5.14
 SKEMPTON_NC_STRIP_MAX = 7.5
 SKEMPTON_SQUARE_TO_STRIP = 1.2
+SKEMPTON_NC_SQUARE_SURFACE = 6.2   # Skempton (1951) tabulated square N_c0
+SKEMPTON_NC_SQUARE_MAX = 9.0
 
 
 def skempton_undrained_nc(depth_below_mudline: float, width: float, *,
@@ -123,6 +126,35 @@ def skempton_undrained_nc(depth_below_mudline: float, width: float, *,
     return min(SKEMPTON_NC_STRIP_SURFACE * shape * (1.0 + 0.2 * ratio),
                SKEMPTON_NC_STRIP_MAX * shape)
 
+def skempton_nc(z_over_b: float, *, footing: str = "strip") -> float:
+    """Skempton (1951) undrained bearing-capacity factor ``N_c``.
+
+    ``N_c = N_c0 (1 + 0.2 z/B)`` with ``N_c0 = 5.14`` for a strip footing and
+    ``6.2`` for a square or circular footing, capped at ``7.5`` (strip) and
+    ``9.0`` (square / circular) for ``z/B >= 2.5`` (Skempton 1951, tabulated in
+    Das, *Principles of Foundation Engineering*, table 3.3).
+
+    Thin wrapper around :func:`skempton_undrained_nc`: the strip branch is the
+    same closed form (``width = 1``, ``length_ratio = 0``), while the square /
+    circular branch keeps the tabulated ``N_c0 = 6.2`` rather than the
+    ``5.14 x 1.2 = 6.168`` shape-factor product.  The 0.5 % gap is below the
+    resolution of the published table, which is quoted to three significant
+    figures.
+
+    The embedment enhancement lives **inside** ``N_c``; it must not be applied a
+    second time through a separate depth factor.  A subsea pipeline is a very
+    long footing, so ``footing="strip"`` is the physically correct choice and is
+    the default.  Anchor: at ``z/B = 0`` the strip value reduces to the Prandtl
+    (1920) slip-line solution ``2 + pi = 5.1416``.
+    """
+    _require_finite("z_over_b", z_over_b, nonnegative=True)
+    if footing not in ("strip", "square", "circular"):
+        raise ValueError("footing must be 'strip', 'square' or 'circular'")
+    if footing == "strip":
+        return skempton_undrained_nc(z_over_b, 1.0)
+    return min(SKEMPTON_NC_SQUARE_SURFACE * (1.0 + 0.2 * z_over_b),
+               SKEMPTON_NC_SQUARE_MAX)
+
 
 @dataclass(frozen=True)
 class MohrCoulombSoil:
@@ -133,7 +165,8 @@ class MohrCoulombSoil:
     phi = 0 model in which ``cohesion`` is read as the undrained shear strength
     ``s_u``.  ``pore_pressure_ratio`` reduces the effective unit weight by
     ``(1 - r_u)``, i.e. a simple partially-drained pore-pressure model rather
-    than a coupled seepage solution.
+    than a coupled seepage solution.  In the undrained branch the embedment
+    enhancement is the Skempton (1951) factor and is applied once.
     """
 
     friction_angle_deg: float = 30.0
@@ -196,15 +229,22 @@ class MohrCoulombSoil:
         with Meyerhof/Hansen depth factors ``k = min(z/B, 1)``.
 
         Undrained: ``q = s_u N_c`` with the Skempton (1951) embedment factor of
-        :func:`skempton_undrained_nc`.  That factor already includes the
-        ``0.2 z/B`` embedment term, so **no** additional depth factor is applied;
-        ``length_ratio = B/L`` selects the strip (0, cap 7.5) or square/circular
-        (1, cap 9.0) limit.
+        :func:`skempton_undrained_nc` (equivalently :func:`skempton_nc` for the
+        strip default).  That factor already includes the ``0.2 z/B`` embedment
+        term, so **no** additional depth factor is applied; ``length_ratio =
+        B/L`` selects the strip (0, cap 7.5) or square/circular (1, cap 9.0)
+        limit.
         """
         _require_finite("width", width, positive=True)
         _require_finite("depth_below_mudline", depth_below_mudline, nonnegative=True)
         phi = self.phi_rad
         if self.undrained:
+            # Skempton's N_c already contains the embedment enhancement, so no
+            # separate depth factor is applied.  The earlier implementation
+            # multiplied N_c by (1 + 0.2 k) a second time, which over-predicted
+            # the capacity by 20 % at z/B = 1 and lifted the "capped at 9" value
+            # to 10.8; see docs/ridge_capacity_skempton_audit.md and
+            # docs/ridge_geotech_capacity_verification.md.
             n_c = skempton_undrained_nc(depth_below_mudline, width,
                                         length_ratio=length_ratio)
             return self.shear_strength * n_c
