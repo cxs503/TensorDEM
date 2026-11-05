@@ -37,6 +37,12 @@ from .fracture_mass_mapping import (
 #: density carries exactly the mass of the cubic cell ``h^3`` the particle owns,
 #: which is what ``mass_mode="cell"`` assigns (see
 #: ``docs/dem3d_fracture_mass_mapping_audit.md``).
+#:
+#: Equivalent closed form kept from the #166 side of the merge (satisfied
+#: contract `tests/test_fracture_gen_mass_footprint.py`): ``4/3 pi r_m^3 =
+#: h^3 = (2 r)^3`` gives ``r_m / r = (6/pi)^{1/3}``; the two forms agree to
+#: machine precision (asserted in
+#: ``tests/test_fracture_gen_mass_footprint.py::MassRadiusFactorMergeTest``).
 MASS_RADIUS_FACTOR = 2.0 * (3.0 / (4.0 * math.pi)) ** (1.0 / 3.0)
 
 #: Accepted ``mass_mapping`` spellings -> canonical ``mass_mode``.

@@ -115,3 +115,52 @@ python -m pytest tests/test_dem3d_hertz_contact.py tests/test_dem3d_restitution.
     tests/test_friction_cone_verification.py tests/test_tangential_friction_verification.py -q
 python scripts/verify_salvaged_analytic_laws.py
 ```
+## 6. Follow-up (m2942, healed in PR #166 merge): `MASS_RADIUS_FACTOR` / `face_footprint_radius`
+
+Branch `agent/m2942` (PR #166) was opened to close the fifth contract
+(`tests/test_fracture_gen_mass_footprint.py`), which had been left red because the only
+implementation on offer at the time (branch `721041a`) would silently delete the audited
+`pi/6 - 1` mass-mapping deficit.  The owner decision was to "keep the deficit and fix
+only the two missing names", and the PR added two symbols to
+`src/tensordem/fracture_gen.py`:
+
+* `MASS_RADIUS_FACTOR` — ratio of the "mass radius" (sphere whose volume equals the
+  lattice cell) to the geometric particle radius; the PR's closed form was
+  `(6.0 / math.pi) ** (1.0 / 3.0) = 1.240701`.
+* `face_footprint_radius(face: FailureFace) -> float` — `face.extent_radius` when the
+  FEM side supplies it, otherwise the equal-area disc radius `sqrt(face.area / pi)`,
+  plus the `FailureFace.extent_radius` field.
+
+By the time the PR was re-validated against `main`, the mass-mapping / footprint work
+had already landed there in full (audit + breakage implementation:
+`docs/dem3d_fracture_mass_mapping_audit.md`, `docs/dem3d_fracture_footprint_breakage.md`,
+`tests/test_fracture_gen_footprint_breakage.py`), so the PR conflicted: it re-declared
+symbols that `main` already defines.  The merge resolution is a semantic union, not an
+overlay:
+
+| PR #166 content | resolution on merge | evidence |
+|---|---|---|
+| `MASS_RADIUS_FACTOR` (PR form `(6/π)^{1/3}`) | `main`'s canonical definition `2 (3/4π)^{1/3}` kept; the PR's closed form is recorded in its comment and proven identical by `MassRadiusFactorMergeTest` (agreement `< 1e-15`, i.e. machine precision) | `tests/test_fracture_gen_mass_footprint.py` |
+| `face_footprint_radius()` | `main`'s implementation kept: same contract (explicit radius wins, else `sqrt(A/π)`) and a **strict superset** of validation (`extent_radius` must be positive and finite). The PR's weaker `>= 0` bound is satisfied by it, and `extent_radius=0` / `nan` / negative all raise on both sides' contracts | `test_fracture_gen_mass_footprint.py`, `test_fracture_gen_footprint_breakage.py` |
+| `FailureFace.extent_radius` field | present in both; `main`'s field comment kept | — |
+| this section + `report.json` | kept, corrected to the post-merge state | this file |
+
+Nothing from either side is dropped silently: the PR's provisional duplicate block was
+the only deletion, and it is folded (not lost) into `main`'s canonical definitions as
+described above.  Post-merge status of the debt table:
+
+| test module | status after merge | notes |
+|---|---|---|
+| `tests/test_dem3d_hertz_contact.py` | ✅ 8 passed | Hertz normal contact restored |
+| `tests/test_dem3d_restitution.py` | ✅ 8 passed | Restitution inversion restored |
+| `tests/test_friction_cone_verification.py` | ✅ 15 passed | Cundall–Strack tangential contact restored |
+| `tests/test_tangential_friction_verification.py` | ✅ 28 passed | Tangential verification harness restored |
+| `tests/test_fracture_gen_mass_footprint.py` | ✅ 17 passed | collection error fixed *and* implementation debt closed on `main` |
+
+Reproduction of the merge check:
+
+```
+python -m pytest tests/test_fracture_gen_mass_footprint.py \
+    tests/test_fracture_gen_footprint_breakage.py \
+    tests/test_fracture_gen_mass_mapping.py tests/test_fracture_gen_audit.py -q
+```

@@ -1,20 +1,20 @@
 {
  "schema": "tensordem.doc-evidence-ledger/1",
  "generated_by": "scripts/audit_doc_evidence.py",
- "documents_scanned": 105,
- "pointers": 512,
+ "documents_scanned": 106,
+ "pointers": 529,
  "counts": {
-  "code:TRACKED": 195,
+  "code:TRACKED": 198,
   "data:MISSING": 35,
-  "data:TRACKED": 26,
-  "doc:TRACKED": 66,
+  "data:TRACKED": 27,
+  "doc:TRACKED": 70,
   "figure:MISSING": 65,
-  "figure:TRACKED": 7,
-  "test:TRACKED": 118
+  "figure:TRACKED": 8,
+  "test:TRACKED": 126
  },
  "remedy": {
   "REGENERABLE": 100,
-  "TRACKED": 412
+  "TRACKED": 429
  },
  "unresolved_per_doc": {
   "docs/TENSORDEM_UPSTREAM_DIFF_M1630.md": 4,
@@ -3219,6 +3219,41 @@
    "status": "TRACKED"
   },
   {
+   "doc": "docs/dem_analytic_verification_debt_restoration.md",
+   "line": 125,
+   "pointer": "src/tensordem/fracture_gen.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem_analytic_verification_debt_restoration.md",
+   "line": 136,
+   "pointer": "docs/dem3d_fracture_footprint_breakage.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem_analytic_verification_debt_restoration.md",
+   "line": 137,
+   "pointer": "tests/test_fracture_gen_footprint_breakage.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem_analytic_verification_debt_restoration.md",
+   "line": 165,
+   "pointer": "tests/test_fracture_gen_audit.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem_analytic_verification_debt_restoration.md",
+   "line": 165,
+   "pointer": "tests/test_fracture_gen_mass_mapping.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
    "doc": "docs/fracture_gen_mass_footprint_audit.md",
    "line": 3,
    "pointer": "src/tensordem/fracture_gen.py",
@@ -3602,6 +3637,90 @@
    "line": 172,
    "pointer": "src/tensordem/hull_contact.py",
    "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr166_merge_conflict_resolution.md",
+   "line": 9,
+   "pointer": "tests/test_fracture_gen_mass_footprint.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr166_merge_conflict_resolution.md",
+   "line": 10,
+   "pointer": "src/tensordem/fracture_gen.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr166_merge_conflict_resolution.md",
+   "line": 13,
+   "pointer": "docs/dem3d_fracture_mass_mapping_audit.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr166_merge_conflict_resolution.md",
+   "line": 14,
+   "pointer": "docs/dem3d_fracture_footprint_breakage.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr166_merge_conflict_resolution.md",
+   "line": 14,
+   "pointer": "tests/test_fracture_gen_footprint_breakage.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr166_merge_conflict_resolution.md",
+   "line": 23,
+   "pointer": "docs/dem_analytic_verification_debt_restoration.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr166_merge_conflict_resolution.md",
+   "line": 74,
+   "pointer": "artifacts/merge166/merge166_verification.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr166_merge_conflict_resolution.md",
+   "line": 75,
+   "pointer": "artifacts/merge166/merge166_metrics.json",
+   "kind": "data",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr166_merge_conflict_resolution.md",
+   "line": 76,
+   "pointer": "artifacts/merge166/merge166_verification.png",
+   "kind": "figure",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr166_merge_conflict_resolution.md",
+   "line": 82,
+   "pointer": "tests/test_fracture_gen_mass_mapping.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr166_merge_conflict_resolution.md",
+   "line": 83,
+   "pointer": "tests/test_fracture_gen_audit.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr166_merge_conflict_resolution.md",
+   "line": 84,
+   "pointer": "tests/test_fracture_gen.py",
+   "kind": "test",
    "status": "TRACKED"
   },
   {

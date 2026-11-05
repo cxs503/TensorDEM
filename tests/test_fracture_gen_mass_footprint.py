@@ -252,5 +252,31 @@ class TestAuditReproducibility(unittest.TestCase):
         self.assertTrue(audit["mass"]["lattice_cell_within_15pct"])
 
 
+class MassRadiusFactorMergeTest(unittest.TestCase):
+    """PR #166 (agent/m2942) merge guard: the two closed forms are the same number.
+
+    The #166 side derived the mass radius as ``r_m / r = (6/pi)^{1/3}`` from
+    ``4/3 pi r_m^3 = h^3 = (2 r)^3``; trunk writes the same ratio as
+    ``2 (3/4 pi)^{1/3}``.  The merge kept trunk's definition and folded the #166
+    derivation into its comment, so this test pins the algebraic equivalence
+    (failure here means one side's documented number was silently changed).
+    """
+
+    def test_pr166_closed_form_equals_trunk_constant(self):
+        pr166_form = (6.0 / math.pi) ** (1.0 / 3.0)
+        self.assertAlmostEqual(pr166_form, MASS_RADIUS_FACTOR, places=15)
+        self.assertLess(abs(pr166_form - MASS_RADIUS_FACTOR), 1e-15)
+        self.assertAlmostEqual(MASS_RADIUS_FACTOR, 1.240701, places=6)
+
+    def test_pr166_footprint_contract_still_holds(self):
+        """Contract added by #166: explicit radius wins, else sqrt(area/pi)."""
+        self.assertAlmostEqual(
+            face_footprint_radius(face(area=0.04)), math.sqrt(0.04 / math.pi)
+        )
+        self.assertEqual(face_footprint_radius(face(area=0.04, extent_radius=0.3)), 0.3)
+        with self.assertRaises(ValueError):
+            face_footprint_radius(face(area=0.04, extent_radius=-1.0))
+
+
 if __name__ == "__main__":
     unittest.main()
