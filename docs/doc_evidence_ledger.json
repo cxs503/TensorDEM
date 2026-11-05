@@ -1,20 +1,22 @@
 {
  "schema": "tensordem.doc-evidence-ledger/1",
  "generated_by": "scripts/audit_doc_evidence.py",
- "documents_scanned": 105,
- "pointers": 512,
+ "documents_scanned": 106,
+ "pointers": 526,
  "counts": {
-  "code:TRACKED": 195,
-  "data:MISSING": 35,
-  "data:TRACKED": 26,
-  "doc:TRACKED": 66,
-  "figure:MISSING": 65,
+  "code:TRACKED": 198,
+  "data:MISSING": 34,
+  "data:TRACKED": 27,
+  "data:UNTRACKED": 2,
+  "doc:TRACKED": 67,
+  "figure:MISSING": 61,
   "figure:TRACKED": 7,
-  "test:TRACKED": 118
+  "figure:UNTRACKED": 4,
+  "test:TRACKED": 126
  },
  "remedy": {
-  "REGENERABLE": 100,
-  "TRACKED": 412
+  "REGENERABLE": 101,
+  "TRACKED": 425
  },
  "unresolved_per_doc": {
   "docs/TENSORDEM_UPSTREAM_DIFF_M1630.md": 4,
@@ -43,6 +45,7 @@
   "docs/dem3d_rolling_resistance.md": 4,
   "docs/dem3d_rolling_resistance_verification.md": 4,
   "docs/dem3d_scale_benchmark.md": 4,
+  "docs/fracture_gen_audit_reproducibility.md": 1,
   "docs/fracture_gen_mass_footprint_audit.md": 2,
   "docs/ice_floe_physics_validation.md": 1,
   "docs/ice_ridge_pipeline_grounding.md": 9,
@@ -577,7 +580,7 @@
    "line": 51,
    "pointer": "artifacts/fracture_gen_audit/footprint_field_map.png",
    "kind": "figure",
-   "status": "MISSING",
+   "status": "UNTRACKED",
    "producers": [
     "benchmarks/fracture_gen_mass_footprint_audit.py"
    ],
@@ -1700,7 +1703,7 @@
    "line": 96,
    "pointer": "artifacts/fracture_gen_audit/footprint_field_map.png",
    "kind": "figure",
-   "status": "MISSING",
+   "status": "UNTRACKED",
    "producers": [
     "benchmarks/fracture_gen_mass_footprint_audit.py"
    ],
@@ -1711,7 +1714,7 @@
    "line": 103,
    "pointer": "artifacts/fracture_gen_audit/fracture_gen_audit.png",
    "kind": "figure",
-   "status": "MISSING",
+   "status": "UNTRACKED",
    "producers": [
     "benchmarks/fracture_gen_mass_footprint_audit.py"
    ],
@@ -3219,6 +3222,114 @@
    "status": "TRACKED"
   },
   {
+   "doc": "docs/fracture_gen_audit_reproducibility.md",
+   "line": 3,
+   "pointer": "src/tensordem/fracture_gen.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/fracture_gen_audit_reproducibility.md",
+   "line": 12,
+   "pointer": "tests/test_fracture_gen_mass_footprint.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/fracture_gen_audit_reproducibility.md",
+   "line": 13,
+   "pointer": "tests/test_fracture_gen_audit.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/fracture_gen_audit_reproducibility.md",
+   "line": 14,
+   "pointer": "benchmarks/fracture_gen_mass_footprint_audit.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/fracture_gen_audit_reproducibility.md",
+   "line": 15,
+   "pointer": "benchmarks/fracture_gen_audit.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/fracture_gen_audit_reproducibility.md",
+   "line": 68,
+   "pointer": "docs/dem3d_fracture_mass_mapping_audit.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/fracture_gen_audit_reproducibility.md",
+   "line": 68,
+   "pointer": "tests/test_fracture_gen_mass_mapping.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/fracture_gen_audit_reproducibility.md",
+   "line": 87,
+   "pointer": "tests/test_fracture_gen_footprint_breakage.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/fracture_gen_audit_reproducibility.md",
+   "line": 87,
+   "pointer": "tests/test_fracture_gen_footprint_breakage.py::test_alias_conflict_resolved_in_favour_of_mass_mapping",
+   "kind": "test",
+   "status": "TRACKED",
+   "resolved": "tests/test_fracture_gen_footprint_breakage.py"
+  },
+  {
+   "doc": "docs/fracture_gen_audit_reproducibility.md",
+   "line": 100,
+   "pointer": "artifacts/fracture_gen_audit/audit.json",
+   "kind": "data",
+   "status": "UNTRACKED",
+   "producers": [
+    "benchmarks/fracture_gen_mass_footprint_audit.py",
+    "benchmarks/verification_debt_closure_audit.py",
+    "scripts/audit_hull_polyline_geometry.py",
+    "scripts/audit_threefield_lbm_transport.py",
+    "scripts/verify_dem3d_restitution.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/fracture_gen_audit_reproducibility.md",
+   "line": 132,
+   "pointer": "tests/test_fracture_gen.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/fracture_gen_audit_reproducibility.md",
+   "line": 135,
+   "pointer": "benchmarks/fracture_gen_audit_report.json",
+   "kind": "data",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/fracture_gen_audit_reproducibility.md",
+   "line": 148,
+   "pointer": "tests/test_dem3d_contact_impact.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/fracture_gen_audit_reproducibility.md",
+   "line": 148,
+   "pointer": "tests/test_dem3d_contact_impact.py::SolverImpactTests::test_contact_durations",
+   "kind": "test",
+   "status": "TRACKED",
+   "resolved": "tests/test_dem3d_contact_impact.py"
+  },
+  {
    "doc": "docs/fracture_gen_mass_footprint_audit.md",
    "line": 3,
    "pointer": "src/tensordem/fracture_gen.py",
@@ -3244,7 +3355,7 @@
    "line": 6,
    "pointer": "artifacts/fracture_gen_audit/audit.json",
    "kind": "data",
-   "status": "MISSING",
+   "status": "UNTRACKED",
    "producers": [
     "benchmarks/fracture_gen_mass_footprint_audit.py",
     "benchmarks/verification_debt_closure_audit.py",
@@ -3259,7 +3370,7 @@
    "line": 7,
    "pointer": "artifacts/fracture_gen_audit/fracture_gen_audit.png",
    "kind": "figure",
-   "status": "MISSING",
+   "status": "UNTRACKED",
    "producers": [
     "benchmarks/fracture_gen_mass_footprint_audit.py"
    ],

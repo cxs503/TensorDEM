@@ -106,8 +106,10 @@ class TestMassMappingAudit(unittest.TestCase):
         self.assertEqual(f.bond_indices.shape[0], N_BONDS)
 
     def test_frozen_mapping_deficit_is_exactly_pi_over_six(self):
-        # the frozen mapping is opt-in: trunk's default is the corrected
-        # volume-consistent cell mapping (asserted separately below)
+        # ``mass_mode="cell"`` is the repaired default on main; the frozen
+        # equal-volume-sphere baseline is selected by name. The frozen mapping
+        # is opt-in: trunk's default is the corrected volume-consistent cell
+        # mapping (asserted separately below).
         f = field_for([face()], mass_mapping="sphere")
         ledger = FractureLedger(f, [face()])
         accounting = ledger.mass_accounting(CONTINUUM_VOLUME)

@@ -126,10 +126,12 @@ class MassMappingAudit(unittest.TestCase):
         acc = FractureLedger(field, []).mass_accounting(domain_volume=0.5**3)
         self.assertEqual(acc["num_particles"], 8)
         self.assertAlmostEqual(acc["lattice_volume_covered"], 0.4**3)
-        # ``relative_error`` is signed trunk convention (benchmarks display the
-        # direction); the magnitude key is what this audit grades.
-        self.assertAlmostEqual(acc["relative_error"], -abs(0.4**3 - 0.5**3) / 0.5**3, places=12)
-        self.assertAlmostEqual(acc["relative_error_magnitude"], abs(0.4**3 - 0.5**3) / 0.5**3)
+        # ``relative_error`` is signed (DEM - reference); the deficit is negative.
+        # Both magnitude spellings are exposed by the merged ledger API.
+        deficit = abs(0.4**3 - 0.5**3) / 0.5**3
+        self.assertAlmostEqual(acc["relative_error"], -deficit, places=12)
+        self.assertAlmostEqual(acc["absolute_relative_error"], deficit, places=12)
+        self.assertAlmostEqual(acc["relative_error_magnitude"], deficit, places=12)
 
     def test_mass_accounting_reports_mapping_name(self):
         acc = FractureLedger(self._field("cell_volume"), []).mass_accounting()
