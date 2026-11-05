@@ -110,7 +110,7 @@ floor, so the residual is discretisation, not bookkeeping.
 5. **Scope.** Cases A and B are algebraic identities, so agreement proves
    *implementation* fidelity to the stated law; they do not validate the ice
    material model, nor that `bond_stiffness` corresponds to any measured
-   modulus (see `docs/lattice_elasticity2d.md`). `fracture_release_J` and
+   modulus (see `docs/dem2d_lattice_elasticity.md`). `fracture_release_J` and
    `pair_contact_acquired_J` are still covered only by the identity test — a
    closed-form fracture-release anchor (released energy `0.5 k xi_break²`) is
    the natural next debt.
