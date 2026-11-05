@@ -157,11 +157,22 @@ class KernelInvariantTests(unittest.TestCase):
         self.assertLess(mixed.detail["broken_bonds"], 326)
 
     def test_mixed_topology_all_invariants_pass(self):
+        # The audit module exposes long function names; map the short invariant
+        # labels onto the real callables explicitly (getattr on the short label
+        # raises AttributeError).
+        invariant_funcs = {
+            "momentum_closure": momentum_closure,
+            "translation": lambda case, seed: translation_invariance(case, seed, (1.5, -7.25, 3.5)),
+            "rotation": rotation_equivariance,
+            "brute_force": brute_force_agreement,
+            "determinism": determinism_repeatability,
+            "load_superposition": load_superposition,
+        }
         for invariant in ("momentum_closure", "translation", "rotation",
                           "brute_force", "determinism", "load_superposition"):
             for seed in self.seeds:
                 with self.subTest(invariant=invariant, seed=seed):
-                    result = getattr(__import__("tensordem.contact_invariants", fromlist=[invariant]), invariant)(MIXED, seed)
+                    result = invariant_funcs[invariant](MIXED, seed)
                     self.assertInvariant(result)
 
     def test_audit_summary_has_no_violations(self):
