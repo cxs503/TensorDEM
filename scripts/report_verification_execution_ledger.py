@@ -107,8 +107,8 @@ def main() -> None:
 
 ## 1. 目的与背景
 
-仓库已有一份**静态**证据账本（`scripts/audit_verification_evidence.py`）：按测试断言*风格*
-给每个源码模块定级。风格不等于可执行性——一个模块可以是 `QUANTITATIVE_DOCUMENTED`，其测试却
+仓库已有一份**静态**证据账本（按测试断言*风格*
+给每个源码模块定级；产出该表的脚本当前不在本树内）。风格不等于可执行性——一个模块可以是 `QUANTITATIVE_DOCUMENTED`，其测试却
 是红的、被 skip 的、甚至根本 import 不进来。TensorDEM 历史上正是这种状态：已合并的验证文档背后
 的代码被交付门滤除，验证表无人可复现（`docs/dem_analytic_verification_debt_restoration.md`）。
 本增量补的正是**执行**这一半：**哪些已合并能力的验证现在真的跑得过**。
@@ -193,7 +193,7 @@ ERROR tests/test_fracture_gen_mass_footprint.py
 4. **子进程隔离的代价**：每个文件重复支付 import 开销（torch 约 1–2 s），96 文件 ≈ 2 min 纯开销；
    换来的是「一个文件坏不毁全局」，本仓库当前正需要这个。
 5. **执行证据 ≠ 验证证据**：绿只说明断言与它引用的基准一致；基准是不是抄自己的旧输出，静态/执行
-   两份账本都管不了，需要人工审引用（见 `docs/verification-evidence/README.md` 解释契约）。
+   两份账本都管不了，需要人工审引用（这是本树已知的空缺：两份账本都不覆盖引用独立性）。
 
 ## 6. 误差判定（关键量 vs 基准，逐项）
 

@@ -127,7 +127,7 @@ log-log 斜率 1.79–2.01，图 2 左：E ∝ n²，800 步内 E/E0 仅 2.4e3 �
 ## 复现
 
 ```bash
-PYTHONPATH=src python scripts/verify_engine_threshold_crossing.py     # 约 60 s，重写 metrics.json/summary.md/两图
+PYTHONPATH=src python scripts/verify_engine_threshold_crossing.py     # 约 60 s，重写 `metrics.json`、`summary.md` 与两张图
 PYTHONPATH=src python -m pytest tests/test_engine_threshold_crossing.py -q
 PYTHONPATH=src python -m pytest tests/test_dem3d_stability.py -q       # 115 passed（3 条旧断言按纠正后的判据更新）
 ```
