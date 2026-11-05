@@ -167,12 +167,22 @@ solver does not provide. A cross-section convergence study with a fixed `h/a = 2
 and no fracture is the natural next step, and at `21x21x3` = 1323 particles it is
 cheap.
 
-**Closed since:** that study is `docs/dem3d_shear_cross_section_convergence.md`
-(18 sizes up to `61x61x3`): the deficit is a boundary layer,
-`d(n) = 1.191/n + 1.846/n^2` (RMS 4.7e-4), asymptotic bias `0.10 %`, so
-`G_eff(inf)/C44 = 0.99899` and the material constant `7k/(3a)` *is* recoverable —
-directly to < 3 % at `n >= 45`. The `h/a = 2` restriction is load-bearing (taller
-blocks relax far more).
+**Closed since — wide series** (`docs/dem3d_shear_cross_section_convergence.md`):
+18 square sizes up to `61x61x3` at fixed `h/a = 2` show the deficit is a boundary
+layer, `d(n) = 1.191/n + 1.846/n^2` (RMS 4.7e-4) with asymptotic bias `0.10 %`, so
+`G_eff(inf)/C44 = 0.99899`; the material constant `7k/(3a)` *is* recoverable and the
+3 % gate is met directly at `n >= 45` (fitted prediction `n = 41.2`). The `h/a = 2`
+restriction is load-bearing — taller blocks relax far more.
+
+**Closed since — interior window** (`docs/dem3d_shear_interior_window_convergence.md`):
+an independent family `5x5x3 … 41x41x3` reaches the same conclusion from a different
+measurement. The `1/n` extrapolation recovers `C44` to 0.14 % (quadratic) / 1.47 %
+(linear); the interior-window bond census (margin 3 sites, outside the boundary layer)
+gives `0.19 %` for `h/L <= 0.06` and is exact (`1 - G/C44 < 1e-5`) under affine shear,
+so the window bookkeeping is a control rather than a fit. The edge relaxation is a
+`0.63 a` layer. For `h/L >= 0.12` the relaxation length grows with `h/L` and no window
+recovers `C44`, so a thick specimen's modulus stays a specimen property (down to
+`0.790 C44` at `h/L = 0.24`) — that part of the debt is a limitation, not a cure.
 
 Also unchanged: mode-II fracture energy remains NOT_SUPPORTED (no tangential bond
 stiffness), and the `shear_breaking_strain → macro strain` mapping of §3.2 of the
