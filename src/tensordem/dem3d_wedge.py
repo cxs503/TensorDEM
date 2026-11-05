@@ -7,7 +7,6 @@ not as a validated ship-hull hydrodynamics or ice-resistance model.
 from __future__ import annotations
 
 import math
-from typing import Any
 
 import torch
 
@@ -119,7 +118,18 @@ class MovingWedgeBowIceDEM3D(IceDEM3D):
                                   update_history=update_history)
         bow_force, bow_reaction, _ = self._wedge_contact()
         force += bow_force
-        self.last_reaction = bow_reaction
+        # Base-class contract (IceDEM3D.forces): the stored reaction is committed
+        # only by the owning call, so a probe (update_fracture=False, the path
+        # used by diagnostics and the energy audits) must leave it untouched.
+        # copy_ instead of rebinding keeps the preallocated tensor identity that
+        # checkpoint restore (last_reaction.zero_()) relies on, and stops the
+        # reaction handed to a caller from aliasing mutable solver state.
+        # The bow contact is memoryless in (positions, velocities, time), so
+        # update_history has nothing extra to guard here; it is forwarded
+        # because the inherited friction and rolling-torque accumulators do
+        # accumulate, and an unforwarded keyword is what broke this override.
+        if update_fracture:
+            self.last_reaction.copy_(bow_reaction)
         return force, bow_reaction
 
     @torch.no_grad()

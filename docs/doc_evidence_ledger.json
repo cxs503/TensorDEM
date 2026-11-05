@@ -1,20 +1,20 @@
 {
  "schema": "tensordem.doc-evidence-ledger/1",
  "generated_by": "scripts/audit_doc_evidence.py",
- "documents_scanned": 106,
- "pointers": 521,
+ "documents_scanned": 108,
+ "pointers": 544,
  "counts": {
-  "code:TRACKED": 197,
+  "code:TRACKED": 207,
   "data:MISSING": 35,
-  "data:TRACKED": 26,
-  "doc:TRACKED": 68,
+  "data:TRACKED": 29,
+  "doc:TRACKED": 69,
   "figure:MISSING": 65,
-  "figure:TRACKED": 7,
-  "test:TRACKED": 123
+  "figure:TRACKED": 9,
+  "test:TRACKED": 130
  },
  "remedy": {
   "REGENERABLE": 100,
-  "TRACKED": 421
+  "TRACKED": 444
  },
  "unresolved_per_doc": {
   "docs/TENSORDEM_UPSTREAM_DIFF_M1630.md": 4,
@@ -1311,7 +1311,8 @@
     "benchmarks/verification_debt_closure_audit.py",
     "scripts/audit_hull_polyline_geometry.py",
     "scripts/audit_threefield_lbm_transport.py",
-    "scripts/verify_dem3d_restitution.py"
+    "scripts/verify_dem3d_restitution.py",
+    "scripts/verify_forces_override_contract.py"
    ],
    "remedy": "REGENERABLE"
   },
@@ -1658,6 +1659,69 @@
    "line": 10,
    "pointer": "scripts/benchmark_dem3d_energy_timestep.py",
    "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_forces_override_contract.md",
+   "line": 3,
+   "pointer": "src/tensordem/dem3d_wedge.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_forces_override_contract.md",
+   "line": 3,
+   "pointer": "src/tensordem/rudder_ice_load.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_forces_override_contract.md",
+   "line": 5,
+   "pointer": "tests/test_dem3d_forces_override_contract.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_forces_override_contract.md",
+   "line": 6,
+   "pointer": "scripts/verify_forces_override_contract.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_forces_override_contract.md",
+   "line": 20,
+   "pointer": "src/tensordem/contact_invariants.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_forces_override_contract.md",
+   "line": 39,
+   "pointer": "tests/test_threefield.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_forces_override_contract.md",
+   "line": 40,
+   "pointer": "tests/test_dem3d_moving_wedge_bow.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_forces_override_contract.md",
+   "line": 41,
+   "pointer": "tests/test_dem3d_wedge_resistance_sensitivity.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_forces_override_contract.md",
+   "line": 99,
+   "pointer": "tests/test_rudder_ice_load.py",
+   "kind": "test",
    "status": "TRACKED"
   },
   {
@@ -2404,7 +2468,8 @@
     "benchmarks/verification_debt_closure_audit.py",
     "scripts/audit_hull_polyline_geometry.py",
     "scripts/audit_threefield_lbm_transport.py",
-    "scripts/verify_dem3d_restitution.py"
+    "scripts/verify_dem3d_restitution.py",
+    "scripts/verify_forces_override_contract.py"
    ],
    "remedy": "REGENERABLE"
   },
@@ -3278,7 +3343,8 @@
     "benchmarks/verification_debt_closure_audit.py",
     "scripts/audit_hull_polyline_geometry.py",
     "scripts/audit_threefield_lbm_transport.py",
-    "scripts/verify_dem3d_restitution.py"
+    "scripts/verify_dem3d_restitution.py",
+    "scripts/verify_forces_override_contract.py"
    ],
    "remedy": "REGENERABLE"
   },
@@ -3665,6 +3731,104 @@
    "line": 90,
    "pointer": "tests/test_fracture_gen_footprint_breakage.py",
    "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr205_merge_conflict_resolution.md",
+   "line": 3,
+   "pointer": "src/tensordem/dem3d_wedge.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr205_merge_conflict_resolution.md",
+   "line": 3,
+   "pointer": "src/tensordem/rudder_ice_load.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr205_merge_conflict_resolution.md",
+   "line": 5,
+   "pointer": "artifacts/pr205/pr205_merge_provenance.png",
+   "kind": "figure",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr205_merge_conflict_resolution.md",
+   "line": 5,
+   "pointer": "artifacts/pr205/verify_pr205.json",
+   "kind": "data",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr205_merge_conflict_resolution.md",
+   "line": 6,
+   "pointer": "artifacts/pr205/pr205_probe_invariance.png",
+   "kind": "figure",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr205_merge_conflict_resolution.md",
+   "line": 8,
+   "pointer": "runs/m4014/pytest_merged.log",
+   "kind": "data",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr205_merge_conflict_resolution.md",
+   "line": 10,
+   "pointer": "scripts/verify_pr205_merge_semantics.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr205_merge_conflict_resolution.md",
+   "line": 42,
+   "pointer": "tests/test_dem3d_forces_override_contract.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr205_merge_conflict_resolution.md",
+   "line": 43,
+   "pointer": "scripts/verify_forces_override_contract.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr205_merge_conflict_resolution.md",
+   "line": 44,
+   "pointer": "docs/dem3d_forces_override_contract.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr205_merge_conflict_resolution.md",
+   "line": 93,
+   "pointer": "scripts/audit_doc_evidence.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr205_merge_conflict_resolution.md",
+   "line": 95,
+   "pointer": "tests/test_doc_evidence_pointers.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr205_merge_conflict_resolution.md",
+   "line": 100,
+   "pointer": "src/tensordem/contact_invariants.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr205_merge_conflict_resolution.md",
+   "line": 101,
+   "pointer": "docs/doc_evidence_ledger.json",
+   "kind": "data",
    "status": "TRACKED"
   },
   {
