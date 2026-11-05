@@ -52,6 +52,7 @@ __all__ = [
     "hetenyi_infinite_beam_patch_load",
     "hetenyi_infinite_beam_point_load",
     "hetenyi_verification",
+    "skempton_nc",
     "solve_beam_on_winkler",
 ]
 
@@ -124,6 +125,27 @@ def skempton_undrained_nc(depth_below_mudline: float, width: float, *,
                SKEMPTON_NC_STRIP_MAX * shape)
 
 
+def skempton_nc(z_over_b: float, *, footing: str = "strip") -> float:
+    """Skempton (1951) undrained bearing-capacity factor ``N_c``.
+
+    ``N_c = N_c0 (1 + 0.2 z/B)`` with ``N_c0 = 5.14`` for a strip footing and
+    ``6.2`` for a square or circular footing, capped at ``7.5`` (strip) and
+    ``9.0`` (square / circular) for ``z/B >= 2.5`` (Skempton 1951, tabulated in
+    Das, *Principles of Foundation Engineering*, table 3.3).
+
+    The embedment enhancement lives **inside** ``N_c``; it must not be applied a
+    second time through a separate depth factor.  A subsea pipeline is a very
+    long footing, so ``footing="strip"`` is the physically correct choice and is
+    the default.  Anchor: at ``z/B = 0`` the strip value reduces to the Prandtl
+    (1920) slip-line solution ``2 + pi = 5.1416``.
+    """
+    _require_finite("z_over_b", z_over_b, nonnegative=True)
+    if footing not in ("strip", "square", "circular"):
+        raise ValueError("footing must be 'strip', 'square' or 'circular'")
+    base, cap = (5.14, 7.5) if footing == "strip" else (6.2, 9.0)
+    return min(base * (1.0 + 0.2 * z_over_b), cap)
+
+
 @dataclass(frozen=True)
 class MohrCoulombSoil:
     """Effective-stress Mohr-Coulomb subgrade beneath a subsea pipeline.
@@ -133,7 +155,8 @@ class MohrCoulombSoil:
     phi = 0 model in which ``cohesion`` is read as the undrained shear strength
     ``s_u``.  ``pore_pressure_ratio`` reduces the effective unit weight by
     ``(1 - r_u)``, i.e. a simple partially-drained pore-pressure model rather
-    than a coupled seepage solution.
+    than a coupled seepage solution.  In the undrained branch the embedment
+    enhancement is the Skempton (1951) factor and is applied once.
     """
 
     friction_angle_deg: float = 30.0
@@ -199,12 +222,20 @@ class MohrCoulombSoil:
         :func:`skempton_undrained_nc`.  That factor already includes the
         ``0.2 z/B`` embedment term, so **no** additional depth factor is applied;
         ``length_ratio = B/L`` selects the strip (0, cap 7.5) or square/circular
-        (1, cap 9.0) limit.
+        (1, cap 9.0) limit.  :func:`skempton_nc` exposes the same Skempton factor
+        under the ``footing`` keyword (strip/square/circular), which the
+        reference-verification ledger uses.
         """
         _require_finite("width", width, positive=True)
         _require_finite("depth_below_mudline", depth_below_mudline, nonnegative=True)
         phi = self.phi_rad
         if self.undrained:
+            # Skempton's N_c already contains the embedment enhancement, so no
+            # separate depth factor is applied.  The earlier implementation
+            # multiplied N_c by (1 + 0.2 k) a second time, which over-predicted
+            # the capacity by 20 % at z/B = 1 and lifted the "capped at 9" value
+            # to 10.8; see docs/ridge_geotech_capacity_verification.md and
+            # docs/ridge_capacity_skempton_audit.md.
             n_c = skempton_undrained_nc(depth_below_mudline, width,
                                         length_ratio=length_ratio)
             return self.shear_strength * n_c
