@@ -115,8 +115,17 @@ class MovingWedgeBowIceDEM3D(IceDEM3D):
         update_fracture: bool = True,
         update_history: bool = True,
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        force, _ = super().forces(external_forces, update_fracture=update_fracture,
-                                  update_history=update_history)
+        # ``update_history`` is part of the ``IceDEM3D.forces`` contract: probes
+        # (diagnostics, energy audits, invariance checks) call with
+        # ``update_history=False`` so that merely monitoring a run does not
+        # advance the Cundall-Strack slip history.  It has to be accepted and
+        # forwarded here as well, otherwise the bow subclass silently narrows
+        # the base-class signature and every probe raises TypeError.
+        force, _ = super().forces(
+            external_forces,
+            update_fracture=update_fracture,
+            update_history=update_history,
+        )
         bow_force, bow_reaction, _ = self._wedge_contact()
         force += bow_force
         self.last_reaction = bow_reaction
