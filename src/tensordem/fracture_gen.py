@@ -58,6 +58,11 @@ MASS_MAPPING_ALIASES = {
     "frozen": "sphere",
 }
 
+#: Canonical *reporting* name per internal ``mass_mode``.  One mapping, one
+#: documented name: the audit tables quote "cell_volume"/"equal_volume_spheres"
+#: even when the caller used one of the accepted aliases.
+MASS_MODE_TO_MAPPING = {"sphere": "equal_volume_spheres", "cell": "cell_volume"}
+
 #: Geometric tolerance (m) applied to the in-plane footprint radius test.
 _FOOTPRINT_TOLERANCE = 1e-12
 
@@ -67,6 +72,9 @@ _FOOTPRINT_TOLERANCE = 1e-12
 #: bonds whose crossing point projects inside the equal-area footprint disc of
 #: radius ``sqrt(area/pi)``, so the count tracks ``pi R^2 / h^2``.
 FACE_EXTENTS = {"plane": False, "disc": True}
+
+#: Accepted ``face_extent`` spellings, in canonical reporting order.
+VALID_FACE_EXTENTS = ("plane", "disc")
 
 
 def normalise_mass_mapping(value: str, name: str = "mass_mapping") -> str:
@@ -190,13 +198,17 @@ class FractureField:
         mass_mapping: str | None = None,
     ):
         self.mass_mode = normalise_mass_mapping(mass_mode, "mass_mode")
-        # Canonical mode plus the spelling the caller actually asked for, so an
-        # audit can quote "cell_volume" while the physics uses "cell".
+        # ``mass_mapping`` is *reported* under the one canonical name of the
+        # mapping (``MASS_MODE_TO_MAPPING``), whichever accepted spelling the
+        # caller used, while the physics uses the internal ``mass_mode``.  The
+        # caller's spelling is kept in ``mass_mapping_alias`` so a report can
+        # quote the request as well.
         if mass_mapping is None:
-            self.mass_mapping = self.mass_mode
+            self.mass_mapping_alias = self.mass_mode
         else:
-            normalise_mass_mapping(mass_mapping, "mass_mapping")  # validate only
-            self.mass_mapping = str(mass_mapping)
+            self.mass_mode = normalise_mass_mapping(mass_mapping, "mass_mapping")
+            self.mass_mapping_alias = str(mass_mapping)
+        self.mass_mapping = MASS_MODE_TO_MAPPING[self.mass_mode]
         if not math.isfinite(on_plane_tolerance) or on_plane_tolerance < 0.0:
             raise ValueError("on_plane_tolerance must be non-negative and finite")
         self.footprint_aware = normalise_face_extent(face_extent, footprint_aware)
@@ -615,13 +627,33 @@ class FractureLedger:
             "volume_fraction": self.field.volume_fraction,
             "dem_mass": dem_mass,
             "continuum_volume": continuum_volume,
+            # ``domain_volume`` repeats the reference volume under the keyword
+            # the contract report (``scripts/fracture_gen_contract_report.py``)
+            # passes in, so the row is self-describing.
+            "domain_volume": continuum_volume,
             "continuum_mass": continuum_mass,
             "fem_continuum_mass": continuum_mass,
             "relative_error": signed_error,
             "relative_error_magnitude": magnitude,
+            # same magnitude under the name the restoration contract report
+            # uses; kept so both published tables stay reproducible.
+            "absolute_relative_error": magnitude,
             "tolerance": tolerance,
             "within_15pct": magnitude <= tolerance,
         }
+
+    def lattice_volume(self) -> float:
+        """Volume physically covered by the realised particle lattice, ``N h^3``.
+
+        This is the *material-mapping* reference volume (every particle owns
+        one cell), i.e. the restoration contract report's ``domain_volume``
+        default.  It equals ``_lattice_volume()`` for a full rectangular
+        lattice; the two differ only for a ragged lattice, where the
+        bounding-box volume in ``_lattice_volume()`` (the default of
+        :meth:`mass_accounting`) is the looser reference.  Pass
+        ``continuum_volume``/``domain_volume`` explicitly to choose.
+        """
+        return self.field.represented_volume
 
     def _lattice_volume(self) -> float:
         """Volume covered by the particle lattice: bounding box + half a cell."""

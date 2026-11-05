@@ -1,20 +1,20 @@
 {
  "schema": "tensordem.doc-evidence-ledger/1",
  "generated_by": "scripts/audit_doc_evidence.py",
- "documents_scanned": 105,
- "pointers": 512,
+ "documents_scanned": 107,
+ "pointers": 539,
  "counts": {
-  "code:TRACKED": 195,
+  "code:TRACKED": 203,
   "data:MISSING": 35,
-  "data:TRACKED": 26,
-  "doc:TRACKED": 66,
+  "data:TRACKED": 29,
+  "doc:TRACKED": 72,
   "figure:MISSING": 65,
-  "figure:TRACKED": 7,
-  "test:TRACKED": 118
+  "figure:TRACKED": 8,
+  "test:TRACKED": 127
  },
  "remedy": {
   "REGENERABLE": 100,
-  "TRACKED": 412
+  "TRACKED": 439
  },
  "unresolved_per_doc": {
   "docs/TENSORDEM_UPSTREAM_DIFF_M1630.md": 4,
@@ -3219,6 +3219,83 @@
    "status": "TRACKED"
   },
   {
+   "doc": "docs/fracture_gen_contract_restoration.md",
+   "line": 4,
+   "pointer": "src/tensordem/fracture_gen.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/fracture_gen_contract_restoration.md",
+   "line": 5,
+   "pointer": "scripts/fracture_gen_contract_report.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/fracture_gen_contract_restoration.md",
+   "line": 12,
+   "pointer": "docs/dem3d_fracture_gen_audit.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/fracture_gen_contract_restoration.md",
+   "line": 12,
+   "pointer": "docs/fracture_gen_mass_footprint_audit.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/fracture_gen_contract_restoration.md",
+   "line": 16,
+   "pointer": "docs/dem_analytic_verification_debt_restoration.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/fracture_gen_contract_restoration.md",
+   "line": 24,
+   "pointer": "tests/test_fracture_gen_audit.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/fracture_gen_contract_restoration.md",
+   "line": 25,
+   "pointer": "tests/test_fracture_gen_mass_footprint.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/fracture_gen_contract_restoration.md",
+   "line": 101,
+   "pointer": "docs/dem3d_fracture_mass_mapping_audit.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/fracture_gen_contract_restoration.md",
+   "line": 107,
+   "pointer": "benchmarks/fracture_gen_mass_footprint_audit.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/fracture_gen_contract_restoration.md",
+   "line": 144,
+   "pointer": "tests/test_fracture_gen.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/fracture_gen_contract_restoration.md",
+   "line": 144,
+   "pointer": "tests/test_fracture_gen_mass_mapping.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
    "doc": "docs/fracture_gen_mass_footprint_audit.md",
    "line": 3,
    "pointer": "src/tensordem/fracture_gen.py",
@@ -3499,6 +3576,118 @@
    "line": 3,
    "pointer": "scripts/benchmark_floe_buoyancy.py",
    "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/m3870_pr168_merge_note.md",
+   "line": 9,
+   "pointer": "runs/m3870_merge/evidence.json",
+   "kind": "data",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/m3870_pr168_merge_note.md",
+   "line": 9,
+   "pointer": "scripts/merge_m3870_evidence.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/m3870_pr168_merge_note.md",
+   "line": 10,
+   "pointer": "runs/m3870_merge/merge_evidence.png",
+   "kind": "figure",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/m3870_pr168_merge_note.md",
+   "line": 21,
+   "pointer": "docs/fracture_gen_contract_restoration.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/m3870_pr168_merge_note.md",
+   "line": 21,
+   "pointer": "scripts/fracture_gen_contract_report.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/m3870_pr168_merge_note.md",
+   "line": 22,
+   "pointer": "tests/test_fracture_gen_footprint_breakage.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/m3870_pr168_merge_note.md",
+   "line": 47,
+   "pointer": "src/tensordem/fracture_gen.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/m3870_pr168_merge_note.md",
+   "line": 63,
+   "pointer": "tests/test_fracture_gen_audit.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/m3870_pr168_merge_note.md",
+   "line": 64,
+   "pointer": "tests/test_fracture_gen_mass_footprint.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/m3870_pr168_merge_note.md",
+   "line": 65,
+   "pointer": "benchmarks/fracture_gen_mass_footprint_audit.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/m3870_pr168_merge_note.md",
+   "line": 70,
+   "pointer": "artifacts/fracture_gen_contract_restoration/tables.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/m3870_pr168_merge_note.md",
+   "line": 128,
+   "pointer": "docs/doc_evidence_ledger.json",
+   "kind": "data",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/m3870_pr168_merge_note.md",
+   "line": 128,
+   "pointer": "scripts/audit_doc_evidence.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/m3870_pr168_merge_note.md",
+   "line": 128,
+   "pointer": "tests/test_doc_evidence_pointers.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/m3870_pr168_merge_note.md",
+   "line": 129,
+   "pointer": "runs/m3870_merge/test_baseline_main_partial.log",
+   "kind": "data",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/m3870_pr168_merge_note.md",
+   "line": 158,
+   "pointer": "tests/test_fracture_gen.py",
+   "kind": "test",
    "status": "TRACKED"
   },
   {

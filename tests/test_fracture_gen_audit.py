@@ -127,9 +127,16 @@ class MassMappingAudit(unittest.TestCase):
         self.assertEqual(acc["num_particles"], 8)
         self.assertAlmostEqual(acc["lattice_volume_covered"], 0.4**3)
         # ``relative_error`` is signed trunk convention (benchmarks display the
-        # direction); the magnitude key is what this audit grades.
+        # direction); the magnitude is graded under both of its published
+        # spellings: ``relative_error_magnitude`` (trunk) and
+        # ``absolute_relative_error`` (restoration contract report).
         self.assertAlmostEqual(acc["relative_error"], -abs(0.4**3 - 0.5**3) / 0.5**3, places=12)
         self.assertAlmostEqual(acc["relative_error_magnitude"], abs(0.4**3 - 0.5**3) / 0.5**3)
+        self.assertAlmostEqual(acc["absolute_relative_error"], abs(0.4**3 - 0.5**3) / 0.5**3)
+        self.assertAlmostEqual(
+            acc["absolute_relative_error"], acc["relative_error_magnitude"], places=15
+        )
+        self.assertAlmostEqual(acc["domain_volume"], 0.5**3)
 
     def test_mass_accounting_reports_mapping_name(self):
         acc = FractureLedger(self._field("cell_volume"), []).mass_accounting()

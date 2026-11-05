@@ -30,6 +30,12 @@ so the two tests that assert the frozen π/6 - 1 deficit request that mapping
 explicitly; every asserted number is unchanged. The complementary contract --
 "the default mapping is volume consistent" -- is pinned in
 ``tests/test_fracture_gen_footprint_breakage.py``.
+
+The frozen mapping is requested here under its canonical name
+``mass_mapping="equal_volume_spheres"`` (one mapping, one reported name:
+``MASS_MODE_TO_MAPPING``); the trunk aliases ``"sphere"`` /
+``"equal_volume_sphere"`` normalise to the same mode.  The restoration
+contract behind that naming is ``docs/fracture_gen_contract_restoration.md``.
 """
 
 from __future__ import annotations
@@ -106,9 +112,13 @@ class TestMassMappingAudit(unittest.TestCase):
         self.assertEqual(f.bond_indices.shape[0], N_BONDS)
 
     def test_frozen_mapping_deficit_is_exactly_pi_over_six(self):
-        # the frozen mapping is opt-in: trunk's default is the corrected
-        # volume-consistent cell mapping (asserted separately below)
-        f = field_for([face()], mass_mapping="sphere")
+        # The frozen (prereg) mapping is opt-in and is requested under its
+        # canonical name: trunk's default is the volume-consistent
+        # ``cell_volume`` mapping (see
+        # ``docs/fracture_gen_contract_restoration.md`` §4 and
+        # ``docs/dem3d_fracture_mass_mapping_audit.md``), asserted separately
+        # below.  ``"sphere"`` is an accepted alias of the same mode.
+        f = field_for([face()], mass_mapping="equal_volume_spheres")
         ledger = FractureLedger(f, [face()])
         accounting = ledger.mass_accounting(CONTINUUM_VOLUME)
         self.assertAlmostEqual(accounting["relative_error"], math.pi / 6 - 1, places=12)
@@ -118,7 +128,7 @@ class TestMassMappingAudit(unittest.TestCase):
 
     def test_frozen_mapping_tolerance_against_its_own_formula_is_vacuous(self):
         """The prereg criterion 1 cannot detect the deficit it is named after."""
-        f = field_for([face()], mass_mapping="sphere")
+        f = field_for([face()], mass_mapping="equal_volume_spheres")
         ledger = FractureLedger(f, [face()])
         sphere_mass = N_PARTICLES * DENSITY * (4.0 / 3.0) * math.pi * RADIUS**3
         self.assertAlmostEqual(ledger.mass_conservation_error(sphere_mass), 0.0, places=9)
@@ -132,6 +142,17 @@ class TestMassMappingAudit(unittest.TestCase):
         # mass radius, not geometric radius, carries the correction
         self.assertAlmostEqual(f.mass_radius / RADIUS, MASS_RADIUS_FACTOR, places=12)
         self.assertAlmostEqual(f.particle_mass, DENSITY * SPACING**3, places=12)
+
+    def test_default_mapping_is_volume_consistent(self):
+        """The shipped default must be the volume-consistent mapping."""
+        f = field_for([face()])
+        self.assertEqual(f.mass_mapping, "cell_volume")
+        self.assertEqual(f.mass_mode, "cell")
+        accounting = FractureLedger(f, [face()]).mass_accounting(CONTINUUM_VOLUME)
+        self.assertAlmostEqual(accounting["relative_error"], 0.0, places=12)
+        self.assertTrue(accounting["within_15pct"])
+        self.assertAlmostEqual(accounting["fem_continuum_mass"], CONTINUUM_VOLUME * DENSITY)
+        self.assertAlmostEqual(accounting["absolute_relative_error"], 0.0, places=12)
 
     def test_mass_mapping_rejects_unknown_value(self):
         with self.assertRaises(ValueError):

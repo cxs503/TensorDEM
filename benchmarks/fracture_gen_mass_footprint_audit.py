@@ -81,10 +81,13 @@ def enumerate_footprint(radius):
 
 def run_audit(write_artifacts: bool = True):
     faces = [_face()]
-    # The frozen SI-2 mapping is the *equal-volume-sphere* one; trunk's default
-    # is the corrected volume-consistent cell mapping, so the audited mapping
-    # must be requested explicitly (otherwise this audit would measure 0 %).
-    frozen = _field(faces, mass_mapping="equal_volume_sphere")
+    # The frozen SI-2 mapping is the *equal-volume-sphere* one (reported as
+    # ``equal_volume_spheres``); trunk's default is the corrected
+    # volume-consistent ``cell_volume`` mapping since the m2536 restoration, so
+    # the audited mapping must be requested explicitly -- otherwise this audit
+    # would measure 0 %.  ``"equal_volume_sphere"``/``"sphere"`` are accepted
+    # aliases of the same mode.
+    frozen = _field(faces, mass_mapping="equal_volume_spheres")
     corrected = _field(faces, mass_mapping="lattice_cell")
     frozen_acct = FractureLedger(frozen, faces).mass_accounting(CONTINUUM_VOLUME)
     corrected_acct = FractureLedger(corrected, faces).mass_accounting(CONTINUUM_VOLUME)
