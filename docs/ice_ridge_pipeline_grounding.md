@@ -184,3 +184,25 @@ ever disagree.
   capacity verification cases against Prandtl, Vesic and Skempton).
 * (f) complete Beaufort-like case with curve, stress distribution and DEM field
   cloud — produced.
+| (c) pipe stress vs Winkler theory | FE beam against closed-form Hetenyi point and patch solutions, and the coupled run's own moment against the same closed form | REAL: point load 0.12 % moment / 0.00002 % deflection, **patch load 1.63 % moment / 4.47 % deflection** (regenerated; see `docs/ridge_grounding_artifact_refresh.md` §3.5) |
+python scripts/run_ice_ridge_grounding.py            # ~10 min on one CPU core (regenerated in docs/ridge_grounding_artifact_refresh.md)
+python -m pytest tests/test_ridge_grounding.py -q
+  (peak reached strictly before the end of the record, 15.5 % post-peak
+  softening, predominantly rising pre-peak branch). The softening mechanism is
+  width barely change the system capacity (regenerated: -0.57 % over 8 -> 16 m keel
+  depth, +0.34 % over 16 -> 32 m keel width, i.e. inside the +-1 % claim); the seabed
+  strength scales it monotonically. **Regenerated in this revision** (they had
+  predated the m2983 Skempton fix, see `docs/ridge_capacity_skempton_audit.md`):
+  subgrade peak reaction `55.36 / 166.09 / 332.18 kN/m` and ultimate
+  `61.52 / 184.55 / 369.09 kN/m` for `s_u = 10 / 30 / 60 kPa`. The previously
+  published `73.8 / 221.5 / 442.9 kN/m` are exactly 4/3 of these, i.e. 33.3 % too
+  high; the reference coupled capacity at 30 kPa and 0.15 m/s is `174.44 kN/m`
+  (published 221.5 kN/m, +27.0 %) and the zero-rate limit from the velocity fit
+  `P(v) = 164.51 + 66.5 v` is `164.51 kN/m`, which is 0.95 % below the subgrade peak
+  reaction (the expected closure). Numbers and error verdicts:
+  `docs/ridge_grounding_artifact_refresh.md`, machine copy
+  `docs/artifacts/ridge_grounding_refresh/summary.json`. The rigid-pipe ice-side
+  study gives 1.45 / 1.41 / 1.30 MN/m at 8 / 12 / 16 m keel depth for a fixed
+  stroke (not regenerated here, `WITHHELD` in the refresh document), i.e. the ice
+  side is 5-7 times stronger than the seabed and is still hardening at the end of
+  the stroke, so it is a stroke-dependent resistance rather than a converged
