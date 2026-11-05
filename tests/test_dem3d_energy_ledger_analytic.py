@@ -17,9 +17,15 @@ in closed form), and the symplectic-Euler energy oscillation of case B has
 relative amplitude ``dt * omega`` with no secular drift.
 
 Finally ``ShearInvariantProbeTests`` pins the strain measure used by the
-fracture criterion: exact on the full cubic lattice, but rank-deficient
-neighbourhoods (a single bond, i.e. collinear references) report a spurious
-invariant of 1/3 for a rigid, undeformed configuration.
+fracture criterion: exact on the full cubic lattice (and frame indifferent),
+and zero-preserving on rank-deficient neighbourhoods (a single bond, i.e.
+collinear references).  The raw least-squares Green-Lagrange invariant would be
+1/3 for a rigid, undeformed bond because the fit degenerates to the projection
+``e e^T``; ``IceDEM3D._objective_shear_strain`` therefore skips the shear test
+whenever the local reference covariance has rank < 3 (guard from PR #189 /
+commit 7eebe6d) and reports 0, so a rigid collinear bond no longer fractures
+under the default 3 % shear limit.  Full-rank lattices are unaffected by the
+guard, which the analytic rows below still require.
 """
 from __future__ import annotations
 
@@ -34,7 +40,6 @@ from scripts.verify_dem3d_energy_ledger_analytic import (
     BOND_STIFFNESS,
     DRAG,
     OSC_AMPLITUDE,
-    OSC_PERIODS,
     RADIUS,
     base_config,
     build_subsystem,
@@ -230,7 +235,11 @@ class ShearInvariantProbeTests(unittest.TestCase):
         unit setups that previously broke in the first step.
         """
         probe = _probe()
-        self.assertLess(probe["collinear_undeformed_shear"], 1e-6)
+        # The guard reports an exact zero, not merely a small number: a
+        # tolerance of 1e-6 would also accept a partially-degenerate
+        # pseudo-inverse, which is precisely the defect that was fixed.
+        self.assertFalse(probe["collinear_degenerate"])
+        self.assertLess(probe["collinear_undeformed_shear"], 1e-12)
         self.assertLess(probe["collinear_undeformed_shear"],
                         DEM3DConfig().shear_breaking_strain)
 
@@ -244,9 +253,14 @@ class ShearInvariantProbeTests(unittest.TestCase):
             rest_lengths=[2.0 * RADIUS],
         )
         self.assertTrue(bool(solver.alive[0]))
-        solver.step()
+        # Several steps, not just the first: the old defect broke the bond at
+        # step 1, but a partial guard could still accumulate spurious strain.
+        for _ in range(5):
+            solver.step()
+        self.assertEqual(len(solver.alive), 1)  # a single bond survives
         self.assertTrue(bool(solver.alive[0]),
                          "a rigid, undeformed collinear bond must not break")
+        self.assertEqual(int(solver.failure_mode.sum()), 0)
 
 
 class LedgerBookkeepingTests(unittest.TestCase):
