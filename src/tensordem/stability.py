@@ -39,13 +39,30 @@ and the spectral radius (per-step growth factor of any perturbation) is
     rho = max(|lambda_+|, |lambda_-|),  lambda_\pm = (tr A +/- sqrt(tr^2 - 4 det A)) / 2,
 
 which is real-rooted when ``tr^2 >= 4 det`` and otherwise ``rho = sqrt(|det A|)``.
-The stability region is exactly ``0 <= g <= 2`` **and** ``d <= 2``, i.e.
+The two *axis* limits ``d <= 2`` (undamped) and ``0 <= g <= 2`` (undamped-free
+degrees of freedom) are only necessary conditions, not the stability region: a
+real 2x2 matrix has both roots inside the unit disc iff ``|det| <= 1`` and
+``|tr| <= 1 + det``, which for this scheme reads
 
-    dt_crit = min(2 / w, 2 m / c).
+    rho <= 1  <=>  0 <= g <= 2   and   d^2 + 2 g <= 4,
 
-Both limits are independent, which is why the SDOF critical step factorises so
-cleanly; the equality cases ``d = 2`` (repeated root at ``-1``) and ``g = 2``
-are marginally stable (``rho = 1``).
+so the region is bounded by a *parabola*, not by the rectangle ``d <= 2 and
+g <= 2``.  (An earlier revision of this module and of
+``docs/dem3d_timestep_stability.md`` stated the rectangle; the coupled form is
+derived in ``docs/dem3d_engine_threshold_crossing.md`` and verified at the
+engine level by ``scripts/verify_engine_threshold_crossing.py``.  Every point
+that satisfies ``d <= 2 and g <= 2`` *and* ``d^2 + 2 g > 4`` is unstable: e.g.
+``d = g = 1.5`` gives roots ``0.25`` and ``-2`` (``rho = 2``) although both
+axis tests pass.)  The exact critical step follows from ``d^2 + 2 g = 4``:
+
+    dt_crit = (sqrt(gamma^2 + 4 w^2) - gamma) / w^2 = 4 / (sqrt(gamma^2 + 4 w^2) + gamma),
+
+which reduces to ``2 / w`` for ``gamma = 0`` and to ``2 / gamma`` for ``w = 0``.
+The equality cases ``d = 2`` (repeated root at ``-1``, Jordan block) and
+``g = 2`` are marginally stable (``rho = 1``).
+The shortest way to state the correction: the closed-form *growth factor*
+:func:`symplectic_euler_growth_factor` was always right; what was wrong is
+the closed-form *critical step*.
 
 The many-body generalisation uses the symmetric positive semi-definite
 translational stiffness matrix ``K`` of the free particles.  Its Gershgorin row
@@ -76,6 +93,7 @@ __all__ = [
     "elastic_timestep_limit",
     "damping_timestep_limit",
     "critical_timestep",
+    "coupled_timestep_limit",
     "symplectic_euler_growth_factor",
     "symplectic_euler_stable",
     "gershgorin_omega_bound",
@@ -157,9 +175,44 @@ def damping_timestep_limit(damping_rate: float) -> float:
     return math.inf if damping_rate == 0.0 else 2.0 / damping_rate
 
 
+def coupled_timestep_limit(omega: float, damping_rate: float = 0.0) -> float:
+    """Exact stability limit of the *coupled* elastic+damped SDOF mode.
+
+    The amplification matrix has ``det = 1 - g`` and ``tr = 2 - d^2 - g`` with
+    ``d = dt * omega`` and ``g = dt * damping_rate``; both roots stay inside the
+    unit disc iff ``0 <= g <= 2`` and ``d^2 + 2 g <= 4``.  Solving the equality
+    for ``dt`` gives
+
+        dt = 4 / (sqrt(gamma^2 + 4 omega^2) + gamma),
+
+    which is written in the numerically stable (no cancellation) form.  It is
+    never larger than :func:`elastic_timestep_limit` or
+    :func:`damping_timestep_limit`, and it is strictly smaller whenever both
+    stiffness and damping are active -- the two axis limits alone are *not* a
+    sufficient condition (``omega = gamma = 1.5 / dt`` has ``rho = 2`` while both
+    axis limits hold).
+    """
+    omega = _positive(omega, "omega", allow_zero=True)
+    damping_rate = _positive(damping_rate, "damping_rate", allow_zero=True)
+    denominator = math.sqrt(damping_rate * damping_rate + 4.0 * omega * omega) + damping_rate
+    if denominator == 0.0:
+        return math.inf
+    return 4.0 / denominator
+
+
 def critical_timestep(omega: float, damping_rate: float = 0.0) -> float:
-    """Closed-form critical step of semi-implicit Euler, ``min(2/w, 2m/c)``."""
-    return min(elastic_timestep_limit(omega), damping_timestep_limit(damping_rate))
+    """Exact critical step of semi-implicit Euler on one SDOF mode.
+
+    Returns ``4 / (sqrt(gamma^2 + 4 w^2) + gamma)`` (= :func:`coupled_timestep_limit`),
+    which for a single limit reduces to ``2 / w`` (``gamma = 0``) or ``2 / gamma``
+    (``w = 0``).  It is ``<= min(2/w, 2m/c)``, i.e. the older ``min`` expression
+    is a necessary-only bound.
+    """
+    return min(
+        coupled_timestep_limit(omega, damping_rate),
+        elastic_timestep_limit(omega),
+        damping_timestep_limit(damping_rate),
+    )
 
 
 def gershgorin_omega_bound(
@@ -319,9 +372,15 @@ def stability_report(model: "IceDEM3D") -> dict[str, Any]:
 
     elastic_limit = elastic_timestep_limit(omega_upper)
     damping_limit = damping_timestep_limit(damping_rate_upper)
+    coupled_limit = coupled_timestep_limit(omega_upper, damping_rate_upper)
     critical = critical_timestep(omega_upper, damping_rate_upper)
-    if elastic_limit <= damping_limit:
-        binding = "elastic" if math.isfinite(elastic_limit) else "none"
+    axis_limit = min(elastic_limit, damping_limit)
+    if not math.isfinite(axis_limit):
+        binding = "none"
+    elif coupled_limit < axis_limit * (1.0 - 1e-12):
+        binding = "coupled"          # both stiffness and damping are active
+    elif elastic_limit <= damping_limit:
+        binding = "elastic"
     else:
         binding = "damping"
 
@@ -338,6 +397,10 @@ def stability_report(model: "IceDEM3D") -> dict[str, Any]:
         "elastic_dt_limit_s": elastic_limit,
         "damping_dt_limit_s": damping_limit,
         "critical_dt_s": critical,
+        "coupled_dt_limit_s": coupled_limit,
+        "axis_dt_limit_s": axis_limit,
+        "stability_region_value": (float(model.dt) * omega_upper) ** 2
+        + 2.0 * float(model.dt) * damping_rate_upper,
         "binding_limit": binding,
         "margin_factor": (critical / float(model.dt)) if math.isfinite(critical) else math.inf,
         "is_stable": bool(float(model.dt) < critical if math.isfinite(critical) else True),
@@ -346,5 +409,11 @@ def stability_report(model: "IceDEM3D") -> dict[str, Any]:
         "kinematic_dt_limit_s": kinematic_timestep_limit(model),
         "growth_factor_at_dt": symplectic_euler_growth_factor(
             float(model.dt), omega_upper, damping_rate_upper
+        ),
+        # A zero-frequency (rigid-body) mode has rho = 1 exactly, so the top-mode
+        # closed form alone can under-report the many-body spectral radius.
+        "growth_factor_including_rigid_modes": max(
+            1.0,
+            symplectic_euler_growth_factor(float(model.dt), omega_upper, damping_rate_upper),
         ),
     }
