@@ -13,7 +13,7 @@ Every restitution verification landed so far measures **one** contact episode:
 | `scripts/verify_dem3d_restitution.py` | single pair / single platen impact vs reference clip law |
 | `scripts/calibrate_dem3d_restitution.py` | single platen bounce vs damping sweep |
 | `tensordem.restitution.platen_bounce_experiment` | single platen bounce |
-| `tests/test_dem3d_restitution.py::EngineClosureTests` | single pair and single platen impact, 3 % |
+| `tests/test_dem3d_restitution.py::RestitutionEngineTests` | single pair and single platen impact, 3 % |
 
 A single impact is blind to the failure modes that only appear when the *same*
 contact branch is engaged repeatedly:

@@ -96,7 +96,14 @@ class RidgeMaterialTests(unittest.TestCase):
         neighbours = 13.0
         stiffness = neighbours * (mat.contact_stiffness + 2.0 * mat.bond_stiffness)
         expected_elastic = 0.2 * math.sqrt(mat.particle_mass / stiffness)
-        self.assertAlmostEqual(mat.recommended_dt, expected_elastic, places=10)
+        # recommended_dt is the binding (smallest) of the stiffness and damping
+        # limits; with these parameters the dashpot limit is the binding one, so
+        # the analytic elastic bound is a bound, not the returned value.
+        damping = neighbours * mat.contact_damping + mat.drag
+        expected_viscous = 0.2 * mat.particle_mass / damping
+        self.assertLess(expected_viscous, expected_elastic)
+        self.assertAlmostEqual(mat.recommended_dt, min(expected_elastic, expected_viscous), places=10)
+        self.assertAlmostEqual(mat.recommended_dt, expected_viscous, places=10)
 
     def test_recommended_dt_viscous_limit(self):
         """dt_viscous = 0.2 * m / (neighbours * c_d + drag)."""
