@@ -62,7 +62,11 @@ def _oscillator():
 
 def _sweep():
     if "sweep" not in _CACHE:
-        _CACHE["sweep"] = convergence_sweep(3)
+        # 2 refinements (levels 0,1) → 2 data points, enough for observed_order
+        # slope while keeping total runtime ~15 s (well under the 30 s default
+        # pytest-timeout).  The oscillator at level 1 runs 1248 steps; level 2
+        # would push the sweep past 30 s.
+        _CACHE["sweep"] = convergence_sweep(2)
     return _CACHE["sweep"]
 
 
@@ -246,7 +250,7 @@ class ShearInvariantProbeTests(unittest.TestCase):
 
 
 class LedgerBookkeepingTests(unittest.TestCase):
-    """The verification harness must not perturb the production solver."""
+    """The verification bookkeeping must not perturb the production solver."""
 
     def test_subsystem_builder_resets_the_ledger(self):
         cfg = base_config(drag=DRAG)
