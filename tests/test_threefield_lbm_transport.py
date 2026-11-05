@@ -51,7 +51,14 @@ def test_streaming_is_mass_conserving():
     inst = make()
     torch.manual_seed(1)
     f = torch.rand((inst.nx, inst.ny, inst.nz, 19), dtype=torch.float64)
-    assert float((periodic_stream(inst, f).sum() - f.sum()).abs()) < 1e-12
+    total = f.sum()
+    streamed = periodic_stream(inst, f).sum()
+    # nx*ny*nz*19 = 32832 float64 populations summing to ~1.6e4, so ONE ulp of the
+    # total is already 3.6e-12: an absolute 1e-12 bound sits below the resolution of
+    # the quantity it measures, and only held while the (thread-dependent) reduction
+    # order happened to round exactly.  Assert the conservation law relative to the
+    # mass it conserves; 1e-13 ~ 450 ulp is still far tighter than any physical bound.
+    assert float((streamed - total).abs()) <= 1e-13 * float(total.abs())
 
 
 def test_cs_zero_is_exactly_laminar():

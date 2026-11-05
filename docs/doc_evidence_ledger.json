@@ -1,20 +1,20 @@
 {
  "schema": "tensordem.doc-evidence-ledger/1",
  "generated_by": "scripts/audit_doc_evidence.py",
- "documents_scanned": 105,
- "pointers": 512,
+ "documents_scanned": 106,
+ "pointers": 527,
  "counts": {
-  "code:TRACKED": 195,
+  "code:TRACKED": 200,
   "data:MISSING": 35,
-  "data:TRACKED": 26,
-  "doc:TRACKED": 66,
+  "data:TRACKED": 28,
+  "doc:TRACKED": 69,
   "figure:MISSING": 65,
   "figure:TRACKED": 7,
-  "test:TRACKED": 118
+  "test:TRACKED": 123
  },
  "remedy": {
   "REGENERABLE": 100,
-  "TRACKED": 412
+  "TRACKED": 427
  },
  "unresolved_per_doc": {
   "docs/TENSORDEM_UPSTREAM_DIFF_M1630.md": 4,
@@ -659,6 +659,113 @@
    "line": 81,
    "pointer": "benchmarks/fracture_gen_audit.py",
    "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ci_red_triage_m3815.md",
+   "line": 15,
+   "pointer": "src/tensordem/stability.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ci_red_triage_m3815.md",
+   "line": 15,
+   "pointer": "tests/test_dem3d_stability.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ci_red_triage_m3815.md",
+   "line": 16,
+   "pointer": "src/tensordem/ridge_geotech.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ci_red_triage_m3815.md",
+   "line": 23,
+   "pointer": "tests/test_doc_evidence_pointers.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ci_red_triage_m3815.md",
+   "line": 23,
+   "pointer": "tests/test_doc_evidence_pointers.py::DocumentedEvidenceGateTests::",
+   "kind": "test",
+   "status": "TRACKED",
+   "resolved": "tests/test_doc_evidence_pointers.py"
+  },
+  {
+   "doc": "docs/ci_red_triage_m3815.md",
+   "line": 32,
+   "pointer": "docs/doc_evidence_ledger.json",
+   "kind": "data",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ci_red_triage_m3815.md",
+   "line": 36,
+   "pointer": "docs/dem3d_contact_impact_dashpot_convention.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ci_red_triage_m3815.md",
+   "line": 37,
+   "pointer": "docs/wake_lbm_analytic_verification.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ci_red_triage_m3815.md",
+   "line": 37,
+   "pointer": "src/tensordem/threefield/coupling.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ci_red_triage_m3815.md",
+   "line": 38,
+   "pointer": "docs/dem3d_fracture_footprint_breakage.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ci_red_triage_m3815.md",
+   "line": 45,
+   "pointer": "scripts/audit_doc_evidence.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ci_red_triage_m3815.md",
+   "line": 75,
+   "pointer": "tests/test_threefield_lbm_transport.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ci_red_triage_m3815.md",
+   "line": 75,
+   "pointer": "tests/test_threefield_lbm_transport.py::test_streaming_is_mass_conserving",
+   "kind": "test",
+   "status": "TRACKED",
+   "resolved": "tests/test_threefield_lbm_transport.py"
+  },
+  {
+   "doc": "docs/ci_red_triage_m3815.md",
+   "line": 89,
+   "pointer": "scripts/audit_ci_red_mass_tolerance_m3815.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ci_red_triage_m3815.md",
+   "line": 90,
+   "pointer": "artifacts/ci_red_mass_tolerance_m3815/mass_tolerance_audit.json",
+   "kind": "data",
    "status": "TRACKED"
   },
   {
