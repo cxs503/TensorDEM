@@ -1,0 +1,174 @@
+{
+  "provenance": {
+    "repo": "TensorDEM",
+    "script": "scripts/run_ice_ridge_grounding.py",
+    "stages": "beam,main,rate,sensitivity,calibration",
+    "note": "all numbers computed programmatically; no hand transcription"
+  },
+  "main_case": {
+    "peak_load_per_length_kN_per_m": 174.4368005471216,
+    "residual_kN_per_m": 140.15359457730162,
+    "softening_ratio": 0.19653654425150313,
+    "rising_increment_fraction": 0.7171052631578947,
+    "steps": 40000,
+    "particles": 159,
+    "broken_bonds": 336,
+    "soil_ultimate_kN_per_m": 184.54656,
+    "soil_peak_kN_per_m": 166.091904,
+    "soil_residual_kN_per_m": 132.87352320000002
+  },
+  "soil_strength_sweep": {
+    "su_kPa": [
+      10,
+      30,
+      60
+    ],
+    "published_pre_fix_peak_kN_per_m": [
+      73.8,
+      221.5,
+      442.9
+    ],
+    "recomputed_peak_kN_per_m": [
+      55.364,
+      166.0919,
+      332.1838
+    ],
+    "recomputed_ultimate_kN_per_m": [
+      61.5155,
+      184.5466,
+      369.0931
+    ],
+    "published_over_recomputed": [
+      1.332997,
+      1.333599,
+      1.333298
+    ]
+  },
+  "rate_study": {
+    "velocities": [
+      0.6,
+      0.3,
+      0.15
+    ],
+    "capacity_kN_per_m": [
+      204.5009,
+      184.6547,
+      174.4368
+    ],
+    "linear_zero_rate_intercept_kN_per_m": 164.514,
+    "linear_slope_kN_per_m_per_mps": 66.716
+  },
+  "sensitivity": {
+    "keel_depth": [
+      {
+        "keel_depth": 8.0,
+        "capacity_per_length": 192363.63774910234,
+        "particles": 117
+      },
+      {
+        "keel_depth": 12.0,
+        "capacity_per_length": 191282.13742826114,
+        "particles": 159
+      },
+      {
+        "keel_depth": 16.0,
+        "capacity_per_length": 190175.49722072386,
+        "particles": 223
+      }
+    ],
+    "keel_width": [
+      {
+        "keel_width": 16.0,
+        "capacity_per_length": 190757.5048274921,
+        "particles": 107
+      },
+      {
+        "keel_width": 24.0,
+        "capacity_per_length": 191282.13742826114,
+        "particles": 159
+      },
+      {
+        "keel_width": 32.0,
+        "capacity_per_length": 192060.09810417733,
+        "particles": 209
+      }
+    ],
+    "soil_strength": [
+      {
+        "undrained_shear_strength": 10000.0,
+        "soil_peak_capacity": 55363.96800000001,
+        "soil_ultimate_capacity": 61515.520000000004,
+        "soil_residual_capacity": 44291.17440000001
+      },
+      {
+        "undrained_shear_strength": 30000.0,
+        "soil_peak_capacity": 166091.904,
+        "soil_ultimate_capacity": 184546.56,
+        "soil_residual_capacity": 132873.52320000003
+      },
+      {
+        "undrained_shear_strength": 60000.0,
+        "soil_peak_capacity": 332183.808,
+        "soil_ultimate_capacity": 369093.12,
+        "soil_residual_capacity": 265747.04640000005
+      }
+    ]
+  },
+  "beam_verification_present": true,
+  "beam_verification": {
+    "point_load": {
+      "deflection_relative_error": 2.0094468476592316e-07,
+      "moment_relative_error": 0.0011559154359975733,
+      "profile_deflection_relative_error": 1.8853378321481818e-06,
+      "profile_moment_relative_error": 0.0011559154359975733
+    },
+    "patch_load": {
+      "deflection_relative_error": 0.044660202068729574,
+      "moment_relative_error": 0.016290909077259674,
+      "profile_deflection_relative_error": 0.044660202068729574,
+      "profile_moment_relative_error": 0.04300355757145176
+    }
+  },
+  "envelope": {
+    "soil_capacity_per_length_kN_per_m": 184.54656,
+    "rows": [
+      {
+        "keel_depth": 8.0,
+        "ice_capacity_kN_per_m": 192.36,
+        "governing": "soil",
+        "peak_moment_Nm": 320634.15940681606,
+        "peak_utilization": 0.06565477723335204,
+        "acceptable": true
+      },
+      {
+        "keel_depth": 12.0,
+        "ice_capacity_kN_per_m": 191.28,
+        "governing": "soil",
+        "peak_moment_Nm": 320634.15940681606,
+        "peak_utilization": 0.06565477723335204,
+        "acceptable": true
+      },
+      {
+        "keel_depth": 16.0,
+        "ice_capacity_kN_per_m": 190.18,
+        "governing": "soil",
+        "peak_moment_Nm": 320634.15940681606,
+        "peak_utilization": 0.06565477723335204,
+        "acceptable": true
+      }
+    ]
+  },
+  "ledger_grades": {
+    "a_curve_shape": "REAL",
+    "b_capacity_vs_limit_analysis": "DERIVED (Vesic limit equilibrium) + WITHHELD (Cross/DNV empirical reference text not available in the worktree)",
+    "c_pipe_stress_vs_winkler": "REAL",
+    "d_sensitivity": "REAL",
+    "e_pytest": "REAL",
+    "f_full_case": "REAL"
+  },
+  "zero_rate": {
+    "intercept_kN_per_m": 164.514,
+    "subgrade_peak_kN_per_m": 166.091904,
+    "closure_error": -0.009500186113827636
+  }
+}
