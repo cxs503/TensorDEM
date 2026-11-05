@@ -153,6 +153,7 @@ def static_direct_shear(
     config: DEM3DConfig | None = None,
     *,
     gamma: float = 1.0e-3,
+    return_displacement: bool = False,
 ) -> dict[str, Any]:
     """Linear elastic equilibrium of the direct-shear specimen (rate-free limit).
 
@@ -161,6 +162,11 @@ def static_direct_shear(
     and the remaining degrees of freedom are free.  Returns tractions normalised
     by the nominal area and by :func:`affine_effective_area`, plus residuals that
     prove the discrete equilibrium was actually reached.
+
+    With ``return_displacement=True`` the nodal displacement field and the
+    undeformed positions are returned as ``(N, 3)`` arrays
+    (``displacement_m`` / ``initial_positions_m``) for boundary-layer analysis;
+    they are omitted by default so the JSON-friendly summary stays unchanged.
     """
     if not np.isfinite(gamma) or gamma <= 0.0:
         raise ValueError("gamma must be finite and positive")
@@ -206,7 +212,7 @@ def static_direct_shear(
     bond_force_scale = cfg.bond_stiffness * gamma * a
 
     displacement = u.reshape(-1, 3)
-    return {
+    result = {
         "gamma": gamma,
         "C44_Pa": c44,
         "height_m": height,
@@ -226,6 +232,10 @@ def static_direct_shear(
         "particle_count": int(len(positions)),
         "profile": layer_profile(displacement, z, gamma * height),
     }
+    if return_displacement:
+        result["displacement_m"] = displacement
+        result["initial_positions_m"] = sim.initial_positions.cpu().numpy()
+    return result
 
 
 def layer_profile(displacement: np.ndarray, z: np.ndarray, gamma_h: float) -> list[dict[str, float]]:

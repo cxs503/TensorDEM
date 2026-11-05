@@ -5,7 +5,7 @@ closed-form references at the contact and integration level. This is
 *code-versus-analytic* verification, **not** a physical validation of sea-ice
 mechanics.
 
-Related documents: `docs/rolling_resistance.md` family
+Related documents: `docs/dem3d_rolling_resistance.md` family
 (`docs/dem3d_rolling_resistance.md`) covers the **standalone torque-law library**
 `tensordem.rolling_resistance` (Ai et al. 2011 `cdt`/`viscous`/`epsd` models,
 verified against closed-form references) which is *not wired into the solver*.

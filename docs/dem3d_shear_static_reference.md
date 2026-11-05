@@ -167,6 +167,13 @@ solver does not provide. A cross-section convergence study with a fixed `h/a = 2
 and no fracture is the natural next step, and at `21x21x3` = 1323 particles it is
 cheap.
 
+**Closed since:** that study is `docs/dem3d_shear_cross_section_convergence.md`
+(18 sizes up to `61x61x3`): the deficit is a boundary layer,
+`d(n) = 1.191/n + 1.846/n^2` (RMS 4.7e-4), asymptotic bias `0.10 %`, so
+`G_eff(inf)/C44 = 0.99899` and the material constant `7k/(3a)` *is* recoverable —
+directly to < 3 % at `n >= 45`. The `h/a = 2` restriction is load-bearing (taller
+blocks relax far more).
+
 Also unchanged: mode-II fracture energy remains NOT_SUPPORTED (no tangential bond
 stiffness), and the `shear_breaking_strain → macro strain` mapping of §3.2 of the
 specimen page is untouched.

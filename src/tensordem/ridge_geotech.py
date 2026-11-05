@@ -7,9 +7,13 @@ workflow implemented in :mod:`tensordem.ridge_dem` and orchestrated in
 * ``MohrCoulombSoil`` -- effective-stress Mohr-Coulomb (or undrained total
   stress) subgrade with an initial elastic stiffness, a hyperbolic
   (elastic-plastic) vertical reaction curve and a lateral limit pressure.
-  Bearing-capacity factors follow Vesic (1973); undrained embedment follows
-  Skempton (1951); lateral limit pressure uses the usual pipe-soil practice of
-  an embedment-dependent bearing factor ``N_p = 2 + 1.5 z/D`` capped at 9.
+  Drained bearing-capacity factors follow Vesic (1973).  The undrained
+  total-stress branch uses the Skempton (1951) embedment factor
+  ``N_c = 5.14 (1 + 0.2 z/B)``, which *already contains* the depth effect, so no
+  second depth factor is applied (see ``skempton_undrained_nc`` and
+  ``docs/ridge_capacity_skempton_audit.md``).  Lateral limit pressure uses the
+  usual pipe-soil practice of an embedment-dependent bearing factor
+  ``N_p = 2 + 1.5 z/D`` capped at 9.
 * ``PipeSection`` / ``dnv_os_f101_utilization`` -- DNV-OS-F101 style plastic
   capacities ``M_p = f_y (D-t)^2 t`` and ``N_p = f_y pi (D-t) t`` plus the
   load-controlled combined-loading interaction check.
@@ -39,7 +43,11 @@ __all__ = [
     "MohrCoulombSoil",
     "SofteningVerticalSpring",
     "PipeSection",
+    "SKEMPTON_NC_STRIP_MAX",
+    "SKEMPTON_NC_STRIP_SURFACE",
+    "SKEMPTON_SQUARE_TO_STRIP",
     "bearing_capacity_factors",
+    "skempton_undrained_nc",
     "dnv_os_f101_utilization",
     "hetenyi_infinite_beam_patch_load",
     "hetenyi_infinite_beam_point_load",
@@ -80,6 +88,40 @@ def bearing_capacity_factors(phi_rad: float) -> tuple[float, float, float]:
     n_c = (n_q - 1.0) / tan_phi
     n_gamma = 2.0 * (n_q + 1.0) * tan_phi
     return n_c, n_q, n_gamma
+
+
+SKEMPTON_NC_STRIP_SURFACE = 5.14
+SKEMPTON_NC_STRIP_MAX = 7.5
+SKEMPTON_SQUARE_TO_STRIP = 1.2
+
+
+def skempton_undrained_nc(depth_below_mudline: float, width: float, *,
+                          length_ratio: float = 0.0) -> float:
+    """Skempton (1951) undrained bearing factor ``N_c`` for an embedded footing.
+
+    Strip footing (``length_ratio = B/L = 0``)::
+
+        N_c = 5.14 (1 + 0.2 z/B),  capped at 7.5
+
+    Square/circular footing (``B/L = 1``): the same expression multiplied by the
+    shape factor ``(1 + 0.2 B/L) = 1.2``, i.e. ``6.17`` at the surface and a cap
+    of ``9.0``.  The surface value ``5.14`` is the Prandtl (1920) slip-line
+    solution ``N_c = 2 + pi = 5.1416`` for a weightless strip on phi = 0 clay
+    truncated to three significant figures.
+
+    The ``0.2 z/B`` term *is* the embedment effect: Skempton derived it from
+    deep-mechanism solutions for increasing ``z/B``.  Applying a Meyerhof/Hansen
+    depth factor on top of it counts the same physics twice, which inflated the
+    undrained capacity of the pipeline/keel subgrade by 20-23 % (see
+    ``docs/ridge_capacity_skempton_audit.md``).
+    """
+    _require_finite("depth_below_mudline", depth_below_mudline, nonnegative=True)
+    _require_finite("width", width, positive=True)
+    _require_finite("length_ratio", length_ratio, nonnegative=True)
+    shape = 1.0 + 0.2 * length_ratio
+    ratio = depth_below_mudline / width
+    return min(SKEMPTON_NC_STRIP_SURFACE * shape * (1.0 + 0.2 * ratio),
+               SKEMPTON_NC_STRIP_MAX * shape)
 
 
 @dataclass(frozen=True)
@@ -146,20 +188,27 @@ class MohrCoulombSoil:
             raise ValueError("soil must have a positive effective unit weight")
         return gamma_prime * (1.0 - self.pore_pressure_ratio) * depth
 
-    def vertical_pressure_capacity(self, width: float, depth_below_mudline: float) -> float:
+    def vertical_pressure_capacity(self, width: float, depth_below_mudline: float, *,
+                                   length_ratio: float = 0.0) -> float:
         """Ultimate bearing pressure (Pa) for a footing of projected ``width``.
 
-        Drained: ``q = c' N_c d_c + sigma'_v N_q d_q + 0.5 gamma' B N_gamma``.
-        Undrained: ``q = s_u N_c d_c`` with Skempton ``N_c = 5.14 (1 + 0.2 z/B)``
-        capped at 9.  Depth factors use Meyerhof/Hansen ``k = min(z/B, 1)``.
+        Drained: ``q = c' N_c d_c + sigma'_v N_q d_q + 0.5 gamma' B N_gamma``
+        with Meyerhof/Hansen depth factors ``k = min(z/B, 1)``.
+
+        Undrained: ``q = s_u N_c`` with the Skempton (1951) embedment factor of
+        :func:`skempton_undrained_nc`.  That factor already includes the
+        ``0.2 z/B`` embedment term, so **no** additional depth factor is applied;
+        ``length_ratio = B/L`` selects the strip (0, cap 7.5) or square/circular
+        (1, cap 9.0) limit.
         """
         _require_finite("width", width, positive=True)
         _require_finite("depth_below_mudline", depth_below_mudline, nonnegative=True)
         phi = self.phi_rad
-        k = min(depth_below_mudline / width, 1.0)
         if self.undrained:
-            n_c = min(5.14 * (1.0 + 0.2 * depth_below_mudline / width), 9.0)
-            return self.shear_strength * n_c * (1.0 + 0.2 * k)
+            n_c = skempton_undrained_nc(depth_below_mudline, width,
+                                        length_ratio=length_ratio)
+            return self.shear_strength * n_c
+        k = min(depth_below_mudline / width, 1.0)
         n_c, n_q, n_gamma = bearing_capacity_factors(phi)
         d_c = 1.0 + 0.4 * k
         d_q = 1.0 + 2.0 * math.tan(phi) * (1.0 - math.sin(phi)) ** 2 * k
@@ -169,15 +218,18 @@ class MohrCoulombSoil:
                 + sigma_v * n_q * d_q
                 + 0.5 * gamma_prime * width * n_gamma)
 
-    def vertical_capacity_per_length(self, diameter: float, embedment: float) -> float:
+    def vertical_capacity_per_length(self, diameter: float, embedment: float, *,
+                                     length_ratio: float = 0.0) -> float:
         """Ultimate vertical resistance per unit pipe length (N/m).
 
         A buried cylinder is treated as a strip footing of projected width ``D``
         with its base at the pipe invert, ``embedment + D`` below the mudline.
+        ``length_ratio`` is forwarded to :meth:`vertical_pressure_capacity`.
         """
         _require_finite("diameter", diameter, positive=True)
         _require_finite("embedment", embedment, nonnegative=True)
-        return self.vertical_pressure_capacity(diameter, embedment + diameter) * diameter
+        return self.vertical_pressure_capacity(diameter, embedment + diameter,
+                                               length_ratio=length_ratio) * diameter
 
     def subgrade_modulus(self, width: float) -> float:
         """Elastic subgrade modulus ``k_v`` in N/m^3 (see class docstring)."""
