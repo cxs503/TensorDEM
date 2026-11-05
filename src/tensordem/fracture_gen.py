@@ -592,7 +592,8 @@ class FractureLedger:
         half a cell on every axis, which is ``N h^3`` for a full lattice.
 
         ``relative_error`` is signed, ``(dem - continuum) / continuum``, as the
-        trunk benchmarks display it; ``relative_error_magnitude`` is its
+        trunk benchmarks display it; ``relative_error_magnitude`` (alias
+        ``absolute_relative_error``) is its
         magnitude, which is what the 15 % gate and the quantisation audit grade.
         ``fem_continuum_mass`` is the spelling the audit tables use for
         ``continuum_mass``.  The
@@ -627,9 +628,24 @@ class FractureLedger:
             "fem_continuum_mass": continuum_mass,
             "relative_error": signed_error,
             "relative_error_magnitude": magnitude,
+            # branch m2910 spelling of the same magnitude; kept so both audit
+            # contracts (fracture_gen_contract_report.py and
+            # benchmarks/fracture_gen_audit.py) read the key they were written
+            # against, instead of one of them silently getting a KeyError.
+            "absolute_relative_error": magnitude,
             "tolerance": tolerance,
             "within_15pct": magnitude <= tolerance,
         }
+
+    def lattice_volume(self) -> float:
+        """Volume physically covered by the realised particle lattice, N h^3.
+
+        Public spelling from the contract-restoration audit; it is the
+        quantisation-free cell count (``represented_volume``), while
+        ``_lattice_volume`` derives the same volume from the bounding box and is
+        the default reference of ``mass_accounting``.
+        """
+        return self.field.represented_volume
 
     def _lattice_volume(self) -> float:
         """Volume covered by the particle lattice: bounding box + half a cell."""

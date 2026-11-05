@@ -106,8 +106,11 @@ class TestMassMappingAudit(unittest.TestCase):
         self.assertEqual(f.bond_indices.shape[0], N_BONDS)
 
     def test_frozen_mapping_deficit_is_exactly_pi_over_six(self):
-        # the frozen mapping is opt-in: trunk's default is the corrected
-        # volume-consistent cell mapping (asserted separately below)
+        # The frozen mapping is requested explicitly: trunk's default is the
+        # volume-consistent ``cell_volume`` mapping (see
+        # docs/fracture_gen_contract_restoration.md §4), so the frozen contract
+        # is audited as an option rather than as the default.  ``"sphere"`` and
+        # ``"equal_volume_spheres"`` (m2910 spelling) are the same mapping.
         f = field_for([face()], mass_mapping="sphere")
         ledger = FractureLedger(f, [face()])
         accounting = ledger.mass_accounting(CONTINUUM_VOLUME)
@@ -132,6 +135,27 @@ class TestMassMappingAudit(unittest.TestCase):
         # mass radius, not geometric radius, carries the correction
         self.assertAlmostEqual(f.mass_radius / RADIUS, MASS_RADIUS_FACTOR, places=12)
         self.assertAlmostEqual(f.particle_mass, DENSITY * SPACING**3, places=12)
+
+    def test_default_mapping_is_volume_consistent(self):
+        """The shipped default must be the volume-consistent mapping."""
+        f = field_for([face()])
+        # The physics is pinned by the canonical mode; the reported spelling is
+        # the caller's own when it gave one (``"cell_volume"`` below), else the
+        # canonical ``mass_mode`` ("cell").  Both name the volume-consistent
+        # mapping, so asserting one literal spelling would grade the wording
+        # instead of the contract.
+        self.assertEqual(f.mass_mode, "cell")
+        self.assertIn(f.mass_mapping, {"cell", "cell_volume"})
+        accounting = FractureLedger(f, [face()]).mass_accounting(CONTINUUM_VOLUME)
+        self.assertAlmostEqual(accounting["relative_error"], 0.0, places=12)
+        self.assertTrue(accounting["within_15pct"])
+        self.assertAlmostEqual(accounting["fem_continuum_mass"], CONTINUUM_VOLUME * DENSITY)
+        # the descriptive spelling is accepted and quoted back, and it is the
+        # same mapping (identical particle mass), not a second code path
+        named = field_for([face()], mass_mapping="cell_volume")
+        self.assertEqual(named.mass_mapping, "cell_volume")
+        self.assertEqual(named.mass_mode, "cell")
+        self.assertEqual(named.particle_mass, f.particle_mass)
 
     def test_mass_mapping_rejects_unknown_value(self):
         with self.assertRaises(ValueError):
