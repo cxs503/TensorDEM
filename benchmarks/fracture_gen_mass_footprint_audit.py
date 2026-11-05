@@ -84,7 +84,9 @@ def run_audit(write_artifacts: bool = True):
     # The frozen SI-2 mapping is the *equal-volume-sphere* one; trunk's default
     # is the corrected volume-consistent cell mapping, so the audited mapping
     # must be requested explicitly (otherwise this audit would measure 0 %).
-    frozen = _field(faces, mass_mapping="equal_volume_sphere")
+    # ``equal_volume_sphere`` and ``equal_volume_spheres`` are aliases of the
+    # same mapping (see ``MASS_MAPPING_ALIASES``).
+    frozen = _field(faces, mass_mapping="equal_volume_spheres")
     corrected = _field(faces, mass_mapping="lattice_cell")
     frozen_acct = FractureLedger(frozen, faces).mass_accounting(CONTINUUM_VOLUME)
     corrected_acct = FractureLedger(corrected, faces).mass_accounting(CONTINUUM_VOLUME)

@@ -68,6 +68,14 @@ _FOOTPRINT_TOLERANCE = 1e-12
 #: radius ``sqrt(area/pi)``, so the count tracks ``pi R^2 / h^2``.
 FACE_EXTENTS = {"plane": False, "disc": True}
 
+#: Accepted ``face_extent`` spellings (the keys of ``FACE_EXTENTS``).
+VALID_FACE_EXTENTS = tuple(FACE_EXTENTS)
+
+#: Canonical descriptive ``mass_mapping`` name reported for each internal
+#: ``mass_mode``.  One mapping therefore has one reporting name -- the one the
+#: published audit notes use -- whichever spelling the caller passed in.
+MASS_MODE_TO_MAPPING = {"sphere": "equal_volume_spheres", "cell": "cell_volume"}
+
 
 def normalise_mass_mapping(value: str, name: str = "mass_mapping") -> str:
     """Canonicalise a mass-mapping spelling onto ``VALID_MASS_MODES``.
@@ -192,11 +200,12 @@ class FractureField:
         self.mass_mode = normalise_mass_mapping(mass_mode, "mass_mode")
         # Canonical mode plus the spelling the caller actually asked for, so an
         # audit can quote "cell_volume" while the physics uses "cell".
-        if mass_mapping is None:
-            self.mass_mapping = self.mass_mode
-        else:
+        if mass_mapping is not None:
             normalise_mass_mapping(mass_mapping, "mass_mapping")  # validate only
-            self.mass_mapping = str(mass_mapping)
+        # Report the canonical descriptive name of the mode the physics uses, so
+        # an audit can quote "cell_volume" / "equal_volume_spheres" while the
+        # solver keeps the "cell" / "sphere" mode.
+        self.mass_mapping = MASS_MODE_TO_MAPPING[self.mass_mode]
         if not math.isfinite(on_plane_tolerance) or on_plane_tolerance < 0.0:
             raise ValueError("on_plane_tolerance must be non-negative and finite")
         self.footprint_aware = normalise_face_extent(face_extent, footprint_aware)
@@ -455,6 +464,9 @@ def identify_bonds_crossing_face(
     if on_plane_tolerance < 0.0:
         raise ValueError("on_plane_tolerance must be non-negative")
     footprint_aware = normalise_face_extent(face_extent, footprint_aware)
+    # Keep the canonical spelling in sync with the resolved criterion: callers
+    # may pass either alias (or neither), and the checks below read the spelling.
+    face_extent = "disc" if footprint_aware else "plane"
     normal_norm = float(torch.linalg.norm(face.normal))
     if not math.isfinite(normal_norm) or normal_norm <= 0.0:
         raise ValueError(
@@ -472,10 +484,22 @@ def identify_bonds_crossing_face(
     centroid = face.centroid.to(positions.device)
     normal = face.normal.to(positions.device)
     
+    if float(torch.linalg.norm(normal)) <= 0.0:
+        raise ValueError("face normal must be non-zero")
+    if footprint_aware:
+        face_extent = "disc"
+    if face_extent not in VALID_FACE_EXTENTS:
+        raise ValueError(
+            f"face_extent must be one of {VALID_FACE_EXTENTS}, got {face_extent!r}"
+        )
+    tolerance = float(on_plane_tolerance)
+    if tolerance < 0:
+        raise ValueError("on_plane_tolerance must be non-negative")
+
     # Signed distance from face plane: normal · (pos - centroid)
     dist_i = torch.sum((pos_i - centroid) * normal, dim=1)
     dist_j = torch.sum((pos_j - centroid) * normal, dim=1)
-    
+
     # Bond crosses face if signs are opposite (one positive, one negative)
     crosses = (dist_i * dist_j) < 0
 
@@ -619,6 +643,8 @@ class FractureLedger:
             "fem_continuum_mass": continuum_mass,
             "relative_error": signed_error,
             "relative_error_magnitude": magnitude,
+            # spelling used by the contract-restoration audit tables
+            "absolute_relative_error": magnitude,
             "tolerance": tolerance,
             "within_15pct": magnitude <= tolerance,
         }

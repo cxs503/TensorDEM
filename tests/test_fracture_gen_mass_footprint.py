@@ -106,9 +106,16 @@ class TestMassMappingAudit(unittest.TestCase):
         self.assertEqual(f.bond_indices.shape[0], N_BONDS)
 
     def test_frozen_mapping_deficit_is_exactly_pi_over_six(self):
-        # the frozen mapping is opt-in: trunk's default is the corrected
-        # volume-consistent cell mapping (asserted separately below)
+        # The legacy mapping is requested explicitly: trunk's default is the
+        # volume-consistent ``cell_volume`` mapping (see
+        # docs/fracture_gen_contract_restoration.md §4), so the frozen contract
+        # is audited as an option rather than as the default.  Both published
+        # spellings of that mapping must give the same field.
         f = field_for([face()], mass_mapping="sphere")
+        f_alias = field_for([face()], mass_mapping="equal_volume_spheres")
+        self.assertEqual(f.total_mass, f_alias.total_mass)
+        self.assertEqual(f.mass_mode, f_alias.mass_mode)
+        self.assertEqual(f.mass_mapping, "equal_volume_spheres")
         ledger = FractureLedger(f, [face()])
         accounting = ledger.mass_accounting(CONTINUUM_VOLUME)
         self.assertAlmostEqual(accounting["relative_error"], math.pi / 6 - 1, places=12)
@@ -132,6 +139,15 @@ class TestMassMappingAudit(unittest.TestCase):
         # mass radius, not geometric radius, carries the correction
         self.assertAlmostEqual(f.mass_radius / RADIUS, MASS_RADIUS_FACTOR, places=12)
         self.assertAlmostEqual(f.particle_mass, DENSITY * SPACING**3, places=12)
+
+    def test_default_mapping_is_volume_consistent(self):
+        """The shipped default must be the volume-consistent mapping."""
+        f = field_for([face()])
+        self.assertEqual(f.mass_mapping, "cell_volume")
+        accounting = FractureLedger(f, [face()]).mass_accounting(CONTINUUM_VOLUME)
+        self.assertAlmostEqual(accounting["relative_error"], 0.0, places=12)
+        self.assertTrue(accounting["within_15pct"])
+        self.assertAlmostEqual(accounting["fem_continuum_mass"], CONTINUUM_VOLUME * DENSITY)
 
     def test_mass_mapping_rejects_unknown_value(self):
         with self.assertRaises(ValueError):
