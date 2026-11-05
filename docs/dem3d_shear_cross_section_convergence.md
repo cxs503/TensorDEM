@@ -6,6 +6,12 @@ Status: implemented in `src/tensordem/shear_convergence.py`, tested by
 `scripts/audit_dem3d_shear_cross_section_convergence.py` (~52 s, single thread);
 generated numbers in `docs/dem3d-shear-cross-section-convergence/`.
 
+> Companion page: `docs/dem3d_shear_interior_window_convergence.md` reaches the same
+> conclusion from an independent specimen family (`5x5x3 … 41x41x3`) with an
+> interior-window traction census; its artifacts live in
+> `docs/dem3d-shear-interior-window-convergence/`. The two studies write disjoint
+> trees, so neither overwrites the other.
+
 ## 1. The debt this closes
 
 `docs/dem3d_shear_static_reference.md` §5 closed the driven-ramp WITHHELD with one

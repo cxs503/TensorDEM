@@ -68,6 +68,16 @@ properties.
   to be protocol-limited (cross-section census bias `0.7873`, transient hump), not
   rate-limited; a material shear modulus still needs a cross-section convergence
   study or periodic boundaries.
+- **Material shear modulus identified** from the direct-shear geometry by a
+  cross-section convergence study: `docs/dem3d_shear_cross_section_convergence.md`
+  (wide series) and `docs/dem3d_shear_interior_window_convergence.md` (interior window).
+  Extrapolating the free-surface bias in `1/nx+1/ny` over `5x5x3 … 41x41x3`
+  recovers `C44 = 7k/(3a)` to 0.14 % (quadratic) / 1.47 % (linear); an interior
+  window at margin 3 sites recovers it to 0.19 %, with a measured edge-relaxation
+  length of `0.63 a`. Conditional result: for `h/L >= 0.12` the shear lag fills
+  the cross-section (relaxation length grows with `h/L`, up to `3.66 a`), so thick
+  specimens report a geometry-dependent modulus (down to `0.790 C44`) and must not
+  be read as a material constant.
 - Still open: mode-II energy release rate (model change), fracture-energy
   calibration from measured crack growth, independent shear-specimen data.
 

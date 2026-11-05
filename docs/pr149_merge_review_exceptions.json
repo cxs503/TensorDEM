@@ -1,0 +1,36 @@
+{
+  "docs/dem3d_material_calibration_roadmap.md": {
+    "reason": "Pointer line rewritten to cite both studies (wide series + interior window); the underlying values are carried in the two added sentences.",
+    "lines": [
+      "  cross-section convergence study: `docs/dem3d_shear_cross_section_convergence.md`."
+    ]
+  },
+  "docs/dem3d_shear_static_reference.md": {
+    "reason": "The single \"Closed since\" paragraph was reflowed into two labelled paragraphs (wide series from main, interior window from the branch). Wording changed, meaning and every number kept: 40/40 numeric tokens from both sides found in the merged file.",
+    "lines": [
+      "(18 sizes up to `61x61x3`): the deficit is a boundary layer,",
+      "(quadratic) / 1.47 % (linear) and an interior window (margin 3 sites) to 0.19 %",
+      "**Closed since:** that study is `docs/dem3d_shear_cross_section_convergence.md`",
+      "**Follow-up (closed 2026-11-03):** that study was run over `5x5x3 … 41x41x3` and",
+      "`1/n` extrapolation of the free-surface bias recovers `C44` to 0.14 %",
+      "`G_eff(inf)/C44 = 0.99899` and the material constant `7k/(3a)` *is* recoverable —",
+      "`d(n) = 1.191/n + 1.846/n^2` (RMS 4.7e-4), asymptotic bias `0.10 %`, so",
+      "blocks relax far more).",
+      "directly to < 3 % at `n >= 45`. The `h/a = 2` restriction is load-bearing (taller",
+      "for `h/L <= 0.06`; the edge relaxation is a `0.63 a` layer. For `h/L >= 0.12`",
+      "is reported in `docs/dem3d_shear_cross_section_convergence.md`. Summary: the",
+      "specimen's modulus stays a specimen property (down to `0.790 C44` at `h/L = 0.24`).",
+      "the relaxation length grows with `h/L` and no window recovers `C44`, so a thick"
+    ]
+  },
+  "src/tensordem/shear_static.py": {
+    "reason": "Docstring rewritten to document both opt-in flags (return_displacement from main, include_state from the branch); the branch return line is present as \"return result, sim, displacement\" after unifying the payload->result variable name. All 96 numeric tokens and every public symbol from both sides verified present.",
+    "lines": [
+      "        return payload, sim, displacement",
+      "    (``displacement_m`` / ``initial_positions_m``) for boundary-layer analysis;",
+      "    With ``return_displacement=True`` the nodal displacement field and the",
+      "    they are omitted by default so the JSON-friendly summary stays unchanged.",
+      "    undeformed positions are returned as ``(N, 3)`` arrays"
+    ]
+  }
+}
