@@ -88,13 +88,19 @@ class RidgeMaterialTests(unittest.TestCase):
 
     def test_recommended_dt_elastic_limit(self):
         """dt_elastic = 0.2 * sqrt(m / (neighbours * (k_c + 2 k_b)))."""
+        # The elastic branch binds only while the viscous bound is looser, i.e.
+        # while neighbours * c_d + drag < sqrt(m * k); otherwise the assertion
+        # below would silently compare the elastic formula against the viscous
+        # step.  The damping here sits an order of magnitude below that crossover.
         mat = RidgeMaterial(
             particle_radius=0.5, ice_density=917.0,
             contact_stiffness=1.0e7, bond_stiffness=5.0e6,
-            contact_damping=5.0e4, drag=2.0e3,
+            contact_damping=1.0e4, drag=2.0e2,
         )
         neighbours = 13.0
         stiffness = neighbours * (mat.contact_stiffness + 2.0 * mat.bond_stiffness)
+        damping = neighbours * mat.contact_damping + mat.drag
+        self.assertLess(damping, math.sqrt(mat.particle_mass * stiffness))
         expected_elastic = 0.2 * math.sqrt(mat.particle_mass / stiffness)
         self.assertAlmostEqual(mat.recommended_dt, expected_elastic, places=10)
 
