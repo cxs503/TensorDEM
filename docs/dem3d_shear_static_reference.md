@@ -158,21 +158,17 @@ modulus is replaced by (i) an exact statement of the measurement bias
 removes it, and (ii) the rate-free reference `G_eff/C44 = 0.8442` valid for the
 default 9x5x3 block, reproduced by the solver's dynamics to 2.6 %.
 
-**Does not close:** a shear modulus of the *material* cannot be extracted from
-this test at the sizes used here. The infinite-lattice value `C44 = 7k/(3a)`
-remains the material constant; extracting it from a simulation requires either a
-cross-section much wider than the boundary layer (trend 0.844 → 0.939 from
-9x5 to 21x21 suggests `O(1/nx)` convergence) or periodic boundaries, which the 3-D
-solver does not provide. A cross-section convergence study with a fixed `h/a = 2`
-and no fracture is the natural next step, and at `21x21x3` = 1323 particles it is
-cheap.
-
-**Closed since:** that study is `docs/dem3d_shear_cross_section_convergence.md`
-(18 sizes up to `61x61x3`): the deficit is a boundary layer,
-`d(n) = 1.191/n + 1.846/n^2` (RMS 4.7e-4), asymptotic bias `0.10 %`, so
-`G_eff(inf)/C44 = 0.99899` and the material constant `7k/(3a)` *is* recoverable —
-directly to < 3 % at `n >= 45`. The `h/a = 2` restriction is load-bearing (taller
-blocks relax far more).
+**Follow-up (closed 2026-11-03):** the cross-section convergence study
+(`docs/dem3d_shear_cross_section_convergence.md`) swept 18 sizes up to `61x61x3`
+and confirmed the deficit is a boundary layer: `d(n) = 1.191/n + 1.846/n^2`
+(RMS 4.7e-4), asymptotic bias `0.10 %`, so `G_eff(∞)/C44 = 0.99899` and the
+material constant `7k/(3a)` *is* recoverable — directly to < 3 % at `n >= 45`.
+The `h/a = 2` restriction is load-bearing (taller blocks relax far more).
+An independent window-based measurement (`interior_traction`, margin 3 sites)
+on thin specimens recovers `C44` to 0.19 %; for thick specimens (`h/L >= 0.12`)
+the relaxation length grows with `h/L` and no interior window recovers `C44`,
+so a thick specimen's modulus stays a specimen property (down to `0.790 C44`
+at `h/L = 0.24`).
 
 Also unchanged: mode-II fracture energy remains NOT_SUPPORTED (no tangential bond
 stiffness), and the `shear_breaking_strain → macro strain` mapping of §3.2 of the
