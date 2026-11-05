@@ -111,7 +111,8 @@ def lattice_energy_force(positions: np.ndarray, pairs: np.ndarray, rest: np.ndar
 def solve_static_equilibrium(case: dict[str, Any], travel: float, *,
                              increments: int = 20,
                              max_iterations: int = 4000,
-                             tolerance_Pa: float = 1e-4) -> dict[str, Any]:
+                             tolerance_Pa: float = 1e-4,
+                             return_configuration: bool = False) -> dict[str, Any]:
     """Relaxed configuration of the bond network at a prescribed platen travel.
 
     Static equilibrium is found by minimising the elastic potential with L-BFGS
@@ -124,6 +125,12 @@ def solve_static_equilibrium(case: dict[str, Any], travel: float, *,
     ``tolerance_Pa`` is the convergence criterion expressed as a bond-stress
     equivalent (``|F|_inf / (spacing^2)``), so it is a physical tolerance and not
     a machine-epsilon one.
+
+    ``return_configuration`` additionally returns the relaxed ``positions`` and
+    the ``sim``/``geometry`` pair under a ``"configuration"`` key.  Those objects
+    are deliberately kept out of the default result because it must stay
+    JSON-serialisable; they exist so that one expensive relaxation can be reused
+    to re-measure the field (see ``scripts/brazilian_hondros_estimator.py``).
     """
     sim, geometry = _build(case)
     p = case["config"]
@@ -248,6 +255,8 @@ def solve_static_equilibrium(case: dict[str, Any], travel: float, *,
         "displacement_max_m": float(np.abs(displacement).max()),
         "axial_shortening_m": float(-displacement[:, 2].max() + displacement[:, 2].min()),
         "history": history,
+        **({"configuration": {"sim": sim, "geometry": geometry,
+                              "positions": positions}} if return_configuration else {}),
     }
 
 
