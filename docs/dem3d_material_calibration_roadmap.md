@@ -67,7 +67,12 @@ properties.
   reproduced by the solver's dynamics to 2.6 %). The driven-ramp modulus is shown
   to be protocol-limited (cross-section census bias `0.7873`, transient hump), not
   rate-limited; a material shear modulus still needs a cross-section convergence
-  study or periodic boundaries.
+  study or periodic boundaries. Both routes are now worked: the free-surface
+  convergence study (`docs/dem3d_shear_cross_section_convergence.md`, `G_eff(inf)/C44
+  = 0.99899`, < 3 % at `n >= 45`) and the static lateral periodic closure
+  (`docs/dem3d_shear_periodic_closure.md`, `G_eff/C44 = 1` to round-off for every size
+  and height). What is still missing for a *calibrated* modulus is an experimental
+  shear specimen, not a numerics item.
 - Still open: mode-II energy release rate (model change), fracture-energy
   calibration from measured crack growth, independent shear-specimen data.
 

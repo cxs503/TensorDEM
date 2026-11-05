@@ -174,6 +174,14 @@ cheap.
 directly to < 3 % at `n >= 45`. The `h/a = 2` restriction is load-bearing (taller
 blocks relax far more).
 
+**Second route also taken:** `docs/dem3d_shear_periodic_closure.md` closes the same
+specimen with *lateral periodic* boundaries (static solve,
+`src/tensordem/shear_periodic.py`). There `G_eff/C44 = 1` to `4e-16` at every size and
+every height, so the asymptotic bias of the free-surface fit is exactly zero, and the
+census identity of §2 above is consistent with the closed form `7k/(3a)` to round-off.
+The time-domain solver `IceDEM3D` still has no periodic option; that figure remains
+`rate = 0` evidence.
+
 Also unchanged: mode-II fracture energy remains NOT_SUPPORTED (no tangential bond
 stiffness), and the `shear_breaking_strain → macro strain` mapping of §3.2 of the
 specimen page is untouched.

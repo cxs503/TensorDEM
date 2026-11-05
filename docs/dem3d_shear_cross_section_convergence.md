@@ -121,8 +121,12 @@ block to 0.1 %, or by direct measurement at `n ≥ 45` to better than 3 %. The e
 - **`nz = 3` is load-bearing.** At fixed `n = 13`, `G_eff/C44` falls `0.898 (nz=3) →
   0.744 (nz=5) → 0.588 (nz=7) → 0.268 (nz=13)`: a free lateral face cannot carry the
   shear traction `σ_xz = C44 γ`, so taller blocks relax more. The convergence statement
-  is therefore **only** about the fixed `h/a = 2` aspect ratio; a height-independent
-  material modulus still needs periodic boundaries, which the 3-D solver does not have.
+  is therefore **only** about the fixed `h/a = 2` aspect ratio. The height-independent
+  statement is supplied by `docs/dem3d_shear_periodic_closure.md`: under lateral periodic
+  closure `G_eff/C44 = 1` to round-off for `nz = 3 … 9`, so the `h/a` degradation is a
+  free-surface effect of *this* boundary-value problem, not a bias of the bond law. That
+  page also pins the asymptote of the fit below: `c0 = 0` exactly, so the fitted
+  `c0 = 1.01e-3` is a fit artefact inside its own residual envelope.
 - **Linear elastic only.** No fracture, no contact, no rate. `shear_breaking_strain`
   and the fracture-energy / mode-II items of
   `docs/dem3d_material_calibration_roadmap.md` are untouched (mode-II remains
