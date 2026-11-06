@@ -2,19 +2,19 @@
  "schema": "tensordem.doc-evidence-ledger/1",
  "generated_by": "scripts/audit_doc_evidence.py",
  "documents_scanned": 152,
- "pointers": 879,
+ "pointers": 880,
  "counts": {
   "code:TRACKED": 290,
   "data:MISSING": 47,
-  "data:TRACKED": 44,
+  "data:TRACKED": 45,
   "doc:TRACKED": 125,
-  "figure:MISSING": 87,
-  "figure:TRACKED": 23,
+  "figure:MISSING": 89,
+  "figure:TRACKED": 21,
   "test:TRACKED": 263
  },
  "remedy": {
-  "REGENERABLE": 134,
-  "TRACKED": 745
+  "REGENERABLE": 136,
+  "TRACKED": 744
  },
  "unresolved_per_doc": {
   "docs/TENSORDEM_UPSTREAM_DIFF_M1630.md": 4,
@@ -22,6 +22,7 @@
   "docs/accounting_ledger_validation.md": 2,
   "docs/buoyancy_free_float_verification.md": 3,
   "docs/ci_clearance_m3317.md": 1,
+  "docs/ci_clearance_m4829.md": 3,
   "docs/coupling_restart_boundary_matrix.md": 1,
   "docs/dem2d_energy_fracture_ledger_negative_controls.md": 3,
   "docs/dem2d_lattice_elasticity.md": 1,
@@ -68,7 +69,7 @@
   "docs/threefield/FORMULAS.md": 2,
   "docs/threefield_lbm_transport_verification.md": 3,
   "docs/threefield_wake_boundary_verification.md": 3,
-  "docs/tutorials/first_verified_run.md": 3,
+  "docs/tutorials/first_verified_run.md": 2,
   "docs/verification_campaigns.md": 4
  },
  "historical_quotes": {
@@ -749,7 +750,11 @@
    "line": 21,
    "pointer": "artifacts/m4829_ci_gate/gate_evidence.json",
    "kind": "data",
-   "status": "TRACKED"
+   "status": "MISSING",
+   "producers": [
+    "scripts/m4829_ci_gate_evidence.py"
+   ],
+   "remedy": "REGENERABLE"
   },
   {
    "doc": "docs/ci_clearance_m4829.md",
@@ -763,7 +768,11 @@
    "line": 22,
    "pointer": "artifacts/m4829_ci_gate/provenance_gate_matrix.png",
    "kind": "figure",
-   "status": "TRACKED"
+   "status": "MISSING",
+   "producers": [
+    "scripts/m4829_ci_gate_evidence.py"
+   ],
+   "remedy": "REGENERABLE"
   },
   {
    "doc": "docs/ci_clearance_m4829.md",
@@ -777,7 +786,11 @@
    "line": 61,
    "pointer": "artifacts/m4829_ci_gate/ledger_regeneration.png",
    "kind": "figure",
-   "status": "TRACKED"
+   "status": "MISSING",
+   "producers": [
+    "scripts/m4829_ci_gate_evidence.py"
+   ],
+   "remedy": "REGENERABLE"
   },
   {
    "doc": "docs/ci_clearance_m4829.md",
@@ -1093,7 +1106,8 @@
    "status": "MISSING",
    "producers": [
     "scripts/collect_tutorial_first_verified_run.py",
-    "scripts/validate_lattice_elasticity2d.py"
+    "scripts/validate_lattice_elasticity2d.py",
+    "tests/test_tutorial_first_verified_run.py"
    ],
    "remedy": "REGENERABLE"
   },
@@ -6434,89 +6448,88 @@
   },
   {
    "doc": "docs/tutorials/first_verified_run.md",
-   "line": 305,
+   "line": 318,
    "pointer": "docs/dem3d_lattice_elastic_constants.md",
    "kind": "doc",
    "status": "TRACKED"
   },
   {
    "doc": "docs/tutorials/first_verified_run.md",
-   "line": 307,
+   "line": 320,
    "pointer": "docs/dem3d_three_point_bending.md",
    "kind": "doc",
    "status": "TRACKED"
   },
   {
    "doc": "docs/tutorials/first_verified_run.md",
-   "line": 307,
+   "line": 320,
    "pointer": "docs/indentation_benchmark_protocol.md",
    "kind": "doc",
    "status": "TRACKED"
   },
   {
    "doc": "docs/tutorials/first_verified_run.md",
-   "line": 328,
+   "line": 341,
    "pointer": "scripts/collect_tutorial_first_verified_run.py",
    "kind": "code",
    "status": "TRACKED"
   },
   {
    "doc": "docs/tutorials/first_verified_run.md",
-   "line": 329,
+   "line": 342,
    "pointer": "artifacts/tutorial_first_verified_run/summary.json",
    "kind": "data",
-   "status": "MISSING",
-   "producers": [
-    "scripts/benchmark_dem3d_contact_impact.py",
-    "scripts/benchmark_dem3d_scale.py",
-    "scripts/collect_tutorial_first_verified_run.py",
-    "scripts/make_contact_impact_report.py",
-    "scripts/report_rolling_resistance.py",
-    "scripts/validate_rolling_resistance.py",
-    "tests/test_ridge_grounding_refresh_evidence.py"
-   ],
-   "remedy": "REGENERABLE"
+   "status": "TRACKED"
   },
   {
    "doc": "docs/tutorials/first_verified_run.md",
-   "line": 330,
+   "line": 343,
    "pointer": "artifacts/tutorial_first_verified_run/figures/directional_modulus.png",
    "kind": "figure",
    "status": "MISSING",
    "producers": [
     "scripts/collect_tutorial_first_verified_run.py",
-    "scripts/validate_lattice_elasticity2d.py"
+    "scripts/validate_lattice_elasticity2d.py",
+    "tests/test_tutorial_first_verified_run.py"
    ],
    "remedy": "REGENERABLE"
   },
   {
    "doc": "docs/tutorials/first_verified_run.md",
-   "line": 331,
+   "line": 344,
    "pointer": "artifacts/tutorial_first_verified_run/figures/energy_ledger_convergence.png",
    "kind": "figure",
    "status": "MISSING",
    "producers": [
-    "scripts/collect_tutorial_first_verified_run.py"
+    "scripts/collect_tutorial_first_verified_run.py",
+    "tests/test_tutorial_first_verified_run.py"
    ],
    "remedy": "REGENERABLE"
   },
   {
    "doc": "docs/tutorials/first_verified_run.md",
-   "line": 334,
+   "line": 348,
+   "pointer": "docs/doc_evidence_ledger.json",
+   "kind": "data",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/tutorials/first_verified_run.md",
+   "line": 352,
    "pointer": "docs/dem2d_lattice_elasticity.md",
    "kind": "doc",
    "status": "TRACKED"
   },
   {
    "doc": "docs/tutorials/first_verified_run.md",
-   "line": 334,
+   "line": 352,
    "pointer": "scripts/validate_lattice_elasticity2d.py",
    "kind": "code",
    "status": "TRACKED"
   },
   {
    "doc": "docs/tutorials/first_verified_run.md",
-   "line": 335,
+   "line": 353,
    "pointer": "tests/test_lattice_elasticity2d.py",
    "kind": "test",
    "status": "TRACKED"
