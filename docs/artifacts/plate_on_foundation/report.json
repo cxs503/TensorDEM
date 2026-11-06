@@ -1,0 +1,229 @@
+{
+  "protocol": "tensordem-ice-sheet-plate-on-foundation-v1",
+  "material": {
+    "young_modulus_Pa": 5000000000.0,
+    "poisson_ratio": 0.3,
+    "thickness_m": 1.0,
+    "water_density_kg_m3": 1025.0,
+    "gravity_m_s2": 9.81,
+    "rigidity_Nm": 457875457.8754579,
+    "foundation_modulus_N_per_m3": 10055.25,
+    "characteristic_length_m": 14.60792812335169
+  },
+  "identities": {
+    "point_centre_deflection_m": 0.005825589698756352,
+    "point_centre_deflection_closed_form_m": 0.005825589698756353,
+    "point_centre_deflection_relative_error": 1.488882298342377e-16,
+    "point_reaction_over_load": 0.9999999959090314,
+    "point_reaction_relative_error": 4.090968563907893e-09
+  },
+  "routes": [
+    {
+      "a_over_l": 0.005,
+      "centre_moment_closed_form_Nm": 61183.3517685133,
+      "centre_moment_hankel_Nm": 61183.33106973517,
+      "centre_moment_relative_difference": 3.383073586073969e-07,
+      "hoop_over_radial": 1.0,
+      "patch_over_point_deflection": 0.9999734837929506
+    },
+    {
+      "a_over_l": 0.01,
+      "centre_moment_closed_form_Nm": 54012.77093222381,
+      "centre_moment_hankel_Nm": 54012.77977029798,
+      "centre_moment_relative_difference": 1.6362934210063994e-07,
+      "hoop_over_radial": 1.0,
+      "patch_over_point_deflection": 0.9999049669127679
+    },
+    {
+      "a_over_l": 0.02,
+      "centre_moment_closed_form_Nm": 46842.418569111614,
+      "centre_moment_hankel_Nm": 46842.42240927693,
+      "centre_moment_relative_difference": 8.198050894720639e-08,
+      "hoop_over_radial": 1.0,
+      "patch_over_point_deflection": 0.9996639941461427
+    },
+    {
+      "a_over_l": 0.05,
+      "centre_moment_closed_form_Nm": 37365.456867911475,
+      "centre_moment_hankel_Nm": 37365.45652251746,
+      "centre_moment_relative_difference": 9.243671676039658e-09,
+      "hoop_over_radial": 1.0,
+      "patch_over_point_deflection": 0.9982645165784652
+    },
+    {
+      "a_over_l": 0.1,
+      "centre_moment_closed_form_Nm": 30202.396647498896,
+      "centre_moment_hankel_Nm": 30202.396579705775,
+      "centre_moment_relative_difference": 2.244627174557345e-09,
+      "hoop_over_radial": 1.0,
+      "patch_over_point_deflection": 0.9941608542505534
+    },
+    {
+      "a_over_l": 0.2,
+      "centre_moment_closed_form_Nm": 23061.937924545993,
+      "centre_moment_hankel_Nm": 23061.937913621434,
+      "centre_moment_relative_difference": 4.737051740896537e-10,
+      "hoop_over_radial": 1.0,
+      "patch_over_point_deflection": 0.9810499091609949
+    },
+    {
+      "a_over_l": 0.3,
+      "centre_moment_closed_form_Nm": 18917.142124486614,
+      "centre_moment_hankel_Nm": 18917.142122381898,
+      "centre_moment_relative_difference": 1.1125973707891454e-10,
+      "hoop_over_radial": 1.0,
+      "patch_over_point_deflection": 0.9631469749352781
+    }
+  ],
+  "max_route_relative_difference": 3.383073586073969e-07,
+  "max_equibiaxial_relative_difference": 0.0,
+  "westergaard_constant_convergence": [
+    {
+      "a_over_l": 0.1,
+      "extracted_constant": 0.6169111355778778,
+      "published_constant": 0.6159
+    },
+    {
+      "a_over_l": 0.05,
+      "extracted_constant": 0.6161767970385315,
+      "published_constant": 0.6159
+    },
+    {
+      "a_over_l": 0.02,
+      "extracted_constant": 0.6159707808210579,
+      "published_constant": 0.6159
+    },
+    {
+      "a_over_l": 0.01,
+      "extracted_constant": 0.6159413328027581,
+      "published_constant": 0.6159
+    },
+    {
+      "a_over_l": 0.005,
+      "extracted_constant": 0.6159339700046234,
+      "published_constant": 0.6159
+    },
+    {
+      "a_over_l": 0.002,
+      "extracted_constant": 0.6159319083568278,
+      "published_constant": 0.6159
+    },
+    {
+      "a_over_l": 0.001,
+      "extracted_constant": 0.6159316138331379,
+      "published_constant": 0.6159
+    }
+  ],
+  "westergaard_constant_absolute_error": 3.161383313787791e-05,
+  "peak_stress_comparison": [
+    {
+      "a_over_l": 0.005,
+      "exact_peak_stress_Pa": 367100.1106110798,
+      "westergaard_peak_stress_Pa": 367098.0020783603,
+      "published_relative_error": -5.743753974845797e-06
+    },
+    {
+      "a_over_l": 0.01,
+      "exact_peak_stress_Pa": 324076.6255933428,
+      "westergaard_peak_stress_Pa": 324074.06004859327,
+      "published_relative_error": -7.916475755864016e-06
+    },
+    {
+      "a_over_l": 0.02,
+      "exact_peak_stress_Pa": 281054.5114146697,
+      "westergaard_peak_stress_Pa": 281050.1180188262,
+      "published_relative_error": -1.563182822219901e-05
+    },
+    {
+      "a_over_l": 0.05,
+      "exact_peak_stress_Pa": 224192.74120746885,
+      "westergaard_peak_stress_Pa": 224175.56029687184,
+      "published_relative_error": -7.663455339574569e-05
+    },
+    {
+      "a_over_l": 0.1,
+      "exact_peak_stress_Pa": 181214.37988499337,
+      "westergaard_peak_stress_Pa": 181151.6182671048,
+      "published_relative_error": -0.0003463390594521879
+    },
+    {
+      "a_over_l": 0.2,
+      "exact_peak_stress_Pa": 138371.62754727597,
+      "westergaard_peak_stress_Pa": 138127.67623733773,
+      "published_relative_error": -0.001763015397465766
+    }
+  ],
+  "worst_published_relative_error": 0.001763015397465766,
+  "bearing_capacity": [
+    {
+      "rigidity_Nm": 12362637.36263736,
+      "foundation_modulus_N_per_m3": 10055.25,
+      "characteristic_length_m": 5.921470422504851,
+      "load_radius_over_l": 0.025331545933239375,
+      "thickness_over_l": 0.05066309186647875,
+      "peak_stress_per_newton_Pa": 29.598623414587177,
+      "westergaard_stress_per_newton_Pa": 29.597971665108904,
+      "westergaard_relative_error": -2.2019587503908387e-05,
+      "allowable_stress_Pa": 500000.0,
+      "allowable_load_N": 16892.67750721081,
+      "centre_deflection_per_newton_m": 3.543515516883997e-07,
+      "thickness_m": 0.3
+    },
+    {
+      "rigidity_Nm": 57234432.234432235,
+      "foundation_modulus_N_per_m3": 10055.25,
+      "characteristic_length_m": 8.685926029869089,
+      "load_radius_over_l": 0.01726931584314456,
+      "thickness_over_l": 0.057564386143815205,
+      "peak_stress_per_newton_Pa": 11.606635683761537,
+      "westergaard_stress_per_newton_Pa": 11.606484749479396,
+      "westergaard_relative_error": -1.3004137137882852e-05,
+      "allowable_stress_Pa": 500000.0,
+      "allowable_load_N": 43078.805402631326,
+      "centre_deflection_per_newton_m": 1.6473013281087107e-07,
+      "thickness_m": 0.5
+    },
+    {
+      "rigidity_Nm": 457875457.8754579,
+      "foundation_modulus_N_per_m3": 10055.25,
+      "characteristic_length_m": 14.60792812335169,
+      "load_radius_over_l": 0.010268396635948364,
+      "thickness_over_l": 0.06845597757298909,
+      "peak_stress_per_newton_Pa": 3.224326739516611,
+      "westergaard_stress_per_newton_Pa": 3.224300752593102,
+      "westergaard_relative_error": -8.05964333285166e-06,
+      "allowable_stress_Pa": 500000.0,
+      "allowable_load_N": 155071.13279560485,
+      "centre_deflection_per_newton_m": 5.825008547276675e-08,
+      "thickness_m": 1.0
+    },
+    {
+      "rigidity_Nm": 1545329670.3296704,
+      "foundation_modulus_N_per_m3": 10055.25,
+      "characteristic_length_m": 19.799629681273785,
+      "load_radius_over_l": 0.0075758992675437715,
+      "thickness_over_l": 0.07575899267543772,
+      "peak_stress_per_newton_Pa": 1.5169241143523664,
+      "westergaard_stress_per_newton_Pa": 1.516913865776761,
+      "westergaard_relative_error": -6.756155768460245e-06,
+      "allowable_stress_Pa": 500000.0,
+      "allowable_load_N": 329614.3790379846,
+      "centre_deflection_per_newton_m": 3.1708683790419294e-08,
+      "thickness_m": 1.5
+    },
+    {
+      "rigidity_Nm": 3663003663.003663,
+      "foundation_modulus_N_per_m3": 10055.25,
+      "characteristic_length_m": 24.567508786420717,
+      "load_radius_over_l": 0.0061056251695699,
+      "thickness_over_l": 0.08140833559426533,
+      "peak_stress_per_newton_Pa": 0.8867505378394271,
+      "westergaard_stress_per_newton_Pa": 0.8867450794540888,
+      "westergaard_relative_error": -6.155491432444393e-06,
+      "allowable_stress_Pa": 500000.0,
+      "allowable_load_N": 563856.4383826064,
+      "centre_deflection_per_newton_m": 2.0595779935389155e-08,
+      "thickness_m": 2.0
+    }
+  ]
+}
