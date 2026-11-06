@@ -1,0 +1,39 @@
+{
+  "scenario": "dem_fem_oneway_particle_impact",
+  "dem": {
+    "n_steps": 102,
+    "dt": 6.70918268045492e-05,
+    "peak_force_N": 34.64631047944937,
+    "peak_force_time_s": 0.002817856725791067,
+    "contact_duration_s": 0.005367346144363941,
+    "impulse_Ns": -0.12003420266432294,
+    "particle_mass_kg": 0.06001750965295503,
+    "v_initial_ms": -1.0,
+    "v_final_ms": 0.9969305490932477,
+    "energy_initial_J": 0.03005377321243206,
+    "energy_final_J": 0.030021046435417434
+  },
+  "fem": {
+    "n_elements": 30,
+    "peak_deflection_m": 4.503447049462851e-08,
+    "peak_deflection_time_s": 0.0029520403794001658,
+    "impulse_Ns": -0.12003420266432294,
+    "energy_final_J": 1.7391078179924509e-09,
+    "work_done_J": 1.7391078188882509e-09
+  },
+  "verification": {
+    "impulse_error_relative": 0.0,
+    "impulse_pass": true,
+    "deflection_analytical_static_m": 4.350122688546933e-08,
+    "deflection_error_relative": 0.035245985433834504,
+    "deflection_pass": true,
+    "dem_dissipation_J": 3.2726777014626535e-05,
+    "fem_work_done_J": 1.7391078188882509e-09,
+    "work_energy_error_relative": 5.150916989648723e-10,
+    "energy_pass": true,
+    "energy_balance_error_relative": 0.001088882839285933,
+    "separability_dem": true,
+    "separability_fem": true,
+    "separability_fem_deflection_error": 2.194816714561837e-12
+  }
+}
