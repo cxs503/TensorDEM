@@ -39,6 +39,8 @@ TensorDEM 是 Tensor 工程仿真体系中的**离散元与颗粒断裂求解器
 
 ## 安装与运行
 
+**新手从这里开始：** [教程：从零到一次「可验证」的冰格 DEM 运行](docs/tutorials/first_verified_run.md) —— 15 分钟、全程带断言的 runnable 教程（建格 → 平衡态 → Cauchy–Born 刚度 → 各向同性诊断 → 压入能量账），其代码块由 `tests/test_tutorial_first_verified_run.py` 原样执行并做负例控制。
+
 需要 Python 3.10+。在项目根目录执行：
 
 ```bash
