@@ -2,7 +2,8 @@
 
 These tests prove that the ledger balance identity is **sensitive** to
 deliberate corruption of individual channels: when a channel is tampered
-with, the balance check must fail (turn red).  This is the complement of
+with, the balance check must *detect* it (the residual must exceed the
+tolerance).  This is the complement of
 ``test_accounting_ledger_validation.py`` which proves the *uncorrupted*
 ledger closes.
 
@@ -11,14 +12,22 @@ release + pair-contact acquired).  The energy balance identity is:
 
     dE_mech - W_tool - W_external + Q_damping + E_fracture - E_pair_contact == 0
 
-Each test injects a known fault into one channel and asserts the balance
-closes — which it cannot, so the test turns red.
+Each negative test injects a known fault into one channel and asserts the
+balance check **catches** it (residual >= tolerance).  A green suite means
+the check is sensitive to that channel; a red suite means the check has
+become blind to it.
+
+Note: the tool-indentation scenario applies no external nodal loads, so
+``external_work_J`` is exactly 0.  Corrupting a zero channel is a no-op, so
+that one control is skipped (vacuous) rather than asserted on unchanged data.
 """
 from __future__ import annotations
 
 import copy
 import sys
 from pathlib import Path
+
+import pytest
 
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -28,6 +37,9 @@ from tensordem import DEMConfig, IceDEM  # noqa: E402
 #: simulated seconds for the indentation run
 DURATION = 0.12
 LATTICE = (7, 3)
+
+#: relative residual below which the (uncorrupted) ledger is considered closed
+TOL = 0.005
 
 
 def _run_indentation() -> IceDEM:
@@ -88,107 +100,92 @@ def test_positive_control_ledger_closes():
     scale = _energy_scale(sim)
     assert scale > 0.0, "energy scale must be non-trivial"
     rel_err = abs(residual) / scale
-    assert rel_err < 0.005, (
+    assert rel_err < TOL, (
         f"uncorrupted ledger residual {rel_err:.4g} exceeds 0.5 %"
     )
 
 
 # ---------------------------------------------------------------------------
-# Negative controls: deliberately corrupt one channel, then assert balance
-# closes → this MUST FAIL (red) because the ledger is broken.
+# Negative controls: deliberately corrupt one channel, then assert the
+# balance check DETECTS the corruption (residual >= tolerance).
 #
-# To prove the negative, we run the corrupted simulation through the same
-# balance check as the positive control.  The assertion is identical, but
-# the data is poisoned, so the test turns red.
+# A working balance check is sensitive: corrupting a channel must break the
+# balance.  These tests are GREEN when the check catches the fault and turn
+# RED if the check ever becomes blind to that channel.
 # ---------------------------------------------------------------------------
 
-def _corrupt_and_assert_balance(sim: IceDEM, channel: str, factor: float) -> None:
-    """Corrupt one ledger channel, then assert the balance closes.
+def _corrupt_and_assert_detected(sim: IceDEM, channel: str, factor: float) -> None:
+    """Corrupt one ledger channel, then assert the balance check detects it.
 
-    This function is designed to FAIL when called with factor != 1.0,
-    proving the balance check is sensitive to channel corruption.
+    The corrupted ledger must NOT close: the residual must exceed the
+    tolerance.  If the check is broken (insensitive to this channel), the
+    corrupted ledger would still close and this assertion fails.
+
+    If the channel is exactly zero in this scenario, the corruption is a
+    no-op and the control is vacuous — skip rather than assert on unchanged
+    data.
     """
     corrupted = copy.deepcopy(sim)
-    corrupted.accounting[channel] *= factor
+    original = sim.accounting[channel]
+    corrupted.accounting[channel] = original * factor
+    if corrupted.accounting[channel] == original:
+        pytest.skip(
+            f"channel {channel} is zero in this scenario; "
+            f"x{factor} is a no-op, nothing to detect"
+        )
     residual = _energy_residual(corrupted)
     scale = _energy_scale(corrupted)
     rel_err = abs(residual) / max(scale, 1e-18)
-    # This assertion is identical to the positive control, but on corrupted
-    # data — so it must fail.
-    assert rel_err < 0.005, (
-        f"corrupted ledger ({channel} × {factor}) residual {rel_err:.4g} "
-        f"should exceed 0.5 % — this test is expected to FAIL (red)"
+    assert rel_err >= TOL, (
+        f"corrupted ledger ({channel} x {factor}) residual {rel_err:.4g} "
+        f"did not exceed 0.5 % — the balance check failed to catch the fault"
     )
 
 
 def test_negative_fracture_release_zeroed():
-    """Negative: zeroing fracture_release_J must break the balance.
-
-    This test is EXPECTED TO FAIL (red).  It proves the ledger balance
-    check catches a missing fracture-release channel.
-    """
+    """Negative: zeroing fracture_release_J must be caught by the check."""
     sim = _run_indentation()
-    _corrupt_and_assert_balance(sim, "fracture_release_J", 0.0)
+    _corrupt_and_assert_detected(sim, "fracture_release_J", 0.0)
 
 
 def test_negative_fracture_release_tripled():
-    """Negative: tripling fracture_release_J must break the balance.
-
-    This test is EXPECTED TO FAIL (red).  It proves the ledger balance
-    check catches an inflated fracture-release channel.
-    """
+    """Negative: tripling fracture_release_J must be caught by the check."""
     sim = _run_indentation()
-    _corrupt_and_assert_balance(sim, "fracture_release_J", 3.0)
+    _corrupt_and_assert_detected(sim, "fracture_release_J", 3.0)
 
 
 def test_negative_pair_contact_zeroed():
-    """Negative: zeroing pair_contact_acquired_J must break the balance.
-
-    This test is EXPECTED TO FAIL (red).  It proves the ledger balance
-    check catches a missing pair-contact-acquired channel.
-    """
+    """Negative: zeroing pair_contact_acquired_J must be caught by the check."""
     sim = _run_indentation()
-    _corrupt_and_assert_balance(sim, "pair_contact_acquired_J", 0.0)
+    _corrupt_and_assert_detected(sim, "pair_contact_acquired_J", 0.0)
 
 
 def test_negative_pair_contact_tripled():
-    """Negative: tripling pair_contact_acquired_J must break the balance.
-
-    This test is EXPECTED TO FAIL (red).  It proves the ledger balance
-    check catches an inflated pair-contact-acquired channel.
-    """
+    """Negative: tripling pair_contact_acquired_J must be caught by the check."""
     sim = _run_indentation()
-    _corrupt_and_assert_balance(sim, "pair_contact_acquired_J", 3.0)
+    _corrupt_and_assert_detected(sim, "pair_contact_acquired_J", 3.0)
 
 
 def test_negative_tool_work_zeroed():
-    """Negative: zeroing tool_work_J must break the balance.
-
-    This test is EXPECTED TO FAIL (red).  It proves the ledger balance
-    check catches a missing tool-work channel.
-    """
+    """Negative: zeroing tool_work_J must be caught by the check."""
     sim = _run_indentation()
-    _corrupt_and_assert_balance(sim, "tool_work_J", 0.0)
+    _corrupt_and_assert_detected(sim, "tool_work_J", 0.0)
 
 
 def test_negative_damping_dissipation_zeroed():
-    """Negative: zeroing damping_dissipation_J must break the balance.
-
-    This test is EXPECTED TO FAIL (red).  It proves the ledger balance
-    check catches a missing damping-dissipation channel.
-    """
+    """Negative: zeroing damping_dissipation_J must be caught by the check."""
     sim = _run_indentation()
-    _corrupt_and_assert_balance(sim, "damping_dissipation_J", 0.0)
+    _corrupt_and_assert_detected(sim, "damping_dissipation_J", 0.0)
 
 
 def test_negative_external_work_negated():
-    """Negative: negating external_work_J must break the balance.
+    """Negative: negating external_work_J must be caught by the check.
 
-    This test is EXPECTED TO FAIL (red).  It proves the ledger balance
-    check catches a sign-flipped external-work channel.
+    Skipped when the scenario produces no external work (channel is 0), in
+    which case the corruption is a no-op and the control is vacuous.
     """
     sim = _run_indentation()
-    _corrupt_and_assert_balance(sim, "external_work_J", -1.0)
+    _corrupt_and_assert_detected(sim, "external_work_J", -1.0)
 
 
 # ---------------------------------------------------------------------------
@@ -196,23 +193,17 @@ def test_negative_external_work_negated():
 # ---------------------------------------------------------------------------
 
 def test_negative_self_evidence():
-    """Documentation test: proves the negative controls exist and are
-    runnable.  This test itself passes (green).
+    """Documentation test: proves the negative controls exist and are runnable.
+
+    This test itself passes (green).
 
     Negative-evidence commands:
         TORCH_DEVICE_BACKEND_AUTOLOAD=0 python3 -m pytest \
-            tests/test_dem2d_energy_fracture_ledger_negative.py \
-            -k negative -q
+            tests/test_dem2d_energy_fracture_ledger_negative.py -q
 
-    Expected red output (summary):
-        FAILED ... test_negative_fracture_release_zeroed
-        FAILED ... test_negative_fracture_release_tripled
-        FAILED ... test_negative_pair_contact_zeroed
-        FAILED ... test_negative_pair_contact_tripled
-        FAILED ... test_negative_tool_work_zeroed
-        FAILED ... test_negative_damping_dissipation_zeroed
-        FAILED ... test_negative_external_work_negated
-        7 failed, 2 passed
+    Expected output (summary):
+        8 passed, 1 skipped
+        (the external_work control is vacuous: that channel is 0 here)
     """
     sim = _run_indentation()
     scale = _energy_scale(sim)

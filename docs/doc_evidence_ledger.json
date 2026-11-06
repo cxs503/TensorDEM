@@ -1,20 +1,20 @@
 {
  "schema": "tensordem.doc-evidence-ledger/1",
  "generated_by": "scripts/audit_doc_evidence.py",
- "documents_scanned": 141,
- "pointers": 805,
+ "documents_scanned": 143,
+ "pointers": 808,
  "counts": {
-  "code:TRACKED": 265,
-  "data:MISSING": 41,
+  "code:TRACKED": 266,
+  "data:MISSING": 42,
   "data:TRACKED": 39,
   "doc:TRACKED": 115,
   "figure:MISSING": 83,
   "figure:TRACKED": 19,
-  "test:TRACKED": 243
+  "test:TRACKED": 244
  },
  "remedy": {
-  "REGENERABLE": 124,
-  "TRACKED": 681
+  "REGENERABLE": 125,
+  "TRACKED": 683
  },
  "unresolved_per_doc": {
   "docs/TENSORDEM_UPSTREAM_DIFF_M1630.md": 4,
@@ -22,6 +22,7 @@
   "docs/accounting_ledger_validation.md": 2,
   "docs/buoyancy_free_float_verification.md": 3,
   "docs/ci_clearance_m3317.md": 1,
+  "docs/coupling_restart_boundary_matrix.md": 1,
   "docs/dem2d_lattice_elasticity.md": 1,
   "docs/dem3d_bond_fracture_energy.md": 1,
   "docs/dem3d_brazilian_hondros_closure.md": 2,
@@ -708,6 +709,32 @@
    "pointer": "scripts/audit_smooth_plane.py",
    "kind": "code",
    "status": "TRACKED"
+  },
+  {
+   "doc": "docs/coupling_restart_boundary_matrix.md",
+   "line": 3,
+   "pointer": "tests/test_coupling_restart.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/coupling_restart_boundary_matrix.md",
+   "line": 46,
+   "pointer": "scripts/verify_restart_boundary_negative_controls.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/coupling_restart_boundary_matrix.md",
+   "line": 50,
+   "pointer": "artifacts/coupling_restart_negative_controls.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "scripts/plot_restart_boundary_audit.py",
+    "scripts/verify_restart_boundary_negative_controls.py"
+   ],
+   "remedy": "REGENERABLE"
   },
   {
    "doc": "docs/dem2d_energy_ledger_analytic_verification.md",
