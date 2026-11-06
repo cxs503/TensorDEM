@@ -320,6 +320,27 @@ def summary(report: dict) -> str:
     return "\n".join(lines)
 
 
+def lost_from_history(committed_entries: list[dict], entries: list[dict]) -> list[str]:
+    """Pointers the ledger records as TRACKED that the checkout no longer has.
+
+    ``TRACKED`` is not a soft claim: it says git carries the blob, so a document
+    citing it resolves in a fresh clone. A ``TRACKED -> MISSING/UNTRACKED`` flip
+    is therefore never ordinary staleness -- the blob left the history (a merge
+    that did not carry it, a rewritten branch, a squash that dropped binaries).
+    Regenerating the ledger would paper over that: it would silently downgrade
+    the document's claim instead of restoring the evidence, so name it instead.
+    """
+    now = {(e["doc"], e["pointer"]): e["status"] for e in entries}
+    lost = []
+    for entry in committed_entries:
+        if entry.get("status") != "TRACKED":
+            continue
+        status = now.get((entry["doc"], entry["pointer"]))
+        if status is not None and status not in ("TRACKED", "EXTERNAL"):
+            lost.append(f"{entry['doc']}:{entry.get('line', '?')} {entry['pointer']} -> {status}")
+    return sorted(lost)
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
@@ -353,6 +374,15 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"  + {k}", file=sys.stderr)
             for k in [k for k in old if k not in new_set][:10]:
                 print(f"  - {k}", file=sys.stderr)
+            lost = lost_from_history(committed.get("entries", []), report["entries"])
+            if lost:
+                print(
+                    "recorded as committed but gone from the checkout: restore the file "
+                    "(do not regenerate the ledger -- that erases the claim):",
+                    file=sys.stderr,
+                )
+                for line in lost[:10]:
+                    print(f"  ! {line}", file=sys.stderr)
             return 1
         print("ledger up to date: " + report["counts"].__repr__())
         return 0
