@@ -171,10 +171,20 @@ class DEM3DConfig:
             value = getattr(self, name)
             if isinstance(value, bool) or not isinstance(value, int) or value < 2:
                 raise ValueError(f"{name} must be an integer >= 2")
-        for name in ("radius", "density", "bond_stiffness", "contact_stiffness",
-                     "breaking_strain", "shear_breaking_strain", "tool_radius", "tool_speed"):
+        for name in ("radius", "density", "breaking_strain", "shear_breaking_strain",
+                     "tool_radius", "tool_speed"):
             value = getattr(self, name)
             if not math.isfinite(value) or value <= 0:
+                raise ValueError(f"{name} must be finite and positive")
+        # ``bond_stiffness``/``contact_stiffness`` are unused sentinels under
+        # ``contact_model="hertz"``: the secant stiffness then comes from
+        # ``young_modulus``/``poisson_ratio`` (see :func:`hertz_secant_stiffness`),
+        # so 0.0 there means "take it from the Hertz model", not "missing input".
+        # The linear path really multiplies by them, so it keeps strict positivity.
+        hertz_model = self.contact_model == "hertz"
+        for name in ("bond_stiffness", "contact_stiffness"):
+            value = getattr(self, name)
+            if not math.isfinite(value) or value < 0 or (value == 0 and not hertz_model):
                 raise ValueError(f"{name} must be finite and positive")
         for name in ("contact_damping", "drag", "tool_gap", "platen_damping",
                      "top_platen_gap", "bottom_platen_gap"):
@@ -502,6 +512,10 @@ class IceDEM3D:
         """Return an alive-bond mask aligned with arbitrary sorted node pairs."""
         if pairs.numel() == 0:
             return torch.zeros((0,), dtype=torch.bool, device=self.device)
+        if len(self._bond_keys) == 0:
+            # Fully broken lattices carry no bond keys at all; searching an empty
+            # bond array raised IndexError on the ``safe`` gather below.
+            return torch.zeros((pairs.shape[0],), dtype=torch.bool, device=self.device)
         keys = pairs[:, 0] * len(self.positions) + pairs[:, 1]
         where = torch.searchsorted(self._bond_keys, keys)
         safe = where.clamp(max=max(len(self._bond_keys) - 1, 0))

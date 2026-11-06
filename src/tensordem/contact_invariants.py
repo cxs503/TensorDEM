@@ -132,6 +132,10 @@ __all__ = [
     "summarise",
     "violations",
     "monitor_purity",
+    "translation",
+    "rotation",
+    "brute_force",
+    "determinism",
 ]
 
 INVARIANTS = (
@@ -787,3 +791,33 @@ TOLERANCES: dict[str, float] = {
 def violations(results: Sequence[InvariantResult]) -> list[InvariantResult]:
     """Return the results that exceed their invariant threshold."""
     return [r for r in results if r.residual > TOLERANCES.get(r.invariant, 0.0)]
+
+# --------------------------------------------------------------------------
+# Short aliases keyed by invariant name
+# --------------------------------------------------------------------------
+# ``INVARIANTS`` names the audit keys ("translation", "rotation", "brute_force",
+# "determinism") while the implementations carry a descriptive suffix
+# (``translation_invariance``, ``rotation_equivariance``, ``brute_force_agreement``,
+# ``determinism_repeatability``).  Callers that dispatch on the invariant key -- the
+# mixed-topology regression test among them -- need the alias to exist, so expose
+# each implementation under its audit name.
+
+def translation(case: CaseSpec, seed: int,
+                offset: Sequence[float] = (1.5, -7.25, 3.5)) -> InvariantResult:
+    """``translation_invariance`` under its ``INVARIANTS`` name."""
+    return translation_invariance(case, seed, offset)
+
+
+def rotation(case: CaseSpec, seed: int) -> InvariantResult:
+    """``rotation_equivariance`` under its ``INVARIANTS`` name."""
+    return rotation_equivariance(case, seed)
+
+
+def brute_force(case: CaseSpec, seed: int) -> InvariantResult:
+    """``brute_force_agreement`` under its ``INVARIANTS`` name."""
+    return brute_force_agreement(case, seed)
+
+
+def determinism(case: CaseSpec, seed: int) -> InvariantResult:
+    """``determinism_repeatability`` under its ``INVARIANTS`` name."""
+    return determinism_repeatability(case, seed)
