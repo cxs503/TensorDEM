@@ -96,22 +96,23 @@ assert rel_err < 0.005, "... this test is expected to FAIL (red)"
 - `external_work_J` 工况依赖：若将来该场景接入外驱动，应改回乘性符号翻转，
   测试已用 `assert sim.accounting["external_work_J"] == 0.0` 钉住前提并在报错信息中提示。
 - 判据 0.5 % 沿用正控原值，未放宽度；负控裕度最紧的通道仍有 8 倍。
-## 7. 复现与产物（m4790 复算）
 
-本节的数字全部由脚本注入，无手抄：
+<!-- m4790:begin -->
+## 7. 故障幅值敏感性：门要多大的故障才亮红（m4790）
 
-- 负控套件 `tests/test_dem2d_energy_fracture_ledger_negative.py`
-  （`pytest -q tests/test_dem2d_energy_fracture_ledger_negative.py`
-  → 8 passed, 1 skipped；skip 为 `external_work_J` 休眠通道的乘性空转守卫）。
-- 图与逐通道残差 `scripts/plot_m4790_sensitivity.py`
-  → `artifacts/m4790/ledger_corruption_sensitivity.png`（残差柱状图 + 0.5 % 判据线
-  + 3 % 参考线；干净基线 0.2796 %）。
-- 报告装配 `scripts/post_m4790_report.py` → `artifacts/m4790/report.md`。
+§4 的柱状图证明「注入即检出」，但不回答幅值门槛。下表由
+`scripts/plot_m4790_sensitivity.py` 扫 `z` 并解析求解 `|R(z)| = TOL·S(z)` 得到，
+`scripts/post_m4790_report.py` 直接注入本文件（零手抄）；报告全文见
+`artifacts/m4790/report.md`，原始数据 `artifacts/m4790/sensitivity.json`，
+图 `artifacts/m4790/ledger_corruption_sensitivity.png`。
 
-复算得到与本文件 §4 一致的残差（干净台账 0.2796 %；检出裕度最紧的通道
-`pair_contact_acquired_J` ×0 为 4.0 %≈8×判据，最宽 `tool_work_J` ×0 为 398.8 %；
-休眠通道 `external_work_J` 用加性故障 +`tool_work_J` 得 79.6 %）。逐通道数字落在
-`artifacts/m4790/sensitivity.json`，报告由 `scripts/post_m4790_report.py` 从该 JSON
-注入后发布，无手抄。注意本文件的 §1–§6 成文于 m4790；此后 main 上的负控测试已升级为
-含 `balance_check` 门函数、空转守卫与 `external_work_J` 加性故障的 10 用例版本，
-本节的复算与之口径一致（判据 0.5 %、同一残差定义）。
+| 通道 | 干净值 (J) | 在尺度内 | 解析 z* | 盲区 \|1-z*\| | 盲区 / TOL |
+|---|---|---|---|---|---|
+| `damping_dissipation_J` | 1.2655e-02 | 是 | 0.920865，1.022590 | 0.0226 | 4.52 |
+| `fracture_release_J` | 1.3297e-02 | 是 | 0.924683，1.021500 | 0.0215 | 4.30 |
+| `tool_work_J` | 1.0314e-01 | 是 | 0.997256，1.009807 | 0.0027 | 0.55 |
+| `external_work_J` | 0.0000e+00 | 否 | —（休眠通道） | — | 空转（a=0） |
+| `pair_contact_acquired_J` | 4.7985e-03 | 否 | 0.940719，1.209751 | 0.0593 | 11.86 |
+
+干净残差 0.28 %（< 0.5 % 判据，正控成立）；解析 `z*` 回代求解器的相对偏差 ≤ 1e-9，解析面最大绝对误差 3.9378e-16。`external_work_J` 恒为 0，乘性故障空转（脚本标注 `vacuous`），因此该通道的负控必须用加性故障。回归门：`tests/test_m4790_sensitivity_evidence.py`。
+<!-- m4790:end -->
