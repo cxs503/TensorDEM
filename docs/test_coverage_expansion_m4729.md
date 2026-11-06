@@ -51,7 +51,7 @@ TORCH_DEVICE_BACKEND_AUTOLOAD=0 python3 -m pytest \
 # 61 passed, 1 warning in 7.56s
 ```
 
-未删除、未跳过任何既有测试，未放宽任何既有断言容差（全部改动是新增文件）。
+未删除、未跳过任何既有测试，未放宽任何既有断言容差（全部改动是新增文件）；m4804 把 `tests/test_dem2d_energy_fracture_ledger_negative.py` 的负控检出裕度量化成闭式分辨率（见 `docs/dem2d_energy_fracture_ledger_negative_controls_m4804.md`）。
 
 ## 3. 负例自证：源码注入缺陷必须变红
 
