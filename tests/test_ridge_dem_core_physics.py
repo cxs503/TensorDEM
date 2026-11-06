@@ -87,7 +87,14 @@ class RidgeMaterialTests(unittest.TestCase):
         self.assertAlmostEqual(mat.bond_failure_strain, expected, places=12)
 
     def test_recommended_dt_elastic_limit(self):
-        """dt_elastic = 0.2 * sqrt(m / (neighbours * (k_c + 2 k_b)))."""
+        """dt = min(0.2 sqrt(m/(n(k_c+2k_b))), 0.2 m/(n c + c_d)).
+
+        ``RidgeMaterial.recommended_dt`` is the *conservative* step: the
+        stiffness (elastic) bound and the damping (viscous) bound are both
+        evaluated and the smaller one wins.  For this material the viscous
+        bound is the active one, so pinning the elastic bound alone would
+        overstate the usable step by 50%.
+        """
         mat = RidgeMaterial(
             particle_radius=0.5, ice_density=917.0,
             contact_stiffness=1.0e7, bond_stiffness=5.0e6,
@@ -95,8 +102,13 @@ class RidgeMaterialTests(unittest.TestCase):
         )
         neighbours = 13.0
         stiffness = neighbours * (mat.contact_stiffness + 2.0 * mat.bond_stiffness)
+        damping = neighbours * mat.contact_damping + mat.drag
         expected_elastic = 0.2 * math.sqrt(mat.particle_mass / stiffness)
-        self.assertAlmostEqual(mat.recommended_dt, expected_elastic, places=10)
+        expected_viscous = 0.2 * mat.particle_mass / damping
+        expected = min(expected_elastic, expected_viscous)
+        self.assertAlmostEqual(mat.recommended_dt, expected, places=10)
+        # Document which bound is active: the damping limit is the binding one.
+        self.assertLess(expected_viscous, expected_elastic)
 
     def test_recommended_dt_viscous_limit(self):
         """dt_viscous = 0.2 * m / (neighbours * c_d + drag)."""

@@ -500,8 +500,11 @@ class IceDEM3D:
     @torch.no_grad()
     def _alive_bond_for_pairs(self, pairs: torch.Tensor) -> torch.Tensor:
         """Return an alive-bond mask aligned with arbitrary sorted node pairs."""
-        if pairs.numel() == 0:
-            return torch.zeros((0,), dtype=torch.bool, device=self.device)
+        if pairs.numel() == 0 or len(self._bond_keys) == 0:
+            # No bond at all (a purely frictional / unbonded assembly): every
+            # pair is a contact, so nothing can be masked out.  Without this
+            # guard the searchsorted/clamp below indexes an empty key array.
+            return torch.zeros((len(pairs),), dtype=torch.bool, device=self.device)
         keys = pairs[:, 0] * len(self.positions) + pairs[:, 1]
         where = torch.searchsorted(self._bond_keys, keys)
         safe = where.clamp(max=max(len(self._bond_keys) - 1, 0))

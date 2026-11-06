@@ -1,20 +1,20 @@
 {
  "schema": "tensordem.doc-evidence-ledger/1",
  "generated_by": "scripts/audit_doc_evidence.py",
- "documents_scanned": 126,
- "pointers": 720,
+ "documents_scanned": 141,
+ "pointers": 805,
  "counts": {
-  "code:TRACKED": 241,
-  "data:MISSING": 39,
-  "data:TRACKED": 29,
-  "doc:TRACKED": 97,
-  "figure:MISSING": 81,
-  "figure:TRACKED": 11,
-  "test:TRACKED": 222
+  "code:TRACKED": 265,
+  "data:MISSING": 41,
+  "data:TRACKED": 39,
+  "doc:TRACKED": 115,
+  "figure:MISSING": 83,
+  "figure:TRACKED": 19,
+  "test:TRACKED": 243
  },
  "remedy": {
-  "REGENERABLE": 120,
-  "TRACKED": 600
+  "REGENERABLE": 124,
+  "TRACKED": 681
  },
  "unresolved_per_doc": {
   "docs/TENSORDEM_UPSTREAM_DIFF_M1630.md": 4,
@@ -38,7 +38,6 @@
   "docs/dem3d_fracture_mass_mapping_audit.md": 2,
   "docs/dem3d_hertz_restitution_closure.md": 3,
   "docs/dem3d_integration_order_verification.md": 1,
-  "docs/dem3d_lattice_elasticity.md": 4,
   "docs/dem3d_lattice_elasticity3d_audit.md": 1,
   "docs/dem3d_lattice_wave_propagation.md": 3,
   "docs/dem3d_pair_contact_damping_closure.md": 1,
@@ -47,9 +46,13 @@
   "docs/dem3d_rolling_resistance.md": 4,
   "docs/dem3d_rolling_resistance_verification.md": 4,
   "docs/dem3d_scale_benchmark.md": 4,
+  "docs/dem3d_scale_benchmark_figures_report.md": 4,
+  "docs/dem3d_shear_cross_section_convergence.md": 1,
   "docs/floe_heave_finite_amplitude_period.md": 3,
   "docs/floe_heave_finite_amplitude_verification.md": 1,
   "docs/fracture_gen_mass_footprint_audit.md": 2,
+  "docs/fragmentation_statistics_tables.md": 1,
+  "docs/fragmentation_statistics_verification.md": 2,
   "docs/ice_floe_physics_validation.md": 1,
   "docs/ice_ridge_pipeline_grounding.md": 10,
   "docs/m669_hull_mesh_contact.md": 3,
@@ -704,6 +707,104 @@
    "line": 60,
    "pointer": "scripts/audit_smooth_plane.py",
    "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem2d_energy_ledger_analytic_verification.md",
+   "line": 8,
+   "pointer": "src/tensordem/dem.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem2d_energy_ledger_analytic_verification.md",
+   "line": 10,
+   "pointer": "tests/test_accounting_ledger_validation.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem2d_energy_ledger_analytic_verification.md",
+   "line": 20,
+   "pointer": "docs/dem3d_energy_ledger_analytic_verification.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem2d_energy_ledger_analytic_verification.md",
+   "line": 113,
+   "pointer": "docs/dem3d_lattice_elasticity.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem2d_energy_ledger_analytic_verification.md",
+   "line": 125,
+   "pointer": "scripts/verify_dem2d_energy_ledger.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem2d_energy_ledger_analytic_verification.md",
+   "line": 126,
+   "pointer": "tests/test_dem2d_energy_ledger.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem2d_energy_ledger_analytic_verification.md",
+   "line": 127,
+   "pointer": "docs/artifacts/dem2d_energy_ledger/ledger_closure.json",
+   "kind": "data",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem2d_energy_ledger_analytic_verification.md",
+   "line": 128,
+   "pointer": "docs/artifacts/dem2d_energy_ledger/ledger_cases.csv",
+   "kind": "data",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem2d_energy_ledger_analytic_verification.md",
+   "line": 129,
+   "pointer": "docs/artifacts/dem2d_energy_ledger/ledger_anchors.csv",
+   "kind": "data",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem2d_energy_ledger_analytic_verification.md",
+   "line": 130,
+   "pointer": "docs/artifacts/dem2d_energy_ledger/ledger_closure.png",
+   "kind": "figure",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem2d_fracture_ledger_analytic_verification.md",
+   "line": 34,
+   "pointer": "scripts/verify_dem2d_fracture_ledger.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem2d_fracture_ledger_analytic_verification.md",
+   "line": 36,
+   "pointer": "tests/test_dem2d_fracture_ledger.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem2d_fracture_ledger_analytic_verification.md",
+   "line": 57,
+   "pointer": "docs/artifacts/dem2d_fracture_ledger/fracture_ledger_closure.png",
+   "kind": "figure",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem2d_fracture_ledger_analytic_verification.md",
+   "line": 68,
+   "pointer": "docs/dem3d_bond_fracture_energy.md",
+   "kind": "doc",
    "status": "TRACKED"
   },
   {
@@ -1653,6 +1754,20 @@
    "status": "TRACKED"
   },
   {
+   "doc": "docs/dem3d_contact_invariants_mixed_topology.md",
+   "line": 5,
+   "pointer": "docs/dem3d_contact_invariants.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_contact_invariants_mixed_topology.md",
+   "line": 23,
+   "pointer": "tests/test_dem3d_contact_invariants.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
    "doc": "docs/dem3d_contact_restitution.md",
    "line": 23,
    "pointer": "benchmarks/ice_floe_physics.py",
@@ -1679,6 +1794,7 @@
     "scripts/audit_threefield_lbm_transport.py",
     "scripts/audit_threefield_wake_boundaries.py",
     "scripts/verify_dem3d_restitution.py",
+    "scripts/verify_forces_override_contract.py",
     "scripts/verify_moving_plane_dynamic_impulse.py"
    ],
    "remedy": "REGENERABLE"
@@ -2246,6 +2362,69 @@
    "status": "TRACKED"
   },
   {
+   "doc": "docs/dem3d_forces_override_contract.md",
+   "line": 3,
+   "pointer": "src/tensordem/dem3d_wedge.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_forces_override_contract.md",
+   "line": 3,
+   "pointer": "src/tensordem/rudder_ice_load.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_forces_override_contract.md",
+   "line": 5,
+   "pointer": "tests/test_dem3d_forces_override_contract.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_forces_override_contract.md",
+   "line": 6,
+   "pointer": "scripts/verify_forces_override_contract.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_forces_override_contract.md",
+   "line": 20,
+   "pointer": "src/tensordem/contact_invariants.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_forces_override_contract.md",
+   "line": 39,
+   "pointer": "tests/test_threefield.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_forces_override_contract.md",
+   "line": 40,
+   "pointer": "tests/test_dem3d_moving_wedge_bow.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_forces_override_contract.md",
+   "line": 41,
+   "pointer": "tests/test_dem3d_wedge_resistance_sensitivity.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_forces_override_contract.md",
+   "line": 99,
+   "pointer": "tests/test_rudder_ice_load.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
    "doc": "docs/dem3d_fracture_footprint_breakage.md",
    "line": 4,
    "pointer": "tests/test_fracture_gen_mass_footprint.py",
@@ -2422,6 +2601,41 @@
    "line": 204,
    "pointer": "docs/dem3d_material_calibration_roadmap.md",
    "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_fracture_hcp_packing.md",
+   "line": 7,
+   "pointer": "docs/icebreaking_development_roadmap.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_fracture_hcp_packing.md",
+   "line": 23,
+   "pointer": "src/tensordem/fracture_gen.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_fracture_hcp_packing.md",
+   "line": 30,
+   "pointer": "src/tensordem/fracture_mass_mapping.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_fracture_hcp_packing.md",
+   "line": 40,
+   "pointer": "src/tensordem/lattice_packing_audit.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_fracture_hcp_packing.md",
+   "line": 66,
+   "pointer": "tests/test_fracture_gen_hcp_packing.py",
+   "kind": "test",
    "status": "TRACKED"
   },
   {
@@ -2745,44 +2959,32 @@
    "line": 141,
    "pointer": "lattice-elasticity/lattice_stiffness_matrices.png",
    "kind": "figure",
-   "status": "MISSING",
-   "producers": [
-    "scripts/benchmark_dem3d_lattice_elasticity.py"
-   ],
-   "remedy": "REGENERABLE"
+   "status": "TRACKED",
+   "resolved": "docs/lattice-elasticity/lattice_stiffness_matrices.png"
   },
   {
    "doc": "docs/dem3d_lattice_elasticity.md",
    "line": 145,
    "pointer": "lattice-elasticity/directional_young_modulus.png",
    "kind": "figure",
-   "status": "MISSING",
-   "producers": [
-    "scripts/benchmark_dem3d_lattice_elasticity.py"
-   ],
-   "remedy": "REGENERABLE"
+   "status": "TRACKED",
+   "resolved": "docs/lattice-elasticity/directional_young_modulus.png"
   },
   {
    "doc": "docs/dem3d_lattice_elasticity.md",
    "line": 149,
    "pointer": "lattice-elasticity/surface_deficiency.png",
    "kind": "figure",
-   "status": "MISSING",
-   "producers": [
-    "scripts/benchmark_dem3d_lattice_elasticity.py"
-   ],
-   "remedy": "REGENERABLE"
+   "status": "TRACKED",
+   "resolved": "docs/lattice-elasticity/surface_deficiency.png"
   },
   {
    "doc": "docs/dem3d_lattice_elasticity.md",
    "line": 153,
    "pointer": "lattice-elasticity/phonon_dispersion.png",
    "kind": "figure",
-   "status": "MISSING",
-   "producers": [
-    "scripts/benchmark_dem3d_lattice_elasticity.py"
-   ],
-   "remedy": "REGENERABLE"
+   "status": "TRACKED",
+   "resolved": "docs/lattice-elasticity/phonon_dispersion.png"
   },
   {
    "doc": "docs/dem3d_lattice_elasticity3d_audit.md",
@@ -2986,6 +3188,13 @@
    "status": "TRACKED"
   },
   {
+   "doc": "docs/dem3d_material_calibration_roadmap.md",
+   "line": 72,
+   "pointer": "docs/dem3d_shear_cross_section_convergence.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
    "doc": "docs/dem3d_mechanics_benchmark_protocol.md",
    "line": 29,
    "pointer": "scripts/run_dem3d_mechanics_benchmarks.py",
@@ -3118,6 +3327,7 @@
     "scripts/audit_threefield_lbm_transport.py",
     "scripts/audit_threefield_wake_boundaries.py",
     "scripts/verify_dem3d_restitution.py",
+    "scripts/verify_forces_override_contract.py",
     "scripts/verify_moving_plane_dynamic_impulse.py"
    ],
    "remedy": "REGENERABLE"
@@ -3531,6 +3741,7 @@
    "status": "MISSING",
    "resolved": "artifacts/dem3d_scale_benchmark.png",
    "producers": [
+    "scripts/gen_scale_benchmark_figures.py",
     "scripts/plot_dem3d_scale_benchmark.py"
    ],
    "remedy": "REGENERABLE"
@@ -3543,6 +3754,7 @@
    "status": "MISSING",
    "resolved": "artifacts/dem3d_energy_drift.png",
    "producers": [
+    "scripts/gen_scale_benchmark_figures.py",
     "scripts/plot_dem3d_energy_drift.py"
    ],
    "remedy": "REGENERABLE"
@@ -3568,6 +3780,7 @@
    "kind": "figure",
    "status": "MISSING",
    "producers": [
+    "scripts/gen_scale_benchmark_figures.py",
     "scripts/plot_dem3d_energy_drift.py"
    ],
    "remedy": "REGENERABLE"
@@ -3579,6 +3792,7 @@
    "kind": "figure",
    "status": "MISSING",
    "producers": [
+    "scripts/gen_scale_benchmark_figures.py",
     "scripts/plot_dem3d_scale_benchmark.py"
    ],
    "remedy": "REGENERABLE"
@@ -3591,29 +3805,142 @@
    "status": "TRACKED"
   },
   {
-   "doc": "docs/dem3d_shear_cross_section_convergence.md",
-   "line": 3,
-   "pointer": "src/tensordem/shear_convergence.py",
+   "doc": "docs/dem3d_scale_benchmark_figures_report.md",
+   "line": 9,
+   "pointer": "docs/doc_evidence_ledger.json",
+   "kind": "data",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_scale_benchmark_figures_report.md",
+   "line": 10,
+   "pointer": "docs/dem3d_scale_benchmark.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_scale_benchmark_figures_report.md",
+   "line": 14,
+   "pointer": "artifacts/dem3d_scale_benchmark.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "scripts/gen_scale_benchmark_figures.py",
+    "scripts/plot_dem3d_scale_benchmark.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/dem3d_scale_benchmark_figures_report.md",
+   "line": 14,
+   "pointer": "scripts/plot_dem3d_scale_benchmark.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_scale_benchmark_figures_report.md",
+   "line": 15,
+   "pointer": "artifacts/dem3d_energy_drift.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "scripts/gen_scale_benchmark_figures.py",
+    "scripts/plot_dem3d_energy_drift.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/dem3d_scale_benchmark_figures_report.md",
+   "line": 15,
+   "pointer": "scripts/plot_dem3d_energy_drift.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_scale_benchmark_figures_report.md",
+   "line": 16,
+   "pointer": "../artifacts/dem3d_scale_benchmark.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "resolved": "artifacts/dem3d_scale_benchmark.png",
+   "producers": [
+    "scripts/gen_scale_benchmark_figures.py",
+    "scripts/plot_dem3d_scale_benchmark.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/dem3d_scale_benchmark_figures_report.md",
+   "line": 17,
+   "pointer": "../artifacts/dem3d_energy_drift.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "resolved": "artifacts/dem3d_energy_drift.png",
+   "producers": [
+    "scripts/gen_scale_benchmark_figures.py",
+    "scripts/plot_dem3d_energy_drift.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/dem3d_scale_benchmark_figures_report.md",
+   "line": 19,
+   "pointer": "results-dem3d-scale/scaling_report.json",
+   "kind": "data",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_scale_benchmark_figures_report.md",
+   "line": 26,
+   "pointer": "scripts/gen_scale_benchmark_figures.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_scale_benchmark_figures_report.md",
+   "line": 108,
+   "pointer": "docs/dem3d_scale_benchmark_figures_report.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_scale_benchmark_figures_report.md",
+   "line": 114,
+   "pointer": "docs/dem3d_rolling_resistance.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_scale_benchmark_figures_report.md",
+   "line": 115,
+   "pointer": "docs/dem3d-rolling-resistance/results.json",
+   "kind": "data",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_scale_benchmark_figures_report.md",
+   "line": 116,
+   "pointer": "docs/dem3d_integration_order_verification.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_scale_benchmark_figures_report.md",
+   "line": 117,
+   "pointer": "scripts/verify_dem3d_integration_order.py",
    "kind": "code",
    "status": "TRACKED"
   },
   {
    "doc": "docs/dem3d_shear_cross_section_convergence.md",
-   "line": 4,
-   "pointer": "tests/test_dem3d_shear_cross_section_convergence.py",
-   "kind": "test",
-   "status": "TRACKED"
-  },
-  {
-   "doc": "docs/dem3d_shear_cross_section_convergence.md",
    "line": 5,
-   "pointer": "tests/test_dem3d_shear_static_reference.py",
-   "kind": "test",
+   "pointer": "docs/dem3d_shear_static_reference.md",
+   "kind": "doc",
    "status": "TRACKED"
   },
   {
    "doc": "docs/dem3d_shear_cross_section_convergence.md",
-   "line": 6,
+   "line": 10,
    "pointer": "scripts/audit_dem3d_shear_cross_section_convergence.py",
    "kind": "code",
    "status": "TRACKED"
@@ -3621,36 +3948,32 @@
   {
    "doc": "docs/dem3d_shear_cross_section_convergence.md",
    "line": 11,
-   "pointer": "docs/dem3d_shear_static_reference.md",
-   "kind": "doc",
-   "status": "TRACKED"
-  },
-  {
-   "doc": "docs/dem3d_shear_cross_section_convergence.md",
-   "line": 28,
-   "pointer": "docs/dem3d_shear_specimen.md",
-   "kind": "doc",
-   "status": "TRACKED"
-  },
-  {
-   "doc": "docs/dem3d_shear_cross_section_convergence.md",
-   "line": 59,
-   "pointer": "docs/dem3d-shear-cross-section-convergence/series.csv",
+   "pointer": "docs/dem3d-shear-cross-section-convergence/report.json",
    "kind": "data",
    "status": "TRACKED"
   },
   {
    "doc": "docs/dem3d_shear_cross_section_convergence.md",
-   "line": 93,
-   "pointer": "dem3d-shear-cross-section-convergence/figures/convergence.png",
+   "line": 12,
+   "pointer": "figures/cross_section_convergence.png",
    "kind": "figure",
-   "status": "TRACKED",
-   "resolved": "docs/dem3d-shear-cross-section-convergence/figures/convergence.png"
+   "status": "MISSING",
+   "producers": [
+    "scripts/audit_dem3d_shear_cross_section_convergence.py"
+   ],
+   "remedy": "REGENERABLE"
   },
   {
    "doc": "docs/dem3d_shear_cross_section_convergence.md",
-   "line": 128,
-   "pointer": "docs/dem3d_material_calibration_roadmap.md",
+   "line": 17,
+   "pointer": "tests/test_dem3d_shear_cross_section_convergence.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem3d_shear_cross_section_convergence.md",
+   "line": 22,
+   "pointer": "docs/dem3d_shear_specimen.md",
    "kind": "doc",
    "status": "TRACKED"
   },
@@ -4200,6 +4523,7 @@
     "scripts/audit_threefield_lbm_transport.py",
     "scripts/audit_threefield_wake_boundaries.py",
     "scripts/verify_dem3d_restitution.py",
+    "scripts/verify_forces_override_contract.py",
     "scripts/verify_moving_plane_dynamic_impulse.py"
    ],
    "remedy": "REGENERABLE"
@@ -4220,6 +4544,96 @@
    "line": 151,
    "pointer": "tests/test_fracture_gen.py",
    "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/fragmentation_statistics_tables.md",
+   "line": 3,
+   "pointer": "artifacts/fragmentation_statistics/validation_report.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "benchmarks/fracture_gen_ledger.py",
+    "benchmarks/fragmentation_statistics.py",
+    "benchmarks/fragmentation_statistics_figures.py",
+    "benchmarks/ice_floe_physics.py",
+    "benchmarks/ice_floe_physics_figures.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/fragmentation_statistics_tables.md",
+   "line": 3,
+   "pointer": "benchmarks/fragmentation_statistics_figures.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/fragmentation_statistics_verification.md",
+   "line": 13,
+   "pointer": "benchmarks/fragmentation_statistics.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/fragmentation_statistics_verification.md",
+   "line": 15,
+   "pointer": "benchmarks/fragmentation_statistics_figures.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/fragmentation_statistics_verification.md",
+   "line": 16,
+   "pointer": "tests/test_fragmentation_statistics.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/fragmentation_statistics_verification.md",
+   "line": 17,
+   "pointer": "artifacts/fragmentation_statistics/validation_report.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "benchmarks/fracture_gen_ledger.py",
+    "benchmarks/fragmentation_statistics.py",
+    "benchmarks/fragmentation_statistics_figures.py",
+    "benchmarks/ice_floe_physics.py",
+    "benchmarks/ice_floe_physics_figures.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/fragmentation_statistics_verification.md",
+   "line": 18,
+   "pointer": "docs/fragmentation_statistics_tables.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/fragmentation_statistics_verification.md",
+   "line": 22,
+   "pointer": "docs/THREEFIELD_ICE_HULL_PROPELLER.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/fragmentation_statistics_verification.md",
+   "line": 102,
+   "pointer": "artifacts/fragmentation_statistics/fragmentation_statistics.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "benchmarks/fragmentation_statistics_figures.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/fragmentation_statistics_verification.md",
+   "line": 176,
+   "pointer": "src/tensordem/threefield/fragmentation.py",
+   "kind": "code",
    "status": "TRACKED"
   },
   {
@@ -4251,6 +4665,8 @@
    "status": "MISSING",
    "producers": [
     "benchmarks/fracture_gen_ledger.py",
+    "benchmarks/fragmentation_statistics.py",
+    "benchmarks/fragmentation_statistics_figures.py",
     "benchmarks/ice_floe_physics.py",
     "benchmarks/ice_floe_physics_figures.py"
    ],
@@ -4495,6 +4911,20 @@
    "status": "TRACKED"
   },
   {
+   "doc": "docs/ice_ridge_pipeline_grounding.md",
+   "line": 187,
+   "pointer": "docs/ridge_grounding_artifact_refresh.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ice_ridge_pipeline_grounding.md",
+   "line": 204,
+   "pointer": "docs/artifacts/ridge_grounding_refresh/summary.json",
+   "kind": "data",
+   "status": "TRACKED"
+  },
+  {
    "doc": "docs/icebreaking_development_roadmap.md",
    "line": 82,
    "pointer": "src/tensordem/fracture_gen.py",
@@ -4516,10 +4946,24 @@
    "status": "TRACKED"
   },
   {
+   "doc": "docs/icebreaking_development_roadmap.md",
+   "line": 128,
+   "pointer": "docs/dem3d_fracture_hcp_packing.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
    "doc": "docs/m2334/outputs/floe_buoyancy/summary.md",
    "line": 3,
    "pointer": "scripts/benchmark_floe_buoyancy.py",
    "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/m3813_tensor_dem_pr_fix_report.md",
+   "line": 9,
+   "pointer": "tests/test_fracture_gen_mass_footprint.py",
+   "kind": "test",
    "status": "TRACKED"
   },
   {
@@ -4691,6 +5135,55 @@
    "status": "TRACKED"
   },
   {
+   "doc": "docs/pr149_merge_resolution_m3843.md",
+   "line": 8,
+   "pointer": "docs/dem3d-shear-cross-section-convergence/report.json",
+   "kind": "data",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr149_merge_resolution_m3843.md",
+   "line": 13,
+   "pointer": "docs/dem3d-shear-cross-section-convergence/summary.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr149_merge_resolution_m3843.md",
+   "line": 18,
+   "pointer": "docs/dem3d_shear_cross_section_convergence.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr149_merge_resolution_m3843.md",
+   "line": 23,
+   "pointer": "scripts/audit_dem3d_shear_cross_section_convergence.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr149_merge_resolution_m3843.md",
+   "line": 28,
+   "pointer": "tests/test_dem3d_shear_cross_section_convergence.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr149_merge_resolution_m3843.md",
+   "line": 33,
+   "pointer": "src/tensordem/shear_static.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr149_merge_resolution_m3843.md",
+   "line": 43,
+   "pointer": "docs/dem3d_shear_static_reference.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
    "doc": "docs/pr166_merge_conflict_resolution.md",
    "line": 15,
    "pointer": "src/tensordem/fracture_gen.py",
@@ -4722,6 +5215,57 @@
    "doc": "docs/pr166_merge_conflict_resolution.md",
    "line": 90,
    "pointer": "tests/test_fracture_gen_footprint_breakage.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr166_merge_resolution_report.md",
+   "line": 18,
+   "pointer": "src/tensordem/fracture_gen.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr_red_rca_m3184_m3201_m3207_m3267.md",
+   "line": 10,
+   "pointer": "tests/test_threefield_lbm_transport.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr_red_rca_m3184_m3201_m3207_m3267.md",
+   "line": 10,
+   "pointer": "tests/test_threefield_lbm_transport.py::test_streaming_is_mass_conserving",
+   "kind": "test",
+   "status": "TRACKED",
+   "resolved": "tests/test_threefield_lbm_transport.py"
+  },
+  {
+   "doc": "docs/pr_red_rca_m3184_m3201_m3207_m3267.md",
+   "line": 11,
+   "pointer": "tests/test_ridge_dem_core_physics.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr_red_rca_m3184_m3201_m3207_m3267.md",
+   "line": 11,
+   "pointer": "tests/test_ridge_dem_core_physics.py::test_recommended_dt_elastic_limit",
+   "kind": "test",
+   "status": "TRACKED",
+   "resolved": "tests/test_ridge_dem_core_physics.py"
+  },
+  {
+   "doc": "docs/pr_red_rca_m3184_m3201_m3207_m3267.md",
+   "line": 18,
+   "pointer": "tests/test_dem3d_born_huang.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/pr_red_rca_m3184_m3201_m3207_m3267.md",
+   "line": 95,
+   "pointer": "tests/test_doc_evidence_pointers.py",
    "kind": "test",
    "status": "TRACKED"
   },
@@ -4813,6 +5357,41 @@
     "scripts/verify_ridge_geotech_capacity.py"
    ],
    "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/ridge_grounding_artifact_refresh.md",
+   "line": 3,
+   "pointer": "docs/ridge_capacity_skempton_audit.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ridge_grounding_artifact_refresh.md",
+   "line": 10,
+   "pointer": "docs/ice_ridge_pipeline_grounding.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ridge_grounding_artifact_refresh.md",
+   "line": 19,
+   "pointer": "scripts/run_ice_ridge_grounding.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ridge_grounding_artifact_refresh.md",
+   "line": 41,
+   "pointer": "docs/artifacts/ridge_grounding_refresh/summary.json",
+   "kind": "data",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ridge_grounding_artifact_refresh.md",
+   "line": 172,
+   "pointer": "scripts/run_ridge_rigid_sensitivity.py",
+   "kind": "code",
+   "status": "TRACKED"
   },
   {
    "doc": "docs/ridge_winkler_subgrade_modulus_verification.md",
@@ -4999,7 +5578,8 @@
     "scripts/render_dem3d_hertz_restitution.py",
     "scripts/sir_pc2_figures.py",
     "scripts/verify_dem3d_hertz_restitution.py",
-    "scripts/verify_dem3d_rolling_resistance.py"
+    "scripts/verify_dem3d_rolling_resistance.py",
+    "tests/test_dem3d_energy_friction_rolling.py"
    ],
    "remedy": "REGENERABLE"
   },
@@ -5028,7 +5608,8 @@
     "scripts/render_dem3d_hertz_restitution.py",
     "scripts/sir_pc2_figures.py",
     "scripts/verify_dem3d_hertz_restitution.py",
-    "scripts/verify_dem3d_rolling_resistance.py"
+    "scripts/verify_dem3d_rolling_resistance.py",
+    "tests/test_dem3d_energy_friction_rolling.py"
    ],
    "remedy": "REGENERABLE"
   },
@@ -5074,6 +5655,70 @@
    "pointer": "benchmarks/ice_floe_physics.py",
    "kind": "code",
    "status": "TRACKED"
+  },
+  {
+   "doc": "docs/threefield-thermal-melting-verification.md",
+   "line": 7,
+   "pointer": "scripts/audit_threefield_thermal.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/threefield-thermal-melting-verification.md",
+   "line": 7,
+   "pointer": "src/tensordem/threefield/thermal.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/threefield-thermal-melting-verification.md",
+   "line": 8,
+   "pointer": "tests/test_threefield_thermal_verification.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/threefield-thermal-melting-verification.md",
+   "line": 74,
+   "pointer": "docs/threefield-thermal/thermal_verification.json",
+   "kind": "data",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/threefield-thermal-melting-verification.md",
+   "line": 111,
+   "pointer": "docs/threefield-thermal/figures/closed_form_error.png",
+   "kind": "figure",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/threefield-thermal-melting-verification.md",
+   "line": 113,
+   "pointer": "docs/threefield-thermal/figures/rk2_convergence.png",
+   "kind": "figure",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/threefield-thermal-melting-verification.md",
+   "line": 115,
+   "pointer": "docs/threefield-thermal/figures/diameter_history.png",
+   "kind": "figure",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/threefield-thermal-melting-verification.md",
+   "line": 137,
+   "pointer": "tests/test_threefield_lbm_transport.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/threefield-thermal-melting-verification.md",
+   "line": 137,
+   "pointer": "tests/test_threefield_lbm_transport.py::test_streaming_is_mass_conserving",
+   "kind": "test",
+   "status": "TRACKED",
+   "resolved": "tests/test_threefield_lbm_transport.py"
   },
   {
    "doc": "docs/threefield/FORMULAS.md",
