@@ -19,9 +19,13 @@ until the ledger is regenerated and the new pointer is fixed or justified.
 on a synthetic tree in which the four outcomes are known, so the gate cannot
 silently degrade into "everything resolves".
 """
+import contextlib
+import io
+import json
 import sys
 import tempfile
 import unittest
+import unittest.mock
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -185,6 +189,71 @@ class OrphanControlTests(unittest.TestCase):
             self.assertEqual(len(entries), 1)
             self.assertEqual(entries[0]["status"], "MISSING")
             self.assertEqual(entries[0]["remedy"], "ORPHAN")
+
+
+class LostEvidenceControlTests(unittest.TestCase):
+    """A blob the ledger recorded as committed but the tree lost must be named.
+
+    This is the shape of the m4857 regression: the ledger said ``TRACKED`` for
+    three files under ``artifacts/``, the merge that landed the document did not
+    carry the blobs, and ``--check`` reported only a bare ``+/-`` diff. Those two
+    outcomes are not the same maintenance action -- a TRACKED -> absent flip has
+    to be repaired by restoring the blob, whereas ordinary staleness is repaired
+    by regenerating the ledger -- so the gate names them separately.
+    """
+
+    def test_tracked_then_gone_is_reported(self):
+        committed = [
+            {"doc": "docs/d.md", "line": 7, "pointer": "artifacts/run/e.json", "status": "TRACKED"},
+            {"doc": "docs/d.md", "line": 9, "pointer": "scripts/make.py", "status": "TRACKED"},
+        ]
+        current = [
+            {"doc": "docs/d.md", "line": 7, "pointer": "artifacts/run/e.json", "status": "MISSING"},
+            {"doc": "docs/d.md", "line": 9, "pointer": "scripts/make.py", "status": "TRACKED"},
+        ]
+        self.assertEqual(
+            audit.lost_from_history(committed, current),
+            ["docs/d.md:7 artifacts/run/e.json -> MISSING"],
+        )
+
+    def test_still_present_is_not_a_loss(self):
+        entry = {"doc": "docs/d.md", "line": 7, "pointer": "a/b.json", "status": "TRACKED"}
+        self.assertEqual(audit.lost_from_history([entry], [dict(entry)]), [])
+
+    def test_pointer_the_document_no_longer_cites_is_not_a_loss(self):
+        entry = {"doc": "docs/d.md", "line": 7, "pointer": "a/b.json", "status": "TRACKED"}
+        self.assertEqual(audit.lost_from_history([entry], []), [])
+
+    def test_an_already_uncommitted_pointer_is_not_a_loss(self):
+        committed = [{"doc": "docs/d.md", "line": 7, "pointer": "a/b.json", "status": "MISSING"}]
+        current = [{"doc": "docs/d.md", "line": 7, "pointer": "a/b.json", "status": "MISSING"}]
+        self.assertEqual(audit.lost_from_history(committed, current), [])
+
+
+class StaleLedgerDiagnosisTests(unittest.TestCase):
+    """End-to-end: ``--check`` on a doctored ledger names the lost blob."""
+
+    def test_check_names_a_blob_the_ledger_called_committed(self):
+        report = audit.scan()
+        target = next(
+            e
+            for e in report["entries"]
+            if e["status"] == "MISSING" and e["kind"] in ("data", "figure")
+        )
+        doctored = json.loads(json.dumps(report))
+        for entry in doctored["entries"]:
+            if (entry["doc"], entry["pointer"]) == (target["doc"], target["pointer"]):
+                entry["status"] = "TRACKED"
+        with tempfile.TemporaryDirectory() as tmp:
+            ledger = Path(tmp) / "ledger.json"
+            ledger.write_text(json.dumps(doctored, indent=1) + "\n", encoding="utf-8")
+            err = io.StringIO()
+            with unittest.mock.patch.object(audit, "LEDGER", ledger), contextlib.redirect_stderr(err):
+                rc = audit.main(["--check"])
+        self.assertEqual(rc, 1)
+        message = err.getvalue()
+        self.assertIn("recorded as committed but gone from the checkout", message)
+        self.assertIn(f"{target['doc']}:{target['line']} {target['pointer']}", message)
 
 
 if __name__ == "__main__":
