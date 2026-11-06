@@ -96,3 +96,22 @@ assert rel_err < 0.005, "... this test is expected to FAIL (red)"
 - `external_work_J` 工况依赖：若将来该场景接入外驱动，应改回乘性符号翻转，
   测试已用 `assert sim.accounting["external_work_J"] == 0.0` 钉住前提并在报错信息中提示。
 - 判据 0.5 % 沿用正控原值，未放宽度；负控裕度最紧的通道仍有 8 倍。
+## 7. 复现与产物（m4790 复算）
+
+本节的数字全部由脚本注入，无手抄：
+
+- 负控套件 `tests/test_dem2d_energy_fracture_ledger_negative.py`
+  （`pytest -q tests/test_dem2d_energy_fracture_ledger_negative.py`
+  → 8 passed, 1 skipped；skip 为 `external_work_J` 休眠通道的乘性空转守卫）。
+- 图与逐通道残差 `scripts/plot_m4790_sensitivity.py`
+  → `artifacts/m4790/ledger_corruption_sensitivity.png`（残差柱状图 + 0.5 % 判据线
+  + 3 % 参考线；干净基线 0.2796 %）。
+- 报告装配 `scripts/post_m4790_report.py` → `artifacts/m4790/report.md`。
+
+复算得到与本文件 §4 一致的残差（干净台账 0.2796 %；检出裕度最紧的通道
+`pair_contact_acquired_J` ×0 为 4.0 %≈8×判据，最宽 `tool_work_J` ×0 为 398.8 %；
+休眠通道 `external_work_J` 用加性故障 +`tool_work_J` 得 79.6 %）。逐通道数字落在
+`artifacts/m4790/sensitivity.json`，报告由 `scripts/post_m4790_report.py` 从该 JSON
+注入后发布，无手抄。注意本文件的 §1–§6 成文于 m4790；此后 main 上的负控测试已升级为
+含 `balance_check` 门函数、空转守卫与 `external_work_J` 加性故障的 10 用例版本，
+本节的复算与之口径一致（判据 0.5 %、同一残差定义）。
