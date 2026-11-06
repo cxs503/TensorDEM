@@ -92,7 +92,8 @@ def kind_of(token: str) -> str:
     if suffix == "py":
         return "code"
     if suffix == "md":
-        return "doc"
+        # a .md under artifacts/ is a generated report (run artifact), not a source doc
+        return "data" if token.startswith("artifacts/") else "doc"
     if suffix in {"png", "svg", "pdf"}:
         return "figure"
     return "data"
