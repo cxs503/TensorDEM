@@ -1,20 +1,20 @@
 {
  "schema": "tensordem.doc-evidence-ledger/1",
  "generated_by": "scripts/audit_doc_evidence.py",
- "documents_scanned": 141,
- "pointers": 805,
+ "documents_scanned": 145,
+ "pointers": 824,
  "counts": {
-  "code:TRACKED": 265,
-  "data:MISSING": 41,
+  "code:TRACKED": 273,
+  "data:MISSING": 44,
   "data:TRACKED": 39,
   "doc:TRACKED": 115,
   "figure:MISSING": 83,
-  "figure:TRACKED": 19,
-  "test:TRACKED": 243
+  "figure:TRACKED": 20,
+  "test:TRACKED": 250
  },
  "remedy": {
-  "REGENERABLE": 124,
-  "TRACKED": 681
+  "REGENERABLE": 127,
+  "TRACKED": 697
  },
  "unresolved_per_doc": {
   "docs/TENSORDEM_UPSTREAM_DIFF_M1630.md": 4,
@@ -22,6 +22,7 @@
   "docs/accounting_ledger_validation.md": 2,
   "docs/buoyancy_free_float_verification.md": 3,
   "docs/ci_clearance_m3317.md": 1,
+  "docs/coupling_restart_boundary_matrix.md": 1,
   "docs/dem2d_lattice_elasticity.md": 1,
   "docs/dem3d_bond_fracture_energy.md": 1,
   "docs/dem3d_brazilian_hondros_closure.md": 2,
@@ -61,6 +62,7 @@
   "docs/sdaa_coupling/HERTZ.md": 1,
   "docs/sir-pc2/SIR_PC2_DEM_BUOYANCY_WET_COUPLING.md": 7,
   "docs/tensordem_floe_buoyancy_validation.md": 3,
+  "docs/test_coverage_expansion_m4729.md": 2,
   "docs/threefield/FORMULAS.md": 2,
   "docs/threefield_lbm_transport_verification.md": 3,
   "docs/threefield_wake_boundary_verification.md": 3,
@@ -707,6 +709,67 @@
    "line": 60,
    "pointer": "scripts/audit_smooth_plane.py",
    "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/coupling_restart_boundary_matrix.md",
+   "line": 3,
+   "pointer": "tests/test_coupling_restart.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/coupling_restart_boundary_matrix.md",
+   "line": 46,
+   "pointer": "scripts/verify_restart_boundary_negative_controls.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/coupling_restart_boundary_matrix.md",
+   "line": 50,
+   "pointer": "artifacts/coupling_restart_negative_controls.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "scripts/plot_restart_boundary_audit.py",
+    "scripts/verify_restart_boundary_negative_controls.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/dem2d_energy_fracture_ledger_negative_controls_m4804.md",
+   "line": 3,
+   "pointer": "tests/test_dem2d_energy_fracture_ledger_negative.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem2d_energy_fracture_ledger_negative_controls_m4804.md",
+   "line": 19,
+   "pointer": "scripts/negative_controls_m4804.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem2d_energy_fracture_ledger_negative_controls_m4804.md",
+   "line": 20,
+   "pointer": "scripts/plot_m4804_ledger_negative_margins.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem2d_energy_fracture_ledger_negative_controls_m4804.md",
+   "line": 30,
+   "pointer": "tests/test_accounting_ledger_validation.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem2d_energy_fracture_ledger_negative_controls_m4804.md",
+   "line": 68,
+   "pointer": "docs/figures/m4804_negative_control_margins.png",
+   "kind": "figure",
    "status": "TRACKED"
   },
   {
@@ -5655,6 +5718,92 @@
    "pointer": "benchmarks/ice_floe_physics.py",
    "kind": "code",
    "status": "TRACKED"
+  },
+  {
+   "doc": "docs/test_coverage_expansion_m4729.md",
+   "line": 32,
+   "pointer": "tests/test_dem3d_shear_cross_section_convergence.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/test_coverage_expansion_m4729.md",
+   "line": 40,
+   "pointer": "tests/test_shear_convergence_fit.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/test_coverage_expansion_m4729.md",
+   "line": 41,
+   "pointer": "tests/test_threefield_coupling_units.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/test_coverage_expansion_m4729.md",
+   "line": 42,
+   "pointer": "tests/test_buoyancy_verification_reference.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/test_coverage_expansion_m4729.md",
+   "line": 58,
+   "pointer": "scripts/negative_controls_m4729.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/test_coverage_expansion_m4729.md",
+   "line": 60,
+   "pointer": "artifacts/m4729_negative_controls/negative_injection.log",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "scripts/negative_controls_m4729.py",
+    "scripts/negative_controls_m4804.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/test_coverage_expansion_m4729.md",
+   "line": 64,
+   "pointer": "src/tensordem/shear_convergence.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/test_coverage_expansion_m4729.md",
+   "line": 65,
+   "pointer": "src/tensordem/threefield/coupling.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/test_coverage_expansion_m4729.md",
+   "line": 66,
+   "pointer": "src/tensordem/buoyancy_verification.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/test_coverage_expansion_m4729.md",
+   "line": 82,
+   "pointer": "scripts/plot_m4729_test_coverage.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/test_coverage_expansion_m4729.md",
+   "line": 96,
+   "pointer": "artifacts/m4729_negative_controls/figure_metrics.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "scripts/plot_m4729_test_coverage.py"
+   ],
+   "remedy": "REGENERABLE"
   },
   {
    "doc": "docs/threefield-thermal-melting-verification.md",
