@@ -85,8 +85,8 @@ ruff check tests/test_shear_convergence_fit.py \
 
 - **但仓库级 `ruff check .` 在基线就不是绿的**：本次改动前（`git archive HEAD`
   导出到临时目录）为 562 处告警，改动后工作树为 561 处，差值可追溯到工作树里
-  缺失的一个基线文件（`src/tensorsph/surface_tension.py`），与本次改动无关；新增
-  文件的告警数为 0。历史告警以 `E702`（一行多语句分号）、`E701`、`E402` 为主，
+  缺失的一个 TensorSPH 仓基线模块（surface_tension，属兄弟仓 tensorphysics/
+  tensorsph，不在本仓路径下），与本次改动无关；新增文件的告警数为 0。历史告警以 `E702`（一行多语句分号）、`E701`、`E402` 为主，
   分布在 `scripts/` 与若干早期 `src/` 模块。要让它变绿必须做全仓风格重排，与
   「改动最小、可验证」冲突，故本单**不**顺手做，仅如实记录：仓库级
   `ruff check .` 未通过属既有欠账，本单未增加任何新告警。
