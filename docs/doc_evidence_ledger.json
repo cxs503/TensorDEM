@@ -1,20 +1,20 @@
 {
  "schema": "tensordem.doc-evidence-ledger/1",
  "generated_by": "scripts/audit_doc_evidence.py",
- "documents_scanned": 141,
- "pointers": 805,
+ "documents_scanned": 143,
+ "pointers": 816,
  "counts": {
-  "code:TRACKED": 265,
+  "code:TRACKED": 267,
   "data:MISSING": 41,
-  "data:TRACKED": 39,
-  "doc:TRACKED": 115,
+  "data:TRACKED": 40,
+  "doc:TRACKED": 119,
   "figure:MISSING": 83,
-  "figure:TRACKED": 19,
-  "test:TRACKED": 243
+  "figure:TRACKED": 21,
+  "test:TRACKED": 245
  },
  "remedy": {
   "REGENERABLE": 124,
-  "TRACKED": 681
+  "TRACKED": 692
  },
  "unresolved_per_doc": {
   "docs/TENSORDEM_UPSTREAM_DIFF_M1630.md": 4,
@@ -856,6 +856,7 @@
    "kind": "figure",
    "status": "MISSING",
    "producers": [
+    "scripts/collect_tutorial_first_verified_run.py",
     "scripts/validate_lattice_elasticity2d.py"
    ],
    "remedy": "REGENERABLE"
@@ -5940,6 +5941,83 @@
     "scripts/audit_threefield_wake_boundaries.py"
    ],
    "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/tutorials/first_verified_run.md",
+   "line": 9,
+   "pointer": "tests/test_tutorial_first_verified_run.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/tutorials/first_verified_run.md",
+   "line": 305,
+   "pointer": "docs/dem3d_lattice_elastic_constants.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/tutorials/first_verified_run.md",
+   "line": 307,
+   "pointer": "docs/dem3d_three_point_bending.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/tutorials/first_verified_run.md",
+   "line": 307,
+   "pointer": "docs/indentation_benchmark_protocol.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/tutorials/first_verified_run.md",
+   "line": 328,
+   "pointer": "scripts/collect_tutorial_first_verified_run.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/tutorials/first_verified_run.md",
+   "line": 329,
+   "pointer": "artifacts/tutorial_first_verified_run/summary.json",
+   "kind": "data",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/tutorials/first_verified_run.md",
+   "line": 330,
+   "pointer": "artifacts/tutorial_first_verified_run/figures/directional_modulus.png",
+   "kind": "figure",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/tutorials/first_verified_run.md",
+   "line": 331,
+   "pointer": "artifacts/tutorial_first_verified_run/figures/energy_ledger_convergence.png",
+   "kind": "figure",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/tutorials/first_verified_run.md",
+   "line": 334,
+   "pointer": "docs/dem2d_lattice_elasticity.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/tutorials/first_verified_run.md",
+   "line": 334,
+   "pointer": "scripts/validate_lattice_elasticity2d.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/tutorials/first_verified_run.md",
+   "line": 335,
+   "pointer": "tests/test_lattice_elasticity2d.py",
+   "kind": "test",
+   "status": "TRACKED"
   },
   {
    "doc": "docs/verification-execution/execution_ledger.md",
