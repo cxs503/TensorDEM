@@ -228,7 +228,7 @@ class WeibullFitRecoveryTests(unittest.TestCase):
         rng = np.random.default_rng(99)
         samples = (1.5 * np.power(-np.log1p(-rng.random(10_000)), 1.0 / 2.0)).tolist()
         result = fit_weibull_cdf(samples)
-        self.assertGreater(result["r2"], 0.99)
+        self.assertGreater(result["r_squared"], 0.99)
 
 
 # ---------------------------------------------------------------------------
