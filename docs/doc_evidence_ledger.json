@@ -1,20 +1,20 @@
 {
  "schema": "tensordem.doc-evidence-ledger/1",
  "generated_by": "scripts/audit_doc_evidence.py",
- "documents_scanned": 153,
- "pointers": 886,
+ "documents_scanned": 154,
+ "pointers": 895,
  "counts": {
-  "code:TRACKED": 292,
+  "code:TRACKED": 295,
   "data:MISSING": 48,
-  "data:TRACKED": 45,
-  "doc:TRACKED": 126,
+  "data:TRACKED": 47,
+  "doc:TRACKED": 127,
   "figure:MISSING": 89,
-  "figure:TRACKED": 22,
-  "test:TRACKED": 264
+  "figure:TRACKED": 23,
+  "test:TRACKED": 266
  },
  "remedy": {
   "REGENERABLE": 137,
-  "TRACKED": 749
+  "TRACKED": 758
  },
  "unresolved_per_doc": {
   "docs/TENSORDEM_UPSTREAM_DIFF_M1630.md": 4,
@@ -979,7 +979,7 @@
    "doc": "docs/dem2d_energy_fracture_ledger_negative_controls.md",
    "line": 106,
    "pointer": "artifacts/m4790/report.md",
-   "kind": "doc",
+   "kind": "data",
    "status": "TRACKED"
   },
   {
@@ -1000,6 +1000,55 @@
    "doc": "docs/dem2d_energy_fracture_ledger_negative_controls.md",
    "line": 117,
    "pointer": "tests/test_m4790_sensitivity_evidence.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem2d_energy_fracture_ledger_negative_controls_m4804.md",
+   "line": 6,
+   "pointer": "docs/dem2d_energy_fracture_ledger_negative_controls.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem2d_energy_fracture_ledger_negative_controls_m4804.md",
+   "line": 17,
+   "pointer": "src/tensordem/dem.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem2d_energy_fracture_ledger_negative_controls_m4804.md",
+   "line": 67,
+   "pointer": "scripts/negative_controls_m4804.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem2d_energy_fracture_ledger_negative_controls_m4804.md",
+   "line": 68,
+   "pointer": "artifacts/m4804_negative_control_margins/margins.json",
+   "kind": "data",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem2d_energy_fracture_ledger_negative_controls_m4804.md",
+   "line": 101,
+   "pointer": "docs/figures/m4804_negative_control_margins.png",
+   "kind": "figure",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem2d_energy_fracture_ledger_negative_controls_m4804.md",
+   "line": 102,
+   "pointer": "scripts/plot_m4804_ledger_negative_margins.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem2d_energy_fracture_ledger_negative_controls_m4804.md",
+   "line": 128,
+   "pointer": "tests/test_dem2d_energy_fracture_ledger_negative.py",
    "kind": "test",
    "status": "TRACKED"
   },
@@ -6127,6 +6176,20 @@
    "doc": "docs/test_coverage_expansion_m4729.md",
    "line": 42,
    "pointer": "tests/test_buoyancy_verification_reference.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/test_coverage_expansion_m4729.md",
+   "line": 54,
+   "pointer": "docs/dem2d_energy_fracture_ledger_negative_controls_m4804.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/test_coverage_expansion_m4729.md",
+   "line": 54,
+   "pointer": "tests/test_dem2d_energy_fracture_ledger_negative.py",
    "kind": "test",
    "status": "TRACKED"
   },
