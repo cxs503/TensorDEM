@@ -849,8 +849,28 @@ class IceDEM3D:
                 vn = (relative_v * cnormal).sum(dim=1)
 
                 # --- Normal contact force with restitution-based damping ---
-                # Compute effective mass for restitution mapping
-                m_eff = cfg.mass / 2.0  # equal-mass spheres
+                # Effective mass of the relative coordinate.  Two *mobile*
+                # spheres share the relative velocity, so m_eff = m/2.  A pair
+                # with exactly one pinned particle (hard support: its velocity
+                # is zeroed and its position reset every step) has an infinitely
+                # massive partner, so only the free particle accelerates and
+                # the correct value is m -- the same convention as
+                # tensordem.restitution.effective_mass(m, None) and the
+                # rigid-counterpart tool/platen branches.  Using m/2 there
+                # under-damps by sqrt(2) and the realised restitution
+                # overshoots e_target (docs/dem3d_fixed_support_reduced_mass.md).
+                # The all-mobile case keeps the exact scalar expression, so
+                # legacy trajectories stay bit-for-bit.
+                m_eff: float | torch.Tensor = cfg.mass / 2.0  # equal-mass mobile spheres
+                if bool(self.fixed.any()):
+                    pinned = self.fixed[ci] ^ self.fixed[cj]
+                    if bool(pinned.any()):
+                        m_eff = torch.where(
+                            pinned,
+                            torch.as_tensor(cfg.mass, dtype=self.dtype, device=self.device),
+                            torch.as_tensor(cfg.mass / 2.0, dtype=self.dtype,
+                                            device=self.device),
+                        )
                 # Hertz: the elastic stiffness is the per-contact secant
                 # stiffness k_s(delta), so both the penalty term and the
                 # restitution-derived damper follow the local overlap.
@@ -868,8 +888,13 @@ class IceDEM3D:
                     ln_e = math.log(cfg.restitution_coefficient)
                     abs_ln_e = -ln_e
                     zeta = abs_ln_e / math.sqrt(math.pi ** 2 + abs_ln_e ** 2)
+                    # The pinned-pair branch makes m_eff a per-pair tensor;
+                    # the all-mobile scalar path keeps math.sqrt bit-for-bit.
                     gamma_n = (2.0 * zeta * torch.sqrt(k_local * m_eff) if hertz
-                               else 2.0 * zeta * math.sqrt(cfg.contact_stiffness * m_eff))
+                               else 2.0 * zeta * (
+                                   torch.sqrt(cfg.contact_stiffness * m_eff)
+                                   if torch.is_tensor(m_eff)
+                                   else math.sqrt(cfg.contact_stiffness * m_eff)))
                 else:
                     gamma_n = 0.0
 
