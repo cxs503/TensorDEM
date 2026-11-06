@@ -44,11 +44,19 @@ L0 = 2.0 * R
 EPS_B = 0.015
 
 
-def check_provenance() -> str:
-    """Return the tensordem source path; fail if it leaks from another tree."""
-    import tensordem
+def check_provenance(module_path: str | None = None) -> str:
+    """Return the tensordem source path; fail if it leaks from another tree.
 
-    path = os.path.abspath(tensordem.__file__)
+    ``module_path`` defaults to the importable package's ``__file__``.  Tests
+    pass a synthetic path so the rejection branch can be exercised without
+    touching ``sys.modules``.
+    """
+    if module_path is None:
+        import tensordem
+
+        module_path = tensordem.__file__
+
+    path = os.path.abspath(module_path)
     here = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     if not path.startswith(here + os.sep):
         raise RuntimeError(

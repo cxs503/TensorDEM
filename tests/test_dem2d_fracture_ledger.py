@@ -9,16 +9,15 @@ closed forms and to a k*xi^2 scaling law.
 
 import os
 import sys
+import tempfile
 import unittest
+from pathlib import Path
 
 import torch
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from scripts.verify_dem2d_fracture_ledger import (  # noqa: E402
-    EPS_B,
-    L0,
-    R,
     case_a_controlled_break,
     case_b_scaling,
     case_c_indentation_events,
@@ -27,13 +26,31 @@ from scripts.verify_dem2d_fracture_ledger import (  # noqa: E402
 )
 
 
+ROOT = Path(__file__).resolve().parents[1]
+
+
 class Dem2DFractureLedgerTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         torch.set_num_threads(1)
 
     def test_provenance(self):
-        self.assertIn(os.sep + "work" + os.sep, check_provenance())
+        # The engine must come from *this* checkout, not from an editable install
+        # pointing at another worktree.  Anchor on the repository root: an earlier
+        # version asserted on os.sep + "work" + os.sep, which only probed the
+        # runner's mount layout and goes red on runners that check out under
+        # ``_work`` (self-hosted CI), for a tree that is perfectly clean.
+        resolved = Path(check_provenance()).resolve()
+        self.assertEqual(resolved.parent.parent, ROOT / "src", str(resolved))
+        self.assertEqual(resolved.name, "__init__.py")
+
+    def test_provenance_rejects_a_foreign_tree(self):
+        # Negative control: without it the positive test above could pass on a
+        # gate that never fails.
+        outside = os.path.join(tempfile.gettempdir(), "elsewhere", "tensordem",
+                               "__init__.py")
+        with self.assertRaises(RuntimeError):
+            check_provenance(outside)
 
     def test_controlled_break_matches_closed_form(self):
         row = case_a_controlled_break()
