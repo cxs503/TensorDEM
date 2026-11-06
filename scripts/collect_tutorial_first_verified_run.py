@@ -87,8 +87,15 @@ def summary(namespace: dict[str, object], log: str) -> dict[str, object]:
             "broken_bonds": int(namespace["run_impact"].broken),
         },
         "calibration": {
+            # ``bond_stiffness_from_young_modulus`` returns the *axis* bond stiffness
+            # k_axis = 3/4 E t, which is what ``DEMConfig.bond_stiffness`` expects; the
+            # isotropic diagonal stiffness is k_diag = 0.5 k_axis, and E = 4/3 k_axis / t
+            # only holds with that correction applied.  Recording a single number here
+            # used to invite a factor-2 calibration error (k_axis vs 2 k_axis = 19 GPa).
             "young_modulus_Pa": float(namespace["ice_young"]),
-            "bond_stiffness_for_that_modulus_N_per_m": float(namespace["k_for_ice"]),
+            "axis_bond_stiffness_N_per_m": float(namespace["k_axis"]),
+            "diagonal_bond_stiffness_N_per_m": float(namespace["k_diag"]),
+            "diagonal_to_axis_ratio": float(namespace["le"].ISOTROPIC_DIAGONAL_SCALE),
         },
         "log_lines": log.strip().splitlines(),
     }
