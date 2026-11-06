@@ -8,7 +8,7 @@
 ## Summary
 
 This document records the analytical verification of the turbulent fragmentation
-physics core (`threefield/fragmentation.py`).  The module implements a breakup
+physics core (`src/tensordem/threefield/fragmentation.py`).  The module implements a breakup
 criterion for ice floes drifting in a propeller race: floes exceeding a critical
 length `L_crit` are fragmented by turbulent bending stresses until all survivors
 are below the threshold.  The verification confirms the *model's own internal
@@ -152,7 +152,7 @@ docstring and must be quoted with any number taken from this verification.
 
 ## Conclusion
 
-The `threefield/fragmentation.py` module is internally consistent: the bending
+The `src/tensordem/threefield/fragmentation.py` module is internally consistent: the bending
 stress formula, critical floe length, mass conservation, Weibull fitting, and
 KS statistic all pass analytical verification against independent references.
 The verification confirms the *model's own* formulas, not physical accuracy
