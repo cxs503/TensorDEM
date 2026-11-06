@@ -48,10 +48,33 @@ def test_streaming_matches_independent_periodic_roll():
 
 
 def test_streaming_is_mass_conserving():
+    """Periodic streaming preserves mass to double-precision rounding only.
+
+    Streaming maps the field onto itself (wrap-around resampling plus
+    accumulation), so mass is conserved *exactly* in real arithmetic.  The
+    measured residual is therefore pure summation rounding and its size scales
+    with the total mass: an absolute guard such as ``1e-12`` is below one ulp
+    of ``sum(f)`` for this lattice (total ~1.6e4) and only passed by luck of the
+    summation order.  We bound it by a rounding budget instead, and keep the
+    physics claim as a *relative* one (rounding-level, far below any physical
+    drift).
+    """
     inst = make()
     torch.manual_seed(1)
     f = torch.rand((inst.nx, inst.ny, inst.nz, 19), dtype=torch.float64)
-    assert float((periodic_stream(inst, f).sum() - f.sum()).abs()) < 1e-12
+    streamed = periodic_stream(inst, f)
+    total = float(f.abs().sum())
+    residual = abs(float(streamed.sum()) - float(f.sum()))
+    eps = float(torch.finfo(f.dtype).eps)
+    # 8 ulp of the accumulated mass: a generous but rounding-level bound
+    budget = 8.0 * eps * total
+    assert residual <= budget, (
+        f"streaming mass residual {residual:.3e} exceeds the rounding budget "
+        f"{budget:.3e} (total mass {total:.6e})"
+    )
+    assert residual / total < 1e-14, (
+        f"streaming mass drift {residual / total:.3e} is above rounding level"
+    )
 
 
 def test_cs_zero_is_exactly_laminar():
