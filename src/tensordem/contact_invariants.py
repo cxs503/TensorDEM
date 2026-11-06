@@ -100,7 +100,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 import math
-from typing import Any, Iterable, Sequence
+from typing import Any, Callable, Sequence
 
 import torch
 
@@ -121,12 +121,18 @@ __all__ = [
     "evaluate_forces",
     "brute_force_pair_forces",
     "bond_forces_reference",
+    "DEFAULT_OFFSET",
+    "INVARIANT_CHECKS",
     "momentum_closure",
+    "translation",
+    "rotation",
+    "brute_force",
+    "determinism",
+    "load_superposition",
     "translation_invariance",
     "rotation_equivariance",
     "brute_force_agreement",
     "determinism_repeatability",
-    "load_superposition",
     "tangent_reciprocity",
     "run_audit",
     "summarise",
@@ -693,6 +699,53 @@ def monitor_purity(case: CaseSpec, seed: int, steps: int = 60) -> dict[str, floa
 
 
 # --------------------------------------------------------------------------
+# Invariant-named entry points
+# --------------------------------------------------------------------------
+# ``INVARIANTS`` above lists the *physical* names that appear in
+# ``InvariantResult.invariant``, ``TOLERANCES``, the summary table and the audit
+# report.  Some of those natural names differ from the descriptive function
+# names (``translation`` vs ``translation_invariance``, ...), so the invariant
+# name alone used to be an unusable handle: dispatching on it required private
+# knowledge of the mapping.  The thin wrappers below close that gap -- every
+# entry of ``INVARIANTS`` except ``reciprocity`` is callable as
+# ``contact_invariants.<invariant>(case, seed)`` -- and ``INVARIANT_CHECKS``
+# makes the mapping explicit instead of implicit knowledge in ``run_audit``.
+DEFAULT_OFFSET: tuple[float, float, float] = (1.5, -7.25, 3.5)
+
+
+def translation(
+    case: CaseSpec, seed: int, offset: Sequence[float] = DEFAULT_OFFSET
+) -> InvariantResult:
+    """Invariant ``translation``: ``F(x + c) == F(x)`` (see ``invariance``)."""
+    return translation_invariance(case, seed, offset)
+
+
+def rotation(case: CaseSpec, seed: int) -> InvariantResult:
+    """Invariant ``rotation``: ``F(Rx, Rv) == R F(x, v)``."""
+    return rotation_equivariance(case, seed)
+
+
+def brute_force(case: CaseSpec, seed: int) -> InvariantResult:
+    """Invariant ``brute_force``: agreement with the ``O(N^2)`` reference."""
+    return brute_force_agreement(case, seed)
+
+
+def determinism(case: CaseSpec, seed: int) -> InvariantResult:
+    """Invariant ``determinism``: repeated evaluation is bitwise identical."""
+    return determinism_repeatability(case, seed)
+
+
+INVARIANT_CHECKS: dict[str, Callable[[CaseSpec, int], InvariantResult]] = {
+    "momentum_closure": momentum_closure,
+    "translation": translation,
+    "rotation": rotation,
+    "brute_force": brute_force,
+    "determinism": determinism,
+    "load_superposition": load_superposition,
+}
+
+
+# --------------------------------------------------------------------------
 # Audit driver
 # --------------------------------------------------------------------------
 DEFAULT_CASES: tuple[CaseSpec, ...] = (
@@ -719,7 +772,7 @@ DEFAULT_SEEDS: tuple[int, ...] = (0, 1, 2, 3)
 def run_audit(
     seeds: Sequence[int] = DEFAULT_SEEDS,
     cases: Sequence[CaseSpec] | None = None,
-    offset: Sequence[float] = (1.5, -7.25, 3.5),
+    offset: Sequence[float] = DEFAULT_OFFSET,
     include_reciprocity: bool = True,
 ) -> list[InvariantResult]:
     """Run every applicable invariant for every case/seed pair.
