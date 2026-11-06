@@ -286,18 +286,31 @@ print(f"能量账相对残差 dt={coarse:.3e} → dt/2={fine:.3e}，比值={fine
 
 ```python
 def bond_stiffness_from_young_modulus(young_pa: float, thickness: float) -> float:
-    """各向同性格点：k = 3/4 * E * thickness（平面应力、单轴 0°/90° 一致）。"""
+    """各向同性格点**轴键**刚度：k_axis = 3/4 * E * thickness（对角键取 k_axis/2）。"""
     return 0.75 * young_pa * thickness
 
-def young_modulus_from_bond_stiffness(k: float, thickness: float) -> float:
-    return 4.0 / 3.0 * k / thickness
+def young_modulus_from_bond_stiffness(k_axis: float, thickness: float) -> float:
+    """逆变换：E = 4/3 * k_axis / thickness（前提是 k_diag = k_axis/2 各向同性修正）。"""
+    return 4.0 / 3.0 * k_axis / thickness
 
 ice_young = 9.5e9   # Pa，柱状冰/粒间弹性模量的量级参考值
-k_for_ice = bond_stiffness_from_young_modulus(ice_young, THICKNESS)
-assert math.isclose(young_modulus_from_bond_stiffness(k_for_ice, THICKNESS), ice_young, rel_tol=1e-12)
-assert math.isclose(k_for_ice, 0.75 * 9.5e9 * 0.2, rel_tol=1e-12)
-print(f"E={ice_young/1e9:.2f} GPa @ t={THICKNESS} m → bond_stiffness=k_diag*2={2 * k_for_ice:.4g} N/m（轴键）")
+k_axis = bond_stiffness_from_young_modulus(ice_young, THICKNESS)   # 传给 DEMConfig.bond_stiffness
+k_diag = le.ISOTROPIC_DIAGONAL_SCALE * k_axis                      # 对角键刚度（各向同性修正）
+assert math.isclose(k_diag, 0.5 * k_axis, rel_tol=1e-12)
+assert math.isclose(k_axis, 0.75 * 9.5e9 * 0.2, rel_tol=1e-12)
+assert math.isclose(young_modulus_from_bond_stiffness(k_axis, THICKNESS), ice_young, rel_tol=1e-12)
+# 把这对刚度真的喂回格点模块，三个方向都必须正好 9.5 GPa（不是"其中某个方向"）：
+for _row in le.directional_moduli([0.0, 45.0, 90.0], k_axis, le.ISOTROPIC_DIAGONAL_SCALE):
+    assert math.isclose(_row["youngs_modulus_N_per_m"] / THICKNESS, ice_young, rel_tol=1e-9)
+print(f"E={ice_young/1e9:.2f} GPa @ t={THICKNESS} m → 轴键 k_axis={k_axis:.4g} N/m，"
+      f"对角键 k_diag={k_diag:.4g} N/m（喂 DEMConfig.bond_stiffness 的是 k_axis）")
 ```
+
+> **陷阱 3（差 2 倍，最容易漏）**：`bond_stiffness_from_young_modulus` 返回的是**轴键**刚度
+> `k_axis = 3/4 E t`；对角键刚度是它的一半。若把返回值再乘 2 当"轴键"（或把 `k_axis/2` 当轴键）
+> 喂给引擎，模量就差 **2 倍**：`k_axis = 1.425e9` → E = 9.5 GPa，而 `2 k_axis = 2.85e9` → E = 19 GPa。
+> 若完全不做各向同性修正（对角键 = 轴键 = `k_axis`），0° 方向是 10.69 GPa、45° 方向 17.1 GPa——
+> 这就是第 5 步那个 60% 各向异性在"标定"里的直接后果。
 
 **适用范围（本教程验证到哪、没验证到哪）**
 
@@ -329,6 +342,11 @@ TORCH_DEVICE_BACKEND_AUTOLOAD=0 python3 -m pytest tests/test_tutorial_first_veri
 写出 `artifacts/tutorial_first_verified_run/summary.json`（含 `run_log.txt` 与两张图
 `artifacts/tutorial_first_verified_run/figures/directional_modulus.png`、
 `artifacts/tutorial_first_verified_run/figures/energy_ledger_convergence.png`）。
+`summary.json` 与 `run_log.txt` 随仓库提交（基线），并由门禁 `tests/test_tutorial_first_verified_run.py`
+逐字段核对：提交的基线与**重跑一次**的结果必须一致（相对误差 1e-9），正文里写死的数字
+（23% 表面亏损、60% 各向异性、C(35,2)=595、≈-2e-3 残差、差 2 倍的标定陷阱）也必须与本次执行一致，
+任一处漂移就变红。两张 png 不提交（可用上面的脚本一条命令重建，见 `docs/doc_evidence_ledger.json` 的
+`REGENERABLE` 记录）。
 
 学完想继续深入：本篇第 3–5 步背后的完整研究报告（四路径数值验证、方向模量 CSV、
 压入后果的定量分析）在 `docs/dem2d_lattice_elasticity.md`，复现脚本 `scripts/validate_lattice_elasticity2d.py`、
