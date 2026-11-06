@@ -171,10 +171,20 @@ class DEM3DConfig:
             value = getattr(self, name)
             if isinstance(value, bool) or not isinstance(value, int) or value < 2:
                 raise ValueError(f"{name} must be an integer >= 2")
-        for name in ("radius", "density", "bond_stiffness", "contact_stiffness",
-                     "breaking_strain", "shear_breaking_strain", "tool_radius", "tool_speed"):
+        for name in ("radius", "density", "breaking_strain", "shear_breaking_strain",
+                     "tool_radius", "tool_speed"):
             value = getattr(self, name)
             if not math.isfinite(value) or value <= 0:
+                raise ValueError(f"{name} must be finite and positive")
+        # ``bond_stiffness``/``contact_stiffness`` are unused sentinels under
+        # ``contact_model="hertz"``: the secant stiffness then comes from
+        # ``young_modulus``/``poisson_ratio`` (see :func:`hertz_secant_stiffness`),
+        # so 0.0 there means "take it from the Hertz model", not "missing input".
+        # The linear path really multiplies by them, so it keeps strict positivity.
+        hertz_model = self.contact_model == "hertz"
+        for name in ("bond_stiffness", "contact_stiffness"):
+            value = getattr(self, name)
+            if not math.isfinite(value) or value < 0 or (value == 0 and not hertz_model):
                 raise ValueError(f"{name} must be finite and positive")
         for name in ("contact_damping", "drag", "tool_gap", "platen_damping",
                      "top_platen_gap", "bottom_platen_gap"):
