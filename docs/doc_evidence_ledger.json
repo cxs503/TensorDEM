@@ -2,19 +2,19 @@
  "schema": "tensordem.doc-evidence-ledger/1",
  "generated_by": "scripts/audit_doc_evidence.py",
  "documents_scanned": 153,
- "pointers": 885,
+ "pointers": 886,
  "counts": {
   "code:TRACKED": 292,
-  "data:MISSING": 49,
-  "data:TRACKED": 44,
+  "data:MISSING": 48,
+  "data:TRACKED": 45,
   "doc:TRACKED": 126,
-  "figure:MISSING": 90,
-  "figure:TRACKED": 21,
-  "test:TRACKED": 263
+  "figure:MISSING": 89,
+  "figure:TRACKED": 22,
+  "test:TRACKED": 264
  },
  "remedy": {
-  "REGENERABLE": 139,
-  "TRACKED": 746
+  "REGENERABLE": 137,
+  "TRACKED": 749
  },
  "unresolved_per_doc": {
   "docs/TENSORDEM_UPSTREAM_DIFF_M1630.md": 4,
@@ -24,7 +24,7 @@
   "docs/ci_clearance_m3317.md": 1,
   "docs/ci_clearance_m4829.md": 3,
   "docs/coupling_restart_boundary_matrix.md": 1,
-  "docs/dem2d_energy_fracture_ledger_negative_controls.md": 5,
+  "docs/dem2d_energy_fracture_ledger_negative_controls.md": 3,
   "docs/dem2d_lattice_elasticity.md": 1,
   "docs/dem3d_bond_fracture_energy.md": 1,
   "docs/dem3d_brazilian_hondros_closure.md": 2,
@@ -752,7 +752,8 @@
    "kind": "data",
    "status": "MISSING",
    "producers": [
-    "scripts/m4829_ci_gate_evidence.py"
+    "scripts/m4829_ci_gate_evidence.py",
+    "scripts/m4857_ci_gate_evidence.py"
    ],
    "remedy": "REGENERABLE"
   },
@@ -770,7 +771,8 @@
    "kind": "figure",
    "status": "MISSING",
    "producers": [
-    "scripts/m4829_ci_gate_evidence.py"
+    "scripts/m4829_ci_gate_evidence.py",
+    "scripts/m4857_ci_gate_evidence.py"
    ],
    "remedy": "REGENERABLE"
   },
@@ -788,7 +790,8 @@
    "kind": "figure",
    "status": "MISSING",
    "producers": [
-    "scripts/m4829_ci_gate_evidence.py"
+    "scripts/m4829_ci_gate_evidence.py",
+    "scripts/m4857_ci_gate_evidence.py"
    ],
    "remedy": "REGENERABLE"
   },
@@ -960,9 +963,30 @@
   },
   {
    "doc": "docs/dem2d_energy_fracture_ledger_negative_controls.md",
-   "line": 106,
+   "line": 104,
    "pointer": "scripts/plot_m4790_sensitivity.py",
    "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem2d_energy_fracture_ledger_negative_controls.md",
+   "line": 105,
+   "pointer": "scripts/post_m4790_report.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem2d_energy_fracture_ledger_negative_controls.md",
+   "line": 106,
+   "pointer": "artifacts/m4790/report.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem2d_energy_fracture_ledger_negative_controls.md",
+   "line": 106,
+   "pointer": "artifacts/m4790/sensitivity.json",
+   "kind": "data",
    "status": "TRACKED"
   },
   {
@@ -970,44 +994,14 @@
    "line": 107,
    "pointer": "artifacts/m4790/ledger_corruption_sensitivity.png",
    "kind": "figure",
-   "status": "MISSING",
-   "producers": [
-    "scripts/plot_m4790_sensitivity.py",
-    "scripts/post_m4790_report.py"
-   ],
-   "remedy": "REGENERABLE"
-  },
-  {
-   "doc": "docs/dem2d_energy_fracture_ledger_negative_controls.md",
-   "line": 109,
-   "pointer": "artifacts/m4790/report.md",
-   "kind": "doc",
    "status": "TRACKED"
   },
   {
    "doc": "docs/dem2d_energy_fracture_ledger_negative_controls.md",
-   "line": 109,
-   "pointer": "scripts/post_m4790_report.py",
-   "kind": "code",
+   "line": 117,
+   "pointer": "tests/test_m4790_sensitivity_evidence.py",
+   "kind": "test",
    "status": "TRACKED"
-  },
-  {
-   "doc": "docs/dem2d_energy_fracture_ledger_negative_controls.md",
-   "line": 114,
-   "pointer": "artifacts/m4790/sensitivity.json",
-   "kind": "data",
-   "status": "MISSING",
-   "producers": [
-    "scripts/build_ridge_report.py",
-    "scripts/make_ridge_grounding_figures.py",
-    "scripts/plot_m4790_sensitivity.py",
-    "scripts/post_m4790_report.py",
-    "scripts/run_ice_ridge_grounding.py",
-    "scripts/verify_ridge_grounding_rederivation.py",
-    "src/tensordem/ridge_grounding_verification.py",
-    "tests/test_ice_ridge_grounding_rederivation.py"
-   ],
-   "remedy": "REGENERABLE"
   },
   {
    "doc": "docs/dem2d_energy_ledger_analytic_verification.md",
@@ -4858,7 +4852,6 @@
     "scripts/build_ridge_report.py",
     "scripts/hull_contact_verification.py",
     "scripts/make_contact_impact_report.py",
-    "scripts/post_m4790_report.py",
     "scripts/verify_floe_heave_finite_amplitude.py",
     "tests/test_doc_evidence_pointers.py",
     "tests/test_verification.py"
@@ -5227,7 +5220,8 @@
     "scripts/run_ice_ridge_grounding.py",
     "scripts/verify_ridge_grounding_rederivation.py",
     "src/tensordem/ridge_grounding_verification.py",
-    "tests/test_ice_ridge_grounding_rederivation.py"
+    "tests/test_ice_ridge_grounding_rederivation.py",
+    "tests/test_m4790_sensitivity_evidence.py"
    ],
    "remedy": "REGENERABLE"
   },
@@ -5292,7 +5286,9 @@
    "status": "MISSING",
    "producers": [
     "scripts/build_ridge_report.py",
-    "scripts/run_ice_ridge_grounding.py"
+    "scripts/m4857_ci_gate_evidence.py",
+    "scripts/run_ice_ridge_grounding.py",
+    "tests/test_doc_evidence_pointers.py"
    ],
    "remedy": "REGENERABLE"
   },
