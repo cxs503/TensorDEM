@@ -65,6 +65,12 @@ from .restitution import (
     restitution_from_damping_clamped,
 )
 from .dem_export import DemExport, Fragment, save_json, load_json, load_to_tensors
+from .fem_euler_bernoulli import (
+    EulerBernoulliBeam,
+    BeamConfig,
+    beam_center_deflection_analytic,
+    beam_center_deflection_static,
+)
 
 __all__ = [
     "RestitutionMeasurement",
@@ -85,4 +91,5 @@ __all__ = [
     "restitution_to_damping_clamped", "DemExport", "Fragment", "save_json",
     "load_json", "load_to_tensors", "tangential_cycle_dissipated_work", "classic_restitution_ratio",
     "clamped_restitution_ratio", "damping_for_target_restitution", "measure_dem3d_impact",
+    "EulerBernoulliBeam", "BeamConfig", "beam_center_deflection_analytic", "beam_center_deflection_static",
 ]
