@@ -97,6 +97,14 @@ class LBMConfig:
     disk_perturbation: float = 0.15
     quarter_domain: bool = True
     dtype: str = "float64"
+    # Guo forcing bookkeeping.  "simple" is the historical update (source term
+    # ``3 w (c.F)`` with no ``1 - omega/2`` prefactor); the discrete momentum
+    # balance then reads ``div(Pi) = (1 + omega/2) F`` rather than ``= F``, i.e.
+    # every body-force driven flow is over-driven by ``1 + omega/2`` -- up to a
+    # factor 2 at ``tau0 -> 1/2``.  "guo" is the consistent Gou source and is
+    # opt-in so that no previously published number moves silently.  See
+    # docs/threefield_les_resolution_study.md (IN52-N02).
+    force_scheme: str = "simple"
 
     def __post_init__(self) -> None:
         for name in ("nx", "ny", "nz", "disk_x", "disk_thickness"):
@@ -128,6 +136,8 @@ class LBMConfig:
             raise ValueError("disk_profile must be 'top_hat', 'parabolic' or 'gaussian'")
         if self.dtype not in {"float32", "float64"}:
             raise ValueError("dtype must be float32 or float64")
+        if self.force_scheme not in {"simple", "guo"}:
+            raise ValueError("force_scheme must be 'simple' or 'guo'")
 
     @property
     def viscosity(self) -> float:
@@ -327,9 +337,18 @@ class WakeLBM:
             tau = self._effective_tau(self.f, rho, u)
             feq = self._equilibrium(rho.unsqueeze(-1), u_forced)
             omega = 1.0 / tau.unsqueeze(-1)
-            forcing_term = 3.0 * self.w.view(1, 1, 1, -1) * torch.einsum(
-                "ia,...a->...i", self.c, force
-            )
+            if self.config.force_scheme == "guo":
+                # Consistent Guo source: div(Pi) = F instead of (1 + omega/2) F.
+                cu = torch.einsum("ia,...a->...i", self.c, u_forced)
+                cf = torch.einsum("ia,...a->...i", self.c, force)
+                uf = (u_forced * force).sum(dim=-1, keepdim=True)
+                forcing_term = (1.0 - 0.5 * omega) * self.w.view(1, 1, 1, -1) * (
+                    3.0 * cf + 9.0 * cu * cf - 3.0 * uf
+                )
+            else:
+                forcing_term = 3.0 * self.w.view(1, 1, 1, -1) * torch.einsum(
+                    "ia,...a->...i", self.c, force
+                )
             self.f = (
                 self.f
                 - omega * (self.f - feq)
