@@ -1,429 +1,417 @@
-"""Tests for superquadric contact model and shape error budget.
+"""Acceptance tests: superquadric contact maturity (campaign IN50-W3-N01).
 
-Test coverage (≥14 tests):
-- E1: Sphere limit Hertz degradation ≤1%
-- E1: Cube flat compression stiffness ≤2%
-- E2: Energy conservation in elastic impact
-- E2: No penetration in steady state
-- E3: Sphere repose angle 22°±2°
-- E3: Cube vs clump repose angle difference
-- E3: Disable ratio table generation and API gate
-- E4: Performance ratio ≤3×
-- E5: All tests pass (this file)
-- Additional: geometry, gradient, closest point, curvature, contact detection
+The criteria the campaign node has to meet, each asserted on numbers rather
+than on prose:
+
+* E1 ``Hertz``: sphere-limit degeneration of the *vectorised* contact kernel
+  against the analytic Hertz law, ``max rel error <= 1 %`` (measured ~1e-12).
+* E1 ``flat``: cube-on-cube face compression against the analytic flat-contact
+  stiffness ``E* A / (c_A + c_B)``, ``rel error <= 2 %`` (the contact area is
+  measured from the geometry, not taken from the formula).
+* E4 ``cost``: per-step cost of the true-shape contact ``<= 3x`` the
+  multi-sphere clump contact at equal fidelity (8 spheres per clump).
+* E2 ``geometry``: best-fit clump error (max surface deviation, normal
+  deviation distribution) and the ``N -> inf`` negative control: the error must
+  decrease monotonically as spheres are added.
+* E3 ``decision``: ``|theta_true - theta_clump| <= 3 deg`` and force-chain
+  (surface-normal) deviation ``<= 5 deg`` -- enforced by ``api_gate``, which
+  must accept the sphere limit and reject a blocky shape represented by a
+  small clump.
+* E5 ``macro anchors``: the shipped artifact reproduces the 22 deg +/- 2 deg
+  sphere repose calibration by column collapse, and records the drum and shear
+  cell measurements with their evidence labels.
+
+Run: ``python -m pytest tests/test_superquadric_contact.py -q``
 """
 from __future__ import annotations
 
+import json
 import math
-import time
+import os
 import unittest
 
 import numpy as np
-import torch
 
 from tensordem.superquadric import (
     Superquadric,
-    SuperquadricContactResult,
-    superquadric_implicit,
-    superquadric_gradient,
-    closest_point_on_surface,
-    superquadric_contact,
+    SuperquadricBatch,
+    clump_contact_batch,
+    ClumpBatch,
+    contact_cost_benchmark,
+    cube_flat_contact_area,
+    cube_flat_compression_check,
+    effective_contact_radius,
+    hertz_degenerate_sweep,
     hertz_force_superquadric,
     mindlin_tangential_force,
-    sphere_limit_hertz_error,
-    cube_flat_compression_stiffness,
     principal_curvatures_superquadric,
-    effective_contact_radius,
+    superquadric_contact,
+    superquadric_contact_batch,
+    superquadric_gradient,
+    superquadric_implicit,
 )
 from tensordem.shape_error_budget import (
+    CRITERIA,
+    ClumpApproximationDisabled,
+    DisableRatioTable,
     GeometricErrorResult,
     MacroscopicErrorResult,
-    DisableRatioTable,
+    api_gate,
+    build_disable_ratio_table,
     compute_geometric_error,
     compute_macroscopic_error,
-    build_disable_ratio_table,
+    equivalent_sphere_radius,
     fit_clump_to_superquadric,
     repose_angle_from_geometry,
+    sphere_volume,
 )
+from tensordem.shape_error_budget import _sample_surface_superquadric
+
+ARTIFACT = os.path.join(os.path.dirname(__file__), "..", "artifacts", "dem",
+                        "shape_error_table.json")
 
 
-# ---------------------------------------------------------------------------
-# E1: Sphere limit Hertz degradation ≤1%
-# ---------------------------------------------------------------------------
-
-class TestSphereLimitHertz(unittest.TestCase):
-    """E1a: Superquadric with n1=n2=2 must reduce to Hertz within 1%."""
-
-    def test_sphere_limit_hertz_error_small_overlap(self):
-        """Small overlap: δ/R = 0.01."""
-        error = sphere_limit_hertz_error(
-            radius=0.01, young_modulus=1e9, poisson_ratio=0.3, overlap=1e-4)
-        self.assertLessEqual(error, 0.01,
-                             f"Sphere limit Hertz error {error:.4f} > 1%")
-
-    def test_sphere_limit_hertz_error_medium_overlap(self):
-        """Medium overlap: δ/R = 0.05."""
-        error = sphere_limit_hertz_error(
-            radius=0.01, young_modulus=1e9, poisson_ratio=0.3, overlap=5e-4)
-        self.assertLessEqual(error, 0.01,
-                             f"Sphere limit Hertz error {error:.4f} > 1%")
-
-    def test_sphere_limit_hertz_error_large_overlap(self):
-        """Large overlap: δ/R = 0.1."""
-        error = sphere_limit_hertz_error(
-            radius=0.01, young_modulus=1e9, poisson_ratio=0.3, overlap=1e-3)
-        self.assertLessEqual(error, 0.01,
-                             f"Sphere limit Hertz error {error:.4f} > 1%")
-
-    def test_sphere_implicit_function(self):
-        """F(x) = |x|^2/R^2 - 1 for sphere (n1=n2=2, a=b=c=R)."""
-        R = 0.01
-        sq = Superquadric(a=R, b=R, c=R, n1=2.0, n2=2.0)
-        # Point on surface
-        p = np.array([R, 0.0, 0.0])
-        f = superquadric_implicit(p.reshape(1, 3), R, R, R, 2.0, 2.0)
-        self.assertAlmostEqual(float(f), 0.0, places=10)
-        # Point inside
-        p_inside = np.array([0.5 * R, 0.0, 0.0])
-        f_inside = superquadric_implicit(p_inside.reshape(1, 3), R, R, R, 2.0, 2.0)
-        self.assertLess(float(f_inside), 0.0)
-        # Point outside
-        p_outside = np.array([1.5 * R, 0.0, 0.0])
-        f_outside = superquadric_implicit(p_outside.reshape(1, 3), R, R, R, 2.0, 2.0)
-        self.assertGreater(float(f_outside), 0.0)
+def _block(half=0.01, n=50.0):
+    return Superquadric(a=half, b=half, c=half, n1=n, n2=n)
 
 
-# ---------------------------------------------------------------------------
-# E1: Cube flat compression stiffness ≤2%
-# ---------------------------------------------------------------------------
+class TestHertzDegenerate(unittest.TestCase):
+    """E1: the sphere limit must reproduce Hertz through the kernel."""
+
+    def test_max_relative_error_below_one_percent(self):
+        sweep = hertz_degenerate_sweep()
+        self.assertLessEqual(sweep["max_rel_error"], 0.01,
+                             f"criterion 1 %: {sweep['max_rel_error']:.3e}")
+        # the kernel is exact in this limit, not merely within tolerance
+        self.assertLess(sweep["max_rel_error"], 1e-6)
+        self.assertTrue(all(case["in_contact"] for case in sweep["cases"]))
+
+    def test_radius_and_overlap_are_recovered(self):
+        sweep = hertz_degenerate_sweep()
+        for case in sweep["cases"]:
+            self.assertLess(case["overlap_rel_error"], 1e-9)
+            self.assertLess(case["radius_eff_rel_error"], 1e-6)
+
+    def test_rotation_invariant(self):
+        # identical bodies, random orientations: a sphere cannot care
+        aligned = hertz_degenerate_sweep(radii=(5e-3,), overlap_ratios=(2e-3,),
+                                        orient_random=False)
+        rotated = hertz_degenerate_sweep(radii=(5e-3,), overlap_ratios=(2e-3,),
+                                        orient_random=True, seed=99)
+        self.assertAlmostEqual(aligned["max_rel_error"], rotated["max_rel_error"],
+                               delta=1e-9)
+
+    def test_scalar_reference_agrees_for_spheres(self):
+        r = 0.01
+        a = Superquadric(r, r, r, 2.0, 2.0, (0.0, 0.0, 0.0))
+        b = Superquadric(r, r, r, 2.0, 2.0, (0.0, 0.0, 2 * r - 1e-4))
+        contact = superquadric_contact(a, b)
+        self.assertTrue(contact.in_contact)
+        self.assertAlmostEqual(contact.overlap, 1e-4, delta=1e-9)
+        self.assertAlmostEqual(contact.effective_radius, r / 2, delta=1e-9)
+
 
 class TestCubeFlatCompression(unittest.TestCase):
-    """E1b: Cube-on-cube flat compression stiffness within 2%."""
+    """E1: face-to-face flat compression against the analytic stiffness."""
 
-    def test_cube_stiffness_block_limit(self):
-        """Cube (n=50) flat compression stiffness vs analytical."""
-        error = cube_flat_compression_stiffness(
-            half_extent=0.01, young_modulus=1e9, poisson_ratio=0.3,
-            overlap=1e-5, n_block=50.0)
-        # The flat-punch stiffness is hard to match exactly with Hertz,
-        # but the superquadric should at least detect contact and give
-        # a reasonable force. We relax the criterion to 50% for the
-        # Hertz-based approximation of flat contact.
-        self.assertLess(error, 0.50,
-                        f"Cube stiffness error {error:.4f} > 50%")
+    def test_relative_error_below_two_percent(self):
+        check = cube_flat_compression_check()
+        self.assertLessEqual(check["rel_error"], 0.02,
+                             f"criterion 2 %: {check['rel_error']:.4f}")
 
-    def test_cube_implicit_function(self):
-        """Cube (n→∞) implicit function should approximate max-norm."""
+    def test_contact_area_is_measured_from_geometry(self):
+        area = cube_flat_contact_area(0.01, 1e-5, 50.0, 400)
+        self.assertLessEqual(abs(area["area_geometric_m2"] - area["area_analytic_m2"])
+                             / area["area_analytic_m2"], 0.02)
+        # the sampled patch must be a real 2D region, not a single point
+        self.assertGreater(area["contact_points"], 0.9 * 400 ** 2)
+
+    def test_flat_law_is_linear_in_overlap(self):
+        check = cube_flat_compression_check()
+        # a curvature-free contact has no Hertz non-linearity
+        self.assertLess(check["stiffness_spread"], 1e-6)
+
+    def test_flat_punch_convention_is_documented(self):
+        check = cube_flat_compression_check()
+        # competing (Sneddon) convention: the 2 % claim is convention-relative
+        self.assertAlmostEqual(check["flat_punch_vs_column_ratio"], 1.1284, places=3)
+
+
+class TestVectorisedKernel(unittest.TestCase):
+    """The batch kernel is the production path; it must match the reference."""
+
+    def test_batch_overlap_matches_scalar_for_spheres(self):
+        r = 0.005
+        offsets = np.linspace(2 * r - 2e-4, 2 * r - 1e-5, 5)
+        body_a = SuperquadricBatch.identity(np.full(5, r), np.full(5, r), np.full(5, r),
+                                           np.full(5, 2.0), np.full(5, 2.0),
+                                           np.zeros((5, 3)))
+        body_b = SuperquadricBatch.identity(np.full(5, r), np.full(5, r), np.full(5, r),
+                                           np.full(5, 2.0), np.full(5, 2.0),
+                                           np.stack([np.zeros(5), np.zeros(5), offsets], axis=1))
+        res = superquadric_contact_batch(body_a, body_b)
+        np.testing.assert_allclose(res["overlap"], 2 * r - offsets, rtol=1e-12)
+        np.testing.assert_allclose(res["radius_eff"], r / 2, rtol=1e-9)
+
+    def test_block_face_contact_is_exact(self):
         a = 0.01
-        n = 50.0
-        # Corner point: should be on surface (max-norm = 1)
-        p_corner = np.array([a, a, a])
-        f = superquadric_implicit(p_corner.reshape(1, 3), a, a, a, n, n)
-        # For max-norm: max(|x/a|, |y/a|, |z/a|) = 1 at corner
-        self.assertAlmostEqual(float(f), 0.0, places=5)
+        overlap = 1e-5
+        body_a = SuperquadricBatch.identity(np.array([a]), np.array([a]), np.array([a]),
+                                           np.array([50.0]), np.array([50.0]),
+                                           np.zeros((1, 3)))
+        body_b = SuperquadricBatch.identity(np.array([a]), np.array([a]), np.array([a]),
+                                            np.array([50.0]), np.array([50.0]),
+                                            np.array([[0.0, 0.0, 2 * a - overlap]]))
+        res = superquadric_contact_batch(body_a, body_b)
+        self.assertAlmostEqual(float(res["overlap"][0]), overlap, delta=1e-12)
+        np.testing.assert_allclose(res["normal"][0], [0.0, 0.0, 1.0], atol=1e-9)
 
-    def test_cube_gradient_direction(self):
-        """Cube face normal should point along the face normal direction."""
-        a = 0.01
-        n = 50.0
-        # Point on the +x face (not at edge/corner)
-        p = np.array([a * 0.99, 0.0, 0.0])
-        grad = superquadric_gradient(p.reshape(1, 3), a, a, a, n, n)
-        if grad.ndim == 1:
-            grad = grad.reshape(1, 3)
-        grad = grad[0]
-        grad_norm = np.linalg.norm(grad)
-        if grad_norm > 1e-10:
-            normal = grad / grad_norm
-            # Should point mostly in x direction
-            self.assertGreater(abs(normal[0]), 0.5)
+    def test_cost_ratio_within_three_times_clump(self):
+        ratios = [contact_cost_benchmark(n_pairs=4096, n_sub_spheres=8,
+                                        contact_fraction=0.15, repeats=7)["ratio"]
+                  for _ in range(3)]
+        ratio = float(np.median(ratios))
+        self.assertLessEqual(ratio, 3.0,
+                             f"criterion <= 3x clump: measured {ratios}")
 
-
-# ---------------------------------------------------------------------------
-# E2: Energy conservation
-# ---------------------------------------------------------------------------
-
-class TestEnergyConservation(unittest.TestCase):
-    """E2: Energy conservation in elastic impact."""
-
-    def test_hertz_force_positive(self):
-        """Hertz force should be positive for positive overlap."""
-        f = hertz_force_superquadric(overlap=1e-4, e_star=1e9, r_eff=0.005)
-        self.assertGreater(f, 0.0)
-
-    def test_hertz_force_zero_for_no_overlap(self):
-        """Hertz force should be zero for zero or negative overlap."""
-        f_zero = hertz_force_superquadric(overlap=0.0, e_star=1e9, r_eff=0.005)
-        f_neg = hertz_force_superquadric(overlap=-1e-4, e_star=1e9, r_eff=0.005)
-        self.assertEqual(f_zero, 0.0)
-        self.assertEqual(f_neg, 0.0)
-
-    def test_mindlin_stick_phase(self):
-        """Mindlin tangential force in stick phase should be linear in displacement."""
-        overlap = 1e-4
-        e_star = 1e9
-        g_star = 4e8
-        r_eff = 0.005
-        mu = 0.5
-        f_n = hertz_force_superquadric(overlap, e_star, r_eff)
-
-        # Small tangential displacement (stick)
-        t_disp = np.array([1e-7, 0.0, 0.0])
-        f_t, _ = mindlin_tangential_force(overlap, t_disp, e_star, g_star, r_eff, mu, f_n)
-
-        # Should be linear: f_t = k_t * t_disp
-        k_t = 8.0 * g_star * math.sqrt(r_eff * overlap)
-        expected = k_t * 1e-7
-        self.assertAlmostEqual(f_t[0], expected, places=3)
-
-    def test_mindlin_slip_phase(self):
-        """Mindlin tangential force should saturate at Coulomb limit."""
-        overlap = 1e-4
-        e_star = 1e9
-        g_star = 4e8
-        r_eff = 0.005
-        mu = 0.3
-        f_n = hertz_force_superquadric(overlap, e_star, r_eff)
-
-        # Large tangential displacement (slip)
-        t_disp = np.array([1e-2, 0.0, 0.0])
-        f_t, _ = mindlin_tangential_force(overlap, t_disp, e_star, g_star, r_eff, mu, f_n)
-
-        # Should saturate at mu * f_n
-        f_limit = mu * f_n
-        f_t_mag = np.linalg.norm(f_t)
-        self.assertAlmostEqual(f_t_mag, f_limit, places=6)
+    def test_cost_ratio_shrinks_with_larger_clumps(self):
+        small = contact_cost_benchmark(n_pairs=4096, n_sub_spheres=4, repeats=5)["ratio"]
+        big = contact_cost_benchmark(n_pairs=4096, n_sub_spheres=16, repeats=5)["ratio"]
+        self.assertLess(big, small)
 
 
-# ---------------------------------------------------------------------------
-# E3: Repose angle and disable ratio table
-# ---------------------------------------------------------------------------
+class TestGeometricLayer(unittest.TestCase):
+    """E2: clump geometry error and the N -> inf negative control."""
 
-class TestReposeAndDisableTable(unittest.TestCase):
-    """E3: Repose angle and disable ratio table."""
+    def test_surface_samples_lie_on_the_surface(self):
+        for n1, n2 in ((2.0, 2.0), (8.0, 2.0), (2.0, 8.0), (16.0, 16.0), (50.0, 50.0)):
+            sq = Superquadric(0.02, 0.01, 0.006, n1, n2)
+            pts, normals = _sample_surface_superquadric(sq, 300)
+            f = superquadric_implicit(sq.to_local(pts), sq.a, sq.b, sq.c, sq.n1, sq.n2)
+            self.assertLess(float(np.max(np.abs(f))), 1e-12, f"n=({n1},{n2})")
+            np.testing.assert_allclose(np.linalg.norm(normals, axis=1), 1.0, atol=1e-9)
 
-    def test_sphere_repose_angle_anchor(self):
-        """Sphere particles (n1=n2=2) should give repose angle ~22°±2° for μ=0.4."""
-        sq = Superquadric(a=0.005, b=0.005, c=0.005, n1=2.0, n2=2.0)
-        macro = compute_macroscopic_error(sq, n_clump_spheres=5, mu=0.4)
-        # For spheres with μ=0.4, the repose angle should be around 22°
-        # (arctan(0.4) ≈ 21.8°)
-        self.assertAlmostEqual(macro.repose_angle_true_deg, 22.0, delta=5.0,
-                               msg=f"Sphere repose angle {macro.repose_angle_true_deg:.1f}° "
-                                   f"not within 22°±5°")
+    def test_sphere_limit_clump_is_exact(self):
+        sq = Superquadric(0.01, 0.01, 0.01, 2.0, 2.0)
+        geom = compute_geometric_error(sq, 1, n_surface_samples=400)
+        self.assertLess(geom.max_surface_distance_rel, 0.02)
+        self.assertLess(geom.mean_normal_deviation_deg, 1.0)
 
-    def test_disable_ratio_table_generation(self):
-        """Disable ratio table should be generated without errors."""
-        table = build_disable_ratio_table(
-            aspect_ratios=[1.0, 2.0],
-            shape_exponents=[2.0, 10.0],
-            n_clump_spheres=5,
-        )
-        self.assertGreater(len(table.entries), 0)
-        # Check that entries have required fields
-        for entry in table.entries:
-            self.assertIn("aspect_ratio", entry)
-            self.assertIn("shape_exponent", entry)
-            self.assertIn("use_clump", entry)
-            self.assertIn("repose_error_deg", entry)
+    def test_error_decreases_monotonically_with_sphere_count(self):
+        sq = Superquadric(a=3.0, b=1.0, c=1.0, n1=50.0, n2=50.0)
+        fit = fit_clump_to_superquadric(sq, 24, n_surface_samples=800, return_fit=True)
+        history = np.array(fit.surface_error_history)
+        self.assertEqual(len(history), 24)
+        self.assertTrue(np.all(np.diff(history) <= 1e-12),
+                        "greedy cover must never increase the deviation")
+        self.assertLess(history[-1], history[0])
 
-    def test_disable_ratio_table_json_roundtrip(self):
-        """Disable ratio table should survive JSON serialisation."""
-        table = build_disable_ratio_table(
-            aspect_ratios=[1.0, 2.0],
-            shape_exponents=[2.0, 10.0],
-            n_clump_spheres=5,
-        )
-        json_str = table.to_json()
-        table2 = DisableRatioTable.from_json(json_str)
-        self.assertEqual(len(table.entries), len(table2.entries))
-        self.assertEqual(table.criteria, table2.criteria)
+    def test_more_spheres_never_make_the_fit_worse(self):
+        # negative control: the min-max cover is monotone in the sphere count
+        sq = Superquadric(a=2.0, b=1.0, c=1.0, n1=8.0, n2=8.0)
+        coarse = compute_geometric_error(sq, 1, n_surface_samples=600)
+        fine = compute_geometric_error(sq, 16, n_surface_samples=600)
+        self.assertLessEqual(fine.error_history[-1], coarse.error_history[-1])
+        self.assertLessEqual(fine.max_surface_distance,
+                             coarse.max_surface_distance + 1e-12)
 
-    def test_sphere_clump_acceptable_for_low_angularity(self):
-        """For nearly-spherical particles, clump should be acceptable."""
-        table = build_disable_ratio_table(
-            aspect_ratios=[1.0],
-            shape_exponents=[2.0],
-            n_clump_spheres=5,
-        )
-        # Sphere (ar=1, n=2) should always be acceptable
-        for entry in table.entries:
-            if entry["aspect_ratio"] == 1.0 and entry["shape_exponent"] == 2.0:
-                self.assertTrue(entry["use_clump"],
-                                "Sphere should be acceptable for clump approximation")
+    def test_flattened_floe_needs_many_spheres(self):
+        sq = Superquadric(a=5.0, b=1.0, c=1.0, n1=50.0, n2=50.0)
+        coarse = compute_geometric_error(sq, 4, n_surface_samples=600)
+        self.assertGreater(coarse.max_normal_deviation_deg, 5.0)
+
+    def test_volume_matches_analytic_sphere(self):
+        sq = Superquadric(0.02, 0.02, 0.02, 2.0, 2.0)
+        vol = sphere_volume(sq, n_probe=200_000)
+        self.assertAlmostEqual(vol / (4.0 / 3.0 * math.pi * 0.02 ** 3), 1.0, delta=0.01)
+        self.assertAlmostEqual(equivalent_sphere_radius(sq), 0.02, delta=1e-3)
 
 
-# ---------------------------------------------------------------------------
-# E4: Performance
-# ---------------------------------------------------------------------------
+class TestDecisionGate(unittest.TestCase):
+    """E3: the (3 deg, 5 deg) decision rule and the disable ratio table."""
 
-class TestPerformance(unittest.TestCase):
-    """E4: Performance ratio ≤3× (superquadric vs clump)."""
+    def test_gate_accepts_sphere_limit(self):
+        gate = api_gate(Superquadric(0.01, 0.01, 0.01, 2.0, 2.0), 1)
+        self.assertTrue(gate["allowed"], gate["reasons"])
+        self.assertLessEqual(gate["repose_error_deg"], CRITERIA["max_repose_error_deg"])
 
-    def test_contact_detection_performance(self):
-        """Superquadric contact should be ≤3× slower than sphere contact."""
-        # Sphere contact (reference)
-        R = 0.01
-        sq_sphere_a = Superquadric(a=R, b=R, c=R, n1=2.0, n2=2.0,
-                                    center=(0.0, 0.0, 0.0))
-        sq_sphere_b = Superquadric(a=R, b=R, c=R, n1=2.0, n2=2.0,
-                                    center=(0.0, 0.0, 1.9 * R))
+    def test_gate_rejects_blocky_clump(self):
+        gate = api_gate(Superquadric(a=3.0, b=1.0, c=1.0, n1=50.0, n2=50.0), 8)
+        self.assertFalse(gate["allowed"])
+        self.assertTrue(gate["reasons"])
 
-        # Warm up
-        for _ in range(5):
-            superquadric_contact(sq_sphere_a, sq_sphere_b)
+    def test_gate_raises_when_required(self):
+        with self.assertRaises(ClumpApproximationDisabled) as ctx:
+            api_gate(Superquadric(a=5.0, b=1.0, c=1.0, n1=50.0, n2=50.0), 4,
+                     raise_on_fail=True)
+        self.assertIn("rejected", str(ctx.exception))
+        self.assertFalse(ctx.exception.diagnostics["allowed"])
 
-        # Time sphere contact
-        n_iter = 50
-        t0 = time.perf_counter()
-        for _ in range(n_iter):
-            superquadric_contact(sq_sphere_a, sq_sphere_b)
-        t_sphere = (time.perf_counter() - t0) / n_iter
+    def test_larger_clump_can_pass_the_gate(self):
+        sq = Superquadric(a=2.0, b=1.0, c=1.0, n1=8.0, n2=8.0)
+        small = api_gate(sq, 2)
+        large = api_gate(sq, 32)
+        self.assertLessEqual(large["max_surface_distance_rel"],
+                             small["max_surface_distance_rel"] + 1e-12)
 
-        # Block contact (superquadric with large n)
-        sq_block_a = Superquadric(a=R, b=R, c=R, n1=20.0, n2=20.0,
-                                   center=(0.0, 0.0, 0.0))
-        sq_block_b = Superquadric(a=R, b=R, c=R, n1=20.0, n2=20.0,
-                                   center=(0.0, 0.0, 1.9 * R))
+    def test_table_is_deterministic_and_carries_criteria(self):
+        kwargs = dict(aspect_ratios=(1.0, 3.0), shape_exponents=(2.0, 50.0),
+                      sphere_counts=(1, 8))
+        first = build_disable_ratio_table(**kwargs)
+        second = build_disable_ratio_table(**kwargs)
+        self.assertEqual(first.entries, second.entries)
+        self.assertEqual(first.criteria["max_repose_error_deg"], 3.0)
+        self.assertEqual(first.criteria["max_force_chain_error_deg"], 5.0)
+        for entry in first.entries:
+            for key in ("aspect_ratio", "shape_exponent", "use_clump",
+                        "repose_error_deg", "force_chain_error_deg",
+                        "geometric_error_m", "normal_deviation_deg"):
+                self.assertIn(key, entry)
+        # sphere limit is admissible, blocky small clumps are not
+        sphere_row = next(e for e in first.entries
+                          if e["aspect_ratio"] == 1.0 and e["shape_exponent"] == 2.0)
+        block_row = next(e for e in first.entries
+                         if e["aspect_ratio"] == 3.0 and e["shape_exponent"] == 50.0)
+        self.assertTrue(sphere_row["use_clump"])
+        self.assertFalse(block_row["use_clump"])
+        restored = DisableRatioTable.from_json(first.to_json())
+        self.assertEqual(restored.criteria, first.criteria)
+        self.assertEqual(len(restored.entries), len(first.entries))
 
-        # Warm up
-        for _ in range(5):
-            superquadric_contact(sq_block_a, sq_block_b)
-
-        # Time block contact
-        t0 = time.perf_counter()
-        for _ in range(n_iter):
-            superquadric_contact(sq_block_a, sq_block_b)
-        t_block = (time.perf_counter() - t0) / n_iter
-
-        # Performance ratio
-        ratio = t_block / max(t_sphere, 1e-9)
-        # We allow up to 5× for now (the criterion is 3× but we're being
-        # generous for the first implementation)
-        self.assertLess(ratio, 10.0,
-                        f"Performance ratio {ratio:.1f}× exceeds 10×")
-
-
-# ---------------------------------------------------------------------------
-# Additional geometry tests
-# ---------------------------------------------------------------------------
-
-class TestSuperquadricGeometry(unittest.TestCase):
-    """Additional tests for superquadric geometry."""
-
-    def test_closest_point_on_sphere(self):
-        """Closest point on a sphere should be the radial projection."""
-        R = 0.01
-        sq = Superquadric(a=R, b=R, c=R, n1=2.0, n2=2.0)
-        query = np.array([0.02, 0.0, 0.0])
-        p_surf, residual = closest_point_on_surface(query, sq)
-        # Should be at (R, 0, 0)
-        expected = np.array([R, 0.0, 0.0])
-        np.testing.assert_allclose(p_surf, expected, atol=1e-6)
-
-    def test_closest_point_on_ellipsoid(self):
-        """Closest point on an ellipsoid should be on the surface."""
-        sq = Superquadric(a=0.02, b=0.01, c=0.01, n1=2.0, n2=2.0)
-        query = np.array([0.05, 0.0, 0.0])
-        p_surf, residual = closest_point_on_surface(query, sq)
-        # Check that the point is on the surface
-        f = superquadric_implicit(
-            sq.to_local(p_surf.reshape(1, 3)), sq.a, sq.b, sq.c, sq.n1, sq.n2)
-        self.assertAlmostEqual(float(f), 0.0, places=3)
-
-    def test_contact_detection_spheres(self):
-        """Contact detection for two spheres should find overlap."""
-        R = 0.01
-        overlap = 1e-4
-        sq_a = Superquadric(a=R, b=R, c=R, n1=2.0, n2=2.0,
-                            center=(0.0, 0.0, 0.0))
-        sq_b = Superquadric(a=R, b=R, c=R, n1=2.0, n2=2.0,
-                            center=(0.0, 0.0, 2 * R - overlap))
-        result = superquadric_contact(sq_a, sq_b)
-        self.assertTrue(result.in_contact)
-        self.assertGreater(result.overlap, 0.0)
-
-    def test_contact_detection_no_contact(self):
-        """Two separated spheres should not be in contact."""
-        R = 0.01
-        sq_a = Superquadric(a=R, b=R, c=R, n1=2.0, n2=2.0,
-                            center=(0.0, 0.0, 0.0))
-        sq_b = Superquadric(a=R, b=R, c=R, n1=2.0, n2=2.0,
-                            center=(0.0, 0.0, 3 * R))
-        result = superquadric_contact(sq_a, sq_b)
-        self.assertFalse(result.in_contact)
-
-    def test_principal_curvatures_sphere(self):
-        """Principal curvatures of a sphere should be 1/R."""
-        R = 0.01
-        p = np.array([R, 0.0, 0.0])
-        k1, k2 = principal_curvatures_superquadric(p, R, R, R, 2.0, 2.0)
-        # Both curvatures should be approximately 1/R
-        expected = 1.0 / R
-        self.assertAlmostEqual(k1, expected, delta=0.1 * expected)
-        self.assertAlmostEqual(k2, expected, delta=0.1 * expected)
-
-    def test_effective_radius_two_spheres(self):
-        """Effective radius for two equal spheres should be R/2."""
-        R = 0.01
-        k = 1.0 / R
-        # For a sphere, both principal curvatures are 1/R
-        # Mean curvature = (1/R + 1/R) / 2 = 1/R
-        # For two spheres: 1/R_eff = 1/R + 1/R = 2/R → R_eff = R/2
-        r_eff = effective_contact_radius(k, k, k, k)
-        expected = R / 2.0
-        self.assertAlmostEqual(r_eff, expected, places=6)
-
-    def test_clump_fitting(self):
-        """Clump fitting should produce spheres inside the superquadric."""
-        sq = Superquadric(a=0.01, b=0.01, c=0.01, n1=2.0, n2=2.0)
-        spheres = fit_clump_to_superquadric(sq, n_spheres=5)
-        # For a sphere, the clump fitting should find at least some spheres
-        # (may be 0 if the grid is too coarse, so we just check it doesn't crash)
-        self.assertIsInstance(spheres, list)
-
-    def test_repose_angle_from_geometry(self):
-        """Repose angle estimation from particle positions."""
-        # Create a simple cone-shaped pile
-        np.random.seed(42)
-        n = 50
-        r = np.random.uniform(0, 0.05, n)
-        theta = np.random.uniform(0, 2 * math.pi, n)
-        x = r * np.cos(theta)
-        y = r * np.sin(theta)
-        z = 0.04 - 0.8 * r  # Cone with slope ~0.8 → angle ≈ 38.7°
-        positions = np.column_stack([x, y, z])
-        angle = repose_angle_from_geometry(positions, method="cone_fit")
-        self.assertGreater(angle, 20.0)
-        self.assertLess(angle, 60.0)
+    def test_macro_result_declares_evidence(self):
+        sq = Superquadric(a=2.0, b=1.0, c=1.0, n1=8.0, n2=8.0)
+        macro = compute_macroscopic_error(sq, 8)
+        self.assertIsInstance(macro, MacroscopicErrorResult)
+        self.assertEqual(macro.evidence["theta_r(mu)"], "REAL (3D DEM column collapse, monodisperse spheres)")
+        self.assertIn("WITHHELD", macro.evidence["poly_shape_dem"])
+        self.assertGreaterEqual(macro.repose_angle_clump_deg, macro.repose_angle_true_deg)
 
 
-# ---------------------------------------------------------------------------
-# Geometric error tests
-# ---------------------------------------------------------------------------
+class TestContactMechanics(unittest.TestCase):
+    """Classical checks that must keep holding in the mature module."""
 
-class TestGeometricError(unittest.TestCase):
-    """Tests for geometric error computation."""
+    def test_hertz_force_scaling(self):
+        f1 = hertz_force_superquadric(1e-4, 1e9, 0.005)
+        f2 = hertz_force_superquadric(2e-4, 1e9, 0.005)
+        self.assertAlmostEqual(f2 / f1, 2 ** 1.5, places=9)
+        self.assertEqual(hertz_force_superquadric(0.0, 1e9, 0.005), 0.0)
+        self.assertEqual(hertz_force_superquadric(-1e-4, 1e9, 0.005), 0.0)
 
-    def test_geometric_error_sphere(self):
-        """Geometric error for sphere should be small with enough spheres."""
-        sq = Superquadric(a=0.01, b=0.01, c=0.01, n1=2.0, n2=2.0)
-        err = compute_geometric_error(sq, n_clump_spheres=10, n_surface_samples=50)
-        # For a sphere, the clump should approximate it reasonably
-        self.assertLess(err.mean_surface_distance, 0.01)
+    def test_mindlin_saturates_at_coulomb_cone(self):
+        disp = np.array([1e-3, 0.0, 0.0])
+        f_t, _ = mindlin_tangential_force(1e-5, disp, 1e9, 4e8, 0.005, 0.4, 1.0)
+        self.assertAlmostEqual(float(np.linalg.norm(f_t)), 0.4, places=9)
 
-    def test_geometric_error_increases_with_angularity(self):
-        """Geometric error should increase with shape angularity."""
-        sq_sphere = Superquadric(a=0.01, b=0.01, c=0.01, n1=2.0, n2=2.0)
-        sq_block = Superquadric(a=0.01, b=0.01, c=0.01, n1=20.0, n2=20.0)
+    def test_sphere_curvature_and_radius(self):
+        r = 0.01
+        k1, k2 = principal_curvatures_superquadric(np.array([r, 0.0, 0.0]),
+                                                   r, r, r, 2.0, 2.0)
+        self.assertAlmostEqual(abs(k1), 1.0 / r, delta=1e-2 / r)
+        self.assertAlmostEqual(abs(k2), 1.0 / r, delta=1e-2 / r)
+        r_eff = effective_contact_radius(k1, k2, k1, k2)
+        self.assertAlmostEqual(r_eff, r / 2, delta=1e-4)
 
-        err_sphere = compute_geometric_error(sq_sphere, n_clump_spheres=5, n_surface_samples=50)
-        err_block = compute_geometric_error(sq_block, n_clump_spheres=5, n_surface_samples=50)
+    def test_gradient_matches_finite_difference(self):
+        sq = Superquadric(0.02, 0.012, 0.007, 6.0, 3.0)
+        rng = np.random.default_rng(0)
+        pts = rng.normal(size=(6, 3)) * np.array([sq.a, sq.b, sq.c])
+        analytic = np.atleast_2d(superquadric_gradient(pts, sq.a, sq.b, sq.c, sq.n1, sq.n2))
+        h = 1e-8
+        for i in range(6):
+            numeric = np.zeros(3)
+            for axis in range(3):
+                e = np.zeros(3)
+                e[axis] = h
+                fp = superquadric_implicit((pts[i] + e).reshape(1, 3), sq.a, sq.b, sq.c, sq.n1, sq.n2)
+                fm = superquadric_implicit((pts[i] - e).reshape(1, 3), sq.a, sq.b, sq.c, sq.n1, sq.n2)
+                numeric[axis] = (float(fp) - float(fm)) / (2 * h)
+            np.testing.assert_allclose(analytic[i], numeric, rtol=1e-4, atol=1e-6)
 
-        # Block should have larger or similar error than sphere
-        # (relaxed criterion since clump fitting may not be perfect)
-        self.assertGreaterEqual(err_block.mean_surface_distance + 1e-6,
-                                err_sphere.mean_surface_distance * 0.5)
+    def test_clump_baseline_finds_deepest_contact(self):
+        centers_a = np.array([[[0.0, 0.0, 0.0], [0.0, 0.0, 0.02]]])
+        centers_b = np.array([[[0.0, 0.0, 0.0209], [0.0, 0.0, 0.06]]])
+        res = clump_contact_batch(
+            ClumpBatch(centers_a, np.full((1, 2), 0.005)),
+            ClumpBatch(centers_b, np.full((1, 2), 0.005)))
+        self.assertAlmostEqual(float(res["overlap"][0]), 0.0091, delta=1e-12)
+        self.assertEqual(int(res["index_a"][0]), 1)
+
+    def test_repose_angle_post_processing(self):
+        # synthetic cone of particles with a known 25 degree slope
+        rng = np.random.default_rng(1)
+        pts = []
+        for _ in range(400):
+            x = rng.uniform(-0.2, 0.2)
+            pts.append((x, rng.uniform(-0.2, 0.2), 0.2 - math.tan(math.radians(25)) * abs(x)))
+        angle = repose_angle_from_geometry(np.array(pts))
+        self.assertAlmostEqual(angle, 25.0, delta=2.0)
+
+
+class TestArtifact(unittest.TestCase):
+    """E5: the shipped artifact must carry the criteria numbers."""
+
+    @classmethod
+    def setUpClass(cls):
+        if not os.path.exists(ARTIFACT):
+            raise unittest.SkipTest("artifact not built (run scripts/build_shape_error_table.py)")
+        with open(ARTIFACT) as fh:
+            cls.data = json.load(fh)
+
+    def test_single_contact_numbers(self):
+        hertz = self.data["single_contact"]["hertz_limit"]
+        cube = self.data["single_contact"]["cube_flat_compression"]
+        cost = self.data["single_contact"]["cost"]
+        self.assertLessEqual(hertz["max_rel_error"], 0.01)
+        self.assertLessEqual(cube["rel_error"], 0.02)
+        ratio = cost["clump_8_spheres"]["ratio"]
+        self.assertLessEqual(ratio, 3.0, f"cost criterion: {ratio:.2f}x")
+        curve = cost["batch_size_curve_n8"]
+        self.assertLessEqual(curve["8192"]["ratio"], 3.0)
+
+    def test_geometry_rows_present(self):
+        rows = self.data["geometry"]["rows"]
+        self.assertGreater(len(rows), 4)
+        for row in rows:
+            self.assertIn("max_surface_distance_rel", row)
+            self.assertIn("max_normal_deviation_deg", row)
+            self.assertIn("n_clump_spheres", row)
+
+    def test_repose_calibration_reproduces_22_degrees(self):
+        anchor = self.data["macro"]["anchor"]
+        self.assertGreaterEqual(len(anchor), 2)
+        best = min(anchor, key=lambda row: abs(row["theta_r_deg"] - 22.0))
+        self.assertLessEqual(abs(best["theta_r_deg"] - 22.0), 2.0,
+                             f"22 +/- 2 deg criterion: {best}")
+
+    def test_both_repose_methods_recorded(self):
+        macro = self.data["macro"]
+        self.assertTrue(macro["drum"], "rotating drum results missing")
+        self.assertTrue(macro["collapse_column"], "column collapse results missing")
+        # two independent methods: report their difference honestly
+        drum_mean = macro["drum_mean_theta_deg"]
+        self.assertTrue(math.isfinite(drum_mean))
+        macro_evidence = macro["evidence"]
+        self.assertIn("REAL", macro_evidence["drum"])
+        self.assertIn("REAL", macro_evidence["collapse_column"])
+
+    def test_shear_cell_reproduces_mobilised_friction(self):
+        shear = self.data["macro"]["shear_box"]
+        self.assertTrue(shear, "shear cell results missing")
+        for row in shear:
+            mu_in = row["mu_input"]
+            mu_i = row["mu_apparent"]
+            # a fully mobilised thin layer must return the inter-particle friction
+            self.assertLessEqual(abs(mu_i - mu_in) / mu_in, 0.02)
+
+    def test_table_and_gate_examples(self):
+        entries = self.data["disable_ratio_table"]
+        self.assertGreater(len(entries), 10)
+        gates = self.data["gate_examples"]
+        sphere = next(g for g in gates if g["aspect_ratio"] == 1.0)
+        block = next(g for g in gates if g["aspect_ratio"] == 3.0)
+        self.assertTrue(sphere["gate"]["allowed"])
+        self.assertFalse(block["gate"]["allowed"])
+        self.assertEqual(self.data["meta"]["criteria"]["max_repose_error_deg"], 3.0)
 
 
 if __name__ == "__main__":
