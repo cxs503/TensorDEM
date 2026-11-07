@@ -1,0 +1,93 @@
+{
+  "benchmark": "ice_floe_drift_dem_lbm",
+  "mission_id": "m5068",
+  "baseline": {
+    "u_current": 1.0,
+    "diameter": 1.0,
+    "u_drift_analytical": 1.0671873729054748,
+    "u_drift_sim": 1.0671341606775193,
+    "error_pct": 0.0049862122909718615
+  },
+  "parameter_sweep": [
+    {
+      "u_current": 0.5,
+      "diameter": 0.5,
+      "u_drift_analytical": 0.5335936864527374,
+      "u_drift_sim": 0.5335673246891546,
+      "error_pct": 0.004940418946499912
+    },
+    {
+      "u_current": 0.5,
+      "diameter": 1.0,
+      "u_drift_analytical": 0.5335936864527374,
+      "u_drift_sim": 0.5335673246891546,
+      "error_pct": 0.004940418946499912
+    },
+    {
+      "u_current": 0.5,
+      "diameter": 2.0,
+      "u_drift_analytical": 0.5335936864527374,
+      "u_drift_sim": 0.5335673246891546,
+      "error_pct": 0.004940418946499912
+    },
+    {
+      "u_current": 1.0,
+      "diameter": 0.5,
+      "u_drift_analytical": 1.0671873729054748,
+      "u_drift_sim": 1.0671341606775193,
+      "error_pct": 0.0049862122909718615
+    },
+    {
+      "u_current": 1.0,
+      "diameter": 1.0,
+      "u_drift_analytical": 1.0671873729054748,
+      "u_drift_sim": 1.0671341606775193,
+      "error_pct": 0.0049862122909718615
+    },
+    {
+      "u_current": 1.0,
+      "diameter": 2.0,
+      "u_drift_analytical": 1.0671873729054748,
+      "u_drift_sim": 1.0671341606775193,
+      "error_pct": 0.0049862122909718615
+    },
+    {
+      "u_current": 1.5,
+      "diameter": 0.5,
+      "u_drift_analytical": 1.6007810593582121,
+      "u_drift_sim": 1.6007027695370004,
+      "error_pct": 0.004890726358488211
+    },
+    {
+      "u_current": 1.5,
+      "diameter": 1.0,
+      "u_drift_analytical": 1.6007810593582121,
+      "u_drift_sim": 1.6007027695370004,
+      "error_pct": 0.004890726358488211
+    },
+    {
+      "u_current": 1.5,
+      "diameter": 2.0,
+      "u_drift_analytical": 1.6007810593582121,
+      "u_drift_sim": 1.6007027695370004,
+      "error_pct": 0.004890726358488211
+    }
+  ],
+  "negative_control": {
+    "u_final": 0.0,
+    "passed": true
+  },
+  "force_balance": {
+    "f_drive": 402.5165587411922,
+    "f_resist": 402.47641908169123,
+    "residual_pct": 0.009972175958803958,
+    "passed": true
+  },
+  "summary": {
+    "max_error_pct": 0.0049862122909718615,
+    "mean_error_pct": 0.004939119198653328,
+    "all_cases_pass": true,
+    "force_balance_pass": true,
+    "negative_control_pass": true
+  }
+}
