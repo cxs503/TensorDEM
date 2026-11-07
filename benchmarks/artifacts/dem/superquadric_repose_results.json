@@ -1,0 +1,512 @@
+{
+  "benchmark": "superquadric_repose_angle",
+  "parameters": {
+    "aspect_ratios": [
+      1.0,
+      1.5,
+      2.0,
+      3.0
+    ],
+    "shape_exponents": [
+      2.0,
+      4.0,
+      8.0,
+      16.0,
+      32.0,
+      50.0
+    ],
+    "n_clump_spheres": 10,
+    "mu": 0.4
+  },
+  "results": [
+    {
+      "aspect_ratio": 1.0,
+      "shape_exponent": 2.0,
+      "repose_angle_true_deg": 21.8,
+      "repose_angle_clump_deg": 21.8,
+      "repose_angle_diff_deg": 0.0,
+      "force_chain_deviation_deg": 0.0,
+      "geometric_error_m": 0.0,
+      "normal_deviation_deg": 0.0,
+      "n_clump_spheres": 0
+    },
+    {
+      "aspect_ratio": 1.0,
+      "shape_exponent": 4.0,
+      "repose_angle_true_deg": 21.8,
+      "repose_angle_clump_deg": 21.8,
+      "repose_angle_diff_deg": 0.0,
+      "force_chain_deviation_deg": 0.0,
+      "geometric_error_m": 0.0,
+      "normal_deviation_deg": 0.0,
+      "n_clump_spheres": 0
+    },
+    {
+      "aspect_ratio": 1.0,
+      "shape_exponent": 8.0,
+      "repose_angle_true_deg": 21.8,
+      "repose_angle_clump_deg": 21.8,
+      "repose_angle_diff_deg": 0.0,
+      "force_chain_deviation_deg": 0.0,
+      "geometric_error_m": 0.0,
+      "normal_deviation_deg": 0.0,
+      "n_clump_spheres": 0
+    },
+    {
+      "aspect_ratio": 1.0,
+      "shape_exponent": 16.0,
+      "repose_angle_true_deg": 21.8,
+      "repose_angle_clump_deg": 21.8,
+      "repose_angle_diff_deg": 0.0,
+      "force_chain_deviation_deg": 0.0,
+      "geometric_error_m": 0.0,
+      "normal_deviation_deg": 0.0,
+      "n_clump_spheres": 0
+    },
+    {
+      "aspect_ratio": 1.0,
+      "shape_exponent": 32.0,
+      "repose_angle_true_deg": 21.8,
+      "repose_angle_clump_deg": 21.8,
+      "repose_angle_diff_deg": 0.0,
+      "force_chain_deviation_deg": 0.0,
+      "geometric_error_m": 0.006581,
+      "normal_deviation_deg": 87.87,
+      "n_clump_spheres": 8
+    },
+    {
+      "aspect_ratio": 1.0,
+      "shape_exponent": 50.0,
+      "repose_angle_true_deg": 21.8,
+      "repose_angle_clump_deg": 21.8,
+      "repose_angle_diff_deg": 0.0,
+      "force_chain_deviation_deg": 0.0,
+      "geometric_error_m": 0.006289,
+      "normal_deviation_deg": 87.87,
+      "n_clump_spheres": 8
+    },
+    {
+      "aspect_ratio": 1.5,
+      "shape_exponent": 2.0,
+      "repose_angle_true_deg": 24.8,
+      "repose_angle_clump_deg": 21.8,
+      "repose_angle_diff_deg": 3.0,
+      "force_chain_deviation_deg": 0.33,
+      "geometric_error_m": 0.0,
+      "normal_deviation_deg": 0.0,
+      "n_clump_spheres": 0
+    },
+    {
+      "aspect_ratio": 1.5,
+      "shape_exponent": 4.0,
+      "repose_angle_true_deg": 27.8,
+      "repose_angle_clump_deg": 21.8,
+      "repose_angle_diff_deg": 6.0,
+      "force_chain_deviation_deg": 0.67,
+      "geometric_error_m": 0.0,
+      "normal_deviation_deg": 0.0,
+      "n_clump_spheres": 0
+    },
+    {
+      "aspect_ratio": 1.5,
+      "shape_exponent": 8.0,
+      "repose_angle_true_deg": 33.8,
+      "repose_angle_clump_deg": 21.8,
+      "repose_angle_diff_deg": 12.0,
+      "force_chain_deviation_deg": 1.33,
+      "geometric_error_m": 0.0,
+      "normal_deviation_deg": 0.0,
+      "n_clump_spheres": 0
+    },
+    {
+      "aspect_ratio": 1.5,
+      "shape_exponent": 16.0,
+      "repose_angle_true_deg": 36.8,
+      "repose_angle_clump_deg": 21.8,
+      "repose_angle_diff_deg": 15.0,
+      "force_chain_deviation_deg": 1.67,
+      "geometric_error_m": 0.0,
+      "normal_deviation_deg": 0.0,
+      "n_clump_spheres": 0
+    },
+    {
+      "aspect_ratio": 1.5,
+      "shape_exponent": 32.0,
+      "repose_angle_true_deg": 36.8,
+      "repose_angle_clump_deg": 21.8,
+      "repose_angle_diff_deg": 15.0,
+      "force_chain_deviation_deg": 1.67,
+      "geometric_error_m": 0.007805,
+      "normal_deviation_deg": 88.2,
+      "n_clump_spheres": 8
+    },
+    {
+      "aspect_ratio": 1.5,
+      "shape_exponent": 50.0,
+      "repose_angle_true_deg": 36.8,
+      "repose_angle_clump_deg": 21.8,
+      "repose_angle_diff_deg": 15.0,
+      "force_chain_deviation_deg": 1.67,
+      "geometric_error_m": 0.006711,
+      "normal_deviation_deg": 88.02,
+      "n_clump_spheres": 8
+    },
+    {
+      "aspect_ratio": 2.0,
+      "shape_exponent": 2.0,
+      "repose_angle_true_deg": 26.3,
+      "repose_angle_clump_deg": 21.8,
+      "repose_angle_diff_deg": 4.5,
+      "force_chain_deviation_deg": 0.5,
+      "geometric_error_m": 0.0,
+      "normal_deviation_deg": 0.0,
+      "n_clump_spheres": 0
+    },
+    {
+      "aspect_ratio": 2.0,
+      "shape_exponent": 4.0,
+      "repose_angle_true_deg": 30.8,
+      "repose_angle_clump_deg": 21.8,
+      "repose_angle_diff_deg": 9.0,
+      "force_chain_deviation_deg": 1.0,
+      "geometric_error_m": 0.0,
+      "normal_deviation_deg": 0.0,
+      "n_clump_spheres": 0
+    },
+    {
+      "aspect_ratio": 2.0,
+      "shape_exponent": 8.0,
+      "repose_angle_true_deg": 39.8,
+      "repose_angle_clump_deg": 21.8,
+      "repose_angle_diff_deg": 18.0,
+      "force_chain_deviation_deg": 2.0,
+      "geometric_error_m": 0.0,
+      "normal_deviation_deg": 0.0,
+      "n_clump_spheres": 0
+    },
+    {
+      "aspect_ratio": 2.0,
+      "shape_exponent": 16.0,
+      "repose_angle_true_deg": 44.3,
+      "repose_angle_clump_deg": 21.8,
+      "repose_angle_diff_deg": 22.5,
+      "force_chain_deviation_deg": 2.5,
+      "geometric_error_m": 0.0,
+      "normal_deviation_deg": 0.0,
+      "n_clump_spheres": 0
+    },
+    {
+      "aspect_ratio": 2.0,
+      "shape_exponent": 32.0,
+      "repose_angle_true_deg": 44.3,
+      "repose_angle_clump_deg": 21.8,
+      "repose_angle_diff_deg": 22.5,
+      "force_chain_deviation_deg": 2.5,
+      "geometric_error_m": 0.009568,
+      "normal_deviation_deg": 88.64,
+      "n_clump_spheres": 8
+    },
+    {
+      "aspect_ratio": 2.0,
+      "shape_exponent": 50.0,
+      "repose_angle_true_deg": 44.3,
+      "repose_angle_clump_deg": 21.8,
+      "repose_angle_diff_deg": 22.5,
+      "force_chain_deviation_deg": 2.5,
+      "geometric_error_m": 0.008062,
+      "normal_deviation_deg": 88.36,
+      "n_clump_spheres": 8
+    },
+    {
+      "aspect_ratio": 3.0,
+      "shape_exponent": 2.0,
+      "repose_angle_true_deg": 27.8,
+      "repose_angle_clump_deg": 21.8,
+      "repose_angle_diff_deg": 6.0,
+      "force_chain_deviation_deg": 0.67,
+      "geometric_error_m": 0.0,
+      "normal_deviation_deg": 0.0,
+      "n_clump_spheres": 0
+    },
+    {
+      "aspect_ratio": 3.0,
+      "shape_exponent": 4.0,
+      "repose_angle_true_deg": 33.8,
+      "repose_angle_clump_deg": 21.8,
+      "repose_angle_diff_deg": 12.0,
+      "force_chain_deviation_deg": 1.33,
+      "geometric_error_m": 0.0,
+      "normal_deviation_deg": 0.0,
+      "n_clump_spheres": 0
+    },
+    {
+      "aspect_ratio": 3.0,
+      "shape_exponent": 8.0,
+      "repose_angle_true_deg": 45.8,
+      "repose_angle_clump_deg": 21.8,
+      "repose_angle_diff_deg": 24.0,
+      "force_chain_deviation_deg": 2.67,
+      "geometric_error_m": 0.0,
+      "normal_deviation_deg": 0.0,
+      "n_clump_spheres": 0
+    },
+    {
+      "aspect_ratio": 3.0,
+      "shape_exponent": 16.0,
+      "repose_angle_true_deg": 51.8,
+      "repose_angle_clump_deg": 21.8,
+      "repose_angle_diff_deg": 30.0,
+      "force_chain_deviation_deg": 3.33,
+      "geometric_error_m": 0.0,
+      "normal_deviation_deg": 0.0,
+      "n_clump_spheres": 0
+    },
+    {
+      "aspect_ratio": 3.0,
+      "shape_exponent": 32.0,
+      "repose_angle_true_deg": 51.8,
+      "repose_angle_clump_deg": 21.8,
+      "repose_angle_diff_deg": 30.0,
+      "force_chain_deviation_deg": 3.33,
+      "geometric_error_m": 0.013381,
+      "normal_deviation_deg": 89.09,
+      "n_clump_spheres": 8
+    },
+    {
+      "aspect_ratio": 3.0,
+      "shape_exponent": 50.0,
+      "repose_angle_true_deg": 51.8,
+      "repose_angle_clump_deg": 21.8,
+      "repose_angle_diff_deg": 30.0,
+      "force_chain_deviation_deg": 3.33,
+      "geometric_error_m": 0.011046,
+      "normal_deviation_deg": 88.91,
+      "n_clump_spheres": 8
+    }
+  ],
+  "disable_ratio_table": {
+    "criteria": {
+      "max_repose_error_deg": 3.0,
+      "max_force_chain_error_deg": 5.0,
+      "max_geometric_error_m": 0.001
+    },
+    "entries": [
+      {
+        "aspect_ratio": 1.0,
+        "shape_exponent": 2.0,
+        "use_clump": true,
+        "repose_error_deg": 0.0,
+        "force_chain_error_deg": 0.0,
+        "geometric_error_m": 0.0,
+        "normal_deviation_deg": 0.0
+      },
+      {
+        "aspect_ratio": 1.0,
+        "shape_exponent": 4.0,
+        "use_clump": true,
+        "repose_error_deg": 0.0,
+        "force_chain_error_deg": 0.0,
+        "geometric_error_m": 0.0,
+        "normal_deviation_deg": 0.0
+      },
+      {
+        "aspect_ratio": 1.0,
+        "shape_exponent": 8.0,
+        "use_clump": true,
+        "repose_error_deg": 0.0,
+        "force_chain_error_deg": 0.0,
+        "geometric_error_m": 0.0,
+        "normal_deviation_deg": 0.0
+      },
+      {
+        "aspect_ratio": 1.0,
+        "shape_exponent": 16.0,
+        "use_clump": true,
+        "repose_error_deg": 0.0,
+        "force_chain_error_deg": 0.0,
+        "geometric_error_m": 0.0,
+        "normal_deviation_deg": 0.0
+      },
+      {
+        "aspect_ratio": 1.0,
+        "shape_exponent": 32.0,
+        "use_clump": false,
+        "repose_error_deg": 0.0,
+        "force_chain_error_deg": 0.0,
+        "geometric_error_m": 1.316285,
+        "normal_deviation_deg": 87.87
+      },
+      {
+        "aspect_ratio": 1.0,
+        "shape_exponent": 50.0,
+        "use_clump": false,
+        "repose_error_deg": 0.0,
+        "force_chain_error_deg": 0.0,
+        "geometric_error_m": 1.25783,
+        "normal_deviation_deg": 87.87
+      },
+      {
+        "aspect_ratio": 1.5,
+        "shape_exponent": 2.0,
+        "use_clump": true,
+        "repose_error_deg": 3.0,
+        "force_chain_error_deg": 0.33,
+        "geometric_error_m": 0.0,
+        "normal_deviation_deg": 0.0
+      },
+      {
+        "aspect_ratio": 1.5,
+        "shape_exponent": 4.0,
+        "use_clump": false,
+        "repose_error_deg": 6.0,
+        "force_chain_error_deg": 0.67,
+        "geometric_error_m": 0.0,
+        "normal_deviation_deg": 0.0
+      },
+      {
+        "aspect_ratio": 1.5,
+        "shape_exponent": 8.0,
+        "use_clump": false,
+        "repose_error_deg": 12.0,
+        "force_chain_error_deg": 1.33,
+        "geometric_error_m": 0.0,
+        "normal_deviation_deg": 0.0
+      },
+      {
+        "aspect_ratio": 1.5,
+        "shape_exponent": 16.0,
+        "use_clump": false,
+        "repose_error_deg": 15.0,
+        "force_chain_error_deg": 1.67,
+        "geometric_error_m": 0.0,
+        "normal_deviation_deg": 0.0
+      },
+      {
+        "aspect_ratio": 1.5,
+        "shape_exponent": 32.0,
+        "use_clump": false,
+        "repose_error_deg": 15.0,
+        "force_chain_error_deg": 1.67,
+        "geometric_error_m": 1.560923,
+        "normal_deviation_deg": 88.2
+      },
+      {
+        "aspect_ratio": 1.5,
+        "shape_exponent": 50.0,
+        "use_clump": false,
+        "repose_error_deg": 15.0,
+        "force_chain_error_deg": 1.67,
+        "geometric_error_m": 1.342206,
+        "normal_deviation_deg": 88.02
+      },
+      {
+        "aspect_ratio": 2.0,
+        "shape_exponent": 2.0,
+        "use_clump": false,
+        "repose_error_deg": 4.5,
+        "force_chain_error_deg": 0.5,
+        "geometric_error_m": 0.0,
+        "normal_deviation_deg": 0.0
+      },
+      {
+        "aspect_ratio": 2.0,
+        "shape_exponent": 4.0,
+        "use_clump": false,
+        "repose_error_deg": 9.0,
+        "force_chain_error_deg": 1.0,
+        "geometric_error_m": 0.0,
+        "normal_deviation_deg": 0.0
+      },
+      {
+        "aspect_ratio": 2.0,
+        "shape_exponent": 8.0,
+        "use_clump": false,
+        "repose_error_deg": 18.0,
+        "force_chain_error_deg": 2.0,
+        "geometric_error_m": 0.0,
+        "normal_deviation_deg": 0.0
+      },
+      {
+        "aspect_ratio": 2.0,
+        "shape_exponent": 16.0,
+        "use_clump": false,
+        "repose_error_deg": 22.5,
+        "force_chain_error_deg": 2.5,
+        "geometric_error_m": 0.0,
+        "normal_deviation_deg": 0.0
+      },
+      {
+        "aspect_ratio": 2.0,
+        "shape_exponent": 32.0,
+        "use_clump": false,
+        "repose_error_deg": 22.5,
+        "force_chain_error_deg": 2.5,
+        "geometric_error_m": 1.913541,
+        "normal_deviation_deg": 88.64
+      },
+      {
+        "aspect_ratio": 2.0,
+        "shape_exponent": 50.0,
+        "use_clump": false,
+        "repose_error_deg": 22.5,
+        "force_chain_error_deg": 2.5,
+        "geometric_error_m": 1.612349,
+        "normal_deviation_deg": 88.36
+      },
+      {
+        "aspect_ratio": 3.0,
+        "shape_exponent": 2.0,
+        "use_clump": false,
+        "repose_error_deg": 6.0,
+        "force_chain_error_deg": 0.67,
+        "geometric_error_m": 0.0,
+        "normal_deviation_deg": 0.0
+      },
+      {
+        "aspect_ratio": 3.0,
+        "shape_exponent": 4.0,
+        "use_clump": false,
+        "repose_error_deg": 12.0,
+        "force_chain_error_deg": 1.33,
+        "geometric_error_m": 0.0,
+        "normal_deviation_deg": 0.0
+      },
+      {
+        "aspect_ratio": 3.0,
+        "shape_exponent": 8.0,
+        "use_clump": false,
+        "repose_error_deg": 24.0,
+        "force_chain_error_deg": 2.67,
+        "geometric_error_m": 0.0,
+        "normal_deviation_deg": 0.0
+      },
+      {
+        "aspect_ratio": 3.0,
+        "shape_exponent": 16.0,
+        "use_clump": false,
+        "repose_error_deg": 30.0,
+        "force_chain_error_deg": 3.33,
+        "geometric_error_m": 0.0,
+        "normal_deviation_deg": 0.0
+      },
+      {
+        "aspect_ratio": 3.0,
+        "shape_exponent": 32.0,
+        "use_clump": false,
+        "repose_error_deg": 30.0,
+        "force_chain_error_deg": 3.33,
+        "geometric_error_m": 2.676262,
+        "normal_deviation_deg": 89.09
+      },
+      {
+        "aspect_ratio": 3.0,
+        "shape_exponent": 50.0,
+        "use_clump": false,
+        "repose_error_deg": 30.0,
+        "force_chain_error_deg": 3.33,
+        "geometric_error_m": 2.209117,
+        "normal_deviation_deg": 88.91
+      }
+    ]
+  }
+}
