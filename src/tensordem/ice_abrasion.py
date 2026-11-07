@@ -341,12 +341,31 @@ class WaterlineBandSpec:
     below_waterline_m: float = 1.2
     above_waterline_m: float = 1.0
     cell_size_m: float = 0.25
+    #: optional anisotropic refinement (``None`` -> the isotropic ``cell_size_m``).
+    #: Needed to separate the along-hull and the depth-direction contributions to
+    #: the resolution sensitivity of the P95 statistic (``extremal_statistics``).
+    cell_size_x_m: float | None = None
+    cell_size_z_m: float | None = None
 
     def __post_init__(self) -> None:
         _check_positive("below_waterline_m", self.below_waterline_m)
         _check_finite("above_waterline_m", self.above_waterline_m,
                       nonnegative=True)
         _check_positive("cell_size_m", self.cell_size_m)
+        if self.cell_size_x_m is not None:
+            _check_positive("cell_size_x_m", self.cell_size_x_m)
+        if self.cell_size_z_m is not None:
+            _check_positive("cell_size_z_m", self.cell_size_z_m)
+
+    @property
+    def dx_m(self) -> float:
+        return float(self.cell_size_m if self.cell_size_x_m is None
+                     else self.cell_size_x_m)
+
+    @property
+    def dz_m(self) -> float:
+        return float(self.cell_size_m if self.cell_size_z_m is None
+                     else self.cell_size_z_m)
 
 
 @dataclass(frozen=True)
@@ -460,8 +479,8 @@ def build_waterline_grid(hull: HullParticulars | None = None,
     # --- waterline-band grid ----------------------------------------------
     band_lo = hull.draught_m - spec.below_waterline_m
     band_hi = hull.draught_m + spec.above_waterline_m
-    n_x = max(4, int(round(hull.length_m / spec.cell_size_m)))
-    n_z = max(2, int(round((band_hi - band_lo) / spec.cell_size_m)))
+    n_x = max(4, int(round(hull.length_m / spec.dx_m)))
+    n_z = max(2, int(round((band_hi - band_lo) / spec.dz_m)))
     x_edges = torch.linspace(0.0, hull.length_m, n_x + 1, dtype=DTYPE)
     z_edges = torch.linspace(band_lo, band_hi, n_z + 1, dtype=DTYPE)
     x_centers = 0.5 * (x_edges[1:] + x_edges[:-1])
