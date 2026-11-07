@@ -19,6 +19,10 @@ Modules
 ``mortar``     interface sides, mortar projection 1D/2D/3D, conservative backfill
 ``operators``  RBF/MLS and momentum-exchange companions for the comparison table
 ``acceptance`` the machine-checkable C1..C6 harness (also used by the tests)
+``clip3d``     triangle-to-triangle clipping on *non-coplanar* facets (curved
+               interfaces: two different polyhedral approximations of one patch),
+               homogeneous Sutherland-Hodgman clipping, surface mortar operator
+``acceptance3d`` the machine-checkable D1..D6 harness of campaign node IN52-N01
 """
 
 from __future__ import annotations
@@ -32,6 +36,12 @@ from .mortar import (InterfaceSide, MortarOperator, cell_averages, from_polygons
                      tri_patch_side)
 from .operators import (MomentumExchangeOperator, RBFOperator,
                         characteristic_length)
+from .clip3d import (SurfaceMortarOperator, TriSide, clip_homogeneous,
+                     clip_tris_by_box, facet_gradients, ico_sphere_tris,
+                     measure_backfill, octant_reference, surface_cell_averages,
+                     surface_coverage, surface_integral, surface_l2_error,
+                     surface_overlap_entries, tri_area, tri_pair_overlap,
+                     tri_patch_side, uv_sphere_tris)
 
 __all__ = [
     "cell_overlap",
@@ -57,4 +67,21 @@ __all__ = [
     "MomentumExchangeOperator",
     "RBFOperator",
     "characteristic_length",
+    "SurfaceMortarOperator",
+    "TriSide",
+    "clip_homogeneous",
+    "clip_tris_by_box",
+    "facet_gradients",
+    "ico_sphere_tris",
+    "measure_backfill",
+    "octant_reference",
+    "surface_cell_averages",
+    "surface_coverage",
+    "surface_integral",
+    "surface_l2_error",
+    "surface_overlap_entries",
+    "tri_area",
+    "tri_pair_overlap",
+    "tri_patch_side",
+    "uv_sphere_tris",
 ]
