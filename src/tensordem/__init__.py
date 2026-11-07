@@ -1,6 +1,32 @@
 """PyTorch bonded-particle discrete element ice-breaking simulation."""
 
 from .dem import DEMConfig, IceDEM
+from .clump import (
+    Clump,
+    ClumpGeometryError,
+    ClumpOverlapError,
+    ClumpTopologyError,
+    SphereMember,
+    double_sphere_clump,
+    double_sphere_inertia_analytic,
+    double_sphere_mass_analytic,
+    lens_moments,
+    mass_properties_by_voxel,
+    sphere_moments,
+    union_moments,
+)
+from .clump_dynamics import (
+    ClumpBody,
+    ClumpContact,
+    ContactConfig as ClumpContactConfig,
+    PlaneContact,
+    SphereObstacle,
+    effective_mass_along,
+    quaternion_from_axis_angle,
+    quaternion_multiply,
+    quaternion_to_matrix,
+    restitution_to_damping_ratio,
+)
 from .dem3d import DEM3DConfig, IceDEM3D
 from .buoyancy_wet import (
     WetCouplingConfig,

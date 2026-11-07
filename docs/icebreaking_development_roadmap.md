@@ -130,3 +130,39 @@ The generated `FractureField` can be converted to IceDEM3D initial state via `to
 - Bond breakage detection uses plane intersection; does not handle curved failure surfaces
 - Mass mapping assumes uniform density; does not account for FEM element-level density variations
 - Energy accounting is bookkeeping only; does not modify bond stiffness or failure criteria in subsequent simulation
+
+## Increment 3 — rigid multi-sphere (clump) particles, IN14-D3
+
+Status: implemented and verified for spheres; polyhedral particles declared only.
+
+`src/tensordem/clump.py` adds rigid clumps: a set of overlapping spheres glued
+into one non-deformable body with union mass properties (overlap counted once),
+validation (radius, density, overlap limit, connectivity, triple-overlap
+rejection) and an independent voxel cross-check of the union geometry.
+`src/tensordem/clump_dynamics.py` adds the six-DOF rigid body with
+member-summed clump-wall and clump-sphere contacts. Evidence and numbers:
+`docs/clump_multisphere_particles.md`, `artifacts/m4950/`.
+
+Verification baseline (dumbbell, r = 0.05 m, rho = 900 kg/m^3):
+union inertia vs the closed-form dumbbell value 2.3e-16 relative; free-fall energy
+drift 1.4e-12 relative with zero rotation; inclined-plane rolling acceleration
+1.216777535 vs 1.216777588 m/s^2 analytic (4.4e-8); two-member static contact
+carries the weight to 0.0 relative error; clump-sphere third-law residual 0.0 N;
+`tests/test_clump_multisphere.py` 36 passed.
+
+### Roadmap: polyhedral particles (declared, not implemented)
+
+1. **P1** convex hull mass properties (tetrahedralisation; verified against a
+   dense sphere clump as the member count grows).
+2. **P2** polyhedron-plane and polyhedron-sphere contact (support function /
+   closest point; weight balance and torque-vanishing checks).
+3. **P3** polyhedron-polyhedron narrow phase (GJK overlap + SAT/clipping manifold;
+   face-face / edge-edge / vertex-face reference cases and A-B symmetry).
+4. **P4** polyhedra as clump templates vs true hull contact, to quantify the
+   multi-sphere approximation error (target < 5 % peak force / penetration).
+
+Known limits of the implemented clump path: no clump-clump contact, triple member
+overlaps rejected, restitution calibrated to 0.014-0.063 absolute, tumbling
+geometries can lock in history-based Coulomb friction, no rolling resistance or
+torsion friction, uniform density only. See
+`docs/clump_multisphere_particles.md` §5 for details.
