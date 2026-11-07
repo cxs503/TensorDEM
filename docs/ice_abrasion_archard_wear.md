@@ -247,6 +247,22 @@ statistic changes by
 a shot-noise field are resolution dependent even when the mean is not.  This is a
 documented limitation, not a converged quantity.
 
+<!-- BEGIN EXTREME-STATS-ADJUDICATION -->
+### 4.5b 极值统计量裁决（IN37-N02 认证，替代原 4.5 的定性说明）
+
+P95 的 19.8 % 网格收敛指数已被重新认证为**测度依赖**而非数值误差：
+
+| 量 | 值 |
+|---|---|
+| 独立重复（0.25 m, n=24）P95 抽样半宽 | 0.47 % |
+| 最细两级（0.25 vs 0.125 m）差异 | 19.47 % |
+| 尺度律（幂律臂，q ∝ h^−β_p）| β_p = 0.261（95 % 区间 [0.258, 0.265]），每减半 +19.86 % |
+| 饱和臂 q_inf（约束拟合，连续值不可识别）| 7.969e-05 m（β = 0.257）|
+| 双机制模型（活动度平滑 × 散粒噪声）最大残差 | 17.2 % |
+
+结论：(i) 19.8 % 不在抽样区间内（为抽样半宽的 46.2 倍），不能用统计不确定度掩盖；(ii) 它也不是投影的数值误差（体积严格守恒，双机制模型可复现）；(iii) 标定口径须写明「0.25 m 水线带单元平均」，跨尺度比较按 β_p = 0.261 换算；(iv) 细节见 `docs/ice_abrasion_extreme_statistics_certification.md`，验收协议见 `docs/EXTREME_STATISTICS_ACCEPTANCE_PROTOCOL.md`。
+<!-- END EXTREME-STATS-ADJUDICATION -->
+
 ### 4.6 Sensitivity
 
 | parameter | value | P95 depth [um/season] | belt mean [um/season] |
