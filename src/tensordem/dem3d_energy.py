@@ -30,6 +30,9 @@ class EnergyAuditedIceDEM3D(IceDEM3D):
         # resistance work (always <= 0, pure dissipation).
         self.cumulative_friction_work_J = 0.0
         self.cumulative_rolling_work_J = 0.0
+        # Platen (top/bottom + lateral) actuator work and dashpot dissipation.
+        self.cumulative_platen_work_J = 0.0
+        self.cumulative_platen_damping_J = 0.0
         self.reference_mechanical_energy_J = self._mechanical_energy()
         self.energy_balance_residual_J = 0.0
 
@@ -78,7 +81,20 @@ class EnergyAuditedIceDEM3D(IceDEM3D):
                     tangential = (0.5 * k_t * tang_disp.square().sum(dim=1)).sum()
                 else:
                     tangential = (0.5 * cfg.contact_stiffness * tang_disp.square().sum(dim=1)).sum()
-        return float(kinetic + bond + particle_contact + tool_contact + tangential)
+        # Platen (top/bottom + lateral) penalty-spring energy belongs in the
+        # mechanical balance: the actuator work is partitioned between the
+        # particle system and these boundary springs.
+        platen = 0.0
+        if cfg.top_platen_enabled:
+            top_z = self.top_platen_start_z + self.time * cfg.top_platen_velocity
+            top_overlap = (self.positions[:, 2] + cfg.radius - top_z).clamp_min(0.0)
+            platen += 0.5 * cfg.platen_stiffness * (top_overlap ** 2).sum().item()
+        if cfg.bottom_platen_enabled:
+            bottom_z = self.bottom_platen_start_z + self.time * cfg.bottom_platen_velocity
+            bottom_overlap = (bottom_z + cfg.radius - self.positions[:, 2]).clamp_min(0.0)
+            platen += 0.5 * cfg.platen_stiffness * (bottom_overlap ** 2).sum().item()
+        platen += self.lateral_platen_energy()
+        return float(kinetic + bond + particle_contact + tool_contact + tangential + platen)
 
     @torch.no_grad()
     def _dissipation_rates(self) -> tuple[float, float, float]:
@@ -130,6 +146,8 @@ class EnergyAuditedIceDEM3D(IceDEM3D):
         self.cumulative_fracture_release_J = float(self.failure_energy_J.sum())
         self.cumulative_friction_work_J += self._last_friction_power * self.dt
         self.cumulative_rolling_work_J += self._last_rolling_power * self.dt
+        self.cumulative_platen_work_J += self._platen_work() * self.dt
+        self.cumulative_platen_damping_J += self._platen_damping_power() * self.dt
 
         self.velocities += self.dt * force / self.config.mass
         self.velocities[self.fixed] = 0
@@ -145,12 +163,57 @@ class EnergyAuditedIceDEM3D(IceDEM3D):
                       + self.cumulative_particle_damping_J
                       + self.cumulative_tool_damping_J
                       + self.cumulative_friction_work_J
-                      + self.cumulative_rolling_work_J)
-        input_work = self.cumulative_tool_work_J + self.cumulative_external_work_J
+                      + self.cumulative_rolling_work_J
+                      + self.cumulative_platen_damping_J)
+        input_work = (self.cumulative_tool_work_J + self.cumulative_external_work_J
+                      + self.cumulative_platen_work_J)
         self.energy_balance_residual_J = (
             energy_after - self.reference_mechanical_energy_J - input_work
             + dissipated + self.cumulative_fracture_release_J
         )
+
+    def _platen_work(self) -> float:
+        """Instantaneous power (W) delivered to the specimen by all platens."""
+        cfg = self.config
+        power = 0.0
+        if cfg.top_platen_enabled:
+            power += float(-self.last_top_platen_reaction_z) * cfg.top_platen_velocity
+        if cfg.bottom_platen_enabled:
+            power += float(-self.last_bottom_platen_reaction_z) * cfg.bottom_platen_velocity
+        if cfg.lateral_platens:
+            for idx in range(4):
+                power += float(-self.last_lateral_platen_reaction[idx]) \
+                    * self.lateral_platen_velocity[idx]
+        return power
+
+    def _platen_damping_power(self) -> float:
+        """Instantaneous dashpot dissipation (W, >= 0) in all platen contacts."""
+        cfg = self.config
+        power = 0.0
+        if cfg.top_platen_enabled:
+            top_z = self.top_platen_start_z + self.time * cfg.top_platen_velocity
+            top_overlap = (self.positions[:, 2] + cfg.radius - top_z).clamp_min(0.0)
+            rel = self.velocities[:, 2] - cfg.top_platen_velocity
+            power += cfg.platen_damping * float((rel ** 2)[top_overlap > 0].sum())
+        if cfg.bottom_platen_enabled:
+            bottom_z = self.bottom_platen_start_z + self.time * cfg.bottom_platen_velocity
+            bottom_overlap = (bottom_z + cfg.radius - self.positions[:, 2]).clamp_min(0.0)
+            rel = self.velocities[:, 2] - cfg.bottom_platen_velocity
+            power += cfg.platen_damping * float((rel ** 2)[bottom_overlap > 0].sum())
+        if cfg.lateral_platens:
+            lat_c = (cfg.lateral_platen_damping if cfg.lateral_platen_damping is not None
+                     else cfg.platen_damping)
+            px, py = self.positions[:, 0], self.positions[:, 1]
+            vx, vy = self.velocities[:, 0], self.velocities[:, 1]
+            ov0 = (self.lateral_platen_pos[0] - px + cfg.radius).clamp_min(0.0)
+            power += lat_c * float(((vx - self.lateral_platen_velocity[0]) ** 2)[ov0 > 0].sum())
+            ov1 = (px + cfg.radius - self.lateral_platen_pos[1]).clamp_min(0.0)
+            power += lat_c * float(((vx - self.lateral_platen_velocity[1]) ** 2)[ov1 > 0].sum())
+            ov2 = (self.lateral_platen_pos[2] - py + cfg.radius).clamp_min(0.0)
+            power += lat_c * float(((vy - self.lateral_platen_velocity[2]) ** 2)[ov2 > 0].sum())
+            ov3 = (py + cfg.radius - self.lateral_platen_pos[3]).clamp_min(0.0)
+            power += lat_c * float(((vy - self.lateral_platen_velocity[3]) ** 2)[ov3 > 0].sum())
+        return power
 
     @torch.no_grad()
     def diagnostics(self, external_forces: torch.Tensor | None = None) -> dict[str, float | int]:
@@ -158,15 +221,18 @@ class EnergyAuditedIceDEM3D(IceDEM3D):
         # Base diagnostics evaluates forces and can detect damage at the sampled
         # configuration; synchronize the release ledger with that authoritative state.
         self.cumulative_fracture_release_J = float(self.failure_energy_J.sum())
-        energy = self._mechanical_energy()
+        # Recompute the balance from the ledger (the step-owner's residual is the
+        # authoritative one; this keeps a probe consistent with the last step).
         dissipated = (self.cumulative_drag_dissipation_J
                       + self.cumulative_particle_damping_J
                       + self.cumulative_tool_damping_J
                       + self.cumulative_friction_work_J
-                      + self.cumulative_rolling_work_J)
-        input_work = self.cumulative_tool_work_J + self.cumulative_external_work_J
+                      + self.cumulative_rolling_work_J
+                      + self.cumulative_platen_damping_J)
+        input_work = (self.cumulative_tool_work_J + self.cumulative_external_work_J
+                      + self.cumulative_platen_work_J)
         self.energy_balance_residual_J = (
-            energy - self.reference_mechanical_energy_J - input_work
+            self._mechanical_energy() - self.reference_mechanical_energy_J - input_work
             + dissipated + self.cumulative_fracture_release_J
         )
         row.update({
@@ -183,8 +249,11 @@ class EnergyAuditedIceDEM3D(IceDEM3D):
                 abs(self.reference_mechanical_energy_J)
                 + abs(self.cumulative_tool_work_J)
                 + abs(self.cumulative_external_work_J)
+                + abs(self.cumulative_platen_work_J)
                 + self.cumulative_fracture_release_J, 1e-30
             ),
+            "platen_work_cumulative_J": self.cumulative_platen_work_J,
+            "platen_damping_cumulative_J": self.cumulative_platen_damping_J,
         })
         return row
 
