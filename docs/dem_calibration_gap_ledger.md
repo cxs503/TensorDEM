@@ -10,7 +10,7 @@ Ledger keys follow the m605 gap ids so the two documents can be diffed.
 
 | id | m605 state | now | evidence (this repo) | open part |
 |---|---|---|---|---|
-| **GAP-DEM-G4** tangential friction / rolling resistance | 🟠 high, "no tangential friction / rolling resistance" | **closed for sphere/plane and clump/plane, clump/sphere** | sliding spring: `src/tensordem/contact_tangential.py`, `docs/dem3d_tangential_friction_verification.md`; rolling law (sphere): `src/tensordem/rolling_resistance.py`, `docs/dem3d_rolling_resistance.md`; **rolling + drilling on the clump path: `src/tensordem/clump_rolling.py` + `docs/clump_rolling_resistance_calibration.md` (mission m5052)** | clump–clump contacts are still `NOT_SUPPORTED`, so friction between two clumps has no path; drilling resistance has no elastic branch |
+| **GAP-DEM-G4** tangential friction / rolling resistance | 🟠 high, "no tangential friction / rolling resistance" | **closed for sphere/plane, clump/plane, clump/sphere and clump/clump** | sliding spring: `src/tensordem/contact_tangential.py`, `docs/dem3d_tangential_friction_verification.md`; rolling law (sphere): `src/tensordem/rolling_resistance.py`, `docs/dem3d_rolling_resistance.md`; **rolling + drilling on the clump path: `src/tensordem/clump_rolling.py` + `docs/clump_rolling_resistance_calibration.md` (mission m5052)** | **clump–clump: `src/tensordem/clump_clump.py` + `docs/clump_clump_contact.md` (mission m5186)** — Coulomb tangential spring on merged Hertz-Mindlin junctions; drilling resistance still has no elastic branch and rolling resistance is not defined for a clump pair |
 | **GAP-DEM-G6** cell-list / parallel performance | 🟡 medium, "GPU cell list synchronous blocking" | **open** | scale benchmark exists (`docs/dem3d_scale_benchmark.md`, `results-dem3d-scale/`) | no GPU/domain decomposition; not addressed by m5052 |
 | **GAP-DEM-G7** large-scale stress test (> 10k particles) | 🟡 medium, "no large-scale test" | **open (partially superseded)** | 10k/50k/100k wall-clock study in `docs/dem3d_scale_benchmark.md` | the 100k case is a wall-clock study, not a physics validation; throughput on the 702 cluster not yet recorded |
 | **GAP-DEM-G1** 3-D DEM ↔ fluid two-way coupling | 🔴 blocking | open | 2-D only: `src/tensordem/calibrated_wet_coupling.py`, `docs/calibrated-wet/` | 3-D coupling not implemented |
@@ -45,8 +45,9 @@ Ledger keys follow the m605 gap ids so the two documents can be diffed.
   "threshold" of 5.74° is an artefact and is not claimed). Stability requires
   `dt < I omega_ref / M_lim`; the calibration uses `omega_ref = 0.1` for that
   branch.
-* **Not addressed by m5052**: GAP-DEM-G6, GAP-DEM-G7 (scale/performance) and
-  clump–clump contacts.
+* **Not addressed by m5052**: GAP-DEM-G6, GAP-DEM-G7 (scale/performance).
+  Clump–clump contacts were closed separately in m5186
+  (`docs/clump_clump_contact.md`).
 
 ## Reproduction
 
