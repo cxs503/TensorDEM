@@ -11,7 +11,7 @@ roadmap at the end of this document (see [Roadmap](#roadmap-polyhedral-particles
 | closed-form double-sphere reference, voxel cross-check | REAL | `src/tensordem/clump.py` |
 | rigid-body clump dynamics (6 DOF), clump-wall contact | REAL | `src/tensordem/clump_dynamics.py` |
 | clump-sphere contact (sum over member spheres) | REAL | `src/tensordem/clump_dynamics.py` |
-| clump-clump contact (narrow phase between clumps) | NOT_SUPPORTED | — |
+| clump-clump contact (merged narrow phase, Hertz-Mindlin pair forces) | REAL (m5186) | `src/tensordem/clump_clump.py`, `docs/clump_clump_contact.md` |
 | convex polyhedron particle (hull, SAT/clipping) | NOT_SUPPORTED (roadmap) | — |
 | rolling resistance / torsion friction for clumps | REAL (m5052) | `src/tensordem/clump_rolling.py`, `docs/clump_rolling_resistance_calibration.md` |
 
@@ -253,10 +253,13 @@ the quantitative criteria above.
 
 ### 5.2 Limits of the model as implemented
 
-* **No clump-clump contact.** Only clump-wall and clump-sphere (an infinite-mass
-  spherical obstacle) are implemented. Two clumps require the reverse
-  member-vs-member loop plus the corresponding reaction on the second body's
-  torque; the contact bookkeeping is written to make that extension local.
+* **Clump-clump contact: closed in m5186.** Two clumps now interact through
+  `src/tensordem/clump_clump.py`: member-pair candidates are merged into
+  geometric junctions (so duplicate member pairs cannot double the force) and
+  carry Hertz-Mindlin forces with third-law-closed torques. See
+  [`docs/clump_clump_contact.md`](clump_clump_contact.md) for the criteria table
+  and the remaining limits (no rolling resistance or cohesion on the pair path,
+  heuristic merge tolerance, no broad phase).
 * **Triple member overlaps are rejected**, not silently mis-integrated. Clumps
   whose members form a densely overlapping core (common for rounded polyhedra)
   need inclusion-exclusion to higher order or a voxel/hull-based mass property;
