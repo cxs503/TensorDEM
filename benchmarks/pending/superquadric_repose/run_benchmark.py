@@ -69,7 +69,7 @@ def run_benchmark():
             
             # Compute errors
             geom_err = compute_geometric_error(sq, n_clump_spheres, n_surface_samples=100)
-            macro_err = compute_macroscopic_error(sq, n_clump_spheres, n_particles=50, mu=mu)
+            macro_err = compute_macroscopic_error(sq, n_clump_spheres, mu=mu)
             
             result = {
                 "aspect_ratio": ar,
@@ -94,7 +94,8 @@ def run_benchmark():
     print("Disable Ratio Table")
     print("=" * 70)
     
-    table = build_disable_ratio_table(aspect_ratios, shape_exponents, n_clump_spheres)
+    table = build_disable_ratio_table(aspect_ratios, shape_exponents,
+                                     sphere_counts=(n_clump_spheres,))
     
     print("\nCriteria:")
     for key, value in table.criteria.items():
