@@ -422,6 +422,7 @@ class IceChannelSimulation:
                  water: Optional[WaterEnvironment] = None,
                  contact: Optional[ContactParameters] = None,
                  hull: Optional[HullGeometry] = None,
+                 extra_hulls: Sequence[HullGeometry] = (),
                  dt: float = 5.0e-3,
                  integrator: str = "euler",
                  dtype: torch.dtype = _DTYPE) -> None:
@@ -443,6 +444,15 @@ class IceChannelSimulation:
         self.water = water or WaterEnvironment()
         self.contact = contact or ContactParameters()
         self.hull = hull or HullGeometry()
+        extra = tuple(extra_hulls)
+        for item in extra:
+            if not isinstance(item, HullGeometry):
+                raise TypeError("extra_hulls must contain HullGeometry instances, "
+                                f"got {type(item).__name__}")
+        #: every prescribed hull; index 0 is the reference ``hull``.  A formation
+        #: is one hull plus ``extra_hulls`` (lead + followers); all hulls share
+        #: the same contact law and advance kinematically.
+        self.hulls = (self.hull,) + extra
         self.dt = _require_positive("dt", dt)
         if integrator not in ("euler", "verlet"):
             raise ValueError("integrator must be 'euler' or 'verlet'")
@@ -647,7 +657,8 @@ class IceChannelSimulation:
         }
 
     def cleared_width(self, behind_length: Optional[float] = None,
-                      lateral_limit: Optional[float] = None) -> float:
+                      lateral_limit: Optional[float] = None,
+                      hull: Optional[HullGeometry] = None) -> float:
         """Cleared channel width behind the hull [m].
 
         Definition: over the swept corridor ``x in [x_ship - behind_length,
@@ -658,14 +669,15 @@ class IceChannelSimulation:
         therefore the widest symmetric band around the track that contains no
         floe material.
         """
-        x_ship = self.hull.x_centre(self.time)
+        hull = self.hull if hull is None else hull
+        x_ship = hull.x_centre(self.time)
         behind = float(behind_length if behind_length is not None
-                       else self.hull.length)
-        y_ship = float(self.hull.y_position)
+                       else hull.length)
+        y_ship = float(hull.y_position)
         in_corridor = (self.pos[:, 0] >= x_ship - behind) & (self.pos[:, 0] <= x_ship)
         if not bool(in_corridor.any()):
             length, width = getattr(self, "domain", (float("nan"), 2.0 * float(
-                lateral_limit if lateral_limit is not None else self.hull.beam)))
+                lateral_limit if lateral_limit is not None else hull.beam)))
             return float(width)
         clearance = (self.pos[in_corridor, 1] - y_ship).abs() - self.radius[in_corridor]
         half = float(clearance.min().clamp(min=0.0))
@@ -736,9 +748,11 @@ class IceChannelSimulation:
         torque.index_add_(0, i, arm_pt_i[:, 0] * f_pair[:, 1] - arm_pt_i[:, 1] * f_pair[:, 0])
         torque.index_add_(0, j, arm_pt_j[:, 0] * (-f_pair[:, 1]) - arm_pt_j[:, 1] * (-f_pair[:, 0]))
 
-    def _hull_force(self, t: float, pos: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
-        """Penalty contact of every floe with the prescribed rectangular hull."""
-        hull = self.hull
+    def _hull_force(self, t: float, pos: torch.Tensor,
+                    hull: Optional[HullGeometry] = None
+                    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        """Penalty contact of every floe with a prescribed rectangular hull."""
+        hull = self.hull if hull is None else hull
         x_c = hull.x_centre(t)
         y_c = float(hull.y_position)
         half_l, half_b = hull.half_length, hull.half_beam
@@ -793,7 +807,12 @@ class IceChannelSimulation:
         force = torch.zeros_like(self.pos)
         torque = torch.zeros(self.n, dtype=self.dtype)
         self._accumulate_contacts(force, torque)
-        hull_force, hull_torque = self._hull_force(t, self.pos)
+        hull_force = torch.zeros_like(self.pos)
+        hull_torque = torch.zeros(self.n, dtype=self.dtype)
+        for hull in self.hulls:
+            f_hull, t_hull = self._hull_force(t, self.pos, hull=hull)
+            hull_force = hull_force + f_hull
+            hull_torque = hull_torque + t_hull
         force = force + hull_force
         torque = torque + hull_torque
 
@@ -818,6 +837,38 @@ class IceChannelSimulation:
             c_heave = 2.0 * water.heave_damping_ratio * torch.sqrt(self.mass * k_heave)
             vertical = vertical - c_heave * self.vz
         return force, torque, vertical
+
+    # -- per-hull ledger ----------------------------------------------------
+    def hull_contact(self, t: float) -> Tuple[dict, ...]:
+        """Contact ledger of every prescribed hull at time ``t``.
+
+        One dict per hull (index 0 is ``self.hull``):
+
+        ``force_on_floes_N``            ``(N, 2)`` contact force applied to the floes [N]
+        ``per_floe_force_magnitude_N``  ``(N,)``   magnitude of that force [N]
+        ``force_on_hull_N``             ``(2,)``   reaction = the ice load the hull
+                                                   carries [N]; its ``x`` component is
+                                                   the instantaneous ice-resistance
+                                                   contribution
+        ``contact_count``               number of floes in contact
+
+        Pure query: it does not mutate the state, so a benchmark may sample it
+        every record step without perturbing the trajectory.
+        """
+        ledger = []
+        for index, hull in enumerate(self.hulls):
+            f_floes, _ = self._hull_force(t, self.pos, hull=hull)
+            magnitude = torch.linalg.norm(f_floes, dim=1)
+            ledger.append({
+                "index": index,
+                "x_centre_m": hull.x_centre(t),
+                "y_position_m": float(hull.y_position),
+                "force_on_floes_N": f_floes.detach().clone(),
+                "per_floe_force_magnitude_N": magnitude.detach().clone(),
+                "force_on_hull_N": (-f_floes.sum(dim=0)).detach().clone(),
+                "contact_count": int((magnitude > 0.0).sum()),
+            })
+        return tuple(ledger)
 
     # -- integration --------------------------------------------------------
     def step(self) -> None:
