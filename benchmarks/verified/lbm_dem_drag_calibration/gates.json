@@ -1,0 +1,144 @@
+{
+  "all_recomputed_pass": false,
+  "campaign": "P55-N08",
+  "gates": [
+    {
+      "criterion": "F/(3 pi mu d U) after periodic-array correction vs 1 (Stokes), <= 2 %",
+      "evidence": "stokes_d8 (d=8, L/d=8, Re=0.0499, correction=1.1784)",
+      "gate": "stokes_drag_analytic",
+      "measured": 0.009756625767396221,
+      "passed": true,
+      "threshold": 0.02
+    },
+    {
+      "criterion": "spread (max-min)/mean of the corrected Stokes drag over Cs in {0.5,1,2}, <= 2 %",
+      "evidence": "stokes_cs0.5, stokes_cs1, stokes_cs2, stokes_d6",
+      "gate": "stokes_cs_insensitivity",
+      "measured": 0.011876472006995592,
+      "passed": true,
+      "threshold": 0.02
+    },
+    {
+      "criterion": "spread (max-min)/mean of the corrected Stokes drag over L/d in {8,16}, <= 1 %",
+      "evidence": "stokes_ld16, stokes_ld8",
+      "gate": "stokes_domain_insensitivity",
+      "measured": 0.003570521152005842,
+      "passed": true,
+      "threshold": 0.01
+    },
+    {
+      "criterion": "|F_MEM - F_direct| / F_MEM for the same case, <= 2 %",
+      "evidence": "stokes_d6 vs scheme_direct_re0.05",
+      "gate": "ibm_scheme_agreement_d6_re0.05",
+      "measured": 0.2422586609525007,
+      "passed": false,
+      "threshold": 0.02
+    },
+    {
+      "criterion": "|F_MEM - F_direct| / F_MEM for the same case, <= 2 %",
+      "evidence": "reich_re20 vs scheme_direct_re20",
+      "gate": "ibm_scheme_agreement_d6_re20",
+      "measured": 0.20943044518124346,
+      "passed": false,
+      "threshold": 0.02
+    },
+    {
+      "criterion": "C_D measured vs Schiller-Naumann at the measured Re, <= 5 %",
+      "evidence": "reich_re20 (Re=21.2, d=6, L/d=8)",
+      "gate": "schiller_naumann_reich_re20",
+      "measured": -0.27457252656543485,
+      "passed": false,
+      "threshold": 0.05
+    },
+    {
+      "criterion": "C_D measured vs Schiller-Naumann at the measured Re, <= 5 %",
+      "evidence": "reich_re20_d8 (Re=20, d=8, L/d=8)",
+      "gate": "schiller_naumann_reich_re20_d8",
+      "measured": 0.17513460214090681,
+      "passed": false,
+      "threshold": 0.05
+    },
+    {
+      "criterion": "C_D measured vs Schiller-Naumann at the measured Re, <= 5 %",
+      "evidence": "reich_re5 (Re=5.12, d=6, L/d=8)",
+      "gate": "schiller_naumann_reich_re5",
+      "measured": -0.10649953765026421,
+      "passed": false,
+      "threshold": 0.05
+    },
+    {
+      "criterion": "C_D measured vs Schiller-Naumann at the measured Re, <= 5 %",
+      "evidence": "reich_re50 (Re=9.82e+19, d=6, L/d=8)",
+      "gate": "schiller_naumann_reich_re50",
+      "measured": NaN,
+      "passed": false,
+      "threshold": 0.05
+    },
+    {
+      "criterion": "C_D measured vs Schiller-Naumann at the measured Re, <= 5 %",
+      "evidence": "reich_re5_d8 (Re=5, d=8, L/d=8)",
+      "gate": "schiller_naumann_reich_re5_d8",
+      "measured": 0.03919294009602381,
+      "passed": true,
+      "threshold": 0.05
+    },
+    {
+      "criterion": "C_D measured vs Schiller-Naumann at the measured Re, <= 5 %",
+      "evidence": "scheme_direct_re20 (Re=20.5, d=6, L/d=8)",
+      "gate": "schiller_naumann_scheme_direct_re20",
+      "measured": -0.07657028519130893,
+      "passed": false,
+      "threshold": 0.05
+    },
+    {
+      "criterion": "F_pair/(2 F_single) vs 1 - 3 xi/2 (Stimson-Jeffery leading term), <= 5 %",
+      "evidence": "pair_r8_d6 vs single_d6_l64 (xi=a/r=0.125, series truncation O(xi^3)=0.00195)",
+      "gate": "two_sphere_tandem_ratio",
+      "measured": 0.12076851090772811,
+      "passed": false,
+      "threshold": 0.05
+    },
+    {
+      "criterion": "corrected relative terminal velocity vs the Schiller-Naumann drag balance, <= 3 %",
+      "evidence": "settling_d6 (Re_t=0.815)",
+      "gate": "terminal_velocity_settling_d6",
+      "measured": 0.09216763565072883,
+      "passed": false,
+      "threshold": 0.03
+    },
+    {
+      "criterion": "|F_drag(terminal) - effective weight| / weight, <= 3 %",
+      "evidence": "settling_d6",
+      "gate": "drag_balance_settling_d6",
+      "measured": 0.004015312533122821,
+      "passed": true,
+      "threshold": 0.03
+    },
+    {
+      "criterion": "drag time series never negative and no step-to-step jump > 5 %",
+      "evidence": "settling_d6",
+      "gate": "drag_no_negative_artifact_settling_d6",
+      "measured": {
+        "max_step_jump": 4.598738567157656,
+        "min_drag": -0.5764205263435003
+      },
+      "passed": false,
+      "threshold": {
+        "max_step_jump": 0.05,
+        "min_drag": 0.0
+      }
+    },
+    {
+      "criterion": "max relative residual of d(m v)/dt + dP_fluid/dt - F_external, <= 1e-10",
+      "evidence": "settling_d6",
+      "gate": "momentum_conservation_settling_d6",
+      "measured": 6.6189404391882634e-12,
+      "passed": true,
+      "threshold": 1e-10
+    }
+  ],
+  "generated_by": "benchmarks/verified/lbm_dem_drag_calibration/run.py --merge",
+  "mission_id": 5430,
+  "n_gates": 16,
+  "n_passed": 6
+}
