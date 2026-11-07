@@ -1,0 +1,130 @@
+{
+  "node": "IN29-N02",
+  "repo": "TensorDEM",
+  "module": "src/tensordem/floe_rigid6dof.py",
+  "tests": "tests/test_floe_rigid6dof.py",
+  "parameters": {
+    "ice_density_kg_m3": 917.0,
+    "water_density_kg_m3": 1025.0,
+    "gravity_m_s2": 9.81,
+    "floe_length_m": 4.0,
+    "floe_width_m": 3.0,
+    "floe_thickness_m": 0.4,
+    "added_mass_ratio": 0.5,
+    "added_inertia_ratio": 0.2,
+    "contact_stiffness_N_m15": 20000000.0,
+    "friction_coefficient_pile": 0.5,
+    "heave_damping_N_s_m": 2822.0
+  },
+  "free_decay": {
+    "period_measured_s": 1.4714999999998626,
+    "period_analytic_s": 1.4715908198662417,
+    "period_rel_error": 6.171543417715109e-05,
+    "period_undamped_analytic_s": 1.4697508668286245,
+    "omega_n_rad_s": 4.27500023914748,
+    "zeta_analytic": 0.049990679308794694,
+    "log_decrement_measured": 0.3145259058392042,
+    "log_decrement_analytic": 0.3144939183980472,
+    "log_decrement_rel_error": 0.00010171084172293976,
+    "heave_stiffness_N_m": 120663.0,
+    "mass_effective_kg": 6602.4000000000015,
+    "quaternion_norm_error_max": 0.0,
+    "energy_ledger_residual_relative": 2.5801028507544464e-07,
+    "dissipated_J": 23.370537619242917
+  },
+  "collision": {
+    "linear_momentum_initial_kg_m_s": 2200.8000000000006,
+    "linear_momentum_rel_error_max": 8.265128151335224e-16,
+    "angular_momentum_scale_kg_m2_s": 8803.200000000003,
+    "angular_momentum_rel_error_max": 6.024968480017703e-12,
+    "max_penetration_m": 0.019386437827088265,
+    "flake_thickness_m": 0.4,
+    "v_after_contact_m_s": [
+      0.004641020859028572,
+      0.49535897914097143
+    ],
+    "energy_residual_state_relative": 5.111290246429849e-07,
+    "energy_residual_trapezoid_relative": 2.3152074702662755e-05,
+    "contact_work_J": -133.9261429957831,
+    "initial_kinetic_energy_J": 2751.000000000001
+  },
+  "static_equilibrium": {
+    "n_floes": 4,
+    "force_ratio_max": 3.3700828343874506e-16,
+    "moment_ratio_max": 7.082986091388788e-16,
+    "force_ratio_per_floe": [
+      1.6850414171937253e-16,
+      1.6850414171937253e-16,
+      3.3700828343874506e-16,
+      1.6850414171937253e-16
+    ],
+    "moment_ratio_per_floe": [
+      3.644627988273797e-18,
+      7.082986091388788e-16,
+      3.5413992752926214e-16,
+      3.541493045694394e-16
+    ],
+    "analytic_draught_m": 0.3578536585365854,
+    "centre_height_m": -0.1578536585365854,
+    "heel_deg": [
+      0.5,
+      1.0,
+      2.0,
+      4.0,
+      6.0,
+      8.0
+    ],
+    "restoring_moment_Nm": [
+      -1396.0738342232287,
+      -2792.3681698621963,
+      -5005.721534276183,
+      -7980.79659595023,
+      -10743.08811346619,
+      -13460.438182463218
+    ],
+    "restoring_slope_Nm_per_rad": -160003.5447802721
+  },
+  "pile": {
+    "n_floes": 4,
+    "floe_size_m": [
+      1.2,
+      1.0,
+      0.3
+    ],
+    "configuration": "two vertical stacks of two floes on a seabed",
+    "settle_time_s": 0.8,
+    "relax_steps": 332,
+    "force_ratio_max": 9.984589622047775e-07,
+    "moment_ratio_max": 0.0,
+    "velocity_max_m_s": 7.911657503856534e-07,
+    "omega_max_rad_s": 0.0,
+    "max_penetration_m": 0.004715800502569589,
+    "pile_height_m": 0.2981285182767731,
+    "centre_heights_m": [
+      -0.8547158005025696,
+      -0.5565872822257965,
+      -0.8547158005025696,
+      -0.5565872822257965
+    ]
+  },
+  "adaptive": {
+    "fixed_steps": 10000,
+    "adaptive_steps": 309.0,
+    "adaptive_mean_dt_s": 0.003236245954692557,
+    "adaptive_last_dt_s": 0.0009058636481205085,
+    "final_height_fixed_m": -0.16632516685458176,
+    "final_height_adaptive_m": -0.166324019161766,
+    "height_difference_m": 1.1476928157561073e-06,
+    "quaternion_norm_error": 0.0
+  },
+  "criteria": {
+    "a_quaternion_norm_below_1e-12": true,
+    "b_free_decay_frequency_below_1_percent": true,
+    "c_collision_momentum_below_1e-8": true,
+    "d_static_equilibrium_below_1e-6": true,
+    "e_energy_ledger_below_1e-6": true,
+    "f_negative_control": true,
+    "g_tests_at_least_15": true
+  },
+  "all_criteria_met": true
+}
