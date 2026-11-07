@@ -11,6 +11,7 @@ from typing import Any
 import torch
 
 from .dem3d import DEM3DConfig, IceDEM3D
+from . import hertz_mindlin
 
 
 class EnergyAuditedIceDEM3D(IceDEM3D):
@@ -54,10 +55,11 @@ class EnergyAuditedIceDEM3D(IceDEM3D):
         tool_distance = torch.linalg.vector_norm(self.positions - self.tool_position, dim=1)
         tool_overlap = (cfg.radius + cfg.tool_radius - tool_distance).clamp_min(0)
         tool_contact = (0.5 * cfg.contact_stiffness * tool_overlap.square()).sum()
-        # Tangential (Cundall-Strack) spring energy of active, unbonded contacts.
+        # Tangential (Cundall-Strack / Hertz-Mindlin) spring energy of active, unbonded contacts.
         # The friction force is a spring force: during stick its work is recoverable,
-        # so the stored energy belongs in the mechanical balance.  Linear k_t = k_n
-        # convention, same as the normal term above.
+        # so the stored energy belongs in the mechanical balance.
+        # For Hertz contacts: k_t = 8 G* sqrt(R* delta) (Mindlin)
+        # For linear contacts: k_t = contact_stiffness (constant)
         tangential = torch.zeros((), dtype=self.dtype, device=self.device)
         if pairs.numel() and cfg.friction_coefficient > 0.0:
             ci, cj = pairs.T
@@ -69,7 +71,13 @@ class EnergyAuditedIceDEM3D(IceDEM3D):
                     torch.finfo(self.dtype).eps
                 )[:, None]
                 tang_disp = self._get_tangential_state(ci[active], cj[active], cnormal[active])
-                tangential = (0.5 * cfg.contact_stiffness * tang_disp.square().sum(dim=1)).sum()
+                if cfg.contact_model == "hertz":
+                    e_star, r_eff = self._hertz_pair_params
+                    k_t = hertz_mindlin.hertz_mindlin_tangential_stiffness(
+                        overlap[active], e_star, self._hertz_g_star, r_eff)
+                    tangential = (0.5 * k_t * tang_disp.square().sum(dim=1)).sum()
+                else:
+                    tangential = (0.5 * cfg.contact_stiffness * tang_disp.square().sum(dim=1)).sum()
         return float(kinetic + bond + particle_contact + tool_contact + tangential)
 
     @torch.no_grad()
