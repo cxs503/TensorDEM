@@ -145,6 +145,16 @@ class DEM3DConfig:
     bottom_platen_gap: float = 0.0
     top_platen_velocity: float = 0.0
     bottom_platen_velocity: float = 0.0
+    # --- Lateral (x, y) servo platens for true-triaxial tests ---
+    # All four lateral planes (x-min, x-max, y-min, y-max) share these
+    # settings.  Disabled by default so every pre-existing trajectory is
+    # bit-for-bit unchanged.  Plane positions are tracked incrementally
+    # (pos += vel*dt) so a driver can servo the pressure at runtime via
+    # ``IceDEM3D.lateral_platen_velocity`` (a 4-vector, same order).
+    lateral_platens: bool = False
+    lateral_platen_stiffness: float | None = None   # None -> platen_stiffness
+    lateral_platen_damping: float | None = None     # None -> platen_damping
+    lateral_platen_gap: float = 0.0
     # --- SIR-PC2|F05: Coulomb friction + rolling resistance ---
     friction_coefficient: float = 0.0        # mu: Coulomb friction coefficient
     rolling_resistance_coefficient: float = 0.0  # mu_r: rolling resistance coefficient
@@ -205,6 +215,18 @@ class DEM3DConfig:
                 raise ValueError(f"{name} must be a boolean")
         if self.dt is not None and (not math.isfinite(self.dt) or self.dt <= 0):
             raise ValueError("dt must be finite and positive")
+        if not isinstance(self.lateral_platens, bool):
+            raise ValueError("lateral_platens must be a boolean")
+        if self.lateral_platen_stiffness is not None and (
+                not math.isfinite(self.lateral_platen_stiffness)
+                or self.lateral_platen_stiffness <= 0):
+            raise ValueError("lateral_platen_stiffness must be positive when given")
+        if self.lateral_platen_damping is not None and (
+                not math.isfinite(self.lateral_platen_damping)
+                or self.lateral_platen_damping < 0):
+            raise ValueError("lateral_platen_damping must be nonnegative when given")
+        if not math.isfinite(self.lateral_platen_gap) or self.lateral_platen_gap < 0:
+            raise ValueError("lateral_platen_gap must be nonnegative")
         if self.device not in ("cpu", "cuda"):
             raise ValueError("device must be 'cpu' or 'cuda'")
         if self.geometry not in ("box", "cylinder_xz"):
@@ -295,18 +317,25 @@ class DEM3DConfig:
         # friction is switched off, so a later mu_p switch cannot outrun the bound.
         platen_k = (self.platen_stiffness if self.platen_friction_stiffness is None
                     else max(self.platen_stiffness, self.platen_friction_stiffness))
+        lat_k = (self.lateral_platen_stiffness if self.lateral_platen_stiffness is not None
+                 else self.platen_stiffness)
+        lat_c = (self.lateral_platen_damping if self.lateral_platen_damping is not None
+                 else self.platen_damping)
+        n_platens = (int(self.top_platen_enabled) + int(self.bottom_platen_enabled)
+                    + (4 if self.lateral_platens else 0))
         contact_stiffness = max(
             self.bond_stiffness,
             self._bound_stiffness(self.contact_stiffness, rigid_counterpart=False),
             self._bound_stiffness(self.effective_tangential_stiffness,
                                   rigid_counterpart=False),
-            self._bound_stiffness(platen_k, rigid_counterpart=True)
-            if (self.top_platen_enabled or self.bottom_platen_enabled) else 0.0,
+            self._bound_stiffness(
+                max(platen_k, lat_k if self.lateral_platens else 0.0),
+                rigid_counterpart=True) if n_platens else 0.0,
         )
         k = (2 * degree_bound + 1) * contact_stiffness
         c = ((2 * degree_bound + 1) * self.contact_damping + self.drag
-             + (2 if (self.top_platen_enabled or self.bottom_platen_enabled) else 0)
-             * self.platen_damping)
+             + n_platens * max(self.platen_damping,
+                           lat_c if self.lateral_platens else 0.0))
         elastic = 0.15 * math.sqrt(self.mass / k)
         damping = 0.15 * self.mass / c if c > 0 else math.inf
         travel = 0.1 * self.radius / self.tool_speed
@@ -432,6 +461,17 @@ class IceDEM3D:
         )
         self.last_top_platen_reaction_z = torch.zeros((), dtype=self.dtype, device=self.device)
         self.last_bottom_platen_reaction_z = torch.zeros((), dtype=self.dtype, device=self.device)
+        # --- Lateral (x, y) servo platens: order (x_min, x_max, y_min, y_max) ---
+        # Plane positions are tracked incrementally so a driver can change
+        # ``lateral_platen_velocity`` between steps (servo pressure control).
+        self.lateral_platen_pos = torch.zeros(4, dtype=self.dtype, device=self.device)
+        self.lateral_platen_velocity = torch.zeros(4, dtype=self.dtype, device=self.device)
+        if config.lateral_platens:
+            self.lateral_platen_pos[0] = float(self.initial_positions[:, 0].min()) - config.radius - config.lateral_platen_gap
+            self.lateral_platen_pos[1] = float(self.initial_positions[:, 0].max()) + config.radius + config.lateral_platen_gap
+            self.lateral_platen_pos[2] = float(self.initial_positions[:, 1].min()) - config.radius - config.lateral_platen_gap
+            self.lateral_platen_pos[3] = float(self.initial_positions[:, 1].max()) + config.radius + config.lateral_platen_gap
+        self.last_lateral_platen_reaction = torch.zeros(4, dtype=self.dtype, device=self.device)
 
         # --- SIR-PC2|F05: tangential friction & rolling resistance state ---
         # Tangential displacement accumulator per contact pair (keyed by pair hash).
@@ -455,6 +495,34 @@ class IceDEM3D:
         # Last evaluated tangential force (N) at each plane, for diagnostics only.
         self.last_top_platen_friction = torch.zeros((n, 3), dtype=self.dtype, device=self.device)
         self.last_bottom_platen_friction = torch.zeros((n, 3), dtype=self.dtype, device=self.device)
+
+    @torch.no_grad()
+    def lateral_platen_energy(self) -> float:
+        """Elastic energy (J) stored in the four lateral platen springs.
+
+        Zero when the lateral platens are disabled, so the term is provably
+        inert for every pre-existing case.  Mirrors the top/bottom platen
+        energy convention (linear penalty: 0.5 * k * overlap^2 per particle).
+        """
+        cfg = self.config
+        if not cfg.lateral_platens:
+            return 0.0
+        k = (cfg.lateral_platen_stiffness if cfg.lateral_platen_stiffness is not None
+             else cfg.platen_stiffness)
+        px, py = self.positions[:, 0], self.positions[:, 1]
+        ov = torch.zeros_like(px)
+        total = torch.zeros((), dtype=self.dtype, device=self.device)
+        for idx in range(4):
+            if idx == 0:
+                ov = (self.lateral_platen_pos[0] - px + cfg.radius).clamp_min(0.0)
+            elif idx == 1:
+                ov = (px + cfg.radius - self.lateral_platen_pos[1]).clamp_min(0.0)
+            elif idx == 2:
+                ov = (self.lateral_platen_pos[2] - py + cfg.radius).clamp_min(0.0)
+            else:
+                ov = (py + cfg.radius - self.lateral_platen_pos[3]).clamp_min(0.0)
+            total = total + (ov ** 2).sum()
+        return float(0.5 * k * total)
 
     @property
     def platen_friction_k(self) -> float:
@@ -1076,10 +1144,49 @@ class IceDEM3D:
                 force += bottom_friction
                 self.last_bottom_platen_friction.copy_(bottom_friction)
 
+        # Optional lateral (x, y) servo platens.  Plane positions come from the
+        # incrementally-updated ``lateral_platen_pos`` so a driver can change
+        # ``lateral_platen_velocity`` between steps.  Inward normals: x_min +x,
+        # x_max -x, y_min +y, y_max -y.  Damping opposes relative normal approach
+        # (same sign convention as the top/bottom platens above).
+        lat_reactions = torch.zeros(4, dtype=self.dtype, device=self.device)
+        if cfg.lateral_platens:
+            lat_k = (cfg.lateral_platen_stiffness if cfg.lateral_platen_stiffness is not None
+                     else cfg.platen_stiffness)
+            lat_c = (cfg.lateral_platen_damping if cfg.lateral_platen_damping is not None
+                     else cfg.platen_damping)
+            px, py = self.positions[:, 0], self.positions[:, 1]
+            vx, vy = self.velocities[:, 0], self.velocities[:, 1]
+            pvx, pvy = self.lateral_platen_velocity[0], self.lateral_platen_velocity[2]
+            # x_min plane (inward +x): overlap = p - (x - R); force +x.
+            ov = (self.lateral_platen_pos[0] - px + cfg.radius).clamp_min(0.0)
+            mag = (lat_k * ov - lat_c * (vx - pvx)).clamp_min(0.0)
+            mag = torch.where(ov > 0, mag, torch.zeros_like(mag))
+            force[:, 0] += mag
+            lat_reactions[0] = -mag.sum()
+            # x_max plane (inward -x): overlap = (x + R) - p; force -x.
+            ov = (px + cfg.radius - self.lateral_platen_pos[1]).clamp_min(0.0)
+            mag = (lat_k * ov + lat_c * (vx - pvx)).clamp_min(0.0)
+            mag = torch.where(ov > 0, mag, torch.zeros_like(mag))
+            force[:, 0] -= mag
+            lat_reactions[1] = mag.sum()
+            # y_min plane (inward +y): overlap = p - (y - R); force +y.
+            ov = (self.lateral_platen_pos[2] - py + cfg.radius).clamp_min(0.0)
+            mag = (lat_k * ov - lat_c * (vy - pvy)).clamp_min(0.0)
+            mag = torch.where(ov > 0, mag, torch.zeros_like(mag))
+            force[:, 1] += mag
+            lat_reactions[2] = -mag.sum()
+            # y_max plane (inward -y): overlap = (y + R) - p; force -y.
+            ov = (py + cfg.radius - self.lateral_platen_pos[3]).clamp_min(0.0)
+            mag = (lat_k * ov + lat_c * (vy - pvy)).clamp_min(0.0)
+            mag = torch.where(ov > 0, mag, torch.zeros_like(mag))
+            force[:, 1] -= mag
+            lat_reactions[3] = mag.sum()
         if update_fracture:
             self.last_reaction.copy_(reaction)
         self.last_top_platen_reaction_z.copy_(top_reaction_z)
         self.last_bottom_platen_reaction_z.copy_(bottom_reaction_z)
+        self.last_lateral_platen_reaction.copy_(lat_reactions)
         return force, reaction
 
     @torch.no_grad()
@@ -1094,6 +1201,8 @@ class IceDEM3D:
         self.velocities[self.fixed] = 0.0
         self.positions += self.velocities * self.dt
         self.positions[self.fixed] = self.initial_positions[self.fixed]
+        if self.config.lateral_platens:
+            self.lateral_platen_pos += self.lateral_platen_velocity * self.dt
         self.time += self.dt
         self.step_count += 1
         if not bool(torch.isfinite(self.positions).all() and torch.isfinite(self.velocities).all()):
@@ -1167,7 +1276,10 @@ class IceDEM3D:
             "tool_contact_energy_J": float(tool_energy),
             "platen_contact_energy_J": float(platen_energy),
             "released_bond_energy_J": float(released),
-            "mechanical_energy_J": float(kinetic + bond_energy + contact_energy + tool_energy + platen_energy),
+            "lateral_platen_reaction": [float(v) for v in self.last_lateral_platen_reaction],
+            "lateral_platen_energy_J": self.lateral_platen_energy(),
+            "mechanical_energy_J": float(kinetic + bond_energy + contact_energy + tool_energy
+                                          + platen_energy + self.lateral_platen_energy()),
             **self.body_force_ledger(),
         }
 
@@ -1222,6 +1334,7 @@ class IceDEM3D:
                 bottom_overlap, *self._hertz_rigid_params).sum().item())
                 if cfg.contact_model == "hertz"
                 else 0.5 * cfg.platen_stiffness * (bottom_overlap ** 2).sum().item())
+        platen_energy += self.lateral_platen_energy()
         released = 0.5 * cfg.bond_stiffness * (extension[~self.alive] ** 2).sum().item()
         return {
             "time_s": self.time,
@@ -1236,6 +1349,28 @@ class IceDEM3D:
             "released_bond_energy_J": float(released),
             "mechanical_energy_J": float(kinetic + bond_energy + contact_energy + tool_energy + platen_energy),
         }
+
+    @torch.no_grad()
+    def lateral_platen_energy(self) -> float:
+        """Elastic energy (J) stored in the four lateral servo-platen springs.
+
+        Zero when the lateral platens are disabled, so the term is provably
+        inert for every pre-existing case.  Mirrors the top/bottom platen
+        energy convention (linear penalty: 0.5 * k * overlap^2 per particle).
+        """
+        cfg = self.config
+        if not cfg.lateral_platens:
+            return 0.0
+        lat_k = (cfg.lateral_platen_stiffness if cfg.lateral_platen_stiffness is not None
+                 else cfg.platen_stiffness)
+        px, py = self.positions[:, 0], self.positions[:, 1]
+        total = (
+            (self.lateral_platen_pos[0] - px + cfg.radius).clamp_min(0.0).square().sum()
+            + (px + cfg.radius - self.lateral_platen_pos[1]).clamp_min(0.0).square().sum()
+            + (self.lateral_platen_pos[2] - py + cfg.radius).clamp_min(0.0).square().sum()
+            + (py + cfg.radius - self.lateral_platen_pos[3]).clamp_min(0.0).square().sum()
+        )
+        return float(0.5 * lat_k * total)
 
     def state_dict(self) -> dict[str, Any]:
         """Return restart-friendly state (tensors remain on the active device)."""
