@@ -40,6 +40,7 @@ def contact_stress_table(system) -> dict[str, np.ndarray]:
         empty2 = np.zeros((0, 2))
         return {"i": np.zeros(0, dtype=np.int64), "j": np.zeros(0, dtype=np.int64),
                 "branch": empty2, "force_on_i": empty2,
+                "image": empty2,
                 "boundary_i": np.zeros(0, dtype=np.int64), "point": empty2,
                 "boundary_force_on_i": empty2,
                 "magnitude": np.zeros(0)}
@@ -51,14 +52,23 @@ def contact_stress_table(system) -> dict[str, np.ndarray]:
     lever = np.asarray(contacts["lever"])[disk]
     f = np.asarray(contacts["f_on_i"])[disk]
     # lever stores x_j - x_i for disk pairs; make it explicit
-    branch = system.pos[j] - system.pos[i]
-    if system.periodic_x is not None:
-        branch[:, 0] -= system.periodic_x * np.round(branch[:, 0] / system.periodic_x)
+    raw = system.pos[j] - system.pos[i]
+    branch = raw.copy()
+    image = np.zeros_like(branch)
+    px = getattr(system, "periodic_x", None)
+    py = getattr(system, "periodic_y", None)
+    if px is not None:
+        image[:, 0] = np.round(raw[:, 0] / px)
+        branch[:, 0] = raw[:, 0] - px * image[:, 0]
+    if py is not None:
+        image[:, 1] = np.round(raw[:, 1] / py)
+        branch[:, 1] = raw[:, 1] - py * image[:, 1]
     return {
         "i": i,
         "j": j,
         "branch": branch,
         "force_on_i": f,
+        "image": image,
         "magnitude": np.linalg.norm(f, axis=1),
         "normal_magnitude": np.asarray(contacts["fn"])[disk],
         "tangential_magnitude": np.asarray(contacts["ft"])[disk],
@@ -115,6 +125,16 @@ def stress_balance(system, *, area: float | None = None) -> dict[str, float]:
         accumulation.
     ``antisymmetric_fraction``
         Physical couple-stress fraction ``||W - W^T||/(2||W||)`` of the raw sum.
+    ``virial_identity_periodic_rel``
+        ``||W + W_image|| / ||W||``: the periodic form of the Virial identity.
+        With minimum-image branch vectors the image part must cancel the contact
+        sum exactly for a force-balanced configuration, so this residual measures
+        relaxation quality in a *doubly periodic* cell (no walls to supply
+        tractions).  A negative control that omits the image term makes it O(1).
+    ``virial_symmetry_raw_rel``
+        ``||W_raw - W_raw^T|| / ||W_raw||`` of the **unsymmetrised** virial sum;
+        vanishing to round-off for central-force contacts, non-zero once
+        friction/rolling couple stresses are active.
     """
     contacts = system.contact_forces()
     table = contact_stress_table(system)
@@ -158,8 +178,21 @@ def stress_balance(system, *, area: float | None = None) -> dict[str, float]:
         w_boundary = _outer(system.pos, f_b)
     residual_boundary = float(np.linalg.norm(w_int - w_boundary) / max(scale, 1e-30))
 
+    # periodic counterpart of the Virial identity: with minimum-image branch
+    # vectors the raw sum is W + W_image, and W + W_image = -sum_p x_p (x) F_p^int,
+    # which vanishes for a force-balanced configuration.  This is therefore a
+    # *physical* check, not an algebraic tautology.
+    w_image = np.zeros((2, 2))
+    if len(table["i"]):
+        lengths = np.array([system.periodic_x or 0.0, system.periodic_y or 0.0])
+        shift = table["image"] * lengths[None, :]
+        w_image = _outer(shift, table["force_on_i"])
+    periodic_norm = float(np.linalg.norm(w_int)) if len(table["i"]) else 0.0
+    radius_residual = float(np.linalg.norm(w_int + w_image) / max(periodic_norm, 1e-30))
+
     sigma = w_int / area
     sigma_sym = 0.5 * (sigma + sigma.T)
+    raw_symmetry = float(np.linalg.norm(sigma - sigma.T) / max(float(np.linalg.norm(sigma)), 1e-30))
     norm_sym = float(np.linalg.norm(sigma_sym))
     symmetry = float(np.linalg.norm(sigma_sym - sigma_sym.T) / max(norm_sym, 1e-30))
     antisym = float(np.linalg.norm(sigma - sigma.T) / max(2.0 * float(np.linalg.norm(sigma)), 1e-30))
@@ -168,6 +201,8 @@ def stress_balance(system, *, area: float | None = None) -> dict[str, float]:
         "virial_identity_static_rel": residual_static,
         "boundary_traction_rel": residual_boundary,
         "stress_symmetry_rel": symmetry,
+        "virial_symmetry_raw_rel": raw_symmetry,
+        "virial_identity_periodic_rel": radius_residual,
         "antisymmetric_fraction": antisym,
         "virial": w_int.ravel().copy(),
         "external_virial": w_ext.ravel().copy(),
