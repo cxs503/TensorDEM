@@ -111,6 +111,24 @@ IceDEM.forces(external_forces=loads) 和 IceDEM.step(external_forces=loads) 接�
 
 该接口仅是载荷入口，不代表已完成流固耦合。TensorLBM 侧应先将流体牵引力按对应表面积分成颗粒节点力，并验证总力/力矩传递守恒。
 
+## 两向 LBM–DEM 曳力闭合（`tensordem.lbmdem`）
+
+仓库内自带的 D3Q19 流体求解器与两种浸没边界，用于把颗粒–流体曳力闭合跑到解析锚上，
+口径与实测见 [docs/tensordem_coupling_p1.md](docs/tensordem_coupling_p1.md)，
+机器可读判据在 `benchmarks/verified/lbm_dem_drag_calibration/{result.json,gates.json}`
+（由 `run.py --merge` 程序化重算，门槛不接受手抄）。
+
+**当前自陈（2026-11，P55-N08 实测，不夸大）**：Stokes 极限（Re≈0.05，d=8，L/d=8）
+的曳力在扣除周期阵列解析修正后与 $3\pi\mu dU$ 相差 **+0.98%**（≤2% 门通过）；
+同一算例对 Smagorinsky 常数（Cs=0/0.5/1/2）散布 **1.19%**、对域长（L/d=8→16）散布
+**0.36%**（≤2% / ≤1% 门通过）；全局动量恒等式残差 **6.6e-12**（≤1e-10 门通过）；
+自由沉降的曳力–有效重力平衡残差 **0.40%**。
+未通过（如实记录）：中低 Re 的 $C_D$（Re=20 在两档分辨率下为 −27.5%/+17.5%，门 ≤5%）、
+MEM 与直接强迫两种口径的一致性（+24%，门 ≤2%）、二球串联比值（+12.1%，门 ≤5%，
+周期像污染）、沉降终速（+9.2%，门 ≤3%）与沉降启动瞬态的负阻伪迹。
+因此 `gates.json.all_recomputed_pass = false`：**曳力闭合目前只在 Stokes 极限定量可用**，
+中低 Re、移动边界与二体相互作用仍需更高分辨率、多次强迫迭代与非周期远场。
+
 
 ## 网格/分辨率敏感性扫描
 
