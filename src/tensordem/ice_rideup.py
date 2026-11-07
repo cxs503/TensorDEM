@@ -56,12 +56,23 @@ Evidence level
   Archimedes buoyancy of a flat disk (static vertical residual is machine zero).
 * **REAL (reduced model)** -- the ride-up dynamics: floes are non-interacting
   (dilute channel, independent lanes), water is a linear damper plus a
-  metacentric righting moment, buoyancy uses the flat-disk (near-level) form and
+  metacentric righting moment, buoyancy uses the flat-disk (near-level) form by
+  default and
   the continuity of the intact sheet is one brittle elastic anchor per bonded
   floe instead of a bond network.  Those assumptions are listed in
   ``docs/ICE_RIDEUP_3D.md``.  No channel of the resistance split is prescribed:
   all three are measured from simulated contact forces and the split is a
   partition of the measured hull force whose residual is *checked*.
+* **Righting moment, two models** -- ``righting_model="near_level"`` (default,
+  the historical kernel) uses ``M = rho_w g V GM sin(phi)`` with the level-disk
+  ``GM = R^2/(4d)`` and the keel-to-gravity term dropped; ``righting_model=
+  "exact"`` uses the large-angle heave-relaxed hydrostatics of
+  :func:`tensordem.floe_6dof.submerged_hydrostatics` for both the vertical force
+  and the moment.  For the ride-up floe geometry (``R/t = 8``) the near-level
+  law is already outside its small-angle envelope above ``arctan(t/2R)`` and
+  overstates the restoring moment by up to a factor of seven in the heel band
+  the bow imposes; the measured envelope is in
+  ``docs/ice_rideup_righting_moment_envelope.md``.
 """
 from __future__ import annotations
 
@@ -71,8 +82,16 @@ from typing import Dict, List, Optional, Sequence, Tuple
 
 import torch
 
+from .floe_6dof import submerged_hydrostatics
+from .ice_channel import WaterEnvironment
+
+RIGHTING_MODEL_NEAR_LEVEL = "near_level"
+RIGHTING_MODEL_EXACT = "exact"
+RIGHTING_MODELS = (RIGHTING_MODEL_NEAR_LEVEL, RIGHTING_MODEL_EXACT)
+
 __all__ = [
     "GRAVITY", "RHO_ICE", "RHO_WATER", "HULL_EDGE_RADIUS",
+    "RIGHTING_MODEL_EXACT", "RIGHTING_MODEL_NEAR_LEVEL", "RIGHTING_MODELS",
     "BowSlope", "RectPatch", "ContactParams", "RideUpResult", "RideUpSimulation",
     "quat_normalize", "quat_multiply", "quat_to_rotmat", "quat_rotate",
     "quat_integrate", "perp_basis",
@@ -677,7 +696,8 @@ class RideUpSimulation:
                  dt: float = 0.01, steps: int = 1800, warmup_steps: int = 400,
                  n_samples: int = 24, patches=None, n_slope_facets: Optional[int] = None,
                  rho_ice: float = RHO_ICE, rho_water: float = RHO_WATER,
-                 gravity: float = GRAVITY) -> None:
+                 gravity: float = GRAVITY,
+                 righting_model: str = RIGHTING_MODEL_NEAR_LEVEL) -> None:
         self.fr = float(fr)
         self.thickness = float(thickness)
         self.slope = slope or BowSlope()
@@ -690,6 +710,14 @@ class RideUpSimulation:
         self.rho_ice = float(rho_ice)
         self.rho_water = float(rho_water)
         self.gravity = float(gravity)
+        if righting_model not in RIGHTING_MODELS:
+            raise ValueError(
+                f"righting_model must be one of {RIGHTING_MODELS}, got {righting_model!r}")
+        self.righting_model = str(righting_model)
+        # hydrostatic environment for the exact (large-angle) branch
+        self._water = WaterEnvironment(water_density=self.rho_water,
+                                       ice_density=self.rho_ice,
+                                       gravity=self.gravity)
         # Froude reference length: Fr = V / sqrt(g L_ref), L_ref = 10 m, so that
         # Fr in [0.1, 0.5] maps to V in [1.0, 5.0] m/s, the icebreaking range.
         self.froude_length = float(ship_length)
@@ -821,7 +849,26 @@ class RideUpSimulation:
         force = torch.where(f.bonded.unsqueeze(-1), elastic, torch.zeros_like(elastic))
         return force, torch.zeros_like(force)
 
+    def _hydrostatic_forces_exact(self) -> Tuple[torch.Tensor, torch.Tensor]:
+        """Large-angle hydrostatics: exact buoyancy force **and** moment.
+
+        The floe is the cylinder ``rho <= R``, ``|zeta| <= t/2``; the waterline
+        cuts it at the floe's *current* attitude and centre height, so the
+        submerged volume, the centre of buoyancy and the resulting moment about
+        the centre of mass are all exact for that attitude (no small-angle
+        linearisation, no level-waterplane assumption).  Costs one 24x32 disk
+        quadrature per floe per step.
+        """
+        f = self.field
+        state = submerged_hydrostatics(f.radius, f.thickness, f.quats,
+                                       f.centers[:, 2], self._water)
+        force = state.weight.clone()
+        force[:, 2] = force[:, 2] + state.buoyancy[:, 2]
+        return force, state.moment
+
     def _hydrostatic_forces(self) -> Tuple[torch.Tensor, torch.Tensor]:
+        if self.righting_model == RIGHTING_MODEL_EXACT:
+            return self._hydrostatic_forces_exact()
         f = self.field
         b = archimedes_buoyancy(f.centers[:, 2], f.radius, f.thickness,
                                rho_water=self.rho_water, rho_ice=self.rho_ice,
@@ -1005,13 +1052,15 @@ def run_case(*, fr: float, thickness: float, angle_deg: float, seed: int = 0,
              steps: int = 1800, dt: float = 0.01, n_floes: int = 40, warmup_steps: int = 400,
              n_samples: int = 24, patches=None, n_slope_facets=None,
              contact: ContactParams = ContactParams(), ship_length: float = 10.0,
-             radius_mean: float = 4.0, return_sim: bool = False):
+             radius_mean: float = 4.0, return_sim: bool = False,
+             righting_model: str = RIGHTING_MODEL_NEAR_LEVEL):
     """Run one parameter point and return a :class:`RideUpResult` (or the sim)."""
     sim = RideUpSimulation(fr=fr, thickness=thickness, slope=BowSlope(angle_deg=angle_deg),
                            seed=seed, n_floes=n_floes, contact=contact, dt=dt,
                            steps=steps, warmup_steps=warmup_steps, n_samples=n_samples,
                            patches=patches, n_slope_facets=n_slope_facets,
-                           ship_length=ship_length, radius_mean=radius_mean)
+                           ship_length=ship_length, radius_mean=radius_mean,
+                           righting_model=righting_model)
     result = sim.run()
     return (result, sim) if return_sim else result
 
