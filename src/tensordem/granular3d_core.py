@@ -237,8 +237,8 @@ def contact_forces(pos: np.ndarray, vel: np.ndarray, omega: np.ndarray,
     v_t = v_rel - v_n[:, None] * nvec
     if mat.mu > 0.0:
         # surface velocity of each body at the contact point
-        surf_i = np.cross(omega[iu_a], -nvec * r)
-        surf_j = np.cross(omega[ju_a], nvec * r)
+        surf_i = np.cross(omega[iu_a], nvec * r)
+        surf_j = np.cross(omega[ju_a], -nvec * r)
         v_t_surf = (v_rel - v_n[:, None] * nvec) + (surf_j - surf_i)
         keys = state_keys[active]
         tang = np.array([state.tang.get(k, np.zeros(3)) for k in keys], dtype=np.float64)

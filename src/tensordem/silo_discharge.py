@@ -119,19 +119,19 @@ def _initial_packing(case: SiloCase) -> np.ndarray:
 def _plate_forces(pos, vel, mat, case, f):
     """Forces from the flat bottom plate with a centred circular hole.
 
-    The plate is solid where ``radial > a`` and ``-t < z < 0`` (a = orifice
-    radius, t = plate thickness).  Three contact surfaces:
+    The plate is solid where ``radial > a`` and ``-t < z < 0`` (``a`` = orifice
+    radius, ``t`` = plate thickness, ``z = 0`` the plate top).  The solid is
+    modelled as the union of three surfaces -- top face, bottom face, and the
+    edge cylinder -- plus the two sharp rim circles at ``(a, 0)`` and
+    ``(a, -t)``.  For every particle the *nearest* feature is the one that
+    carries the contact (largest positive penetration), so a particle resting
+    on the plate top at ``radial ~ a`` is supported by the top face and is not
+    spuriously pushed sideways by the edge cylinder: a sphere whose centre is
+    at ``z = +r`` cannot overlap a cylinder that only spans ``-t < z < 0``.
 
-    * top face    (z = 0,  radial > a): pushes +z;
-    * bottom face (z = -t, radial < a): pushes -z (only for a particle whose
-      centre is already below the plate bottom, i.e. it is emerging from the
-      hole);
-    * edge        (cylinder of radius a, -t < z < 0): pushes the particle
-      away from the solid, i.e. -radial inside the hole and +radial outside.
-
-    For the benchmark the hole is at least 3 particle diameters wide
-    (a >= 1.5 r), so a particle in the middle of the hole never touches the
-    edge; only particles at the rim do.
+    Surface normal ``n`` points from the solid into the particle; the normal
+    force is the usual spring-dashpot ``max(kn*pen - gamma_w*(v.n), 0)`` and
+    the tangential force is Coulomb-limited at ``mu_w |F_n|``.
     """
     r = case.radius
     a = case.orifice_radius
@@ -140,53 +140,66 @@ def _plate_forces(pos, vel, mat, case, f):
     gamma_w = mat.gamma_wall
     mu_w = case.wall_mu
 
+    n_p = len(pos)
     radial = np.hypot(pos[:, 0], pos[:, 1])
-    nz = pos[:, 2]
+    z = pos[:, 2]
+    eps = 1e-30
+    er_x = pos[:, 0] / np.maximum(radial, eps)
+    er_y = pos[:, 1] / np.maximum(radial, eps)
+    dr = radial - a
 
-    # ---- top face (z = 0, outside the hole) --------------------------
-    top_pen = r - nz
-    top_hit = (top_pen > 0.0) & (radial > a + 0.3 * r)
-    if top_hit.any():
-        idx = np.nonzero(top_hit)[0]
-        fn = np.clip(kn * top_pen[idx] - gamma_w * vel[idx, 2], 0.0, None)
-        f[idx, 2] += fn
-        if mu_w > 0.0:
-            vt = np.stack([vel[idx, 0], vel[idx, 1]], axis=1)
-            vtn = np.linalg.norm(vt, axis=1)
-            ft = np.where(vtn > 0.0, mu_w * fn[:, None] * vt / np.maximum(vtn[:, None], 1e-30), 0.0)
-            f[idx, 0] += ft[:, 0]
-            f[idx, 1] += ft[:, 1]
+    # candidate contacts: penetration + unit normal (pointing into particle)
+    pen = np.zeros(n_p)
+    nx, ny, nz_ = np.zeros(n_p), np.zeros(n_p), np.zeros(n_p)
 
-    # ---- bottom face (z = -t, inside the hole) -----------------------
-    # Only a particle whose centre is below the plate bottom can press on the
-    # underside; a particle above the plate is on the other side of it.
-    if t > 0.0:
-        bot_pen = nz + r + t
-        bot_hit = (bot_pen > 0.0) & (radial < a - 0.3 * r) & (nz < -t)
-        if bot_hit.any():
-            idx = np.nonzero(bot_hit)[0]
-            fn = np.clip(kn * bot_pen[idx] - gamma_w * vel[idx, 2], 0.0, None)
-            f[idx, 2] -= fn
+    def consider(p_c, n_x, n_y, n_z):
+        nonlocal pen, nx, ny, nz_
+        better = p_c > pen
+        pen = np.where(better, p_c, pen)
+        nx = np.where(better, n_x, nx)
+        ny = np.where(better, n_y, ny)
+        nz_ = np.where(better, n_z, nz_)
 
-    # ---- edge (cylinder of radius a spanning -t < z < 0) -------------
-    edge_hit = (np.abs(radial - a) < r) & (nz > -t - r) & (nz < r)
-    if edge_hit.any():
-        idx = np.nonzero(edge_hit)[0]
-        pen = r - np.abs(radial[idx] - a)
-        fn = np.clip(kn * pen, 0.0, None)
-        rr = np.maximum(radial[idx], 1e-30)
-        ux = pos[idx, 0] / rr
-        uy = pos[idx, 1] / rr
-        sign = np.where(radial[idx] < a, -1.0, 1.0)
-        f[idx, 0] += sign * fn * ux
-        f[idx, 1] += sign * fn * uy
-        if mu_w > 0.0:
-            vrad = vel[idx, 0] * ux + vel[idx, 1] * uy
-            vt = np.stack([vel[idx, 0] - vrad * ux, vel[idx, 1] - vrad * uy], axis=1)
-            vtn = np.linalg.norm(vt, axis=1)
-            ft = np.where(vtn > 0.0, mu_w * fn[:, None] * vt / np.maximum(vtn[:, None], 1e-30), 0.0)
-            f[idx, 0] += ft[:, 0]
-            f[idx, 1] += ft[:, 1]
+    zero = np.zeros(n_p)
+    # 1. top face (z = 0, radial >= a) pushes +z.  Gated to ``z >= 0``:
+    #    a centre below the plate top is not "resting" on it, and without the
+    #    gate a particle one radius *under* the plate would read a penetration
+    #    of ``r + |z|`` (~15 mm -> 1.5 kN) and be launched upwards.
+    consider(np.where((radial >= a) & (z >= 0.0), r - z, -1.0),
+             zero, zero, np.ones(n_p))
+    # 2. underside (z = -t, radial >= a) pushes -z: only material outside the
+    #    aperture is solid below the plate; inside the aperture it is a hole,
+    #    so a particle emerging from the hole touches the rim, not a face.
+    consider(np.where((radial >= a) & (z <= -t), r + z + t, -1.0),
+             zero, zero, -np.ones(n_p))
+    # 3. edge cylinder (a, -t < z < 0): pushes away from the solid wall
+    in_slab = (z <= 0.0) & (z >= -t)
+    consider(np.where(in_slab, r - np.abs(dr), -1.0),
+             np.sign(dr) * er_x, np.sign(dr) * er_y, zero)
+    # 4./5. sharp rim circles at z = 0 and z = -t
+    for z_rim in (0.0, -t):
+        dz = z - z_rim
+        d_rim = np.sqrt(dr * dr + dz * dz)
+        safe = np.maximum(d_rim, eps)
+        consider(r - d_rim, dr * er_x / safe, dr * er_y / safe, dz / safe)
+
+    hit = pen > 0.0
+    if not hit.any():
+        return
+    idx = np.nonzero(hit)[0]
+    pen_h = pen[idx]
+    nh = np.stack([nx[idx], ny[idx], nz_[idx]], axis=1)
+    vn = (vel[idx] * nh).sum(axis=1)
+    fn = np.clip(kn * pen_h - gamma_w * vn, 0.0, None)
+    f[idx] += fn[:, None] * nh
+
+    if mu_w > 0.0:
+        vt = vel[idx] - vn[:, None] * nh
+        vtn = np.linalg.norm(vt, axis=1)
+        ft = np.where(vtn > 0.0,
+                      mu_w * fn[:, None] * vt / np.maximum(vtn[:, None], eps),
+                      0.0)
+        f[idx] += ft
 
 
 def _side_wall(pos, vel, mat, case, f):
@@ -326,6 +339,7 @@ def simulate_silo(case: SiloCase, *, return_history: bool = False) -> dict:
     }
     if return_history:
         out["positions"] = pos
+        out["velocities"] = vel
         out["alive"] = alive
     return out
 
