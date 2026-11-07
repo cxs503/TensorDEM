@@ -22,6 +22,15 @@ opposite), with
 .. math:: f_t = -k_t \\xi_t, \\qquad |k_t \\xi_t| \\le \\mu f_n
 .. math:: M_r = -k_r \\theta_{rel}, \\qquad |M_r| \\le \\mu_r r_{eff} f_n
 
+Periodicity
+-----------
+``periodic_x`` and/or ``periodic_y`` wrap the cell.  For a doubly periodic cell
+both the neighbour search (eight mirror images chained through the four
+boundary-adjacent index sets) and the minimum-image convention are applied on
+each axis, so wall layers disappear and ``domain_area()`` returns ``Lx * Ly``.
+Periodic contact stress carries a wrap term: see
+:func:`tensordem.granular2d.stress.stress_balance`.
+
 Boundary segments (channel banks, ship hull) enter as an infinitely massive
 static body: ``j = -1`` and the reaction ``-f`` is accumulated on the segment
 owner (wall or hull) so boundary tractions are never lost.
@@ -136,7 +145,8 @@ class DiskSystem:
     """A deterministic 2D rigid-disk assembly with optional static boundaries."""
 
     def __init__(self, positions, radii, config: DiskConfig | None = None, *,
-                 walls=None, hull=None, periodic_x: float | None = None) -> None:
+                 walls=None, hull=None, periodic_x: float | None = None,
+                 periodic_y: float | None = None) -> None:
         self.config = config or DiskConfig()
         pos = np.array(positions, dtype=np.float64)
         rad = np.array(radii, dtype=np.float64).reshape(-1)
@@ -161,8 +171,10 @@ class DiskSystem:
         self.walls = self._as_segments(walls, "walls")
         self.hull = self._as_segments(hull, "hull")
         self.periodic_x = None if periodic_x is None else float(periodic_x)
-        if self.periodic_x is not None and self.periodic_x <= 0.0:
-            raise ValueError("periodic_x must be a positive period or None")
+        self.periodic_y = None if periodic_y is None else float(periodic_y)
+        for name, value in (("periodic_x", self.periodic_x), ("periodic_y", self.periodic_y)):
+            if value is not None and (not math.isfinite(value) or value <= 0.0):
+                raise ValueError(f"{name} must be a positive period or None")
         self.time = 0.0
         self.steps = 0
         self.dt = cfg.dt if cfg.dt is not None else self.recommended_dt
@@ -214,7 +226,31 @@ class DiskSystem:
             raise ValueError("an explicit positive area is required")
         return disk_area / area
 
+    @property
+    def periodic(self) -> tuple[float | None, float | None]:
+        """Periods ``(Lx, Ly)``; ``None`` marks a non-periodic axis."""
+        return (self.periodic_x, self.periodic_y)
+
+    @property
+    def n_periodic_axes(self) -> int:
+        return int(self.periodic_x is not None) + int(self.periodic_y is not None)
+
+    def _minimum_image(self, d: np.ndarray) -> np.ndarray:
+        """Apply the minimum-image convention on every periodic axis."""
+        if self.periodic_x is not None:
+            d[..., 0] -= self.periodic_x * np.round(d[..., 0] / self.periodic_x)
+        if self.periodic_y is not None:
+            d[..., 1] -= self.periodic_y * np.round(d[..., 1] / self.periodic_y)
+        return d
+
     def domain_area(self) -> float | None:
+        """Cell area: the periodic box when both axes are periodic.
+
+        With a doubly periodic cell the volume is unambiguous and no wall layer
+        exists; with only ``periodic_x`` the area still comes from the walls.
+        """
+        if self.periodic_x is not None and self.periodic_y is not None:
+            return float(self.periodic_x * self.periodic_y)
         if len(self.walls) == 0:
             return None
         pts = self.walls.reshape(-1, 2)
@@ -252,22 +288,49 @@ class DiskSystem:
             self._tree = cKDTree(self.pos)
             self._tree_pos = self.pos.copy()
         pairs = self._tree.query_pairs(reach, output_type="ndarray").reshape(-1, 2)
-        if self.periodic_x is not None:
-            left = np.flatnonzero(self.pos[:, 0] < reach)
-            right = np.flatnonzero(self.pos[:, 0] > self.periodic_x - reach)
-            if len(left) and len(right):
-                d = (self.pos[right][None, :, :]
-                     - (self.pos[left][:, None, :] + np.array([self.periodic_x, 0.0])))
-                ii, jj = np.nonzero(np.linalg.norm(d, axis=2) < reach)
-                if len(ii):
-                    pairs = np.vstack([pairs, np.stack([left[ii], right[jj]], axis=1)])
+        extra = []
+        lx, ly = self.periodic_x, self.periodic_y
+        # boundary-adjacent index sets: an image pair can only cross the border
+        # through one of these
+        near = {}
+        if lx is not None:
+            near["x0"] = self.pos[:, 0] < reach
+            near["x1"] = self.pos[:, 0] > lx - reach
+        if ly is not None:
+            near["y0"] = self.pos[:, 1] < reach
+            near["y1"] = self.pos[:, 1] > ly - reach
+        combos = []
+        if lx is not None:
+            combos.append(((lx, 0.0), ("x0",), ("x1",)))
+        if ly is not None:
+            combos.append(((0.0, ly), ("y0",), ("y1",)))
+        if lx is not None and ly is not None:
+            combos.append(((lx, ly), ("x0", "y0"), ("x1", "y1")))
+            combos.append(((lx, -ly), ("x0", "y1"), ("x1", "y0")))
+        for shift, a_keys, b_keys in combos:
+            a_mask = np.ones(len(self.pos), dtype=bool)
+            b_mask = np.ones(len(self.pos), dtype=bool)
+            for key in a_keys:
+                a_mask &= near[key]
+            for key in b_keys:
+                b_mask &= near[key]
+            a = np.flatnonzero(a_mask)
+            b = np.flatnonzero(b_mask)
+            if not len(a) or not len(b):
+                continue
+            d = self.pos[b][None, :, :] - (self.pos[a][:, None, :] + np.asarray(shift))
+            d = self._minimum_image(d)
+            ii, jj = np.nonzero(np.linalg.norm(d, axis=2) < reach)
+            if len(ii):
+                extra.append(np.stack([a[ii], b[jj]], axis=1))
+        if extra:
+            pairs = np.vstack([pairs] + extra)
         if not len(pairs):
             return (np.zeros(0, dtype=np.int64),) * 2 + (np.zeros((0, 2)),)
         pairs = np.unique(np.sort(pairs.astype(np.int64), axis=1), axis=0)
         i, j = pairs[:, 0], pairs[:, 1]
         l = self.pos[j] - self.pos[i]
-        if self.periodic_x is not None:
-            l[:, 0] -= self.periodic_x * np.round(l[:, 0] / self.periodic_x)
+        l = self._minimum_image(l)
         return i, j, l
 
     def _segment_contacts(self, segments: np.ndarray):
@@ -503,6 +566,8 @@ class DiskSystem:
             self.theta += self.dt * self.omega
             if self.periodic_x is not None:
                 self.pos[:, 0] = np.mod(self.pos[:, 0], self.periodic_x)
+            if self.periodic_y is not None:
+                self.pos[:, 1] = np.mod(self.pos[:, 1], self.periodic_y)
             self.time += self.dt
             self.steps += 1
             if record:
