@@ -112,6 +112,12 @@ class DEM3DConfig:
     density: float = 917.0
     bond_stiffness: float = 2_000.0
     contact_stiffness: float = 5_000.0
+    # --- Particle-particle tangential (Cundall-Strack) stiffness ---
+    # ``None`` (default) keeps the legacy behaviour k_t = contact_stiffness
+    # bit-for-bit.  A positive value decouples the tangential branch so the
+    # k_n / k_t pair can be swept independently (ice UQ / identifiability
+    # studies); see docs/dem_uq_ice_resistance.md.
+    tangential_stiffness: float | None = None
     breaking_strain: float = 0.015
     shear_breaking_strain: float = 0.03
     contact_damping: float = 5.0
@@ -212,6 +218,11 @@ class DEM3DConfig:
             raise ValueError("rolling_resistance_coefficient must be finite and nonnegative")
         if not (0.0 < self.restitution_coefficient <= 1.0):
             raise ValueError("restitution_coefficient must be in (0, 1]")
+        if self.tangential_stiffness is not None and (
+                not math.isfinite(self.tangential_stiffness)
+                or self.tangential_stiffness <= 0.0):
+            raise ValueError(
+                "tangential_stiffness must be finite and positive, or None")
         if self.contact_damping_model not in ("restitution", "absolute"):
             raise ValueError(
                 "contact_damping_model must be 'restitution' or 'absolute'")
@@ -243,6 +254,17 @@ class DEM3DConfig:
     @property
     def mass(self) -> float:
         return self.density * (4.0 / 3.0) * math.pi * self.radius**3
+
+    @property
+    def effective_tangential_stiffness(self) -> float:
+        """Tangential stiffness actually used by the linear contact branch.
+
+        ``None`` maps to :attr:`contact_stiffness`, which reproduces the legacy
+        k_t = k_n behaviour exactly.
+        """
+        if self.tangential_stiffness is None:
+            return float(self.contact_stiffness)
+        return float(self.tangential_stiffness)
 
     def _bound_stiffness(self, linear_stiffness: float, *,
                          rigid_counterpart: bool) -> float:
@@ -276,6 +298,8 @@ class DEM3DConfig:
         contact_stiffness = max(
             self.bond_stiffness,
             self._bound_stiffness(self.contact_stiffness, rigid_counterpart=False),
+            self._bound_stiffness(self.effective_tangential_stiffness,
+                                  rigid_counterpart=False),
             self._bound_stiffness(platen_k, rigid_counterpart=True)
             if (self.top_platen_enabled or self.bottom_platen_enabled) else 0.0,
         )
@@ -925,11 +949,12 @@ class IceDEM3D:
                     #   k_t = 8 G* sqrt(R* delta)
                     # For linear contacts, use the constant contact_stiffness.
                     # The ratio k_t/k_n for equal spheres is 3/(1-nu) ~ 4.3 for nu=0.3.
-                    if hertz:
+                    if hertz and cfg.tangential_stiffness is None:
                         k_t = hertz_mindlin.hertz_mindlin_tangential_stiffness(
                             overlap, e_star_pairs, self._hertz_g_star, r_eff_pairs)
                     else:
-                        k_t = torch.full_like(overlap, cfg.contact_stiffness)
+                        k_t = torch.full_like(
+                            overlap, cfg.effective_tangential_stiffness)
 
                     F_t_raw = k_t[:, None] * tang_disp
                     F_t_mag = torch.linalg.vector_norm(F_t_raw, dim=1)
