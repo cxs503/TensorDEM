@@ -80,6 +80,19 @@ properties.
 - Still open: mode-II energy release rate (model change), fracture-energy
   calibration from measured crack growth, independent shear-specimen data.
 
+## Automatic repose-angle calibration (m605 gap closed, m4970)
+
+`src/tensordem/repose_calibration.py` adds the missing macroscopic calibration
+surface for granular flow: a lifting-cylinder column-collapse DEM forward model
+(`mu -> theta_r`), a monotone PCHIP calibration table, an inverse lookup with a
+strict extrapolation guard, and two closed-form anchors (irrotational slider
+onset at `arctan(mu)`; rolling onset at `arctan(min(mu, mu_r))`).  See
+`docs/repose_angle_calibration.md` for the numbers.  The end-to-end inverse
+recovery of `mu` from a DEM repose angle is 6-28 %, i.e. **not** inside the 2 %
+target: the settled heap is only 2-4 grains deep for a 10 deg slope, so the
+flank resolution, not the software, is the limiting factor.  Joint
+`(mu, mu_r)` inversion remains declared-only.
+
 ## Acceptance philosophy
 
 Numerical repeatability, numerical stability, parameter fit and physical
