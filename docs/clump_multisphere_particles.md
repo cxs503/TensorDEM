@@ -13,7 +13,7 @@ roadmap at the end of this document (see [Roadmap](#roadmap-polyhedral-particles
 | clump-sphere contact (sum over member spheres) | REAL | `src/tensordem/clump_dynamics.py` |
 | clump-clump contact (narrow phase between clumps) | NOT_SUPPORTED | — |
 | convex polyhedron particle (hull, SAT/clipping) | NOT_SUPPORTED (roadmap) | — |
-| rolling resistance / torsion friction for clumps | NOT_SUPPORTED | — |
+| rolling resistance / torsion friction for clumps | REAL (m5052) | `src/tensordem/clump_rolling.py`, `docs/clump_rolling_resistance_calibration.md` |
 
 ## 1. Why clumps belong in TensorDEM
 

@@ -31,6 +31,7 @@ from typing import Iterable, Sequence
 import numpy as np
 
 from .clump import Clump
+from .clump_rolling import resistance_moment
 
 __all__ = [
     "ClumpBody",
@@ -58,15 +59,29 @@ class ContactConfig:
     ``normal_stiffness`` [N/m], ``tangential_stiffness`` [N/m] (default: equal to
     the normal one), ``restitution`` [-] sets the normal damping ratio through
     :func:`restitution_to_damping_ratio`, ``friction`` [-] is the Coulomb limit.
+
+    ``rolling_friction`` (``mu_r``) and ``drilling_friction`` (``mu_t``) enable
+    the per-member rolling / torsion resistance of
+    :mod:`tensordem.clump_rolling`; both are zero by default, so a clump with the
+    default configuration behaves exactly as before.  ``rolling_model`` selects
+    the branch (``"epsd"`` elastic-plastic, ``"cdt"`` memoryless, ``"viscous"``)
+    and ``rolling_stiffness_factor`` sets ``k_r = factor * mu_r * k_n * r**2``.
     """
 
     normal_stiffness: float = 1.0e5
     tangential_stiffness: float | None = None
     restitution: float = 0.5
     friction: float = 0.5
+    rolling_friction: float = 0.0
+    drilling_friction: float = 0.0
+    rolling_model: str = "epsd"
+    rolling_stiffness_factor: float = 2.25
+    rolling_omega_ref: float = 1.0e-3
 
     def __post_init__(self) -> None:
-        for name in ("normal_stiffness", "restitution", "friction"):
+        for name in ("normal_stiffness", "restitution", "friction",
+                     "rolling_friction", "drilling_friction", "rolling_stiffness_factor",
+                     "rolling_omega_ref"):
             value = getattr(self, name)
             if not math.isfinite(value):
                 raise ValueError(f"{name} must be finite")
@@ -79,6 +94,14 @@ class ContactConfig:
             raise ValueError("restitution must be in (0, 1]")
         if self.friction < 0.0:
             raise ValueError("friction must be non-negative")
+        if self.rolling_friction < 0.0 or self.drilling_friction < 0.0:
+            raise ValueError("rolling_friction and drilling_friction must be non-negative")
+        if self.rolling_stiffness_factor <= 0.0:
+            raise ValueError("rolling_stiffness_factor must be positive")
+        if self.rolling_omega_ref <= 0.0:
+            raise ValueError("rolling_omega_ref must be positive")
+        if self.rolling_model not in ("cdt", "viscous", "epsd"):
+            raise ValueError("rolling_model must be 'cdt', 'viscous' or 'epsd'")
 
     @property
     def k_t(self) -> float:
@@ -156,7 +179,13 @@ def effective_mass_along(clump: Clump, arm: Sequence[float],
 
 
 class ClumpContact:
-    """Interface for a contact generator acting on a :class:`ClumpBody`."""
+    """Interface for a contact generator acting on a :class:`ClumpBody`.
+
+    Implements the bookkeeping shared by every contact: the per-member rolling /
+    drilling resistance moment of :mod:`tensordem.clump_rolling` (switched on by
+    ``ContactConfig.rolling_friction`` / ``drilling_friction``) and its energy
+    audit.  Subclasses call :meth:`_resistance` once per active member.
+    """
 
     name = "contact"
 
@@ -168,7 +197,55 @@ class ClumpContact:
         return {"name": self.name, "active_members": 0}
 
     def reset(self) -> None:
-        pass
+        self._rolling_moment = None
+        self._rolling_moment_work = 0.0
+        self._rolling_power_max = -math.inf
+
+    # -- rolling / drilling resistance -----------------------------------
+    def _init_resistance(self) -> None:
+        self._rolling_moment = None          # (N, 3) epsd spring state, world frame
+        self._rolling_moment_work = 0.0      # dissipated moment work [J]
+        self._rolling_power_max = -math.inf  # max of M . omega (must stay <= 0)
+
+    def _ensure_resistance_state(self, count: int) -> None:
+        if self._rolling_moment is None or len(self._rolling_moment) != count:
+            self._rolling_moment = np.zeros((count, 3))
+
+    def _resistance(self, cfg: "ContactConfig", normal: np.ndarray, body: "ClumpBody",
+                    normal_force: float, radius: float, index: int, dt: float,
+                    commit: bool) -> np.ndarray:
+        """Moment on the clump from rolling/drilling resistance at one member."""
+        if cfg.rolling_friction <= 0.0 and cfg.drilling_friction <= 0.0:
+            return np.zeros(3)
+        self._ensure_resistance_state(len(body.clump))
+        omega_world = body.angular_velocity_world()
+        moment, state = resistance_moment(
+            normal, omega_world, normal_force, radius,
+            mu_r=cfg.rolling_friction, mu_t=cfg.drilling_friction,
+            model=cfg.rolling_model, moment_state=self._rolling_moment[index], dt=dt,
+            normal_stiffness=cfg.normal_stiffness,
+            stiffness_factor=cfg.rolling_stiffness_factor,
+            omega_ref=cfg.rolling_omega_ref)
+        if commit:
+            self._rolling_moment[index] = state
+            power = float(moment @ omega_world)
+            self._rolling_moment_work += -power * dt
+            self._rolling_power_max = max(self._rolling_power_max, power)
+        return moment
+
+    def rolling_moment_state(self) -> np.ndarray:
+        """Per-member rolling-spring moment state (world frame, N m)."""
+        if self._rolling_moment is None:
+            return np.zeros((0, 3))
+        return np.array(self._rolling_moment, dtype=np.float64, copy=True)
+
+    def moment_work(self) -> float:
+        """Energy dissipated by the rolling/drilling moments [J] (>= 0)."""
+        return float(self._rolling_moment_work)
+
+    def moment_power_max(self) -> float:
+        """Largest instantaneous ``moment . omega`` seen; must not be positive."""
+        return float(self._rolling_power_max)
 
 
 class PlaneContact(ClumpContact):
@@ -188,6 +265,7 @@ class PlaneContact(ClumpContact):
         self.name = name
         self._tangential = None           # body-frame (N, 3) history
         self._tangential_world = None
+        self._init_resistance()
         self._last = {"member_forces": np.zeros((0, 3)), "penetrations": np.zeros(0)}
 
     def _ensure_state(self, count: int) -> None:
@@ -215,6 +293,8 @@ class PlaneContact(ClumpContact):
             if signed >= 0.0:
                 if commit:
                     self._tangential[i] = 0.0
+                    if self._rolling_moment is not None:
+                        self._rolling_moment[i] = 0.0
                 continue
             penetration = -signed
             penetrations[i] = penetration
@@ -241,9 +321,12 @@ class PlaneContact(ClumpContact):
                 self._tangential_world[i] = xi_world
                 self._tangential[i] = rotation.T @ xi_world
             force = f_n * self.normal + f_t
+            # rolling / drilling resistance about the member centre
+            member_moment = self._resistance(cfg, self.normal, body, f_n, clump.radii[i],
+                                             i, dt, commit)
             member_forces[i] = force
             total_force += force
-            total_torque += np.cross(arm, force)
+            total_torque += np.cross(arm, force) + member_moment
             tangential_world[i] = f_t
         self._last = {"member_forces": member_forces, "penetrations": penetrations,
                       "tangential": tangential_world}
@@ -264,6 +347,7 @@ class PlaneContact(ClumpContact):
     def reset(self) -> None:
         self._tangential = None
         self._tangential_world = None
+        ClumpContact.reset(self)
 
     # diagnostics ---------------------------------------------------------
     def member_forces(self) -> np.ndarray:
@@ -301,6 +385,7 @@ class SphereObstacle(ClumpContact):
         self.mass = mass
         self._tangential = None
         self._tangential_world = None
+        self._init_resistance()
         self._last = {"member_forces": np.zeros((0, 3)), "penetrations": np.zeros(0)}
 
     def _ensure_state(self, count: int) -> None:
@@ -330,6 +415,8 @@ class SphereObstacle(ClumpContact):
                 if commit:
                     self._tangential[i] = 0.0
                     self._tangential_world[i][:] = 0.0
+                    if self._rolling_moment is not None:
+                        self._rolling_moment[i] = 0.0
                 continue
             penetrations[i] = penetration
             normal = delta / distance if distance > 0.0 else np.array([0.0, 0.0, 1.0])
@@ -355,9 +442,12 @@ class SphereObstacle(ClumpContact):
                 self._tangential_world[i] = xi_world
                 self._tangential[i] = rotation.T @ xi_world
             force = f_n * normal + f_t
+            # rolling / drilling resistance (obstacle spin assumed zero)
+            member_moment = self._resistance(cfg, normal, body, f_n, clump.radii[i],
+                                             i, dt, commit)
             member_forces[i] = force
             total_force += force
-            total_torque += np.cross(arm, force)
+            total_torque += np.cross(arm, force) + member_moment
         self._last = {"member_forces": member_forces, "penetrations": penetrations}
         return total_force, total_torque
 
@@ -386,6 +476,7 @@ class SphereObstacle(ClumpContact):
     def reset(self) -> None:
         self._tangential = None
         self._tangential_world = None
+        ClumpContact.reset(self)
 
 
 # --------------------------------------------------------------------------
