@@ -336,15 +336,15 @@ class FreeSurfaceCorrection:
     def free_surface_inertia(self, ru: float) -> float:
         """Free surface moment of inertia I_fs at given ru, m⁴.
 
-        For a rectangular hold:
-            I_fs = (L × B³ / 12) × (ρ_cargo / ρ_sw)
+        For a rectangular hold (geometric inertia):
+            I_fs = L × B³ / 12
 
         I_fs is only meaningful when cargo is liquefied (ru ≥ 0.8).
-        Uses full cargo density (mass is conserved, only strength is lost).
+        The density ratio is applied in the FSC calculation, not here.
         """
         if ru < 0.8:
             return 0.0  # solid cargo, no free surface effect
-        return (self.hold_length * self.hold_width ** 3 / 12.0) * (self.cargo_density / self.rho_sw)
+        return self.hold_length * self.hold_width ** 3 / 12.0
 
     def fsc(self, ru: float) -> float:
         """Free surface correction to GZ, m.
