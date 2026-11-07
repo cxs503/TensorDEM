@@ -1,0 +1,4 @@
+GLIBCXX_3.4.32 {
+    global:
+        _ZSt21ios_base_library_initv;
+};
