@@ -97,6 +97,20 @@ from .fem_euler_bernoulli import (
     beam_center_deflection_analytic,
     beam_center_deflection_static,
 )
+from .ice_steel_friction import (
+    MU_CONSTANT_BASELINE,
+    VALIDATION_GATE,
+    FrictionAnchor,
+    IceResistanceCase,
+    IceSteelFrictionModel,
+    attach_friction_field,
+    dem_friction_probe,
+    fit_ice_steel_friction,
+    holdout_error_table,
+    ice_resistance,
+    negative_control_table,
+    sensitivity_table,
+)
 
 __all__ = [
     "RestitutionMeasurement",
@@ -118,4 +132,8 @@ __all__ = [
     "load_json", "load_to_tensors", "tangential_cycle_dissipated_work", "classic_restitution_ratio",
     "clamped_restitution_ratio", "damping_for_target_restitution", "measure_dem3d_impact",
     "EulerBernoulliBeam", "BeamConfig", "beam_center_deflection_analytic", "beam_center_deflection_static",
+    "IceSteelFrictionModel", "FrictionAnchor", "IceResistanceCase",
+    "fit_ice_steel_friction", "holdout_error_table", "ice_resistance",
+    "sensitivity_table", "negative_control_table", "dem_friction_probe",
+    "attach_friction_field", "MU_CONSTANT_BASELINE", "VALIDATION_GATE",
 ]
