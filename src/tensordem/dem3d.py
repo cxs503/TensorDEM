@@ -28,6 +28,7 @@ from typing import Any
 import torch
 
 from .buoyancy_wet3d import submerged_fraction_sphere_tensor
+from . import hertz_mindlin
 
 
 # --------------------------------------------------------------------------
@@ -454,6 +455,12 @@ class IceDEM3D:
         return (hertz_reduced_modulus(self.config.young_modulus, self.config.poisson_ratio,
                                       rigid_counterpart=True),
                 hertz_effective_radius(self.config.radius, rigid_counterpart=True))
+
+    @property
+    def _hertz_g_star(self) -> float:
+        """Reduced shear modulus G* for Hertz--Mindlin tangential stiffness."""
+        return hertz_mindlin.hertz_reduced_shear_modulus(
+            self.config.young_modulus, self.config.poisson_ratio)
 
     @property
     def tool_position(self) -> torch.Tensor:
@@ -913,10 +920,18 @@ class IceDEM3D:
                     if update_history:
                         tang_disp = tang_disp + v_tangent * self.dt
 
-                    # Tangential force from spring; k_t = k_n locally, so the
-                    # Hertz model uses the same overlap-dependent secant value.
-                    F_t_raw = (k_local[:, None] * tang_disp if hertz
-                               else cfg.contact_stiffness * tang_disp)
+                    # --- Hertz-Mindlin tangential stiffness ---
+                    # For Hertz contacts, use Mindlin no-slip tangential stiffness:
+                    #   k_t = 8 G* sqrt(R* delta)
+                    # For linear contacts, use the constant contact_stiffness.
+                    # The ratio k_t/k_n for equal spheres is 3/(1-nu) ~ 4.3 for nu=0.3.
+                    if hertz:
+                        k_t = hertz_mindlin.hertz_mindlin_tangential_stiffness(
+                            overlap, e_star_pairs, self._hertz_g_star, r_eff_pairs)
+                    else:
+                        k_t = torch.full_like(overlap, cfg.contact_stiffness)
+
+                    F_t_raw = k_t[:, None] * tang_disp
                     F_t_mag = torch.linalg.vector_norm(F_t_raw, dim=1)
                     F_limit = cfg.friction_coefficient * contact_mag
 
@@ -941,8 +956,10 @@ class IceDEM3D:
                     force.index_add_(0, cj, -F_t)
 
                     # Update tangential state (step owner only).
+                    # Project onto friction cone: delta_t <- F_t / k_t
                     if update_history:
-                        self._update_tangential_state(ci, cj, cnormal, tang_disp)
+                        tang_disp_next = F_t / k_t[:, None]
+                        self._update_tangential_state(ci, cj, cnormal, tang_disp_next)
 
                 # --- SIR-PC2|F05: Rolling resistance torque ---
                 if cfg.rolling_resistance_coefficient > 0.0:
