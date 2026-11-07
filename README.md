@@ -21,6 +21,18 @@ DEM–Mohr-Coulomb 地基–Winkler 弹性地基梁耦合流程：冰脊龙骨�
 `docs/ice_ridge_pipeline_grounding.md`；工件见 `artifacts/ridge_grounding/`；
 运行 `python scripts/run_ice_ridge_grounding.py`。
 
+## 冰–船体水线带冲蚀磨损（ice-hull abrasion wear）
+
+`tensordem.ice_abrasion` 把 DEM 接触统计（Hertz 接触 + 冰压碎强度截断 +
+Cundall–Strack 切向饱和，输出局部压力 `p_c` 与滑移距离 `L_slip` 的联合分布）
+接上 Archard 磨损律 `V = K W L / H`（等价于比磨损率 `k = K/H`）与 Finnie
+高冲击角修正，投影到船体水线带网格得到磨损深度场，并与 `threefield.resistance`
+的摩擦功做能量守恒闭环（`V H / W_f = K / mu`），输出涂层/钢基体寿命 P10/P50/P90。
+几何先过 Cb/L/B 校验再算磨损。绝对量级由单一参数 `k` 对文献锚点标定，
+明确标注为 CALIBRATED；方法、判据与局限见 `docs/ice_abrasion_archard_wear.md`，
+工件见 `artifacts/ice_abrasion/`，API 合约 `ice_abrasion_calculation`
+对应 `POST /api/v1/calculations/structure/ice_abrasion`。
+
 ## 面向 Agent 科研工厂的职责
 
 在以 Agent 为科研主体的黑灯科研工厂中，TensorDEM 是一个**可编程、可观测、可验证的离散元数值实验设备**，负责颗粒运动、接触、键合与断裂等数值内核及专项验证。TensorPhysics 负责实验编排与跨求解器协调；TensorPlatform 负责数据、产物、研究记录和模型资产治理。
