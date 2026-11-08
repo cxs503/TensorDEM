@@ -43,8 +43,13 @@ error):
 * dashpot dissipation       ``Phi = sum (k_a/tau_a) * int s_a^2 dt``  (exactly ``W - dU``)
 
 with ``int s^2 dt`` and ``int s dd`` both elementary; see
-:func:`advance_branches`.  This is what makes the ``< 1e-10`` energy-closure
-acceptance criterion achievable instead of a truncation-limited ``~1e-3``.
+:func:`advance_branches`.  This is what makes a ``< 1e-10`` energy closure
+achievable instead of a truncation-limited ``~1e-3``: it is measured at
+``1.5e-12`` relative for ``dt/tau >= 3e-4`` (see
+``docs/ice_bond_viscoelastic_verification.md``).  The closure is *not* uniform
+in ``dt/tau``: the ``int s^2 dt`` summand is a difference of terms of order
+``(dd/dt)^2 tau^2 dt``, so for ``dt/tau ~ 1e-6`` with large strain increments
+the residual rises to ``~1e-7`` relative (cancellation, not truncation).
 
 Failure / damage
 ----------------
@@ -126,16 +131,28 @@ class MaxwellWiechertBond:
 
         ``equilibrium_fraction`` is ``k0 / k_unrelaxed``; the remaining
         ``1 - equilibrium_fraction`` is shared between the Maxwell branches in
-        the proportions of ``delayed_elastic_fraction`` (which must sum to 1).
+        the proportions of ``delayed_elastic_fraction``.  The shares are
+        *proportions*, so they are normalised by their sum: both the
+        proportions convention (shares summing to 1) and the fraction-of-
+        unrelaxed-stiffness convention used by the module defaults (which sum to
+        ``1 - equilibrium_fraction``) give the same bond law.  Requiring the
+        sum to be exactly 1 rejected the module's own defaults
+        ``(0.45, 0.20)`` against ``equilibrium_fraction = 0.35``.
         """
         if not (0.0 < equilibrium_fraction < 1.0):
             raise ValueError("equilibrium_fraction must be in (0, 1)")
         shares = tuple(float(f) for f in delayed_elastic_fraction)
-        if len(shares) != len(relaxation_time) or abs(sum(shares) - 1.0) > 1e-12:
-            raise ValueError("delayed_elastic_fraction must sum to 1 and match tau count")
+        if len(shares) != len(relaxation_time):
+            raise ValueError("delayed_elastic_fraction must match the tau count")
+        if any(not (math.isfinite(f) and f > 0.0) for f in shares):
+            raise ValueError("delayed_elastic_fraction entries must be finite and positive")
+        share_sum = sum(shares)
+        if not (math.isfinite(share_sum) and share_sum > 0.0):
+            raise ValueError("delayed_elastic_fraction must have a positive finite sum")
         k_total = float(unrelaxed_stiffness)
         k0 = equilibrium_fraction * k_total
-        branches = tuple((1.0 - equilibrium_fraction) * k_total * f for f in shares)
+        branches = tuple((1.0 - equilibrium_fraction) * k_total * (f / share_sum)
+                         for f in shares)
         return cls(equilibrium_stiffness=k0, branch_stiffness=branches,
                    relaxation_time=tuple(float(t) for t in relaxation_time))
 
@@ -220,10 +237,14 @@ def advance_branches(
         new_offsets.append(d_new - s_new)
         # int s dd  and  int s^2 dt  in closed form (linear strain path).
         integral_s_dd = d_dot * (amp * dt + (s0 - amp) * tau * one_minus)
+        # (1 - u^2) is formed as (1-u)(1+u): computing 1 - decay*decay loses
+        # the whole significance of the factor when dt << tau, and that error
+        # propagates into the dissipation and breaks the energy ledger at small
+        # dt/tau (measured 6.6e-8 relative at dt/tau = 2e-4, vs <1e-10 below).
         integral_s2 = (amp * amp * dt
                        + 2.0 * amp * (s0 - amp) * tau * one_minus
                        + 0.5 * (s0 - amp).square() * tau
-                       * (1.0 - decay * decay))
+                       * (one_minus * (1.0 + decay)))
         work = work + k * integral_s_dd
         dissipation = dissipation + (k / tau) * integral_s2
         force = force + k * s_new

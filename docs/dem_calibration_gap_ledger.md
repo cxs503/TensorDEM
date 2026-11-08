@@ -57,3 +57,38 @@ PYTHONPATH=src python scripts/m5052_clump_rolling_calibration.py --workers 8
 PYTHONPATH=src python scripts/m5052_clump_rolling_calibration.py --extra-only
 PYTHONPATH=src python scripts/m5052_clump_rolling_calibration.py --figures-only
 ```
+## selfstart write-back (Maxwell-Wiechert bond law, `ice_bond_viscoelastic`)
+
+* **New row (was missing from the ledger entirely):** *constitutive rate
+  dependence of the 3-D DEM bond* — m605 state **not listed**; now
+  **partially closed at the constitutive level, open at the specimen level**.
+  Evidence of this repo: `src/tensordem/ice_bond_viscoelastic.py`,
+  `tests/test_ice_bond_viscoelastic.py` (23 cases),
+  `scripts/verify_ice_bond_viscoelastic.py`,
+  `docs/ice_bond_viscoelastic_verification.md`,
+  `artifacts/ice_bond_viscoelastic/verification.json`.
+* **Verified against closed-form references** (numbers injected
+  programmatically from the JSON): Prony relaxation `4.0e-13` max rel. err;
+  constant-strain-rate ramp `1.6e-13`; increment-splitting invariance
+  `1.6e-14`; Kachanov increment `1.0e-14`; emergent ductile exponent
+  `sigma_f ~ edot^(1/(m+1))` recovered to `<1 %` for `m = 1,2,4` without any
+  envelope in the code; parallel-Wiechert creep compliance to `4.5e-4` at
+  `dt = tau/500` with first-order convergence; Weibull median `4.7e-4`.
+* **Two defects found and fixed:**
+  1. `from_unrelaxed_stiffness()` raised on its own defaults (shares
+     `0.45 + 0.20 = 0.65 != 1`); the factory now normalises the shares, which
+     reproduces the constants-as-fractions-of-`K` reading exactly
+     (`k0 = 0.35 K`, branches `0.45 K / 0.20 K`).
+  2. the dissipation integral formed `1 - u^2` by subtraction, which is
+     cancellation-limited for `dt << tau`; forming it as `(1-u)(1+u)` drops the
+     measured ledger residual from `6.6e-8` to `1.5e-12` in that regime.
+* **Honest limit, recorded not hidden:** the ledger identity is
+  cancellation-limited at `~1e-7` relative for `dt/tau ~ 1e-6` with large
+  strain increments (float64 cannot resolve the difference of `O(1e8)` larger
+  terms). The `<1e-10` figure is the `dt/tau >= 3e-4` regime; the module
+  docstring was corrected accordingly.
+* **Open part (not addressed here):** no engine call site — `dem3d.py` still
+  uses the linear bond, damage is not fed back into the bond force, and no
+  bonded-specimen rate-dependence benchmark exists. Closing that needs a
+  bond-law hook in `IceDEM3D` plus a specimen campaign; it is the next node for
+  this trajectory.
