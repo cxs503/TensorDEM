@@ -299,6 +299,7 @@ class RidgeAssembly:
             self._bonded[self.bonds[:, 0] * count + self.bonds[:, 1]] = True
             self._bonded[self.bonds[:, 1] * count + self.bonds[:, 0]] = True
         self._free = (~self.driven).to(torch.float64)
+        self.bond_fracture_energy = 0.0
 
     # ------------------------------------------------------------------ helpers
     @property
@@ -314,6 +315,69 @@ class RidgeAssembly:
 
     def kinetic_energy(self) -> float:
         return float(0.5 * (self.mass[:, None] * self.vel ** 2).sum())
+
+    def elastic_energy(self) -> dict:
+        """Stored elastic energy of every reversible interaction (J).
+
+        ``bond``       axial + tangential spring energy of the live freeze bonds,
+        ``contact``    penalty normal-spring energy of the active unbonded
+                       disk-disk contacts (tangential contact work is dissipated
+                       by the regularised Coulomb law and is not stored),
+        ``soil``       reversible part of the subgrade reaction, i.e. the energy
+                       that would be returned if every particle below the
+                       mudline were unloaded along ``min(k delta, q_ult)``.
+
+        Used by the energy ledger; the values use exactly the stiffnesses that
+        :meth:`forces` integrates, so the ledger closes on the integrated
+        physics rather than on a parallel model.
+        """
+        m = self.material
+        bond_energy = 0.0
+        if self.bonds.numel():
+            alive = self.bond_alive
+            i = self.bonds[:, 0]
+            j = self.bonds[:, 1]
+            length = torch.linalg.vector_norm(self.pos[j] - self.pos[i],
+                                             dim=1).clamp_min(1e-12)
+            extension = length - self.bond_length0
+            shear = self.bond_shear_disp
+            bond_energy = float((0.5 * m.bond_stiffness * extension ** 2
+                                 + 0.5 * m.bond_shear_stiffness * shear ** 2
+                                 )[alive].sum())
+        index_i = self._neigh_i
+        index_j = self._neigh_j
+        contact_energy = 0.0
+        if index_i.numel():
+            delta = self.pos[index_j] - self.pos[index_i]
+            distance = (delta * delta).sum(dim=1).sqrt()
+            overlap = self.radii[index_i] + self.radii[index_j] - distance
+            active = overlap > 0.0
+            if self.bonds.numel():
+                count = self.count
+                active = active & ~self._bonded[index_i * count + index_j]
+            if bool(active.any()):
+                contact_energy = float(
+                    (0.5 * m.contact_stiffness * overlap[active] ** 2).sum())
+        soil_energy = 0.0
+        if self.soil is not None and self.mudline is not None:
+            depth = self.mudline - self.pos[:, 1]
+            below = depth > 0.0
+            if bool(below.any()):
+                total = 0.0
+                for radius, d in zip(self.radii[below], depth[below]):
+                    r = float(radius)
+                    area = 2.0 * r * self.thickness
+                    k = self.soil.subgrade_modulus(2.0 * r) * 2.0 * r * area
+                    q = self.soil.vertical_pressure_capacity(2.0 * r,
+                                                             float(max(d, 1e-6))) * area
+                    delta = float(d)
+                    if k > 0.0 and delta < q / k:
+                        total += 0.5 * k * delta ** 2
+                    else:
+                        total += q * max(delta - 0.5 * q / max(k, 1e-30), 0.0)
+                soil_energy = total
+        return {"bond": bond_energy, "contact": contact_energy,
+                "soil": soil_energy}
 
     def _update_neighbours(self) -> None:
         """Rebuild the Verlet neighbour list (pairs within contact + skin)."""
@@ -343,6 +407,18 @@ class RidgeAssembly:
         # environmental/global drag damps free particles only; kinematic
         # platen particles are excluded so their reaction stays interpretable
         force -= m.drag * self.vel * self._free[:, None]
+        drag_power = float((m.drag * (self.vel ** 2).sum(dim=1) * self._free).sum())
+        contact_damping_power = 0.0
+        contact_friction_power = 0.0
+        pipe_damping_power = 0.0
+        pipe_friction_power = 0.0
+        plane_damping_power = 0.0
+        plane_friction_power = 0.0
+        soil_damping_power = 0.0
+        soil_friction_power = 0.0
+        pipe_power = 0.0
+        soil_power = 0.0
+        plane_power = 0.0
 
         # --- freeze bonds -------------------------------------------------
         if self.bonds.numel():
@@ -362,6 +438,10 @@ class RidgeAssembly:
             broken = alive & ((normal_force > m.bond_tensile_strength * area)
                               | (shear_force.abs() > m.bond_shear_strength * area))
             if break_bonds and bool(broken.any()):
+                released = (0.5 * m.bond_stiffness * extension[broken] ** 2
+                            + 0.5 * m.bond_shear_stiffness
+                            * self.bond_shear_disp[broken] ** 2)
+                self.bond_fracture_energy += float(released.sum())
                 self.bond_alive = alive & ~broken
                 self.broken_bonds += int(broken.sum())
                 self._mark_bond_broken(broken)
@@ -398,6 +478,11 @@ class RidgeAssembly:
             v_t = (relative_velocity * tangent).sum(dim=1)
             tangential = (-m.friction_coefficient * magnitude
                           * torch.tanh(v_t / m.velocity_regularisation))
+            loaded = m.contact_stiffness * overlap[active] \
+                - m.contact_damping * v_n > 0.0
+            contact_damping_power += float(
+                (m.contact_damping * v_n ** 2 * loaded).sum())
+            contact_friction_power += float((-tangential * v_t).sum())
             pair_force = (magnitude[:, None] * normal
                           + tangential[:, None] * tangent)
             force.index_add_(0, ai, pair_force)
@@ -428,6 +513,12 @@ class RidgeAssembly:
                 on_particles = magnitude[:, None] * normal + tangential[:, None] * tangent
                 force.index_add_(0, self._all[hit], on_particles)
                 pipe_force -= on_particles.sum(dim=0)
+                pipe_loaded = (m.contact_stiffness * gap[hit]
+                               - m.contact_damping * v_n) > 0.0
+                pipe_damping_power += float(
+                    (m.contact_damping * v_n ** 2 * pipe_loaded).sum())
+                pipe_friction_power += float((-tangential * v_t).sum())
+                pipe_power += float((on_particles * self.vel[hit]).sum())
 
         # --- rigid planes --------------------------------------------------
         plane_forces = []
@@ -453,6 +544,12 @@ class RidgeAssembly:
                 on_particles = magnitude[:, None] * normal + tangential[:, None] * tangent
                 force.index_add_(0, self._all[hit], on_particles)
                 on_plane = -on_particles.sum(dim=0)
+                plane_loaded = (plane.stiffness * gap[hit]
+                                - plane.damping * v_n) > 0.0
+                plane_damping_power += float(
+                    (plane.damping * v_n ** 2 * plane_loaded).sum())
+                plane_friction_power += float((-tangential * v_t).sum())
+                plane_power += float((on_particles * self.vel[hit]).sum())
             plane_forces.append(on_plane)
 
         # --- Mohr-Coulomb subgrade on particles below the mudline ----------
@@ -480,6 +577,10 @@ class RidgeAssembly:
                 on_particles = torch.stack((tangential, magnitude), dim=1)
                 force.index_add_(0, self._all[below], on_particles)
                 soil_force = on_particles.sum(dim=0)
+                damping_part = 2.0 * area * 1.0e4 * (-v_y).clamp_min(0.0)
+                soil_damping_power += float((damping_part * v_y).sum())
+                soil_friction_power += float((-tangential * self.vel[below, 0]).sum())
+                soil_power += float((on_particles * self.vel[below]).sum())
 
         # --- kinematic platen reaction -------------------------------------
         platen_force = torch.zeros(2, dtype=torch.float64)
@@ -496,6 +597,22 @@ class RidgeAssembly:
             "pipe_contacts": pipe_contacts,
             "plane_contacts": plane_contacts,
             "soil_contacts": soil_contacts,
+            # --- energy accounting (non-negative dissipation rates, W) ------
+            "dissipation": {
+                "contact_damping": contact_damping_power,
+                "contact_friction": contact_friction_power,
+                "drag": drag_power,
+                "pipe_damping": pipe_damping_power,
+                "pipe_friction": pipe_friction_power,
+                "plane_damping": plane_damping_power,
+                "plane_friction": plane_friction_power,
+                "soil_damping": soil_damping_power,
+                "soil_friction": soil_friction_power,
+            },
+            # signed power *delivered to the particles* by each boundary
+            "exchange": {"pipe": pipe_power, "soil": soil_power,
+                         "plane": plane_power},
+            "bond_fracture_energy": self.bond_fracture_energy,
         }
 
     # ------------------------------------------------------------ integration
