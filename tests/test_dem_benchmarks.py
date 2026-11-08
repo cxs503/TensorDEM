@@ -182,9 +182,12 @@ class TestBeverlooDischarge:
         )
 
     def test_beverloo_C_k_calibration(self):
-        """C2: Calibrated C, k within 10% of literature values.
+        """C2: the correlation inverts exactly (calibration round-trip).
 
-        Literature: C = 0.58 ± 0.06, k = 1.5 ± 0.2 (Beverloo 1961).
+        A calibration claim needs a measurement; what can be asserted here
+        without running a silo is that the module's inversion is exact, so a
+        measured W maps onto the right C.  Real campaign values (measured W ->
+        recovered C) live in docs/beverloo_discharge_measurement_audit.md.
         """
         case = bev.BeverlooCase(
             radius=0.005, density=2500.0, mu=0.5, mu_rolling=0.05,
@@ -192,10 +195,10 @@ class TestBeverlooDischarge:
             silo_radius=0.04, fill_height=0.12, orifice_diameter=0.030,
             gravity=9.81, packing_gap=0.02, jitter=0.01, max_time=1.0,
         )
-        pred = bev.beverloo_prediction(case, C=0.58, k=1.5)
-        assert pred["valid"]
-        assert abs(0.58 - 0.58) / 0.58 < 0.10
-        assert abs(1.5 - 1.5) / 1.5 < 0.10
+        for C_in in (0.55, 0.58, 0.60):
+            W = bev.beverloo_prediction(case, C=C_in, k=1.5)["W_kg_s"]
+            C_out = bev.recovered_C(case, W, k=1.5)
+            assert abs(C_out - C_in) / C_in < 1e-10, f"C_in={C_in}, C_out={C_out}"
 
     def test_beverloo_dem_heap_prerequisite(self):
         """C2: DEM produces a heap (prerequisite for discharge flow)."""
