@@ -119,3 +119,31 @@ PYTHONPATH=src python scripts/m5052_clump_rolling_calibration.py --figures-only
   single-chain driver, or move the rate window 2–3 decades slower with a
   quasi-static servo so the inertial term no longer dominates; only then can
   the emergent exponent be compared to 1/(m+1).
+
+## selfstart write-back (single-bond engine driver, m6543)
+
+* **Row changed:** the "constitutive rate dependence of the 3-D DEM bond" row
+  moves from *"engine closed / specimen benchmark open with a measured
+  negative result"* to **engine closed at the single-bond level / specimen
+  benchmark still open**. Evidence: `scripts/verify_ice_bond_single_bond_engine.py`,
+  `tests/test_ice_bond_single_bond_engine.py` (5 cases),
+  `artifacts/ice_bond_single_bond/verification.json`,
+  `docs/ice_bond_single_bond_engine_verification.md`.
+* **What was verified:** a 2-particle / 1-bond assembly built from the real
+  `IceDEM3D` engine (2×2×2 grid reduced to one bond), driven kinematically at
+  constant strain rate (no inertia), so the *engine's* call sites
+  (`_bond_force` history advance + `_commit_fracture` + `_commit_creep_damage`
+  with the engine's `F_ref`) are the ones under test.
+* **Quantified:** the linear+creep arm (m = 2) reproduces the analytic ductile
+  exponent `1/(m+1) = 1/3` to **0.075 %** (fitted 0.3336), and every creep-window
+  point sits on the closed-form creep force to < 0.1 %; the linear arm is
+  rate-independent to 0.02 % (negative control); the creep/brittle crossover
+  is between 0.3 and 1.0 s^-1, consistent with the analytic `edot_c = 1.0 s^-1`.
+* **Measured, not claimed:** the maxwell_wiechert+creep arm's creep-window
+  exponent is 0.3678 (10.3 % above 1/3) because the relaxation spectrum adds
+  rate stiffening on top of the creep damage; the MW force is not a linear
+  ramp, so there is no strict closed-form reference for that arm.
+* **Honest limit:** this is the *single-bond* level. A bonded *specimen*
+  (many bonds, load redistribution, inertia) has not yet been shown to follow
+  the envelope; that needs a quasi-static servo at 2-3 decades slower rates or
+  a single-chain (weakest-link) driver. Both are the next node.
