@@ -92,3 +92,30 @@ PYTHONPATH=src python scripts/m5052_clump_rolling_calibration.py --figures-only
   bonded-specimen rate-dependence benchmark exists. Closing that needs a
   bond-law hook in `IceDEM3D` plus a specimen campaign; it is the next node for
   this trajectory.
+
+## selfstart write-back (rate-dependent bond wired into the engine, mission m6464)
+
+* **Row changed:** the "constitutive rate dependence of the 3-D DEM bond" row
+  moves from *"partially closed at the constitutive level, open at the specimen
+  level"* to **engine closed / specimen benchmark open with a measured negative
+  result**. Evidence: `src/tensordem/dem3d.py` (`bond_model`,
+  `bond_creep_exponent`), `tests/test_ice_bond_engine.py` (20 cases),
+  `scripts/verify_ice_bond_specimen_rate.py`,
+  `artifacts/ice_bond_specimen/verification.json`,
+  `docs/ice_bond_specimen_rate_dependence.md`.
+* **Closed:** the engine call site now exists (`IceDEM3D` evaluates the Prony
+  law per bond, advances the branches in closed form, records the dashpot
+  dissipation in the audited ledger, and runs the Kachanov clock with failure
+  mode bit 4). The legacy linear bond is bit-for-bit unchanged (asserted) and
+  legacy checkpoints still load.
+* **Measured, not claimed:** at 0.25–4 s^-1 a 4x4x3 opposed-platen specimen
+  gives fitted strengths σ_f ∝ ε̇^0.244 (linear+creep) and ε̇^0.198
+  (Maxwell-Wiechert+creep) versus the analytic 1/3, **but the negative control
+  (pure linear bond) is not flat either** (slope +0.117, 38 % spread) and the
+  measured strength is 7–9x the rigid-plate bound: the specimen is
+  inertia-dominated in this rate window. The specimen-level exponent is
+  therefore **not verified** here — an honest FAIL, recorded as such.
+* **Next node:** isolate the constitutive response with a single-bond or
+  single-chain driver, or move the rate window 2–3 decades slower with a
+  quasi-static servo so the inertial term no longer dominates; only then can
+  the emergent exponent be compared to 1/(m+1).

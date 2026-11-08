@@ -33,6 +33,8 @@ class EnergyAuditedIceDEM3D(IceDEM3D):
         # Platen (top/bottom + lateral) actuator work and dashpot dissipation.
         self.cumulative_platen_work_J = 0.0
         self.cumulative_platen_damping_J = 0.0
+        # ``cumulative_bond_dissipation_J`` is created by the base solver (it
+        # stays 0.0 on the legacy linear bond); the ledger only reads it.
         self.reference_mechanical_energy_J = self._mechanical_energy()
         self.energy_balance_residual_J = 0.0
 
@@ -44,7 +46,10 @@ class EnergyAuditedIceDEM3D(IceDEM3D):
         i, j = self.pairs.T
         distance = torch.linalg.vector_norm(self.positions[j] - self.positions[i], dim=1)
         extension = distance - self.rest_lengths
-        bond = (0.5 * cfg.bond_stiffness * extension.square() * self.alive).sum()
+        # Constitutive stored energy: the identical expression for the legacy
+        # linear bond, and it includes the Maxwell branch springs when the
+        # rate-dependent law is active.
+        bond = (self.bond_stored_energy(extension) * self.alive).sum()
 
         pairs = self._contact_candidate_pairs()
         particle_contact = torch.zeros((), dtype=self.dtype, device=self.device)
@@ -164,7 +169,8 @@ class EnergyAuditedIceDEM3D(IceDEM3D):
                       + self.cumulative_tool_damping_J
                       + self.cumulative_friction_work_J
                       + self.cumulative_rolling_work_J
-                      + self.cumulative_platen_damping_J)
+                      + self.cumulative_platen_damping_J
+                      + self.cumulative_bond_dissipation_J)
         input_work = (self.cumulative_tool_work_J + self.cumulative_external_work_J
                       + self.cumulative_platen_work_J)
         self.energy_balance_residual_J = (
@@ -228,7 +234,8 @@ class EnergyAuditedIceDEM3D(IceDEM3D):
                       + self.cumulative_tool_damping_J
                       + self.cumulative_friction_work_J
                       + self.cumulative_rolling_work_J
-                      + self.cumulative_platen_damping_J)
+                      + self.cumulative_platen_damping_J
+                      + self.cumulative_bond_dissipation_J)
         input_work = (self.cumulative_tool_work_J + self.cumulative_external_work_J
                       + self.cumulative_platen_work_J)
         self.energy_balance_residual_J = (
@@ -254,6 +261,7 @@ class EnergyAuditedIceDEM3D(IceDEM3D):
             ),
             "platen_work_cumulative_J": self.cumulative_platen_work_J,
             "platen_damping_cumulative_J": self.cumulative_platen_damping_J,
+            "bond_dissipation_cumulative_J": self.cumulative_bond_dissipation_J,
         })
         return row
 
@@ -269,6 +277,7 @@ class EnergyAuditedIceDEM3D(IceDEM3D):
             "cumulative_fracture_release_J": self.cumulative_fracture_release_J,
             "cumulative_friction_work_J": self.cumulative_friction_work_J,
             "cumulative_rolling_work_J": self.cumulative_rolling_work_J,
+            "cumulative_bond_dissipation_J": self.cumulative_bond_dissipation_J,
             "energy_balance_residual_J": self.energy_balance_residual_J,
         }
         return state
@@ -296,7 +305,8 @@ class EnergyAuditedIceDEM3D(IceDEM3D):
             "cumulative_external_work_J", "cumulative_drag_dissipation_J",
             "cumulative_particle_damping_J", "cumulative_tool_damping_J",
             "cumulative_fracture_release_J", "cumulative_friction_work_J",
-            "cumulative_rolling_work_J", "energy_balance_residual_J",
+            "cumulative_rolling_work_J", "cumulative_bond_dissipation_J",
+            "energy_balance_residual_J",
         )
         staged = {key: float(audit.get(key, 0.0)) for key in keys}
         if not all(torch.isfinite(torch.tensor(value)) for value in staged.values()):
