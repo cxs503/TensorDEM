@@ -73,9 +73,12 @@ class GroundingScenario:
     plastic_rate: float = 0.05
     pipe_line_mass: float = 400.0
     pipe_damping_ratio: float = 0.7
+    track_energy: bool = False
+    pipe_lateral_compliance: bool = False
+    initial_penetration: float = 0.0
 
     def __post_init__(self) -> None:
-        for name in ("cover_depth", "tip_clearance"):
+        for name in ("cover_depth", "tip_clearance", "initial_penetration"):
             value = getattr(self, name)
             if isinstance(value, bool) or not isinstance(value, (int, float)) \
                     or not math.isfinite(value) or value < 0:
@@ -126,6 +129,7 @@ class GroundingResult:
     dt: float
     steps: int
     final_pipe_displacement: float
+    final_snapshot: dict | None = None
 
     def summary(self) -> dict:
         """Compact, JSON-friendly view of the run."""
@@ -139,8 +143,9 @@ class GroundingResult:
 
 
 def _build_assembly(scenario: GroundingScenario) -> tuple[RidgeAssembly, dict]:
-    generated = generate_keel_assembly(scenario.keel, scenario.material,
-                                      tip_height=scenario.tip_clearance)
+    generated = generate_keel_assembly(
+        scenario.keel, scenario.material,
+        tip_height=scenario.tip_clearance - scenario.initial_penetration)
     assembly = generated["assembly"]
     assembly.soil = scenario.soil
     assembly.mudline = 0.0
@@ -158,7 +163,8 @@ def _build_assembly(scenario: GroundingScenario) -> tuple[RidgeAssembly, dict]:
                                        dtype=torch.float64)
         assembly.driven = assembly.driven & (assembly.pos[:, 1] >= 0.0)
     assembly.set_platen_velocity(platen_velocity)
-    return assembly, generated["info"] | {"cylinder": cylinder}
+    return assembly, generated["info"] | {"cylinder": cylinder,
+                                          "platen_velocity": platen_velocity}
 
 
 def _moving_average(values: torch.Tensor, window: int) -> torch.Tensor:
@@ -192,18 +198,74 @@ def run_grounding(scenario: GroundingScenario, *, max_steps: int = 40000) -> Gro
         "pipe_displacement": [], "drive_force": [], "soil_force": [],
         "keel_penetration": [], "broken_bonds": [], "contacts": [],
         "kinetic_energy": [], "work": [], "driven_drop": [], "pipe_load_soil": [],
+        "pipe_displacement_lateral": [], "pipe_load_soil_lateral": [],
     }
+    if scenario.track_energy:
+        history["energy_track"] = []
     initial_top = float(assembly.pos[assembly.driven, 1].mean())
     pipe_displacement = 0.0
     pipe_velocity = 0.0
     smoothed_load = 0.0
     tip_start = float(assembly.pos[:, 1].min())
 
+    # --- lateral pipe degree of freedom (optional) ---------------------
+    lateral_compliant = (scenario.pipe_lateral_compliance
+                         and scenario.loading == "lateral")
+    lateral_displacement = 0.0
+    lateral_velocity = 0.0
+    lateral_stiffness = (
+        scenario.soil.initial_vertical_stiffness(scenario.section.outer_diameter)
+        if scenario.soil is not None else 0.0)
+    lateral_capacity = (
+        scenario.soil.lateral_limit_pressure(scenario.cover_depth,
+                                             scenario.section.outer_diameter)
+        if scenario.soil is not None else 0.0)
+    lateral_damping = (2.0 * scenario.pipe_damping_ratio
+                       * math.sqrt(lateral_stiffness * scenario.pipe_line_mass))
+    lateral_centre_x = 0.0
+
+    # --- energy ledger (optional) --------------------------------------
+    ledger = None
+    if scenario.track_energy:
+        start_elastic = assembly.elastic_energy()
+        ledger = {
+            "platen_work": 0.0, "body_work": 0.0,
+            "exchanged_pipe": 0.0, "exchanged_soil": 0.0, "exchanged_plane": 0.0,
+            "dissipation": {key: 0.0 for key in (
+                "contact_damping", "contact_friction", "drag", "pipe_damping",
+                "pipe_friction", "plane_damping", "plane_friction",
+                "soil_damping", "soil_friction")},
+            "kinetic_start": assembly.kinetic_energy(),
+            "elastic_start": start_elastic,
+            "pipe_kinetic_start": 0.0,
+            "pipe_spring_work": 0.0, "pipe_damping_work": 0.0,
+        }
+    platen_velocity_vector = info["platen_velocity"]
+    free_mask = ~assembly.driven
+
+    last_out = None
     for step in range(steps):
         out = assembly.step(dt)
+        last_out = out
         load = -float(out["pipe_force"][1])
         load_h = float(out["pipe_force"][0])
         smoothed_load += 0.1 * (load - smoothed_load)
+
+        if lateral_compliant:
+            # elastic-perfectly-plastic lateral soil resistance, symmetric in
+            # both directions: the ridge can drag the pipe either way
+            elastic = lateral_stiffness * lateral_displacement
+            resistance = max(-lateral_capacity, min(elastic, lateral_capacity))
+            acceleration_x = (load_h - resistance
+                              - lateral_damping * lateral_velocity) \
+                / scenario.pipe_line_mass
+            lateral_velocity += acceleration_x * dt
+            lateral_displacement = lateral_displacement + lateral_velocity * dt
+            lateral_centre_x = lateral_displacement
+            cylinder["centre"] = torch.tensor(
+                (lateral_centre_x, scenario.pipe_centre_height - pipe_displacement),
+                dtype=torch.float64)
+            assembly.cylinders[0] = cylinder
 
         if scenario.pipe_response == "compliant":
             stiffness = scenario.soil.initial_vertical_stiffness(
@@ -222,6 +284,23 @@ def run_grounding(scenario: GroundingScenario, *, max_steps: int = 40000) -> Gro
             cylinder["centre"] = centre
             assembly.cylinders[0] = cylinder
 
+        if ledger is not None:
+            ledger["platen_work"] += float(
+                torch.dot(out["platen_force"], platen_velocity_vector)) * dt
+            ledger["body_work"] += float(
+                (assembly.body_force[free_mask]
+                 * assembly.vel[free_mask, 1]).sum()) * dt
+            for name, power in out["dissipation"].items():
+                ledger["dissipation"][name] += power * dt
+            for name in ("pipe", "soil", "plane"):
+                ledger[f"exchanged_{name}"] += out["exchange"][name] * dt
+            if spring is not None:
+                ledger["pipe_spring_work"] += spring.reaction(pipe_displacement) \
+                    * (pipe_velocity * dt)
+                damping_coefficient = (2.0 * scenario.pipe_damping_ratio
+                                       * math.sqrt(stiffness * scenario.pipe_line_mass))
+                ledger["pipe_damping_work"] += damping_coefficient * pipe_velocity ** 2 * dt
+
         if step % scenario.sample_every == 0 or step == steps - 1:
             driven_drop = initial_top - float(assembly.pos[assembly.driven, 1].mean())
             history["time"].append(assembly.time)
@@ -239,6 +318,27 @@ def run_grounding(scenario: GroundingScenario, *, max_steps: int = 40000) -> Gro
             history["kinetic_energy"].append(assembly.kinetic_energy())
             history["pipe_load_soil"].append(spring.reaction(pipe_displacement)
                                             if spring is not None else 0.0)
+            if ledger is not None:
+                snapshot = assembly.elastic_energy()
+                history["energy_track"].append({
+                    "time": assembly.time,
+                    "platen_work": ledger["platen_work"],
+                    "body_work": ledger["body_work"],
+                    "exchanged_pipe": ledger["exchanged_pipe"],
+                    "exchanged_soil": ledger["exchanged_soil"],
+                    "exchanged_plane": ledger["exchanged_plane"],
+                    "dissipated": sum(ledger["dissipation"].values()),
+                    "bond_fracture": assembly.bond_fracture_energy,
+                    "kinetic": assembly.kinetic_energy(),
+                    "elastic_bond": snapshot["bond"],
+                    "elastic_contact": snapshot["contact"],
+                    "elastic_soil": snapshot["soil"],
+                })
+            history["pipe_displacement_lateral"].append(lateral_displacement)
+            history["pipe_load_soil_lateral"].append(
+                max(-lateral_capacity,
+                    min(lateral_stiffness * lateral_displacement, lateral_capacity))
+                if lateral_compliant else 0.0)
             history["work"].append(float(abs(out["platen_force"][1])
                                          * scenario.platen_velocity * assembly.time))
             history["driven_drop"].append(driven_drop)
@@ -252,12 +352,131 @@ def run_grounding(scenario: GroundingScenario, *, max_steps: int = 40000) -> Gro
     info["bonds_final"] = int(assembly.bond_alive.sum())
     info["broken_bonds"] = assembly.broken_bonds
     info["pipe_load_peak_raw"] = float(loads.max()) if loads.numel() else 0.0
+    info["lateral"] = {
+        "compliant": lateral_compliant,
+        "capacity": lateral_capacity if lateral_compliant else 0.0,
+        "stiffness": lateral_stiffness if lateral_compliant else 0.0,
+        "final_displacement": lateral_displacement,
+        "peak_load": (float(torch.tensor(history["pipe_load_horizontal"],
+                                         dtype=torch.float64).abs().max())
+                      if history["pipe_load_horizontal"] else 0.0),
+        "regime": ("elastic" if abs(lateral_displacement) * lateral_stiffness
+                   < lateral_capacity else "plastic") if lateral_compliant else "rigid",
+        "sustained_load": (float(abs(torch.tensor(
+            history["pipe_load_horizontal"][len(history["pipe_load_horizontal"]) // 2:],
+            dtype=torch.float64)).mean())
+            if history["pipe_load_horizontal"] else 0.0),
+    }
     info["smoothing_window"] = window
     if spring is not None:
         info["soil_spring"] = spring.describe()
+    if ledger is not None:
+        info["energy"] = _close_energy_ledger(
+            ledger, assembly, scenario, pipe_velocity)
+        info["energy"]["windows"] = _window_closure(history["energy_track"])
+    snapshot = None
+    if last_out is not None:
+        magnitude = torch.linalg.vector_norm(last_out["force"], dim=1)
+        snapshot = {"time": assembly.time,
+                    "positions": assembly.pos.tolist(),
+                    "force_magnitude": magnitude.tolist(),
+                    "contacts": int(last_out["contacts"]),
+                    "pipe_contacts": int(last_out["pipe_contacts"]),
+                    "soil_contacts": int(last_out["soil_contacts"]),
+                    "broken_bonds": assembly.broken_bonds}
     return GroundingResult(scenario=scenario, history=history, info=info,
                            capacity=capacity, dt=dt, steps=steps,
-                           final_pipe_displacement=pipe_displacement)
+                           final_pipe_displacement=pipe_displacement,
+                           final_snapshot=snapshot)
+
+
+def _window_closure(track: list[dict]) -> dict:
+    """Closure of the ledger over the second half of the record.
+
+    The first part of a DEM run is the settling transient of the freshly built
+    lattice (the keel is placed at rest and picked up by buoyancy and by the
+    kinematic platen).  Splitting the record makes the difference between
+    "the ledger closes for the loading event" and "the whole record, transient
+    included, closes" explicit instead of hiding it in one number.
+    """
+    if len(track) < 8:
+        return {"available": False}
+    start = track[len(track) // 2]
+    end = track[-1]
+    inputs = ((end["platen_work"] + end["body_work"])
+              - (start["platen_work"] + start["body_work"]))
+    stored = ((end["kinetic"] + end["elastic_bond"] + end["elastic_contact"]
+               + end["elastic_soil"]) - (start["kinetic"] + start["elastic_bond"]
+                                         + start["elastic_contact"]
+                                         + start["elastic_soil"]))
+    dissipated = end["dissipated"] - start["dissipated"]
+    exchanged = sum(end[key] - start[key]
+                    for key in ("exchanged_pipe", "exchanged_soil",
+                                "exchanged_plane"))
+    fracture = end["bond_fracture"] - start["bond_fracture"]
+    sinks = stored + dissipated - exchanged + fracture
+    scale = max(abs(inputs), abs(sinks), 1.0e-12)
+    return {"available": True, "t_start": start["time"], "t_end": end["time"],
+            "inputs": inputs, "stored": stored, "dissipated": dissipated,
+            "boundary": -exchanged, "bond_fracture": fracture,
+            "residual": inputs - sinks, "closure_error": abs(inputs - sinks) / scale}
+
+
+def _close_energy_ledger(ledger: dict, assembly, scenario: GroundingScenario,
+                         pipe_velocity: float) -> dict:
+    """Turn the accumulated powers into a closed energy statement.
+
+    Statement integrated over the run (particles + subgrade + pipeline)::
+
+        W_platen + W_body = dK_particles + dE_springs + phi_dissipated
+                            - exchanged_pipe - exchanged_soil - exchanged_plane
+
+    Each boundary (pipe, subgrade, rigid plane) is a separate subsystem: the
+    work it takes out of the particles is its own absorption, and its internal
+    decomposition (elastic storage / plastic dissipation / damping) is reported
+    next to it as an independent sub-ledger.
+    """
+    end = assembly.elastic_energy()
+    elastic_start = ledger["elastic_start"]
+    delta_spring = {key: end[key] - elastic_start[key] for key in end}
+    kinetic = assembly.kinetic_energy() - ledger["kinetic_start"]
+    sources = ledger["platen_work"] + ledger["body_work"]
+    phi = ledger["dissipation"]
+    phi_total = sum(phi.values())
+    absorbed_pipe = -ledger["exchanged_pipe"]
+    absorbed_soil = -ledger["exchanged_soil"]
+    absorbed_plane = -ledger["exchanged_plane"]
+    sinks = (kinetic + sum(delta_spring.values()) + phi_total + absorbed_pipe
+             + absorbed_soil + absorbed_plane + assembly.bond_fracture_energy)
+    scale = max(abs(sources), abs(sinks), 1.0e-12)
+    residual = sources - sinks
+    # sub-ledger of the pipeline: work the ice transfers to it is spent on its
+    # own kinetic energy, on the peak-to-residual subgrade spring and on the
+    # damping of its single degree of freedom.
+    pipe_internal = (ledger["pipe_spring_work"] + ledger["pipe_damping_work"]
+                     + 0.5 * scenario.pipe_line_mass * pipe_velocity ** 2
+                     - ledger["pipe_kinetic_start"])
+    soil_elastic = delta_spring["soil"] if "soil" in delta_spring else 0.0
+    return {
+        "sources": {"platen_work": ledger["platen_work"],
+                    "body_work": ledger["body_work"], "total": sources},
+        "sinks": {"kinetic": kinetic, "spring": delta_spring,
+                  "dissipated": phi_total,
+                  "absorbed_pipe": absorbed_pipe,
+                  "absorbed_soil": absorbed_soil,
+                  "absorbed_plane": absorbed_plane,
+                  "bond_fracture": assembly.bond_fracture_energy,
+                  "total": sinks},
+        "dissipation_breakdown": phi,
+        "soil": {"absorbed": absorbed_soil, "elastic": soil_elastic,
+                 "plastic": absorbed_soil - soil_elastic},
+        "pipe": {"absorbed": absorbed_pipe, "spring": ledger["pipe_spring_work"],
+                 "damping": ledger["pipe_damping_work"],
+                 "kinetic": 0.5 * scenario.pipe_line_mass * pipe_velocity ** 2,
+                 "internal": pipe_internal},
+        "residual": residual,
+        "closure_error": abs(residual) / scale,
+    }
 
 
 def load_displacement_metrics(result: GroundingResult, *,
