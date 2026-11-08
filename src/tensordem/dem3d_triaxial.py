@@ -77,6 +77,15 @@ class TriaxialConfig:
     max_axial_steps: int = 1200
     post_peak_fraction: float = 0.55     # failure when stress < frac * peak
     peak_min_stress: float = 1.0         # Pa; ignore peaks below this
+    # --- opt-in bond constitutive model ---
+    # See docs/ice_bond_specimen_rate_dependence.md.
+    bond_model: str = "linear"            # "linear" | "maxwell_wiechert"
+    bond_equilibrium_fraction: float = 0.35
+    bond_delayed_elastic_fraction: tuple[float, ...] = (0.45, 0.20)
+    bond_relaxation_time_s: tuple[float, ...] = (0.5, 30.0)
+    bond_creep_exponent: int = 0          # m; 0 = brittle strain criterion only
+    bond_creep_time_s: float = 1.0        # t_ref
+    bond_creep_force_fraction: float = 1.0
     # --- numerics ---
     dt_factor: float = 1.0
     seed: int = 0
@@ -137,6 +146,13 @@ class TriaxialRunner:
             fix_x_edges=False,
             fix_bottom=False,
             lateral_platens=(cfg.sigma_x > 0.0 or cfg.sigma_y > 0.0),
+            bond_model=cfg.bond_model,
+            bond_equilibrium_fraction=cfg.bond_equilibrium_fraction,
+            bond_delayed_elastic_fraction=cfg.bond_delayed_elastic_fraction,
+            bond_relaxation_time_s=cfg.bond_relaxation_time_s,
+            bond_creep_exponent=cfg.bond_creep_exponent,
+            bond_creep_time_s=cfg.bond_creep_time_s,
+            bond_creep_force_fraction=cfg.bond_creep_force_fraction,
         )
         self.sim = EnergyAuditedIceDEM3D(DEM3DConfig(
             **{**base.__dict__, "dt": base.recommended_dt * cfg.dt_factor}
@@ -299,7 +315,8 @@ class TriaxialRunner:
                 + float(self.sim.cumulative_tool_damping_J)
                 + float(self.sim.cumulative_friction_work_J)
                 + float(self.sim.cumulative_rolling_work_J)
-                + float(self.sim.cumulative_platen_damping_J))
+                + float(self.sim.cumulative_platen_damping_J)
+                + float(self.sim.cumulative_bond_dissipation_J))
         frac = float(self.sim.cumulative_fracture_release_J)
         resid = e_t - e0 - w_in + diss + frac
         scale = max(abs(e0) + abs(w_in) + frac, 1e-30)

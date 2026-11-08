@@ -27,6 +27,13 @@ from typing import Any
 
 import torch
 
+from .ice_bond_viscoelastic import (
+    MaxwellWiechertBond,
+    advance_branches,
+    damage_increment,
+    stored_energy as _bond_stored_energy,
+)
+
 from .buoyancy_wet3d import submerged_fraction_sphere_tensor
 from . import hertz_mindlin
 
@@ -182,6 +189,23 @@ class DEM3DConfig:
     water_level: float | None = None      # free-surface elevation z (m); None = dry
     water_density: float = 1025.0         # kg/m^3
     wet_drag_coefficient: float = 0.0     # N s/m, applied to the submerged fraction only
+    # --- Opt-in bond constitutive model (default off: legacy linear spring) ---
+    # "linear" reproduces the single-stiffness spring bit-for-bit.
+    # "maxwell_wiechert" gives the bond a Prony-series relaxation spectrum
+    # (equilibrium spring + Maxwell branches), so the bond carries memory and
+    # the specimen becomes rate dependent.  See
+    # docs/ice_bond_specimen_rate_dependence.md.
+    bond_model: str = "linear"          # "linear" | "maxwell_wiechert"
+    bond_equilibrium_fraction: float = 0.35   # k0 / k_unrelaxed
+    bond_delayed_elastic_fraction: tuple[float, ...] = (0.45, 0.20)
+    bond_relaxation_time_s: tuple[float, ...] = (0.5, 30.0)
+    # --- Opt-in Kachanov creep damage (0 disables it) ---
+    # dD/dt = (1/t_ref) * (|F| / F_ref)**m with failure at D = 1.  This is a
+    # failure *clock*, not a stiffness-degradation law: the bond force stays
+    # elastic until the bond is deleted (stated as a limitation in the doc).
+    bond_creep_exponent: int = 0          # m; 0 = brittle (strain) criterion only
+    bond_creep_time_s: float = 1.0        # t_ref
+    bond_creep_force_fraction: float = 1.0  # F_ref = fraction * k_unrelaxed * eps_b * L0
 
     def __post_init__(self) -> None:
         for name in ("nx", "ny", "nz"):
@@ -272,6 +296,35 @@ class DEM3DConfig:
         if (not math.isfinite(self.wet_drag_coefficient)
                 or self.wet_drag_coefficient < 0.0):
             raise ValueError("wet_drag_coefficient must be finite and nonnegative")
+        # Opt-in bond constitutive model + creep damage clock
+        if self.bond_model not in ("linear", "maxwell_wiechert"):
+            raise ValueError("bond_model must be 'linear' or 'maxwell_wiechert'")
+        if not (math.isfinite(self.bond_equilibrium_fraction)
+                and 0.0 < self.bond_equilibrium_fraction < 1.0):
+            raise ValueError("bond_equilibrium_fraction must be in (0, 1)")
+        if len(self.bond_delayed_elastic_fraction) != len(self.bond_relaxation_time_s):
+            raise ValueError(
+                "bond_delayed_elastic_fraction and bond_relaxation_time_s "
+                "must have equal length")
+        if self.bond_model == "maxwell_wiechert" and not self.bond_relaxation_time_s:
+            raise ValueError(
+                "bond_model='maxwell_wiechert' needs at least one relaxation time")
+        for value in self.bond_relaxation_time_s:
+            if not (math.isfinite(value) and value > 0.0):
+                raise ValueError("bond_relaxation_time_s entries must be finite and positive")
+        for value in self.bond_delayed_elastic_fraction:
+            if not (math.isfinite(value) and value > 0.0):
+                raise ValueError(
+                    "bond_delayed_elastic_fraction entries must be finite and positive")
+        if isinstance(self.bond_creep_exponent, bool) or not isinstance(
+                self.bond_creep_exponent, int) or self.bond_creep_exponent < 0:
+            raise ValueError("bond_creep_exponent must be a nonnegative integer")
+        if self.bond_creep_exponent > 0:
+            if not (math.isfinite(self.bond_creep_time_s) and self.bond_creep_time_s > 0.0):
+                raise ValueError("bond_creep_time_s must be finite and positive")
+            if not (math.isfinite(self.bond_creep_force_fraction)
+                    and self.bond_creep_force_fraction > 0.0):
+                raise ValueError("bond_creep_force_fraction must be finite and positive")
 
     @property
     def mass(self) -> float:
@@ -442,6 +495,25 @@ class IceDEM3D:
         self.failure_time_s = torch.full((len(self.pairs),), -1.0, dtype=self.dtype, device=self.device)
         self.failure_extension_m = torch.zeros(len(self.pairs), dtype=self.dtype, device=self.device)
         self.failure_energy_J = torch.zeros(len(self.pairs), dtype=self.dtype, device=self.device)
+        # Opt-in bond constitutive state.  ``bond_law`` is None on the legacy
+        # linear bond, in which case every array below stays zero-sized and the
+        # trajectory is bit-for-bit the pre-existing one.
+        self.bond_law = (
+            MaxwellWiechertBond.from_unrelaxed_stiffness(
+                config.bond_stiffness,
+                equilibrium_fraction=config.bond_equilibrium_fraction,
+                delayed_elastic_fraction=config.bond_delayed_elastic_fraction,
+                relaxation_time=config.bond_relaxation_time_s,
+            )
+            if config.bond_model == "maxwell_wiechert" else None
+        )
+        n_branches = self.bond_law.n_branches if self.bond_law is not None else 0
+        self.branch_offsets = torch.zeros(
+            (len(self.pairs), n_branches), dtype=self.dtype, device=self.device)
+        self._bond_elongation_prev = torch.zeros(
+            len(self.pairs), dtype=self.dtype, device=self.device)
+        self.bond_damage = torch.zeros(len(self.pairs), dtype=self.dtype, device=self.device)
+        self.cumulative_bond_dissipation_J = 0.0
         self._bond_keys = self.pairs[:, 0] * len(grid) + self.pairs[:, 1]
 
         self.time = 0.0
@@ -737,7 +809,123 @@ class IceDEM3D:
         self.failure_mode[newly] = tensile_fail[newly].to(torch.uint8) + 2 * shear_fail[newly].to(torch.uint8)
         self.failure_time_s[newly] = self.time
         self.failure_extension_m[newly] = extension[newly]
-        self.failure_energy_J[newly] = 0.5 * cfg.bond_stiffness * extension[newly].square()
+        # Release energy = the recoverable energy the bond actually stored, so
+        # the energy ledger stays closed for the rate-dependent bond too.
+        self.failure_energy_J[newly] = self.bond_stored_energy(extension)[newly]
+
+    # ------------------------------------------------------------------
+    # Opt-in rate-dependent bond law + creep damage clock
+    # ------------------------------------------------------------------
+    @property
+    def unrelaxed_bond_stiffness(self) -> float:
+        """Instantaneous (wave-speed) bond stiffness in N/m."""
+        if self.bond_law is None:
+            return float(self.config.bond_stiffness)
+        return float(self.bond_law.unrelaxed_stiffness)
+
+    @torch.no_grad()
+    def _bond_force(self, extension: torch.Tensor, *, update_history: bool) -> torch.Tensor:
+        """Axial bond force for every bond pair (N) at the current elongation.
+
+        With ``update_history`` the Maxwell branches are advanced over the
+        increment ``elongation_prev -> extension`` exactly (closed form), the
+        dashpot dissipation is added to ``cumulative_bond_dissipation_J`` and
+        the stored elongation is refreshed.  Probe calls must pass
+        ``update_history=False``; they then evaluate the constitutive law at the
+        frozen branch state and do not disturb the trajectory.
+        """
+        if self.bond_law is None:
+            return self.config.bond_stiffness * extension
+        if update_history:
+            offsets, force, _work, dissipation = advance_branches(
+                self.bond_law, self.branch_offsets, self._bond_elongation_prev,
+                extension, self.dt)
+            alive = self.alive
+            if self.bond_law.n_branches:
+                # A deleted bond stores nothing, so park its branch offsets on the
+                # current elongation: s_a = 0 keeps it out of the dissipation
+                # ledger and cannot leak energy after deletion.
+                offsets = torch.where(alive[:, None], offsets,
+                                      extension[:, None].expand_as(offsets))
+                self.branch_offsets = offsets
+            self.cumulative_bond_dissipation_J += float(
+                torch.where(alive, dissipation, torch.zeros_like(dissipation)).sum())
+            self._bond_elongation_prev = extension.clone()
+        force = float(self.bond_law.equilibrium_stiffness) * extension
+        for a, k_a in enumerate(self.bond_law.branch_stiffness):
+            force = force + float(k_a) * (extension - self.branch_offsets[:, a])
+        return force
+
+    @torch.no_grad()
+    def bond_stored_energy(self, extension: torch.Tensor | None = None) -> torch.Tensor:
+        """Recoverable elastic energy per bond (J) for either bond model."""
+        if extension is None:
+            i, j = self.pairs.T
+            distance = torch.linalg.vector_norm(
+                self.positions[j] - self.positions[i], dim=1)
+            extension = distance - self.rest_lengths
+        if self.bond_law is None:
+            return 0.5 * self.config.bond_stiffness * extension.square()
+        return _bond_stored_energy(self.bond_law, self.branch_offsets, extension)
+
+    @torch.no_grad()
+    def bond_creep_reference_force(self) -> torch.Tensor:
+        """Per-bond Kachanov reference force ``F_ref`` in N.
+
+        ``F_ref = fraction * k_unrelaxed * breaking_strain * L0``: the force at
+        which the damage clock runs at exactly ``1 / t_ref`` is the force the
+        brittle strain criterion would delete the bond at.  With
+        ``fraction = 1`` the ductile/brittle crossover is therefore set by a
+        *time* comparison ``t_fail > (m + 1) t_ref`` and not by a tuned stress.
+        """
+        cfg = self.config
+        return (cfg.bond_creep_force_fraction * self.unrelaxed_bond_stiffness
+                * cfg.breaking_strain * self.rest_lengths)
+
+    @torch.no_grad()
+    def _commit_creep_damage(self, force: torch.Tensor,
+                             extension: torch.Tensor) -> None:
+        """Advance the Kachanov damage clock and delete bonds that reach D = 1."""
+        cfg = self.config
+        alive = self.alive
+        if not bool(alive.any()):
+            return
+        increment = damage_increment(force, self.bond_creep_reference_force(),
+                                     self.dt, cfg.bond_creep_time_s,
+                                     float(cfg.bond_creep_exponent))
+        self.bond_damage = self.bond_damage + torch.where(
+            alive, increment, torch.zeros_like(increment))
+        failed = alive & (self.bond_damage >= 1.0)
+        if not bool(failed.any()):
+            return
+        self.alive = alive & ~failed
+        # failure_mode bitmask: 1 tensile, 2 shear, 4 creep damage.  Bonds that
+        # already failed the strain criteria this step are excluded by ``alive``,
+        # so the mechanisms stay mutually exclusive.
+        self.failure_mode[failed] = 4
+        self.failure_time_s[failed] = self.time
+        self.failure_extension_m[failed] = extension[failed]
+        self.failure_energy_J[failed] = self.bond_stored_energy(extension)[failed]
+
+    def bond_law_report(self) -> dict[str, float | str | list[float]]:
+        """Machine-readable summary of the active bond constitutive model."""
+        cfg = self.config
+        payload: dict[str, float | str | list[float]] = {
+            "bond_model": cfg.bond_model,
+            "unrelaxed_stiffness_N_m": self.unrelaxed_bond_stiffness,
+            "relaxed_stiffness_N_m": (
+                float(self.bond_law.equilibrium_stiffness) if self.bond_law is not None
+                else float(cfg.bond_stiffness)),
+            "creep_exponent": float(cfg.bond_creep_exponent),
+            "creep_time_s": float(cfg.bond_creep_time_s),
+            "cumulative_bond_dissipation_J": float(self.cumulative_bond_dissipation_J),
+            "creep_failed_bonds": int((self.failure_mode == 4).sum()),
+            "max_bond_damage": float(self.bond_damage.max()) if len(self.bond_damage) else 0.0,
+        }
+        if self.bond_law is not None:
+            payload["branch_stiffness_N_m"] = [float(k) for k in self.bond_law.branch_stiffness]
+            payload["relaxation_time_s"] = [float(t) for t in self.bond_law.relaxation_time]
+        return payload
 
     # ------------------------------------------------------------------
     # SIR-PC2|F05: Coulomb friction + rolling resistance helpers
@@ -911,10 +1099,16 @@ class IceDEM3D:
         normal = delta / distance.clamp_min(eps)[:, None]
         normal = torch.where((distance > eps)[:, None], normal, self.initial_normals)
         extension = distance - self.rest_lengths
+        # The constitutive force is evaluated before the failure commits so a
+        # rate-dependent bond is judged on the force it actually carries.  For
+        # the legacy linear law this is the same number as before (the bond
+        # magnitude does not depend on the alive mask).
+        bond_mag = self._bond_force(extension, update_history=update_history)
         if update_fracture:
             self._commit_fracture(extension)
+            if cfg.bond_creep_exponent > 0:
+                self._commit_creep_damage(bond_mag, extension)
 
-        bond_mag = cfg.bond_stiffness * extension
         bond_force = bond_mag[:, None] * normal
         force = -cfg.drag * self.velocities
         if cfg.gravity > 0.0 or cfg.water_level is not None:
@@ -1220,7 +1414,7 @@ class IceDEM3D:
         i, j = self.pairs.T
         distance = torch.linalg.vector_norm(self.positions[j] - self.positions[i], dim=1)
         extension = distance - self.rest_lengths
-        bond_energy = (0.5 * self.config.bond_stiffness * extension.square() * self.alive).sum()
+        bond_energy = (self.bond_stored_energy(extension) * self.alive).sum()
         contact_pairs = self._contact_candidate_pairs()
         contact_energy = torch.zeros((), dtype=self.dtype, device=self.device)
         if contact_pairs.numel():
@@ -1292,7 +1486,7 @@ class IceDEM3D:
         delta = self.positions[j] - self.positions[i]
         distance = torch.linalg.vector_norm(delta, dim=1)
         extension = distance - self.rest_lengths
-        bond_energy = 0.5 * cfg.bond_stiffness * (extension[self.alive] ** 2).sum().item()
+        bond_energy = float(self.bond_stored_energy(extension)[self.alive].sum().item())
         contact_energy = 0.0
         contact_pairs = self._contact_candidate_pairs()
         if contact_pairs.numel():
@@ -1382,6 +1576,12 @@ class IceDEM3D:
             "pairs": self.pairs.clone(), "bonded": self.bonded.clone(), "alive": self.alive.clone(),
             "failure_mode": self.failure_mode.clone(), "failure_time_s": self.failure_time_s.clone(),
             "failure_extension_m": self.failure_extension_m.clone(), "failure_energy_J": self.failure_energy_J.clone(),
+            "bond_law": {
+                "branch_offsets": self.branch_offsets.clone(),
+                "elongation_prev": self._bond_elongation_prev.clone(),
+                "damage": self.bond_damage.clone(),
+                "cumulative_bond_dissipation_J": self.cumulative_bond_dissipation_J,
+            },
         }
 
     @torch.no_grad()
@@ -1459,6 +1659,42 @@ class IceDEM3D:
                      "bonded", "alive", "failure_mode", "failure_time_s",
                      "failure_extension_m", "failure_energy_J"):
             getattr(self, name).copy_(staged[name])
+        bond_state = state.get("bond_law")
+        if self.bond_law is not None:
+            if not isinstance(bond_state, dict):
+                raise ValueError(
+                    "checkpoint has no bond-law state but the solver uses "
+                    "a rate-dependent bond")
+            offsets = bond_state.get("branch_offsets")
+            expected = tuple(self.branch_offsets.shape)
+            if (not isinstance(offsets, torch.Tensor)
+                    or tuple(offsets.shape) != expected
+                    or offsets.dtype != self.dtype):
+                raise ValueError(
+                    f"checkpoint branch_offsets must be a {self.dtype} tensor "
+                    f"with shape {expected}")
+            damage = bond_state.get("damage")
+            if (not isinstance(damage, torch.Tensor)
+                    or tuple(damage.shape) != (len(self.pairs),)
+                    or damage.dtype != self.dtype):
+                raise ValueError(
+                    f"checkpoint bond damage must be a {self.dtype} tensor "
+                    f"with shape {(len(self.pairs),)}")
+            elongation_prev = bond_state.get("elongation_prev")
+            if (not isinstance(elongation_prev, torch.Tensor)
+                    or tuple(elongation_prev.shape) != (len(self.pairs),)
+                    or elongation_prev.dtype != self.dtype):
+                raise ValueError(
+                    f"checkpoint elongation_prev must be a {self.dtype} tensor "
+                    f"with shape {(len(self.pairs),)}")
+            for value in (offsets, damage, elongation_prev):
+                if not bool(torch.isfinite(value).all()):
+                    raise ValueError("checkpoint bond-law state is non-finite")
+            self.branch_offsets.copy_(offsets.to(device=self.device))
+            self.bond_damage.copy_(damage.to(device=self.device))
+            self._bond_elongation_prev.copy_(elongation_prev.to(device=self.device))
+            self.cumulative_bond_dissipation_J = float(
+                bond_state.get("cumulative_bond_dissipation_J", 0.0))
         self.time = time_value
         self.step_count = step_value
         self.last_reaction.zero_()
