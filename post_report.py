@@ -13,7 +13,10 @@ login_data = json.dumps({
 }).encode()
 req = urllib.request.Request(base + "/auth/login", data=login_data, headers={"Content-Type": "application/json"}, method="POST")
 with urllib.request.urlopen(req, timeout=180) as resp:
-    tok = json.loads(resp.read()).get("access_token") or json.loads(resp.read()).get("token")
+    login_body = json.loads(resp.read())
+tok = login_body.get("access_token") or login_body.get("token")
+if not tok:
+    raise SystemExit(f"login did not return a token: {login_body}")
 
 # Post report
 with open("/tmp/report.json", "r") as f:
