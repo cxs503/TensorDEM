@@ -74,6 +74,13 @@ class TriaxialConfig:
     confine_steps: int = 400             # max steps to establish confinement
     confine_settle: int = 40             # consecutive settled steps required
     # --- axial phase ---
+    # ``False`` (legacy): the lateral platens are frozen once confinement is
+    # over, so the axial phase is strain-controlled laterally and the *measured*
+    # lateral stresses drift away from the prescribed ones.  ``True`` keeps the
+    # pressure servo running, which is what a constant-confining-pressure
+    # triaxial test means physically; ``_summary`` reports the measured values
+    # either way.
+    servo_during_axial: bool = False
     max_axial_steps: int = 1200
     post_peak_fraction: float = 0.55     # failure when stress < frac * peak
     peak_min_stress: float = 1.0         # Pa; ignore peaks below this
@@ -271,6 +278,8 @@ class TriaxialRunner:
             load = self._axial_load(top, bot)
             stress = load / self.gross_area
             fx, fy = self._lateral_forces(rxmin, rxmax, rymin, rymax)
+            if cfg.servo_during_axial:
+                self._servo(fx, fy)
             self._record("axial", load, fx, fy)
             if stress > peak:
                 peak = stress
@@ -303,6 +312,33 @@ class TriaxialRunner:
         s2, s3 = self.cfg.sigma_x, self.cfg.sigma_y
         denom = sigma1 - s3
         b_lode = (s2 - s3) / denom if abs(denom) > 1e-12 else 0.0
+        # The prescribed lateral pressures are inputs; the platen reactions are
+        # the only measurement of the stress state that was actually reached.
+        # ``b_lode`` above is therefore an *input* Lode parameter.  Report the
+        # measured state and the Lode parameter it implies, so a reader can see
+        # whether the run realised the intended true-triaxial condition.
+        px_peak = float(peak_row["pressure_x_Pa"])
+        py_peak = float(peak_row["pressure_y_Pa"])
+        denom_meas = sigma1 - py_peak
+        b_lode_measured = (px_peak - py_peak) / denom_meas if abs(denom_meas) > 1e-12 else 0.0
+        confine_rows = [r for r in rows if r["phase"] == "confine"]
+        conf = confine_rows[-1] if confine_rows else {
+            "pressure_x_Pa": 0.0, "pressure_y_Pa": 0.0, "step": 0}
+        tol = self.cfg.servo_tol
+
+        def _rel(meas: float, target: float) -> float:
+            return (meas - target) / target if target else 0.0
+
+        conf_x = _rel(float(conf["pressure_x_Pa"]), self.cfg.sigma_x)
+        conf_y = _rel(float(conf["pressure_y_Pa"]), self.cfg.sigma_y)
+        converged = all(
+            abs(v) <= tol for v, t in ((conf_x, self.cfg.sigma_x), (conf_y, self.cfg.sigma_y))
+            if t > 0)
+        peak_x = _rel(px_peak, self.cfg.sigma_x)
+        peak_y = _rel(py_peak, self.cfg.sigma_y)
+        stress_state_verified = all(
+            abs(v) <= tol for v, t in ((peak_x, self.cfg.sigma_x), (peak_y, self.cfg.sigma_y))
+            if t > 0)
         # energy ledger from a single final diagnostics() snapshot
         d = self.sim.diagnostics()
         e0 = float(getattr(self.sim, "reference_mechanical_energy_J", 0.0))
@@ -341,6 +377,29 @@ class TriaxialRunner:
             "sigma2_Pa": s2,
             "sigma3_Pa": s3,
             "b_lode": float(b_lode),
+            "b_lode_measured": float(b_lode_measured),
+            "confinement": {
+                "target_pressure_x_Pa": self.cfg.sigma_x,
+                "target_pressure_y_Pa": self.cfg.sigma_y,
+                "measured_pressure_x_Pa": float(conf["pressure_x_Pa"]),
+                "measured_pressure_y_Pa": float(conf["pressure_y_Pa"]),
+                "relative_error_x": float(conf_x),
+                "relative_error_y": float(conf_y),
+                "steps_used": int(conf["step"]),
+                "tolerance": tol,
+                "converged": bool(converged),
+            },
+            "stress_state_at_peak": {
+                "prescribed_sigma2_Pa": s2,
+                "prescribed_sigma3_Pa": s3,
+                "measured_pressure_x_Pa": px_peak,
+                "measured_pressure_y_Pa": py_peak,
+                "lateral_relative_error_x": float(peak_x),
+                "lateral_relative_error_y": float(peak_y),
+                "tolerance": tol,
+                "verified": bool(stress_state_verified),
+                "servo_during_axial": bool(self.cfg.servo_during_axial),
+            },
             "strain_at_peak": float(peak_row["axial_engineering_strain"]),
             "peak_load_N": float(peak_row["axial_load_N"]),
             "final_broken_bonds": int(self.sim.broken_bonds),

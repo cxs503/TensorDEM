@@ -158,6 +158,14 @@ class EnergyAuditedIceDEM3D(IceDEM3D):
         self.velocities[self.fixed] = 0
         self.positions += self.dt * self.velocities
         self.positions[self.fixed] = self.initial_positions[self.fixed]
+        # Lateral servo platens integrate their own velocity here.  The base
+        # solver advances them in ``IceDEM3D.step``; this override replays the
+        # kinematic update and must keep that term, otherwise a driver that
+        # sets ``lateral_platen_velocity`` (true-triaxial pressure servo) moves
+        # a velocity that never displaces the platen, and the prescribed
+        # confining pressure can never be reached.
+        if self.config.lateral_platens:
+            self.lateral_platen_pos += self.lateral_platen_velocity * self.dt
         self.time += self.dt
         self.step_count += 1
         if not bool(torch.isfinite(self.positions).all() and torch.isfinite(self.velocities).all()):
