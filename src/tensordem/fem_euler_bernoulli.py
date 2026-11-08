@@ -8,6 +8,15 @@ with simply-supported or clamped boundary conditions, accepting arbitrary
 time-varying nodal loads (supplied by the DEM side of the coupling).
 
 All quantities are SI.  The beam axis is x, deflection is w (positive downward).
+Nodal degrees of freedom are (w, theta) with theta = dw/dx in radians
+(consistent with the cubic Hermite interpolation used by both the stiffness and
+the consistent mass matrix).
+
+Supported boundary conditions: ``simply_supported`` (w=0 at both ends, rotations
+free), ``clamped`` (w=theta=0 at both ends) and ``cantilever`` (w=theta=0 at
+x=0, both free at x=L).  The deflection field between nodes is recovered by
+:meth:`EulerBernoulliBeam.deflection_at`, so meshes with an odd number of
+elements (no node exactly at mid-span) still report the mid-span value.
 """
 from __future__ import annotations
 
@@ -22,6 +31,7 @@ __all__ = [
     "BeamConfig",
     "beam_center_deflection_analytic",
     "beam_center_deflection_static",
+    "beam_tip_deflection_analytic",
 ]
 
 
@@ -40,11 +50,15 @@ def beam_center_deflection_analytic(
     load: float, length: float, young_modulus: float, inertia: float,
     *, bc: str = "simply_supported",
 ) -> float:
-    """Analytical center deflection of an Euler-Bernoulli beam under central point load.
+    """Analytical deflection of an Euler-Bernoulli beam under a central point load.
 
-    Simply-supported:  delta = P L^3 / (48 E I)
-    Clamped-clamped:   delta = P L^3 / (192 E I)
-    Cantilever (load at tip): delta = P L^3 / (3 E I)
+    Simply-supported:  delta = P L^3 / (48 E I)   (mid-span)
+    Clamped-clamped:   delta = P L^3 / (192 E I)  (mid-span)
+
+    ``bc="cantilever"`` is kept for backward compatibility but the cantilever is
+    *not* loaded at mid-span: the returned value is the **tip** deflection of a
+    cantilever under a tip point load, delta = P L^3 / (3 E I).  Use
+    :func:`beam_tip_deflection_analytic` for that case.
     """
     P = _finite("load", load)
     L = _finite("length", length, positive=True)
@@ -59,6 +73,23 @@ def beam_center_deflection_analytic(
         return P * L ** 3 / (3.0 * EI)
     else:
         raise ValueError(f"unknown bc={bc!r}")
+
+
+def beam_tip_deflection_analytic(
+    load: float, length: float, young_modulus: float, inertia: float,
+    *, bc: str = "cantilever",
+) -> float:
+    """Analytical tip deflection of an Euler-Bernoulli beam under a tip point load.
+
+    Cantilever (load at free end): delta = P L^3 / (3 E I)
+    """
+    P = _finite("load", load)
+    L = _finite("length", length, positive=True)
+    E = _finite("young_modulus", young_modulus, positive=True)
+    I = _finite("inertia", inertia, positive=True)
+    if bc != "cantilever":
+        raise ValueError(f"tip-load analytic solution only defined for bc='cantilever', got {bc!r}")
+    return P * L ** 3 / (3.0 * E * I)
 
 
 def beam_center_deflection_static(
@@ -89,8 +120,9 @@ class BeamConfig:
         _finite("density", self.density, positive=True)
         if isinstance(self.n_elements, bool) or not isinstance(self.n_elements, int) or self.n_elements < 1:
             raise ValueError("n_elements must be an integer >= 1")
-        if self.bc not in ("simply_supported", "clamped"):
-            raise ValueError("bc must be 'simply_supported' or 'clamped'")
+        if self.bc not in ("simply_supported", "clamped", "cantilever"):
+            raise ValueError(
+                "bc must be 'simply_supported', 'clamped' or 'cantilever'")
         if not (0.0 <= self.damping_ratio < 1.0):
             raise ValueError("damping_ratio must be in [0, 1)")
 
@@ -160,24 +192,42 @@ class EulerBernoulliBeam:
         elif config.bc == "clamped":
             self._fixed_dofs = torch.tensor([0, 1, 2 * n_elem, 2 * n_elem + 1],
                                             dtype=torch.long, device=self.device)
+        elif config.bc == "cantilever":
+            # clamped at x=0, free at x=L
+            self._fixed_dofs = torch.tensor([0, 1], dtype=torch.long,
+                                            device=self.device)
 
         free_mask = torch.ones(n_dof, dtype=torch.bool, device=self.device)
         free_mask[self._fixed_dofs] = False
         self._free_idx = torch.arange(n_dof, device=self.device)[free_mask]
 
+        self._K_full = K
+        self._M_full = M
         self.K_free = K[self._free_idx[:, None], self._free_idx[None, :]]
         self.M_free = M[self._free_idx[:, None], self._free_idx[None, :]]
 
+        # Generalized eigenproblem K phi = omega^2 M phi, reduced to the
+        # symmetric standard form A = L^-1 K L^-T with M = L L^T, using a
+        # Cholesky factorization of the (free) consistent mass matrix.
+        # NOTE: the reduction must be A = L^-1 K L^-T (symmetric, positive
+        # semi-definite); a spurious extra transpose produces L^-1 K L^-1 and
+        # negative eigenvalues, which previously turned any damped run into NaN.
+        L_chol = torch.linalg.cholesky(self.M_free)
+        LinvK = torch.linalg.solve_triangular(L_chol, self.K_free, upper=False)
+        self._A_eig = torch.linalg.solve_triangular(L_chol, LinvK.T, upper=False)
+        self._eigvals = torch.linalg.eigvalsh(self._A_eig)
+        self._omegas = torch.sqrt(torch.clamp(self._eigvals, min=0.0))
+
         # Rayleigh damping
         if config.damping_ratio > 0.0:
-            # Use scipy-style generalized eigenvalue via Cholesky
-            L = torch.linalg.cholesky(self.M_free)
-            LinvK = torch.linalg.solve_triangular(L, self.K_free, upper=False)
-            A = torch.linalg.solve_triangular(L.T, LinvK.T, upper=True).T
-            eigvals = torch.linalg.eigvalsh(A)
-            omega1 = torch.sqrt(eigvals[0])
+            omega1 = float(self._omegas[0])
+            if not math.isfinite(omega1) or omega1 <= 0.0:
+                raise ValueError(
+                    "damping_ratio requires a positive fundamental frequency; "
+                    "check mass/stiffness assembly and boundary conditions")
             zeta = config.damping_ratio
-            beta_damp = 2.0 * zeta / float(omega1)
+            # Stiffness-proportional Rayleigh term: C = (2 zeta / omega_1) K
+            beta_damp = 2.0 * zeta / omega1
             self.C_free = beta_damp * self.K_free
         else:
             self.C_free = torch.zeros_like(self.K_free)
@@ -207,8 +257,73 @@ class EulerBernoulliBeam:
         self.x_nodes = torch.linspace(0.0, config.length, n_node,
                                       dtype=self.dtype, device=self.device)
 
-    def static_solve(self, force_vector: torch.Tensor) -> dict[str, Any]:
-        """Solve K * d = F statically."""
+    def _interpolate_deflection(self, d: torch.Tensor, x: float) -> float:
+        """Cubic Hermite interpolation of the deflection field at position x."""
+        length = float(self.config.length)
+        xf = _finite("x", x)
+        tol = 1.0e-12 * length
+        if xf < -tol or xf > length + tol:
+            raise ValueError(f"x={xf!r} outside beam domain [0, {length}]")
+        xf = min(max(xf, 0.0), length)
+        n_elem = int(self.config.n_elements)
+        h = self.h_elem
+        e = min(int(xf // h), n_elem - 1)
+        xi = (xf - e * h) / h
+        n1 = 1.0 - 3.0 * xi ** 2 + 2.0 * xi ** 3
+        n2 = xi - 2.0 * xi ** 2 + xi ** 3
+        n3 = 3.0 * xi ** 2 - 2.0 * xi ** 3
+        n4 = -xi ** 2 + xi ** 3
+        w_l = float(d[2 * e])
+        t_l = float(d[2 * e + 1])
+        w_r = float(d[2 * e + 2])
+        t_r = float(d[2 * e + 3])
+        return n1 * w_l + h * n2 * t_l + n3 * w_r + h * n4 * t_r
+
+    def deflection_at(self, x: float) -> float:
+        """Current deflection at physical position x (cubic Hermite interpolation)."""
+        return self._interpolate_deflection(self.disp, x)
+
+    def consistent_point_load(self, x: float, load: float) -> torch.Tensor:
+        """Equivalent nodal force vector for a transverse point load at position x.
+
+        The load is distributed onto the two nodes of the element containing x
+        with the cubic Hermite shape functions, which is the variationally
+        consistent load vector for Euler-Bernoulli elements.  At a node the
+        result reduces exactly to a single nodal force.
+        """
+        length = float(self.config.length)
+        xf = _finite("x", x)
+        P = _finite("load", load)
+        tol = 1.0e-12 * length
+        if xf < -tol or xf > length + tol:
+            raise ValueError(f"x={xf!r} outside beam domain [0, {length}]")
+        xf = min(max(xf, 0.0), length)
+        n_elem = int(self.config.n_elements)
+        h = self.h_elem
+        e = min(int(xf // h), n_elem - 1)
+        xi = (xf - e * h) / h
+        n1 = 1.0 - 3.0 * xi ** 2 + 2.0 * xi ** 3
+        n2 = xi - 2.0 * xi ** 2 + xi ** 3
+        n3 = 3.0 * xi ** 2 - 2.0 * xi ** 3
+        n4 = -xi ** 2 + xi ** 3
+        f = torch.zeros(self.n_dof, dtype=self.dtype, device=self.device)
+        f[2 * e] += P * n1
+        f[2 * e + 1] += P * h * n2
+        f[2 * e + 2] += P * n3
+        f[2 * e + 3] += P * h * n4
+        return f
+
+    def static_solve(
+        self, force_vector: torch.Tensor, *, commit: bool = False,
+    ) -> dict[str, Any]:
+        """Solve K * d = F statically.
+
+        By default the result is returned without touching the dynamic state
+        (this keeps :meth:`static_solve` free of side effects and lets callers
+        use it as a pure probe).  Pass ``commit=True`` to load the static
+        equilibrium into the dynamic state (velocity and acceleration reset to
+        zero), which is the usual restart-from-equilibrium pattern.
+        """
         if force_vector.shape[0] != self.n_dof:
             raise ValueError(f"force_vector must have {self.n_dof} entries")
         f = force_vector.to(device=self.device, dtype=self.dtype)
@@ -218,11 +333,24 @@ class EulerBernoulliBeam:
         d_full[self._free_idx] = d_free
         w = d_full[0::2]
         theta = d_full[1::2]
+        center = self._interpolate_deflection(d_full, 0.5 * float(self.config.length))
+        if commit:
+            self.disp = d_full.clone()
+            self.vel.zero_()
+            self.acc.zero_()
+            self._static_load = f.clone()
         return {
             "deflection": w.detach().cpu().numpy().tolist(),
             "rotation": theta.detach().cpu().numpy().tolist(),
-            "center_deflection": float(w[self.n_node // 2]),
+            "center_deflection": center,
+            "reaction": self._reaction(f, d_full),
         }
+
+    def _reaction(self, f: torch.Tensor, d_full: torch.Tensor) -> list[float]:
+        """Support reactions R = K d - F at the constrained degrees of freedom."""
+        K = self._full_stiffness()
+        r = (K @ d_full) - f
+        return [float(r[i]) for i in self._fixed_dofs.tolist()]
 
     def apply_load(self, force_vector: torch.Tensor, dt: float) -> dict[str, Any]:
         """Apply nodal force and advance one Newmark step.
@@ -300,14 +428,16 @@ class EulerBernoulliBeam:
             "deflection": w.detach().cpu().numpy().tolist(),
             "rotation": theta.detach().cpu().numpy().tolist(),
             "velocity": v_w.detach().cpu().numpy().tolist(),
-            "center_deflection": float(w[self.n_node // 2]),
+            "center_deflection": self.deflection_at(0.5 * float(self.config.length)),
         }
 
     def center_deflection(self) -> float:
-        return float(self.disp[0::2][self.n_node // 2].item())
+        """Mid-span deflection (interpolated, valid for odd element counts too)."""
+        return self.deflection_at(0.5 * float(self.config.length))
 
     def center_velocity(self) -> float:
-        return float(self.vel[0::2][self.n_node // 2].item())
+        """Mid-span velocity (interpolated, valid for odd element counts too)."""
+        return self._interpolate_deflection(self.vel, 0.5 * float(self.config.length))
 
     def kinetic_energy(self) -> float:
         v_full = self.vel.clone()
@@ -318,14 +448,12 @@ class EulerBernoulliBeam:
         return float(0.5 * (d_full @ self._full_stiffness() @ d_full).item())
 
     def _full_mass(self) -> torch.Tensor:
-        M = torch.zeros(self.n_dof, self.n_dof, dtype=self.dtype, device=self.device)
-        M[self._free_idx[:, None], self._free_idx[None, :]] = self.M_free
-        return M
+        """Complete (unconstrained) consistent mass matrix."""
+        return self._M_full.clone()
 
     def _full_stiffness(self) -> torch.Tensor:
-        K = torch.zeros(self.n_dof, self.n_dof, dtype=self.dtype, device=self.device)
-        K[self._free_idx[:, None], self._free_idx[None, :]] = self.K_free
-        return K
+        """Complete (unconstrained) stiffness matrix, including constrained rows."""
+        return self._K_full.clone()
 
     def total_energy(self) -> float:
         return self.kinetic_energy() + self.strain_energy()
