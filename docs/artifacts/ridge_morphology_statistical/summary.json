@@ -1,0 +1,101 @@
+{
+  "provenance": {
+    "repo": "TensorDEM",
+    "script": "scripts/run_ridge_statistical_study.py",
+    "module": "tensordem.ridge_morphology",
+    "n_samples": 100,
+    "seed": 42,
+    "simulation_mode": "analytical_anchor",
+    "note": "all numbers computed programmatically; no hand transcription"
+  },
+  "distribution_fit": {
+    "sail_height": {
+      "distribution": "lognormal",
+      "mu": 5.0,
+      "sigma": 2.0,
+      "sample_mean": 4.934801424520975,
+      "sample_std": 1.9388998901568273,
+      "ks_statistic": 0.03687923416220229,
+      "ks_p_value": 0.1284670110973426,
+      "ks_pass": true
+    },
+    "keel_depth": {
+      "distribution": "lognormal",
+      "mu": 20.0,
+      "sigma": 8.0,
+      "sample_mean": 19.41303848308772,
+      "sample_std": 7.784017335102009,
+      "ks_statistic": 0.03377954460221316,
+      "ks_p_value": 0.19937800437391928,
+      "ks_pass": true
+    },
+    "porosity": {
+      "distribution": "normal",
+      "mu": 0.25,
+      "sigma": 0.1,
+      "sample_mean": 0.2542098771358215,
+      "sample_std": 0.09965036238650377,
+      "ks_statistic": 0.027720609741354985,
+      "ks_p_value": 0.41830387184632234,
+      "ks_pass": true
+    }
+  },
+  "analytical_anchor": {
+    "baseline_F_max_per_length_kN_per_m": 5.50092977414632,
+    "n_to_0_ratio": 25.338455762337645,
+    "n_to_0_pass": true,
+    "n_to_1_ratio": 0.0,
+    "n_to_1_pass": true
+  },
+  "fmax_statistics": {
+    "mean": 14282.209971121332,
+    "std": 22097.62425344238,
+    "P10": 356.5335673727404,
+    "P50": 5113.602909943212,
+    "P90": 37900.83095932474,
+    "min": 1.6809586125685987,
+    "max": 148524.61702180677
+  },
+  "sobol_indices": {
+    "S_Hs": 0.00039267276248202717,
+    "S_Dk": 0.10843814097303595,
+    "S_n": 0.891169186264482,
+    "total": 1.0,
+    "dominant_parameter": "n",
+    "correlations": {
+      "H_s": 0.014649268257501449,
+      "D_k": 0.24343979565565524,
+      "n": -0.697879793375802
+    }
+  },
+  "probability_design": {
+    "mu": 14282.209971121332,
+    "sigma": 22097.62425344238,
+    "P10": 356.5335673727404,
+    "P50": 5113.602909943212,
+    "P90": 37900.83095932474,
+    "F_design": 310.02918901977426,
+    "load_factor": 1.15,
+    "beta": 0.6322933461919538,
+    "reliability_class": "LOW"
+  },
+  "negative_control": {
+    "cv": 0.01759780759961785,
+    "pass": true
+  },
+  "acceptance_criteria": {
+    "a_distribution_fit": true,
+    "b_sample_convergence": true,
+    "c_analytical_anchor": true,
+    "d_sobol_sum": true,
+    "e_probability_design": false,
+    "f_negative_control": true,
+    "g_physical_reasonableness": true
+  },
+  "figures": {
+    "distribution_cdf": "/root/tp-agent/work/m7047/docs/artifacts/ridge_morphology_statistical/fig1_distribution_cdf_comparison.png",
+    "fmax_pdf_cdf": "/root/tp-agent/work/m7047/docs/artifacts/ridge_morphology_statistical/fig2_fmax_pdf_cdf.png",
+    "sobol_indices": "/root/tp-agent/work/m7047/docs/artifacts/ridge_morphology_statistical/fig3_sobol_indices.png",
+    "reliability_beta": "/root/tp-agent/work/m7047/docs/artifacts/ridge_morphology_statistical/fig4_reliability_beta.png"
+  }
+}
