@@ -23,6 +23,9 @@ Modules
                interfaces: two different polyhedral approximations of one patch),
                homogeneous Sutherland-Hodgman clipping, surface mortar operator
 ``acceptance3d`` the machine-checkable D1..D6 harness of campaign node IN52-N01
+``curved_patch_mortar``  patch-local parametrisation + Newton-projected true
+               intersection + per-patch local conservation with gap/penetration
+               volume terms (campaign node P248-N01)
 """
 
 from __future__ import annotations
@@ -42,6 +45,17 @@ from .clip3d import (SurfaceMortarOperator, TriSide, clip_homogeneous,
                      surface_coverage, surface_integral, surface_l2_error,
                      surface_overlap_entries, tri_area, tri_pair_overlap,
                      tri_patch_side, uv_sphere_tris)
+# the curved-patch names are prefixed where they would shadow the planar API
+# (``grid_side`` exists in ``mortar`` for the coplanar construction)
+from .curved_patch_mortar import (CurvedMortarOperator, CurvedSide, GraphPatch,
+                                  ParamPatch, SpherePatch, adjoint_apply,
+                                  adjoint_diagnostics, coverage_arrangement,
+                                  dual_moment_defect, first_order_coupling,
+                                  intersection_curve, pair_measures,
+                                  per_patch_balance, plane_projection_defect,
+                                  side_from_ambient)
+from .curved_patch_mortar import grid_side as curved_grid_side
+from .curved_patch_mortar import run_acceptance as run_curved_acceptance
 
 __all__ = [
     "cell_overlap",
@@ -84,4 +98,21 @@ __all__ = [
     "tri_pair_overlap",
     "tri_patch_side",
     "uv_sphere_tris",
+    "ParamPatch",
+    "SpherePatch",
+    "GraphPatch",
+    "CurvedSide",
+    "curved_grid_side",
+    "side_from_ambient",
+    "pair_measures",
+    "per_patch_balance",
+    "coverage_arrangement",
+    "intersection_curve",
+    "CurvedMortarOperator",
+    "plane_projection_defect",
+    "first_order_coupling",
+    "adjoint_apply",
+    "adjoint_diagnostics",
+    "dual_moment_defect",
+    "run_curved_acceptance",
 ]
