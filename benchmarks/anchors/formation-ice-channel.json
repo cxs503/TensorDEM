@@ -1,0 +1,1003 @@
+{
+  "task_key": "paper-exp-formation-ice-channel-1",
+  "case": "formation-ice-channel",
+  "experiment": "external anchor verification (Lindqvist 1989) + same-caliber conversion",
+  "generated_by": "benchmarks/anchors/formation_ice_channel_anchor.py",
+  "prereg_path": "prereg/formation_ice_channel_anchor_prereg.json",
+  "prereg_sha256": "ef77ad071c6f9dce31db2790c21a477396c6e5f271bce5eb482a07854b39ae90",
+  "caliber": {
+    "name": "formation-ice-channel",
+    "hull_length_m": 80.0,
+    "hull_beam_m": 20.0,
+    "speed_m_s": 1.6,
+    "ice_thickness_m": 0.7,
+    "sigma_c_pa": 1500000.0,
+    "sigma_f_pa": 500000.0,
+    "rho_water_kg_m3": 1025.0,
+    "gravity_m_s2": 9.80665,
+    "block_coefficient": 1.0
+  },
+  "caliber_chain": {
+    "step_1_source_structure": "Lindqvist three components R_c, R_b, R_s + added drag R_v, as implemented in src/tensordem/level_ice/formula.py (structure grade REAL, coefficient grade WITHHELD)",
+    "step_2_symbol_map": {
+      "sigma_c": "case contact crushing strength 1.5 MPa",
+      "sigma_f": "level-ice flexural strength 0.5 MPa (formula default)",
+      "h": "mean floe thickness 0.7 m (level-ice equivalent)",
+      "B": "case hull beam 20 m (box hull)",
+      "L": "case hull length 80 m (box hull)",
+      "V": "fleet transit speed 1.6 m/s",
+      "rho_w": "1025 kg/m3",
+      "g": "9.80665 m/s2",
+      "alpha": "stem/entry angle: UNDEFINED for the case (box hull, vertical stem, alpha = 90 deg); substituted by the declared band {15, 20, 30} deg"
+    },
+    "step_3_out_of_domain_flags": [
+      "alpha = 90 deg for the case hull makes R_c diverge; every finite alpha in the band is an out-of-domain substitution",
+      "the case field is broken ice at 0.80 coverage, the formula is level ice: model-form mismatch"
+    ],
+    "step_4_units": "all components evaluated in SI (N); kN reported for comparison with the DEM artifact",
+    "ledger_sha256": "927c675b4625807ec0be8cfc5cb37fe133b9a28c2aa2c772be23d7fb2f836047"
+  },
+  "geometry_check": {
+    "block_coefficient_Cb": 1.0,
+    "L_over_B": 4.0,
+    "draught_m": "not defined by the 2-D planar case hull",
+    "passed": true,
+    "note": "rectangular box hull: Cb = 1 identically, L/B = 4.0; both are machine-checked from the case caliber, not assumed."
+  },
+  "section_A_verbatim_anchor": {
+    "criterion": "M1 verbatim transcription of Lindqvist (1989) POAC'89 components with quote + page/table",
+    "target_source": "Lindqvist, G. (1989). A straightforward method for calculation of ice resistance of ships. POAC'89.",
+    "n_required_triples": 4,
+    "n_transcribed_triples": 0,
+    "components": {
+      "R_ice": {
+        "quote": null,
+        "page_or_table": null,
+        "value": null
+      },
+      "R_c": {
+        "quote": null,
+        "page_or_table": null,
+        "value": null
+      },
+      "R_b": {
+        "quote": null,
+        "page_or_table": null,
+        "value": null
+      },
+      "R_s": {
+        "quote": null,
+        "page_or_table": null,
+        "value": null
+      }
+    },
+    "search_audit": [
+      {
+        "path": "/root/tp-agent/work/m7497/benchmarks/ice_nav_refs",
+        "exists": false
+      },
+      {
+        "path": "/root/tp-agent/work/m7497/benchmarks/anchors",
+        "exists": true
+      },
+      {
+        "path": "/root/tp-agent/work/m7497/docs/literature",
+        "exists": false
+      },
+      {
+        "path": "/root/tp-agent/work/m7497/docs/refs",
+        "exists": false
+      },
+      {
+        "path": "/root/tp-agent/work/m7497/artifacts/literature",
+        "exists": false
+      },
+      {
+        "glob": "*lindqvist*",
+        "matches": []
+      },
+      {
+        "glob": "*POAC*",
+        "matches": []
+      },
+      {
+        "glob": "*poac*",
+        "matches": []
+      },
+      {
+        "network_probe": {
+          "poac.aalto.fi": "gaierror: [Errno -2] Name or service not known",
+          "api.crossref.org": "dns-resolvable"
+        },
+        "http_egress": "probed with urllib (see bibliographic_probe); shell curl is blocked by the sandbox policy",
+        "bibliographic_probe": {
+          "status": "reachable",
+          "n_items": 2,
+          "top_titles": [
+            "A Numerical Method for Ice Resistance Calculation of Polar Ships Navigating in Floating Ice Region",
+            "Ships and marine technology. Potable water supply on ships and marine structures"
+          ],
+          "top_doi": [
+            "10.1115/omae2019-96131",
+            "10.3403/02589263u"
+          ],
+          "usable_for_verbatim": false,
+          "note": "bibliographic metadata only: no abstracts/full text, so no component quote or page/table number can be taken from it"
+        }
+      }
+    ],
+    "prior_in_repo_declarations": [
+      {
+        "source_path": "docs/LEVEL_ICE_RESISTANCE_DEM.md",
+        "found": true,
+        "quotes": [
+          {
+            "line": 25,
+            "text": "| Lindqvist/Riska **coefficient values** | WITHHELD | primary papers are not readable offline; the MT Uikku structural fit below quantifies the residual and does not validate the values |"
+          }
+        ]
+      },
+      {
+        "source_path": "docs/threefield/FORMULAS.md",
+        "found": true,
+        "quotes": [
+          {
+            "line": 70,
+            "text": "| literature agreement of the whole set | – | **WITHHELD** | Lindqvist (1989) and Riska (1989) are not available offline. No statement in this repository claims the numbers reproduce the published predictions, and none should be inferred. The baselines are a *band*, not a calibration target. |"
+          }
+        ]
+      },
+      {
+        "source_path": "src/tensordem/level_ice/formula.py",
+        "found": true,
+        "quotes": [
+          {
+            "line": 38,
+            "text": "The primary papers are not readable from this offline sandbox, so no"
+          }
+        ]
+      }
+    ],
+    "prior_declaration_found": true,
+    "verdict": "WITHHELD",
+    "passed": false,
+    "honest_fail_reason": "The POAC'89 primary text is not present anywhere in this repository or in the sandbox literature caches, outbound HTTP egress is blocked, and the repository already grades the Lindqvist coefficient set WITHHELD for exactly this reason. Transcribing quote/page/table from memory would be fabrication, so all four triples are left null and criterion M1 is recorded as FAIL.",
+    "consequence": "No literature-validation statement may be made from this experiment, and the domain comparison in section E is reported as informational only (predeclared: M5 is not gated while M1 fails)."
+  },
+  "section_B_caliber_conversion": {
+    "criterion": "same-caliber conversion of the anchor to this case",
+    "reference_point": {
+      "alpha_deg": 20.0,
+      "mu": 0.05,
+      "components_N": {
+        "R_c": 153313.3276620742,
+        "R_b": 15312.499999999996,
+        "R_s": 89642.09731749998,
+        "R_v": 18368.0,
+        "R_total": 276635.92497957416
+      },
+      "components_kN": {
+        "R_c": 153.31332766207422,
+        "R_b": 15.312499999999996,
+        "R_s": 89.64209731749999,
+        "R_v": 18.368,
+        "R_total": 276.63592497957416
+      }
+    },
+    "band_alpha_x_mu": [
+      {
+        "alpha_deg": 15.0,
+        "mu": 0.05,
+        "components_N": {
+          "R_c": 117494.52803347284,
+          "R_b": 15312.499999999996,
+          "R_s": 89642.09731749998,
+          "R_v": 18368.0,
+          "R_total": 240817.1253509728
+        },
+        "components_kN": {
+          "R_c": 117.49452803347285,
+          "R_b": 15.312499999999996,
+          "R_s": 89.64209731749999,
+          "R_v": 18.368,
+          "R_total": 240.81712535097282
+        },
+        "component_shares": {
+          "R_c": 0.4878993878123635,
+          "R_b": 0.06358559416272071,
+          "R_s": 0.37224137272983965,
+          "R_v": 0.07627364529507619
+        },
+        "module_cross_check": {
+          "R_c": 117494.52803347284,
+          "R_b": 15312.499999999996,
+          "R_s": 89642.09731749998,
+          "R_v": 18368.0,
+          "R_total": 240817.1253509728
+        },
+        "module_relative_difference": {
+          "R_c": 0.0,
+          "R_b": 0.0,
+          "R_s": 0.0,
+          "R_v": 0.0,
+          "R_total": 0.0
+        },
+        "module_max_relative_difference": 0.0
+      },
+      {
+        "alpha_deg": 15.0,
+        "mu": 0.1,
+        "components_N": {
+          "R_c": 136517.7278485081,
+          "R_b": 15312.499999999996,
+          "R_s": 90627.17530999999,
+          "R_v": 18368.0,
+          "R_total": 260825.4031585081
+        },
+        "components_kN": {
+          "R_c": 136.51772784850812,
+          "R_b": 15.312499999999996,
+          "R_s": 90.62717531,
+          "R_v": 18.368,
+          "R_total": 260.8254031585081
+        },
+        "component_shares": {
+          "R_c": 0.5234065631465503,
+          "R_b": 0.05870785519573922,
+          "R_s": 0.3474629932994843,
+          "R_v": 0.07042258835822617
+        },
+        "module_cross_check": {
+          "R_c": 136517.7278485081,
+          "R_b": 15312.499999999996,
+          "R_s": 90627.17530999999,
+          "R_v": 18368.0,
+          "R_total": 260825.4031585081
+        },
+        "module_relative_difference": {
+          "R_c": 0.0,
+          "R_b": 0.0,
+          "R_s": 0.0,
+          "R_v": 0.0,
+          "R_total": 0.0
+        },
+        "module_max_relative_difference": 0.0
+      },
+      {
+        "alpha_deg": 15.0,
+        "mu": 0.15,
+        "components_N": {
+          "R_c": 155540.92766354338,
+          "R_b": 15312.499999999996,
+          "R_s": 91612.25330249999,
+          "R_v": 18368.0,
+          "R_total": 280833.6809660434
+        },
+        "components_kN": {
+          "R_c": 155.54092766354339,
+          "R_b": 15.312499999999996,
+          "R_s": 91.61225330249998,
+          "R_v": 18.368,
+          "R_total": 280.8336809660434
+        },
+        "component_shares": {
+          "R_c": 0.5538542497057196,
+          "R_b": 0.05452515505735043,
+          "R_s": 0.3262153349532785,
+          "R_v": 0.06540526028365146
+        },
+        "module_cross_check": {
+          "R_c": 155540.92766354338,
+          "R_b": 15312.499999999996,
+          "R_s": 91612.25330249999,
+          "R_v": 18368.0,
+          "R_total": 280833.6809660434
+        },
+        "module_relative_difference": {
+          "R_c": 0.0,
+          "R_b": 0.0,
+          "R_s": 0.0,
+          "R_v": 0.0,
+          "R_total": 0.0
+        },
+        "module_max_relative_difference": 0.0
+      },
+      {
+        "alpha_deg": 20.0,
+        "mu": 0.05,
+        "components_N": {
+          "R_c": 153313.3276620742,
+          "R_b": 15312.499999999996,
+          "R_s": 89642.09731749998,
+          "R_v": 18368.0,
+          "R_total": 276635.92497957416
+        },
+        "components_kN": {
+          "R_c": 153.31332766207422,
+          "R_b": 15.312499999999996,
+          "R_s": 89.64209731749999,
+          "R_v": 18.368,
+          "R_total": 276.63592497957416
+        },
+        "component_shares": {
+          "R_c": 0.5542061381702118,
+          "R_b": 0.05535253601328395,
+          "R_s": 0.32404358661702687,
+          "R_v": 0.06639773919947754
+        },
+        "module_cross_check": {
+          "R_c": 153313.3276620742,
+          "R_b": 15312.499999999996,
+          "R_s": 89642.09731749998,
+          "R_v": 18368.0,
+          "R_total": 276635.92497957416
+        },
+        "module_relative_difference": {
+          "R_c": 0.0,
+          "R_b": 0.0,
+          "R_s": 0.0,
+          "R_v": 0.0,
+          "R_total": 0.0
+        },
+        "module_max_relative_difference": 0.0
+      },
+      {
+        "alpha_deg": 20.0,
+        "mu": 0.1,
+        "components_N": {
+          "R_c": 172867.59423131912,
+          "R_b": 15312.499999999996,
+          "R_s": 90627.17530999999,
+          "R_v": 18368.0,
+          "R_total": 297175.2695413191
+        },
+        "components_kN": {
+          "R_c": 172.86759423131912,
+          "R_b": 15.312499999999996,
+          "R_s": 90.62717531,
+          "R_v": 18.368,
+          "R_total": 297.1752695413191
+        },
+        "component_shares": {
+          "R_c": 0.5817024899081775,
+          "R_b": 0.051526831366669135,
+          "R_s": 0.30496203620806084,
+          "R_v": 0.0618086425170925
+        },
+        "module_cross_check": {
+          "R_c": 172867.59423131912,
+          "R_b": 15312.499999999996,
+          "R_s": 90627.17530999999,
+          "R_v": 18368.0,
+          "R_total": 297175.2695413191
+        },
+        "module_relative_difference": {
+          "R_c": 0.0,
+          "R_b": 0.0,
+          "R_s": 0.0,
+          "R_v": 0.0,
+          "R_total": 0.0
+        },
+        "module_max_relative_difference": 0.0
+      },
+      {
+        "alpha_deg": 20.0,
+        "mu": 0.15,
+        "components_N": {
+          "R_c": 192421.86080056397,
+          "R_b": 15312.499999999996,
+          "R_s": 91612.25330249999,
+          "R_v": 18368.0,
+          "R_total": 317714.61410306394
+        },
+        "components_kN": {
+          "R_c": 192.42186080056396,
+          "R_b": 15.312499999999996,
+          "R_s": 91.61225330249998,
+          "R_v": 18.368,
+          "R_total": 317.7146141030639
+        },
+        "component_shares": {
+          "R_c": 0.6056437200529402,
+          "R_b": 0.0481957685302847,
+          "R_s": 0.28834762153176163,
+          "R_v": 0.05781288988501352
+        },
+        "module_cross_check": {
+          "R_c": 192421.86080056397,
+          "R_b": 15312.499999999996,
+          "R_s": 91612.25330249999,
+          "R_v": 18368.0,
+          "R_total": 317714.61410306394
+        },
+        "module_relative_difference": {
+          "R_c": 0.0,
+          "R_b": 0.0,
+          "R_s": 0.0,
+          "R_v": 0.0,
+          "R_total": 0.0
+        },
+        "module_max_relative_difference": 0.0
+      },
+      {
+        "alpha_deg": 30.0,
+        "mu": 0.05,
+        "components_N": {
+          "R_c": 233393.84631990612,
+          "R_b": 15312.499999999996,
+          "R_s": 89642.09731749998,
+          "R_v": 18368.0,
+          "R_total": 356716.4436374061
+        },
+        "components_kN": {
+          "R_c": 233.39384631990612,
+          "R_b": 15.312499999999996,
+          "R_s": 89.64209731749999,
+          "R_v": 18.368,
+          "R_total": 356.7164436374061
+        },
+        "component_shares": {
+          "R_c": 0.6542839571397653,
+          "R_b": 0.04292625213421558,
+          "R_s": 0.2512979115945075,
+          "R_v": 0.05149187913151164
+        },
+        "module_cross_check": {
+          "R_c": 233393.84631990618,
+          "R_b": 15312.499999999996,
+          "R_s": 89642.09731749998,
+          "R_v": 18368.0,
+          "R_total": 356716.44363740616
+        },
+        "module_relative_difference": {
+          "R_c": 2.4939672502626253e-16,
+          "R_b": 0.0,
+          "R_s": 0.0,
+          "R_v": 0.0,
+          "R_total": 1.63176276147881e-16
+        },
+        "module_max_relative_difference": 2.4939672502626253e-16
+      },
+      {
+        "alpha_deg": 30.0,
+        "mu": 0.1,
+        "components_N": {
+          "R_c": 254611.4687126249,
+          "R_b": 15312.499999999996,
+          "R_s": 90627.17530999999,
+          "R_v": 18368.0,
+          "R_total": 378919.1440226248
+        },
+        "components_kN": {
+          "R_c": 254.61146871262488,
+          "R_b": 15.312499999999996,
+          "R_s": 90.62717531,
+          "R_v": 18.368,
+          "R_total": 378.91914402262483
+        },
+        "component_shares": {
+          "R_c": 0.6719414226730712,
+          "R_b": 0.040410995964578936,
+          "R_s": 0.2391728598030105,
+          "R_v": 0.0484747215593395
+        },
+        "module_cross_check": {
+          "R_c": 254611.46871262492,
+          "R_b": 15312.499999999996,
+          "R_s": 90627.17530999999,
+          "R_v": 18368.0,
+          "R_total": 378919.14402262494
+        },
+        "module_relative_difference": {
+          "R_c": 1.1430683230370365e-16,
+          "R_b": 0.0,
+          "R_s": 0.0,
+          "R_v": 0.0,
+          "R_total": 3.0722998207761125e-16
+        },
+        "module_max_relative_difference": 3.0722998207761125e-16
+      },
+      {
+        "alpha_deg": 30.0,
+        "mu": 0.15,
+        "components_N": {
+          "R_c": 275829.0911053436,
+          "R_b": 15312.499999999996,
+          "R_s": 91612.25330249999,
+          "R_v": 18368.0,
+          "R_total": 401121.8444078436
+        },
+        "components_kN": {
+          "R_c": 275.8290911053436,
+          "R_b": 15.312499999999996,
+          "R_s": 91.61225330249998,
+          "R_v": 18.368,
+          "R_total": 401.1218444078436
+        },
+        "component_shares": {
+          "R_c": 0.6876441533931827,
+          "R_b": 0.03817418625656024,
+          "R_s": 0.22839008789895907,
+          "R_v": 0.04579157245129786
+        },
+        "module_cross_check": {
+          "R_c": 275829.09110534366,
+          "R_b": 15312.499999999996,
+          "R_s": 91612.25330249999,
+          "R_v": 18368.0,
+          "R_total": 401121.84440784366
+        },
+        "module_relative_difference": {
+          "R_c": 2.1102799809914525e-16,
+          "R_b": 0.0,
+          "R_s": 0.0,
+          "R_v": 0.0,
+          "R_total": 1.4511216909514492e-16
+        },
+        "module_max_relative_difference": 2.1102799809914525e-16
+      }
+    ],
+    "recompute": {
+      "criterion": "M2 recompute residual of the same-caliber conversion",
+      "independent_closed_form_vs_repo_module_max_rel": 3.0722998207761125e-16,
+      "inverse_solve": {
+        "target_R_total_N": 276635.92497957416,
+        "h_target_m": 0.7,
+        "h_solved_m": 0.7,
+        "relative_residual": 0.0,
+        "bisection_iterations": 54
+      },
+      "json_roundtrip": {
+        "max_relative_residual": 0.0,
+        "per_component": {
+          "R_c": 0.0,
+          "R_b": 0.0,
+          "R_s": 0.0,
+          "R_v": 0.0,
+          "R_total": 0.0
+        }
+      },
+      "threshold": 1e-09,
+      "max_relative_residual": 3.0722998207761125e-16,
+      "passed": true
+    }
+  },
+  "section_C_dimensional": {
+    "criterion": "M3 dimensional homogeneity (every component has dimension of force)",
+    "alpha_deg": 20.0,
+    "mu": 0.05,
+    "newton_exponents": {
+      "L": 1,
+      "M": 1,
+      "T": -2
+    },
+    "terms": {
+      "R_c": {
+        "si_exponents": {
+          "L": 1,
+          "M": 1,
+          "T": -2
+        },
+        "reduces_to_newton": true
+      },
+      "R_b": {
+        "si_exponents": {
+          "L": 1,
+          "M": 1,
+          "T": -2
+        },
+        "reduces_to_newton": true
+      },
+      "R_s": {
+        "si_exponents": {
+          "L": 1,
+          "M": 1,
+          "T": -2
+        },
+        "reduces_to_newton": true
+      },
+      "R_v": {
+        "si_exponents": {
+          "L": 1,
+          "M": 1,
+          "T": -2
+        },
+        "reduces_to_newton": true
+      },
+      "R_total": {
+        "si_exponents": {
+          "L": 1,
+          "M": 1,
+          "T": -2
+        },
+        "reduces_to_newton": true
+      }
+    },
+    "n_failures": 0,
+    "passed": true,
+    "note": "the sum is homogeneous because every addend is dimensionally N; trigonometric ratios and mu are dimensionless, so they cannot break homogeneity, which is why alpha/mu do not enter the map."
+  },
+  "section_D_internal_consistency": {
+    "criterion": "M4 internal consistency of the three-component structure",
+    "n_checks": 17,
+    "n_failures": 0,
+    "passed": true,
+    "checks": [
+      {
+        "identity": "R_c_h_squared_homogeneity",
+        "statement": "R_c(2h) = 4 R_c(h)  (term proportional to h^2)",
+        "lhs": 613253.3106482968,
+        "rhs": 613253.3106482968,
+        "relative_residual": 0.0,
+        "passed": true
+      },
+      {
+        "identity": "R_b_h_squared_homogeneity",
+        "statement": "R_b(2h) = 4 R_b(h)  (term proportional to h^2)",
+        "lhs": 61249.999999999985,
+        "rhs": 61249.999999999985,
+        "relative_residual": 0.0,
+        "passed": true
+      },
+      {
+        "identity": "R_s_h_squared_homogeneity",
+        "statement": "R_s(2h) = 4 R_s(h)  (term proportional to h^2)",
+        "lhs": 358568.3892699999,
+        "rhs": 358568.3892699999,
+        "relative_residual": 0.0,
+        "passed": true
+      },
+      {
+        "identity": "R_v_h_linearity",
+        "statement": "R_v(2h) = 2 R_v(h)  (added drag proportional to h)",
+        "lhs": 36736.0,
+        "rhs": 36736.0,
+        "relative_residual": 0.0,
+        "passed": true
+      },
+      {
+        "identity": "euler_homogeneity_h_dRdh",
+        "statement": "h dR/dh = 2 (R_c + R_b + R_s) + R_v  (Euler homogeneity)",
+        "lhs": 534903.8499590824,
+        "rhs": 534903.8499591483,
+        "relative_residual": 1.231830209468063e-13,
+        "passed": true
+      },
+      {
+        "identity": "speed_split",
+        "statement": "R(0) = R(v) - R_v(v): the three static components carry no speed",
+        "lhs": 258267.9249795742,
+        "rhs": 258267.92497957416,
+        "relative_residual": 1.1268852088014977e-16,
+        "passed": true
+      },
+      {
+        "identity": "R_v_quadratic",
+        "statement": "R_v(2v) = 4 R_v(v)",
+        "lhs": 73472.0,
+        "rhs": 73472.0,
+        "relative_residual": 0.0,
+        "passed": true
+      },
+      {
+        "identity": "R_b_beam_linear",
+        "statement": "R_b(2B) = 2 R_b(B)",
+        "lhs": 30624.999999999993,
+        "rhs": 30624.999999999993,
+        "relative_residual": 0.0,
+        "passed": true
+      },
+      {
+        "identity": "R_s_beam_affine",
+        "statement": "R_s(B) = rho g h^2 (0.9 B + 0.05 mu L): affine in B; only the buoyancy part is linear in B, the friction part is B-free",
+        "lhs": 178299.11664249998,
+        "rhs": 178299.11664249998,
+        "relative_residual": 0.0,
+        "passed": true
+      },
+      {
+        "identity": "R_v_beam_linear",
+        "statement": "R_v(2B) = 2 R_v(B)",
+        "lhs": 36736.0,
+        "rhs": 36736.0,
+        "relative_residual": 0.0,
+        "passed": true
+      },
+      {
+        "identity": "R_c_beam_independent",
+        "statement": "R_c carries no beam: its implicit contact width is h, not B",
+        "lhs": 153313.3276620742,
+        "rhs": 153313.3276620742,
+        "relative_residual": 0.0,
+        "passed": true
+      },
+      {
+        "identity": "R_b_length_inverse",
+        "statement": "R_b(2L) = R_b(L)/2",
+        "lhs": 7656.249999999998,
+        "rhs": 7656.249999999998,
+        "relative_residual": 0.0,
+        "passed": true
+      },
+      {
+        "identity": "R_s_length_affine",
+        "statement": "R_s(L) = rho g h^2 B (0.9 + 0.05 mu L/B): affine in L",
+        "lhs": 90627.17530999999,
+        "rhs": 90627.17530999998,
+        "relative_residual": 1.605690034869835e-16,
+        "passed": true
+      },
+      {
+        "identity": "R_c_monotone_in_alpha",
+        "statement": "R_c strictly increasing in the stem angle on (0, 90 deg)",
+        "lhs": 673278.6717815622,
+        "rhs": 50597.27336063606,
+        "relative_residual": 0.0,
+        "passed": true,
+        "values": [
+          50597.27336063606,
+          83458.62940376143,
+          153313.3276620742,
+          233393.84631990612,
+          393486.1742086055,
+          673278.6717815622
+        ]
+      },
+      {
+        "identity": "R_c_diverges_at_alpha_90",
+        "statement": "R_c -> infinity as alpha -> 90 deg (tan + sec), so a vertical-stem box hull has no finite Lindqvist crushing term",
+        "lhs": 221089880.73830828,
+        "rhs": 153313.3276620742,
+        "ratio_alpha_89p9_over_20": 1442.0786771103415,
+        "relative_residual": 0.0,
+        "passed": true
+      },
+      {
+        "identity": "no_draught_dependence",
+        "statement": "no component takes the hull draught: the structure cannot represent a draught-dependent buoyancy/friction split",
+        "lhs": 0.0,
+        "rhs": 0.0,
+        "relative_residual": 0.0,
+        "passed": true
+      },
+      {
+        "identity": "component_sum",
+        "statement": "R_total = R_c + R_b + R_s + R_v exactly",
+        "lhs": 276635.92497957416,
+        "rhs": 276635.92497957416,
+        "relative_residual": 0.0,
+        "passed": true
+      }
+    ]
+  },
+  "section_E_domain_comparison": {
+    "criterion": "M5 domain experiment vs anchor deviation (informational while M1 fails)",
+    "domain_reference": {
+      "value_kN": 82.66,
+      "source_path": "docs/formation_ice_channel_cloud.md",
+      "locator": "line 74, section 4.1 hull table, mean |ice load| column (bold cell)",
+      "quoted_row": "| lead | 468 | **82.66** | 81.79 | 0.936 | 30.49 |",
+      "grade": "REAL (DEM run, secondary in-repo doc)"
+    },
+    "caliber_reference_point": {
+      "alpha_deg": 20.0,
+      "mu": 0.05,
+      "R_anchor_kN": 276.63592497957416
+    },
+    "band": [
+      {
+        "alpha_deg": 15.0,
+        "mu": 0.05,
+        "R_anchor_kN": 240.81712535097282,
+        "R_domain_kN": 82.66,
+        "domain_minus_anchor_kN": -158.15712535097282,
+        "relative_deviation": -0.6567519860577636,
+        "anchor_over_domain_ratio": 2.9133453345145517
+      },
+      {
+        "alpha_deg": 15.0,
+        "mu": 0.1,
+        "R_anchor_kN": 260.8254031585081,
+        "R_domain_kN": 82.66,
+        "domain_minus_anchor_kN": -178.1654031585081,
+        "relative_deviation": -0.6830830164584617,
+        "anchor_over_domain_ratio": 3.1554004737298342
+      },
+      {
+        "alpha_deg": 15.0,
+        "mu": 0.15,
+        "R_anchor_kN": 280.8336809660434,
+        "R_domain_kN": 82.66,
+        "domain_minus_anchor_kN": -198.1736809660434,
+        "relative_deviation": -0.7056620854177575,
+        "anchor_over_domain_ratio": 3.3974556129451177
+      },
+      {
+        "alpha_deg": 20.0,
+        "mu": 0.05,
+        "R_anchor_kN": 276.63592497957416,
+        "R_domain_kN": 82.66,
+        "domain_minus_anchor_kN": -193.97592497957416,
+        "relative_deviation": -0.7011957141643721,
+        "anchor_over_domain_ratio": 3.34667221122156
+      },
+      {
+        "alpha_deg": 20.0,
+        "mu": 0.1,
+        "R_anchor_kN": 297.1752695413191,
+        "R_domain_kN": 82.66,
+        "domain_minus_anchor_kN": -214.5152695413191,
+        "relative_deviation": -0.7218476486028492,
+        "anchor_over_domain_ratio": 3.5951520631662124
+      },
+      {
+        "alpha_deg": 20.0,
+        "mu": 0.15,
+        "R_anchor_kN": 317.7146141030639,
+        "R_domain_kN": 82.66,
+        "domain_minus_anchor_kN": -235.05461410306393,
+        "relative_deviation": -0.7398294056023945,
+        "anchor_over_domain_ratio": 3.843631915110863
+      },
+      {
+        "alpha_deg": 30.0,
+        "mu": 0.05,
+        "R_anchor_kN": 356.7164436374061,
+        "R_domain_kN": 82.66,
+        "domain_minus_anchor_kN": -274.0564436374061,
+        "relative_deviation": -0.7682753305198851,
+        "anchor_over_domain_ratio": 4.315466291282435
+      },
+      {
+        "alpha_deg": 30.0,
+        "mu": 0.1,
+        "R_anchor_kN": 378.91914402262483,
+        "R_domain_kN": 82.66,
+        "domain_minus_anchor_kN": -296.2591440226248,
+        "relative_deviation": -0.7818531966411693,
+        "anchor_over_domain_ratio": 4.584069005838675
+      },
+      {
+        "alpha_deg": 30.0,
+        "mu": 0.15,
+        "R_anchor_kN": 401.1218444078436,
+        "R_domain_kN": 82.66,
+        "domain_minus_anchor_kN": -318.4618444078436,
+        "relative_deviation": -0.7939279519368314,
+        "anchor_over_domain_ratio": 4.852671720394914
+      }
+    ],
+    "grade": "INFORMATIONAL -- the anchor is WITHHELD (M1 FAIL), so this is a magnitude comparison against an unverified implementation-caliber number, not a validation error.",
+    "not_gated": true
+  },
+  "criteria": [
+    {
+      "id": "M1",
+      "name": "verbatim anchor transcription (quote + page/table)",
+      "passed": false,
+      "measured": 0,
+      "required": 4,
+      "status": "WITHHELD"
+    },
+    {
+      "id": "M2",
+      "name": "same-caliber conversion recompute residual < 1e-9",
+      "passed": true,
+      "measured": 3.0722998207761125e-16,
+      "required": 1e-09,
+      "status": "PASS"
+    },
+    {
+      "id": "M3",
+      "name": "dimensional homogeneity (all components -> N)",
+      "passed": true,
+      "measured": 0,
+      "required": 0,
+      "status": "PASS"
+    },
+    {
+      "id": "M4",
+      "name": "internal consistency identities",
+      "passed": true,
+      "measured": 0,
+      "required": 0,
+      "status": "PASS"
+    },
+    {
+      "id": "M5",
+      "name": "domain vs anchor deviation (informational)",
+      "passed": null,
+      "measured": [
+        {
+          "alpha_deg": 15.0,
+          "mu": 0.05,
+          "R_anchor_kN": 240.81712535097282,
+          "R_domain_kN": 82.66,
+          "domain_minus_anchor_kN": -158.15712535097282,
+          "relative_deviation": -0.6567519860577636,
+          "anchor_over_domain_ratio": 2.9133453345145517
+        },
+        {
+          "alpha_deg": 15.0,
+          "mu": 0.1,
+          "R_anchor_kN": 260.8254031585081,
+          "R_domain_kN": 82.66,
+          "domain_minus_anchor_kN": -178.1654031585081,
+          "relative_deviation": -0.6830830164584617,
+          "anchor_over_domain_ratio": 3.1554004737298342
+        },
+        {
+          "alpha_deg": 15.0,
+          "mu": 0.15,
+          "R_anchor_kN": 280.8336809660434,
+          "R_domain_kN": 82.66,
+          "domain_minus_anchor_kN": -198.1736809660434,
+          "relative_deviation": -0.7056620854177575,
+          "anchor_over_domain_ratio": 3.3974556129451177
+        },
+        {
+          "alpha_deg": 20.0,
+          "mu": 0.05,
+          "R_anchor_kN": 276.63592497957416,
+          "R_domain_kN": 82.66,
+          "domain_minus_anchor_kN": -193.97592497957416,
+          "relative_deviation": -0.7011957141643721,
+          "anchor_over_domain_ratio": 3.34667221122156
+        },
+        {
+          "alpha_deg": 20.0,
+          "mu": 0.1,
+          "R_anchor_kN": 297.1752695413191,
+          "R_domain_kN": 82.66,
+          "domain_minus_anchor_kN": -214.5152695413191,
+          "relative_deviation": -0.7218476486028492,
+          "anchor_over_domain_ratio": 3.5951520631662124
+        },
+        {
+          "alpha_deg": 20.0,
+          "mu": 0.15,
+          "R_anchor_kN": 317.7146141030639,
+          "R_domain_kN": 82.66,
+          "domain_minus_anchor_kN": -235.05461410306393,
+          "relative_deviation": -0.7398294056023945,
+          "anchor_over_domain_ratio": 3.843631915110863
+        },
+        {
+          "alpha_deg": 30.0,
+          "mu": 0.05,
+          "R_anchor_kN": 356.7164436374061,
+          "R_domain_kN": 82.66,
+          "domain_minus_anchor_kN": -274.0564436374061,
+          "relative_deviation": -0.7682753305198851,
+          "anchor_over_domain_ratio": 4.315466291282435
+        },
+        {
+          "alpha_deg": 30.0,
+          "mu": 0.1,
+          "R_anchor_kN": 378.91914402262483,
+          "R_domain_kN": 82.66,
+          "domain_minus_anchor_kN": -296.2591440226248,
+          "relative_deviation": -0.7818531966411693,
+          "anchor_over_domain_ratio": 4.584069005838675
+        },
+        {
+          "alpha_deg": 30.0,
+          "mu": 0.15,
+          "R_anchor_kN": 401.1218444078436,
+          "R_domain_kN": 82.66,
+          "domain_minus_anchor_kN": -318.4618444078436,
+          "relative_deviation": -0.7939279519368314,
+          "anchor_over_domain_ratio": 4.852671720394914
+        }
+      ],
+      "required": null,
+      "status": "NOT GATED"
+    }
+  ],
+  "overall": {
+    "all_gated_criteria_passed": false,
+    "anchor_verified": false,
+    "verdict": "HONEST FAIL -- gated criteria: M1=WITHHELD, M2=PASS, M3=PASS, M4=PASS, M5=NOT GATED; M5 informational only",
+    "usable_as_validation_reference": false
+  }
+}
