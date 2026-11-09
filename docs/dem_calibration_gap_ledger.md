@@ -147,3 +147,42 @@ PYTHONPATH=src python scripts/m5052_clump_rolling_calibration.py --figures-only
   (many bonds, load redistribution, inertia) has not yet been shown to follow
   the envelope; that needs a quasi-static servo at 2-3 decades slower rates or
   a single-chain (weakest-link) driver. Both are the next node.
+
+## selfstart write-back (quasi-static bonded-column campaign executed, m7571)
+
+* **Row changed:** the "constitutive rate dependence of the 3-D DEM bond" row
+  moves from *"engine closed at the single-bond level / specimen benchmark
+  still open"* to **engine closed at the single-bond and quasi-static
+  bonded-column level / specimen benchmark (load redistribution) still
+  open**. The m6541 driver (`tensordem.bond_quasistatic`,
+  `scripts/verify_bond_quasistatic_rate.py`, `tests/test_bond_quasistatic.py`)
+  had been merged **without** its verification surface in this repo (no
+  artifacts, no doc, no ledger row); m7571 ran the full campaign and closed
+  that verification debt.
+* **Verification surface now in this repo:** `artifacts/ice_bond_quasistatic/`
+  (`verification.json` + 5 figures), `docs/ice_bond_quasistatic_rate_verification.md`
+  (rendered from the JSON by `scripts/render_ice_bond_quasistatic_doc.py`,
+  zero hand-copied numbers), 17 tests in `tests/test_bond_quasistatic.py`
+  (all green).
+* **Quantified (2 x 2 x 2 column, `n_layers = 2`, no free particle):**
+  brittle control rate-independent to 0.067 % (the control that failed in
+  m6464); ductile m = 2 fitted slope 0.333333 vs analytic 1/3, max strength
+  error 0.033 %; exponent sweep m = 1 / 4 gives 0.5000 / 0.2000 vs 1/2 / 1/5
+  (0.000 %); Maxwell-Wiechert engine matches the independent Prony reference
+  to 0.009 % (its 10.3 % slope offset above 1/3 is a *constitutive* effect
+  of the relaxation spectrum -- the reference fit is 0.3680 too); damage
+  clock 2.17th order in dt (first order or better).
+* **Measured, not claimed:** the free-layer arms (F/G) do **not** collapse
+  onto the inertia index alone (log-log correlation 0.824). The mass dial at
+  fixed `n_layers = 4` holds a density-independent strength error of 6.37 %
+  while KE/SE varies by a factor of ~16: the dominant deviation is the
+  quasi-static strain non-uniformity of the multi-layer column (scales with
+  `n_layers - 1`), inertia is a secondary modulation. The campaign figure
+  caption's "collapse" wording is therefore an overstatement; the clean
+  constitutive measurement is the zero-inertia, zero-non-uniformity cell
+  (`n_layers = 2`), and the exponent claims rest on it.
+* **Not addressed by m7571:** a bonded *specimen* with load redistribution
+  across many bonds (the m6464 platen FAIL remains open at that level).
+  Next node: a weakest-link chain driver (1-D series, Weibull
+  weakest-link scaling `sigma_chain ~ N^(-1/m)`) or a quasi-static 2-D
+  specimen with load redistribution after first bond failure.
