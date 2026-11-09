@@ -1,43 +1,65 @@
 {
  "schema": "tensordem.doc-evidence-ledger/1",
  "generated_by": "scripts/audit_doc_evidence.py",
- "documents_scanned": 220,
- "pointers": 1417,
+ "documents_scanned": 280,
+ "pointers": 1905,
  "counts": {
-  "code:MISSING": 8,
-  "code:TRACKED": 475,
-  "data:MISSING": 126,
-  "data:TRACKED": 48,
+  "code:MISSING": 21,
+  "code:TRACKED": 627,
+  "data:MISSING": 183,
+  "data:TRACKED": 67,
   "doc:MISSING": 1,
-  "doc:TRACKED": 168,
-  "figure:MISSING": 178,
-  "figure:TRACKED": 60,
-  "test:TRACKED": 353
+  "doc:TRACKED": 194,
+  "figure:MISSING": 281,
+  "figure:TRACKED": 94,
+  "test:TRACKED": 437
  },
  "remedy": {
-  "ORPHAN": 12,
-  "REGENERABLE": 301,
-  "TRACKED": 1104
+  "ORPHAN": 37,
+  "REGENERABLE": 449,
+  "TRACKED": 1419
  },
  "unresolved_per_doc": {
+  "docs/AG27W2_N06_conditional_simulation_adjudication.md": 2,
+  "docs/AG27W2_N09_stochastic_pressure_field_fatigue.md": 2,
+  "docs/DEM_DRUM_FLOW_REGIME_MAP.md": 6,
+  "docs/DEM_THERMAL_GRANULAR_VERIFICATION.md": 2,
   "docs/HERTZ_VERIFY.md": 1,
   "docs/ICE_CONTACT_PRESSURE_ROLLING_PROXY.md": 1,
+  "docs/ICE_FLOE_BREAKUP.md": 1,
+  "docs/ICE_POLYGON_FLOE_FIELD_ANCHOR.md": 1,
   "docs/ICE_RIDEUP_3D.md": 5,
+  "docs/ICE_RIDGE_MECHANICS_DEM.md": 1,
   "docs/ICE_STEEL_FRICTION_LAW.md": 2,
   "docs/ICE_STRUCTURE_CONTACT_MECHANICS.md": 1,
+  "docs/IN143_N09_packed_bed_drag.md": 1,
+  "docs/IN155_N04_dem_ft_rainflow_sn_chain.md": 6,
   "docs/IN32_N01_polygon_floe_field.md": 1,
   "docs/IN32_N01_results.md": 1,
+  "docs/IN60_N09_cargo_liquefaction_effstress.md": 1,
+  "docs/IN69_N01_creep_constitutive.md": 6,
+  "docs/IN69_N06_rubble_accumulation.md": 1,
+  "docs/IN99_N08_consolidation_terzaghi.md": 7,
   "docs/LEVEL_ICE_RESISTANCE_DEM.md": 1,
+  "docs/MIXED_ICE_RESISTANCE.md": 9,
+  "docs/P248-N01_curved_patch_mortar.md": 6,
   "docs/P40_N10_shape_representation_verdict.md": 1,
+  "docs/P66_W2_N05_spatiotemporal_abrasion_field.md": 1,
+  "docs/P82W2_N09_mts_contact_integration.md": 2,
+  "docs/P82W4_N01_adfreeze_bond_report.md": 7,
   "docs/PROPELLER_ICE_MILLING_TRANSIENT.md": 7,
   "docs/SUPERQUADRIC_CONTACT_MATURITY.md": 3,
   "docs/TENSORDEM_UPSTREAM_DIFF_M1630.md": 4,
   "docs/THREEFIELD_ICE_HULL_PROPELLER.md": 4,
+  "docs/VIBRO_ACOUSTIC_SOURCE_TERMS.md": 5,
   "docs/accounting_ledger_validation.md": 2,
   "docs/adhesion-contact-verification/MEASUREMENTS.md": 1,
   "docs/adhesion_jkr_capillary.md": 4,
+  "docs/ae/README.md": 3,
   "docs/ball_ball_rolling_contact.md": 2,
   "docs/beverloo_discharge_measurement_audit.md": 3,
+  "docs/bidisperse_segregation.md": 1,
+  "docs/bpm_calibration_maturation.md": 7,
   "docs/broken_ice_micro_structure_validation.md": 2,
   "docs/buoyancy_free_float_verification.md": 3,
   "docs/cargo_liquefaction_stability.md": 1,
@@ -47,6 +69,8 @@
   "docs/clump_clump_contact.md": 2,
   "docs/clump_multisphere_particles.md": 6,
   "docs/clump_rolling_resistance_calibration.md": 5,
+  "docs/coarse_graining_scaling_laws.md": 4,
+  "docs/contact_physics_module.md": 12,
   "docs/coupling_restart_boundary_matrix.md": 1,
   "docs/dem2d_energy_fracture_ledger_negative_controls.md": 6,
   "docs/dem2d_energy_fracture_ledger_negative_controls_m4804.md": 1,
@@ -78,42 +102,65 @@
   "docs/dem3d_scale_benchmark_figures_report.md": 4,
   "docs/dem3d_shear_cross_section_convergence.md": 1,
   "docs/dem3d_triaxial_lode.md": 1,
-  "docs/dem_calibration_gap_ledger.md": 5,
+  "docs/dem_calibration_gap_ledger.md": 6,
+  "docs/dem_contact_mechanics_verification_report.md": 1,
   "docs/dem_nonspherical_representation_verdict.md": 3,
   "docs/dem_uq_ice_resistance.md": 5,
   "docs/fem_euler_bernoulli_analytic_verification.md": 4,
   "docs/floe_heave_finite_amplitude_period.md": 3,
   "docs/floe_heave_finite_amplitude_verification.md": 1,
+  "docs/floe_population_P80W2N05.md": 5,
+  "docs/formation_ice_channel_anchor.md": 1,
   "docs/formation_ice_channel_cloud.md": 1,
   "docs/fracture_gen_mass_footprint_audit.md": 2,
+  "docs/fragment_milling_report.md": 7,
   "docs/fragmentation_statistics_tables.md": 1,
   "docs/fragmentation_statistics_verification.md": 2,
+  "docs/freeze_bond_evolution_report.md": 4,
+  "docs/freeze_bond_mode_transition/REPORT.md": 4,
   "docs/fsd_packing_sensitivity.md": 1,
   "docs/granular2d_force_chain_jamming.md": 1,
   "docs/granular2d_jamming_energy_minimization.md": 2,
+  "docs/granular_wave_speed_hertz_mindlin.md": 1,
   "docs/hertz_mindlin_contact.md": 6,
+  "docs/ice-steel-friction-closure.md": 1,
   "docs/ice_abrasion_archard_wear.md": 9,
   "docs/ice_abrasion_extreme_statistics_certification.md": 8,
   "docs/ice_beam_bending_anchor.md": 1,
+  "docs/ice_bond_quasistatic_rate_verification.md": 6,
   "docs/ice_bond_rate_envelope.md": 1,
   "docs/ice_bond_single_bond_engine_verification.md": 1,
   "docs/ice_bond_specimen_rate_dependence.md": 1,
   "docs/ice_bond_viscoelastic_verification.md": 3,
   "docs/ice_channel_dem.md": 1,
   "docs/ice_floe_physics_validation.md": 1,
+  "docs/ice_pressure_band_lambda_x.md": 1,
+  "docs/ice_pressure_band_lambda_x_maturation.md": 1,
   "docs/ice_ridge_pipeline_grounding.md": 10,
   "docs/ice_rubble_microstructure.md": 7,
   "docs/interface_thermal_contact_coupling.md": 2,
   "docs/interface_tri_tri_nonplanar.md": 8,
   "docs/m5737_cargo_liquefaction_validation.md": 5,
   "docs/m669_hull_mesh_contact.md": 3,
+  "docs/m7359/REPORT.md": 3,
+  "docs/m7444_rigid_collision_ledger.md": 4,
+  "docs/mixed_ice_dem_field.md": 1,
   "docs/mortar_2d3d_interface_operators.md": 8,
   "docs/moving_plane_dynamic_impulse.md": 2,
+  "docs/mts_contact_timestep_gate.md": 7,
+  "docs/myi-ridge-keel-interaction/REPORT.md": 2,
   "docs/nonspherical_contact_timestep_layer.md": 2,
+  "docs/p174_n08_segregation_validation.md": 3,
+  "docs/p54_w2_n07_ice_ridge_grounding_iso19906.md": 5,
+  "docs/p54w2-n06-collision-ledger-certification/REPORT.md": 8,
+  "docs/p54w2_n03_ridge_freeze_bond_aging.md": 1,
   "docs/packed_bed_conductivity.md": 4,
   "docs/pressure_area_index_dem.md": 4,
+  "docs/report_m669.md": 3,
   "docs/repose_angle_calibration.md": 1,
+  "docs/repose_injection_driver.md": 2,
   "docs/ridge_capacity_skempton_audit.md": 1,
+  "docs/rubble_rheology_postprocess.md": 1,
   "docs/sdaa_coupling/HERTZ.md": 1,
   "docs/sea_ice_drift_dynamics.md": 6,
   "docs/shm_ice_load_twin.md": 2,
@@ -128,12 +175,226 @@
   "docs/threefield_wake_boundary_verification.md": 3,
   "docs/tutorials/first_verified_run.md": 3,
   "docs/verification_campaigns.md": 4,
+  "docs/wet_ice_cohesion_P35N2.md": 6,
   "docs/whipping_response.md": 2
  },
  "historical_quotes": {
   "docs/dem3d_doc_evidence_pointer_audit.md": 10
  },
  "entries": [
+  {
+   "doc": "docs/AG27W2_N06_conditional_simulation_adjudication.md",
+   "line": 3,
+   "pointer": "runs/AG27W2_N06/verification.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "benchmarks/mts_contact_integration.py",
+    "scripts/ag27w2_n06_verification.py",
+    "scripts/build_ag27w2_n06_doc.py",
+    "scripts/p66_w2_n05_verification.py",
+    "scripts/p82w2_n09_report.py",
+    "scripts/render_ice_bond_quasistatic_doc.py",
+    "scripts/verify_bond_quasistatic_rate.py",
+    "scripts/verify_buoyancy_free_float.py",
+    "scripts/verify_dem3d_contact_impact_convention.py",
+    "scripts/verify_hertz_contract.py",
+    "scripts/verify_ice_bond_single_bond_engine.py",
+    "scripts/verify_ice_bond_specimen_rate.py",
+    "scripts/verify_ice_bond_viscoelastic.py",
+    "scripts/verify_nonspherical_contact_and_timestep.py",
+    "scripts/verify_repose_injection.py",
+    "tests/test_repose_injection.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/AG27W2_N06_conditional_simulation_adjudication.md",
+   "line": 3,
+   "pointer": "scripts/ag27w2_n06_verification.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/AG27W2_N06_conditional_simulation_adjudication.md",
+   "line": 3,
+   "pointer": "src/tensordem/ice_abrasion_conditional_adjudication.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/AG27W2_N06_conditional_simulation_adjudication.md",
+   "line": 68,
+   "pointer": "figures/AG27W2_N06/fig2_p95_variance_estimators.png",
+   "kind": "figure",
+   "status": "TRACKED",
+   "resolved": "docs/figures/AG27W2_N06/fig2_p95_variance_estimators.png"
+  },
+  {
+   "doc": "docs/AG27W2_N06_conditional_simulation_adjudication.md",
+   "line": 74,
+   "pointer": "figures/AG27W2_N06/fig1_realisation_cloud.png",
+   "kind": "figure",
+   "status": "TRACKED",
+   "resolved": "docs/figures/AG27W2_N06/fig1_realisation_cloud.png"
+  },
+  {
+   "doc": "docs/AG27W2_N06_conditional_simulation_adjudication.md",
+   "line": 88,
+   "pointer": "figures/AG27W2_N06/fig3_resolution_decomposition.png",
+   "kind": "figure",
+   "status": "TRACKED",
+   "resolved": "docs/figures/AG27W2_N06/fig3_resolution_decomposition.png"
+  },
+  {
+   "doc": "docs/AG27W2_N06_conditional_simulation_adjudication.md",
+   "line": 92,
+   "pointer": "figures/AG27W2_N06/fig4_resolution_ladder.png",
+   "kind": "figure",
+   "status": "TRACKED",
+   "resolved": "docs/figures/AG27W2_N06/fig4_resolution_ladder.png"
+  },
+  {
+   "doc": "docs/AG27W2_N06_conditional_simulation_adjudication.md",
+   "line": 139,
+   "pointer": "runs/AG27W2_N06/dem_ensemble.npz",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "scripts/ag27w2_n06_stage1_ensemble.py",
+    "scripts/ag27w2_n06_verification.py",
+    "scripts/build_ag27w2_n06_doc.py",
+    "scripts/p66_w2_n05_verification.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/AG27W2_N06_conditional_simulation_adjudication.md",
+   "line": 144,
+   "pointer": "scripts/ag27w2_n06_stage1_ensemble.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/AG27W2_N06_conditional_simulation_adjudication.md",
+   "line": 146,
+   "pointer": "scripts/build_ag27w2_n06_doc.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/AG27W2_N06_conditional_simulation_adjudication.md",
+   "line": 147,
+   "pointer": "tests/test_ice_abrasion_conditional_adjudication.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/AG27W2_N09_stochastic_pressure_field_fatigue.md",
+   "line": 5,
+   "pointer": "runs/AG27W2_N09/dem_pressure.npz",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "scripts/ag27w2_n09_random_pressure_field_fatigue.py",
+    "src/tensordem/stochastic_pressure_field/study.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/AG27W2_N09_stochastic_pressure_field_fatigue.md",
+   "line": 5,
+   "pointer": "runs/AG27W2_N09/study.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "scripts/ag27w2_n09_random_pressure_field_fatigue.py",
+    "scripts/audit_calibrated_wet.py",
+    "scripts/audit_continuum_boundary.py",
+    "scripts/audit_smooth_plane.py",
+    "scripts/broken_ice_micro_study.py",
+    "scripts/calibrated_wet_study.py",
+    "scripts/continuum_boundary_study.py",
+    "scripts/ice_contact_gsa.py",
+    "scripts/ice_ridge_keel_acceptance.py",
+    "scripts/ice_ridge_keel_figures.py",
+    "scripts/ice_ridge_keel_study.py",
+    "scripts/ice_rubble_microstructure_study.py",
+    "scripts/make_ice_contact_report.py",
+    "scripts/material_calibration.py",
+    "scripts/pressure_band_lambda_calibration.py",
+    "scripts/pressure_band_maturation.py",
+    "scripts/pressure_band_maturation_report.py",
+    "scripts/pressure_band_report_md.py",
+    "scripts/run_ridge_freeze_bond_aging.py",
+    "scripts/smooth_plane_study.py",
+    "scripts/validate_accounting_ledger.py",
+    "src/tensordem/broken_ice_micro/__init__.py",
+    "src/tensordem/broken_ice_micro/study.py",
+    "src/tensordem/ice_contact/study.py",
+    "src/tensordem/ice_evolution/study.py",
+    "src/tensordem/stochastic_pressure_field/study.py",
+    "tests/test_ice_contact_acceptance.py",
+    "tests/test_ice_ridge_keel_freezebond.py",
+    "tests/test_ridge_freeze_bond_aging.py",
+    "tests/test_stochastic_pressure_field.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/AG27W2_N09_stochastic_pressure_field_fatigue.md",
+   "line": 6,
+   "pointer": "tests/test_stochastic_pressure_field.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/AG27W2_N09_stochastic_pressure_field_fatigue.md",
+   "line": 149,
+   "pointer": "figures/AG27W2_N09/fig1_correlation_fit.png",
+   "kind": "figure",
+   "status": "TRACKED",
+   "resolved": "docs/figures/AG27W2_N09/fig1_correlation_fit.png"
+  },
+  {
+   "doc": "docs/AG27W2_N09_stochastic_pressure_field_fatigue.md",
+   "line": 153,
+   "pointer": "figures/AG27W2_N09/fig2_kl_spectrum.png",
+   "kind": "figure",
+   "status": "TRACKED",
+   "resolved": "docs/figures/AG27W2_N09/fig2_kl_spectrum.png"
+  },
+  {
+   "doc": "docs/AG27W2_N09_stochastic_pressure_field_fatigue.md",
+   "line": 157,
+   "pointer": "figures/AG27W2_N09/fig3_pressure_fields.png",
+   "kind": "figure",
+   "status": "TRACKED",
+   "resolved": "docs/figures/AG27W2_N09/fig3_pressure_fields.png"
+  },
+  {
+   "doc": "docs/AG27W2_N09_stochastic_pressure_field_fatigue.md",
+   "line": 161,
+   "pointer": "figures/AG27W2_N09/fig4_fatigue_and_pressure_area.png",
+   "kind": "figure",
+   "status": "TRACKED",
+   "resolved": "docs/figures/AG27W2_N09/fig4_fatigue_and_pressure_area.png"
+  },
+  {
+   "doc": "docs/AG27W2_N09_stochastic_pressure_field_fatigue.md",
+   "line": 165,
+   "pointer": "figures/AG27W2_N09/fig5_plate_check.png",
+   "kind": "figure",
+   "status": "TRACKED",
+   "resolved": "docs/figures/AG27W2_N09/fig5_plate_check.png"
+  },
+  {
+   "doc": "docs/AG27W2_N09_stochastic_pressure_field_fatigue.md",
+   "line": 236,
+   "pointer": "scripts/ag27w2_n09_random_pressure_field_fatigue.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
   {
    "doc": "docs/DEM3D_BENCHMARK_PAPER.md",
    "line": 69,
@@ -240,6 +501,213 @@
    "status": "TRACKED"
   },
   {
+   "doc": "docs/DEM_DRUM_FLOW_REGIME_MAP.md",
+   "line": 23,
+   "pointer": "src/tensordem/drum_flow/kernel.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/DEM_DRUM_FLOW_REGIME_MAP.md",
+   "line": 40,
+   "pointer": "figures/fr_agreement.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "benchmarks/drum_flow_doc.py",
+    "benchmarks/drum_flow_figures.py",
+    "benchmarks/drum_flow_report.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/DEM_DRUM_FLOW_REGIME_MAP.md",
+   "line": 40,
+   "pointer": "figures/free_surface.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "benchmarks/drum_flow_doc.py",
+    "benchmarks/drum_flow_figures.py",
+    "benchmarks/drum_flow_report.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/DEM_DRUM_FLOW_REGIME_MAP.md",
+   "line": 40,
+   "pointer": "figures/phase_map.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "benchmarks/drum_flow_doc.py",
+    "benchmarks/drum_flow_figures.py",
+    "benchmarks/drum_flow_report.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/DEM_DRUM_FLOW_REGIME_MAP.md",
+   "line": 40,
+   "pointer": "figures/power_ledger.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "benchmarks/drum_flow_doc.py",
+    "benchmarks/drum_flow_figures.py",
+    "benchmarks/drum_flow_report.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/DEM_DRUM_FLOW_REGIME_MAP.md",
+   "line": 120,
+   "pointer": "tests/test_drum_flow_regimes.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/DEM_DRUM_FLOW_REGIME_MAP.md",
+   "line": 158,
+   "pointer": "artifacts/drum_flow/phase_map.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "benchmarks/drum_flow_doc.py",
+    "benchmarks/drum_flow_figures.py",
+    "benchmarks/drum_flow_regime_map.py",
+    "benchmarks/drum_flow_report.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/DEM_DRUM_FLOW_REGIME_MAP.md",
+   "line": 158,
+   "pointer": "benchmarks/drum_flow_regime_map.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/DEM_DRUM_FLOW_REGIME_MAP.md",
+   "line": 160,
+   "pointer": "benchmarks/drum_flow_figures.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/DEM_DRUM_FLOW_REGIME_MAP.md",
+   "line": 161,
+   "pointer": "benchmarks/drum_flow_doc.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/DEM_DRUM_FLOW_REGIME_MAP.md",
+   "line": 165,
+   "pointer": "artifacts/drum_flow/tables.md",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "benchmarks/drum_flow_doc.py",
+    "benchmarks/drum_flow_figures.py",
+    "benchmarks/floe_heave_finite_amplitude.py",
+    "scripts/verify_dem3d_contact_impact_convention.py",
+    "scripts/verify_moving_plane_dynamic_impulse.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/DEM_THERMAL_GRANULAR_VERIFICATION.md",
+   "line": 5,
+   "pointer": "src/tensordem/granular_collapse.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/DEM_THERMAL_GRANULAR_VERIFICATION.md",
+   "line": 5,
+   "pointer": "src/tensordem/thermal/contact_chain.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/DEM_THERMAL_GRANULAR_VERIFICATION.md",
+   "line": 6,
+   "pointer": "tests/test_granular_collapse.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/DEM_THERMAL_GRANULAR_VERIFICATION.md",
+   "line": 6,
+   "pointer": "tests/test_thermal_contact_chain.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/DEM_THERMAL_GRANULAR_VERIFICATION.md",
+   "line": 7,
+   "pointer": "scripts/plot_dem_thermal_granular.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/DEM_THERMAL_GRANULAR_VERIFICATION.md",
+   "line": 7,
+   "pointer": "scripts/run_dem_thermal_granular.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/DEM_THERMAL_GRANULAR_VERIFICATION.md",
+   "line": 304,
+   "pointer": "runs/dem_thermal_granular/thermal.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "scripts/build_dem_thermal_report.py",
+    "scripts/plot_dem_thermal_granular.py",
+    "scripts/run_dem_thermal_granular.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/DEM_THERMAL_GRANULAR_VERIFICATION.md",
+   "line": 305,
+   "pointer": "runs/dem_thermal_granular/summary.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "benchmarks/ice_rideup_sweep.py",
+    "scripts/adhesion_repose_pile.py",
+    "scripts/analyse_rubble_rheology.py",
+    "scripts/benchmark_dem3d_contact_impact.py",
+    "scripts/benchmark_dem3d_scale.py",
+    "scripts/build_dem_thermal_report.py",
+    "scripts/collect_tutorial_first_verified_run.py",
+    "scripts/m6296_beverloo_analysis.py",
+    "scripts/m6457_beverloo_analysis.py",
+    "scripts/make_api_report.py",
+    "scripts/make_contact_impact_report.py",
+    "scripts/mts_contact_report.py",
+    "scripts/plot_dem_thermal_granular.py",
+    "scripts/post_adhesion_report.py",
+    "scripts/pressure_area_campaign.py",
+    "scripts/pressure_area_figures.py",
+    "scripts/pressure_area_report.py",
+    "scripts/render_ice_uq_page.py",
+    "scripts/render_rubble_rheology_report.py",
+    "scripts/report_rolling_resistance.py",
+    "scripts/run_dem_thermal_granular.py",
+    "scripts/run_ice_uq_sensitivity.py",
+    "scripts/run_ridge_statistical_study.py",
+    "scripts/validate_rolling_resistance.py",
+    "tests/test_ridge_grounding_refresh_evidence.py",
+    "tests/test_tutorial_first_verified_run.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
    "doc": "docs/HERTZ_VERIFY.md",
    "line": 7,
    "pointer": "docs/dem3d_doc_evidence_pointer_audit.md",
@@ -260,6 +728,12 @@
    "kind": "data",
    "status": "MISSING",
    "producers": [
+    "benchmarks/mts_contact_integration.py",
+    "scripts/ag27w2_n06_verification.py",
+    "scripts/build_ag27w2_n06_doc.py",
+    "scripts/p66_w2_n05_verification.py",
+    "scripts/p82w2_n09_report.py",
+    "scripts/render_ice_bond_quasistatic_doc.py",
     "scripts/verify_bond_quasistatic_rate.py",
     "scripts/verify_buoyancy_free_float.py",
     "scripts/verify_dem3d_contact_impact_convention.py",
@@ -267,7 +741,9 @@
     "scripts/verify_ice_bond_single_bond_engine.py",
     "scripts/verify_ice_bond_specimen_rate.py",
     "scripts/verify_ice_bond_viscoelastic.py",
-    "scripts/verify_nonspherical_contact_and_timestep.py"
+    "scripts/verify_nonspherical_contact_and_timestep.py",
+    "scripts/verify_repose_injection.py",
+    "tests/test_repose_injection.py"
    ],
    "remedy": "REGENERABLE"
   },
@@ -292,6 +768,7 @@
    "kind": "data",
    "status": "MISSING",
    "producers": [
+    "scripts/ag27w2_n09_random_pressure_field_fatigue.py",
     "scripts/audit_calibrated_wet.py",
     "scripts/audit_continuum_boundary.py",
     "scripts/audit_smooth_plane.py",
@@ -299,15 +776,28 @@
     "scripts/calibrated_wet_study.py",
     "scripts/continuum_boundary_study.py",
     "scripts/ice_contact_gsa.py",
+    "scripts/ice_ridge_keel_acceptance.py",
+    "scripts/ice_ridge_keel_figures.py",
+    "scripts/ice_ridge_keel_study.py",
     "scripts/ice_rubble_microstructure_study.py",
     "scripts/make_ice_contact_report.py",
     "scripts/material_calibration.py",
+    "scripts/pressure_band_lambda_calibration.py",
+    "scripts/pressure_band_maturation.py",
+    "scripts/pressure_band_maturation_report.py",
+    "scripts/pressure_band_report_md.py",
+    "scripts/run_ridge_freeze_bond_aging.py",
     "scripts/smooth_plane_study.py",
     "scripts/validate_accounting_ledger.py",
     "src/tensordem/broken_ice_micro/__init__.py",
     "src/tensordem/broken_ice_micro/study.py",
     "src/tensordem/ice_contact/study.py",
-    "tests/test_ice_contact_acceptance.py"
+    "src/tensordem/ice_evolution/study.py",
+    "src/tensordem/stochastic_pressure_field/study.py",
+    "tests/test_ice_contact_acceptance.py",
+    "tests/test_ice_ridge_keel_freezebond.py",
+    "tests/test_ridge_freeze_bond_aging.py",
+    "tests/test_stochastic_pressure_field.py"
    ],
    "remedy": "REGENERABLE"
   },
@@ -354,6 +844,83 @@
    "status": "TRACKED"
   },
   {
+   "doc": "docs/ICE_FLOE_BREAKUP.md",
+   "line": 101,
+   "pointer": "src/tensordem/ice_floe_breakup.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ICE_FLOE_BREAKUP.md",
+   "line": 102,
+   "pointer": "src/tensordem/ice_channel_integrated.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ICE_FLOE_BREAKUP.md",
+   "line": 103,
+   "pointer": "tests/test_ice_floe_breakup.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ICE_FLOE_BREAKUP.md",
+   "line": 104,
+   "pointer": "benchmarks/ice_floe_breakup_benchmark.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ICE_FLOE_BREAKUP.md",
+   "line": 105,
+   "pointer": "artifacts/ice_floe_breakup/result.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "benchmarks/dem3d_triaxial/runner.py",
+    "benchmarks/ice_floe_breakup_benchmark.py",
+    "benchmarks/packed_bed_conductivity/make_docs.py",
+    "benchmarks/packed_bed_conductivity/make_report.py",
+    "benchmarks/packed_bed_conductivity/run.py",
+    "benchmarks/packed_bed_p74n11/run.py",
+    "benchmarks/verified/lbm_dem_drag_calibration/figures.py",
+    "benchmarks/verified/lbm_dem_drag_calibration/report.py",
+    "benchmarks/verified/lbm_dem_drag_calibration/run.py",
+    "scripts/packed_bed_p73w2n11_validation.py",
+    "src/tensordem/lbmdem/calibration.py",
+    "tests/test_dem_benchmarks.py",
+    "tests/test_packed_bed_conductivity.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/ICE_POLYGON_FLOE_FIELD_ANCHOR.md",
+   "line": 5,
+   "pointer": "benchmarks/anchors/build_ice_polygon_floe_field.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ICE_POLYGON_FLOE_FIELD_ANCHOR.md",
+   "line": 5,
+   "pointer": "benchmarks/anchors/ice-polygon-floe-field.json",
+   "kind": "data",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ICE_POLYGON_FLOE_FIELD_ANCHOR.md",
+   "line": 118,
+   "pointer": "artifacts/anchors/ice_polygon_floe_field/fig1_operator.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "benchmarks/anchors/build_ice_polygon_floe_field.py",
+    "benchmarks/anchors/make_anchor_doc.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
    "doc": "docs/ICE_RIDEUP_3D.md",
    "line": 4,
    "pointer": "src/tensordem/ice_rideup.py",
@@ -383,20 +950,27 @@
    "producers": [
     "benchmarks/ice_rideup_sweep.py",
     "scripts/adhesion_repose_pile.py",
+    "scripts/analyse_rubble_rheology.py",
     "scripts/benchmark_dem3d_contact_impact.py",
     "scripts/benchmark_dem3d_scale.py",
+    "scripts/build_dem_thermal_report.py",
     "scripts/collect_tutorial_first_verified_run.py",
     "scripts/m6296_beverloo_analysis.py",
     "scripts/m6457_beverloo_analysis.py",
     "scripts/make_api_report.py",
     "scripts/make_contact_impact_report.py",
+    "scripts/mts_contact_report.py",
+    "scripts/plot_dem_thermal_granular.py",
     "scripts/post_adhesion_report.py",
     "scripts/pressure_area_campaign.py",
     "scripts/pressure_area_figures.py",
     "scripts/pressure_area_report.py",
     "scripts/render_ice_uq_page.py",
+    "scripts/render_rubble_rheology_report.py",
     "scripts/report_rolling_resistance.py",
+    "scripts/run_dem_thermal_granular.py",
     "scripts/run_ice_uq_sensitivity.py",
+    "scripts/run_ridge_statistical_study.py",
     "scripts/validate_rolling_resistance.py",
     "tests/test_ridge_grounding_refresh_evidence.py",
     "tests/test_tutorial_first_verified_run.py"
@@ -446,6 +1020,49 @@
     "benchmarks/ice_rideup_sweep.py"
    ],
    "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/ICE_RIDGE_MECHANICS_DEM.md",
+   "line": 6,
+   "pointer": "artifacts/ridge_mechanics/acceptance.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "scripts/_publish_report_m7300.py",
+    "scripts/analyze_bidisperse_segregation.py",
+    "scripts/ice_drift_dynamics_artifacts.py",
+    "scripts/ice_ridge_keel_acceptance.py",
+    "scripts/in29_n03_calibration.py",
+    "scripts/in29_n03_report.py",
+    "scripts/ridge_mechanics_acceptance.py",
+    "scripts/ridge_mechanics_figures.py",
+    "scripts/run_curved_patch_mortar_benchmark.py",
+    "scripts/verify_acoustic_source_terms.py",
+    "src/tensordem/ae/indentation.py",
+    "tests/test_ae_acoustic_emission.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/ICE_RIDGE_MECHANICS_DEM.md",
+   "line": 73,
+   "pointer": "tests/test_ice_ridge_mechanics.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ICE_RIDGE_MECHANICS_DEM.md",
+   "line": 138,
+   "pointer": "scripts/ridge_mechanics_acceptance.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ICE_RIDGE_MECHANICS_DEM.md",
+   "line": 139,
+   "pointer": "scripts/ridge_mechanics_figures.py",
+   "kind": "code",
+   "status": "TRACKED"
   },
   {
    "doc": "docs/ICE_STEEL_FRICTION_LAW.md",
@@ -523,6 +1140,7 @@
    "status": "MISSING",
    "producers": [
     "benchmarks/ice_steel_friction_calibration.py",
+    "benchmarks/ice_steel_friction_closure.py",
     "benchmarks/interface_thermal_coupling.py",
     "scripts/interface_thermal_report.py"
    ],
@@ -558,6 +1176,208 @@
    "producers": [],
    "remedy": "ORPHAN",
    "suggested": []
+  },
+  {
+   "doc": "docs/IN143_N09_packed_bed_drag.md",
+   "line": 5,
+   "pointer": "artifacts/IN143-N09/results.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "benchmarks/hertz_analytic/run.py",
+    "benchmarks/hertz_analytic/validate.py",
+    "scripts/benchmark_floe_buoyancy.py",
+    "scripts/build_freeze_bond_report.py",
+    "scripts/gen_ice_pressure_stats_figs.py",
+    "scripts/in143_n09_study.py",
+    "scripts/render_dem3d_hertz_restitution.py",
+    "scripts/report_ball_ball_rolling_contact.py",
+    "scripts/run_coarse_graining_campaign.py",
+    "scripts/run_freeze_bond_arch.py",
+    "scripts/sir_pc2_figures.py",
+    "scripts/verify_ball_ball_rolling_contact.py",
+    "scripts/verify_dem3d_hertz_restitution.py",
+    "scripts/verify_dem3d_rolling_resistance.py",
+    "src/tensordem/bedcoupling/study.py",
+    "tests/test_ball_ball_rolling_contact.py",
+    "tests/test_bedcoupling_acceptance.py",
+    "tests/test_coarse_graining_scaling.py",
+    "tests/test_dem3d_energy_friction_rolling.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/IN143_N09_packed_bed_drag.md",
+   "line": 6,
+   "pointer": "scripts/in143_n09_study.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/IN143_N09_packed_bed_drag.md",
+   "line": 38,
+   "pointer": "tests/test_bedcoupling_bed.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/IN143_N09_packed_bed_drag.md",
+   "line": 225,
+   "pointer": "src/tensordem/bedcoupling/closures.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/IN143_N09_packed_bed_drag.md",
+   "line": 226,
+   "pointer": "src/tensordem/bedcoupling/packing.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/IN143_N09_packed_bed_drag.md",
+   "line": 227,
+   "pointer": "src/tensordem/bedcoupling/bed.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/IN143_N09_packed_bed_drag.md",
+   "line": 228,
+   "pointer": "src/tensordem/bedcoupling/study.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/IN143_N09_packed_bed_drag.md",
+   "line": 229,
+   "pointer": "tests/test_bedcoupling_closures.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/IN143_N09_packed_bed_drag.md",
+   "line": 230,
+   "pointer": "tests/test_bedcoupling_packing.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/IN143_N09_packed_bed_drag.md",
+   "line": 232,
+   "pointer": "tests/test_bedcoupling_acceptance.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/IN155_N04_dem_ft_rainflow_sn_chain.md",
+   "line": 6,
+   "pointer": "scripts/in155_n04_chain.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/IN155_N04_dem_ft_rainflow_sn_chain.md",
+   "line": 35,
+   "pointer": "docs/ice_load_statistics_calibration.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/IN155_N04_dem_ft_rainflow_sn_chain.md",
+   "line": 58,
+   "pointer": "fatigue_chain/contract.py",
+   "kind": "code",
+   "status": "MISSING",
+   "producers": [],
+   "remedy": "ORPHAN",
+   "suggested": [
+    "src/tensordem/fatigue_chain/contract.py",
+    "src/tensordem/ice_pressure_band/contract.py"
+   ]
+  },
+  {
+   "doc": "docs/IN155_N04_dem_ft_rainflow_sn_chain.md",
+   "line": 247,
+   "pointer": "figures/fig1_contact_forces.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "scripts/in155_n04_chain.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/IN155_N04_dem_ft_rainflow_sn_chain.md",
+   "line": 248,
+   "pointer": "figures/fig2_energy_budget.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "scripts/in155_n04_chain.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/IN155_N04_dem_ft_rainflow_sn_chain.md",
+   "line": 249,
+   "pointer": "figures/fig3_anchors.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "scripts/in155_n04_chain.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/IN155_N04_dem_ft_rainflow_sn_chain.md",
+   "line": 250,
+   "pointer": "figures/fig4_envelopes.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "scripts/in155_n04_chain.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/IN155_N04_dem_ft_rainflow_sn_chain.md",
+   "line": 251,
+   "pointer": "figures/fig5_min_rate_law.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "scripts/in155_n04_chain.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/IN155_N04_dem_ft_rainflow_sn_chain.md",
+   "line": 337,
+   "pointer": "tests/test_fatigue_chain_anchors.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/IN155_N04_dem_ft_rainflow_sn_chain.md",
+   "line": 337,
+   "pointer": "tests/test_fatigue_chain_contract.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/IN155_N04_dem_ft_rainflow_sn_chain.md",
+   "line": 338,
+   "pointer": "tests/test_fatigue_chain_astm.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/IN155_N04_dem_ft_rainflow_sn_chain.md",
+   "line": 338,
+   "pointer": "tests/test_fatigue_chain_envelope.py",
+   "kind": "test",
+   "status": "TRACKED"
   },
   {
    "doc": "docs/IN32_N01_polygon_floe_field.md",
@@ -644,7 +1464,24 @@
    "line": 1,
    "pointer": "artifacts/in60-n09/metrics.json",
    "kind": "data",
-   "status": "TRACKED"
+   "status": "MISSING",
+   "producers": [
+    "benchmarks/consolidation_terzaghi/make_report.py",
+    "benchmarks/consolidation_terzaghi/post_platform_report.py",
+    "benchmarks/consolidation_terzaghi/run.py",
+    "scripts/audit_dem3d_buoyancy_float.py",
+    "scripts/audit_ice_rideup_righting.py",
+    "scripts/in29_n02_floe6dof_benchmark.py",
+    "scripts/in29_n02_report.py",
+    "scripts/in54w1_contact_energy_order.py",
+    "scripts/in60_n09_cargo_liquefaction.py",
+    "scripts/in60_n09_report.py",
+    "scripts/m6423_curved_hull_audit.py",
+    "scripts/p54w2_n06_collision_ledger_certification.py",
+    "scripts/verify_engine_threshold_crossing.py",
+    "src/tensordem/collision_ledger_certification.py"
+   ],
+   "remedy": "REGENERABLE"
   },
   {
    "doc": "docs/IN60_N09_cargo_liquefaction_effstress.md",
@@ -665,6 +1502,312 @@
    "line": 240,
    "pointer": "tests/test_cargo_liquefaction_effstress.py",
    "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/IN69_N01_creep_constitutive.md",
+   "line": 4,
+   "pointer": "src/tensordem/creep_constitutive.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/IN69_N01_creep_constitutive.md",
+   "line": 4,
+   "pointer": "tools/run_creep_validation.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/IN69_N01_creep_constitutive.md",
+   "line": 5,
+   "pointer": "artifacts/in69_n01_creep/summary.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "benchmarks/ice_rideup_sweep.py",
+    "scripts/adhesion_repose_pile.py",
+    "scripts/analyse_rubble_rheology.py",
+    "scripts/benchmark_dem3d_contact_impact.py",
+    "scripts/benchmark_dem3d_scale.py",
+    "scripts/build_dem_thermal_report.py",
+    "scripts/collect_tutorial_first_verified_run.py",
+    "scripts/m6296_beverloo_analysis.py",
+    "scripts/m6457_beverloo_analysis.py",
+    "scripts/make_api_report.py",
+    "scripts/make_contact_impact_report.py",
+    "scripts/mts_contact_report.py",
+    "scripts/plot_dem_thermal_granular.py",
+    "scripts/post_adhesion_report.py",
+    "scripts/pressure_area_campaign.py",
+    "scripts/pressure_area_figures.py",
+    "scripts/pressure_area_report.py",
+    "scripts/render_ice_uq_page.py",
+    "scripts/render_rubble_rheology_report.py",
+    "scripts/report_rolling_resistance.py",
+    "scripts/run_dem_thermal_granular.py",
+    "scripts/run_ice_uq_sensitivity.py",
+    "scripts/run_ridge_statistical_study.py",
+    "scripts/validate_rolling_resistance.py",
+    "tests/test_ridge_grounding_refresh_evidence.py",
+    "tests/test_tutorial_first_verified_run.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/IN69_N01_creep_constitutive.md",
+   "line": 5,
+   "pointer": "tests/test_creep_constitutive.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/IN69_N01_creep_constitutive.md",
+   "line": 78,
+   "pointer": "prereg/in69_n01_creep_prereg.json",
+   "kind": "data",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/IN69_N01_creep_constitutive.md",
+   "line": 179,
+   "pointer": "artifacts/in69_n01_creep/fig1_norton_rate_parity.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [],
+   "remedy": "ORPHAN",
+   "suggested": []
+  },
+  {
+   "doc": "docs/IN69_N01_creep_constitutive.md",
+   "line": 180,
+   "pointer": "artifacts/in69_n01_creep/fig2_three_stage_creep.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [],
+   "remedy": "ORPHAN",
+   "suggested": []
+  },
+  {
+   "doc": "docs/IN69_N01_creep_constitutive.md",
+   "line": 181,
+   "pointer": "artifacts/in69_n01_creep/fig3_contact_relaxation.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [],
+   "remedy": "ORPHAN",
+   "suggested": []
+  },
+  {
+   "doc": "docs/IN69_N01_creep_constitutive.md",
+   "line": 182,
+   "pointer": "artifacts/in69_n01_creep/fig4_exponent_and_ledger.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [],
+   "remedy": "ORPHAN",
+   "suggested": []
+  },
+  {
+   "doc": "docs/IN69_N01_creep_constitutive.md",
+   "line": 251,
+   "pointer": "artifacts/in69_n01_creep/fig1..fig4.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [],
+   "remedy": "ORPHAN",
+   "suggested": []
+  },
+  {
+   "doc": "docs/IN69_N01_creep_constitutive.md",
+   "line": 252,
+   "pointer": "docs/IN69_N01_creep_constitutive.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/IN69_N06_rubble_accumulation.md",
+   "line": 7,
+   "pointer": "src/tensordem/rubble_accumulation.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/IN69_N06_rubble_accumulation.md",
+   "line": 8,
+   "pointer": "tools/run_rubble_sweep.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/IN69_N06_rubble_accumulation.md",
+   "line": 9,
+   "pointer": "prereg/IN69_N06_rubble_accumulation_prereg.json",
+   "kind": "data",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/IN69_N06_rubble_accumulation.md",
+   "line": 10,
+   "pointer": "tests/test_rubble_accumulation.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/IN69_N06_rubble_accumulation.md",
+   "line": 12,
+   "pointer": "runs/IN69_N06_stiff/summary.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "benchmarks/ice_rideup_sweep.py",
+    "scripts/adhesion_repose_pile.py",
+    "scripts/analyse_rubble_rheology.py",
+    "scripts/benchmark_dem3d_contact_impact.py",
+    "scripts/benchmark_dem3d_scale.py",
+    "scripts/build_dem_thermal_report.py",
+    "scripts/collect_tutorial_first_verified_run.py",
+    "scripts/m6296_beverloo_analysis.py",
+    "scripts/m6457_beverloo_analysis.py",
+    "scripts/make_api_report.py",
+    "scripts/make_contact_impact_report.py",
+    "scripts/mts_contact_report.py",
+    "scripts/plot_dem_thermal_granular.py",
+    "scripts/post_adhesion_report.py",
+    "scripts/pressure_area_campaign.py",
+    "scripts/pressure_area_figures.py",
+    "scripts/pressure_area_report.py",
+    "scripts/render_ice_uq_page.py",
+    "scripts/render_rubble_rheology_report.py",
+    "scripts/report_rolling_resistance.py",
+    "scripts/run_dem_thermal_granular.py",
+    "scripts/run_ice_uq_sensitivity.py",
+    "scripts/run_ridge_statistical_study.py",
+    "scripts/validate_rolling_resistance.py",
+    "tests/test_ridge_grounding_refresh_evidence.py",
+    "tests/test_tutorial_first_verified_run.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/IN99_N08_consolidation_terzaghi.md",
+   "line": 1,
+   "pointer": "artifacts/in99-n08/metrics.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "benchmarks/consolidation_terzaghi/make_report.py",
+    "benchmarks/consolidation_terzaghi/post_platform_report.py",
+    "benchmarks/consolidation_terzaghi/run.py",
+    "scripts/audit_dem3d_buoyancy_float.py",
+    "scripts/audit_ice_rideup_righting.py",
+    "scripts/in29_n02_floe6dof_benchmark.py",
+    "scripts/in29_n02_report.py",
+    "scripts/in54w1_contact_energy_order.py",
+    "scripts/in60_n09_cargo_liquefaction.py",
+    "scripts/in60_n09_report.py",
+    "scripts/m6423_curved_hull_audit.py",
+    "scripts/p54w2_n06_collision_ledger_certification.py",
+    "scripts/verify_engine_threshold_crossing.py",
+    "src/tensordem/collision_ledger_certification.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/IN99_N08_consolidation_terzaghi.md",
+   "line": 1,
+   "pointer": "benchmarks/consolidation_terzaghi/make_report.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/IN99_N08_consolidation_terzaghi.md",
+   "line": 36,
+   "pointer": "scripts/in99_n08_liquefaction_consumer.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/IN99_N08_consolidation_terzaghi.md",
+   "line": 38,
+   "pointer": "tests/test_consolidation_terzaghi.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/IN99_N08_consolidation_terzaghi.md",
+   "line": 143,
+   "pointer": "artifacts/in99-n08/ru_table.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "benchmarks/consolidation_terzaghi/make_report.py",
+    "benchmarks/consolidation_terzaghi/run.py",
+    "scripts/in99_n08_liquefaction_consumer.py",
+    "tests/test_consolidation_terzaghi.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/IN99_N08_consolidation_terzaghi.md",
+   "line": 178,
+   "pointer": "artifacts/in99-n08/figures/terzaghi_u.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "benchmarks/consolidation_terzaghi/run.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/IN99_N08_consolidation_terzaghi.md",
+   "line": 182,
+   "pointer": "artifacts/in99-n08/figures/settlement_time.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "benchmarks/consolidation_terzaghi/run.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/IN99_N08_consolidation_terzaghi.md",
+   "line": 186,
+   "pointer": "artifacts/in99-n08/figures/ru_profiles.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "benchmarks/consolidation_terzaghi/run.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/IN99_N08_consolidation_terzaghi.md",
+   "line": 190,
+   "pointer": "artifacts/in99-n08/figures/dem_oedometer.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "benchmarks/consolidation_terzaghi/run.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/IN99_N08_consolidation_terzaghi.md",
+   "line": 194,
+   "pointer": "artifacts/in99-n08/figures/ru_interface.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "benchmarks/consolidation_terzaghi/run.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/IN99_N08_consolidation_terzaghi.md",
+   "line": 236,
+   "pointer": "benchmarks/consolidation_terzaghi/run.py",
+   "kind": "code",
    "status": "TRACKED"
   },
   {
@@ -722,6 +1865,269 @@
    "status": "TRACKED"
   },
   {
+   "doc": "docs/MIXED_ICE_RESISTANCE.md",
+   "line": 82,
+   "pointer": "mixed_ice/aging.py",
+   "kind": "code",
+   "status": "MISSING",
+   "producers": [
+    "scripts/mixed_ice_platform_report.py",
+    "src/tensordem/mixed_ice/report.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/MIXED_ICE_RESISTANCE.md",
+   "line": 85,
+   "pointer": "mixed_ice/field.py",
+   "kind": "code",
+   "status": "MISSING",
+   "producers": [
+    "scripts/mixed_ice_platform_report.py",
+    "src/tensordem/mixed_ice/report.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/MIXED_ICE_RESISTANCE.md",
+   "line": 93,
+   "pointer": "mixed_ice/resistance.py",
+   "kind": "code",
+   "status": "MISSING",
+   "producers": [
+    "scripts/build_ice_abrasion_doc.py",
+    "scripts/build_ice_hull_propeller_anchor.py",
+    "scripts/mixed_ice_platform_report.py",
+    "src/tensordem/mixed_ice/report.py",
+    "tests/test_threefield_resistance.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/MIXED_ICE_RESISTANCE.md",
+   "line": 98,
+   "pointer": "mixed_ice/campaign.py",
+   "kind": "code",
+   "status": "MISSING",
+   "producers": [
+    "src/tensordem/mixed_ice/report.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/MIXED_ICE_RESISTANCE.md",
+   "line": 279,
+   "pointer": "../artifacts/mixed_ice/figures/fig1_my_fraction_curve.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "resolved": "artifacts/mixed_ice/figures/fig1_my_fraction_curve.png",
+   "producers": [
+    "scripts/mixed_ice_platform_report.py",
+    "src/tensordem/mixed_ice/figures.py",
+    "tests/test_mixed_ice_campaign.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/MIXED_ICE_RESISTANCE.md",
+   "line": 281,
+   "pointer": "../artifacts/mixed_ice/figures/fig2_fsd_sensitivity.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "resolved": "artifacts/mixed_ice/figures/fig2_fsd_sensitivity.png",
+   "producers": [
+    "scripts/mixed_ice_platform_report.py",
+    "src/tensordem/mixed_ice/figures.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/MIXED_ICE_RESISTANCE.md",
+   "line": 283,
+   "pointer": "../artifacts/mixed_ice/figures/fig3_ageing.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "resolved": "artifacts/mixed_ice/figures/fig3_ageing.png",
+   "producers": [
+    "scripts/mixed_ice_platform_report.py",
+    "src/tensordem/mixed_ice/figures.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/MIXED_ICE_RESISTANCE.md",
+   "line": 285,
+   "pointer": "../artifacts/mixed_ice/figures/fig4_dem_factorial.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "resolved": "artifacts/mixed_ice/figures/fig4_dem_factorial.png",
+   "producers": [
+    "scripts/mixed_ice_platform_report.py",
+    "src/tensordem/mixed_ice/figures.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/MIXED_ICE_RESISTANCE.md",
+   "line": 367,
+   "pointer": "scripts/mixed_ice_campaign.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/MIXED_ICE_RESISTANCE.md",
+   "line": 369,
+   "pointer": "tests/test_mixed_ice_aging.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/MIXED_ICE_RESISTANCE.md",
+   "line": 369,
+   "pointer": "tests/test_mixed_ice_field.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/MIXED_ICE_RESISTANCE.md",
+   "line": 370,
+   "pointer": "tests/test_mixed_ice_campaign.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/MIXED_ICE_RESISTANCE.md",
+   "line": 370,
+   "pointer": "tests/test_mixed_ice_resistance.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/MIXED_ICE_RESISTANCE.md",
+   "line": 371,
+   "pointer": "tests/test_level_ice_resistance_dem.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/MIXED_ICE_RESISTANCE.md",
+   "line": 376,
+   "pointer": "tests/test_shape_representation.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/MIXED_ICE_RESISTANCE.md",
+   "line": 380,
+   "pointer": "artifacts/mixed_ice/mixed_ice_campaign.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "scripts/mixed_ice_campaign.py",
+    "scripts/mixed_ice_platform_report.py",
+    "src/tensordem/mixed_ice/report.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/P248-N01_curved_patch_mortar.md",
+   "line": 38,
+   "pointer": "src/tensordem/interface_operators/curved_patch_mortar.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/P248-N01_curved_patch_mortar.md",
+   "line": 152,
+   "pointer": "runs/P248-N01_curved_patch_mortar/figures/per_patch_closure.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "scripts/run_curved_patch_mortar_benchmark.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/P248-N01_curved_patch_mortar.md",
+   "line": 158,
+   "pointer": "runs/P248-N01_curved_patch_mortar/figures/geometry_and_uniform_state.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "scripts/run_curved_patch_mortar_benchmark.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/P248-N01_curved_patch_mortar.md",
+   "line": 164,
+   "pointer": "runs/P248-N01_curved_patch_mortar/figures/gap_penetration_balance.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "scripts/run_curved_patch_mortar_benchmark.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/P248-N01_curved_patch_mortar.md",
+   "line": 170,
+   "pointer": "runs/P248-N01_curved_patch_mortar/figures/coupling_energy_account.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "scripts/run_curved_patch_mortar_benchmark.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/P248-N01_curved_patch_mortar.md",
+   "line": 176,
+   "pointer": "runs/P248-N01_curved_patch_mortar/figures/transpose_consistency.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "scripts/run_curved_patch_mortar_benchmark.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/P248-N01_curved_patch_mortar.md",
+   "line": 208,
+   "pointer": "tests/test_curved_patch_mortar.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/P248-N01_curved_patch_mortar.md",
+   "line": 209,
+   "pointer": "runs/P248-N01_curved_patch_mortar/acceptance.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "scripts/_publish_report_m7300.py",
+    "scripts/analyze_bidisperse_segregation.py",
+    "scripts/ice_drift_dynamics_artifacts.py",
+    "scripts/ice_ridge_keel_acceptance.py",
+    "scripts/in29_n03_calibration.py",
+    "scripts/in29_n03_report.py",
+    "scripts/ridge_mechanics_acceptance.py",
+    "scripts/ridge_mechanics_figures.py",
+    "scripts/run_curved_patch_mortar_benchmark.py",
+    "scripts/verify_acoustic_source_terms.py",
+    "src/tensordem/ae/indentation.py",
+    "tests/test_ae_acoustic_emission.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/P248-N01_curved_patch_mortar.md",
+   "line": 209,
+   "pointer": "scripts/run_curved_patch_mortar_benchmark.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
    "doc": "docs/P40_N10_shape_representation_verdict.md",
    "line": 4,
    "pointer": "artifacts/p40_n10/shape_representation_verdict.json",
@@ -732,7 +2138,8 @@
     "scripts/p40_n10_shape_verdict.py",
     "scripts/shape_representation_campaign.py",
     "scripts/shape_representation_report.py",
-    "src/tensordem/shape_representation/__init__.py"
+    "src/tensordem/shape_representation/__init__.py",
+    "tests/test_dem_contact_mechanics_verification.py"
    ],
    "remedy": "REGENERABLE"
   },
@@ -763,6 +2170,267 @@
    "pointer": "docs/figures/p40_n10_piles.png",
    "kind": "figure",
    "status": "TRACKED"
+  },
+  {
+   "doc": "docs/P66_W2_N05_spatiotemporal_abrasion_field.md",
+   "line": 5,
+   "pointer": "src/tensordem/ice_abrasion_spatiotemporal.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/P66_W2_N05_spatiotemporal_abrasion_field.md",
+   "line": 6,
+   "pointer": "scripts/p66_w2_n05_verification.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/P66_W2_N05_spatiotemporal_abrasion_field.md",
+   "line": 7,
+   "pointer": "runs/P66_W2_N05/verification.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "benchmarks/mts_contact_integration.py",
+    "scripts/ag27w2_n06_verification.py",
+    "scripts/build_ag27w2_n06_doc.py",
+    "scripts/p66_w2_n05_verification.py",
+    "scripts/p82w2_n09_report.py",
+    "scripts/render_ice_bond_quasistatic_doc.py",
+    "scripts/verify_bond_quasistatic_rate.py",
+    "scripts/verify_buoyancy_free_float.py",
+    "scripts/verify_dem3d_contact_impact_convention.py",
+    "scripts/verify_hertz_contract.py",
+    "scripts/verify_ice_bond_single_bond_engine.py",
+    "scripts/verify_ice_bond_specimen_rate.py",
+    "scripts/verify_ice_bond_viscoelastic.py",
+    "scripts/verify_nonspherical_contact_and_timestep.py",
+    "scripts/verify_repose_injection.py",
+    "tests/test_repose_injection.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/P66_W2_N05_spatiotemporal_abrasion_field.md",
+   "line": 71,
+   "pointer": "figures/P66_W2_N05/fig1_activity_profile.png",
+   "kind": "figure",
+   "status": "TRACKED",
+   "resolved": "docs/figures/P66_W2_N05/fig1_activity_profile.png"
+  },
+  {
+   "doc": "docs/P66_W2_N05_spatiotemporal_abrasion_field.md",
+   "line": 77,
+   "pointer": "figures/P66_W2_N05/fig2_activity_sections.png",
+   "kind": "figure",
+   "status": "TRACKED",
+   "resolved": "docs/figures/P66_W2_N05/fig2_activity_sections.png"
+  },
+  {
+   "doc": "docs/P66_W2_N05_spatiotemporal_abrasion_field.md",
+   "line": 103,
+   "pointer": "figures/P66_W2_N05/fig3_residual_conditional.png",
+   "kind": "figure",
+   "status": "TRACKED",
+   "resolved": "docs/figures/P66_W2_N05/fig3_residual_conditional.png"
+  },
+  {
+   "doc": "docs/P66_W2_N05_spatiotemporal_abrasion_field.md",
+   "line": 108,
+   "pointer": "figures/P66_W2_N05/fig4_covariance_kl.png",
+   "kind": "figure",
+   "status": "TRACKED",
+   "resolved": "docs/figures/P66_W2_N05/fig4_covariance_kl.png"
+  },
+  {
+   "doc": "docs/P66_W2_N05_spatiotemporal_abrasion_field.md",
+   "line": 136,
+   "pointer": "figures/P66_W2_N05/fig5_field_evolution.png",
+   "kind": "figure",
+   "status": "TRACKED",
+   "resolved": "docs/figures/P66_W2_N05/fig5_field_evolution.png"
+  },
+  {
+   "doc": "docs/P66_W2_N05_spatiotemporal_abrasion_field.md",
+   "line": 140,
+   "pointer": "figures/P66_W2_N05/fig6_regional_evolution.png",
+   "kind": "figure",
+   "status": "TRACKED",
+   "resolved": "docs/figures/P66_W2_N05/fig6_regional_evolution.png"
+  },
+  {
+   "doc": "docs/P66_W2_N05_spatiotemporal_abrasion_field.md",
+   "line": 183,
+   "pointer": "figures/P66_W2_N05/fig7_validation.png",
+   "kind": "figure",
+   "status": "TRACKED",
+   "resolved": "docs/figures/P66_W2_N05/fig7_validation.png"
+  },
+  {
+   "doc": "docs/P66_W2_N05_spatiotemporal_abrasion_field.md",
+   "line": 252,
+   "pointer": "tests/test_ice_abrasion_spatiotemporal.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/P82W2_N09_mts_contact_integration.md",
+   "line": 3,
+   "pointer": "TensorDEM/src/tensordem/mts.py",
+   "kind": "code",
+   "status": "MISSING",
+   "producers": [
+    "scripts/p82w2_n09_report.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/P82W2_N09_mts_contact_integration.md",
+   "line": 4,
+   "pointer": "benchmarks/mts_contact_integration.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/P82W2_N09_mts_contact_integration.md",
+   "line": 5,
+   "pointer": "tests/test_mts_contact_integration.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/P82W2_N09_mts_contact_integration.md",
+   "line": 6,
+   "pointer": "runs/P82W2_N09/verification.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "benchmarks/mts_contact_integration.py",
+    "scripts/ag27w2_n06_verification.py",
+    "scripts/build_ag27w2_n06_doc.py",
+    "scripts/p66_w2_n05_verification.py",
+    "scripts/p82w2_n09_report.py",
+    "scripts/render_ice_bond_quasistatic_doc.py",
+    "scripts/verify_bond_quasistatic_rate.py",
+    "scripts/verify_buoyancy_free_float.py",
+    "scripts/verify_dem3d_contact_impact_convention.py",
+    "scripts/verify_hertz_contract.py",
+    "scripts/verify_ice_bond_single_bond_engine.py",
+    "scripts/verify_ice_bond_specimen_rate.py",
+    "scripts/verify_ice_bond_viscoelastic.py",
+    "scripts/verify_nonspherical_contact_and_timestep.py",
+    "scripts/verify_repose_injection.py",
+    "tests/test_repose_injection.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/P82W2_N09_mts_contact_integration.md",
+   "line": 208,
+   "pointer": "src/tensordem/mts.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/P82W2_N09_mts_contact_integration.md",
+   "line": 213,
+   "pointer": "prereg/P82W2_N09.json",
+   "kind": "data",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/P82W4_N01_adfreeze_bond_report.md",
+   "line": 27,
+   "pointer": "src/tensordem/adfreeze_bond.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/P82W4_N01_adfreeze_bond_report.md",
+   "line": 28,
+   "pointer": "tests/test_adfreeze_bond.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/P82W4_N01_adfreeze_bond_report.md",
+   "line": 75,
+   "pointer": "artifacts/fig1_sn_curve.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "scripts/verify_adfreeze_bond.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/P82W4_N01_adfreeze_bond_report.md",
+   "line": 78,
+   "pointer": "artifacts/fig2_damage_evolution.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "scripts/verify_adfreeze_bond.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/P82W4_N01_adfreeze_bond_report.md",
+   "line": 81,
+   "pointer": "artifacts/fig3_hysteresis.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "scripts/verify_adfreeze_bond.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/P82W4_N01_adfreeze_bond_report.md",
+   "line": 84,
+   "pointer": "artifacts/fig4_param_identification.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "scripts/verify_adfreeze_bond.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/P82W4_N01_adfreeze_bond_report.md",
+   "line": 87,
+   "pointer": "artifacts/fig5_multiscale.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "scripts/verify_adfreeze_bond.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/P82W4_N01_adfreeze_bond_report.md",
+   "line": 90,
+   "pointer": "artifacts/fig6_energy_balance.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "scripts/verify_adfreeze_bond.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/P82W4_N01_adfreeze_bond_report.md",
+   "line": 120,
+   "pointer": "runs/verification_report.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "benchmarks/platen_friction_verification.py",
+    "scripts/verify_adfreeze_bond.py",
+    "tests/test_adfreeze_bond.py"
+   ],
+   "remedy": "REGENERABLE"
   },
   {
    "doc": "docs/PROPELLER_ICE_MILLING_TRANSIENT.md",
@@ -1115,6 +2783,90 @@
    "status": "TRACKED"
   },
   {
+   "doc": "docs/VIBRO_ACOUSTIC_SOURCE_TERMS.md",
+   "line": 5,
+   "pointer": "scripts/verify_acoustic_source_terms.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/VIBRO_ACOUSTIC_SOURCE_TERMS.md",
+   "line": 6,
+   "pointer": "artifacts/acoustic_source_terms/acceptance.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "scripts/_publish_report_m7300.py",
+    "scripts/analyze_bidisperse_segregation.py",
+    "scripts/ice_drift_dynamics_artifacts.py",
+    "scripts/ice_ridge_keel_acceptance.py",
+    "scripts/in29_n03_calibration.py",
+    "scripts/in29_n03_report.py",
+    "scripts/ridge_mechanics_acceptance.py",
+    "scripts/ridge_mechanics_figures.py",
+    "scripts/run_curved_patch_mortar_benchmark.py",
+    "scripts/verify_acoustic_source_terms.py",
+    "src/tensordem/ae/indentation.py",
+    "tests/test_ae_acoustic_emission.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/VIBRO_ACOUSTIC_SOURCE_TERMS.md",
+   "line": 7,
+   "pointer": "tests/test_acoustics_source_terms.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/VIBRO_ACOUSTIC_SOURCE_TERMS.md",
+   "line": 176,
+   "pointer": "../artifacts/acoustic_source_terms/fig1_lighthill_quadrupole.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "resolved": "artifacts/acoustic_source_terms/fig1_lighthill_quadrupole.png",
+   "producers": [
+    "scripts/verify_acoustic_source_terms.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/VIBRO_ACOUSTIC_SOURCE_TERMS.md",
+   "line": 178,
+   "pointer": "../artifacts/acoustic_source_terms/fig2_curle_dipole.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "resolved": "artifacts/acoustic_source_terms/fig2_curle_dipole.png",
+   "producers": [
+    "scripts/verify_acoustic_source_terms.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/VIBRO_ACOUSTIC_SOURCE_TERMS.md",
+   "line": 180,
+   "pointer": "../artifacts/acoustic_source_terms/fig3_bpf_spectrum.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "resolved": "artifacts/acoustic_source_terms/fig3_bpf_spectrum.png",
+   "producers": [
+    "scripts/verify_acoustic_source_terms.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/VIBRO_ACOUSTIC_SOURCE_TERMS.md",
+   "line": 182,
+   "pointer": "../artifacts/acoustic_source_terms/fig4_fft_scaling.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "resolved": "artifacts/acoustic_source_terms/fig4_fft_scaling.png",
+   "producers": [
+    "scripts/verify_acoustic_source_terms.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
    "doc": "docs/accounting_ledger_validation.md",
    "line": 6,
    "pointer": "tests/test_accounting_output.py",
@@ -1362,6 +3114,59 @@
    "remedy": "REGENERABLE"
   },
   {
+   "doc": "docs/ae/README.md",
+   "line": 240,
+   "pointer": "tests/test_ae_acoustic_emission.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ae/README.md",
+   "line": 244,
+   "pointer": "artifacts/AE/acceptance.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "scripts/_publish_report_m7300.py",
+    "scripts/analyze_bidisperse_segregation.py",
+    "scripts/ice_drift_dynamics_artifacts.py",
+    "scripts/ice_ridge_keel_acceptance.py",
+    "scripts/in29_n03_calibration.py",
+    "scripts/in29_n03_report.py",
+    "scripts/ridge_mechanics_acceptance.py",
+    "scripts/ridge_mechanics_figures.py",
+    "scripts/run_curved_patch_mortar_benchmark.py",
+    "scripts/verify_acoustic_source_terms.py",
+    "src/tensordem/ae/indentation.py",
+    "tests/test_ae_acoustic_emission.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/ae/README.md",
+   "line": 246,
+   "pointer": "artifacts/AE/events.csv",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "src/tensordem/ae/indentation.py",
+    "tests/test_ae_acoustic_emission.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/ae/README.md",
+   "line": 248,
+   "pointer": "artifacts/AE/result_summary.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "src/tensordem/ae/indentation.py",
+    "tests/test_ae_acoustic_emission.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
    "doc": "docs/ball_ball_rolling_contact.md",
    "line": 5,
    "pointer": "scripts/verify_ball_ball_rolling_contact.py",
@@ -1385,13 +3190,21 @@
     "benchmarks/hertz_analytic/run.py",
     "benchmarks/hertz_analytic/validate.py",
     "scripts/benchmark_floe_buoyancy.py",
+    "scripts/build_freeze_bond_report.py",
+    "scripts/gen_ice_pressure_stats_figs.py",
+    "scripts/in143_n09_study.py",
     "scripts/render_dem3d_hertz_restitution.py",
     "scripts/report_ball_ball_rolling_contact.py",
+    "scripts/run_coarse_graining_campaign.py",
+    "scripts/run_freeze_bond_arch.py",
     "scripts/sir_pc2_figures.py",
     "scripts/verify_ball_ball_rolling_contact.py",
     "scripts/verify_dem3d_hertz_restitution.py",
     "scripts/verify_dem3d_rolling_resistance.py",
+    "src/tensordem/bedcoupling/study.py",
     "tests/test_ball_ball_rolling_contact.py",
+    "tests/test_bedcoupling_acceptance.py",
+    "tests/test_coarse_graining_scaling.py",
     "tests/test_dem3d_energy_friction_rolling.py"
    ],
    "remedy": "REGENERABLE"
@@ -1425,8 +3238,10 @@
    "status": "MISSING",
    "producers": [
     "benchmarks/sea_ice_drift_validation.py",
+    "scripts/gen_ice_collision_figures.py",
     "scripts/make_ridge_grounding_figures.py",
     "scripts/post_ice_beam_report.py",
+    "scripts/pressure_band_maturation_report.py",
     "scripts/render_ice_beam_figures.py",
     "scripts/report_ball_ball_rolling_contact.py",
     "scripts/sir_pc2_figures.py",
@@ -1542,20 +3357,27 @@
    "producers": [
     "benchmarks/ice_rideup_sweep.py",
     "scripts/adhesion_repose_pile.py",
+    "scripts/analyse_rubble_rheology.py",
     "scripts/benchmark_dem3d_contact_impact.py",
     "scripts/benchmark_dem3d_scale.py",
+    "scripts/build_dem_thermal_report.py",
     "scripts/collect_tutorial_first_verified_run.py",
     "scripts/m6296_beverloo_analysis.py",
     "scripts/m6457_beverloo_analysis.py",
     "scripts/make_api_report.py",
     "scripts/make_contact_impact_report.py",
+    "scripts/mts_contact_report.py",
+    "scripts/plot_dem_thermal_granular.py",
     "scripts/post_adhesion_report.py",
     "scripts/pressure_area_campaign.py",
     "scripts/pressure_area_figures.py",
     "scripts/pressure_area_report.py",
     "scripts/render_ice_uq_page.py",
+    "scripts/render_rubble_rheology_report.py",
     "scripts/report_rolling_resistance.py",
+    "scripts/run_dem_thermal_granular.py",
     "scripts/run_ice_uq_sensitivity.py",
+    "scripts/run_ridge_statistical_study.py",
     "scripts/validate_rolling_resistance.py",
     "tests/test_ridge_grounding_refresh_evidence.py",
     "tests/test_tutorial_first_verified_run.py"
@@ -1591,6 +3413,223 @@
    "status": "TRACKED"
   },
   {
+   "doc": "docs/bidisperse_segregation.md",
+   "line": 5,
+   "pointer": "artifacts/p70n03/acceptance.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "scripts/_publish_report_m7300.py",
+    "scripts/analyze_bidisperse_segregation.py",
+    "scripts/ice_drift_dynamics_artifacts.py",
+    "scripts/ice_ridge_keel_acceptance.py",
+    "scripts/in29_n03_calibration.py",
+    "scripts/in29_n03_report.py",
+    "scripts/ridge_mechanics_acceptance.py",
+    "scripts/ridge_mechanics_figures.py",
+    "scripts/run_curved_patch_mortar_benchmark.py",
+    "scripts/verify_acoustic_source_terms.py",
+    "src/tensordem/ae/indentation.py",
+    "tests/test_ae_acoustic_emission.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/bidisperse_segregation.md",
+   "line": 21,
+   "pointer": "src/tensordem/bidisperse_segregation.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/bidisperse_segregation.md",
+   "line": 54,
+   "pointer": "src/tensordem/segregation_stability.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/bidisperse_segregation.md",
+   "line": 111,
+   "pointer": "scripts/_diag_settle_m7300.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/bidisperse_segregation.md",
+   "line": 159,
+   "pointer": "tests/test_bidisperse_segregation.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/bidisperse_segregation.md",
+   "line": 162,
+   "pointer": "scripts/run_bidisperse_segregation.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/bidisperse_segregation.md",
+   "line": 169,
+   "pointer": "scripts/analyze_bidisperse_segregation.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/bidisperse_segregation.md",
+   "line": 179,
+   "pointer": "scripts/_diag_mode_m7300.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/bidisperse_segregation.md",
+   "line": 180,
+   "pointer": "scripts/_diag_step_m7300.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/bidisperse_segregation.md",
+   "line": 180,
+   "pointer": "scripts/_diag_wall_m7300.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/bpm_calibration_maturation.md",
+   "line": 26,
+   "pointer": "src/tensordem/bpm_calibration.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/bpm_calibration_maturation.md",
+   "line": 117,
+   "pointer": "src/tensordem/dem3d.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/bpm_calibration_maturation.md",
+   "line": 145,
+   "pointer": "figures/fig1_quasi_static_convergence.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "scripts/bpm_calibration_figures.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/bpm_calibration_maturation.md",
+   "line": 161,
+   "pointer": "figures/fig2_size_effect.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "scripts/bpm_calibration_figures.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/bpm_calibration_maturation.md",
+   "line": 171,
+   "pointer": "figures/fig3_weibull_bootstrap.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "scripts/bpm_calibration_figures.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/bpm_calibration_maturation.md",
+   "line": 182,
+   "pointer": "figures/fig4_dual_friction.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "scripts/bpm_calibration_figures.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/bpm_calibration_maturation.md",
+   "line": 196,
+   "pointer": "scripts/calibrate_dem3d_ucs.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/bpm_calibration_maturation.md",
+   "line": 199,
+   "pointer": "figures/fig5_ucs_literature.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "scripts/bpm_calibration_figures.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/bpm_calibration_maturation.md",
+   "line": 205,
+   "pointer": "scripts/bpm_calibration_figures.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/bpm_calibration_maturation.md",
+   "line": 242,
+   "pointer": "docs/dem3d_brazilian_hondros_closure.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/bpm_calibration_maturation.md",
+   "line": 294,
+   "pointer": "tests/test_bpm_calibration.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/bpm_calibration_maturation.md",
+   "line": 295,
+   "pointer": "scripts/bpm_calibration_runner.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/bpm_calibration_maturation.md",
+   "line": 302,
+   "pointer": "results/bpm_calibration/bpm_calibration_report.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "scripts/bpm_calibration_runner.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/bpm_calibration_maturation.md",
+   "line": 303,
+   "pointer": "results/bpm_calibration/figures/fig1-5.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [],
+   "remedy": "ORPHAN",
+   "suggested": []
+  },
+  {
+   "doc": "docs/bpm_calibration_maturation.md",
+   "line": 304,
+   "pointer": "docs/bpm_calibration_maturation.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
    "doc": "docs/broken_ice_micro_structure_validation.md",
    "line": 4,
    "pointer": "scripts/broken_ice_micro_study.py",
@@ -1611,6 +3650,7 @@
    "kind": "data",
    "status": "MISSING",
    "producers": [
+    "scripts/ag27w2_n09_random_pressure_field_fatigue.py",
     "scripts/audit_calibrated_wet.py",
     "scripts/audit_continuum_boundary.py",
     "scripts/audit_smooth_plane.py",
@@ -1618,15 +3658,28 @@
     "scripts/calibrated_wet_study.py",
     "scripts/continuum_boundary_study.py",
     "scripts/ice_contact_gsa.py",
+    "scripts/ice_ridge_keel_acceptance.py",
+    "scripts/ice_ridge_keel_figures.py",
+    "scripts/ice_ridge_keel_study.py",
     "scripts/ice_rubble_microstructure_study.py",
     "scripts/make_ice_contact_report.py",
     "scripts/material_calibration.py",
+    "scripts/pressure_band_lambda_calibration.py",
+    "scripts/pressure_band_maturation.py",
+    "scripts/pressure_band_maturation_report.py",
+    "scripts/pressure_band_report_md.py",
+    "scripts/run_ridge_freeze_bond_aging.py",
     "scripts/smooth_plane_study.py",
     "scripts/validate_accounting_ledger.py",
     "src/tensordem/broken_ice_micro/__init__.py",
     "src/tensordem/broken_ice_micro/study.py",
     "src/tensordem/ice_contact/study.py",
-    "tests/test_ice_contact_acceptance.py"
+    "src/tensordem/ice_evolution/study.py",
+    "src/tensordem/stochastic_pressure_field/study.py",
+    "tests/test_ice_contact_acceptance.py",
+    "tests/test_ice_ridge_keel_freezebond.py",
+    "tests/test_ridge_freeze_bond_aging.py",
+    "tests/test_stochastic_pressure_field.py"
    ],
    "remedy": "REGENERABLE"
   },
@@ -1655,6 +3708,12 @@
    "kind": "data",
    "status": "MISSING",
    "producers": [
+    "benchmarks/mts_contact_integration.py",
+    "scripts/ag27w2_n06_verification.py",
+    "scripts/build_ag27w2_n06_doc.py",
+    "scripts/p66_w2_n05_verification.py",
+    "scripts/p82w2_n09_report.py",
+    "scripts/render_ice_bond_quasistatic_doc.py",
     "scripts/verify_bond_quasistatic_rate.py",
     "scripts/verify_buoyancy_free_float.py",
     "scripts/verify_dem3d_contact_impact_convention.py",
@@ -1662,7 +3721,9 @@
     "scripts/verify_ice_bond_single_bond_engine.py",
     "scripts/verify_ice_bond_specimen_rate.py",
     "scripts/verify_ice_bond_viscoelastic.py",
-    "scripts/verify_nonspherical_contact_and_timestep.py"
+    "scripts/verify_nonspherical_contact_and_timestep.py",
+    "scripts/verify_repose_injection.py",
+    "tests/test_repose_injection.py"
    ],
    "remedy": "REGENERABLE"
   },
@@ -2274,7 +4335,9 @@
    "status": "MISSING",
    "producers": [
     "benchmarks/clump_clump_contact_verification.py",
-    "scripts/m5186_build_report.py"
+    "scripts/m5186_build_report.py",
+    "scripts/pressure_band_maturation.py",
+    "scripts/pressure_band_maturation_report.py"
    ],
    "remedy": "REGENERABLE"
   },
@@ -2587,6 +4650,308 @@
    "status": "TRACKED"
   },
   {
+   "doc": "docs/coarse_graining_scaling_laws.md",
+   "line": 175,
+   "pointer": "src/tensordem/coarse_graining.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/coarse_graining_scaling_laws.md",
+   "line": 176,
+   "pointer": "tests/test_coarse_graining_scaling.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/coarse_graining_scaling_laws.md",
+   "line": 177,
+   "pointer": "runs/cg_scaling/results.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "benchmarks/hertz_analytic/run.py",
+    "benchmarks/hertz_analytic/validate.py",
+    "scripts/benchmark_floe_buoyancy.py",
+    "scripts/build_freeze_bond_report.py",
+    "scripts/gen_ice_pressure_stats_figs.py",
+    "scripts/in143_n09_study.py",
+    "scripts/render_dem3d_hertz_restitution.py",
+    "scripts/report_ball_ball_rolling_contact.py",
+    "scripts/run_coarse_graining_campaign.py",
+    "scripts/run_freeze_bond_arch.py",
+    "scripts/sir_pc2_figures.py",
+    "scripts/verify_ball_ball_rolling_contact.py",
+    "scripts/verify_dem3d_hertz_restitution.py",
+    "scripts/verify_dem3d_rolling_resistance.py",
+    "src/tensordem/bedcoupling/study.py",
+    "tests/test_ball_ball_rolling_contact.py",
+    "tests/test_bedcoupling_acceptance.py",
+    "tests/test_coarse_graining_scaling.py",
+    "tests/test_dem3d_energy_friction_rolling.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/coarse_graining_scaling_laws.md",
+   "line": 178,
+   "pointer": "artifacts/cg_scaling_laws.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [],
+   "remedy": "ORPHAN",
+   "suggested": []
+  },
+  {
+   "doc": "docs/coarse_graining_scaling_laws.md",
+   "line": 179,
+   "pointer": "artifacts/cg_cross_validation.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [],
+   "remedy": "ORPHAN",
+   "suggested": []
+  },
+  {
+   "doc": "docs/coarse_graining_scaling_laws.md",
+   "line": 180,
+   "pointer": "artifacts/cg_repose_angle.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [],
+   "remedy": "ORPHAN",
+   "suggested": []
+  },
+  {
+   "doc": "docs/contact_physics_module.md",
+   "line": 4,
+   "pointer": "artifacts/contact_physics/integration_report.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "benchmarks/contact_physics_integration.py",
+    "scripts/build_contact_physics_doc.py",
+    "scripts/post_contact_physics_report.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/contact_physics_module.md",
+   "line": 11,
+   "pointer": "src/tensordem/contact_physics/bond.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/contact_physics_module.md",
+   "line": 12,
+   "pointer": "src/tensordem/contact_physics/statistics.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/contact_physics_module.md",
+   "line": 13,
+   "pointer": "src/tensordem/contact_physics/lubrication.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/contact_physics_module.md",
+   "line": 14,
+   "pointer": "src/tensordem/contact_physics/march.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/contact_physics_module.md",
+   "line": 46,
+   "pointer": "contact_physics/bond.py",
+   "kind": "code",
+   "status": "MISSING",
+   "producers": [
+    "scripts/post_contact_physics_report.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/contact_physics_module.md",
+   "line": 47,
+   "pointer": "contact_physics/lubrication.py",
+   "kind": "code",
+   "status": "MISSING",
+   "producers": [
+    "scripts/post_contact_physics_report.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/contact_physics_module.md",
+   "line": 47,
+   "pointer": "contact_physics/statistics.py",
+   "kind": "code",
+   "status": "MISSING",
+   "producers": [
+    "scripts/post_contact_physics_report.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/contact_physics_module.md",
+   "line": 48,
+   "pointer": "contact_physics/march.py",
+   "kind": "code",
+   "status": "MISSING",
+   "producers": [
+    "scripts/post_contact_physics_report.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/contact_physics_module.md",
+   "line": 153,
+   "pointer": "examples/contact_physics_demo.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/contact_physics_module.md",
+   "line": 183,
+   "pointer": "scripts/freeze_contact_physics_api.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/contact_physics_module.md",
+   "line": 184,
+   "pointer": "scripts/contact_physics_regression_gate.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/contact_physics_module.md",
+   "line": 185,
+   "pointer": "benchmarks/contact_physics_integration.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/contact_physics_module.md",
+   "line": 186,
+   "pointer": "scripts/build_contact_physics_doc.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/contact_physics_module.md",
+   "line": 187,
+   "pointer": "tests/test_contact_physics_integration.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/contact_physics_module.md",
+   "line": 188,
+   "pointer": "scripts/post_contact_physics_report.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/contact_physics_module.md",
+   "line": 209,
+   "pointer": "artifacts/contact_physics/api_baseline.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "benchmarks/contact_physics_integration.py",
+    "scripts/freeze_contact_physics_api.py",
+    "scripts/post_contact_physics_report.py",
+    "tests/test_contact_physics_integration.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/contact_physics_module.md",
+   "line": 210,
+   "pointer": "artifacts/contact_physics/performance_pytest.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "benchmarks/contact_physics_integration.py",
+    "scripts/post_contact_physics_report.py",
+    "tests/test_contact_physics_integration.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/contact_physics_module.md",
+   "line": 211,
+   "pointer": "artifacts/contact_physics/regression_gate.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "benchmarks/contact_physics_integration.py",
+    "scripts/contact_physics_regression_gate.py",
+    "scripts/post_contact_physics_report.py",
+    "tests/test_contact_physics_integration.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/contact_physics_module.md",
+   "line": 212,
+   "pointer": "docs/contact_physics_module.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/contact_physics_module.md",
+   "line": 230,
+   "pointer": "artifacts/contact_physics/fig_bond_response.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "benchmarks/contact_physics_integration.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/contact_physics_module.md",
+   "line": 230,
+   "pointer": "artifacts/contact_physics/fig_coupling_history.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "benchmarks/contact_physics_integration.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/contact_physics_module.md",
+   "line": 230,
+   "pointer": "artifacts/contact_physics/fig_parity.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "benchmarks/contact_physics_integration.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/contact_physics_module.md",
+   "line": 230,
+   "pointer": "artifacts/contact_physics/fig_statistics.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "benchmarks/contact_physics_integration.py",
+    "scripts/make_api_report.py",
+    "scripts/pressure_area_figures.py",
+    "scripts/pressure_area_report.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
    "doc": "docs/coupling/continuum-boundary/README.md",
    "line": 82,
    "pointer": "scripts/continuum_boundary_study.py",
@@ -2767,6 +5132,9 @@
    "status": "MISSING",
    "producers": [
     "scripts/post_m4790_report.py",
+    "scripts/pressure_band_report_md.py",
+    "scripts/publish_pressure_band_report.py",
+    "scripts/run_coarse_graining_campaign.py",
     "tests/test_audit_upstream_diff_m1630.py",
     "tests/test_m4790_sensitivity_evidence.py"
    ],
@@ -6883,6 +9251,12 @@
    "kind": "data",
    "status": "MISSING",
    "producers": [
+    "benchmarks/mts_contact_integration.py",
+    "scripts/ag27w2_n06_verification.py",
+    "scripts/build_ag27w2_n06_doc.py",
+    "scripts/p66_w2_n05_verification.py",
+    "scripts/p82w2_n09_report.py",
+    "scripts/render_ice_bond_quasistatic_doc.py",
     "scripts/verify_bond_quasistatic_rate.py",
     "scripts/verify_buoyancy_free_float.py",
     "scripts/verify_dem3d_contact_impact_convention.py",
@@ -6890,7 +9264,9 @@
     "scripts/verify_ice_bond_single_bond_engine.py",
     "scripts/verify_ice_bond_specimen_rate.py",
     "scripts/verify_ice_bond_viscoelastic.py",
-    "scripts/verify_nonspherical_contact_and_timestep.py"
+    "scripts/verify_nonspherical_contact_and_timestep.py",
+    "scripts/verify_repose_injection.py",
+    "tests/test_repose_injection.py"
    ],
    "remedy": "REGENERABLE"
   },
@@ -6922,6 +9298,12 @@
    "kind": "data",
    "status": "MISSING",
    "producers": [
+    "benchmarks/mts_contact_integration.py",
+    "scripts/ag27w2_n06_verification.py",
+    "scripts/build_ag27w2_n06_doc.py",
+    "scripts/p66_w2_n05_verification.py",
+    "scripts/p82w2_n09_report.py",
+    "scripts/render_ice_bond_quasistatic_doc.py",
     "scripts/verify_bond_quasistatic_rate.py",
     "scripts/verify_buoyancy_free_float.py",
     "scripts/verify_dem3d_contact_impact_convention.py",
@@ -6929,7 +9311,9 @@
     "scripts/verify_ice_bond_single_bond_engine.py",
     "scripts/verify_ice_bond_specimen_rate.py",
     "scripts/verify_ice_bond_viscoelastic.py",
-    "scripts/verify_nonspherical_contact_and_timestep.py"
+    "scripts/verify_nonspherical_contact_and_timestep.py",
+    "scripts/verify_repose_injection.py",
+    "tests/test_repose_injection.py"
    ],
    "remedy": "REGENERABLE"
   },
@@ -6961,6 +9345,12 @@
    "kind": "data",
    "status": "MISSING",
    "producers": [
+    "benchmarks/mts_contact_integration.py",
+    "scripts/ag27w2_n06_verification.py",
+    "scripts/build_ag27w2_n06_doc.py",
+    "scripts/p66_w2_n05_verification.py",
+    "scripts/p82w2_n09_report.py",
+    "scripts/render_ice_bond_quasistatic_doc.py",
     "scripts/verify_bond_quasistatic_rate.py",
     "scripts/verify_buoyancy_free_float.py",
     "scripts/verify_dem3d_contact_impact_convention.py",
@@ -6968,7 +9358,9 @@
     "scripts/verify_ice_bond_single_bond_engine.py",
     "scripts/verify_ice_bond_specimen_rate.py",
     "scripts/verify_ice_bond_viscoelastic.py",
-    "scripts/verify_nonspherical_contact_and_timestep.py"
+    "scripts/verify_nonspherical_contact_and_timestep.py",
+    "scripts/verify_repose_injection.py",
+    "tests/test_repose_injection.py"
    ],
    "remedy": "REGENERABLE"
   },
@@ -6977,6 +9369,132 @@
    "line": 131,
    "pointer": "docs/ice_bond_single_bond_engine_verification.md",
    "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem_calibration_gap_ledger.md",
+   "line": 158,
+   "pointer": "scripts/verify_bond_quasistatic_rate.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem_calibration_gap_ledger.md",
+   "line": 158,
+   "pointer": "tests/test_bond_quasistatic.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem_calibration_gap_ledger.md",
+   "line": 163,
+   "pointer": "docs/ice_bond_quasistatic_rate_verification.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem_calibration_gap_ledger.md",
+   "line": 164,
+   "pointer": "scripts/render_ice_bond_quasistatic_doc.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem_calibration_gap_ledger.md",
+   "line": 191,
+   "pointer": "docs/dem_nonspherical_representation_verdict.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem_calibration_gap_ledger.md",
+   "line": 194,
+   "pointer": "src/tensordem/repose_injection.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem_calibration_gap_ledger.md",
+   "line": 195,
+   "pointer": "tests/test_repose_injection.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem_calibration_gap_ledger.md",
+   "line": 196,
+   "pointer": "artifacts/repose_injection/verification.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "benchmarks/mts_contact_integration.py",
+    "scripts/ag27w2_n06_verification.py",
+    "scripts/build_ag27w2_n06_doc.py",
+    "scripts/p66_w2_n05_verification.py",
+    "scripts/p82w2_n09_report.py",
+    "scripts/render_ice_bond_quasistatic_doc.py",
+    "scripts/verify_bond_quasistatic_rate.py",
+    "scripts/verify_buoyancy_free_float.py",
+    "scripts/verify_dem3d_contact_impact_convention.py",
+    "scripts/verify_hertz_contract.py",
+    "scripts/verify_ice_bond_single_bond_engine.py",
+    "scripts/verify_ice_bond_specimen_rate.py",
+    "scripts/verify_ice_bond_viscoelastic.py",
+    "scripts/verify_nonspherical_contact_and_timestep.py",
+    "scripts/verify_repose_injection.py",
+    "tests/test_repose_injection.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/dem_calibration_gap_ledger.md",
+   "line": 196,
+   "pointer": "scripts/verify_repose_injection.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem_calibration_gap_ledger.md",
+   "line": 197,
+   "pointer": "docs/repose_injection_driver.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem_contact_mechanics_verification_report.md",
+   "line": 46,
+   "pointer": "src/tensordem/dem_contact_verification.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem_contact_mechanics_verification_report.md",
+   "line": 47,
+   "pointer": "tests/test_dem_contact_mechanics_verification.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/dem_contact_mechanics_verification_report.md",
+   "line": 141,
+   "pointer": "artifacts/dem/shape_representation_verdict.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "scripts/p40_n10_report.py",
+    "scripts/p40_n10_shape_verdict.py",
+    "scripts/shape_representation_campaign.py",
+    "scripts/shape_representation_report.py",
+    "src/tensordem/shape_representation/__init__.py",
+    "tests/test_dem_contact_mechanics_verification.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/dem_contact_mechanics_verification_report.md",
+   "line": 197,
+   "pointer": "scripts/generate_dem_verification_figures.py",
+   "kind": "code",
    "status": "TRACKED"
   },
   {
@@ -7066,7 +9584,8 @@
     "scripts/p40_n10_shape_verdict.py",
     "scripts/shape_representation_campaign.py",
     "scripts/shape_representation_report.py",
-    "src/tensordem/shape_representation/__init__.py"
+    "src/tensordem/shape_representation/__init__.py",
+    "tests/test_dem_contact_mechanics_verification.py"
    ],
    "remedy": "REGENERABLE"
   },
@@ -7152,6 +9671,8 @@
    "status": "MISSING",
    "producers": [
     "benchmarks/channel_6dof_report.py",
+    "benchmarks/consolidation_terzaghi/post_platform_report.py",
+    "benchmarks/drum_flow_report.py",
     "benchmarks/floe_heave_finite_amplitude.py",
     "benchmarks/in32_n01_report.py",
     "benchmarks/post_jamming_report.py",
@@ -7163,8 +9684,11 @@
     "scripts/benchmark_ice_beam_bending.py",
     "scripts/benchmark_rudder_ice_load.py",
     "scripts/brazilian_report_builder.py",
+    "scripts/build_dem_thermal_report.py",
+    "scripts/build_freeze_bond_report.py",
     "scripts/build_ice_abrasion_doc.py",
     "scripts/build_in22_n03_report.py",
+    "scripts/build_mixed_ice_report.py",
     "scripts/build_platform_report.py",
     "scripts/build_report_payload.py",
     "scripts/build_ridge_report.py",
@@ -7176,7 +9700,17 @@
     "scripts/make_api_report.py",
     "scripts/make_contact_impact_report.py",
     "scripts/make_ice_contact_report.py",
+    "scripts/make_myi_ridge_report.py",
+    "scripts/mixed_ice_platform_report.py",
+    "scripts/mts_contact_report_payload.py",
+    "scripts/n04_report_figures.py",
+    "scripts/pressure_band_lambda_calibration.py",
+    "scripts/pressure_band_maturation.py",
+    "scripts/pressure_band_maturation_report.py",
+    "scripts/pressure_band_report_md.py",
+    "scripts/publish_pressure_band_report.py",
     "scripts/render_ice_uq_page.py",
+    "scripts/render_rubble_rheology_report.py",
     "scripts/shape_representation_report.py",
     "scripts/superquadric_report.py",
     "scripts/verify_fem_euler_bernoulli.py",
@@ -7284,6 +9818,8 @@
    "status": "MISSING",
    "producers": [
     "benchmarks/channel_6dof_report.py",
+    "benchmarks/consolidation_terzaghi/post_platform_report.py",
+    "benchmarks/drum_flow_report.py",
     "benchmarks/floe_heave_finite_amplitude.py",
     "benchmarks/in32_n01_report.py",
     "benchmarks/post_jamming_report.py",
@@ -7295,8 +9831,11 @@
     "scripts/benchmark_ice_beam_bending.py",
     "scripts/benchmark_rudder_ice_load.py",
     "scripts/brazilian_report_builder.py",
+    "scripts/build_dem_thermal_report.py",
+    "scripts/build_freeze_bond_report.py",
     "scripts/build_ice_abrasion_doc.py",
     "scripts/build_in22_n03_report.py",
+    "scripts/build_mixed_ice_report.py",
     "scripts/build_platform_report.py",
     "scripts/build_report_payload.py",
     "scripts/build_ridge_report.py",
@@ -7308,7 +9847,17 @@
     "scripts/make_api_report.py",
     "scripts/make_contact_impact_report.py",
     "scripts/make_ice_contact_report.py",
+    "scripts/make_myi_ridge_report.py",
+    "scripts/mixed_ice_platform_report.py",
+    "scripts/mts_contact_report_payload.py",
+    "scripts/n04_report_figures.py",
+    "scripts/pressure_band_lambda_calibration.py",
+    "scripts/pressure_band_maturation.py",
+    "scripts/pressure_band_maturation_report.py",
+    "scripts/pressure_band_report_md.py",
+    "scripts/publish_pressure_band_report.py",
     "scripts/render_ice_uq_page.py",
+    "scripts/render_rubble_rheology_report.py",
     "scripts/shape_representation_report.py",
     "scripts/superquadric_report.py",
     "scripts/verify_fem_euler_bernoulli.py",
@@ -7359,6 +9908,140 @@
    "remedy": "REGENERABLE"
   },
   {
+   "doc": "docs/floe_population_P80W2N05.md",
+   "line": 25,
+   "pointer": "src/tensordem/floe_population/soft_sphere.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/floe_population_P80W2N05.md",
+   "line": 83,
+   "pointer": "../artifacts/floe_population/c1_collision_kernel.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "resolved": "artifacts/floe_population/c1_collision_kernel.png",
+   "producers": [
+    "src/tensordem/floe_population/figures.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/floe_population_P80W2N05.md",
+   "line": 87,
+   "pointer": "../artifacts/floe_population/c2_breakage_kernel.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "resolved": "artifacts/floe_population/c2_breakage_kernel.png",
+   "producers": [
+    "src/tensordem/floe_population/figures.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/floe_population_P80W2N05.md",
+   "line": 91,
+   "pointer": "../artifacts/floe_population/c3_forecast.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "resolved": "artifacts/floe_population/c3_forecast.png",
+   "producers": [
+    "src/tensordem/floe_population/figures.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/floe_population_P80W2N05.md",
+   "line": 95,
+   "pointer": "../artifacts/floe_population/c5_negative_control.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "resolved": "artifacts/floe_population/c5_negative_control.png",
+   "producers": [
+    "src/tensordem/floe_population/figures.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/floe_population_P80W2N05.md",
+   "line": 99,
+   "pointer": "../artifacts/floe_population/c4_fragment_census.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "resolved": "artifacts/floe_population/c4_fragment_census.png",
+   "producers": [
+    "src/tensordem/floe_population/figures.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/formation_ice_channel_anchor.md",
+   "line": 5,
+   "pointer": "prereg/formation_ice_channel_anchor_prereg.json",
+   "kind": "data",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/formation_ice_channel_anchor.md",
+   "line": 6,
+   "pointer": "benchmarks/anchors/formation_ice_channel_anchor.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/formation_ice_channel_anchor.md",
+   "line": 7,
+   "pointer": "benchmarks/anchors/formation-ice-channel.json",
+   "kind": "data",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/formation_ice_channel_anchor.md",
+   "line": 8,
+   "pointer": "artifacts/anchors/fig1_components_band.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "benchmarks/anchors/formation_ice_channel_anchor.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/formation_ice_channel_anchor.md",
+   "line": 9,
+   "pointer": "tests/test_formation_ice_channel_anchor.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/formation_ice_channel_anchor.md",
+   "line": 48,
+   "pointer": "docs/LEVEL_ICE_RESISTANCE_DEM.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/formation_ice_channel_anchor.md",
+   "line": 49,
+   "pointer": "docs/threefield/FORMULAS.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/formation_ice_channel_anchor.md",
+   "line": 49,
+   "pointer": "src/tensordem/level_ice/formula.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/formation_ice_channel_anchor.md",
+   "line": 88,
+   "pointer": "docs/formation_ice_channel_cloud.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
    "doc": "docs/formation_ice_channel_cloud.md",
    "line": 4,
    "pointer": "src/tensordem/ice_channel.py",
@@ -7386,6 +10069,7 @@
    "kind": "data",
    "status": "MISSING",
    "producers": [
+    "benchmarks/anchors/formation_ice_channel_anchor.py",
     "benchmarks/formation_ice_channel_cloud.py",
     "tests/test_formation_ice_channel_cloud.py"
    ],
@@ -7459,6 +10143,90 @@
    "doc": "docs/fracture_gen_mass_footprint_audit.md",
    "line": 151,
    "pointer": "tests/test_fracture_gen.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/fragment_milling_report.md",
+   "line": 97,
+   "pointer": "figures/torque_spectrum_waterfall.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "scripts/fragment_milling_grid.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/fragment_milling_report.md",
+   "line": 101,
+   "pointer": "figures/sideband_law.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "scripts/fragment_milling_grid.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/fragment_milling_report.md",
+   "line": 105,
+   "pointer": "figures/conservation_ledgers.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "scripts/fragment_milling_grid.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/fragment_milling_report.md",
+   "line": 140,
+   "pointer": "artifacts/fragment_milling/fragment_milling_grid.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "scripts/fragment_milling_grid.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/fragment_milling_report.md",
+   "line": 141,
+   "pointer": "artifacts/fragment_milling/figures/torque_spectrum_waterfall.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "scripts/fragment_milling_grid.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/fragment_milling_report.md",
+   "line": 142,
+   "pointer": "artifacts/fragment_milling/figures/sideband_law.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "scripts/fragment_milling_grid.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/fragment_milling_report.md",
+   "line": 143,
+   "pointer": "artifacts/fragment_milling/figures/conservation_ledgers.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "scripts/fragment_milling_grid.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/fragment_milling_report.md",
+   "line": 144,
+   "pointer": "tests/test_fragment_milling.py",
    "kind": "test",
    "status": "TRACKED"
   },
@@ -7550,6 +10318,210 @@
    "line": 176,
    "pointer": "src/tensordem/threefield/fragmentation.py",
    "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/freeze_bond_arching.md",
+   "line": 4,
+   "pointer": "scripts/run_freeze_bond_arch.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/freeze_bond_arching.md",
+   "line": 10,
+   "pointer": "scripts/build_freeze_bond_report.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/freeze_bond_evolution_report.md",
+   "line": 142,
+   "pointer": "artifacts/freeze_bond_study/bond_strength_evolution.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "scripts/run_freeze_bond_study.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/freeze_bond_evolution_report.md",
+   "line": 167,
+   "pointer": "artifacts/freeze_bond_study/resistance_evolution.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "scripts/run_freeze_bond_study.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/freeze_bond_evolution_report.md",
+   "line": 193,
+   "pointer": "artifacts/freeze_bond_study/parameter_sensitivity.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "scripts/run_freeze_bond_study.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/freeze_bond_evolution_report.md",
+   "line": 336,
+   "pointer": "src/tensordem/ice_ridge_freeze_bond_evolution.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/freeze_bond_evolution_report.md",
+   "line": 337,
+   "pointer": "tests/test_ice_ridge_freeze_bond_evolution.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/freeze_bond_evolution_report.md",
+   "line": 338,
+   "pointer": "scripts/run_freeze_bond_study.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/freeze_bond_evolution_report.md",
+   "line": 339,
+   "pointer": "artifacts/freeze_bond_study/study_results.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "scripts/run_freeze_bond_study.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/freeze_bond_mode_transition/REPORT.md",
+   "line": 3,
+   "pointer": "src/tensordem/freeze_bond/contact.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/freeze_bond_mode_transition/REPORT.md",
+   "line": 3,
+   "pointer": "tools/run_freeze_bond_mode_transition.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/freeze_bond_mode_transition/REPORT.md",
+   "line": 4,
+   "pointer": "runs/freeze_bond_mode_transition/IN13-W4-N03_freeze_bond_mode_transition.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [],
+   "remedy": "ORPHAN",
+   "suggested": []
+  },
+  {
+   "doc": "docs/freeze_bond_mode_transition/REPORT.md",
+   "line": 5,
+   "pointer": "tests/test_freeze_bond_contact.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/freeze_bond_mode_transition/REPORT.md",
+   "line": 64,
+   "pointer": "src/tensordem/freeze_bond.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/freeze_bond_mode_transition/REPORT.md",
+   "line": 66,
+   "pointer": "tests/test_freeze_bond.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/freeze_bond_mode_transition/REPORT.md",
+   "line": 67,
+   "pointer": "tools/run_freeze_bond_sweep.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/freeze_bond_mode_transition/REPORT.md",
+   "line": 68,
+   "pointer": "freeze_bond/__init__.py",
+   "kind": "code",
+   "status": "MISSING",
+   "producers": [
+    "scripts/m4829_ci_gate_evidence.py",
+    "scripts/m5186_build_report.py",
+    "tests/test_dem2d_fracture_ledger.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/freeze_bond_mode_transition/REPORT.md",
+   "line": 68,
+   "pointer": "freeze_bond/strength.py",
+   "kind": "code",
+   "status": "MISSING",
+   "producers": [],
+   "remedy": "ORPHAN",
+   "suggested": [
+    "src/tensordem/freeze_bond/strength.py",
+    "src/tensordem/ice_evolution/strength.py",
+    "src/tensordem/ice_ridge_mechanics/strength.py"
+   ]
+  },
+  {
+   "doc": "docs/freeze_bond_mode_transition/REPORT.md",
+   "line": 70,
+   "pointer": "freeze_bond/contact.py",
+   "kind": "code",
+   "status": "MISSING",
+   "producers": [
+    "scripts/render_propeller_ice_doc.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/freeze_bond_mode_transition/REPORT.md",
+   "line": 198,
+   "pointer": "docs/figs/freeze_bond_mode_transition/bond_strength_temperature.png",
+   "kind": "figure",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/freeze_bond_mode_transition/REPORT.md",
+   "line": 199,
+   "pointer": "docs/figs/freeze_bond_mode_transition/peak_load_and_mode_map.png",
+   "kind": "figure",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/freeze_bond_mode_transition/REPORT.md",
+   "line": 200,
+   "pointer": "docs/figs/freeze_bond_mode_transition/transition_temperature.png",
+   "kind": "figure",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/freeze_bond_mode_transition/REPORT.md",
+   "line": 201,
+   "pointer": "docs/figs/freeze_bond_mode_transition/energy_ledger.png",
+   "kind": "figure",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/freeze_bond_mode_transition/REPORT.md",
+   "line": 202,
+   "pointer": "docs/figs/freeze_bond_mode_transition/multi_contact_slide.png",
+   "kind": "figure",
    "status": "TRACKED"
   },
   {
@@ -7681,6 +10653,39 @@
    "status": "TRACKED"
   },
   {
+   "doc": "docs/granular_wave_speed_hertz_mindlin.md",
+   "line": 4,
+   "pointer": "artifacts/granular_wave/wave_speed_study.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "scripts/run_granular_wave_speed.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/granular_wave_speed_hertz_mindlin.md",
+   "line": 5,
+   "pointer": "scripts/run_granular_wave_speed.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/granular_wave_speed_hertz_mindlin.md",
+   "line": 6,
+   "pointer": "tests/test_granular_wave_speed.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/granular_wave_speed_hertz_mindlin.md",
+   "line": 54,
+   "pointer": "tests/test_granular_wave_speed.py::test_servo_law_is_shared_with_true_triaxial",
+   "kind": "test",
+   "status": "TRACKED",
+   "resolved": "tests/test_granular_wave_speed.py"
+  },
+  {
    "doc": "docs/hertz_mindlin_contact.md",
    "line": 76,
    "pointer": "tensordem/hertz_mindlin.py",
@@ -7772,6 +10777,108 @@
    "status": "TRACKED"
   },
   {
+   "doc": "docs/hertz_peak_overlap_verification_fix.md",
+   "line": 6,
+   "pointer": "docs/dem3d_hertz_restitution_closure.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/hertz_peak_overlap_verification_fix.md",
+   "line": 18,
+   "pointer": "scripts/verify_dem3d_hertz_restitution.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/hertz_peak_overlap_verification_fix.md",
+   "line": 87,
+   "pointer": "tests/test_dem3d_hertz_restitution_verification.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ice-steel-friction-closure.md",
+   "line": 4,
+   "pointer": "artifacts/ice_steel_friction_closure.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "benchmarks/ice_steel_friction_closure.py",
+    "benchmarks/ice_steel_friction_closure_doc.py",
+    "benchmarks/ice_steel_friction_closure_grid_merge.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/ice-steel-friction-closure.md",
+   "line": 6,
+   "pointer": "benchmarks/ice_steel_friction_closure_doc.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ice-steel-friction-closure.md",
+   "line": 162,
+   "pointer": "../docs/ice-steel-friction-closure/coverage_and_film_area.png",
+   "kind": "figure",
+   "status": "TRACKED",
+   "resolved": "docs/ice-steel-friction-closure/coverage_and_film_area.png"
+  },
+  {
+   "doc": "docs/ice-steel-friction-closure.md",
+   "line": 166,
+   "pointer": "../docs/ice-steel-friction-closure/regime_map.png",
+   "kind": "figure",
+   "status": "TRACKED",
+   "resolved": "docs/ice-steel-friction-closure/regime_map.png"
+  },
+  {
+   "doc": "docs/ice-steel-friction-closure.md",
+   "line": 170,
+   "pointer": "../docs/ice-steel-friction-closure/mu_slices.png",
+   "kind": "figure",
+   "status": "TRACKED",
+   "resolved": "docs/ice-steel-friction-closure/mu_slices.png"
+  },
+  {
+   "doc": "docs/ice-steel-friction-closure.md",
+   "line": 174,
+   "pointer": "../docs/ice-steel-friction-closure/extrapolation_parity.png",
+   "kind": "figure",
+   "status": "TRACKED",
+   "resolved": "docs/ice-steel-friction-closure/extrapolation_parity.png"
+  },
+  {
+   "doc": "docs/ice-steel-friction-closure.md",
+   "line": 178,
+   "pointer": "../docs/ice-steel-friction-closure/friction_power_chain.png",
+   "kind": "figure",
+   "status": "TRACKED",
+   "resolved": "docs/ice-steel-friction-closure/friction_power_chain.png"
+  },
+  {
+   "doc": "docs/ice-steel-friction-closure.md",
+   "line": 216,
+   "pointer": "tests/test_ice_steel_friction_closure.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ice-steel-friction-closure.md",
+   "line": 217,
+   "pointer": "benchmarks/ice_steel_friction_closure.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ice-steel-friction-closure.md",
+   "line": 219,
+   "pointer": "benchmarks/ice_steel_friction_closure_grid_merge.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
    "doc": "docs/ice_abrasion_archard_wear.md",
    "line": 4,
    "pointer": "src/tensordem/ice_abrasion.py",
@@ -7849,6 +10956,8 @@
    "status": "MISSING",
    "producers": [
     "benchmarks/channel_6dof_report.py",
+    "benchmarks/consolidation_terzaghi/post_platform_report.py",
+    "benchmarks/drum_flow_report.py",
     "benchmarks/floe_heave_finite_amplitude.py",
     "benchmarks/in32_n01_report.py",
     "benchmarks/post_jamming_report.py",
@@ -7860,8 +10969,11 @@
     "scripts/benchmark_ice_beam_bending.py",
     "scripts/benchmark_rudder_ice_load.py",
     "scripts/brazilian_report_builder.py",
+    "scripts/build_dem_thermal_report.py",
+    "scripts/build_freeze_bond_report.py",
     "scripts/build_ice_abrasion_doc.py",
     "scripts/build_in22_n03_report.py",
+    "scripts/build_mixed_ice_report.py",
     "scripts/build_platform_report.py",
     "scripts/build_report_payload.py",
     "scripts/build_ridge_report.py",
@@ -7873,7 +10985,17 @@
     "scripts/make_api_report.py",
     "scripts/make_contact_impact_report.py",
     "scripts/make_ice_contact_report.py",
+    "scripts/make_myi_ridge_report.py",
+    "scripts/mixed_ice_platform_report.py",
+    "scripts/mts_contact_report_payload.py",
+    "scripts/n04_report_figures.py",
+    "scripts/pressure_band_lambda_calibration.py",
+    "scripts/pressure_band_maturation.py",
+    "scripts/pressure_band_maturation_report.py",
+    "scripts/pressure_band_report_md.py",
+    "scripts/publish_pressure_band_report.py",
     "scripts/render_ice_uq_page.py",
+    "scripts/render_rubble_rheology_report.py",
     "scripts/shape_representation_report.py",
     "scripts/superquadric_report.py",
     "scripts/verify_fem_euler_bernoulli.py",
@@ -8078,7 +11200,9 @@
    "producers": [
     "scripts/build_extreme_stats_doc.py",
     "scripts/extreme_stats_certification.py",
-    "scripts/extreme_stats_figures.py"
+    "scripts/extreme_stats_figures.py",
+    "scripts/p54w2_n06_collision_ledger_certification.py",
+    "tests/test_collision_ledger_certification.py"
    ],
    "remedy": "REGENERABLE"
   },
@@ -8137,6 +11261,50 @@
    "status": "TRACKED"
   },
   {
+   "doc": "docs/ice_abrasion_extremes_anchor.md",
+   "line": 4,
+   "pointer": "benchmarks/anchors/ice-abrasion-extremes.json",
+   "kind": "data",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ice_abrasion_extremes_anchor.md",
+   "line": 5,
+   "pointer": "benchmarks/anchors/ice_abrasion_extremes_anchor.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ice_abrasion_extremes_anchor.md",
+   "line": 6,
+   "pointer": "tests/test_ice_abrasion_extremes_anchor.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ice_abrasion_extremes_anchor.md",
+   "line": 39,
+   "pointer": "src/tensordem/ice_abrasion.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ice_abrasion_extremes_anchor.md",
+   "line": 110,
+   "pointer": "figs/ice_abrasion_anchor/fig1_pA_vs_case_caliber.png",
+   "kind": "figure",
+   "status": "TRACKED",
+   "resolved": "docs/figs/ice_abrasion_anchor/fig1_pA_vs_case_caliber.png"
+  },
+  {
+   "doc": "docs/ice_abrasion_extremes_anchor.md",
+   "line": 115,
+   "pointer": "figs/ice_abrasion_anchor/fig2_case_implied_exponent.png",
+   "kind": "figure",
+   "status": "TRACKED",
+   "resolved": "docs/figs/ice_abrasion_anchor/fig2_case_implied_exponent.png"
+  },
+  {
    "doc": "docs/ice_beam_bending_anchor.md",
    "line": 3,
    "pointer": "artifacts/ice-beam-bending/ice_beam_report.json",
@@ -8156,6 +11324,115 @@
    "line": 3,
    "pointer": "scripts/render_ice_beam_doc.py",
    "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ice_bond_quasistatic_rate_verification.md",
+   "line": 4,
+   "pointer": "scripts/verify_bond_quasistatic_rate.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ice_bond_quasistatic_rate_verification.md",
+   "line": 5,
+   "pointer": "artifacts/ice_bond_quasistatic/verification.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "benchmarks/mts_contact_integration.py",
+    "scripts/ag27w2_n06_verification.py",
+    "scripts/build_ag27w2_n06_doc.py",
+    "scripts/p66_w2_n05_verification.py",
+    "scripts/p82w2_n09_report.py",
+    "scripts/render_ice_bond_quasistatic_doc.py",
+    "scripts/verify_bond_quasistatic_rate.py",
+    "scripts/verify_buoyancy_free_float.py",
+    "scripts/verify_dem3d_contact_impact_convention.py",
+    "scripts/verify_hertz_contract.py",
+    "scripts/verify_ice_bond_single_bond_engine.py",
+    "scripts/verify_ice_bond_specimen_rate.py",
+    "scripts/verify_ice_bond_viscoelastic.py",
+    "scripts/verify_nonspherical_contact_and_timestep.py",
+    "scripts/verify_repose_injection.py",
+    "tests/test_repose_injection.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/ice_bond_quasistatic_rate_verification.md",
+   "line": 6,
+   "pointer": "scripts/render_ice_bond_quasistatic_doc.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ice_bond_quasistatic_rate_verification.md",
+   "line": 10,
+   "pointer": "docs/ice_bond_specimen_rate_dependence.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ice_bond_quasistatic_rate_verification.md",
+   "line": 165,
+   "pointer": "../artifacts/ice_bond_quasistatic/fig_strength_vs_rate.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "resolved": "artifacts/ice_bond_quasistatic/fig_strength_vs_rate.png",
+   "producers": [],
+   "remedy": "ORPHAN",
+   "suggested": []
+  },
+  {
+   "doc": "docs/ice_bond_quasistatic_rate_verification.md",
+   "line": 167,
+   "pointer": "../artifacts/ice_bond_quasistatic/fig_dt_convergence.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "resolved": "artifacts/ice_bond_quasistatic/fig_dt_convergence.png",
+   "producers": [],
+   "remedy": "ORPHAN",
+   "suggested": []
+  },
+  {
+   "doc": "docs/ice_bond_quasistatic_rate_verification.md",
+   "line": 169,
+   "pointer": "../artifacts/ice_bond_quasistatic/fig_inertia_dials.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "resolved": "artifacts/ice_bond_quasistatic/fig_inertia_dials.png",
+   "producers": [],
+   "remedy": "ORPHAN",
+   "suggested": []
+  },
+  {
+   "doc": "docs/ice_bond_quasistatic_rate_verification.md",
+   "line": 171,
+   "pointer": "../artifacts/ice_bond_quasistatic/fig_load_history.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "resolved": "artifacts/ice_bond_quasistatic/fig_load_history.png",
+   "producers": [],
+   "remedy": "ORPHAN",
+   "suggested": []
+  },
+  {
+   "doc": "docs/ice_bond_quasistatic_rate_verification.md",
+   "line": 173,
+   "pointer": "../artifacts/ice_bond_quasistatic/fig_error_vs_inertia.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "resolved": "artifacts/ice_bond_quasistatic/fig_error_vs_inertia.png",
+   "producers": [],
+   "remedy": "ORPHAN",
+   "suggested": []
+  },
+  {
+   "doc": "docs/ice_bond_quasistatic_rate_verification.md",
+   "line": 182,
+   "pointer": "tests/test_bond_quasistatic.py",
+   "kind": "test",
    "status": "TRACKED"
   },
   {
@@ -8179,6 +11456,12 @@
    "kind": "data",
    "status": "MISSING",
    "producers": [
+    "benchmarks/mts_contact_integration.py",
+    "scripts/ag27w2_n06_verification.py",
+    "scripts/build_ag27w2_n06_doc.py",
+    "scripts/p66_w2_n05_verification.py",
+    "scripts/p82w2_n09_report.py",
+    "scripts/render_ice_bond_quasistatic_doc.py",
     "scripts/verify_bond_quasistatic_rate.py",
     "scripts/verify_buoyancy_free_float.py",
     "scripts/verify_dem3d_contact_impact_convention.py",
@@ -8186,7 +11469,9 @@
     "scripts/verify_ice_bond_single_bond_engine.py",
     "scripts/verify_ice_bond_specimen_rate.py",
     "scripts/verify_ice_bond_viscoelastic.py",
-    "scripts/verify_nonspherical_contact_and_timestep.py"
+    "scripts/verify_nonspherical_contact_and_timestep.py",
+    "scripts/verify_repose_injection.py",
+    "tests/test_repose_injection.py"
    ],
    "remedy": "REGENERABLE"
   },
@@ -8204,6 +11489,12 @@
    "kind": "data",
    "status": "MISSING",
    "producers": [
+    "benchmarks/mts_contact_integration.py",
+    "scripts/ag27w2_n06_verification.py",
+    "scripts/build_ag27w2_n06_doc.py",
+    "scripts/p66_w2_n05_verification.py",
+    "scripts/p82w2_n09_report.py",
+    "scripts/render_ice_bond_quasistatic_doc.py",
     "scripts/verify_bond_quasistatic_rate.py",
     "scripts/verify_buoyancy_free_float.py",
     "scripts/verify_dem3d_contact_impact_convention.py",
@@ -8211,7 +11502,9 @@
     "scripts/verify_ice_bond_single_bond_engine.py",
     "scripts/verify_ice_bond_specimen_rate.py",
     "scripts/verify_ice_bond_viscoelastic.py",
-    "scripts/verify_nonspherical_contact_and_timestep.py"
+    "scripts/verify_nonspherical_contact_and_timestep.py",
+    "scripts/verify_repose_injection.py",
+    "tests/test_repose_injection.py"
    ],
    "remedy": "REGENERABLE"
   },
@@ -8264,6 +11557,12 @@
    "kind": "data",
    "status": "MISSING",
    "producers": [
+    "benchmarks/mts_contact_integration.py",
+    "scripts/ag27w2_n06_verification.py",
+    "scripts/build_ag27w2_n06_doc.py",
+    "scripts/p66_w2_n05_verification.py",
+    "scripts/p82w2_n09_report.py",
+    "scripts/render_ice_bond_quasistatic_doc.py",
     "scripts/verify_bond_quasistatic_rate.py",
     "scripts/verify_buoyancy_free_float.py",
     "scripts/verify_dem3d_contact_impact_convention.py",
@@ -8271,7 +11570,9 @@
     "scripts/verify_ice_bond_single_bond_engine.py",
     "scripts/verify_ice_bond_specimen_rate.py",
     "scripts/verify_ice_bond_viscoelastic.py",
-    "scripts/verify_nonspherical_contact_and_timestep.py"
+    "scripts/verify_nonspherical_contact_and_timestep.py",
+    "scripts/verify_repose_injection.py",
+    "tests/test_repose_injection.py"
    ],
    "remedy": "REGENERABLE"
   },
@@ -8317,6 +11618,12 @@
    "kind": "data",
    "status": "MISSING",
    "producers": [
+    "benchmarks/mts_contact_integration.py",
+    "scripts/ag27w2_n06_verification.py",
+    "scripts/build_ag27w2_n06_doc.py",
+    "scripts/p66_w2_n05_verification.py",
+    "scripts/p82w2_n09_report.py",
+    "scripts/render_ice_bond_quasistatic_doc.py",
     "scripts/verify_bond_quasistatic_rate.py",
     "scripts/verify_buoyancy_free_float.py",
     "scripts/verify_dem3d_contact_impact_convention.py",
@@ -8324,7 +11631,9 @@
     "scripts/verify_ice_bond_single_bond_engine.py",
     "scripts/verify_ice_bond_specimen_rate.py",
     "scripts/verify_ice_bond_viscoelastic.py",
-    "scripts/verify_nonspherical_contact_and_timestep.py"
+    "scripts/verify_nonspherical_contact_and_timestep.py",
+    "scripts/verify_repose_injection.py",
+    "tests/test_repose_injection.py"
    ],
    "remedy": "REGENERABLE"
   },
@@ -8563,6 +11872,138 @@
    "status": "TRACKED"
   },
   {
+   "doc": "docs/ice_pressure_band_lambda_x.md",
+   "line": 101,
+   "pointer": "scripts/pressure_band_lambda_calibration.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ice_pressure_band_lambda_x.md",
+   "line": 274,
+   "pointer": "artifacts/pressure_band_lambda/report.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "benchmarks/channel_6dof_report.py",
+    "benchmarks/consolidation_terzaghi/post_platform_report.py",
+    "benchmarks/drum_flow_report.py",
+    "benchmarks/floe_heave_finite_amplitude.py",
+    "benchmarks/in32_n01_report.py",
+    "benchmarks/post_jamming_report.py",
+    "benchmarks/timestep_stability_audit.py",
+    "scripts/audit_dem3d_shear_cross_section_convergence.py",
+    "scripts/audit_dem3d_shear_static_reference.py",
+    "scripts/audit_plate_on_foundation.py",
+    "scripts/benchmark_ice_abrasion.py",
+    "scripts/benchmark_ice_beam_bending.py",
+    "scripts/benchmark_rudder_ice_load.py",
+    "scripts/brazilian_report_builder.py",
+    "scripts/build_dem_thermal_report.py",
+    "scripts/build_freeze_bond_report.py",
+    "scripts/build_ice_abrasion_doc.py",
+    "scripts/build_in22_n03_report.py",
+    "scripts/build_mixed_ice_report.py",
+    "scripts/build_platform_report.py",
+    "scripts/build_report_payload.py",
+    "scripts/build_ridge_report.py",
+    "scripts/hull_contact_verification.py",
+    "scripts/in29_n03_report.py",
+    "scripts/in60_n09_report.py",
+    "scripts/m4950_build_report.py",
+    "scripts/m5186_build_report.py",
+    "scripts/make_api_report.py",
+    "scripts/make_contact_impact_report.py",
+    "scripts/make_ice_contact_report.py",
+    "scripts/make_myi_ridge_report.py",
+    "scripts/mixed_ice_platform_report.py",
+    "scripts/mts_contact_report_payload.py",
+    "scripts/n04_report_figures.py",
+    "scripts/pressure_band_lambda_calibration.py",
+    "scripts/pressure_band_maturation.py",
+    "scripts/pressure_band_maturation_report.py",
+    "scripts/pressure_band_report_md.py",
+    "scripts/publish_pressure_band_report.py",
+    "scripts/render_ice_uq_page.py",
+    "scripts/render_rubble_rheology_report.py",
+    "scripts/shape_representation_report.py",
+    "scripts/superquadric_report.py",
+    "scripts/verify_fem_euler_bernoulli.py",
+    "scripts/verify_floe_heave_finite_amplitude.py",
+    "tests/test_doc_evidence_pointers.py",
+    "tests/test_verification.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/ice_pressure_band_lambda_x.md",
+   "line": 274,
+   "pointer": "scripts/pressure_band_report_md.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ice_pressure_band_lambda_x.md",
+   "line": 285,
+   "pointer": "tests/test_ice_pressure_band.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ice_pressure_band_lambda_x.md",
+   "line": 289,
+   "pointer": "schemas/lambda_x_estimate.v1.json",
+   "kind": "data",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ice_pressure_band_lambda_x_maturation.md",
+   "line": 28,
+   "pointer": "artifacts/pressure_band_lambda_maturation/dem.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "scripts/pressure_band_maturation.py",
+    "scripts/pressure_band_maturation_report.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/ice_pressure_band_lambda_x_maturation.md",
+   "line": 256,
+   "pointer": "scripts/pressure_band_maturation.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ice_pressure_band_lambda_x_maturation.md",
+   "line": 265,
+   "pointer": "scripts/pressure_band_maturation_report.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ice_pressure_band_lambda_x_maturation.md",
+   "line": 267,
+   "pointer": "tests/test_ice_pressure_band.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ice_pressure_band_lambda_x_maturation.md",
+   "line": 267,
+   "pointer": "tests/test_ice_pressure_band_maturation.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ice_pressure_band_lambda_x_maturation.md",
+   "line": 272,
+   "pointer": "schemas/lambda_x_estimate.v1.json",
+   "kind": "data",
+   "status": "TRACKED"
+  },
+  {
    "doc": "docs/ice_rideup_righting_moment_envelope.md",
    "line": 3,
    "pointer": "scripts/audit_ice_rideup_righting.py",
@@ -8616,6 +12057,48 @@
    "line": 30,
    "pointer": "tests/test_ice_ridge_grounding_rederivation.py",
    "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ice_ridge_keel_freezebond_face.md",
+   "line": 3,
+   "pointer": "src/tensordem/ice_ridge_keel_freezebond.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ice_ridge_keel_freezebond_face.md",
+   "line": 4,
+   "pointer": "src/tensordem/adfreeze_key_adapter.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ice_ridge_keel_freezebond_face.md",
+   "line": 5,
+   "pointer": "tests/test_ice_ridge_keel_freezebond.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ice_ridge_keel_freezebond_face.md",
+   "line": 119,
+   "pointer": "artifacts/ice_ridge_keel/acceptance.json",
+   "kind": "data",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ice_ridge_keel_freezebond_face.md",
+   "line": 130,
+   "pointer": "scripts/ice_ridge_keel_liquidus_baseline.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ice_ridge_keel_freezebond_face.md",
+   "line": 131,
+   "pointer": "artifacts/ice_ridge_keel/liquidus_defect_baseline.json",
+   "kind": "data",
    "status": "TRACKED"
   },
   {
@@ -8785,7 +12268,9 @@
    "producers": [
     "scripts/build_ridge_report.py",
     "scripts/m4857_ci_gate_evidence.py",
+    "scripts/make_ridge_iso_grounding_figures.py",
     "scripts/run_ice_ridge_grounding.py",
+    "scripts/run_ridge_iso_grounding.py",
     "tests/test_doc_evidence_pointers.py"
    ],
    "remedy": "REGENERABLE"
@@ -8837,6 +12322,55 @@
    "status": "TRACKED"
   },
   {
+   "doc": "docs/ice_ridge_pipeline_seabed_bearing_anchor.md",
+   "line": 6,
+   "pointer": "prereg/ice_ridge_pipeline_seabed_bearing_prereg.json",
+   "kind": "data",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ice_ridge_pipeline_seabed_bearing_anchor.md",
+   "line": 7,
+   "pointer": "benchmarks/anchors/ice-ridge-pipeline-seabed-bearing.json",
+   "kind": "data",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ice_ridge_pipeline_seabed_bearing_anchor.md",
+   "line": 9,
+   "pointer": "benchmarks/anchors/ice_ridge_pipeline_seabed_bearing.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ice_ridge_pipeline_seabed_bearing_anchor.md",
+   "line": 10,
+   "pointer": "tests/test_ridge_seabed_external_anchor.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ice_ridge_pipeline_seabed_bearing_anchor.md",
+   "line": 26,
+   "pointer": "docs/pressure_area_index_dem.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ice_ridge_pipeline_seabed_bearing_anchor.md",
+   "line": 26,
+   "pointer": "src/tensordem/ridge_iso19906.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/ice_ridge_pipeline_seabed_bearing_anchor.md",
+   "line": 36,
+   "pointer": "scripts/run_ridge_iso_grounding.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
    "doc": "docs/ice_rubble_microstructure.md",
    "line": 4,
    "pointer": "scripts/ice_rubble_microstructure_study.py",
@@ -8857,6 +12391,7 @@
    "kind": "data",
    "status": "MISSING",
    "producers": [
+    "scripts/ag27w2_n09_random_pressure_field_fatigue.py",
     "scripts/audit_calibrated_wet.py",
     "scripts/audit_continuum_boundary.py",
     "scripts/audit_smooth_plane.py",
@@ -8864,15 +12399,28 @@
     "scripts/calibrated_wet_study.py",
     "scripts/continuum_boundary_study.py",
     "scripts/ice_contact_gsa.py",
+    "scripts/ice_ridge_keel_acceptance.py",
+    "scripts/ice_ridge_keel_figures.py",
+    "scripts/ice_ridge_keel_study.py",
     "scripts/ice_rubble_microstructure_study.py",
     "scripts/make_ice_contact_report.py",
     "scripts/material_calibration.py",
+    "scripts/pressure_band_lambda_calibration.py",
+    "scripts/pressure_band_maturation.py",
+    "scripts/pressure_band_maturation_report.py",
+    "scripts/pressure_band_report_md.py",
+    "scripts/run_ridge_freeze_bond_aging.py",
     "scripts/smooth_plane_study.py",
     "scripts/validate_accounting_ledger.py",
     "src/tensordem/broken_ice_micro/__init__.py",
     "src/tensordem/broken_ice_micro/study.py",
     "src/tensordem/ice_contact/study.py",
-    "tests/test_ice_contact_acceptance.py"
+    "src/tensordem/ice_evolution/study.py",
+    "src/tensordem/stochastic_pressure_field/study.py",
+    "tests/test_ice_contact_acceptance.py",
+    "tests/test_ice_ridge_keel_freezebond.py",
+    "tests/test_ridge_freeze_bond_aging.py",
+    "tests/test_stochastic_pressure_field.py"
    ],
    "remedy": "REGENERABLE"
   },
@@ -9062,6 +12610,67 @@
    "status": "TRACKED"
   },
   {
+   "doc": "docs/in54w1-contact-energy-order/REPORT.md",
+   "line": 3,
+   "pointer": "scripts/in54w1_contact_energy_order.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/in54w1-contact-energy-order/REPORT.md",
+   "line": 35,
+   "pointer": "src/tensordem/contact_energy_order.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/in54w1-contact-energy-order/REPORT.md",
+   "line": 35,
+   "pointer": "tests/test_contact_energy_order.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/in54w1-contact-energy-order/REPORT.md",
+   "line": 160,
+   "pointer": "figures/fig1_conventions_vs_dt.png",
+   "kind": "figure",
+   "status": "TRACKED",
+   "resolved": "docs/in54w1-contact-energy-order/figures/fig1_conventions_vs_dt.png"
+  },
+  {
+   "doc": "docs/in54w1-contact-energy-order/REPORT.md",
+   "line": 164,
+   "pointer": "figures/fig2_restitution.png",
+   "kind": "figure",
+   "status": "TRACKED",
+   "resolved": "docs/in54w1-contact-energy-order/figures/fig2_restitution.png"
+  },
+  {
+   "doc": "docs/in54w1-contact-energy-order/REPORT.md",
+   "line": 168,
+   "pointer": "figures/fig3_newton_cradle.png",
+   "kind": "figure",
+   "status": "TRACKED",
+   "resolved": "docs/in54w1-contact-energy-order/figures/fig3_newton_cradle.png"
+  },
+  {
+   "doc": "docs/in54w1-contact-energy-order/REPORT.md",
+   "line": 172,
+   "pointer": "figures/fig4_m5404_verdict.png",
+   "kind": "figure",
+   "status": "TRACKED",
+   "resolved": "docs/in54w1-contact-energy-order/figures/fig4_m5404_verdict.png"
+  },
+  {
+   "doc": "docs/in54w1-contact-energy-order/REPORT.md",
+   "line": 176,
+   "pointer": "figures/fig5_stiffness_collapse.png",
+   "kind": "figure",
+   "status": "TRACKED",
+   "resolved": "docs/in54w1-contact-energy-order/figures/fig5_stiffness_collapse.png"
+  },
+  {
    "doc": "docs/interface_thermal_contact_coupling.md",
    "line": 5,
    "pointer": "artifacts/interface_thermal_coupling.json",
@@ -9089,6 +12698,7 @@
    "status": "MISSING",
    "producers": [
     "benchmarks/ice_steel_friction_calibration.py",
+    "benchmarks/ice_steel_friction_closure.py",
     "benchmarks/interface_thermal_coupling.py",
     "scripts/interface_thermal_report.py"
    ],
@@ -9430,6 +13040,139 @@
    "remedy": "REGENERABLE"
   },
   {
+   "doc": "docs/m7359/REPORT.md",
+   "line": 15,
+   "pointer": "docs/LEVEL_ICE_RESISTANCE_DEM.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/m7359/REPORT.md",
+   "line": 42,
+   "pointer": "src/tensordem/level_ice/sheet3d.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/m7359/REPORT.md",
+   "line": 54,
+   "pointer": "tests/test_level_ice_3d_mass_conservation.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/m7359/REPORT.md",
+   "line": 122,
+   "pointer": "artifacts/m7359/fig1_wb_scan.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "benchmarks/uikku_3d_figures.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/m7359/REPORT.md",
+   "line": 127,
+   "pointer": "artifacts/m7359/fig2_mass_conservation.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "benchmarks/uikku_3d_figures.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/m7359/REPORT.md",
+   "line": 132,
+   "pointer": "artifacts/m7359/fig3_negative_control.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "benchmarks/uikku_3d_figures.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/m7359/REPORT.md",
+   "line": 180,
+   "pointer": "benchmarks/uikku_3d_figures.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/m7359/REPORT.md",
+   "line": 181,
+   "pointer": "benchmarks/uikku_3d_campaign.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/m7444_rigid_collision_ledger.md",
+   "line": 58,
+   "pointer": "runs/m7444/convergence_curves.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "scripts/plot_rigid_collision_convergence.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/m7444_rigid_collision_ledger.md",
+   "line": 88,
+   "pointer": "src/tensordem/rigid_collision_ledger.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/m7444_rigid_collision_ledger.md",
+   "line": 89,
+   "pointer": "tests/test_rigid_collision_ledger_convergence.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/m7444_rigid_collision_ledger.md",
+   "line": 90,
+   "pointer": "scripts/plot_rigid_collision_convergence.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/m7444_rigid_collision_ledger.md",
+   "line": 92,
+   "pointer": "runs/m7444/convergence_data.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "scripts/plot_rigid_collision_convergence.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/m7444_rigid_collision_ledger.md",
+   "line": 93,
+   "pointer": "runs/m7444/newton_cradle.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "scripts/plot_rigid_collision_convergence.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/m7444_rigid_collision_ledger.md",
+   "line": 94,
+   "pointer": "runs/m7444/newton_cradle_data.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "scripts/plot_rigid_collision_convergence.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
    "doc": "docs/material-calibration/README.md",
    "line": 32,
    "pointer": "scripts/material_calibration.py",
@@ -9442,6 +13185,73 @@
    "pointer": "scripts/calibrated_dynamic_patch.py",
    "kind": "code",
    "status": "TRACKED"
+  },
+  {
+   "doc": "docs/mixed_ice_dem_field.md",
+   "line": 7,
+   "pointer": "docs/LEVEL_ICE_RESISTANCE_DEM.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/mixed_ice_dem_field.md",
+   "line": 355,
+   "pointer": "scripts/run_mixed_ice_dem_field.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/mixed_ice_dem_field.md",
+   "line": 356,
+   "pointer": "tests/test_mixed_ice_dem_field.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/mixed_ice_dem_field.md",
+   "line": 357,
+   "pointer": "tests/test_mixed_ice_aging.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/mixed_ice_dem_field.md",
+   "line": 357,
+   "pointer": "tests/test_mixed_ice_field.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/mixed_ice_dem_field.md",
+   "line": 358,
+   "pointer": "tests/test_level_ice_resistance_dem.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/mixed_ice_dem_field.md",
+   "line": 358,
+   "pointer": "tests/test_mixed_ice_resistance.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/mixed_ice_dem_field.md",
+   "line": 361,
+   "pointer": "artifacts/mixed_ice_dem_field/campaign.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "scripts/build_mixed_ice_report.py",
+    "scripts/dem_verification_campaign.py",
+    "scripts/run_mixed_ice_dem_field.py",
+    "scripts/wet_ice_cohesion_study.py",
+    "src/tensordem/wet_ice_cohesion/__init__.py",
+    "src/tensordem/wet_ice_cohesion/figures.py",
+    "src/tensordem/wet_ice_cohesion/study.py",
+    "tests/test_mixed_ice_dem_field.py"
+   ],
+   "remedy": "REGENERABLE"
   },
   {
    "doc": "docs/mortar_2d3d_interface_operators.md",
@@ -9637,6 +13447,291 @@
    "status": "TRACKED"
   },
   {
+   "doc": "docs/mts_contact_timestep_gate.md",
+   "line": 30,
+   "pointer": "src/tensordem/mts_contact.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/mts_contact_timestep_gate.md",
+   "line": 37,
+   "pointer": "benchmarks/mts_contact_gate.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/mts_contact_timestep_gate.md",
+   "line": 37,
+   "pointer": "scripts/mts_contact_report.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/mts_contact_timestep_gate.md",
+   "line": 128,
+   "pointer": "../artifacts/mts_contact/figures/restitution_ladder.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "resolved": "artifacts/mts_contact/figures/restitution_ladder.png",
+   "producers": [
+    "benchmarks/mts_contact_gate.py",
+    "scripts/mts_contact_report_payload.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/mts_contact_timestep_gate.md",
+   "line": 130,
+   "pointer": "../artifacts/mts_contact/figures/negative_control.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "resolved": "artifacts/mts_contact/figures/negative_control.png",
+   "producers": [
+    "benchmarks/mts_contact_gate.py",
+    "scripts/benchmark_ice_beam_bending.py",
+    "scripts/mts_contact_report.py",
+    "scripts/mts_contact_report_payload.py",
+    "scripts/render_ice_beam_figures.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/mts_contact_timestep_gate.md",
+   "line": 132,
+   "pointer": "../artifacts/mts_contact/figures/energy_momentum.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "resolved": "artifacts/mts_contact/figures/energy_momentum.png",
+   "producers": [
+    "benchmarks/mts_contact_gate.py",
+    "scripts/mts_contact_report.py",
+    "scripts/mts_contact_report_payload.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/mts_contact_timestep_gate.md",
+   "line": 134,
+   "pointer": "../artifacts/mts_contact/figures/jamming_eos.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "resolved": "artifacts/mts_contact/figures/jamming_eos.png",
+   "producers": [
+    "benchmarks/mts_contact_gate.py",
+    "scripts/mts_contact_report.py",
+    "scripts/mts_contact_report_payload.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/mts_contact_timestep_gate.md",
+   "line": 136,
+   "pointer": "../artifacts/mts_contact/figures/wall_clock_and_physics.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "resolved": "artifacts/mts_contact/figures/wall_clock_and_physics.png",
+   "producers": [
+    "benchmarks/mts_contact_gate.py",
+    "scripts/mts_contact_report.py",
+    "scripts/mts_contact_report_payload.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/mts_contact_timestep_gate.md",
+   "line": 177,
+   "pointer": "artifacts/mts_contact/gate.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "benchmarks/mts_contact_gate.py",
+    "scripts/mts_contact_report.py",
+    "scripts/mts_contact_report_payload.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/mts_contact_timestep_gate.md",
+   "line": 179,
+   "pointer": "tests/test_mts_contact.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/mts_contact_timestep_gate.md",
+   "line": 182,
+   "pointer": "artifacts/mts_contact/summary.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "benchmarks/ice_rideup_sweep.py",
+    "scripts/adhesion_repose_pile.py",
+    "scripts/analyse_rubble_rheology.py",
+    "scripts/benchmark_dem3d_contact_impact.py",
+    "scripts/benchmark_dem3d_scale.py",
+    "scripts/build_dem_thermal_report.py",
+    "scripts/collect_tutorial_first_verified_run.py",
+    "scripts/m6296_beverloo_analysis.py",
+    "scripts/m6457_beverloo_analysis.py",
+    "scripts/make_api_report.py",
+    "scripts/make_contact_impact_report.py",
+    "scripts/mts_contact_report.py",
+    "scripts/plot_dem_thermal_granular.py",
+    "scripts/post_adhesion_report.py",
+    "scripts/pressure_area_campaign.py",
+    "scripts/pressure_area_figures.py",
+    "scripts/pressure_area_report.py",
+    "scripts/render_ice_uq_page.py",
+    "scripts/render_rubble_rheology_report.py",
+    "scripts/report_rolling_resistance.py",
+    "scripts/run_dem_thermal_granular.py",
+    "scripts/run_ice_uq_sensitivity.py",
+    "scripts/run_ridge_statistical_study.py",
+    "scripts/validate_rolling_resistance.py",
+    "tests/test_ridge_grounding_refresh_evidence.py",
+    "tests/test_tutorial_first_verified_run.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/myi-ridge-keel-interaction/README.md",
+   "line": 32,
+   "pointer": "scripts/run_myi_ridge_campaign.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/myi-ridge-keel-interaction/README.md",
+   "line": 34,
+   "pointer": "scripts/myi_ridge_ledger_convergence.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/myi-ridge-keel-interaction/README.md",
+   "line": 35,
+   "pointer": "scripts/make_myi_ridge_figures.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/myi-ridge-keel-interaction/README.md",
+   "line": 36,
+   "pointer": "scripts/make_myi_ridge_report.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/myi-ridge-keel-interaction/README.md",
+   "line": 39,
+   "pointer": "tests/test_myi_ridge_crushing.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/myi-ridge-keel-interaction/README.md",
+   "line": 39,
+   "pointer": "tests/test_myi_ridge_geometry.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/myi-ridge-keel-interaction/README.md",
+   "line": 40,
+   "pointer": "tests/test_myi_ridge_panel.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/myi-ridge-keel-interaction/README.md",
+   "line": 40,
+   "pointer": "tests/test_myi_ridge_scaling.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/myi-ridge-keel-interaction/REPORT.md",
+   "line": 123,
+   "pointer": "scripts/run_myi_ridge_campaign.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/myi-ridge-keel-interaction/REPORT.md",
+   "line": 125,
+   "pointer": "scripts/myi_ridge_ledger_convergence.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/myi-ridge-keel-interaction/REPORT.md",
+   "line": 126,
+   "pointer": "scripts/make_myi_ridge_figures.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/myi-ridge-keel-interaction/REPORT.md",
+   "line": 127,
+   "pointer": "scripts/make_myi_ridge_report.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/myi-ridge-keel-interaction/REPORT.md",
+   "line": 128,
+   "pointer": "tests/test_myi_ridge_crushing.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/myi-ridge-keel-interaction/REPORT.md",
+   "line": 128,
+   "pointer": "tests/test_myi_ridge_geometry.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/myi-ridge-keel-interaction/REPORT.md",
+   "line": 128,
+   "pointer": "tests/test_myi_ridge_panel.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/myi-ridge-keel-interaction/REPORT.md",
+   "line": 128,
+   "pointer": "tests/test_myi_ridge_scaling.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/myi-ridge-keel-interaction/REPORT.md",
+   "line": 131,
+   "pointer": "artifacts/myi_ridge/ledger_convergence.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "scripts/make_myi_ridge_report.py",
+    "scripts/myi_ridge_ledger_convergence.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/myi-ridge-keel-interaction/REPORT.md",
+   "line": 131,
+   "pointer": "artifacts/myi_ridge/myi_ridge_results.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "scripts/make_myi_ridge_figures.py",
+    "scripts/make_myi_ridge_report.py",
+    "scripts/run_myi_ridge_campaign.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
    "doc": "docs/nonspherical_contact_timestep_layer.md",
    "line": 7,
    "pointer": "src/tensordem/convex_contact.py",
@@ -9692,6 +13787,12 @@
    "kind": "data",
    "status": "MISSING",
    "producers": [
+    "benchmarks/mts_contact_integration.py",
+    "scripts/ag27w2_n06_verification.py",
+    "scripts/build_ag27w2_n06_doc.py",
+    "scripts/p66_w2_n05_verification.py",
+    "scripts/p82w2_n09_report.py",
+    "scripts/render_ice_bond_quasistatic_doc.py",
     "scripts/verify_bond_quasistatic_rate.py",
     "scripts/verify_buoyancy_free_float.py",
     "scripts/verify_dem3d_contact_impact_convention.py",
@@ -9699,7 +13800,9 @@
     "scripts/verify_ice_bond_single_bond_engine.py",
     "scripts/verify_ice_bond_specimen_rate.py",
     "scripts/verify_ice_bond_viscoelastic.py",
-    "scripts/verify_nonspherical_contact_and_timestep.py"
+    "scripts/verify_nonspherical_contact_and_timestep.py",
+    "scripts/verify_repose_injection.py",
+    "tests/test_repose_injection.py"
    ],
    "remedy": "REGENERABLE"
   },
@@ -9720,6 +13823,340 @@
    "pointer": "docs/nonspherical-contact-timestep/contact_geometry_accuracy.png",
    "kind": "figure",
    "status": "TRACKED"
+  },
+  {
+   "doc": "docs/p174_n08_segregation_validation.md",
+   "line": 22,
+   "pointer": "src/tensordem/segregation.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/p174_n08_segregation_validation.md",
+   "line": 23,
+   "pointer": "tests/test_segregation.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/p174_n08_segregation_validation.md",
+   "line": 77,
+   "pointer": "artifacts/m7319/fig1_segregation_vs_dratio.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [],
+   "remedy": "ORPHAN",
+   "suggested": []
+  },
+  {
+   "doc": "docs/p174_n08_segregation_validation.md",
+   "line": 82,
+   "pointer": "artifacts/m7319/fig2_phi_profiles.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [],
+   "remedy": "ORPHAN",
+   "suggested": []
+  },
+  {
+   "doc": "docs/p174_n08_segregation_validation.md",
+   "line": 87,
+   "pointer": "artifacts/m7319/fig3_permeability.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [],
+   "remedy": "ORPHAN",
+   "suggested": []
+  },
+  {
+   "doc": "docs/p174_n08_segregation_validation.md",
+   "line": 113,
+   "pointer": "docs/report_m7319.json",
+   "kind": "data",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/p54_w2_n07_ice_ridge_grounding_iso19906.md",
+   "line": 145,
+   "pointer": "artifacts/p54_w2_n07/figures/load_displacement.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "scripts/build_ridge_report.py",
+    "scripts/make_ridge_grounding_figures.py",
+    "scripts/make_ridge_iso_grounding_figures.py",
+    "scripts/run_ice_ridge_grounding.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/p54_w2_n07_ice_ridge_grounding_iso19906.md",
+   "line": 151,
+   "pointer": "artifacts/p54_w2_n07/figures/capacity_comparison.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [],
+   "remedy": "ORPHAN",
+   "suggested": []
+  },
+  {
+   "doc": "docs/p54_w2_n07_ice_ridge_grounding_iso19906.md",
+   "line": 157,
+   "pointer": "artifacts/p54_w2_n07/figures/lateral_capacity.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [],
+   "remedy": "ORPHAN",
+   "suggested": []
+  },
+  {
+   "doc": "docs/p54_w2_n07_ice_ridge_grounding_iso19906.md",
+   "line": 163,
+   "pointer": "artifacts/p54_w2_n07/figures/pipe_stress_profile.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [],
+   "remedy": "ORPHAN",
+   "suggested": []
+  },
+  {
+   "doc": "docs/p54_w2_n07_ice_ridge_grounding_iso19906.md",
+   "line": 230,
+   "pointer": "tests/test_p54_w2_n07_ice_ridge_grounding_iso19906.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/p54_w2_n07_ice_ridge_grounding_iso19906.md",
+   "line": 240,
+   "pointer": "artifacts/p54_w2_n07/campaign_results.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [],
+   "remedy": "ORPHAN",
+   "suggested": []
+  },
+  {
+   "doc": "docs/p54_w2_n07_ice_ridge_grounding_iso19906.md",
+   "line": 245,
+   "pointer": "docs/p54_w2_n07_ice_ridge_grounding_iso19906.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/p54w2-n06-collision-ledger-certification/REPORT.md",
+   "line": 4,
+   "pointer": "scripts/p54w2_n06_collision_ledger_certification.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/p54w2-n06-collision-ledger-certification/REPORT.md",
+   "line": 5,
+   "pointer": "artifacts/collision_ledger_certification/metrics.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "benchmarks/consolidation_terzaghi/make_report.py",
+    "benchmarks/consolidation_terzaghi/post_platform_report.py",
+    "benchmarks/consolidation_terzaghi/run.py",
+    "scripts/audit_dem3d_buoyancy_float.py",
+    "scripts/audit_ice_rideup_righting.py",
+    "scripts/in29_n02_floe6dof_benchmark.py",
+    "scripts/in29_n02_report.py",
+    "scripts/in54w1_contact_energy_order.py",
+    "scripts/in60_n09_cargo_liquefaction.py",
+    "scripts/in60_n09_report.py",
+    "scripts/m6423_curved_hull_audit.py",
+    "scripts/p54w2_n06_collision_ledger_certification.py",
+    "scripts/verify_engine_threshold_crossing.py",
+    "src/tensordem/collision_ledger_certification.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/p54w2-n06-collision-ledger-certification/REPORT.md",
+   "line": 78,
+   "pointer": "prereg/p54w2_n06_collision_ledger_certification.json",
+   "kind": "data",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/p54w2-n06-collision-ledger-certification/REPORT.md",
+   "line": 90,
+   "pointer": "src/tensordem/collision_ledger_certification.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/p54w2-n06-collision-ledger-certification/REPORT.md",
+   "line": 92,
+   "pointer": "tests/test_collision_ledger_certification.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/p54w2-n06-collision-ledger-certification/REPORT.md",
+   "line": 93,
+   "pointer": "artifacts/collision_ledger_certification/certification.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "scripts/build_extreme_stats_doc.py",
+    "scripts/extreme_stats_certification.py",
+    "scripts/extreme_stats_figures.py",
+    "scripts/p54w2_n06_collision_ledger_certification.py",
+    "tests/test_collision_ledger_certification.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/p54w2-n06-collision-ledger-certification/REPORT.md",
+   "line": 190,
+   "pointer": "figures/fig1_two_axes.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "scripts/p54w2_n06_collision_ledger_certification.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/p54w2-n06-collision-ledger-certification/REPORT.md",
+   "line": 195,
+   "pointer": "figures/fig2_per_step_ledger.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "scripts/p54w2_n06_collision_ledger_certification.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/p54w2-n06-collision-ledger-certification/REPORT.md",
+   "line": 200,
+   "pointer": "figures/fig3_law_dependence.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "scripts/p54w2_n06_collision_ledger_certification.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/p54w2-n06-collision-ledger-certification/REPORT.md",
+   "line": 205,
+   "pointer": "figures/fig4_restitution.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "scripts/p54w2_n06_collision_ledger_certification.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/p54w2-n06-collision-ledger-certification/REPORT.md",
+   "line": 211,
+   "pointer": "figures/fig5_m5404_verdict.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "scripts/p54w2_n06_collision_ledger_certification.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/p54w2-n06-collision-ledger-certification/REPORT.md",
+   "line": 216,
+   "pointer": "figures/fig6_cradle.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "scripts/p54w2_n06_collision_ledger_certification.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/p54w2-n06-collision-ledger-certification/REPORT.md",
+   "line": 280,
+   "pointer": "src/tensordem/rigid_collision_ledger.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/p54w2-n06-collision-ledger-certification/REPORT.md",
+   "line": 291,
+   "pointer": "docs/in54w1-contact-energy-order/REPORT.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/p54w2_n03_ridge_freeze_bond_aging.md",
+   "line": 5,
+   "pointer": "src/tensordem/ridge_freeze_bond_aging.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/p54w2_n03_ridge_freeze_bond_aging.md",
+   "line": 6,
+   "pointer": "src/tensordem/ridge_freeze_bond_aging_dem.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/p54w2_n03_ridge_freeze_bond_aging.md",
+   "line": 7,
+   "pointer": "tests/test_ridge_freeze_bond_aging.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/p54w2_n03_ridge_freeze_bond_aging.md",
+   "line": 8,
+   "pointer": "scripts/run_ridge_freeze_bond_aging.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/p54w2_n03_ridge_freeze_bond_aging.md",
+   "line": 9,
+   "pointer": "runs/p54w2_n03_ridge_freeze_bond_aging/study.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "scripts/ag27w2_n09_random_pressure_field_fatigue.py",
+    "scripts/audit_calibrated_wet.py",
+    "scripts/audit_continuum_boundary.py",
+    "scripts/audit_smooth_plane.py",
+    "scripts/broken_ice_micro_study.py",
+    "scripts/calibrated_wet_study.py",
+    "scripts/continuum_boundary_study.py",
+    "scripts/ice_contact_gsa.py",
+    "scripts/ice_ridge_keel_acceptance.py",
+    "scripts/ice_ridge_keel_figures.py",
+    "scripts/ice_ridge_keel_study.py",
+    "scripts/ice_rubble_microstructure_study.py",
+    "scripts/make_ice_contact_report.py",
+    "scripts/material_calibration.py",
+    "scripts/pressure_band_lambda_calibration.py",
+    "scripts/pressure_band_maturation.py",
+    "scripts/pressure_band_maturation_report.py",
+    "scripts/pressure_band_report_md.py",
+    "scripts/run_ridge_freeze_bond_aging.py",
+    "scripts/smooth_plane_study.py",
+    "scripts/validate_accounting_ledger.py",
+    "src/tensordem/broken_ice_micro/__init__.py",
+    "src/tensordem/broken_ice_micro/study.py",
+    "src/tensordem/ice_contact/study.py",
+    "src/tensordem/ice_evolution/study.py",
+    "src/tensordem/stochastic_pressure_field/study.py",
+    "tests/test_ice_contact_acceptance.py",
+    "tests/test_ice_ridge_keel_freezebond.py",
+    "tests/test_ridge_freeze_bond_aging.py",
+    "tests/test_stochastic_pressure_field.py"
+   ],
+   "remedy": "REGENERABLE"
   },
   {
    "doc": "docs/packed_bed_conductivity.md",
@@ -9792,6 +14229,41 @@
     "benchmarks/packed_bed_conductivity/run.py"
    ],
    "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/packed_bed_thermal_P73W2N11.md",
+   "line": 88,
+   "pointer": "src/tensordem/thermal/packed_bed.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/packed_bed_thermal_P73W2N11.md",
+   "line": 89,
+   "pointer": "tests/test_packed_bed_conductivity.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/packed_bed_thermal_P73W2N11.md",
+   "line": 90,
+   "pointer": "tests/test_packed_bed_p73w2n11.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/packed_bed_thermal_P73W2N11.md",
+   "line": 91,
+   "pointer": "scripts/packed_bed_p73w2n11_validation.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/packed_bed_thermal_P73W2N11.md",
+   "line": 92,
+   "pointer": "benchmarks/packed_bed_p73w2n11/result.json",
+   "kind": "data",
+   "status": "TRACKED"
   },
   {
    "doc": "docs/polyline_hull_contact.md",
@@ -9979,20 +14451,27 @@
    "producers": [
     "benchmarks/ice_rideup_sweep.py",
     "scripts/adhesion_repose_pile.py",
+    "scripts/analyse_rubble_rheology.py",
     "scripts/benchmark_dem3d_contact_impact.py",
     "scripts/benchmark_dem3d_scale.py",
+    "scripts/build_dem_thermal_report.py",
     "scripts/collect_tutorial_first_verified_run.py",
     "scripts/m6296_beverloo_analysis.py",
     "scripts/m6457_beverloo_analysis.py",
     "scripts/make_api_report.py",
     "scripts/make_contact_impact_report.py",
+    "scripts/mts_contact_report.py",
+    "scripts/plot_dem_thermal_granular.py",
     "scripts/post_adhesion_report.py",
     "scripts/pressure_area_campaign.py",
     "scripts/pressure_area_figures.py",
     "scripts/pressure_area_report.py",
     "scripts/render_ice_uq_page.py",
+    "scripts/render_rubble_rheology_report.py",
     "scripts/report_rolling_resistance.py",
+    "scripts/run_dem_thermal_granular.py",
     "scripts/run_ice_uq_sensitivity.py",
+    "scripts/run_ridge_statistical_study.py",
     "scripts/validate_rolling_resistance.py",
     "tests/test_ridge_grounding_refresh_evidence.py",
     "tests/test_tutorial_first_verified_run.py"
@@ -10046,11 +14525,171 @@
    "kind": "figure",
    "status": "MISSING",
    "producers": [
+    "benchmarks/contact_physics_integration.py",
     "scripts/make_api_report.py",
     "scripts/pressure_area_figures.py",
     "scripts/pressure_area_report.py"
    ],
    "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/propeller_open_water_verification.md",
+   "line": 3,
+   "pointer": "src/tensordem/propeller_ice/hydro.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/propeller_open_water_verification.md",
+   "line": 3,
+   "pointer": "tests/test_propeller_ice_milling.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/report_m669.md",
+   "line": 3,
+   "pointer": "docs/m669_hull_mesh_contact.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/report_m669.md",
+   "line": 3,
+   "pointer": "runs/m669_acceptance.json",
+   "kind": "data",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/report_m669.md",
+   "line": 3,
+   "pointer": "scripts/gen_figures_m669.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/report_m669.md",
+   "line": 3,
+   "pointer": "src/tensordem/hull_mesh_contact.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/report_m669.md",
+   "line": 3,
+   "pointer": "tests/test_hull_mesh_contact.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/report_m669.md",
+   "line": 117,
+   "pointer": "artifacts/fig1_force_error.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "scripts/gen_figures_m669.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/report_m669.md",
+   "line": 123,
+   "pointer": "artifacts/fig2_complexity.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "scripts/gen_figures_m669.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/report_m669.md",
+   "line": 129,
+   "pointer": "artifacts/fig3_3d_contact.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "scripts/gen_figures_m669.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/report_m670.md",
+   "line": 41,
+   "pointer": "src/tensordem/dem3d.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/report_m670.md",
+   "line": 47,
+   "pointer": "src/tensordem/contact_tangential.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/report_m670.md",
+   "line": 48,
+   "pointer": "src/tensordem/tangential_verification.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/report_m670.md",
+   "line": 49,
+   "pointer": "src/tensordem/rolling_resistance.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/report_m670.md",
+   "line": 158,
+   "pointer": "tests/test_dem3d_rolling_resistance_verification.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/report_m670.md",
+   "line": 159,
+   "pointer": "tests/test_tangential_friction_verification.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/report_m670.md",
+   "line": 175,
+   "pointer": "scripts/verify_dem3d_rolling_resistance.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/report_m670.md",
+   "line": 259,
+   "pointer": "docs/dem3d-rolling-resistance/results.json",
+   "kind": "data",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/report_m670.md",
+   "line": 259,
+   "pointer": "docs/dem3d_coulomb_friction_cone_verification.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/report_m670.md",
+   "line": 259,
+   "pointer": "docs/dem3d_rolling_resistance_verification.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/report_m670.md",
+   "line": 259,
+   "pointer": "docs/dem3d_tangential_friction_verification.md",
+   "kind": "doc",
+   "status": "TRACKED"
   },
   {
    "doc": "docs/repose_angle_calibration.md",
@@ -10097,6 +14736,77 @@
    "line": 29,
    "pointer": "scripts/calibrate_dem3d_restitution.py",
    "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/repose_injection_driver.md",
+   "line": 6,
+   "pointer": "docs/dem_calibration_gap_ledger.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/repose_injection_driver.md",
+   "line": 9,
+   "pointer": "src/tensordem/repose_injection.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/repose_injection_driver.md",
+   "line": 10,
+   "pointer": "scripts/verify_repose_injection.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/repose_injection_driver.md",
+   "line": 11,
+   "pointer": "tests/test_repose_injection.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/repose_injection_driver.md",
+   "line": 12,
+   "pointer": "artifacts/repose_injection/verification.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "benchmarks/mts_contact_integration.py",
+    "scripts/ag27w2_n06_verification.py",
+    "scripts/build_ag27w2_n06_doc.py",
+    "scripts/p66_w2_n05_verification.py",
+    "scripts/p82w2_n09_report.py",
+    "scripts/render_ice_bond_quasistatic_doc.py",
+    "scripts/verify_bond_quasistatic_rate.py",
+    "scripts/verify_buoyancy_free_float.py",
+    "scripts/verify_dem3d_contact_impact_convention.py",
+    "scripts/verify_hertz_contract.py",
+    "scripts/verify_ice_bond_single_bond_engine.py",
+    "scripts/verify_ice_bond_specimen_rate.py",
+    "scripts/verify_ice_bond_viscoelastic.py",
+    "scripts/verify_nonspherical_contact_and_timestep.py",
+    "scripts/verify_repose_injection.py",
+    "tests/test_repose_injection.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/repose_injection_driver.md",
+   "line": 13,
+   "pointer": "artifacts/repose_injection/figures/anchors_and_estimator.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [],
+   "remedy": "ORPHAN",
+   "suggested": []
+  },
+  {
+   "doc": "docs/repose_injection_driver.md",
+   "line": 22,
+   "pointer": "docs/dem_nonspherical_representation_verdict.md",
+   "kind": "doc",
    "status": "TRACKED"
   },
   {
@@ -10271,6 +14981,112 @@
    "pointer": "tests/test_ridge_winkler_subgrade_verification.py",
    "kind": "test",
    "status": "TRACKED"
+  },
+  {
+   "doc": "docs/rotary_dryer_summary.md",
+   "line": 11,
+   "pointer": "src/tensordem/rotary_dryer/__init__.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/rotary_dryer_summary.md",
+   "line": 12,
+   "pointer": "src/tensordem/rotary_dryer/kinematics.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/rotary_dryer_summary.md",
+   "line": 13,
+   "pointer": "src/tensordem/rotary_dryer/heat_transfer.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/rotary_dryer_summary.md",
+   "line": 14,
+   "pointer": "src/tensordem/rotary_dryer/rtd.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/rotary_dryer_summary.md",
+   "line": 15,
+   "pointer": "src/tensordem/rotary_dryer/literature.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/rotary_dryer_summary.md",
+   "line": 16,
+   "pointer": "src/tensordem/rotary_dryer/api.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/rotary_dryer_summary.md",
+   "line": 17,
+   "pointer": "tests/test_rotary_dryer.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/rubble_rheology_postprocess.md",
+   "line": 4,
+   "pointer": "scripts/analyse_rubble_rheology.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/rubble_rheology_postprocess.md",
+   "line": 4,
+   "pointer": "scripts/run_rubble_rheology.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/rubble_rheology_postprocess.md",
+   "line": 5,
+   "pointer": "prereg/rubble_rheology_prereg.json",
+   "kind": "data",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/rubble_rheology_postprocess.md",
+   "line": 52,
+   "pointer": "artifacts/rubble_rheology/summary.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "benchmarks/ice_rideup_sweep.py",
+    "scripts/adhesion_repose_pile.py",
+    "scripts/analyse_rubble_rheology.py",
+    "scripts/benchmark_dem3d_contact_impact.py",
+    "scripts/benchmark_dem3d_scale.py",
+    "scripts/build_dem_thermal_report.py",
+    "scripts/collect_tutorial_first_verified_run.py",
+    "scripts/m6296_beverloo_analysis.py",
+    "scripts/m6457_beverloo_analysis.py",
+    "scripts/make_api_report.py",
+    "scripts/make_contact_impact_report.py",
+    "scripts/mts_contact_report.py",
+    "scripts/plot_dem_thermal_granular.py",
+    "scripts/post_adhesion_report.py",
+    "scripts/pressure_area_campaign.py",
+    "scripts/pressure_area_figures.py",
+    "scripts/pressure_area_report.py",
+    "scripts/render_ice_uq_page.py",
+    "scripts/render_rubble_rheology_report.py",
+    "scripts/report_rolling_resistance.py",
+    "scripts/run_dem_thermal_granular.py",
+    "scripts/run_ice_uq_sensitivity.py",
+    "scripts/run_ridge_statistical_study.py",
+    "scripts/validate_rolling_resistance.py",
+    "tests/test_ridge_grounding_refresh_evidence.py",
+    "tests/test_tutorial_first_verified_run.py"
+   ],
+   "remedy": "REGENERABLE"
   },
   {
    "doc": "docs/rudder_ice_load_dem_fsm.md",
@@ -10489,20 +15305,27 @@
    "producers": [
     "benchmarks/ice_rideup_sweep.py",
     "scripts/adhesion_repose_pile.py",
+    "scripts/analyse_rubble_rheology.py",
     "scripts/benchmark_dem3d_contact_impact.py",
     "scripts/benchmark_dem3d_scale.py",
+    "scripts/build_dem_thermal_report.py",
     "scripts/collect_tutorial_first_verified_run.py",
     "scripts/m6296_beverloo_analysis.py",
     "scripts/m6457_beverloo_analysis.py",
     "scripts/make_api_report.py",
     "scripts/make_contact_impact_report.py",
+    "scripts/mts_contact_report.py",
+    "scripts/plot_dem_thermal_granular.py",
     "scripts/post_adhesion_report.py",
     "scripts/pressure_area_campaign.py",
     "scripts/pressure_area_figures.py",
     "scripts/pressure_area_report.py",
     "scripts/render_ice_uq_page.py",
+    "scripts/render_rubble_rheology_report.py",
     "scripts/report_rolling_resistance.py",
+    "scripts/run_dem_thermal_granular.py",
     "scripts/run_ice_uq_sensitivity.py",
+    "scripts/run_ridge_statistical_study.py",
     "scripts/validate_rolling_resistance.py",
     "tests/test_ridge_grounding_refresh_evidence.py",
     "tests/test_tutorial_first_verified_run.py"
@@ -10659,13 +15482,21 @@
     "benchmarks/hertz_analytic/run.py",
     "benchmarks/hertz_analytic/validate.py",
     "scripts/benchmark_floe_buoyancy.py",
+    "scripts/build_freeze_bond_report.py",
+    "scripts/gen_ice_pressure_stats_figs.py",
+    "scripts/in143_n09_study.py",
     "scripts/render_dem3d_hertz_restitution.py",
     "scripts/report_ball_ball_rolling_contact.py",
+    "scripts/run_coarse_graining_campaign.py",
+    "scripts/run_freeze_bond_arch.py",
     "scripts/sir_pc2_figures.py",
     "scripts/verify_ball_ball_rolling_contact.py",
     "scripts/verify_dem3d_hertz_restitution.py",
     "scripts/verify_dem3d_rolling_resistance.py",
+    "src/tensordem/bedcoupling/study.py",
     "tests/test_ball_ball_rolling_contact.py",
+    "tests/test_bedcoupling_acceptance.py",
+    "tests/test_coarse_graining_scaling.py",
     "tests/test_dem3d_energy_friction_rolling.py"
    ],
    "remedy": "REGENERABLE"
@@ -10835,13 +15666,21 @@
     "benchmarks/hertz_analytic/run.py",
     "benchmarks/hertz_analytic/validate.py",
     "scripts/benchmark_floe_buoyancy.py",
+    "scripts/build_freeze_bond_report.py",
+    "scripts/gen_ice_pressure_stats_figs.py",
+    "scripts/in143_n09_study.py",
     "scripts/render_dem3d_hertz_restitution.py",
     "scripts/report_ball_ball_rolling_contact.py",
+    "scripts/run_coarse_graining_campaign.py",
+    "scripts/run_freeze_bond_arch.py",
     "scripts/sir_pc2_figures.py",
     "scripts/verify_ball_ball_rolling_contact.py",
     "scripts/verify_dem3d_hertz_restitution.py",
     "scripts/verify_dem3d_rolling_resistance.py",
+    "src/tensordem/bedcoupling/study.py",
     "tests/test_ball_ball_rolling_contact.py",
+    "tests/test_bedcoupling_acceptance.py",
+    "tests/test_coarse_graining_scaling.py",
     "tests/test_dem3d_energy_friction_rolling.py"
    ],
    "remedy": "REGENERABLE"
@@ -11152,6 +15991,55 @@
    "status": "TRACKED"
   },
   {
+   "doc": "docs/threefield_iso_anchor_ledger.md",
+   "line": 4,
+   "pointer": "benchmarks/anchors/ice-hull-propeller-threefield.json",
+   "kind": "data",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/threefield_iso_anchor_ledger.md",
+   "line": 6,
+   "pointer": "scripts/build_ice_hull_propeller_anchor.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/threefield_iso_anchor_ledger.md",
+   "line": 7,
+   "pointer": "src/tensordem/threefield/iso_anchor.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/threefield_iso_anchor_ledger.md",
+   "line": 7,
+   "pointer": "tests/test_threefield_iso_anchor.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/threefield_iso_anchor_ledger.md",
+   "line": 8,
+   "pointer": "docs/img/threefield_iso_anchor.png",
+   "kind": "figure",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/threefield_iso_anchor_ledger.md",
+   "line": 39,
+   "pointer": "docs/ICE_CONTACT_PRESSURE_ROLLING_PROXY.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/threefield_iso_anchor_ledger.md",
+   "line": 76,
+   "pointer": "docs/THREEFIELD_ICE_HULL_PROPELLER.md",
+   "kind": "doc",
+   "status": "TRACKED"
+  },
+  {
    "doc": "docs/threefield_lbm_transport_verification.md",
    "line": 4,
    "pointer": "src/tensordem/threefield/lbm_transport.py",
@@ -11458,20 +16346,27 @@
    "producers": [
     "benchmarks/ice_rideup_sweep.py",
     "scripts/adhesion_repose_pile.py",
+    "scripts/analyse_rubble_rheology.py",
     "scripts/benchmark_dem3d_contact_impact.py",
     "scripts/benchmark_dem3d_scale.py",
+    "scripts/build_dem_thermal_report.py",
     "scripts/collect_tutorial_first_verified_run.py",
     "scripts/m6296_beverloo_analysis.py",
     "scripts/m6457_beverloo_analysis.py",
     "scripts/make_api_report.py",
     "scripts/make_contact_impact_report.py",
+    "scripts/mts_contact_report.py",
+    "scripts/plot_dem_thermal_granular.py",
     "scripts/post_adhesion_report.py",
     "scripts/pressure_area_campaign.py",
     "scripts/pressure_area_figures.py",
     "scripts/pressure_area_report.py",
     "scripts/render_ice_uq_page.py",
+    "scripts/render_rubble_rheology_report.py",
     "scripts/report_rolling_resistance.py",
+    "scripts/run_dem_thermal_granular.py",
     "scripts/run_ice_uq_sensitivity.py",
+    "scripts/run_ridge_statistical_study.py",
     "scripts/validate_rolling_resistance.py",
     "tests/test_ridge_grounding_refresh_evidence.py",
     "tests/test_tutorial_first_verified_run.py"
@@ -11881,7 +16776,14 @@
    "kind": "data",
    "status": "MISSING",
    "producers": [
-    "scripts/dem_verification_campaign.py"
+    "scripts/build_mixed_ice_report.py",
+    "scripts/dem_verification_campaign.py",
+    "scripts/run_mixed_ice_dem_field.py",
+    "scripts/wet_ice_cohesion_study.py",
+    "src/tensordem/wet_ice_cohesion/__init__.py",
+    "src/tensordem/wet_ice_cohesion/figures.py",
+    "src/tensordem/wet_ice_cohesion/study.py",
+    "tests/test_mixed_ice_dem_field.py"
    ],
    "remedy": "REGENERABLE"
   },
@@ -11906,7 +16808,14 @@
    "kind": "data",
    "status": "MISSING",
    "producers": [
-    "scripts/dem_verification_campaign.py"
+    "scripts/build_mixed_ice_report.py",
+    "scripts/dem_verification_campaign.py",
+    "scripts/run_mixed_ice_dem_field.py",
+    "scripts/wet_ice_cohesion_study.py",
+    "src/tensordem/wet_ice_cohesion/__init__.py",
+    "src/tensordem/wet_ice_cohesion/figures.py",
+    "src/tensordem/wet_ice_cohesion/study.py",
+    "tests/test_mixed_ice_dem_field.py"
    ],
    "remedy": "REGENERABLE"
   },
@@ -11971,6 +16880,110 @@
    "line": 20,
    "pointer": "tests/test_wake_lbm_analytic_verification.py",
    "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/wet_ice_cohesion_P35N2.md",
+   "line": 52,
+   "pointer": "scripts/gen_wet_ice_capillary_reference.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/wet_ice_cohesion_P35N2.md",
+   "line": 53,
+   "pointer": "artifacts/wet_ice_cohesion/capillary_reference.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "scripts/gen_wet_ice_capillary_reference.py",
+    "src/tensordem/wet_ice_cohesion/capillary.py",
+    "src/tensordem/wet_ice_cohesion/study.py",
+    "tests/test_wet_ice_cohesion.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/wet_ice_cohesion_P35N2.md",
+   "line": 78,
+   "pointer": "scripts/wet_ice_cohesion_study.py",
+   "kind": "code",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/wet_ice_cohesion_P35N2.md",
+   "line": 79,
+   "pointer": "tests/test_wet_ice_cohesion.py",
+   "kind": "test",
+   "status": "TRACKED"
+  },
+  {
+   "doc": "docs/wet_ice_cohesion_P35N2.md",
+   "line": 151,
+   "pointer": "artifacts/wet_ice_cohesion/fig1_capillary_bridge.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "src/tensordem/wet_ice_cohesion/figures.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/wet_ice_cohesion_P35N2.md",
+   "line": 154,
+   "pointer": "artifacts/wet_ice_cohesion/fig2_agglomeration_smoluchowski.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "src/tensordem/wet_ice_cohesion/figures.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/wet_ice_cohesion_P35N2.md",
+   "line": 156,
+   "pointer": "artifacts/wet_ice_cohesion/fig3_cohesion_cell.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "src/tensordem/wet_ice_cohesion/figures.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/wet_ice_cohesion_P35N2.md",
+   "line": 158,
+   "pointer": "artifacts/wet_ice_cohesion/fig4_enhancement_vs_size.png",
+   "kind": "figure",
+   "status": "MISSING",
+   "producers": [
+    "src/tensordem/wet_ice_cohesion/figures.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/wet_ice_cohesion_P35N2.md",
+   "line": 218,
+   "pointer": "artifacts/wet_ice_cohesion/campaign.json",
+   "kind": "data",
+   "status": "MISSING",
+   "producers": [
+    "scripts/build_mixed_ice_report.py",
+    "scripts/dem_verification_campaign.py",
+    "scripts/run_mixed_ice_dem_field.py",
+    "scripts/wet_ice_cohesion_study.py",
+    "src/tensordem/wet_ice_cohesion/__init__.py",
+    "src/tensordem/wet_ice_cohesion/figures.py",
+    "src/tensordem/wet_ice_cohesion/study.py",
+    "tests/test_mixed_ice_dem_field.py"
+   ],
+   "remedy": "REGENERABLE"
+  },
+  {
+   "doc": "docs/wet_ice_cohesion_P35N2.md",
+   "line": 219,
+   "pointer": "src/tensordem/wet_ice_cohesion/figures.py",
+   "kind": "code",
    "status": "TRACKED"
   },
   {

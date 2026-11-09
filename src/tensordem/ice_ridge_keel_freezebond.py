@@ -141,7 +141,16 @@ RHO_BRINE = 1024.0
 LATENT_HEAT_FUSION = 3.34e5
 K_ICE = 2.2
 
-_LIQUIDUS_T_C = np.array([0.0, -1.0, -2.0, -5.0, -10.0, -15.0, -20.0, -25.0])
+#: Assur (1958) / Cox & Weeks (1983) liquidus anchors, (T [degC], S_b [g/kg]).
+#: The pairing is the upstream one of ``tensorphysics.ice.adfreeze`` -- a
+#: *descending* temperature list next to the *descending* brine-salinity list
+#: (cold end first).  Both arrays must be kept in the same order: the previous
+#: revision had the temperature list sorted ascending against the descending
+#: salinity list, which mis-paired every anchor (S_b = 78 g/kg was read at
+#: -10 degC instead of -5 degC) and pushed the liquidus of seawater (S = 32)
+#: down to -15.9 degC, so *every* saline joint above that temperature was
+#: silently awarded zero adfreeze strength.
+_LIQUIDUS_T_C = np.array([-23.0, -20.0, -15.0, -10.0, -5.0, -2.0, -1.0, -0.1])
 _LIQUIDUS_SB_GKG = np.array([255.0, 240.0, 197.0, 143.0, 78.0, 35.0, 17.5, 2.0])
 
 #: shear-to-tension strength ratio of the freeze-bond law
@@ -1669,6 +1678,9 @@ def macroscopic_friction_angle(
     axial_rate: float = 0.15,        # m/s at the lid (documented rate effect)
     max_strain: float = 0.22,
     settle_steps: int = 900,
+    servo_steps: int = 600,
+    servo_tol: float = 0.15,
+    lateral_fraction: float = 0.4,
     dt: float = 4.0e-4,
     seed: int = 20261109,
 ) -> dict:
@@ -1685,6 +1697,12 @@ def macroscopic_friction_angle(
     continuum reference would bias the comparison.  The measured value is what
     enters :func:`kerr_keel_resistance`.
     """
+    # vertical stress is applied by the (force-controlled) lid, so its preload is
+    # chosen to make the lid load equal to the confining pressure: the specimen
+    # then starts from an *isotropic* stress state and the measured stress ratio
+    # is a friction angle, not an anisotropy artifact.
+    flotation = (WATER_DENSITY - ICE_DENSITY) * (1.0 - porosity) * GRAVITY * size_m
+    preload = float(confining_pa) / max(flotation, 1e-9)
     cfg = KeelConfig(
         n_particles=n_particles,
         depth_m=size_m,
@@ -1693,50 +1711,97 @@ def macroscopic_friction_angle(
         porosity=porosity,
         mu_particle=mu_particle,
         mu_wall=mu_particle,
+        lid_preload=preload,
         settle_steps=settle_steps,
         drag_velocity=axial_rate,
         dt=dt,
         seed=seed,
     )
     sim = KeelRubble(cfg, bonds_enabled=False, buoyant=False)
-    sim.consolidate(preload=8.0)
+    sim.consolidate(preload=1.0)
     area = size_m * size_m
     f_target = confining_pa * area
     left_wall, right_wall = 0.0, size_m
-    lid_z = sim.lid_z
     strain = 0.0
     peak_ratio = 0.0
     history = []
-    n_steps = int(max_strain * size_m / (axial_rate * dt))
-    for k in range(n_steps):
+    servo_trace = []
+
+    def _servo(out, target: float) -> tuple[float, float]:
+        """Stress-controlled increment of the two lateral walls (lid untouched)."""
+        nonlocal left_wall, right_wall
+        err_r = (out["f_back"] - target) / target
+        err_l = (out["f_plate"] - target) / target
+        right_wall += float(np.clip(0.3 * err_r, -1.0, 1.0)) * 2.0e-3
+        left_wall -= float(np.clip(0.3 * err_l, -1.0, 1.0)) * 2.0e-3
+        return err_l, err_r
+
+    # -- phase 1: isotropic servo of the lateral walls to p_c ----------------
+    for _ in range(int(servo_steps)):
         out = sim.step(dt, plate_x=left_wall, back_x=right_wall)
-        # servo the lateral walls to the confining stress
-        err_r = (out["f_back"] - f_target) / max(f_target, 1.0)
-        err_l = (out["f_plate"] - f_target) / max(f_target, 1.0)
-        right_wall += float(np.clip(0.5 * err_r, -1.0, 1.0)) * 5.0e-3
-        left_wall -= float(np.clip(0.5 * err_l, -1.0, 1.0)) * 5.0e-3
-        # kinematic lid (axial piston)
-        lid_z -= axial_rate * dt
-        sim.lid_z = lid_z
-        sim.lid_v = -axial_rate
-        strain = (size_m - lid_z) / size_m
+        servo_trace.append(_servo(out, f_target))
+    servo_error = max(abs(e) for row in servo_trace[-50:] for e in row)
+
+    # -- phase 2: deviatoric path -- hold the lid load, bleed the lateral
+    #    confinement down to ``lateral_fraction`` of p_c (constant-vertical
+    #    extension-type stress path).  The peak mobilised ratio is the friction
+    #    angle; only servo-converged states count.
+    lid_z0 = sim.lid_z
+    n_steps = int(max_strain * size_m / (axial_rate * dt))
+    for k in range(max(n_steps, 1)):
+        frac = 1.0 - (1.0 - float(lateral_fraction)) * min(1.0, k / max(n_steps - 1, 1))
+        target = f_target * frac
+        out = sim.step(dt, plate_x=left_wall, back_x=right_wall)
+        err_l, err_r = _servo(out, target)
+        if max(abs(err_l), abs(err_r)) > servo_tol:
+            continue
         s1 = out["f_lid"] / area
         s3 = 0.5 * (out["f_plate"] + out["f_back"]) / area
+        strain = float((lid_z0 - sim.lid_z) / size_m)
         if s1 > 0.0 and s3 > 0.0:
             ratio = (s1 - s3) / (s1 + s3)
             peak_ratio = max(peak_ratio, float(ratio))
             history.append((strain, s1, s3, float(ratio)))
+    if not history:
+        raise RuntimeError(
+            "biaxial test produced no servo-converged stress state; the "
+            "confining stress was never reached (reduce confining_pa or raise "
+            "servo_steps)"
+        )
     sin_phi = float(np.clip(peak_ratio, 0.0, 0.95))
     phi = float(np.degrees(np.arcsin(sin_phi)))
+    # Plausibility gate.  A sphere assembly with contact friction ``atan(mu)``
+    # and no rolling resistance cannot mobilise a *larger* macroscopic friction
+    # angle than its contact value; if it does, the stress path was not the
+    # intended one (servo/lid transient, specimen not load-carrying) and the
+    # number must not be used as a continuum input.  The earlier revision
+    # silently returned 67 deg (i.e. above the 26.6 deg contact value) and that
+    # value went straight into the Kerr reference.
+    phi_contact = float(np.degrees(np.arctan(mu_particle)))
+    valid = bool(sin_phi <= np.sin(np.deg2rad(phi_contact)) + 0.02 and len(history) >= 50)
     return {
         "phi_macro_deg": phi,
         "sin_phi": sin_phi,
+        "valid": valid,
+        "validity_note": (
+            "phi_macro must not exceed the contact friction angle "
+            f"({np.arctan(mu_particle) * 180.0 / np.pi:.1f} deg); an exceeded "
+            "bound means the servo-converged stress path was not reached and the "
+            "value is WITHHELD as a continuum input"
+        ),
         "contact_friction_angle_deg": float(np.degrees(np.arctan(mu_particle))),
         "confining_pa": float(confining_pa),
         "axial_strain_rate_per_s": float(axial_rate / size_m),
         "final_strain": float(strain),
         "n_particles": int(sim.n),
         "porosity_initial": float(porosity),
+        "servo_steps": int(servo_steps),
+        "lid_preload_used": float(preload),
+        "lateral_fraction": float(lateral_fraction),
+        "servo_error_isotropic": float(servo_error),
+        "servo_tol": float(servo_tol),
+        "n_valid_points": len(history),
+        "confining_stress_ratio": float(f_target / (confining_pa * area)),
         "history": history,
     }
 
