@@ -241,7 +241,19 @@ class RunResult:
 class LevelIceSheet:
     """Bonded-particle level-ice sheet driven by a rigid inclined hull face."""
 
-    def __init__(self, config: SheetConfig = SheetConfig()) -> None:
+    def __init__(self, config: SheetConfig = SheetConfig(), *,
+                 material_field: dict[str, Any] | None = None) -> None:
+        """Build the lattice; ``material_field`` optionally makes it heterogeneous.
+
+        ``material_field`` maps a key in {``strength_scale``, ``modulus_scale``,
+        ``crush_scale``} to a length-``n`` array of *per-particle multipliers*
+        (default 1.0 everywhere, i.e. the homogeneous sheet).  Bond-level
+        properties are the arithmetic mean of the two end particles -- the
+        declared mixing convention for a bond that straddles a FY/MY boundary.
+        Setting it is what allows a mixed ice field (see
+        :mod:`tensordem.mixed_ice.dem_field`) to be simulated instead of an
+        area-averaged homogeneous surrogate.
+        """
         self.config = cfg = config
         d = cfg.spacing_m
         self.dt = 0.0
@@ -275,6 +287,7 @@ class LevelIceSheet:
         self.strength_t = cfg.flexural_strength_pa * cfg.strength_scale
         self.strength_c = cfg.compressive_strength_pa * cfg.strength_scale
         self.strength_s = cfg.shear_strength_pa * cfg.strength_scale
+        self._install_material_field(material_field)
         self.alive = np.ones(self.n_bonds, dtype=bool)
         self.break_time = np.full(self.n_bonds, -1.0)
         self.break_x = np.full(self.n_bonds, np.nan)
@@ -316,6 +329,80 @@ class LevelIceSheet:
                 f"dt {self.dt:.3e} s exceeds the stability limit "
                 f"{cfg.recommended_dt_s:.3e} s"
             )
+
+    # -- optional heterogeneous material field ------------------------------
+    def _install_material_field(self, material_field: dict[str, Any] | None) -> None:
+        """Attach per-particle material multipliers (default: homogeneous)."""
+        n = self.n
+        self.material_field: dict[str, np.ndarray] | None = None
+        scales = {
+            "strength_scale": np.ones(n),
+            "modulus_scale": np.ones(n),
+            "crush_scale": np.ones(n),
+        }
+        if material_field is not None:
+            unknown = set(material_field) - set(scales)
+            if unknown:
+                raise ValueError(f"unknown material_field keys: {sorted(unknown)}")
+            clean: dict[str, np.ndarray] = {}
+            for key, value in material_field.items():
+                arr = np.asarray(value, dtype=float).reshape(-1)
+                if arr.size != n:
+                    raise ValueError(
+                        f"material_field[{key!r}] must have n={n} entries, got {arr.size}"
+                    )
+                if not np.all(np.isfinite(arr)) or np.any(arr <= 0.0):
+                    raise ValueError(
+                        f"material_field[{key!r}] must be finite and positive"
+                    )
+                scales[key] = arr
+                clean[key] = arr
+            self.material_field = clean
+        self.node_strength_scale = scales["strength_scale"]
+        self.node_modulus_scale = scales["modulus_scale"]
+        self.node_crush_scale = scales["crush_scale"]
+        # A bond that straddles a class boundary takes the arithmetic mean of the
+        # two particle multipliers (declared mixing convention, symmetric).
+        self.bond_strength_scale = 0.5 * (
+            self.node_strength_scale[self.bi] + self.node_strength_scale[self.bj]
+        )
+        self.bond_modulus_scale = 0.5 * (
+            self.node_modulus_scale[self.bi] + self.node_modulus_scale[self.bj]
+        )
+        self.strength_t_b = self.strength_t * self.bond_strength_scale
+        self.strength_c_b = self.strength_c * self.bond_strength_scale
+        self.strength_s_b = self.strength_s * self.bond_strength_scale
+        self.heterogeneous = bool(
+            not np.allclose(self.node_strength_scale, 1.0, rtol=0.0, atol=0.0)
+            or not np.allclose(self.node_modulus_scale, 1.0, rtol=0.0, atol=0.0)
+            or not np.allclose(self.node_crush_scale, 1.0, rtol=0.0, atol=0.0)
+        )
+
+    def material_summary(self) -> dict[str, Any]:
+        """Distribution of the per-particle material multipliers (audit payload)."""
+        key = "strength_scale"
+        s = self.node_strength_scale
+        return {
+            "heterogeneous": self.heterogeneous,
+            "strength_scale": {
+                "min": float(s.min()), "max": float(s.max()),
+                "mean": float(s.mean()),
+            },
+            "modulus_scale": {
+                "min": float(self.node_modulus_scale.min()),
+                "max": float(self.node_modulus_scale.max()),
+                "mean": float(self.node_modulus_scale.mean()),
+            },
+            "crush_scale": {
+                "min": float(self.node_crush_scale.min()),
+                "max": float(self.node_crush_scale.max()),
+                "mean": float(self.node_crush_scale.mean()),
+            },
+            "bond_strength_scale_mean": float(self.bond_strength_scale.mean()),
+            "n_particles": int(self.n),
+            "n_bonds": int(self.n_bonds),
+            "key": key,
+        }
 
     # -- hull geometry ------------------------------------------------------
     def hull_position(self) -> float:
@@ -368,11 +455,13 @@ class LevelIceSheet:
         u2 = c * ux_j + s * uz_j
         w2 = -s * ux_j + c * uz_j
         L = self.blen
-        a = self.EA / L
-        b1 = 12.0 * self.EI / L**3
-        b2 = 6.0 * self.EI / L**2
-        b3 = 4.0 * self.EI / L
-        b4 = 2.0 * self.EI / L
+        EA = self.EA * self.bond_modulus_scale
+        EI = self.EI * self.bond_modulus_scale
+        a = EA / L
+        b1 = 12.0 * EI / L**3
+        b2 = 6.0 * EI / L**2
+        b3 = 4.0 * EI / L
+        b4 = 2.0 * EI / L
         axial = a * (u2 - u1)                    # tension positive
         shear = b1 * (w1 - w2) + b2 * (th_i + th_j)
         m_i = b2 * (w1 - w2) + b3 * th_i + b4 * th_j
@@ -382,24 +471,28 @@ class LevelIceSheet:
             sigma_t = axial / self.A + abs_m / self.W
             sigma_c = abs_m / self.W - axial / self.A
             tau = np.abs(shear) / self.A
-            failure = self.alive & ((sigma_t > self.strength_t)
-                                    | (sigma_c > self.strength_c)
-                                    | (tau > self.strength_s))
+            failure = self.alive & ((sigma_t > self.strength_t_b)
+                                    | (sigma_c > self.strength_c_b)
+                                    | (tau > self.strength_s_b))
             if np.any(failure):
                 self.alive &= ~failure
                 self.break_time[failure] = self.time
                 self.break_x[failure] = 0.5 * (self.x[self.bi[failure]]
                                                + self.x[self.bj[failure]])
                 mode = np.zeros(int(failure.sum()), dtype=np.int8)
-                mode[sigma_t[failure] > self.strength_t] = 1
-                mode[(sigma_c[failure] > self.strength_c) & (mode == 0)] = 2
-                mode[(tau[failure] > self.strength_s) & (mode == 0)] = 3
+                mode[sigma_t[failure] > self.strength_t_b[failure]] = 1
+                mode[(sigma_c[failure] > self.strength_c_b[failure])
+                     & (mode == 0)] = 2
+                mode[(tau[failure] > self.strength_s_b[failure])
+                     & (mode == 0)] = 3
                 self.break_mode[failure] = mode
                 released = 0.5 * axial[failure] ** 2 / a[failure]
                 self.accounting["fracture_release_J"] += float(released.sum())
         active = self.alive
         u_elem = np.stack((ux_i, uz_i, th_i, ux_j, uz_j, th_j), axis=1)
-        f_elem = -np.einsum("bij,bj->bi", self.Kg, u_elem)
+        Kg = (self.Kg * self.bond_modulus_scale[:, None, None]
+              if self.heterogeneous else self.Kg)
+        f_elem = -np.einsum("bij,bj->bi", Kg, u_elem)
         f_elem[~active] = 0.0
         nb = self.n
         fx = (np.bincount(self.bi, f_elem[:, 0], minlength=nb)
@@ -484,7 +577,8 @@ class LevelIceSheet:
             chord = 2.0 * np.sqrt(np.clip(pen ** 2 - (pen - r) ** 2, 0.0, None))
             chord = np.clip(chord, 0.05 * self.config.spacing_m, 2.0 * r)
             limit = (self.config.crush_cap_pa * self.config.strength_scale
-                     * chord * self.config.out_of_plane_width_m)
+                     * self.node_crush_scale[idx] * chord
+                     * self.config.out_of_plane_width_m)
             capped = mag > limit
             mag = np.minimum(mag, limit)
         t_dir = np.broadcast_to(self.tangent, (len(idx), 2))
@@ -687,8 +781,13 @@ class LevelIceSheet:
         Minv[1::3] = 1.0 / self.mass
         Minv[2::3] = 1.0 / self.inertia
         scaled = K.multiply(Minv[:, None]).tocsc()
+        # A deterministic starting vector keeps the step -- and therefore a
+        # whole DEM run -- reproducible: ARPACK's default v0 is drawn at random,
+        # which made the stable step (and every archived resistance) jitter at
+        # the ~1e-3 relative level between identical runs.
+        v0 = 1.0 + 1.0e-3 * np.arange(3 * self.n, dtype=float)
         try:
-            lam = float(eigsh(scaled, k=1, which="LA",
+            lam = float(eigsh(scaled, k=1, which="LA", v0=v0,
                               return_eigenvectors=False)[0])
         except Exception:  # pragma: no cover - fall back to the CFL estimate
             return self.config.recommended_dt_s
@@ -739,6 +838,8 @@ class LevelIceSheet:
             T[:, blk + 1, blk + 1] = c
             T[:, blk + 2, blk + 2] = 1.0
         Kg = self.Kg if hasattr(self, "Kg") else np.einsum("bji,bjk,bkl->bil", T, K, T)
+        if getattr(self, "heterogeneous", False):
+            Kg = Kg * self.bond_modulus_scale[:, None, None]
         dofs = np.zeros((nb, 6), dtype=int)
         dofs[:, 0] = 3 * self.bi
         dofs[:, 1] = 3 * self.bi + 1
