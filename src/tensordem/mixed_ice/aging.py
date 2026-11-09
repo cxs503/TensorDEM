@@ -116,6 +116,11 @@ THICKNESS_TIME_A = 1.5
 PERCOLATION_BRINE_VOLUME = 0.28
 #: exponent of the compressive-strength degradation law.
 COMPRESSIVE_EXPONENT = 2.0
+#: exponent of the temperature amplification of the ice-matrix compressive
+#: strength, ``sigma_c ~ (|T| / |T_FY|)**m`` (see the coefficient ledger).
+COMPRESSIVE_TEMPERATURE_EXPONENT = 0.35
+#: sensitivity band swept for the temperature exponent.
+COMPRESSIVE_TEMPERATURE_EXPONENT_BAND = (0.20, 0.50)
 #: exponent of the elastic-modulus degradation law.
 MODULUS_EXPONENT = 1.0
 #: exponent of the fracture-toughness degradation law.
@@ -170,6 +175,15 @@ COEFFICIENT_LEDGER: dict[str, tuple[float, str, str]] = {
         "sigma_c ~ (1 - v_b/v_p)^2, the brittle-strength scaling near a "
         "percolation threshold.  Calibrated so the FY reference state returns "
         "the repository value 1.5 MPa, hence FY-consistent by construction.",
+    ),
+    "compressive_temperature_exponent": (
+        COMPRESSIVE_TEMPERATURE_EXPONENT,
+        "CONVENTION",
+        "sigma_c ~ (|T|/|T_FY|)**m with m in the swept band 0.20-0.50; the "
+        "literature trend (brittle compressive strength rising as sea ice "
+        "cools, Schulson & Duval 2009 ch. 7) fixes the sign and order of "
+        "magnitude, not the exact exponent.  Normalised at the FY reference "
+        "temperature, so age 1 is unchanged for any m.",
     ),
     "modulus_exponent": (
         MODULUS_EXPONENT,
@@ -287,14 +301,44 @@ def _solid_calibration(reference_pa: float, exponent: float,
     return reference_pa / (1.0 - v_b_ref / PERCOLATION_BRINE_VOLUME) ** exponent
 
 
-def compressive_strength_pa(v_b: Any) -> np.ndarray | float:
-    """Compressive strength [Pa] from the pinned percolation law."""
+def compressive_strength_pa(
+    v_b: Any,
+    temperature_c_value: Any | None = None,
+    *,
+    temperature_exponent: float = COMPRESSIVE_TEMPERATURE_EXPONENT,
+) -> np.ndarray | float:
+    """Compressive strength [Pa]: percolation law times temperature amplification.
+
+    ``sigma_c = sigma_solid (|T|/|T_FY|)**m (1 - v_b/v_p)**2``
+
+    The percolation factor alone reproduces the repository first-year anchor
+    (1.5 MPa at age 1) and grows only by the brine-volume loss on desalination,
+    which yields an MY/FY ratio of ~1.47 -- below the observed band.  The
+    amplification factor carries the *matrix* (pure-ice) part of the temperature
+    dependence that the brine-volume argument cannot supply: the ice matrix is
+    both colder and much less saline in MY ice, and brittle compressive strength
+    rises as the temperature falls.  The factor is exactly 1.0 at the FY
+    reference temperature, so the first-year degeneration is exact for any
+    ``m``, and it saturates because the mean temperature saturates.
+
+    ``temperature_c_value=None`` reproduces the pre-extension (porosity-only)
+    law, which is kept for backward compatibility of stored artifacts.
+    """
     v = _as_float_array("brine_volume_fraction", v_b, positive=False)
     _guard_porosity(v)
     ref = brine_volume_fraction(FY_SALINITY_PERMILLE, FY_TEMPERATURE_C)
     solid = _solid_calibration(FY_COMPRESSIVE_REFERENCE_PA, COMPRESSIVE_EXPONENT, ref)
     out = solid * (1.0 - v / PERCOLATION_BRINE_VOLUME) ** COMPRESSIVE_EXPONENT
-    return float(out) if out.ndim == 0 else out
+    if temperature_c_value is not None:
+        m = _finite("temperature_exponent", temperature_exponent)
+        if m < 0.0:
+            raise ValueError("temperature_exponent must be nonnegative")
+        t = np.abs(_as_float_array("temperature_c", temperature_c_value,
+                                  positive=False))
+        if np.any(t <= 0.0):
+            raise ValueError("temperature must be strictly below 0 degC")
+        out = out * (t / abs(FY_TEMPERATURE_C)) ** m
+    return float(out) if np.ndim(out) == 0 else out
 
 
 def elastic_modulus_pa(v_b: Any) -> np.ndarray | float:
@@ -427,6 +471,7 @@ class IceAgeState:
                 "density_kg_m3": True,
                 "fracture_toughness_pa_sqrt_m": False,
             },
+            "compressive_temperature_exponent": COMPRESSIVE_TEMPERATURE_EXPONENT,
             "aging_ledger_sha256": aging_ledger_sha256(),
         }
 
@@ -446,7 +491,7 @@ def material_state(age_years: float) -> IceAgeState:
         temperature_c=t,
         thickness_m=class_thickness_m(age),
         brine_volume_fraction=v_b,
-        compressive_strength_pa=compressive_strength_pa(v_b),
+        compressive_strength_pa=compressive_strength_pa(v_b, t),
         flexural_strength_pa=flexural_strength_pa(v_b),
         elastic_modulus_pa=elastic_modulus_pa(v_b),
         fracture_toughness_pa_sqrt_m=fracture_toughness_pa_sqrt_m(v_b),
@@ -468,7 +513,9 @@ def material_state_arrays(ages: Any) -> dict[str, np.ndarray]:
         "temperature_c": np.asarray(t, dtype=float),
         "thickness_m": np.asarray(class_thickness_m(a), dtype=float),
         "brine_volume_fraction": np.asarray(v_b, dtype=float),
-        "compressive_strength_pa": np.asarray(compressive_strength_pa(v_b), dtype=float),
+        "compressive_strength_pa": np.asarray(
+            compressive_strength_pa(v_b, t), dtype=float
+        ),
         "flexural_strength_pa": np.asarray(flexural_strength_pa(v_b), dtype=float),
         "elastic_modulus_pa": np.asarray(elastic_modulus_pa(v_b), dtype=float),
         "fracture_toughness_pa_sqrt_m": np.asarray(
