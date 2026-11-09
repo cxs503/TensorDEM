@@ -1,0 +1,341 @@
+{
+  "artifact": "ice-abrasion-extremes external anchor verification",
+  "task_key": "paper-exp-ice-abrasion-extremes-1",
+  "topic": "ice-abrasion-extremes",
+  "experiment": "research_plan item 1 -- external anchor verification",
+  "generated_utc": "2026-11-08T15:55:23+00:00",
+  "repository": "TensorDEM",
+  "git_rev": "88131d2",
+  "environment": {
+    "python": "3.11.6",
+    "numpy": "2.4.6",
+    "torch": "2.7.1"
+  },
+  "decision_supported": [
+    "D1: may any 'agreement with ISO 19906' statement be issued for this case? -> no, while K1 is open",
+    "D2: what dominates the case-vs-anchor distance -> the caliber definition (load-bearing vs nominal footprint), by the algebra alone"
+  ],
+  "criteria": [
+    {
+      "id": "K1",
+      "statement": "anchor transcribed verbatim with quote + clause/table/page + raw value",
+      "threshold": "all anchors VERIFIED",
+      "measured": "0/2 anchors verified",
+      "passed": false
+    },
+    {
+      "id": "K2",
+      "statement": "conversion chain recomputes from the artifact",
+      "threshold": "max relative residual < 1e-09",
+      "measured": "max residual 0.000e+00",
+      "passed": true
+    },
+    {
+      "id": "K3",
+      "statement": "dimensional homogeneity + unit-change invariance",
+      "threshold": "exact < 1e-12",
+      "measured": "prefactor L exponent -0.100000 (expected -0.100000); area-unit residual 1.48e-16; pressure-unit residual 0.00e+00",
+      "passed": true
+    },
+    {
+      "id": "K4",
+      "statement": "internal consistency of p(A): p(A0)=p0, monotone, slope recovery, area-weighted identity",
+      "threshold": "< 1e-12 / < 1e-09 / < 1e-09",
+      "measured": "p(A0) residual 0.00e+00; monotone True; slope error 9.26e-12; integral residual 4.21e-14",
+      "passed": true
+    },
+    {
+      "id": "K5",
+      "statement": "caliber conversion re-derivable from the shipped sampler",
+      "threshold": "< 1e-09",
+      "measured": "max identity residual 3.203e-16; p_load median 7.027423e+05 Pa, p_footprint median 1.405485e+04 Pa",
+      "passed": true
+    },
+    {
+      "id": "K6",
+      "statement": "provenance: every number script-injected, source hashed",
+      "threshold": "script + source sha256 present",
+      "measured": "sha256 recorded for the generator and the sampled source module",
+      "passed": true
+    },
+    {
+      "id": "K7",
+      "statement": "no unverified candidate used in a compliance claim",
+      "threshold": "domain comparison NOT_ADJUDICABLE while K1 open",
+      "measured": "domain_comparison = NOT_ADJUDICABLE",
+      "passed": true
+    }
+  ],
+  "verdict": {
+    "overall": "HONEST_FAIL",
+    "open_criteria": [
+      "K1"
+    ],
+    "headline": "external anchor could NOT be closed: no licensed ISO 19906:2019 text is reachable, so K1 stays open and no agreement with the standard may be claimed. The value-free part of the anchor (its algebraic form) was closed and checked; the case-vs-anchor distance is dominated by the caliber definition, not by the anchor's area dependence."
+  },
+  "anchors": [
+    {
+      "id": "iso19906-pA-exponent",
+      "name": "ISO 19906 pressure-area relation p(A): prefactor and exponent",
+      "source_document": "ISO 19906:2019 Petroleum and natural gas industries -- Arctic offshore structures, Annex A (pressure-area)",
+      "required_fields": [
+        "verbatim_quote",
+        "clause_or_table_or_page",
+        "value_raw_in_source_units"
+      ],
+      "clause_table_page_target": "Annex A pressure-area clause/table (exact item not yet identified -- see gap)",
+      "verbatim_quote": null,
+      "value_raw": null,
+      "unit_raw": null,
+      "status": "WITHHELD",
+      "retrieval_attempts": [
+        {
+          "channel": "local filesystem",
+          "command": "find /root /data /srv /opt -maxdepth 4 -iname '*19906*'",
+          "result": "no copy of the standard"
+        },
+        {
+          "channel": "ecosystem repositories",
+          "command": "grep -rIl 'pressure.area|A.8.|Annex A' in TensorPhysics/TensorPapers",
+          "result": "only derived model code, no verbatim quotation with table number"
+        },
+        {
+          "channel": "publisher (www.iso.org)",
+          "command": "curl -s -o /dev/null -w '%{http_code}' https://www.iso.org/standard/65655.html",
+          "result": "HTTP 403; standard is paywalled, no institutional license"
+        }
+      ],
+      "gap": "No licensed copy of ISO 19906:2019 is reachable from this sandbox, so the prefactor and the exponent cannot be transcribed from the source text. Values circulating in sibling repositories are unverified candidates and stay in the comparison-only registry."
+    },
+    {
+      "id": "iso19906-design-global-ice-force",
+      "name": "ISO 19906 design global ice force (Clause 14/15)",
+      "source_document": "ISO 19906:2019, Clause 14 / Clause 15 (global ice actions on structures)",
+      "required_fields": [
+        "verbatim_quote",
+        "clause_or_table_or_page",
+        "value_raw_in_source_units"
+      ],
+      "clause_table_page_target": "Clause 14/15 global ice action formulation (exact clause number not yet identified -- see gap)",
+      "verbatim_quote": null,
+      "value_raw": null,
+      "unit_raw": null,
+      "status": "WITHHELD",
+      "retrieval_attempts": [
+        {
+          "channel": "local filesystem",
+          "command": "same search as above",
+          "result": "no copy of the standard"
+        },
+        {
+          "channel": "publisher (www.iso.org)",
+          "command": "HTTP GET",
+          "result": "HTTP 403"
+        }
+      ],
+      "gap": "Same access gap as the p(A) anchor. Additionally the design global force is structure-specific (a pressure-area integration over an exposure width), so a verbatim clause value would still need a documented structure mapping before it means anything for a hull-belt abrasion case."
+    }
+  ],
+  "structural_form": {
+    "law": "p(A) = C * A^n   <=>   p(A) = p0 * (A/A0)^n,  A0 = 1 m^2 (n < 0)",
+    "prefactor_dims_of_C": {
+      "M": 1.0,
+      "L": -0.09999999999999998,
+      "T": -2.0
+    },
+    "prefactor_length_exponent_expected": -0.09999999999999998,
+    "prefactor_dimensionally_homogeneous": true,
+    "buckingham_rank": 2,
+    "buckingham_dimensionless_groups": 1,
+    "buckingham_note": "1 dimensionless group for {p, C, A}: the law itself, p/(C A^n) = 1. Dimensions therefore fix the units of C but never its value -- C follows from one (A0, p0) anchoring pair, and n is the only transferable dimensionless number of the anchor. Hence an anchor exponent may only be compared as a pure number, and an anchor prefactor must be re-anchored, not copied.",
+    "pair_parameterization_residual": 0.0,
+    "area_unit_change_residual": 1.4802973661668753e-16,
+    "pressure_unit_change_residual": 0.0,
+    "p_at_A0_residual": 0.0,
+    "strict_monotone_decreasing": true,
+    "loglog_slope_recovered": -0.44999999999073553,
+    "loglog_slope_target": -0.45,
+    "loglog_slope_error": 9.264478073589544e-12,
+    "area_weighted_mean_quadrature": 17.816157813868212,
+    "area_weighted_mean_analytic": 17.816157813868962,
+    "area_weighted_mean_residual": 4.207543478557218e-14,
+    "tolerances": {
+      "parameterization": 1e-12,
+      "area_unit": 1e-12,
+      "pressure_unit": 1e-12,
+      "p_at_A0": 1e-12,
+      "slope": 1e-09,
+      "integral": 1e-09
+    }
+  },
+  "case_caliber": {
+    "source_of_parameters": "src/tensordem/ice_abrasion.py",
+    "parameters": {
+      "n_samples": 8192,
+      "fragment_size_median_m": 0.35,
+      "fragment_size_log_sigma": 0.45,
+      "nominal_pressure_median_pa": 700000.0,
+      "nominal_pressure_log_sigma": 0.45,
+      "contact_area_fraction": 0.02,
+      "seed": 20261106
+    },
+    "medians": {
+      "footprint_area_m2": 0.119993372129296,
+      "load_bearing_area_m2": 0.00239986744258592,
+      "pressure_on_load_bearing_area_pa": 702742.3395598414,
+      "pressure_on_footprint_pa": 14054.846791196827,
+      "footprint_ensemble_mean_pa": 15510.429231579781
+    },
+    "identity_residuals": {
+      "p_load_bearing_times_fraction_minus_p_footprint": 3.203041705121031e-16,
+      "load_minus_p_footprint_times_area": 0.0,
+      "load_minus_p_load_bearing_times_area": 2.056462503703576e-16,
+      "tolerance": 1e-09
+    },
+    "case_implied_exponent": {
+      "quantity": "n_case = d ln p / d ln A over the shipped ensemble (footprint area)",
+      "slope": -0.002874378843712326,
+      "standard_error": 0.005662621325797977,
+      "bootstrap_95_interval": [
+        -0.013849159333889548,
+        0.008700672349749585
+      ],
+      "pearson_r": -0.005608900102810003,
+      "n": 8192,
+      "interpretation": "the case draws pressure and fragment size independently, so its own pressure-area coupling is statistically zero; a monotone decreasing external p(A) law is structurally absent from the case"
+    },
+    "caliber_ambiguity": {
+      "factor_load_bearing_vs_footprint": 50.0,
+      "abs_log_gap": 3.912023005428146,
+      "max_area_band_effect_abs_log": 2.763102111592855,
+      "area_band_m2": [
+        0.1,
+        10.0
+      ],
+      "exponent_band_abs": [
+        0.0,
+        0.6
+      ],
+      "caliber_dominates_area_band": true,
+      "decision_D2": "caliber definition (load-bearing vs nominal footprint) dominates the whole plausible area dependence of the anchor law",
+      "candidate_band_note": "exponent band and area band are unverified candidates / plausibility windows used only to size the two effects; no compliance claim rests on them (K7)"
+    }
+  },
+  "conversion_chain": [
+    {
+      "id": "S1",
+      "step": "anchor value at the case footprint area",
+      "expression": "p_anchor(A_case) = C * A_case^n, A_case = median footprint area",
+      "inputs": {
+        "C_MPa_m-2n": 3.0,
+        "n": -0.45,
+        "A_case_m2": 0.119993372129296
+      },
+      "value_MPa": 7.789336906631397,
+      "status": "CANDIDATE_ONLY (prefactor not transcribed; K1 open)"
+    },
+    {
+      "id": "S2",
+      "step": "ratio anchor vs case pressure on the SAME (footprint) caliber",
+      "expression": "R = p_anchor(A_case) / p_case,footprint",
+      "inputs": {
+        "p_anchor_MPa": 7.789336906631397,
+        "p_case_footprint_MPa": 0.014054846791196828
+      },
+      "value": 554.2100189601642,
+      "status": "CANDIDATE_ONLY"
+    },
+    {
+      "id": "S3",
+      "step": "the caliber trap: comparing the anchor with the case's nominal (load-bearing) pressure instead of the footprint pressure",
+      "expression": "R_wrong = p_anchor(A_case) / p_case,load-bearing",
+      "inputs": {
+        "p_anchor_MPa": 7.789336906631397,
+        "p_case_load_bearing_MPa": 0.7027423395598414,
+        "factor": 50.0
+      },
+      "value": 11.084200379203283,
+      "status": "CANDIDATE_ONLY",
+      "note": "differs from S2 by the contact-area fraction; any comparison that omits this step is off by that factor"
+    },
+    {
+      "id": "S4",
+      "step": "recompute check: rebuild S1 from the reference parameterization p0 (A/A0)^-n",
+      "expression": "p0 * (A_case/A0)^n vs C * A_case^n (A0 = 1 m^2)",
+      "inputs": {
+        "p0_MPa": 3.0,
+        "A0_m2": 1.0
+      },
+      "residual": 0.0,
+      "status": "RECOMPUTE"
+    },
+    {
+      "id": "S5",
+      "step": "round trip Pa <-> MPa on the case calibers",
+      "expression": "p_case,footprint*1e6 -> Pa -> /1e6 -> MPa",
+      "residual": 0.0,
+      "status": "RECOMPUTE"
+    },
+    {
+      "id": "S6",
+      "step": "round trip load-bearing <-> footprint through the fraction",
+      "expression": "p_load * fraction -> p_foot -> /fraction -> p_load",
+      "residual": 0.0,
+      "status": "RECOMPUTE"
+    }
+  ],
+  "candidate_registry": [
+    {
+      "id": "candidate-iso19906-p0",
+      "value": 3.0,
+      "unit": "MPa at A = 1 m^2",
+      "source": "sibling repository docstring (TensorPhysics ice_plasticity.iso19906), not the standard text",
+      "status": "UNVERIFIED_CANDIDATE",
+      "permitted_use": "comparison / sensitivity only"
+    },
+    {
+      "id": "candidate-iso19906-exponent",
+      "value": 0.45,
+      "unit": "-",
+      "source": "sibling repository docstring, not the standard text",
+      "status": "UNVERIFIED_CANDIDATE",
+      "permitted_use": "comparison / sensitivity only"
+    }
+  ],
+  "domain_comparison": {
+    "status": "NOT_ADJUDICABLE",
+    "reason": "the p(A) prefactor/exponent and the Clause 14/15 design force are WITHHELD (K1 open); quoting a numerical distance to the standard would rest on unverified candidates",
+    "what_is_still_quantified": [
+      "caliber conversion factor between the two case pressure definitions: 50.0x (|ln| = 3.912) vs at most 2.763 for the anchor's whole plausible area dependence",
+      "case-implied exponent n_case = -0.0029 +/- 0.0057 (95% bootstrap [-0.0138, +0.0087]); a monotone decreasing external p(A) law implies n < 0, so the case's pressure model is structurally not a p(A) realization"
+    ],
+    "what_would_close_it": [
+      "a licensed copy of ISO 19906:2019 (Annex A pressure-area clause/table + Clause 14/15 global ice action), transcribed with quote + table/clause number + page",
+      "then re-run this script with the anchor entries filled (status VERIFIED); K1 flips and domain_comparison becomes ADJUDICABLE",
+      "additionally: state the exposure-width mapping used to turn a global force into a hull-belt pressure before comparing with a per-contact pressure"
+    ],
+    "agreement_declared": false
+  },
+  "provenance": {
+    "script": "benchmarks/anchors/ice_abrasion_extremes_anchor.py",
+    "script_sha256": "2b612c68f1cdb8736383f2eb360426d5c6777325778946a3ba8fd7b1d5e19c8e",
+    "source_modules": [
+      {
+        "path": "src/tensordem/ice_abrasion.py",
+        "sha256": "21cd7949fe2f4009338bacdcf6104b34a82dab0760ac355d5fa39f286b74c625"
+      }
+    ],
+    "reproduce": "PYTHONPATH=src python benchmarks/anchors/ice_abrasion_extremes_anchor.py",
+    "number_policy": "every numeric field in this file is injected by the script; no hand-typed values"
+  },
+  "figures": [
+    {
+      "file": "docs/figs/ice_abrasion_anchor/fig1_pA_vs_case_caliber.png",
+      "caption": "ISO 19906 p(A) candidate curves (exponents are unverified candidates) against the ice-abrasion case pressures: the two case calibers differ by the contact-area fraction, which is larger than the whole area-band effect of the law."
+    },
+    {
+      "file": "docs/figs/ice_abrasion_anchor/fig2_case_implied_exponent.png",
+      "caption": "The case's own pressure-area relation measured on the shipped sampler: pressure and fragment area are drawn independently, so the case carries no pressure-area coupling at all."
+    }
+  ]
+}
