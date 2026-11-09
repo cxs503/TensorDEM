@@ -1,0 +1,101 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://tensor.local/schemas/lambda_x_estimate.v1.json",
+  "title": "lambda_x_estimate.v1",
+  "description": "Auditable ice pressure-band correlation length (lam_x) with uncertainty, record-length sufficiency and estimator provenance. Produced by tensordem.ice_pressure_band.contract.build_estimate; consumed by prop-1104 through contract.to_prop_1104.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "quantity",
+    "unit",
+    "value",
+    "ci95",
+    "estimator",
+    "sampling",
+    "quality",
+    "evidence_grade",
+    "sources",
+    "warnings"
+  ],
+  "properties": {
+    "schema_version": {"const": "lambda_x_estimate.v1"},
+    "quantity": {"const": "lambda_x"},
+    "unit": {"const": "m"},
+    "value": {"type": "number", "minimum": 0.0, "description": "corrected correlation length [m]"},
+    "value_over_thickness": {"type": "number", "description": "lam_x / h, the literature-normalised value"},
+    "thickness_m": {"type": "number", "exclusiveMinimum": 0.0},
+    "ci95": {
+      "oneOf": [
+        {"type": "null"},
+        {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "number"}}
+      ],
+      "description": "95 % interval [m]; must bracket the value when present"
+    },
+    "ci95_over_thickness": {
+      "oneOf": [
+        {"type": "null"},
+        {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "number"}}
+      ]
+    },
+    "estimator": {
+      "type": "object",
+      "required": ["primary"],
+      "properties": {
+        "primary": {"type": "string", "enum": ["integral", "expfit", "spectral", "efold"]},
+        "methods": {"type": "object", "description": "per-method corrected values [m]"},
+        "method_spread": {"type": "number", "description": "relative spread of the calibrated methods"},
+        "method_agreement": {"type": "string", "enum": ["consensus", "disagreement", "none", "n/a"]},
+        "bias_model": {
+          "type": "object",
+          "description": "finite-window bias calibration entry: form, params, rms, k_raw, k_corrected"
+        },
+        "bias_corrected": {"type": "boolean"},
+        "uncertainty": {"type": "string"}
+      }
+    },
+    "sampling": {
+      "type": "object",
+      "required": ["record_length_m", "dx_m", "n_samples", "L_over_lambda"],
+      "properties": {
+        "record_length_m": {"type": "number", "exclusiveMinimum": 0.0},
+        "dx_m": {"type": "number", "exclusiveMinimum": 0.0},
+        "n_samples": {"type": "integer", "minimum": 8},
+        "L_over_lambda": {"type": "number", "description": "record length in correlation lengths"}
+      }
+    },
+    "quality": {
+      "type": "object",
+      "required": ["sufficient", "threshold_K", "bias_corrected", "regime"],
+      "properties": {
+        "sufficient": {"type": "boolean"},
+        "threshold_K": {"type": "number"},
+        "bias_corrected": {"type": "boolean"},
+        "regime": {"type": "string", "enum": ["ok", "white_noise", "periodic"]},
+        "method_agreement": {"type": "string"},
+        "design_usable": {"type": "boolean"}
+      }
+    },
+    "literature_comparison": {
+      "oneOf": [
+        {"type": "null"},
+        {
+          "type": "object",
+          "properties": {
+            "literature_band_over_thickness": {"type": "array", "minItems": 2, "maxItems": 2,
+                                               "items": {"type": "number"}},
+            "inside_band": {"type": "boolean"}
+          }
+        }
+      ]
+    },
+    "evidence_grade": {"type": "string", "enum": ["REAL", "CALIBRATED", "WITHHELD", "MOCK", "STUB"]},
+    "sources": {"type": "array", "items": {"type": "string"}},
+    "warnings": {"type": "array", "items": {"type": "string"}}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"quality": {"properties": {"sufficient": {"const": true}}}}},
+      "then": {"properties": {"quality": {"properties": {"regime": {"const": "ok"}}}}}
+    }
+  ]
+}
