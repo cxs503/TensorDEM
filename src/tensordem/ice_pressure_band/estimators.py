@@ -50,6 +50,8 @@ __all__ = [
     "lambda_expfit",
     "lambda_spectral",
     "lambda_efold",
+    "lambda_lagslope",
+    "lambda_crossing",
     "estimate_all",
     "diagnose_regime",
     "Regime",
@@ -57,8 +59,8 @@ __all__ = [
     "PRIMARY_METHODS",
 ]
 
-METHODS = ("integral", "expfit", "spectral", "efold")
-PRIMARY_METHODS = ("integral", "expfit", "spectral")
+METHODS = ("integral", "expfit", "spectral", "efold", "lagslope", "crossing")
+PRIMARY_METHODS = ("integral", "expfit", "crossing")
 
 _NAN = float("nan")
 
@@ -116,13 +118,107 @@ def lambda_efold(x: np.ndarray, dx: float = 1.0) -> float:
     return float(r0 + (np.exp(-1.0) - p0) * (r1 - r0) / (p1 - p0))
 
 
+def _record_length(x: np.ndarray, dx: float) -> float:
+    return float(np.asarray(x).size) * float(dx)
+
+
+def _physical(x: np.ndarray, dx: float, lam: float) -> float:
+    """Reject estimates that cannot be a correlation length of this record.
+
+    A fitted correlation length at or beyond the record length is a *fit
+    divergence* (the exponential model is then flat over the whole record and
+    any ``lam`` fits), and keeping it in an ensemble mean corrupts the bias model
+    (observed: a single diverging realisation moved the ensemble ratio of
+    ``expfit`` at ``K = 1`` to O(10^3) and destroyed the fit).  Such a value is
+    reported as ``nan`` and counted as a failed realisation.
+    """
+    if not np.isfinite(lam) or lam <= 0.0:
+        return _NAN
+    if lam > _record_length(x, dx):
+        return _NAN
+    return float(lam)
+
+
 def lambda_integral(
     x: np.ndarray, dx: float = 1.0, *, max_lag_fraction: float = 0.5
 ) -> float:
     """Integral scale of the (unbiased) autocorrelation."""
     lags, R = autocorrelation(x, dx, unbiased=True)
     k_end = _truncation_index(R, max_lag_fraction)
-    return float(np.trapezoid(R[: k_end + 1], lags[: k_end + 1]))
+    return _physical(x, dx, float(np.trapezoid(R[: k_end + 1], lags[: k_end + 1])))
+
+
+def lambda_lagslope(
+    x: np.ndarray, dx: float = 1.0, *, lag: int = 1, min_decay: float = 0.02
+) -> float:
+    """Leading-lag log-slope (initial-slope) correlation length.
+
+    For an exponential ACF ``R(r) = exp(-r/lam)`` the leading lag inverts exactly,
+    ``lam = -r / ln R(r)``, so this estimator carries **no truncation**: it is a
+    fixed-number-of-lags (local) functional of the record.  That matters for the
+    variance-scaling law: the first-zero-truncated integral scale
+    (:func:`lambda_integral`) sums a *noise-driven random number of lags*, so its
+    variance saturates instead of falling like ``lam/L`` (measured in
+    ``docs/ice_pressure_band_lambda_x.md`` §3.4).  With a fixed lag the asymptotic
+    result ``Var(lam_hat/lam) ~ 2 / (L/lam)`` holds, i.e. ``Var(lam_hat) ~
+    lam**3 / L``.
+
+    The price is a larger variance than a windowed fit at very long records and a
+    dependence on the ACF being locally exponential; it is therefore reported
+    together with the integral/expfit estimators, never alone.  ``min_decay``
+    rejects records without measurable memory at the leading lag (white noise).
+    """
+    k = int(max(1, lag))
+    lags, R = autocorrelation(x, dx, unbiased=True)
+    if k >= R.size:
+        return _NAN
+    r = float(R[k])
+    if not np.isfinite(r) or r <= float(min_decay) or r >= 1.0:
+        return _NAN
+    return float(-k * dx / np.log(r))
+
+
+def lambda_crossing(
+    x: np.ndarray, dx: float = 1.0, *, target: float = 0.6
+) -> float:
+    """Level-crossing correlation length: the lag ``r0`` at which ``R`` hits ``target``.
+
+    For ``R(r) = exp(-r/lam)`` the crossing solves ``r0 = lam ln(1/target)``, so
+    ``lam = r0 / ln(1/target)``.  The lag is located by log-linear interpolation
+    of the unbiased ACF, which makes the estimator
+
+    * **well conditioned** -- the sensitivity of ``lam`` to an error in ``R`` is
+      ``1 / (target ln(1/target)) ~ 3`` at ``target = 0.6``, versus ~20 for the
+      leading-lag inversion at a sampling step of ``0.05 lam`` (see
+      :func:`lambda_lagslope`);
+    * **shape-only** -- it uses the *position* of a level crossing, not the
+      absolute level of the ACF at a fixed lag, so a sub-percent disagreement
+      between a generator's grid ACF and the analytic one does not turn into a
+      percent-level bias in ``lam``;
+    * **step independent** -- the crossing lag is a physical length, so the bias
+      does not depend on how finely the record is sampled.
+
+    ``target = 0.6`` is pre-registered (the legacy e-folding estimator is the
+    ``target = exp(-1)`` special case, kept for comparison).
+    """
+    lags, R = autocorrelation(x, dx, unbiased=True)
+    t = float(target)
+    if not 0.0 < t < 1.0:
+        raise ValueError("target must be in (0, 1)")
+    below = np.nonzero(R <= t)[0]
+    if below.size == 0:
+        return _NAN
+    k = int(below[0])
+    if k == 0:
+        return float(lags[0])
+    r0, r1 = float(R[k - 1]), float(R[k])
+    if r0 <= 0.0 or r1 <= 0.0:
+        return _NAN
+    l0, l1 = np.log(r0), np.log(r1)
+    frac = (l0 - np.log(t)) / (l0 - l1) if l0 != l1 else 0.0
+    frac = float(min(max(frac, 0.0), 1.0))
+    r_star = float(lags[k - 1] + frac * (lags[k] - lags[k - 1]))
+    return _physical(x, dx, float(r_star / np.log(1.0 / t)))
 
 
 def lambda_expfit(
@@ -158,7 +254,7 @@ def lambda_expfit(
         )
     except (RuntimeError, ValueError):
         return _NAN
-    return float(popt[1])
+    return _physical(x, dx, float(popt[1]))
 
 
 def lambda_spectral(
@@ -203,7 +299,7 @@ def lambda_spectral(
         )
     except (RuntimeError, ValueError):
         return _NAN
-    return float(lam_e * np.exp(popt[1]))
+    return _physical(x, dx, float(lam_e * np.exp(popt[1])))
 
 
 @dataclass(frozen=True)
@@ -278,6 +374,10 @@ def estimate_all(
             out[m] = lambda_spectral(x, dx)
         elif m == "efold":
             out[m] = lambda_efold(x, dx)
+        elif m == "lagslope":
+            out[m] = lambda_lagslope(x, dx)
+        elif m == "crossing":
+            out[m] = lambda_crossing(x, dx)
         else:
             raise ValueError(f"unknown method {m!r}")
     return out
