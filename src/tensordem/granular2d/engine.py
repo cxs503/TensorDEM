@@ -146,7 +146,7 @@ class DiskSystem:
 
     def __init__(self, positions, radii, config: DiskConfig | None = None, *,
                  walls=None, hull=None, periodic_x: float | None = None,
-                 periodic_y: float | None = None) -> None:
+                 periodic_y: float | None = None, wall_velocity=None) -> None:
         self.config = config or DiskConfig()
         pos = np.array(positions, dtype=np.float64)
         rad = np.array(radii, dtype=np.float64).reshape(-1)
@@ -170,6 +170,7 @@ class DiskSystem:
         self.inertia = 0.5 * self.mass * rad**2
         self.walls = self._as_segments(walls, "walls")
         self.hull = self._as_segments(hull, "hull")
+        self.wall_velocity = self._as_wall_velocity(wall_velocity)
         self.periodic_x = None if periodic_x is None else float(periodic_x)
         self.periodic_y = None if periodic_y is None else float(periodic_y)
         for name, value in (("periodic_x", self.periodic_x), ("periodic_y", self.periodic_y)):
@@ -191,6 +192,30 @@ class DiskSystem:
         self.hull_force_history: list[tuple[float, np.ndarray]] = []
         self.contact_history: list[dict[str, float]] = []
         self._rebuild_neighbors()
+
+    # ------------------------------------------------------ moving-wall drive
+    def _as_wall_velocity(self, value) -> np.ndarray | None:
+        """Per-wall-segment translational velocity ``(S, 2)`` or ``None``.
+
+        A rough wall that *slides* can only be represented if its velocity enters
+        the tangential contact law; without it a moving wall would act as a
+        brake.  ``None`` keeps the historical static-wall behaviour exactly
+        (the velocity offset is then omitted from the relative velocity).
+        """
+        if value is None:
+            return None
+        arr = np.asarray(value, dtype=np.float64)
+        if arr.ndim == 1:
+            arr = np.broadcast_to(arr.reshape(1, 2), (len(self.walls), 2)).copy()
+        if arr.shape != (len(self.walls), 2):
+            raise ValueError("wall_velocity must have shape (S, 2) matching walls")
+        if not np.isfinite(arr).all():
+            raise ValueError("wall_velocity must be finite")
+        return arr
+
+    def set_wall_velocity(self, value) -> None:
+        """Set (or clear, with ``None``) the sliding velocity of every wall."""
+        self.wall_velocity = self._as_wall_velocity(value)
 
     # ------------------------------------------------------------------ setup
     @staticmethod
@@ -334,10 +359,11 @@ class DiskSystem:
         return i, j, l
 
     def _segment_contacts(self, segments: np.ndarray):
-        """Disk/segment overlaps: ``(disk, point, n_out, overlap)``."""
+        """Disk/segment overlaps: ``(disk, point, n_out, overlap, segment)``."""
         if len(segments) == 0:
             empty_i = np.zeros(0, dtype=np.int64)
-            return empty_i, np.zeros((0, 2)), np.zeros((0, 2)), np.zeros(0)
+            return (empty_i, np.zeros((0, 2)), np.zeros((0, 2)), np.zeros(0),
+                    empty_i)
         a = segments[:, 0, :]
         ab = segments[:, 1, :] - a
         ap = self.pos[:, None, :] - a[None, :, :]
@@ -351,10 +377,11 @@ class DiskSystem:
         disk, seg = np.nonzero(ok)
         if len(disk) == 0:
             return (np.zeros(0, dtype=np.int64), np.zeros((0, 2)),
-                    np.zeros((0, 2)), np.zeros(0))
+                    np.zeros((0, 2)), np.zeros(0), np.zeros(0, dtype=np.int64))
         point = cp[disk, seg]
         n_out = d[disk, seg] / dist[disk, seg][:, None]
-        return disk.astype(np.int64), point, n_out, overlap[disk, seg]
+        return (disk.astype(np.int64), point, n_out, overlap[disk, seg],
+                seg.astype(np.int64))
 
     @staticmethod
     def _perp(vec: np.ndarray) -> np.ndarray:
@@ -398,8 +425,8 @@ class DiskSystem:
         i, j, l, dist, n_ij, overlap = i[keep], j[keep], l[keep], dist[keep], n_ij[keep], overlap[keep]
         n_pair = len(i)
 
-        wd, wp, wn, wo = self._segment_contacts(self.walls)
-        hd, hp, hn, ho = self._segment_contacts(self.hull)
+        wd, wp, wn, wo, wseg = self._segment_contacts(self.walls)
+        hd, hp, hn, ho, _hseg = self._segment_contacts(self.hull)
         n_w, n_h = len(wd), len(hd)
 
         disk_idx = np.concatenate([i, wd, hd]).astype(np.int64)
@@ -451,6 +478,8 @@ class DiskSystem:
         v_i = self.vel[disk_idx] + self._perp(self.omega[disk_idx][:, None] * lever_i)
         v_j = np.zeros_like(v_i)
         v_j[:n_pair] = self.vel[j] + self._perp(omega_j[:n_pair][:, None] * lever_j[:n_pair])
+        if self.wall_velocity is not None and n_w:
+            v_j[n_pair:n_pair + n_w] = self.wall_velocity[wseg]
         v_rel = v_i - v_j
         v_n = np.sum(v_rel * n_all, axis=1)
 
