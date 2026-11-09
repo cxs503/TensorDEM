@@ -102,6 +102,79 @@
     "no post-hoc outlier removal",
     "the pooled-over-the-calibration-dataset fit as the primary acceptance object (the archived sweep-1 pooled fit over all three scenarios is still reported as a diagnostic and fails: R^2 = 0.406, residual_std = 0.080)"
    ]
+  },
+  {
+   "amendment": 2,
+   "date_utc": "2026-11-09",
+   "attempt": "P82W2-N02 (second mission on this physical node; the P82W4-N02 sweep is re-used only as the legacy reference, all numbers here are regenerated)",
+   "status": "written BEFORE the production sweep of this attempt; the pilot rows below are the only data seen at writing time",
+   "driver_defects_fixed": [
+    "the compression piston carried no wall velocity, so the wall-contact damping was evaluated against a static wall (ablation: P 7.3 -> 9.0 kPa, mu 0.2963 -> 0.3161 at the same run)",
+    "the compression shear rate was the nominal 2|eps_y|; the realised bulk rate measured from the velocity gradient is only 0.70-0.75 of the nominal one, so I was overstated by ~35% (the shear scenario already used a measured rate: the two element tests were therefore not on the same footing)",
+    "a third candidate fix (affine velocity increment on the isochoric x remap) was tested and REJECTED: it doubles the pressure (7.3 -> 17.6 kPa) and collapses mu to 0.063-0.093 because the engine's periodic images carry no box-rate term and the remap injects a spurious slip on the periodic seam. The x remap stays position-only and this is declared as a model-form limitation."
+   ],
+   "design_changes": [
+    "two solid-fraction (pressure) levels per element test: shear phi in {0.82, 0.85}, compression phi in {0.80, 0.84}; three seeds per (case, rate); this widens the I lever arm and makes the pressure level an explicit controlled factor instead of a hidden confounder",
+    "seeds reduced from 6 to 3 per condition because the number of conditions doubled; the estimator's seed scatter is unchanged (mu SE 0.004-0.01 per condition)",
+    "channel scenario: phi = 0.80, 3 drift speeds x 2 seeds, still an out-of-sample validation (never a calibration point)"
+   ],
+   "pilot_rows_excluded_from_the_fit": [
+    {
+     "scenario": "couette_shear",
+     "phi": 0.79,
+     "rate": 8.0,
+     "I": 0.0333,
+     "mu": 0.3137,
+     "P_kPa": 2.49
+    },
+    {
+     "scenario": "couette_shear",
+     "phi": 0.79,
+     "rate": 45.0,
+     "I": 0.0769,
+     "mu": 0.3185,
+     "P_kPa": 9.15
+    },
+    {
+     "scenario": "couette_shear",
+     "phi": 0.85,
+     "rate": 8.0,
+     "I": 0.00344,
+     "mu": 0.2416,
+     "P_kPa": 19.9
+    },
+    {
+     "scenario": "couette_shear",
+     "phi": 0.85,
+     "rate": 45.0,
+     "I": 0.0648,
+     "mu": 0.3016,
+     "P_kPa": 24.8
+    },
+    {
+     "scenario": "biaxial_compression",
+     "phi": 0.76,
+     "rate": 1.5,
+     "I": 0.0737,
+     "mu": 0.3861,
+     "P_kPa": 0.71
+    },
+    {
+     "scenario": "biaxial_compression",
+     "phi": 0.84,
+     "rate": 1.5,
+     "I": 0.0135,
+     "mu": 0.2549,
+     "P_kPa": 20.8
+    }
+   ],
+   "pilot_reading": "phi=0.76 compression runs at P ~ 0.7 kPa (near-unjammed, 232 contacts) and is excluded from the production ladder; the production compression levels are 0.80 and 0.84 where P >= ~5 kPa. The pilot does NOT enter any fit.",
+   "unchanged": [
+    "all five acceptance thresholds, the model form mu = mu0 + alpha I + beta I^2, no post-hoc outlier removal",
+    "primary acceptance object = pooled quadratic fit over the two element tests (condition means, seeds as replicates)",
+    "channel scenario is an out-of-sample validation, not a calibration point"
+   ],
+   "thresholds_not_tuned": true
   }
  ]
 }

@@ -116,6 +116,57 @@ def velocity_profile_shear_rate(y: np.ndarray, vx: np.ndarray, *,
     }
 
 
+def bulk_deformation_rate(positions: np.ndarray, velocities: np.ndarray, *,
+                          length_x: float | None = None,
+                          min_particles: int = 8) -> dict[str, Any]:
+    """Least-squares 2-D velocity gradient and equivalent shear rate.
+
+    The deviatoric strain rate is measured from the particle velocities in the
+    *same* bulk slab that provides the stress, so that no scenario feeds an
+    imposed (nominal) rate into :math:`I` while another feeds a measured one.
+    A planar linear field ``v_a(x, y) = c_a0 + G[a, 0] x + G[a, 1] y`` is fitted
+    to every bulk particle at once; the equivalent shear rate is the invariant
+    ``sqrt(2 D:D)`` of the symmetric part ``D = (G + G^T) / 2`` (for pure shear
+    ``vx = gamma y`` it returns ``gamma``; for isochoric plane-strain
+    compression ``v = (eps x, -eps y)`` it returns ``2 |eps|``).
+
+    ``length_x`` is the periodic length; the streamwise coordinate is centred on
+    the cell mid-plane first, so that the fit is not dominated by the periodic
+    seam (particles wrapped to ``x ~ L`` and ``x ~ 0`` belong to the same
+    material neighbourhood).
+    """
+    pos = np.asarray(positions, dtype=np.float64)
+    vel = np.asarray(velocities, dtype=np.float64)
+    if pos.shape != vel.shape or pos.ndim != 2 or pos.shape[1] != 2:
+        raise ScenarioError("positions and velocities must be (N, 2)")
+    n = len(pos)
+    if n < min_particles:
+        raise ScenarioError("too few particles for a velocity gradient")
+    x = pos[:, 0].copy()
+    if length_x is not None and length_x > 0.0:
+        x = np.mod(x + 0.5 * length_x, length_x) - 0.5 * length_x
+    xc = x - x.mean()
+    yc = pos[:, 1] - pos[:, 1].mean()
+    design = np.column_stack([np.ones(n), xc, yc])
+    coef, *_ = np.linalg.lstsq(design, vel, rcond=None)     # 3 x 2
+    grad = np.empty((2, 2))
+    grad[0, 0], grad[0, 1] = coef[1, 0], coef[2, 0]         # dvx/dx, dvx/dy
+    grad[1, 0], grad[1, 1] = coef[1, 1], coef[2, 1]         # dvy/dx, dvy/dy
+    D = 0.5 * (grad + grad.T)
+    gamma_dot = float(np.sqrt(2.0 * np.sum(D * D)))
+    pred = design @ coef[:, 1]
+    ss_res = float(np.sum((vel[:, 1] - pred) ** 2))
+    ss_tot = float(np.sum((vel[:, 1] - vel[:, 1].mean()) ** 2))
+    return {
+        "gradient": grad.tolist(),
+        "gamma_dot": gamma_dot,
+        "eps_dot_y": float(grad[1, 1]),
+        "eps_dot_x": float(grad[0, 0]),
+        "profile_r2": float(1.0 - ss_res / ss_tot) if ss_tot > 0.0 else float("nan"),
+        "n_particles": int(n),
+    }
+
+
 # ------------------------------------------------------------------- packing
 def _prepare_packing(*, n_particles: int, mean_radius: float, width: float,
                      height: float, phi: float, seed: int, mu: float,
@@ -257,6 +308,7 @@ def run_biaxial_compression(*, strain_rate: float, seed: int = 0,
                             snapshots: int = SNAPSHOTS,
                             isochoric: bool = True,
                             steady_fraction: float = 0.45,
+                            wall_gap_radius: float = 3.0,
                             **cell_kwargs) -> dict[str, Any]:
     """Plane-strain compression at a constant axial strain rate.
 
@@ -265,8 +317,28 @@ def run_biaxial_compression(*, strain_rate: float, seed: int = 0,
     factor every step, so the *area* -- and therefore the solid fraction -- is
     held constant: that is the plane-strain element test the rheology needs,
     whereas a confined cell would simply densify to random close packing and its
-    stress ratio would never reach a steady state.  The equivalent shear rate is
-    the deviatoric magnitude of the strain-rate tensor, ``sqrt(2 D:D) = 2|eps_y|``.
+    stress ratio would never reach a steady state.
+
+    Kinematic consistency (P82W2-N02)
+    ---------------------------------
+    Three corrections make this driver a valid element test, each of them a
+    measurable bias in the earlier version:
+
+    1. the piston is given its *actual* velocity (``wall_velocity = (0, -v)``),
+       so the wall contact damping is evaluated against a moving wall instead of
+       a static one;
+    2. the equivalent shear rate is **measured** from the bulk velocity gradient
+       (``bulk_deformation_rate``) in the same slab that yields the stress,
+       instead of being taken as the nominal ``2 |eps_y|``; the realised bulk
+       rate is only ~70-75 % of the nominal one in this cell, so the nominal rate
+       systematically overstated :math:`I`;
+    3. a third candidate fix, carrying the affine velocity increment on the
+       isochoric ``x`` remap (``dv_x = (lambda - 1) x / dt``), is **rejected**:
+       measured in ``scripts/ablate_compression_kinematics.py`` it doubles the
+       pressure and drops ``mu`` to 0.06-0.09, because the engine's periodic
+       images carry no box-rate term, so the remap injects a spurious slip on the
+       periodic seam.  The ``x`` remap is therefore position-only, which is a
+       declared model-form limitation of this element test.
 
     ``steady_fraction`` discards the first part of the run (transient fabric
     build-up) before the snapshots that enter the rheology.
@@ -282,8 +354,11 @@ def run_biaxial_compression(*, strain_rate: float, seed: int = 0,
     start_step = int(round(steady_fraction * n_steps))
     sample_every = max(1, (n_steps - start_step) // snapshots)
     v_piston = strain_rate * height
+    margin = wall_gap_radius * system.mean_radius
     current_height = height
     current_width = width
+    # walls = [bottom, top]; the piston moves down at exactly v_piston
+    system.set_wall_velocity(np.array([[0.0, 0.0], [0.0, -v_piston]]))
     snaps = []
     for step in range(1, n_steps + 1):
         dh = v_piston * dt
@@ -304,19 +379,42 @@ def run_biaxial_compression(*, strain_rate: float, seed: int = 0,
                                     (float(current_width), float(current_height)),
                                     thickness, (True, False), sample.label,
                                     sample.time)
+            nominal_rate = 2.0 * v_piston / current_height
+            try:
+                bulk = bulk_mask(sample, margin=margin)
+                rate = bulk_deformation_rate(system.pos[bulk], system.vel[bulk],
+                                             length_x=current_width,
+                                             min_particles=20)
+                profile = {"slope": rate["gamma_dot"],
+                           "profile_r2": rate["profile_r2"],
+                           "eps_dot_y_measured": rate["eps_dot_y"],
+                           "gamma_dot_nominal": nominal_rate,
+                           "n_particles": rate["n_particles"]}
+            except ScenarioError:
+                profile = {"slope": nominal_rate, "profile_r2": float("nan"),
+                           "eps_dot_y_measured": float("nan"),
+                           "gamma_dot_nominal": nominal_rate,
+                           "n_particles": 0}
             snaps.append({"sample": sample, "contacts": contacts,
                           "height": float(current_height),
                           "width": float(current_width),
-                          "nominal_shear_rate": 2.0 * strain_rate,
+                          "nominal_shear_rate": nominal_rate,
+                          "profile": profile,
                           "time": step * dt})
     if not snaps:
         raise ScenarioError("compression run produced no snapshot")
-    rates = np.array([2.0 * v_piston / s["height"] for s in snaps])
+    nominal = np.array([s["nominal_shear_rate"] for s in snaps])
+    rates = np.array([s["profile"]["slope"] for s in snaps])
     return {
         "scenario": "biaxial_compression",
-        "nominal_shear_rate": float(2.0 * strain_rate),
+        "nominal_shear_rate": float(np.mean(nominal)),
         "measured_shear_rate": float(np.mean(rates)),
+        "measured_over_nominal_rate": float(np.mean(rates) / np.mean(nominal)),
         "shear_rate_std": float(np.std(rates)),
+        "bulk_margin": float(margin),
+        "velocity_profile_r2": float(np.mean([s["profile"]["profile_r2"] for s in snaps])),
+        "wall_velocity": (system.wall_velocity.tolist()
+                          if system.wall_velocity is not None else None),
         "axial_strain_rate": float(strain_rate),
         "isochoric": bool(isochoric),
         "steady_fraction": float(steady_fraction),
