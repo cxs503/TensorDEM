@@ -33,6 +33,23 @@ Cundall–Strack 切向饱和，输出局部压力 `p_c` 与滑移距离 `L_slip
 工件见 `artifacts/ice_abrasion/`，API 合约 `ice_abrasion_calculation`
 对应 `POST /api/v1/calculations/structure/ice_abrasion`。
 
+## 冰压带相关长度 λ_x 的标定估计量（`tensordem.ice_pressure_band`）
+
+冰–结构压力带沿面相关长度 λ_x 通常以文献锚定值 λ_x/h = 1.5–3 直接引用。本模块把它改成
+**可审计的估计量**：三种估计器（ACF 积分尺度 / 指数拟合 / 洛伦兹谱拟合，另加仓内既有的
+e 折遗留法做对照）的有限窗偏差在已知解析 ACF 的合成场上被**测量**并拟合修正
+（`ρ(K)=1+a/K+b/K²` 等预注册形式族按留一交叉验证选取，`K=L/λ`），修正为自洽方程
+`λ_corr = λ̂/ρ(L/λ_corr)`（向量化求根）；记录长度充分性门槛 `K*` 用留一残差偏差的
+「连续充分尾」定义（|bias|<5 % 且所有更大的 K 都满足）；方差标度 `Var∝λ/L` 由两条独立
+扫描检验；白噪声与严格周期记录被 regime 诊断**拒绝**而不是给出数字。长域 DEM 压力带
+（`ice_contact.sim.IceWallCrush`，B/h = 40–60）给出原生 λ_x 与移动块 bootstrap 95 % 区间，
+并以「粗化阶梯」检验所报长度是否只是沉积核尺度。输出契约为
+`schemas/lambda_x_estimate.v1.json`，扁平视图供 prop-1104 消费。
+
+运行 `python scripts/pressure_band_lambda_calibration.py --skip-dem`（合成标定）与
+`--reuse-dem`（合成长域 DEM 结果）；方法、判据数字与局限见
+`docs/ice_pressure_band_lambda_x.md`，工件见 `artifacts/pressure_band_lambda/`。
+
 ## 面向 Agent 科研工厂的职责
 
 在以 Agent 为科研主体的黑灯科研工厂中，TensorDEM 是一个**可编程、可观测、可验证的离散元数值实验设备**，负责颗粒运动、接触、键合与断裂等数值内核及专项验证。TensorPhysics 负责实验编排与跨求解器协调；TensorPlatform 负责数据、产物、研究记录和模型资产治理。
