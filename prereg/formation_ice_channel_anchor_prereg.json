@@ -1,0 +1,42 @@
+{
+  "task_key": "paper-exp-formation-ice-channel-1",
+  "experiment": "formation-ice-channel / research_plan item 1: external anchor verification (Lindqvist 1989) + same-caliber conversion",
+  "authored_before_results": true,
+  "decision": "Decide whether the external quantitative anchor (Lindqvist 1989 three-component ice resistance) may be used as a validated reference for the formation-ice-channel case, and if so, how large the domain-experiment deviation is.",
+  "alternatives": [
+    "A1: anchor is verbatim-verified against the primary paper AND convertible to this case's caliber -> allowed as a validation reference; deviation reported as an error gate.",
+    "A2: anchor is verbatim-verified but the case's geometry (rectangular box hull, Cb=1, stem angle 90 deg) lies outside the formula's domain -> anchor usable only as an order-of-magnitude baseline, deviation cannot be called a validation error.",
+    "A3: anchor cannot be verbatim-verified offline -> anchor is WITHHELD; the case's domain results must NOT be graded against it, and the conversion is reported as an implementation-caliber number only."
+  ],
+  "hypothesis": "H1 (falsifiable): the Lindqvist (1989) POAC'89 text is present/readable in this sandbox and its three components can be transcribed verbatim with page/table numbers. H1 is falsified if no primary text is reachable offline and network egress is blocked.",
+  "metrics": [
+    "M1 verbatim_anchor_completeness: count of {quote, page_or_table, value} triples transcribed from the primary paper (target 4: R_ice, R_c, R_b, R_s).",
+    "M2 recompute_residual: max relative difference between the artifact's reported component values and an independent closed-form re-evaluation (target < 1e-9), plus inverse-solve residual for h (target < 1e-9).",
+    "M3 dimensional_homogeneity: number of components failing the SI base-exponent test for force (target 0 failures).",
+    "M4 internal_consistency: number of failing analytic identities out of the declared set (target 0 failures).",
+    "M5 domain_vs_anchor_relative_deviation: (R_dem_lead - R_anchor)/R_anchor over the declared caliber band (reported, not gated, while M1 fails)."
+  ],
+  "baseline_or_control": "Repo implementation of the Lindqvist structure in src/tensordem/level_ice/formula.py (structure grade REAL, coefficient grade WITHHELD per COEFFICIENT_LEDGER) used as the caliber-conversion vehicle; the DEM domain result for this case is the lead-hull mean ice load 82.66 kN (docs/formation_ice_channel_cloud.md section 4.1).",
+  "thresholds_predeclared": {
+    "M1_pass": "all four components carry a verbatim quote with page or table number from the primary paper",
+    "M2_pass": "residual < 1e-9",
+    "M3_pass": "0 dimensional failures",
+    "M4_pass": "0 identity failures",
+    "M5_role": "informational while M1 fails; no pass/fail grade is assigned"
+  },
+  "stopping_rule": "Stop after: one offline source search audit (declared path list + network probe) and one full evaluation of M2-M5. No additional search iterations and no threshold revision after inspecting results.",
+  "variables": {
+    "controlled": ["case geometry L=80 m, B=20 m, box hull Cb=1", "ice thickness h=0.7 m", "speed V=1.6 m/s", "water density 1025 kg/m3", "gravity 9.80665 m/s2", "compressive strength 1.5e6 Pa", "flexural strength 0.5e6 Pa"],
+    "varied": ["stem/entry angle alpha in {15, 20, 30} deg (literature-typical band; the case hull is a box i.e. alpha=90 deg, outside the formula domain)", "friction coefficient mu in {0.05, 0.10, 0.15}"]
+  },
+  "confounders": [
+    "The case field is broken ice (77 discs, mean radius 4.88 m, coverage 0.80) whereas Lindqvist is a level-ice formula: a material model-form mismatch, not a numerical error.",
+    "The case hull is a rectangular box with a vertical stem: alpha -> 90 deg makes the crushing term diverge, so any finite alpha is an out-of-domain substitution.",
+    "sigma_f and the three pinned coefficients (0.25, 0.9, 0.05) are graded CONVENTION/WITHHELD, so the converted number inherits that grade."
+  ],
+  "repetitions": "Deterministic closed-form evaluation (no stochastic sampling); the sampling variability of the domain result is carried by the existing U95 of the CLOUD artifact, not re-sampled here.",
+  "environment": {"repo": "TensorDEM", "python": "3.x + torch (repo venv)", "arch": "local sandbox", "network_egress": "probed and reported in the artifact"},
+  "analysis_predeclared": "Values are injected into the artifact by benchmarks/anchors/formation_ice_channel_anchor.py only (no hand-typed numbers in the JSON); the JSON stores per-criterion pass/fail, the measured value, and the script path.",
+  "safety_and_resource_limits": "Closed-form evaluation only; single process; < 60 s; no cluster use; no file writes outside the repository worktree.",
+  "interpretation_limits": "A pass on M2/M3/M4 certifies arithmetic and dimensional bookkeeping of the conversion, NOT agreement with the published paper. While M1 fails, no statement in this experiment may be read as literature validation."
+}
