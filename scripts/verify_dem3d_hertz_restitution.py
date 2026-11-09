@@ -238,11 +238,16 @@ def linear_reference(speed: float, target: float) -> float:
 
 
 def analytic_peak_overlap(speed: float) -> float:
-    """``delta_max`` of a purely elastic equal-sphere Hertz impact."""
+    """``delta_max`` of a purely elastic equal-sphere Hertz impact.
+    
+    For two equal spheres approaching at speed v each, the closing speed is
+    v_rel = 2v. The kinetic energy in the relative frame is 0.5 * m_eff * v_rel^2.
+    """
+    v_rel = 2.0 * speed  # closing speed for two spheres approaching at speed each
     p = law_parameters()
     e_star = hertz_reduced_modulus(YOUNG_MODULUS, POISSON_RATIO)
     r_eff = hertz_effective_radius(RADIUS)
-    return ((15.0 * p["m_eff_kg"] * speed ** 2)
+    return ((15.0 * p["m_eff_kg"] * v_rel ** 2)
             / (16.0 * e_star * math.sqrt(r_eff))) ** 0.4
 
 
