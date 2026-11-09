@@ -1,0 +1,38 @@
+{
+  "node": "IN69-N01",
+  "title": "Ice creep constitutive (Glen flow law) + Norton power-law validation surface + long-time contact force relaxation",
+  "declared_utc": "2026-11-08T12:40:00Z",
+  "declared_before_run": true,
+  "decision": "Accept src/tensordem/creep_constitutive.py as the tensor-level creep kernel for TensorDEM ice contacts if and only if every pre-registered threshold below is met by tools/run_creep_validation.py and the pytest surface.",
+  "alternatives": {
+    "A_rejected": "Reuse ice_bond_viscoelastic Maxwell-Wiechert (Prony) law: linear, so it cannot represent the sigma^n rate sensitivity of ice (n ~ 3) and cannot produce a ductile exponent.",
+    "B_rejected": "Explicit (forward Euler) Norton update: unconditionally unstable for the large A sigma^n dt of the contact problem and gives no path to an energy ledger; kept only as the conceptual baseline.",
+    "C_chosen": "Implicit backward-Euler J2 radial return on the Glen flow law with a scalar bracketed Newton solve; closed-form anchors for every stage (Norton creep, Bailey/Norton relaxation, Kachanov tertiary, Hertz constant-displacement relaxation)."
+  },
+  "hypothesis": {
+    "H1": "The work-conjugate Glen form eps_dot_ij = (3/2) A sigma_eq^(n-1) s_ij reduces exactly to eps_dot = A sigma^n under uniaxial stress for all n in [2.5, 3.5].",
+    "H2": "Backward-Euler radial return reproduces the closed-form Norton relaxation to first order in dt, and the fixed-total-strain vs free-lateral relaxation moduli (3G vs E) are distinguishable (a 15% gap, not a bug).",
+    "H3": "A two-sphere Hertz contact at fixed centre distance relaxes F(t)/F0 to the separable closed form F/F0 = (delta_e/delta0)^(3/2) within 5% at t = 100 s.",
+    "H4": "The three-stage curve requires Bailey primary hardening + Kachanov damage: a pure Norton law has no primary and no tertiary stage (falsifiable negative control)."
+  },
+  "acceptance_criteria": {
+    "a_norton_rate": {"metric": "max |eps_dot_num/eps_dot_ana - 1| over 10 (A, n, sigma) cases", "threshold": 0.01, "baseline": "closed form A sigma^n"},
+    "a_integrator_relaxation": {"metric": "max |sigma_num/sigma_closed_form - 1| on the same 10 cases (dt = t_end/500)", "threshold": 0.01, "baseline": "Bailey-Norton relaxation closed form"},
+    "b_primary_exponent": {"metric": "|fitted log-log slope - 1/3|/(1/3), window t in [1, 100] s", "threshold": 0.01, "baseline": "Bailey t^(1/3)"},
+    "b_steady_rate": {"metric": "|mean rate / (A sigma^n) - 1| in the steady window t > 3e4 s", "threshold": 0.03, "baseline": "Norton A sigma^n"},
+    "b_tertiary": {"metric": "strictly increasing rate after 0.9 t_r AND rate(t->t_r)/A sigma^n > 10, plus rupture time rel. error", "threshold": 0.01, "baseline": "Kachanov t_r = 1/((m+1) B sigma^m)"},
+    "c_contact_relaxation": {"metric": "|F(t)/F0 numeric - closed form| / closed form at t = 100 s, dt = 0.04 s (convergence shown for dt in {5, 1, 0.2, 0.04})", "threshold": 0.05, "baseline": "separable Hertz creep relaxation closed form"},
+    "d_energy_ledger": {"metric": "|dU + int sigma:eps_dot_c dt| / |dU| (fixed displacement, zero external work)", "threshold": 0.01, "baseline": "first law: dissipation = -dU"},
+    "e_linear_limit": {"metric": "max |rate(sigma)/rate(1 MPa) - sigma| for n = 1", "threshold": 0.01, "baseline": "Newtonian linearity"},
+    "f_tests": {"metric": "pytest test count in tests/test_creep_constitutive.py with analytic anchors and negative controls", "threshold": 12, "baseline": "n/a"}
+  },
+  "exclusions": [
+    "No time-dependent temperature: A is constant per case (Glen A(T) is out of scope, declared as a limitation).",
+    "Creep is incompressible; volumetric creep and damage-induced dilatancy are not modelled.",
+    "The contact creep-active depth h = c_h * a is a modelling assumption (c_h = 1 default), stated in the report; the closed form is parametric in c_h, so the comparison does not depend on its value.",
+    "Homogeneous stress in the contact patch: grain-scale stress heterogeneity and Hertz pressure redistribution are not modelled."
+  ],
+  "stopping_rule": "Run the sweep once; if a threshold fails, report honest FAIL with the measured number and do not tune parameters to pass. Timestep refinements are pre-declared (dt in {5, 1, 0.2, 0.04} s and {1, 0.5} s for the element) and are the only permitted repetitions.",
+  "environment_control": "float64 throughout; units MPa / s / mm (force N, energy mJ); torch 2.7.1, numpy 2.4.6, matplotlib 3.10.8; single-threaded serial determinism (no randomness anywhere in the node).",
+  "analysis": "Aggregation = max relative error per criterion; no outlier removal; all 10 sweep cases reported individually in artifacts/in69_n01_creep/summary.json."
+}
