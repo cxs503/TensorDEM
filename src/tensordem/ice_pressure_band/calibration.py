@@ -13,6 +13,10 @@ The calibration is **empirical and out-of-sample**:
    ``"inv_poly"``   ``rho = 1 + a/K + b/K**2``   (finite-window truncation, the
                     physically motivated leading order)
    ``"inv_cubic"``  ``rho = 1 + a/K + b/K**2 + c/K**3``
+   ``"inv_series"`` ``rho = 1 + sum_{j=1..4} a_j / K**j``  (a truncated inverse
+                    series: linear in the coefficients, so the fit is a plain
+                    least-squares one and the extra terms let the correction
+                    remain accurate down to ``K = 3``)
    ``"exp_sat"``    ``rho = 1 - exp(-(K/K0)**p)``  (saturating; captures the
                     strong small-``K`` collapse of the integral/exp-fit methods,
                     which the two-parameter form reproduces at only ~8 % RMS)
@@ -49,8 +53,18 @@ from .fields import windowed_field
 
 __all__ = [
     "BiasModel",
+    "TwoStageCalibration",
+    "MIN_CERTIFIED_K",
+    "build_calibration",
+    "calibrate_two_stage",
+    "smooth_calibration",
+    "smooth_table",
+    "flexible_factor_ceiling",
+    "measure_ratio",
+    "measure_residual",
     "BiasStudy",
     "MODEL_FORMS",
+    "INV_SERIES_TERMS",
     "fit_bias_model",
     "select_bias_model",
     "correct_length",
@@ -66,7 +80,9 @@ __all__ = [
 DEFAULT_K_GRID = (1.0, 1.25, 1.6, 2.0, 2.5, 3.2, 4.0, 5.0, 6.3, 8.0,
                   10.0, 12.6, 16.0, 20.0, 25.0, 32.0, 40.0, 50.0)
 
-MODEL_FORMS = ("inv_poly", "inv_cubic", "exp_sat")
+INV_SERIES_TERMS = 4
+
+MODEL_FORMS = ("inv_poly", "inv_cubic", "inv_series", "exp_sat")
 
 
 @dataclass(frozen=True)
@@ -86,6 +102,11 @@ class BiasModel:
             return 1.0 + p[0] / K + p[1] / (K * K)
         if self.form == "inv_cubic":
             return 1.0 + p[0] / K + p[1] / (K * K) + p[2] / (K**3)
+        if self.form == "inv_series":
+            out = np.ones_like(K)
+            for j, a in enumerate(p, start=1):
+                out = out + a / K**j
+            return out
         if self.form == "exp_sat":
             k0, power = max(p[0], 1e-6), p[1]
             return 1.0 - np.exp(-((K / k0) ** power))
@@ -111,6 +132,8 @@ def _design(K: np.ndarray, form: str) -> np.ndarray:
         return np.column_stack([1.0 / K, 1.0 / (K * K)])
     if form == "inv_cubic":
         return np.column_stack([1.0 / K, 1.0 / (K * K), 1.0 / (K**3)])
+    if form == "inv_series":
+        return np.column_stack([1.0 / K**j for j in range(1, INV_SERIES_TERMS + 1)])
     raise ValueError("exp_sat is fitted nonlinearly")
 
 
@@ -796,3 +819,390 @@ def validate_threshold(
         }
     return {"cells": cells, "per_method": per_method, "tolerance": tol,
             "k_star_used": float(k_star)}
+
+# ---------------------------------------------------------------------------
+# Two-stage empirical correction: the tabulated (non-parametric) calibrator
+# ---------------------------------------------------------------------------
+#: below this record length (in correlation lengths) the estimator is *not*
+#: certified: the correction factor exceeds ~2 and its Monte-Carlo error grows
+#: faster than the bias it removes.
+MIN_CERTIFIED_K = 3.0
+
+
+@dataclass(frozen=True)
+class TwoStageCalibration:
+    """Empirically tabulated correction ``lam_corr = lam_hat / [rho(K) (1+delta(K))]``.
+
+    ``rho`` is the measured mean ratio ``E[lam_hat]/lam`` and ``delta`` is the
+    measured *residual* of the plug-in correction
+
+    ``delta(K) = E[lam_hat / rho(L/lam_hat)] / lam - 1``
+
+    evaluated on an **independent seed set**.  ``rho`` removes the finite-window
+    truncation bias; ``delta`` removes the part of the bias that the plug-in form
+    creates (the correction is strongly non-linear at small ``K``, where the
+    estimator's own scatter is 20-50 %, so the mean of the corrected values is not
+    the corrected mean).  Both tables are *measurements*, not fits, so nothing is
+    assumed about the shape of the bias; interpolation is log-log in ``K``
+    (``1/K`` in ``delta``) and the extrapolation ``K -> inf`` is ``1/K``, which is
+    the analytic leading order of a finite-window truncation.
+
+    The calibration is only certified for ``K = L/lam >= MIN_CERTIFIED_K``; below
+    that :meth:`correct` returns ``nan`` (a *withheld* value) rather than a number
+    with an unquantified error.
+    """
+
+    method: str
+    kind: str
+    k_grid: tuple
+    rho_mean: tuple
+    rel_sd: tuple
+    delta: tuple
+    delta_grid: tuple = ()
+    n_real_stage1: int = 0
+    n_real_stage2: int = 0
+    k_min: float = MIN_CERTIFIED_K
+    smooth_rms: float = float("nan")
+
+    # ---- interpolation ----------------------------------------------------
+    @staticmethod
+    def _interp_loglog(K: float, x: np.ndarray, y: np.ndarray) -> float:
+        lx, ly = np.log(x), np.log(np.maximum(y, 1e-12))
+        if K >= x[-1]:
+            # 1/K tail: rho -> 1
+            return float(1.0 + (y[-1] - 1.0) * x[-1] / K)
+        if K <= x[0]:
+            slope = (ly[1] - ly[0]) / (lx[1] - lx[0])
+            return float(np.exp(ly[0] + slope * (np.log(K) - lx[0])))
+        return float(np.exp(np.interp(np.log(K), lx, ly)))
+
+    @staticmethod
+    def _interp_inv(K: float, x: np.ndarray, y: np.ndarray) -> float:
+        inv = 1.0 / x
+        if K >= x[-1]:
+            return float(y[-1] * x[-1] / K)
+        if K <= x[0]:
+            slope = (y[1] - y[0]) / (inv[1] - inv[0])
+            return float(y[0] + slope * (1.0 / K - inv[0]))
+        return float(np.interp(1.0 / K, inv[::-1], y[::-1]) )
+
+    def rho(self, K: float) -> float:
+        return self._interp_loglog(float(K), np.asarray(self.k_grid, float),
+                                   np.asarray(self.rho_mean, float))
+
+    def residual(self, K: float) -> float:
+        grid = self.delta_grid or self.k_grid
+        if not self.delta:
+            return 0.0
+        return self._interp_inv(float(K), np.asarray(grid, float),
+                                np.asarray(self.delta, float))
+
+    # ---- the estimator ----------------------------------------------------
+    def correct(self, lam_hat: float, L: float) -> float:
+        """Plug-in corrected correlation length; ``nan`` below the certified ``K``."""
+        lam_hat = float(lam_hat)
+        if not np.isfinite(lam_hat) or lam_hat <= 0.0 or L <= 0.0:
+            return float("nan")
+        K = L / lam_hat
+        if K < self.k_min:
+            return float("nan")
+        f = self.rho(K) * (1.0 + self.residual(K))
+        if not np.isfinite(f) or f <= 0.0:
+            return float("nan")
+        return float(lam_hat / f)
+
+    def correction_factor(self, K: float) -> float:
+        return float(self.rho(K) * (1.0 + self.residual(K)))
+
+    def to_dict(self) -> dict:
+        return {
+            "method": self.method, "kind": self.kind,
+            "k_grid": [float(v) for v in self.k_grid],
+            "rho_mean": [float(v) for v in self.rho_mean],
+            "rel_sd": [float(v) for v in self.rel_sd],
+            "delta": [float(v) for v in self.delta],
+            "delta_grid": [float(v) for v in (self.delta_grid or self.k_grid)],
+            "n_real_stage1": int(self.n_real_stage1),
+            "n_real_stage2": int(self.n_real_stage2),
+            "k_min": float(self.k_min),
+            "smooth_rms": float(self.smooth_rms),
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "TwoStageCalibration":
+        return cls(method=str(data["method"]), kind=str(data.get("kind", "")),
+                   k_grid=tuple(float(v) for v in data["k_grid"]),
+                   rho_mean=tuple(float(v) for v in data["rho_mean"]),
+                   rel_sd=tuple(float(v) for v in data.get("rel_sd", [])),
+                   delta=tuple(float(v) for v in data.get("delta", [])),
+                   delta_grid=tuple(float(v) for v in data.get("delta_grid", [])),
+                   n_real_stage1=int(data.get("n_real_stage1", 0)),
+                   n_real_stage2=int(data.get("n_real_stage2", 0)),
+                   k_min=float(data.get("k_min", MIN_CERTIFIED_K)),
+                   smooth_rms=float(data.get("smooth_rms", float("nan"))))
+
+
+def measure_ratio(
+    *,
+    kind: str = "ar1",
+    method: str = "crossing",
+    k_grid=(3.0, 4.0, 5.0, 6.3, 8.0, 10.0, 12.6, 16.0, 20.0, 25.0, 32.0, 40.0, 50.0),
+    n_real: int = 400,
+    dx_over_lam: float = 0.05,
+    seed: int = 0,
+    lam: float = 1.0,
+) -> dict:
+    """Ensemble ``E[lam_hat]/lam`` (and its scatter) per ``K = L/lam``."""
+    rng = np.random.default_rng(int(seed))
+    ratio_mean, ratio_med, rel_sd, usable = [], [], [], []
+    for K in k_grid:
+        n = int(round(float(K) * lam / (dx_over_lam * lam)))
+        vals, ok = [], 0
+        for _ in range(int(n_real)):
+            x = windowed_field(n, dx_over_lam * lam, lam, rng, kind=kind)
+            ok += int(diagnose_regime(x, dx_over_lam * lam).usable)
+            v = estimate_all(x, dx_over_lam * lam, methods=(method,))[method]
+            if np.isfinite(v):
+                vals.append(v / lam)
+        arr = np.asarray(vals, dtype=float)
+        ratio_mean.append(float(np.mean(arr)) if arr.size else float("nan"))
+        ratio_med.append(float(np.median(arr)) if arr.size else float("nan"))
+        rel_sd.append(float(np.std(arr, ddof=1) / np.mean(arr))
+                      if arr.size > 2 and np.mean(arr) != 0 else float("nan"))
+        usable.append(ok / float(n_real))
+    return {"kind": kind, "method": method, "k_grid": [float(k) for k in k_grid],
+            "ratio_mean": ratio_mean, "ratio_median": ratio_med,
+            "relative_sd": rel_sd, "usable_fraction": usable,
+            "n_real": int(n_real), "dx_over_lam": float(dx_over_lam)}
+
+
+def measure_residual(
+    rho_table: dict,
+    *,
+    n_real: int = 400,
+    seed: int = 1000,
+    lam: float = 1.0,
+) -> dict:
+    """Residual of the plug-in correction, indexed by the **nominal** ``K``.
+
+    The plug-in form evaluates ``rho`` at ``K_hat = L/lam_hat`` while the ratio
+    table is measured at the nominal ``K = L/lam``; at small ``K`` these differ
+    by tens of percent because ``lam_hat`` scatters, and the mismatch is a real
+    bias of the corrected mean.  The residual
+
+    ``delta(K) = mean{ lam_hat / rho(K_hat) } / lam - 1``
+
+    is measured per nominal ``K`` on an **independent seed set**, so the
+    composite factor ``rho(K_hat) (1 + delta(K_hat))`` removes it.
+
+    Why the residual is *not* tabulated against ``K_hat``: ``lam_hat`` is a
+    one-to-one function of ``K_hat``, so a ``K_hat``-indexed residual would be
+    computed from the very quantity it corrects (it reproduces the calibration
+    truth identically and is pure leakage).  The nominal index is the only
+    leakage-free choice; the price is that the residual is evaluated at ``K_hat``
+    in service, which is why at ``K = 3`` a few percent survive (:func:`flexible_factor_ceiling`
+    measures how much any multiplicative correction could do).
+    """
+    if isinstance(rho_table, TwoStageCalibration):
+        cal = rho_table
+        kind, method = cal.kind, cal.method
+        dx_over_lam = float(rho_table.dx_over_lam) if hasattr(rho_table, "dx_over_lam") else 0.05
+        k_list = list(cal.k_grid)
+    else:
+        kind, method = rho_table["kind"], rho_table["method"]
+        dx_over_lam = rho_table["dx_over_lam"]
+        cal = TwoStageCalibration(method=method, kind=kind,
+                                  k_grid=tuple(rho_table["k_grid"]),
+                                  rho_mean=tuple(rho_table["ratio_mean"]),
+                                  rel_sd=tuple(rho_table["relative_sd"]),
+                                  delta=tuple(0.0 for _ in rho_table["k_grid"]))
+        k_list = list(rho_table["k_grid"])
+    rng = np.random.default_rng(int(seed))
+    delta = []
+    for K in k_list:
+        L = float(K) * lam
+        n = int(round(L / (dx_over_lam * lam)))
+        vals = []
+        for _ in range(int(n_real)):
+            x = windowed_field(n, dx_over_lam * lam, lam, rng, kind=kind)
+            raw = float(estimate_all(x, dx_over_lam * lam, methods=(method,))[method])
+            c = cal.correct(raw, L)
+            if np.isfinite(c):
+                vals.append(c / lam)
+        arr = np.asarray(vals, dtype=float)
+        delta.append(float(np.mean(arr) - 1.0) if arr.size else float("nan"))
+    return {"kind": kind, "method": method, "k_grid": k_list,
+            "delta": delta, "n_real": int(n_real), "seed": int(seed)}
+
+
+def _design_matrix(khat: np.ndarray, degree: int) -> np.ndarray:
+    z = np.log(np.clip(khat, 1.2, 400.0))
+    return np.column_stack([z**j for j in range(degree + 1)])
+
+
+def flexible_factor_ceiling(
+    *,
+    kind: str = "ar1",
+    method: str = "crossing",
+    k_grid=(3.0, 3.5, 4.0, 5.0, 6.3, 8.0, 10.0, 12.6, 16.0, 20.0, 25.0, 32.0, 40.0, 50.0),
+    degree: int = 3,
+    n_real: int = 400,
+    dx_over_lam: float = 0.05,
+    seed_train: int = 0,
+    seeds_test=(201, 202, 203),
+    lam: float = 1.0,
+) -> dict:
+    """Best multiplicative correction of the *observed* value, and its ceiling.
+
+    A multiplicative correction is any positive function ``f`` of the record's own
+    statistic: ``lam_corr = lam_hat f(K_hat)``.  Here ``log f`` is a polynomial in
+    ``log K_hat`` of the given degree, fitted on an independent training ensemble
+    by matching the ensemble mean at every nominal ``K`` (the *same* objective
+    the tabulated two-stage calibrator optimises), and then evaluated on fresh
+    seeds.  The out-of-sample residual is the **floor** that no record-wise
+    multiplicative debiasing can go below, which separates "the correction form
+    is not flexible enough" from "the information is not there".
+    """
+    from scipy import optimize
+
+    def ensemble(seed, k_list):
+        rng = np.random.default_rng(int(seed))
+        out = []
+        for K in k_list:
+            L = float(K) * lam
+            n = int(round(L / (dx_over_lam * lam)))
+            kh, lh = [], []
+            for _ in range(int(n_real)):
+                x = windowed_field(n, dx_over_lam * lam, lam, rng, kind=kind)
+                raw = float(estimate_all(x, dx_over_lam * lam, methods=(method,))[method])
+                if np.isfinite(raw) and raw > 0.0:
+                    kh.append(L / raw)
+                    lh.append(raw)
+            out.append((float(K), np.asarray(kh, float), np.asarray(lh, float)))
+        return out
+
+    train = ensemble(seed_train, k_grid)
+
+    def residual(coef):
+        r = []
+        for _, kh, lh in train:
+            logf = _design_matrix(kh, degree) @ np.asarray(coef)
+            r.append(float(np.mean(lh * np.exp(logf))) - 1.0)
+        return np.asarray(r)
+
+    x0 = np.zeros(degree + 1)
+    x0[0] = float(np.log(2.0))
+    sol = optimize.least_squares(residual, x0, method="lm", max_nfev=20000,
+                                 xtol=1e-12, ftol=1e-12)
+    coef = np.asarray(sol.x, float)
+
+    def bias(k_list, seed):
+        rows = {}
+        for (K, kh, lh), kk in zip(ensemble(seed, k_list), k_list):
+            logf = _design_matrix(kh, degree) @ coef
+            rows[float(kk)] = float(np.mean(lh * np.exp(logf)) - 1.0)
+        return rows
+
+    test = {int(s): bias(k_grid, s) for s in seeds_test}
+    return {
+        "kind": kind, "method": method, "degree": degree,
+        "coefficients": [float(c) for c in coef],
+        "train_max_abs_bias": float(np.max(np.abs(residual(coef)))),
+        "test_bias": {str(s): {str(k): v for k, v in rows.items()} for s, rows in test.items()},
+        "test_max_abs_bias_K_ge_3": float(np.max(np.abs(
+            [v for rows in test.values() for v in rows.values()]))),
+        "test_bias_at_K3": float(np.mean([rows[3.0] for rows in test.values()])),
+        "n_real": int(n_real), "form": "log f = sum_j c_j (log K_hat)^j",
+    }
+
+
+def smooth_table(k_grid, values, *, terms: int = 0, form: str = "local"):
+    """Lightly denoise a measured ratio/residual table in ``log K``.
+
+    The measured tables carry Monte-Carlo noise (1-3 % per grid point); if they
+    are interpolated point by point the corrected bias inherits that noise as a
+    non-monotone wiggle, and a "sustained below 5 %" threshold then trips on the
+    wiggle rather than on the physics.
+
+    A *global* polynomial in ``1/K`` is deliberately **not** used: it is dominated
+    by the small-``K`` points (where ``1/K`` is large) and bends the large-``K``
+    values by several percent, which showed up as a spurious +5 % over-correction
+    at ``K = 50``.  A symmetric 3-tap ``(1/4, 1/2, 1/4)`` average in ``log K``
+    keeps the endpoints and removes most of the point-to-point scatter; the return
+    value is the RMS size of the modification, so the smoothing is auditable.
+    """
+    K = np.asarray(k_grid, dtype=float)
+    y = np.asarray(values, dtype=float)
+    if y.size < 3:
+        return y.astype(float), 0.0
+    out = y.astype(float).copy()
+    out[1:-1] = 0.25 * y[:-2] + 0.5 * y[1:-1] + 0.25 * y[2:]
+    rms = float(np.sqrt(np.mean((out - y) ** 2)))
+    return out, rms
+
+
+def smooth_calibration(cal: TwoStageCalibration, *, rho_terms: int = 4,
+                       delta_terms: int = 2) -> TwoStageCalibration:
+    """Return the calibrator with both measured tables smoothed (see :func:`smooth_table`)."""
+    rho = np.asarray(cal.rho_mean, dtype=float) - 1.0
+    rho_s, rho_rms = smooth_table(cal.k_grid, rho, terms=rho_terms)
+    delta_s, delta_rms = smooth_table(cal.delta_grid or cal.k_grid, cal.delta,
+                                      terms=delta_terms)
+    return TwoStageCalibration(
+        method=cal.method, kind=cal.kind, k_grid=cal.k_grid,
+        rho_mean=tuple(float(v) + 1.0 for v in rho_s), rel_sd=cal.rel_sd,
+        delta=tuple(float(v) for v in delta_s),
+        delta_grid=cal.delta_grid or cal.k_grid,
+        n_real_stage1=cal.n_real_stage1, n_real_stage2=cal.n_real_stage2,
+        k_min=cal.k_min, smooth_rms=float(max(rho_rms, delta_rms)))
+
+
+def build_calibration(rho_table: dict, residual: dict) -> TwoStageCalibration:
+    """Assemble the two-stage calibrator from the two measured tables."""
+    return TwoStageCalibration(
+        method=rho_table["method"], kind=rho_table["kind"],
+        k_grid=tuple(float(v) for v in rho_table["k_grid"]),
+        rho_mean=tuple(float(v) for v in rho_table["ratio_mean"]),
+        rel_sd=tuple(float(v) for v in rho_table.get("relative_sd", [])),
+        delta=tuple(float(v) for v in residual["delta"]),
+        delta_grid=tuple(float(v) for v in residual["k_grid"]),
+        n_real_stage1=int(rho_table.get("n_real", 0)),
+        n_real_stage2=int(residual.get("n_real", 0)),
+        k_min=MIN_CERTIFIED_K)
+
+
+def calibrate_two_stage(
+    *,
+    kind: str = "ar1",
+    method: str = "crossing",
+    k_grid=(3.0, 4.0, 5.0, 6.3, 8.0, 10.0, 12.6, 16.0, 20.0, 25.0, 32.0, 40.0, 50.0),
+    n_real: int = 400,
+    dx_over_lam: float = 0.05,
+    seed1: int = 0,
+    seed2: int = 1000,
+    lam: float = 1.0,
+    smooth: bool = True,
+) -> TwoStageCalibration:
+    """Full two-stage calibration on two independent seed sets."""
+    tab = measure_ratio(kind=kind, method=method, k_grid=k_grid, n_real=n_real,
+                        dx_over_lam=dx_over_lam, seed=seed1, lam=lam)
+    res = measure_residual(tab, n_real=n_real, seed=seed2, lam=lam)
+    cal = build_calibration(tab, res)
+    if not smooth:
+        return cal
+    # 1) smooth the ratio table; 2) re-measure the plug-in residual *of the
+    #    smoothed ratio table* on the same independent seeds (so delta corrects
+    #    the bias of the calibration that is actually shipped); 3) smooth delta.
+    stage1 = smooth_calibration(cal, rho_terms=4, delta_terms=1)
+    stage1 = TwoStageCalibration(method=stage1.method, kind=stage1.kind,
+                                 k_grid=stage1.k_grid, rho_mean=stage1.rho_mean,
+                                 rel_sd=stage1.rel_sd,
+                                 delta=tuple(0.0 for _ in stage1.k_grid),
+                                 delta_grid=stage1.k_grid,
+                                 n_real_stage1=cal.n_real_stage1,
+                                 n_real_stage2=cal.n_real_stage2,
+                                 k_min=cal.k_min)
+    res2 = measure_residual(stage1, n_real=n_real, seed=seed2 + 1, lam=lam)
+    cal2 = build_calibration(dict(tab, ratio_mean=list(stage1.rho_mean),
+                                  relative_sd=list(stage1.rel_sd)), res2)
+    return smooth_calibration(cal2, rho_terms=4, delta_terms=2)
