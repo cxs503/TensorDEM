@@ -800,3 +800,331 @@ def effective_conductivity(
         "contact_stress_pa": float(contact_model.confining_stress_pa),
         "n_contacts": int(len(bed.contact_pairs)),
     }
+
+
+# ---------------------------------------------------------------------------
+# SOR solver for contact network (alternative to direct spsolve)
+# ---------------------------------------------------------------------------
+def solve_contact_network_sor(
+    bed: StaticPackedBed,
+    k_solid: float,
+    contact_radius_m: float,
+    *,
+    gradient: float = 1.0,
+    omega: float = 1.8,
+    max_iter: int = 10000,
+    tol: float = 1e-12,
+) -> dict[str, float]:
+    """SOR solver for the contact-resistance network with Dirichlet boundary.
+
+    Solves the sparse linear system arising from the Kirchhoff network on the
+    sphere contact graph, using Successive Over-Relaxation.  The background
+    field ``T0 = -gradient * z`` is imposed; the periodic image carries the
+    jump ``+gradient * L`` which is unwrapped in the flux sum.
+
+    Parameters
+    ----------
+    bed : StaticPackedBed
+        The relaxed packing.
+    k_solid : float
+        Solid thermal conductivity (W/m/K).
+    contact_radius_m : float
+        Hertz contact radius (m).
+    gradient : float
+        Background temperature gradient (K/m).
+    omega : float
+        SOR relaxation parameter (1.0 = Gauss-Seidel, 1.8 typical optimum).
+    max_iter : int
+        Maximum iterations.
+    tol : float
+        Convergence tolerance on residual norm.
+
+    Returns
+    -------
+    dict with k_eff, n_contacts, bond_conductance, iterations, converged.
+    """
+    from scipy.sparse import coo_matrix
+
+    ks = _finite("k_solid", k_solid, positive=True)
+    a_c = _finite("contact_radius_m", contact_radius_m, positive=True)
+    n_spheres = bed.n_spheres
+    pairs = bed.contact_pairs
+    vectors = bed.contact_vectors
+
+    # Bond conductance: series of constriction + spread resistance
+    r_spread = 1.0 / (math.pi * ks * bed.radius)
+    r_contact = 1.0 / (2.0 * ks * a_c)
+    g_bond = 1.0 / (r_contact + r_spread)
+
+    # Build diagonal and off-diagonal
+    diag = np.zeros(n_spheres)
+    np.add.at(diag, pairs[:, 0], g_bond)
+    np.add.at(diag, pairs[:, 1], g_bond)
+
+    # RHS from background gradient
+    drive = gradient * g_bond * vectors[:, 2]
+    rhs = np.zeros(n_spheres)
+    np.add.at(rhs, pairs[:, 0], drive)
+    np.add.at(rhs, pairs[:, 1], -drive)
+    rhs = rhs - rhs.mean()  # fix gauge
+
+    # SOR iteration
+    t = np.zeros(n_spheres)
+    converged = False
+    n_iter = 0
+    for it in range(max_iter):
+        t_old = t.copy()
+        for i in range(n_spheres):
+            sigma = 0.0
+            for j_idx in range(len(pairs)):
+                if pairs[j_idx, 0] == i:
+                    sigma -= g_bond * t[pairs[j_idx, 1]]
+                elif pairs[j_idx, 1] == i:
+                    sigma -= g_bond * t[pairs[j_idx, 0]]
+            t[i] = (1.0 - omega) * t_old[i] + omega * (rhs[i] - sigma) / diag[i]
+        n_iter = it + 1
+        residual = np.max(np.abs(t - t_old))
+        if residual < tol:
+            converged = True
+            break
+
+    t -= t.mean()
+
+    # Compute effective conductivity from flux
+    q = g_bond * (t[pairs[:, 0]] - t[pairs[:, 1]] - gradient * vectors[:, 2])
+    flux_sum = float(np.sum(q * (-vectors[:, 2])))
+    k_eff = flux_sum / (bed.volume * gradient)
+
+    return {
+        "k_eff": float(k_eff),
+        "n_contacts": int(len(pairs)),
+        "bond_conductance": float(g_bond),
+        "r_contact": float(r_contact),
+        "r_spread": float(r_spread),
+        "iterations": n_iter,
+        "converged": converged,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Isothermal sphere approximation (explicit declaration)
+# ---------------------------------------------------------------------------
+def isothermal_sphere_conductance(
+    radius: float, k_solid: float, k_fluid: float, porosity: float
+) -> float:
+    """Particle-fluid equivalent conductance under isothermal sphere approximation.
+
+    **Explicit declaration**: This model assumes each sphere is isothermal
+    (Biot number << 1), so the intra-particle temperature gradient is neglected.
+    The sphere acts as a lumped thermal capacitor connected to neighbours via
+    contact conductances and to the fluid via a film conductance.
+
+    The equivalent conductance is the parallel sum of:
+    - Contact conductance to neighbours: ``N_c * 2 * k_s * a_c``
+    - Fluid film conductance: ``4 * pi * R * k_f`` (Stokes-Einstein-like)
+
+    Parameters
+    ----------
+    radius : float
+        Sphere radius (m).
+    k_solid : float
+        Solid conductivity (W/m/K).
+    k_fluid : float
+        Fluid conductivity (W/m/K).
+    porosity : float
+        Bed porosity.
+
+    Returns
+    -------
+    float : Equivalent conductance per sphere (W/K).
+    """
+    r = _finite("radius", radius, positive=True)
+    ks = _finite("k_solid", k_solid, positive=True)
+    kf = _finite("k_fluid", k_fluid, positive=True)
+    phi = _porosity(porosity)
+
+    # Fluid film conductance (spherical conduction in infinite medium)
+    g_fluid = 4.0 * math.pi * r * kf
+
+    # Contact conductance estimate (using typical coordination number)
+    # Z ~ 6 for random close packing, scales with (1-phi)
+    z_coord = 6.0 * (1.0 - phi) / 0.36  # normalised to RCP
+    # Contact radius from typical overlap
+    a_c = r * 0.05  # 5% overlap typical
+    g_contact = z_coord * 2.0 * ks * a_c
+
+    return g_fluid + g_contact
+
+
+# ---------------------------------------------------------------------------
+# Particle-fluid equivalent conductivity (two-phase homogenisation)
+# ---------------------------------------------------------------------------
+def particle_fluid_effective_conductivity(
+    porosity: float, k_solid: float, k_fluid: float,
+    *,
+    model: str = "maxwell_eucken",
+) -> float:
+    """Particle-fluid equivalent conductivity with explicit model selection.
+
+    Parameters
+    ----------
+    porosity : float
+        Bed porosity (fluid volume fraction).
+    k_solid : float
+        Solid conductivity.
+    k_fluid : float
+        Fluid conductivity.
+    model : str
+        Homogenisation model: 'maxwell_eucken', 'wiener', 'krupiczka',
+        'zehner_schluender'.
+
+    Returns
+    -------
+    float : Effective conductivity (W/m/K).
+    """
+    phi = _porosity(porosity)
+    ks = _finite("k_solid", k_solid, positive=True)
+    kf = _finite("k_fluid", k_fluid, positive=True)
+
+    if model == "maxwell_eucken":
+        # Use ME1 for fluid-continuous (typical for packed beds with gas)
+        return maxwell_eucken_1(phi, ks, kf)
+    elif model == "wiener":
+        bounds = wiener_bounds(phi, ks, kf)
+        return math.sqrt(bounds["k_series"] * bounds["k_parallel"])  # geometric mean
+    elif model == "krupiczka":
+        return krupiczka_conductivity(phi, ks, kf)
+    elif model == "zehner_schluender":
+        return zehner_schluender_conductivity(phi, ks, kf)
+    else:
+        raise ValueError(f"Unknown model: {model}")
+
+
+# ---------------------------------------------------------------------------
+# Downstream self-heating model: critical thickness delta_crit
+# ---------------------------------------------------------------------------
+def critical_thickness_delta_crit(
+    k_eff: float,
+    heat_generation_w_m3: float,
+    t_surface: float,
+    t_critical: float,
+    *,
+    geometry: str = "slab",
+) -> float:
+    """Critical bed thickness for thermal runaway (Frank-Kamenetskii criterion).
+
+    For a self-heating porous bed with uniform volumetric heat generation,
+    the critical thickness below which the bed remains stable is:
+
+        delta_crit = sqrt(k_eff * (T_crit - T_surf) / q_gen) * xi
+
+    where xi is a geometry factor (pi/2 for slab, 2.038 for cylinder, 3.0 for sphere).
+
+    Parameters
+    ----------
+    k_eff : float
+        Effective thermal conductivity (W/m/K).
+    heat_generation_w_m3 : float
+        Volumetric heat generation rate (W/m^3).
+    t_surface : float
+        Surface temperature (K).
+    t_critical : float
+        Critical temperature for runaway (K).
+    geometry : str
+        Geometry: 'slab', 'cylinder', 'sphere'.
+
+    Returns
+    -------
+    float : Critical thickness (m).
+    """
+    k = _finite("k_eff", k_eff, positive=True)
+    q = _finite("heat_generation_w_m3", heat_generation_w_m3, positive=True)
+    ts = _finite("t_surface", t_surface)
+    tc = _finite("t_critical", t_critical)
+    if tc <= ts:
+        raise ValueError("t_critical must exceed t_surface")
+
+    delta_t = tc - ts
+    if geometry == "slab":
+        xi = math.pi / 2.0
+    elif geometry == "cylinder":
+        xi = 2.038
+    elif geometry == "sphere":
+        xi = math.pi
+    else:
+        raise ValueError(f"Unknown geometry: {geometry}")
+
+    return xi * math.sqrt(k * delta_t / q)
+
+
+# ---------------------------------------------------------------------------
+# Kozeny-Carman cross-validation
+# ---------------------------------------------------------------------------
+def kozeny_carman_permeability(
+    porosity: float, particle_diameter: float, *, kozeny_constant: float = 180.0
+) -> float:
+    """Kozeny-Carman permeability for packed bed of spheres.
+
+    ``K = phi^3 * d^2 / (180 * (1-phi)^2)``
+
+    Parameters
+    ----------
+    porosity : float
+        Bed porosity.
+    particle_diameter : float
+        Particle diameter (m).
+    kozeny_constant : float
+        Kozeny constant (180 for spheres, 150-180 typical).
+
+    Returns
+    -------
+    float : Permeability (m^2).
+    """
+    phi = _porosity(porosity)
+    d = _finite("particle_diameter", particle_diameter, positive=True)
+    kc = _finite("kozeny_constant", kozeny_constant, positive=True)
+    return phi**3 * d**2 / (kc * (1.0 - phi)**2)
+
+
+def thermal_formation_factor(
+    porosity: float, k_fluid: float
+) -> float:
+    """Thermal formation factor F = k_fluid / k_eff_fluid_only.
+
+    Analogous to electrical formation factor in petrophysics.
+    For a packed bed, F ~ phi^(-m) where m is the cementation exponent.
+    Uses Maxwell-Eucken model for fluid-only channel (solid ~ insulating).
+    """
+    phi = _porosity(porosity)
+    kf = _finite("k_fluid", k_fluid, positive=True)
+    # ME1 with k_s -> 0: k_eff = kf * 2*phi / (3 - phi)
+    k_eff_fluid = kf * 2.0 * phi / (3.0 - phi)
+    return kf / k_eff_fluid
+
+
+def archie_cementation_exponent(
+    porosities: list[float], k_fluid: float, k_eff_values: list[float]
+) -> float:
+    """Fit Archie's law exponent m from porosity vs formation factor data.
+
+    ``F = phi^(-m)`` => ``log(F) = -m * log(phi)``
+
+    Parameters
+    ----------
+    porosities : list[float]
+        Porosity values.
+    k_fluid : float
+        Fluid conductivity.
+    k_eff_values : list[float]
+        Effective conductivity values (fluid-only channel).
+
+    Returns
+    -------
+    float : Cementation exponent m.
+    """
+    if len(porosities) < 2:
+        raise ValueError("Need at least 2 data points")
+    log_phi = np.log(porosities)
+    log_F = np.log([k_fluid / k for k in k_eff_values])
+    m = -np.polyfit(log_phi, log_F, 1)[0]
+    return float(m)
