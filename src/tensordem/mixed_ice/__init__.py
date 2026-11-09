@@ -19,6 +19,11 @@ Public surface
 ``campaign``   the campaign: MY-fraction sweep 0-80 %, FSD sensitivity
                envelope, DEM 2^3 strength/E factorial, reference-case check,
                machine-checkable verdicts, artifact and figures.
+``dem_field``  spatially heterogeneous FY/MY field in the DEM section: per-particle
+               material multipliers, balanced/random class layouts, and the direct
+               test of the linear mixture rule ``R_mix = (1-p)R_FY + p R_MY``
+               (artifact ``artifacts/mixed_ice_dem_field/``, report
+               ``docs/mixed_ice_dem_field.md``).
 
 Evidence grades used here are those of :mod:`tensordem.level_ice.formula`:
 ``DERIVED`` (re-derived from a stated assumption), ``CONVENTION`` (pinned
