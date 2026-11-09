@@ -1,5 +1,8 @@
 # 冰压带相关长度 λ_x 的原生标定：有限窗偏差修正、记录长度门槛与长域 DEM 压力带验证
 
+> 后续节点 p48w3-n02 的成熟化结果（级交叉估计量、方差标度律 repair、门槛修正、
+> 置信区间修复）见 [ice_pressure_band_lambda_x_maturation.md](ice_pressure_band_lambda_x_maturation.md)。
+
 **战役节点** P204-N08 · **仓库** TensorDEM · **模块** `tensordem.ice_pressure_band` · **契约** `lambda_x_estimate.v1` · 生成于 2026-11-08T10:51:29Z
 
 ## 1. 案例介绍（物理背景 · 几何 · 参数）

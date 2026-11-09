@@ -59,17 +59,26 @@ def test_field_generators_match_analytic_acf():
 
 
 def test_estimators_recover_known_lambda_on_long_record():
-    """At L/lam = 80 the calibrated estimators must be within 20 % of the truth."""
+    """At L/lam = 80 the calibrated estimators must be within 20 % of the truth.
+
+    ``lagslope`` is excluded on purpose: at a sampling step of ``0.05 lam`` the
+    leading-lag inversion has a condition number of ~20, so a sub-percent error
+    in ``R(dx)`` becomes a >20 % error in ``lam`` (measured and pinned by
+    ``test_lagslope_bias_depends_on_sampling_step_so_it_is_not_a_reporting_estimator``
+    in ``test_ice_pressure_band_maturation.py``).  It is a variance-scaling
+    demonstrator, not a reporting estimator.
+    """
     rng = np.random.default_rng(1)
     lam, dx = 1.0, 0.05
     n = int(80 / dx)
-    vals = {m: [] for m in METHODS}
+    methods = tuple(m for m in METHODS if m != "lagslope")
+    vals = {m: [] for m in methods}
     for _ in range(12):
         x = windowed_field(n, dx, lam, rng, kind="spectral")
         est = estimate_all(x, dx)
-        for m in METHODS:
+        for m in methods:
             vals[m].append(est[m])
-    for m in METHODS:
+    for m in methods:
         median = float(np.nanmedian(vals[m]))
         assert 0.8 < median / lam < 1.2, (m, median)
 

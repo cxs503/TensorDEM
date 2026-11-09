@@ -54,6 +54,8 @@ __all__ = [
     "estimate_profile_lambda",
     "bootstrap_lambda",
     "shuffle_control",
+    "dem_band_cell",
+    "d50_ladder",
 ]
 
 
@@ -252,8 +254,22 @@ def bootstrap_lambda(
     block: int | None = None,
     seed: int = 0,
     ci: float = 0.95,
+    point_m: float | None = None,
 ) -> dict:
-    """Moving-block bootstrap over snapshots of the corrected correlation length."""
+    """Moving-block bootstrap over snapshots of the corrected correlation length.
+
+    Two intervals are returned.  ``ci_low_m/ci_high_m`` is the plain percentile
+    interval of the bootstrap replicates; ``basic_ci_low_m/basic_ci_high_m`` is
+    the *basic* (pivotal) interval ``point + (q_alpha - mean_boot)``, which is
+    centred on the estimator actually applied to the full time-averaged profile.
+    The percentile interval can exclude the point estimate when the bootstrap
+    distribution is shifted (resampling with replacement averages fewer distinct
+    snapshots, so its replicates are systematically noisier and, through the
+    bias correction, systematically longer) -- an interval that does not contain
+    the reported value is not a usable uncertainty statement, so the
+    ``contains_point`` flag is reported for both and the basic interval is the
+    one quoted in the contract.
+    """
     snaps = np.asarray(snapshots, dtype=float)
     T = snaps.shape[0]
     if T < 4:
@@ -269,23 +285,44 @@ def bootstrap_lambda(
         idx = np.concatenate([(np.arange(s, s + block) % T) for s in starts])[:T]
         prof = snaps[idx].mean(axis=0)
         est = estimate_profile_lambda(prof, dy, models=models, methods=(method,))
-        vals[b] = est["corrected"][method]
+        val = est["corrected"][method]
+        if not np.isfinite(val):
+            # no bias model supplied (or the correction was not applicable): the
+            # bootstrap must still produce a spread, otherwise every replicate is
+            # silently NaN and the interval degenerates to nan/failure_rate = 1
+            val = est["raw"].get(method, float("nan"))
+        vals[b] = val
     ok = np.isfinite(vals)
     alpha = 0.5 * (1.0 - ci)
     lo = float(np.nanpercentile(vals[ok], 100 * alpha)) if ok.sum() > 8 else float("nan")
     hi = float(np.nanpercentile(vals[ok], 100 * (1 - alpha))) if ok.sum() > 8 else float("nan")
-    return {
+    mean_boot = float(np.nanmean(vals[ok])) if ok.sum() else float("nan")
+    if point_m is not None and np.isfinite(point_m) and ok.sum() > 8:
+        b_lo = float(point_m + (lo - mean_boot))
+        b_hi = float(point_m + (hi - mean_boot))
+        point = float(point_m)
+    else:
+        b_lo = float("nan")
+        b_hi = float("nan")
+        point = mean_boot
+    stats = {
         "method": method,
         "n_boot": n_boot,
         "block_snapshots": block,
-        "mean_m": float(np.nanmean(vals[ok])) if ok.sum() else float("nan"),
+        "mean_m": mean_boot,
         "sd_m": float(np.nanstd(vals[ok], ddof=1)) if ok.sum() > 2 else float("nan"),
+        "point_m": point,
         "ci_low_m": lo,
         "ci_high_m": hi,
+        "basic_ci_low_m": b_lo,
+        "basic_ci_high_m": b_hi,
         "ci": ci,
+        "contains_point": bool(np.isfinite(point) and lo <= point <= hi),
+        "basic_contains_point": bool(np.isfinite(b_lo) and b_lo <= point <= b_hi),
         "failure_rate": float(1.0 - ok.mean()),
         "samples": vals[ok].tolist()[:2000],
     }
+    return stats
 
 
 def block_coarsen_profile(profile: np.ndarray, factor: int) -> np.ndarray:
@@ -359,3 +396,126 @@ def shuffle_control(
         "record_length_m": L,
         "ratio_to_grid": float(np.median(ok) / dy) if ok.size else float("nan"),
     }
+
+def dem_band_cell(
+    *,
+    width_over_thickness: float = 40.0,
+    d50_ratio: float = 0.25,
+    seed: int = 0,
+    thickness: float = 0.20,
+    depth: float = 0.30,
+    n_max: int = 7000,
+    models: dict | None = None,
+    methods: tuple[str, ...] = ("integral", "expfit", "crossing"),
+    n_boot: int = 400,
+    ladder_factors: tuple[int, ...] = (1, 2, 4, 8),
+) -> dict:
+    """One long-domain pressure-band run, reduced to a JSON-able record.
+
+    Kept as a module-level function so a driver can map it over a
+    ``(d50, seed, B/h)`` ladder with :class:`multiprocessing.Pool` instead of
+    serialising inside one process (a 40 h band takes ~1 min of CPU here).
+    """
+    cfg = BandConfig(
+        thickness=float(thickness),
+        width_over_thickness=float(width_over_thickness),
+        d50_ratio=float(d50_ratio),
+        depth=float(depth),
+        n_max=int(n_max),
+        seed=int(seed),
+    )
+    run = run_band(cfg)
+    snaps = snapshot_profiles(run.pressure, cfg)
+    prof = snaps.mean(axis=0)
+    est = estimate_profile_lambda(prof, cfg.dy, models=models, methods=methods)
+    point = est["value_m"]
+    boot = bootstrap_lambda(snaps, cfg.dy, models=models, method="integral",
+                            n_boot=n_boot, point_m=point)
+    ladder = resolution_ladder(prof, cfg.dy, models=models,
+                               methods=("integral", "crossing"),
+                               factors=tuple(ladder_factors))
+    shuf = shuffle_control(prof, cfg.dy, models=models)
+    lam_per_method = {m: est["corrected"][m] for m in methods}
+    ok = [v for v in lam_per_method.values() if np.isfinite(v) and v > 0.0]
+    # snapshot-level scale: literature pressure patches are instantaneous, while
+    # the reported profile is a time average over the steady window.  Estimating
+    # the correlation length on single snapshots separates the two scales instead
+    # of attributing the loss of structure to one of them by assumption.
+    n_snap = snaps.shape[0]
+    pick = np.linspace(0, n_snap - 1, int(min(n_snap, 60))).round().astype(int)
+    snap_vals = {m: [] for m in ("integral", "crossing")}
+    for i in pick:
+        e = estimate_profile_lambda(snaps[i], cfg.dy, models=models,
+                                    methods=("integral", "crossing"))
+        for m in snap_vals:
+            snap_vals[m].append(e["corrected"][m])
+    snapshot_summary = {}
+    for m, v in snap_vals.items():
+        arr = np.asarray(v, dtype=float)
+        finite = arr[np.isfinite(arr)]
+        base = lam_per_method.get(m, float("nan"))
+        snapshot_summary[m] = {
+            "median_m": float(np.median(finite)) if finite.size else float("nan"),
+            "iqr_m": [float(np.percentile(finite, 25)), float(np.percentile(finite, 75))]
+            if finite.size else [float("nan"), float("nan")],
+            "n_snapshots": int(finite.size),
+            "values_m": finite.tolist(),
+            "ratio_to_time_mean": float(np.median(finite) / base)
+            if finite.size and np.isfinite(base) and base > 0 else float("nan"),
+        }
+    return {
+        "config": cfg.to_dict(),
+        "seed": int(seed),
+        "d50_ratio": float(d50_ratio),
+        "d50_m": float(cfg.d50_ratio * cfg.thickness),
+        "width_over_thickness": float(width_over_thickness),
+        "n_snapshots": int(snaps.shape[0]),
+        "run_summary": run.summary,
+        "profile": {"mean": float(np.mean(prof)), "max": float(np.max(prof)),
+                    "n_samples": int(prof.size), "dy": float(cfg.dy),
+                    "values": prof.tolist()},
+        "estimate": est,
+        "lambda_by_method": lam_per_method,
+        "lambda_m": float(point) if np.isfinite(point) else float("nan"),
+        "lambda_over_h": float(point / cfg.thickness) if np.isfinite(point) else float("nan"),
+        "lambda_over_d50": float(point / (cfg.d50_ratio * cfg.thickness))
+        if np.isfinite(point) else float("nan"),
+        "method_median_m": float(np.median(ok)) if ok else float("nan"),
+        "bootstrap": {k: v for k, v in boot.items() if k != "samples"},
+        "resolution_ladder": ladder,
+        "shuffle_control": shuf,
+        "snapshot_scale": snapshot_summary,
+        "regime": est["regime"],
+    }
+
+
+def d50_ladder(
+    *,
+    d50_ratios=(0.125, 0.25, 0.40),
+    seeds=(0, 1),
+    widths_over_thickness=(40.0,),
+    thickness: float = 0.20,
+    depth: float = 0.30,
+    n_max: int = 7000,
+    models: dict | None = None,
+    methods: tuple[str, ...] = ("integral", "expfit", "lagslope"),
+    n_boot: int = 400,
+) -> list[dict]:
+    """Serial ladder over ``(d50/h, B/h, seed)`` -- the block-scale test.
+
+    If the measured ``lambda_x`` is the *deposition kernel / fragment* scale
+    rather than a continuum patch scale, then ``lambda_x`` must track ``d50``
+    linearly.  Measuring that slope (``lambda_x/d50``) turns the failure to
+    reproduce the literature band into a **prediction**: the surrogate can only
+    reach ``lambda_x/h ~ c * d50/h`` and is capped by ``d50 <= 0.5 h``.
+    """
+    out = []
+    for w in widths_over_thickness:
+        for d50 in d50_ratios:
+            for seed in seeds:
+                out.append(dem_band_cell(
+                    width_over_thickness=w, d50_ratio=d50, seed=seed,
+                    thickness=thickness, depth=depth, n_max=n_max,
+                    models=models, methods=methods, n_boot=n_boot,
+                ))
+    return out
