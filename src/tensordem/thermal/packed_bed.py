@@ -73,6 +73,8 @@ __all__ = [
     "generate_static_bed",
     "hertz_contact_radius",
     "krupiczka_conductivity",
+    "maxwell_eucken_1",
+    "maxwell_eucken_2",
     "wiener_bounds",
     "zehner_schluender_conductivity",
 ]
@@ -135,6 +137,42 @@ def krupiczka_conductivity(porosity: float, k_solid: float, k_fluid: float) -> f
     lam = ks / kf
     exponent = 0.280 - 0.757 * math.log10(phi) - 0.057 * math.log10(lam)
     return kf * lam**exponent
+
+
+
+def maxwell_eucken_1(porosity: float, k_solid: float, k_fluid: float) -> float:
+    """Maxwell-Eucken ME1: solid spheres dispersed in continuous fluid matrix.
+
+    Valid when solid fraction (1-phi) is moderate.  Reduces to k_solid at phi=0
+    and k_fluid at phi=1.
+
+    ``k_eff = k_f * (k_s + 2*k_f + 2*(1-phi)*(k_s - k_f))
+                   / (k_s + 2*k_f - (1-phi)*(k_s - k_f))``
+    """
+    phi = _porosity(porosity)
+    ks = _finite("k_solid", k_solid, positive=True)
+    kf = _finite("k_fluid", k_fluid, positive=True)
+    f_s = 1.0 - phi  # solid fraction
+    num = ks + 2.0 * kf + 2.0 * f_s * (ks - kf)
+    den = ks + 2.0 * kf - f_s * (ks - kf)
+    return kf * num / den
+
+
+def maxwell_eucken_2(porosity: float, k_solid: float, k_fluid: float) -> float:
+    """Maxwell-Eucken ME2: fluid bubbles dispersed in continuous solid matrix.
+
+    Valid when porosity phi is moderate.  Reduces to k_solid at phi=0
+    and k_fluid at phi=1.
+
+    ``k_eff = k_s * (k_f + 2*k_s + 2*phi*(k_f - k_s))
+                   / (k_f + 2*k_s - phi*(k_f - k_s))``
+    """
+    phi = _porosity(porosity)
+    ks = _finite("k_solid", k_solid, positive=True)
+    kf = _finite("k_fluid", k_fluid, positive=True)
+    num = kf + 2.0 * ks + 2.0 * phi * (kf - ks)
+    den = kf + 2.0 * ks - phi * (kf - ks)
+    return ks * num / den
 
 
 @dataclass(frozen=True)
