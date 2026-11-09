@@ -186,3 +186,45 @@ PYTHONPATH=src python scripts/m5052_clump_rolling_calibration.py --figures-only
   Next node: a weakest-link chain driver (1-D series, Weibull
   weakest-link scaling `sigma_chain ~ N^(-1/m)`) or a quasi-static 2-D
   specimen with load redistribution after first bond failure.
+## selfstart write-back (trickle-injection repose driver, mission m7569)
+* **Row changed:** the open reproduction-gap recorded in
+  `docs/dem_nonspherical_representation_verdict.md` §5.4 — *"closing [the
+  clump/superquadric repose comparison] needs a trickle-injection driver with rate
+  control"* — moves from **open** to **driver implemented / heap campaign open**.
+  Evidence: `src/tensordem/repose_injection.py`,
+  `tests/test_repose_injection.py` (13 cases, green),
+  `scripts/verify_repose_injection.py`, `artifacts/repose_injection/verification.json`,
+  `docs/repose_injection_driver.md`.
+* **New capability, not a re-run:** a rate-controlled point-source pour with a
+  Verlet broad phase that accepts any radius set (the column driver is
+  monodisperse) and two independent free-surface angle estimators (radial-bin
+  envelope + free-surface point fit with per-sector spread).
+* **Verified, quantified:** sliding onset bracketed around the analytic
+  `atan(mu) = 26.565 deg` (23.909–29.222 deg, travel 1.14e-6 vs 2.55e-4 m);
+  rolling onset with `mu_r = 0.20` bracketed around `atan(mu_r) = 11.310 deg`
+  (10.179–12.441 deg); ideal rolling (`mu_r = 0`) moves already at 1.33 deg, i.e.
+  no spurious static threshold; the point-fit estimator recovers synthetic cones
+  of 8/15/25/35 deg to 0.41/0.40/0.041/0.33 % (`r^2 = 0.989`); pair-list rebuild
+  on 1000 grains = 0.180 s (880 candidates).
+* **Defect found in the merged m4970 driver (reported, not patched):** the floor
+  tangential history in `repose_calibration.simulate` uses the grain *centre*
+  velocity and omits the spin term `omega x (-R z)` that the particle–particle
+  branch of the same function includes. Measured with the same law: a grain with
+  `mu = 0.5, mu_r = 0` needs 26.57 deg before it moves instead of rolling at any
+  tilt, and a grain with `mu_r = 0.20` never rolls at all (2.8e-7 m travel at
+  12.44 deg). The published `mu -> theta_r` table is therefore a property of that
+  wall law; it should be re-measured with the spin-corrected branch before being
+  quoted as a material calibration. The new driver defaults to the corrected law
+  and keeps `floor_spin_term=False` to reproduce the legacy behaviour.
+* **Honest gap carried forward:** the heap campaign was NOT run (a single
+  90-grain case exceeded the 110 s per-call budget); **no heap repose angle is
+  claimed**. `scripts/verify_repose_injection.py` carries the full matrix
+  (baseline, rate 60/240, `mu_r` 0/0.10/0.30, polydispersity 0.25, `mu` 0.35,
+  legacy-floor control) ready for the 702 cluster. Clump / superquadric grains are
+  still not admitted by this loop (clump contacts + rigid-body integration).
+* **Two implementation traps recorded:** (1) comparing the *per-step*
+  displacement with `skin/2` never rebuilds the Verlet list — grains tunnel,
+  overlap deeply and launch at 4–14 m/s; compare the cumulative displacement and
+  force a rebuild on release. (2) Keying the outlet height to the highest grain
+  (including airborne ones) ratchets the source upward and no heap forms; key it
+  to the settled apex (`|v| < 0.05 m/s`).
