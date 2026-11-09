@@ -93,3 +93,23 @@ __all__ = [
     "wiener_bounds",
     "zehner_schluender_conductivity",
 ]
+# p74-n11 additions
+from .packed_bed import (
+    solve_contact_network_sor,
+    isothermal_sphere_conductance,
+    particle_fluid_effective_conductivity,
+    critical_thickness_delta_crit,
+    kozeny_carman_permeability,
+    thermal_formation_factor,
+    archie_cementation_exponent,
+)
+
+__all__.extend([
+    "solve_contact_network_sor",
+    "isothermal_sphere_conductance",
+    "particle_fluid_effective_conductivity",
+    "critical_thickness_delta_crit",
+    "kozeny_carman_permeability",
+    "thermal_formation_factor",
+    "archie_cementation_exponent",
+])
