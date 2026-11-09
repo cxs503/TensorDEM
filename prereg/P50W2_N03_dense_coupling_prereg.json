@@ -1,0 +1,86 @@
+{
+  "task": "p50w2-arb7250-n03-dense-dem-cfd · dense particle-fluid coupling closure anchors: Richardson-Zaki expansion / Ergun pressure drop / minimum fluidisation + added mass and pressure-gradient force",
+  "mission": 8224,
+  "repo": "TensorDEM",
+  "module": "src/tensordem/cfd_dem_dense",
+  "timestamp_utc": "2026-11-09T05:30:00Z",
+  "attempt": 2,
+  "frozen_before_sweep": true,
+  "decision": {
+    "question": "Does the assembled unresolved (point-particle) force closure -- Schiller-Naumann, Wen-Yu voidage correction, Di Felice, Ergun/Gidaspow dense branch, explicit pressure-gradient force and Maxey-Riley added mass, all switchable -- reproduce the three classical dense-bed anchors (Richardson-Zaki expansion index, Ergun pressure drop at both ends of the Re range, minimum fluidisation velocity), converge under grid refinement, conserve mass/momentum/energy, and fail in the three pre-declared negative controls?",
+    "alternatives": {
+      "A_chosen": "Periodic homogeneous bed element: N representative spheres in a 1-D column, quasi-steady fluid momentum balance, particle equation of motion integrated with RK4 including added mass on the effective mass. Anchors obtained by *dynamic* inversion (integrate the coupled ODE to its fixed point, bisect on u_s), not by algebraic rearrangement.",
+      "B_rejected": "Free-surface 1-D two-fluid column with contact stress (run in attempt 1 exploratory prototyping): the homogeneous anchors are then contaminated by free-surface smearing and solid-pressure stiffness, the vertical-grid error is first order (delta-x halving ratio ~2, below the pre-declared 2.5), and the steady voidage acquires an O(dx/H) surface bias that propagates into the log-slope n. Kept only as the mass-conserving expansion identity H/H0 = phi0/phi.",
+      "C_rejected": "Algebraic closure inversion only (no dynamics): it cannot distinguish an implementation bug in the coupled force assembly from a closure property, and it makes criteria 1/6 vacuous."
+    }
+  },
+  "hypothesis": {
+    "H1_momentum": "With a normalised hat-kernel deposition the particle->fluid reaction is the exact negative of the particle force, so |sum F_f->p + sum F_p->f| / sum|F| is at machine precision (<= 1e-12) at eps_s = 0.3 and 0.5.",
+    "H2_richardson_zaki": "For fine sand in water (d = 100 um, Re_t = 0.73, the regime where the RZ correlation was established) the Wen-Yu-corrected closure implies a voidage exponent n that matches the tabulated RZ correlation to <= 5%, and eps(u_s) is monotone.",
+    "H3_ergun": "The discrete fluid momentum balance across a static bed reproduces rho_f g H + the classic Ergun porous-media drop to <= 5% at one viscous-dominated and one inertial-dominated velocity.",
+    "H4_umf": "The dynamically inverted minimum fluidisation velocity agrees with the closed-form Ergun quadratic to <= 8%, and the drift velocity changes sign across it (settling below, entrainment above).",
+    "H5_grid": "The pressure drop of a graded bed, with the voidage the CFD grid actually sees (hat filter of half width 2 dx), converges at second order, so halving dx reduces the error by >= 2.5.",
+    "H6_conservation": "Solid mass in the conservative flux form, the inter-phase power pair and the discrete energy-ledger identity close to <= 1e-10.",
+    "H7_negative_controls": "NC1 (no particle->fluid reaction) changes the bed pressure drop by > 20%; NC2 (drag coefficient x2, Newton regime) moves the terminal velocity by 2**-0.5 within 2%; NC3 (no pressure-gradient force) breaks the submerged-weight balance by > 20%."
+  },
+  "outcome_metrics": {
+    "momentum_residual": "|sum F_p + sum R_cell| / sum|F|, worst over eps_s in {0.3, 0.5}, plus the drag-density-vs-pressure-drop cross-check",
+    "rz_index": "log-log least-squares slope of u_s(eps) over eps in [0.55, 0.95] (9 points), dynamic route; deviation from n(Re_t) of the tabulated correlation",
+    "ergun_error": "relative difference between the measured and the analytic pressure drop, uniform and graded bed, at u = 0.01 (inertial fraction 4.5%) and u = 0.30 (58%)",
+    "umf_error": "relative difference between the dynamic root and the Ergun quadratic, plus the sign of the drift velocity at 0.9 u_mf and 1.15 u_mf",
+    "grid_error_ratio": "successive error ratios of the graded-bed pressure drop for dx halving, 5 levels (20..320 cells)",
+    "conservation": "mass drift (flux form), inter-phase power-pair residual, discrete ledger identity residual, quadrature-limited mechanical closure with its dt-convergence ratio"
+  },
+  "baseline_and_controls": {
+    "analytic_references": "Ergun (1952) porous-media quadratic; Richardson & Zaki (1954) tabulated exponent; single-sphere Schiller-Naumann and Newton drag; textbook u_mf quadratic root",
+    "independent_route": "every anchor is computed twice: dynamically (coupled ODE) and algebraically (closure inversion); the two must agree (reported as dynamic_vs_algebraic_relative)",
+    "negative_controls": {
+      "NC1": "fluid_reaction = False: the fluid momentum balance loses the drag source, so the bed pressure drop reverts to hydrostatic",
+      "NC2": "cd_scale = 2 in the Newton regime (constant C_D, Re > 1000): terminal velocity must scale as 2**-0.5. The Stokes-regime cross-check (Re-dependent C_D) is reported and is explicitly *not* 2**-0.5",
+      "NC3": "pressure_gradient = False: the Model-A balance loses the buoyancy channel and u_mf must move by > 20%"
+    },
+    "internal_teeth": "the momentum audit is re-run with the reaction disabled (must fail at O(1)); the mass advection test is re-run in non-conservative (advective) form (must drift at the percent level)"
+  },
+  "predeclared_thresholds": {
+    "momentum_residual": 1e-12,
+    "rz_index_deviation": 0.05,
+    "ergun_pressure_deviation": 0.05,
+    "umf_deviation": 0.08,
+    "grid_error_ratio_min": 2.5,
+    "conservation": 1e-10,
+    "nc1_reaction_off_deviation_min": 0.20,
+    "nc2_terminal_velocity_deviation": 0.02,
+    "nc3_pressure_gradient_off_deviation_min": 0.20
+  },
+  "sweep_design": {
+    "richardson_zaki": {"diameter_m": 1e-4, "solid_fraction_packed": 0.58, "porosities": [0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95], "closure": "wen_yu", "n_particles": 64},
+    "ergun": {"diameter_m": 2e-4, "solid_fraction": 0.5, "bed_length_m": 0.2, "velocities_m_s": [0.01, 0.3], "graded_peak_solid_fraction": 0.55},
+    "minimum_fluidisation": {"diameter_m": 1e-4, "solid_fraction": 0.58, "closure": "gidaspow"},
+    "grid": {"n_cells": [20, 40, 80, 160, 320], "kernel_half_width_in_cells": 2.0},
+    "energy_ledger": {"dt_s": [4e-5, 2e-5, 1e-5, 5e-6, 2.5e-6]},
+    "rationale": "one operating point per anchor in the closure's validity window; closure sensitivity is reported as a table (wen_yu, di_felice, gidaspow, schiller_naumann) instead of being tuned away"
+  },
+  "variables_and_confounders": {
+    "controlled": "temperature-independent fluid properties held at the stated values; particle count and cell count fixed per case; identical integrator and closure assembly across anchors",
+    "varied": "voidage (RZ sweep), superficial velocity (Ergun), grid spacing (criterion 5), time step (ledger), closure switches (sensitivity table)",
+    "confounders": {
+      "closure_vs_implementation": "an anchor can pass because closure and reference share an algebraic form; mitigated by the dynamic route and by reporting cross-closure sensitivity",
+      "closure_validity_window": "the RZ correlation is only meaningful at low Re_t; the study declares d = 100 um (Re_t = 0.73) as the anchor case and reports the higher-Re deviations as out-of-window",
+      "quadrature_in_the_energy_ledger": "the mechanical closure is trapezoid-limited; the 1e-10 threshold is applied to the algebraic identities only and the quadrature-limited closure is reported with its own convergence ratio",
+      "free_surface_absence": "no contacts and no free surface in the bed element; the effect on n is not measured here (declared limitation)"
+    }
+  },
+  "environment": {
+    "python": "3.11",
+    "numpy": "2.4.6",
+    "repo_commit": "recorded in the study JSON environment block at run time",
+    "commands": ["python benchmarks/dense_coupling_verification.py", "python -m pytest tests/test_dense_dem_cfd.py -q"]
+  },
+  "analysis_plan": "All criteria are computed from the code paths that the test-suite exercises; the JSON is written by the benchmark (no transcription). A criterion passes only if its measured value satisfies the predeclared threshold; an honest FAIL is reported verbatim if a threshold is missed. No threshold was changed after inspecting results.",
+  "interpretation_limits": [
+    "homogeneous bed element: no particle contacts, no free surface, no fluid inertia or turbulence at the particle scale",
+    "the fluid is quasi-steady: the interstitial Reynolds number (Re_superficial up to 60) is far below the range where fluid inertia matters for the interphase force, but this is an assumption, not a measurement",
+    "monodisperse spheres only; polydispersity is a separate closure question",
+    "the grid criterion measures the resolution of the voidage field (the unresolved-coupling 'grid'); it is not a wall-normal resolution study of a resolved simulation"
+  ]
+}
