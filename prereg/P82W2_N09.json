@@ -1,0 +1,60 @@
+{
+  "task": "P82W2-N09 multi-rate contact integration (MTS) and time-step stability gate (TensorDEM)",
+  "timestamp_utc": "2026-11-09T02:40:00Z",
+  "frozen_before_runs": true,
+  "contract": {
+    "module": "src/tensordem/mts.py",
+    "driver": "benchmarks/mts_contact_integration.py",
+    "result": "runs/P82W2_N09/verification.json",
+    "figures": "docs/figures/P82W2_N09/",
+    "report": "docs/P82W2_N09_mts_contact_integration.md",
+    "tests": "tests/test_mts_contact_integration.py",
+    "depends_on": [
+      "tensordem.hertz_impact_time (dt_c = Johnson Hertz contact duration)",
+      "tensordem.contact_timestep_ledger (Cundall bound, WallImpact, Hunt-Crossley restitution)",
+      "tensordem.granular2d.engine (m5524 contact laws, used as the shipped baseline and as the state preparation)",
+      "tensordem.granular2d.jamming (W4-P1 servo anchor, bidisperse packing)"
+    ]
+  },
+  "time_step_contract": {
+    "margin": 0.05,
+    "tight_ratio": 0.5,
+    "definition": "ratio = dt/dt_c; substeps = ceil(ratio/margin); status ok if ratio<=margin, subcycle if margin<ratio<0.5, fail if ratio>=0.5"
+  },
+  "acceptance_criteria": {
+    "a_restitution": {
+      "statement": "single Hertz impact, e = 0.5 and 0.9, dt/dt_c in {0.02,0.05,0.1,0.2}, contact sub-cycling on",
+      "metric": "|e_measured/e_reference - 1| against a converged (dt/t_c = 5e-4) solve of the same contact law",
+      "target": "<= 2 % for every combination"
+    },
+    "b_ledger": {
+      "statement": "undamped, frictionless, doubly periodic assembly, 1e5 coarse steps, hierarchy 100:1 on 10 % of disks",
+      "metrics": ["max |dE|/E0 <= 1 %", "|dP|/|P| <= 1e-12"],
+      "notes": "the same gate margins (outer = fast = 0.05) are used for the single-rate control so the comparison isolates the rate split"
+    },
+    "c_jamming": {
+      "statement": "mu = 0.5 frictional jamming, N = 256, 100:1 stiffness skeleton on 10 % of disks; identical prepared state and pressure ladder",
+      "metrics": ["wall clock ratio >= 2x versus the single-rate baseline",
+                   "|dphi_J| <= 0.5 % between the multi-rate and single-rate runs",
+                   "phi_J within 0.5 % of the W4-P1 servo result (shipped jamming_density_isotropic)"]
+    },
+    "d_tightness": {
+      "statement": "dt/dt_c = 0.5 must be rejected by the gate and must fail detectably when forced",
+      "metrics": ["gate status == fail", "forced restitution error > 10 % or energy gain > 10 %"]
+    },
+    "e_shards": {
+      "statement": "the stage-A case matrix evaluated in 1 / 2 / 4 separate processes",
+      "metrics": ["values identical (bitwise) or a stated floating-point bound inside the tolerance"]
+    },
+    "scenario2_shear": {
+      "statement": "double-periodic shear cell, mu in {0.1,0.3,0.5,0.7}",
+      "metrics": ["|tau/P(multi-rate) - tau/P(single-rate)| <= 2 % for every mu",
+                   "tau/P monotone increasing in mu"]
+    }
+  },
+  "honest_fail_policy": "a criterion that fails is reported as FAIL with the measured number and the diagnosis; nothing is overwritten or re-tuned after the fact",
+  "falsifiable_predictions": [
+    "freezing the soft contact force on the coarse step (classic RESPA on contact) keeps the energy ledger within 1 % -- tested in the ablation stage, expected to FAIL",
+    "the multi-rate solver reproduces phi_J within 0.5 % of the shipped single-rate engine on the same prepared state"
+  ]
+}
