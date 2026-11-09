@@ -64,7 +64,9 @@ def run_points(runs: list[dict[str, Any]]) -> list[dict[str, Any]]:
     for run in runs:
         rm = run["run_mean"]
         out.append({
-            "scenario": run["scenario"], "rate_nominal": run["rate_nominal"],
+            "scenario": run["scenario"], "case": run.get("case", "all"),
+            "phi": run.get("phi", float("nan")),
+            "rate_nominal": run["rate_nominal"],
             "seed": run["seed"], "I": rm["I"], "mu": rm["mu"],
             "I_se": rm["I_se"], "mu_se": rm["mu_se"],
             "pressure": rm["pressure"], "shear_rate": rm["shear_rate"],
@@ -76,17 +78,18 @@ def run_points(runs: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 def condition_points(runs: list[dict[str, Any]],
                      scenarios: tuple[str, ...] | None = None) -> list[dict[str, Any]]:
-    groups: dict[tuple[str, float], list[dict[str, Any]]] = collections.defaultdict(list)
+    groups: dict[tuple[str, str, float], list[dict[str, Any]]] = collections.defaultdict(list)
     for run in runs:
         if scenarios and run["scenario"] not in scenarios:
             continue
-        groups[(run["scenario"], run["rate_nominal"])].append(run)
+        groups[(run["scenario"], run.get("case", "all"), run["rate_nominal"])].append(run)
     out = []
-    for (scenario, rate), members in sorted(groups.items()):
+    for (scenario, case, rate), members in sorted(groups.items()):
         I = np.array([m["run_mean"]["I"] for m in members])
         mu = np.array([m["run_mean"]["mu"] for m in members])
         out.append({
-            "scenario": scenario, "rate_nominal": rate, "n_replicates": len(members),
+            "scenario": scenario, "case": case, "phi": members[0].get("phi", float("nan")),
+            "rate_nominal": rate, "n_replicates": len(members),
             "I": float(I.mean()),
             "I_se": float(I.std(ddof=1) / np.sqrt(len(members))) if len(members) > 1 else float("nan"),
             "mu": float(mu.mean()),
@@ -327,9 +330,10 @@ def make_figures(outdir: Path, runs: list[dict[str, Any]],
                  "caption": "Measured friction coefficient against the inertial number for the three "
                             "scenarios, one point per (scenario, imposed rate) with the seed as "
                             "replicate; error bars are the standard error over seeds. Solid line: "
-                            "pooled element-test law; dashed: simple-shear element test alone. The two "
-                            "element tests differ by ~0.02-0.03 at low I (strain-path dependence), which "
-                            "is exactly why the pooled fit does not reach R^2 = 0.95."})
+                            "pooled element-test law; dashed: simple-shear element test alone. "
+                            f"Pooled R^2 = {law['r2']:.3f}, shear-only R^2 = {shear_law['r2']:.3f}; "
+                            "the channel points (mu ~ 0.07-0.10) are drag dominated and are a "
+                            "validation case, not calibration data."})
 
     # ---- 3. residuals
     resid = np.asarray(law["residuals"])
@@ -354,8 +358,10 @@ def make_figures(outdir: Path, runs: list[dict[str, Any]],
     plt.close(fig)
     made.append({"name": "mu_I_residuals.png",
                  "caption": "Residuals of the pooled element-test quadratic fit with the pre-registered "
-                            "residual tolerance. The compression conditions sit systematically above the "
-                            "shear law at low I; the misfit is structured, not random."})
+                            "residual tolerance (+-0.05). The residual standard deviation is inside the "
+                            "tolerance band, yet R^2 stays below 0.95 because the friction range spanned "
+                            "by the data is only ~0.10; the residuals are structured by solid fraction, "
+                            "not random."})
 
     # ---- 4. microstructure vs I (per run)
     fig, axes = plt.subplots(1, 3, figsize=(12.6, 3.7))
@@ -555,8 +561,59 @@ def main(argv: list[str] | None = None) -> int:
     acceptance["all_passed"] = bool(all(v["passed"] for v in acceptance.values()
                                         if isinstance(v, dict)))
 
+    by_case = {}
+    for scenario in sorted({c["scenario"] for c in cond}):
+        for case in sorted({c["case"] for c in cond if c["scenario"] == scenario}):
+            sub = [c for c in cond if c["case"] == case and c["scenario"] == scenario]
+            if len(sub) >= 4:
+                by_case[f"{scenario}:{case}"] = fit_points(sub)
+    # noise budget: is the pooled residual statistical or structural?
+    mu_cond = np.array([c["mu"] for c in cond_element])
+    mu_se_cond = np.array([c["mu_se"] for c in cond_element])
+    ss_tot = float(np.sum((mu_cond - mu_cond.mean()) ** 2))
+    allowed = float(np.sqrt(0.05 * ss_tot / max(len(mu_cond) - 3, 1)))
+    diagnostics = {
+        "state_dependence": {
+            "evidence": "quadratic fits of the two solid-fraction levels separately, per scenario",
+            "by_case": {k: {"mu0": v["mu0"], "alpha": v["alpha"], "beta": v["beta"],
+                            "r2": v["r2"], "residual_std": v["residual_std"],
+                            "n_points": v["n_points"]} for k, v in by_case.items()},
+            "reading": "at the same I the friction level depends on the preparation solid "
+                       "fraction; the mu(I) form carries no state variable, so the pooled "
+                       "residual cannot be removed by more averaging",
+        },
+        "noise_budget": {
+            "n_conditions_element": int(len(mu_cond)),
+            "mu_mean": float(mu_cond.mean()),
+            "mu_std_over_conditions": float(np.std(mu_cond, ddof=1)),
+            "mu_range": [float(mu_cond.min()), float(mu_cond.max())],
+            "mean_condition_mu_se": float(mu_se_cond.mean()),
+            "pooled_residual_std": float(law["residual_std"]),
+            "residual_over_se": float(law["residual_std"] / mu_se_cond.mean()),
+            "residual_std_allowed_for_r2_0.95": allowed,
+            "required_noise_reduction_factor": float(law["residual_std"] / allowed),
+            "structural_floor_estimate": float(np.sqrt(max(
+                law["residual_std"] ** 2 - mu_se_cond.mean() ** 2, 0.0))),
+            "r2_ceiling_infinite_sampling": float(1.0 - max(
+                law["residual_std"] ** 2 - mu_se_cond.mean() ** 2, 0.0)
+                / float(np.var(mu_cond, ddof=1))),
+        },
+    }
+    diagnostics["noise_budget"]["reading"] = (
+        "the pooled residual (%.4f) is %.1fx the mean per-condition standard error "
+        "(%.4f), so it is structural (state/path), not sampling noise; reaching "
+        "R^2 = 0.95 over this mu range needs a residual <= %.4f, i.e. a %.1fx "
+        "reduction of the scatter; subtracting the sampling variance leaves a structural "
+        "floor of %.4f, i.e. R^2 cannot exceed %.3f on this friction range even with "
+        "unlimited sampling"
+        % (law["residual_std"], law["residual_std"] / mu_se_cond.mean(),
+           mu_se_cond.mean(), allowed, law["residual_std"] / allowed,
+           diagnostics["noise_budget"]["structural_floor_estimate"],
+           diagnostics["noise_budget"]["r2_ceiling_infinite_sampling"]))
+
     summary = {
-        "node": "P82W4-N02",
+        "node": "P82W2-N02",
+        "supersedes": "P82W4-N02 (mission m7357) on the same physical node; numbers regenerated",
         "n_runs": len(runs),
         "n_conditions": len(cond),
         "scenarios": sorted({r["scenario"] for r in runs}),
@@ -573,6 +630,7 @@ def main(argv: list[str] | None = None) -> int:
                                "against_shear_law": validation_shear_law},
         "viscosity": visc,
         "microstructure": micro,
+        "fit_diagnostics": diagnostics,
         "sweep1_archive": sweep1,
         "acceptance": acceptance,
         "conditions": cond,

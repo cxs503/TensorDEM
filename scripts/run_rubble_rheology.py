@@ -55,25 +55,35 @@ DEFAULT_OUT = REPO / "artifacts" / "rubble_rheology"
 SWEEP: dict[str, dict[str, Any]] = {
     "couette_shear": {
         "runner": "shear",
-        "rates": [4.0, 8.0, 15.0, 25.0, 45.0],
-        "seeds": [0, 1, 2, 3, 4, 5],
-        "kwargs": dict(n_particles=400, mean_radius=0.014, width=0.64,
-                       height=0.36, phi=0.82, strain=3.0, snapshots=12),
+        "cases": [
+            {"case": "phi0.82", "phi": 0.82, "rates": [4.0, 8.0, 15.0, 25.0, 45.0],
+             "seeds": [0, 1, 2],
+             "kwargs": dict(n_particles=400, mean_radius=0.014, width=0.64,
+                            height=0.36, phi=0.82, strain=3.0, snapshots=12)},
+            {"case": "phi0.85", "phi": 0.85, "rates": [4.0, 8.0, 15.0, 25.0, 45.0],
+             "seeds": [0, 1, 2],
+             "kwargs": dict(n_particles=400, mean_radius=0.014, width=0.64,
+                            height=0.36, phi=0.85, strain=3.0, snapshots=12)},
+        ],
     },
     "biaxial_compression": {
         "runner": "compression",
-        "rates": [0.5, 1.5, 4.0],
-        "seeds": [0, 1, 2, 3, 4, 5],
-        "kwargs": dict(n_particles=380, mean_radius=0.014, width=0.40,
-                       height=0.45, phi=0.80, total_strain=0.30,
-                       snapshots=12),
+        "cases": [
+            {"case": "phi0.80", "phi": 0.80, "rates": [0.5, 1.5, 4.0], "seeds": [0, 1, 2],
+             "kwargs": dict(n_particles=380, mean_radius=0.014, width=0.40,
+                            height=0.45, phi=0.80, total_strain=0.30, snapshots=12)},
+            {"case": "phi0.84", "phi": 0.84, "rates": [0.5, 1.5, 4.0], "seeds": [0, 1, 2],
+             "kwargs": dict(n_particles=380, mean_radius=0.014, width=0.40,
+                            height=0.45, phi=0.84, total_strain=0.30, snapshots=12)},
+        ],
     },
     "ice_channel": {
         "runner": "channel",
-        "rates": [0.15, 0.40, 0.90],
-        "seeds": [0, 1, 2, 3],
-        "kwargs": dict(n_particles=350, mean_radius=0.014, phi=0.80,
-                       duration=0.60, snapshots=10),
+        "cases": [
+            {"case": "phi0.80", "phi": 0.80, "rates": [0.15, 0.40, 0.90], "seeds": [0, 1],
+             "kwargs": dict(n_particles=350, mean_radius=0.014, phi=0.80,
+                            duration=0.60, snapshots=10)},
+        ],
     },
 }
 
@@ -81,26 +91,37 @@ SWEEP: dict[str, dict[str, Any]] = {
 @dataclass(frozen=True)
 class RunSpec:
     scenario: str
+    case: str
+    phi: float
     rate: float
     seed: int
 
     @property
     def name(self) -> str:
-        return f"{self.scenario}__rate{self.rate:g}__seed{self.seed}"
+        return f"{self.scenario}__{self.case}__rate{self.rate:g}__seed{self.seed}"
+
+
+def _case_cfg(spec: RunSpec) -> dict[str, Any]:
+    for case in SWEEP[spec.scenario]["cases"]:
+        if case["case"] == spec.case:
+            return case
+    raise SystemExit(f"unknown case {spec.case!r} for {spec.scenario!r}")
 
 
 def run_specs() -> list[RunSpec]:
     specs: list[RunSpec] = []
     for scenario, cfg in SWEEP.items():
-        for rate in cfg["rates"]:
-            for seed in cfg["seeds"]:
-                specs.append(RunSpec(scenario, float(rate), int(seed)))
+        for case in cfg["cases"]:
+            for rate in case["rates"]:
+                for seed in case["seeds"]:
+                    specs.append(RunSpec(scenario, case["case"], float(case["phi"]),
+                                         float(rate), int(seed)))
     return specs
 
 
 def _run_scenario(spec: RunSpec) -> dict[str, Any]:
     cfg = SWEEP[spec.scenario]
-    kw = dict(cfg["kwargs"])
+    kw = dict(_case_cfg(spec)["kwargs"])
     runner = cfg["runner"]
     t0 = time.time()
     if runner == "shear":
@@ -191,6 +212,8 @@ def analyse_run(spec: RunSpec, run: dict[str, Any]) -> dict[str, Any]:
     }
     record = {
         "scenario": spec.scenario,
+        "case": spec.case,
+        "phi": spec.phi,
         "rate_nominal": spec.rate,
         "seed": spec.seed,
         "run_name": spec.name,
@@ -200,7 +223,7 @@ def analyse_run(spec: RunSpec, run: dict[str, Any]) -> dict[str, Any]:
         "wall_slip_fraction": run.get("wall_slip_fraction"),
         "dt": run.get("dt"), "steps": run.get("steps"),
         "wall_time_s": run.get("wall_time_s"),
-        "kwargs": SWEEP[spec.scenario]["kwargs"],
+        "kwargs": _case_cfg(spec)["kwargs"],
         "points": points,
         "run_mean": run_mean,
         "porosity": {
@@ -254,6 +277,11 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="mode", required=True)
     sub.add_parser("list")
+    p_par = sub.add_parser("sweep-parallel")
+    p_par.add_argument("--jobs", type=int, default=32)
+    p_par.add_argument("--outdir", type=Path, default=DEFAULT_OUT)
+    p_par.add_argument("--ids", nargs="*", default=None,
+                       help="optional subset of run indices")
     p_run = sub.add_parser("run")
     p_run.add_argument("--index", type=int, required=True)
     p_run.add_argument("--outdir", type=Path, default=DEFAULT_OUT)
@@ -271,6 +299,15 @@ def main(argv: list[str] | None = None) -> int:
     if args.mode == "run":
         spec = specs[args.index]
         write_run(spec, args.outdir)
+        return 0
+    if args.mode == "sweep-parallel":
+        from multiprocessing import Pool
+        idx = ([int(x) for x in args.ids] if args.ids
+               else list(range(len(specs))))
+        with Pool(min(args.jobs, len(idx))) as pool:
+            pool.starmap(write_run, [(specs[i], args.outdir) for i in idx])
+        print(json.dumps({"runs": len(idx), "python": platform.python_version(),
+                          "numpy": np.__version__}), flush=True)
         return 0
     shard, total = (int(x) for x in str(args.shard).split("/"))
     if not 0 <= shard < total:
