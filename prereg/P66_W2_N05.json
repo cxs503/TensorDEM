@@ -1,0 +1,59 @@
+{
+  "task": "P66-W2-N05 spatio-temporal ice-abrasion field evolution (TensorDEM)",
+  "timestamp_utc": "2026-11-08T12:00:00Z",
+  "frozen_before_runs": true,
+  "contract": {
+    "module": "src/tensordem/ice_abrasion_spatiotemporal.py",
+    "driver": "scripts/p66_w2_n05_verification.py",
+    "result": "runs/P66_W2_N05/verification.json",
+    "figures": "docs/figures/P66_W2_N05/",
+    "report": "docs/P66_W2_N05_spatiotemporal_abrasion_field.md",
+    "tests": "tests/test_ice_abrasion_spatiotemporal.py",
+    "depends_on": [
+      "tensordem.ice_abrasion (DEM contact ensemble, Archard wear, band grid, reference voyage)",
+      "tensordem.ice_abrasion_field (N04 interface: panel mesh, profile, P95 connector)"
+    ]
+  },
+  "acceptance_criteria": {
+    "C1_profile_fit": {
+      "statement": "deterministic activity profile fitted to the DEM ensemble-mean rate field",
+      "metric": "R^2 on the 112x9 panel mesh",
+      "target": "> 0.95",
+      "notes": "the R^2 on the raw 0.25 m DEM grid is reported separately and is not the criterion; the profile is a panel-scale deterministic model"
+    },
+    "C2_conditional_simulation": {
+      "statement": "residual random field conditional simulation reproduces its target statistics",
+      "metrics": [
+        "noiseless interpolation error < 1e-6 of the prior std",
+        "closed-form kriging variance error < 5 %",
+        "ensemble variance error < 5 % at m = 100 and m = 400",
+        "ensemble mean unbiased within 2 sampling sigma, and < 5 % of the prior std at m = 400"
+      ]
+    },
+    "C3_volume_ledger": {
+      "statement": "accumulation conserves removed volume",
+      "metric": "relative error between the depth field and the rate-model integral",
+      "target": "< 1e-6"
+    },
+    "C4_p95_vs_n02": {
+      "statement": "P95 extracted from the evolved field vs the predecessor single-point P95 statistic",
+      "metric": "relative error (area weighted, one reference voyage)",
+      "target": "< 10 %"
+    },
+    "C5_uniform_anchor": {
+      "statement": "uniform ice field gives d(t) = a t on every panel, with and without moving-frame offsets",
+      "target": "< 1 % each"
+    },
+    "C6_performance": {
+      "statement": ">= 1000 panels x 100 time steps evolution plus ledger plus conditional simulation",
+      "metric": "CPU wall time on one core",
+      "target": "< 60 s"
+    }
+  },
+  "known_risks": [
+    "C4 has a small margin (measured ~9.6 % against a 10 % target) because the smooth profile under-represents pit-scale peaks; it is not tuned.",
+    "The DEM ensemble shows no smooth residual above one 0.244 m cell, so the smooth residual covariance comes from documented activity-parameter bands (modelling assumption declared in the report).",
+    "The absolute wear level inherits the single-point literature anchor of tensordem.ice_abrasion; nothing new is calibrated."
+  ],
+  "no_reuse_of_verified_cases": "The N04 module (ice_abrasion_field) is not re-verified here; its self-referential checks are replaced by DEM-driven ones. New module, new driver, new figures."
+}

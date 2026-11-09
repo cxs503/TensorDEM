@@ -1,6 +1,17 @@
 """Spatio-temporal ice abrasion field evolution: deterministic activity profile
 + random residual field conditional simulation + panel-wise accumulation.
 
+Superseded evidence chain
+------------------------
+The verification in this module is partly self-referential (the "DEM" activity
+field is generated from this module's own parametric profile plus white noise,
+"conditional" simulation never conditions on observations, and the mass ledger
+compares two integrals of the same analytic field).  The N05 node
+(:mod:`tensordem.ice_abrasion_spatiotemporal`) keeps this interface but replaces
+the evidence chain with a real DEM ensemble, kriging-conditioned residual fields
+and a moving-frame accumulation verified against closed forms.  Prefer that
+module for new work; this one is kept for the interface and its unit tests.
+
 Why this module exists
 ----------------------
 N02 (IN66-N02) produced a *single-point* P95 statistic from DEM contact
