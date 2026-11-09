@@ -191,7 +191,7 @@ def stage_variance(args) -> dict:
     lam_values = np.geomspace(args.lam_min, args.lam_max, args.n_lam)
     fam = run_variance_family(
         lam_values=lam_values,
-        fixed_length_over_lam=args.fixed_K,
+        record_length=args.fixed_K,  # absolute L; the old L/lam semantics was a defect
         n_real=args.n_variance,
         dx_over_lam=args.dx_over_lam,
         kind=args.kinds[0],
