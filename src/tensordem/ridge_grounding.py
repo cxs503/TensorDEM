@@ -76,6 +76,7 @@ class GroundingScenario:
     track_energy: bool = False
     pipe_lateral_compliance: bool = False
     initial_penetration: float = 0.0
+    keel_offset_x: float = 0.0
 
     def __post_init__(self) -> None:
         for name in ("cover_depth", "tip_clearance", "initial_penetration"):
