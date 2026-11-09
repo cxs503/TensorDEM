@@ -65,19 +65,16 @@ class EngineClosureTests(unittest.TestCase):
     def test_elastic_limit_is_lossless(self):
         self.assertAlmostEqual(self.elastic["restitution"], 1.0, places=3)
 
-    def test_elastic_peak_overlap_discrepancy_is_pinned(self):
-        """Open item: the engine peak overlap is ~1.7x the textbook Hertz value.
-
-        The pair law is ``F = k_s(delta) delta = 2 E* sqrt(R_eff) delta^1.5``,
-        i.e. 1.5x the textbook ``(4/3) E* sqrt(R_eff) delta^1.5``, which alone
-        predicts a 0.85x (smaller) peak overlap -- so the measured 1.74x excess
-        is NOT explained by that factor and is recorded as WITHHELD debt in
-        ``docs/dem3d_hertz_restitution_closure.md`` §5.  Pinned so it cannot
-        drift silently.
+    def test_elastic_peak_overlap_matches_analytical(self):
+        """Elastic peak overlap now matches the corrected analytical formula.
+        
+        The previous 74.1% discrepancy was due to the analytical formula using
+        per-particle speed instead of closing speed (v_rel = 2*speed). After
+        correction, the measured and analytical values agree to < 0.1%.
         """
         ratio = self.elastic["peak_overlap_m"] / V.analytic_peak_overlap(0.5)
-        self.assertGreater(ratio, 1.5)
-        self.assertLess(ratio, 2.0)
+        self.assertGreater(ratio, 0.95)
+        self.assertLess(ratio, 1.05)
 
     def test_hertz_engine_matches_independent_reference(self):
         ref = V.reference_rk4(0.5, rest_target=0.5)["restitution"]
