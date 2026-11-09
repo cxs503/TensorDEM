@@ -381,3 +381,85 @@ def estimate_all(
         else:
             raise ValueError(f"unknown method {m!r}")
     return out
+
+def dominant_period(x: np.ndarray, dx: float = 1.0, *, detrend: bool = True,
+                    min_cycles: float = 2.0) -> dict:
+    """Dominant period of a record, for *strictly periodic* fields.
+
+    A periodic record has no correlation length (its ACF oscillates instead of
+    decaying), so reporting ``lambda`` for it is a silent error.  This returns
+    the spectral peak with a parabolic refinement, the number of cycles the
+    record contains and the peak-to-median prominence of the line.
+    """
+    f = np.asarray(x, dtype=float).ravel()
+    n = f.size
+    if n < 8:
+        return {"period_m": float("nan"), "cycles": float("nan"),
+                "prominence": float("nan"), "freq_peak": float("nan")}
+    y = f - f.mean()
+    if detrend:
+        t = np.arange(n, dtype=float)
+        coef = np.polyfit(t, y, 1)
+        y = y - np.polyval(coef, t)
+    win = np.hanning(n)
+    freq = np.fft.rfftfreq(n, d=dx)
+    amp = np.abs(np.fft.rfft(y * win))
+    lo = max(1, int(np.searchsorted(freq[1:], 2.0 / (n * dx) * min_cycles)) + 1) if n > 4 else 1
+    hi = freq.size - 1
+    if hi <= lo:
+        return {"period_m": float("nan"), "cycles": float("nan"),
+                "prominence": float("nan"), "freq_peak": float("nan")}
+    k = lo + int(np.argmax(amp[lo:hi + 1]))
+    a0, a1, a2 = amp[max(k - 1, 0)], amp[k], amp[min(k + 1, amp.size - 1)]
+    denom = (a0 - 2.0 * a1 + a2)
+    shift = 0.5 * (a0 - a2) / denom if denom != 0.0 else 0.0
+    df = freq[k + 1] - freq[k] if k + 1 < freq.size else freq[k]
+    f_peak = float(freq[k] + shift * df)
+    med = float(np.median(amp[lo:hi + 1]))
+    return {
+        "period_m": float(1.0 / f_peak) if f_peak > 0 else float("nan"),
+        "freq_peak": f_peak,
+        "cycles": float(n * dx * f_peak),
+        "prominence": float(amp[k] / med) if med > 0 else float("inf"),
+    }
+
+
+def report_length_scale(x: np.ndarray, dx: float = 1.0, *, method: str = "crossing",
+                        models: dict | None = None, record_length: float | None = None,
+                        ) -> dict:
+    """Regime-aware length scale: a correlation length **or** a period.
+
+    The estimator is only meaningful for a decorrelating record.  White noise is
+    rejected (no memory); a strictly periodic record is routed to
+    :func:`dominant_period` and its ``lambda`` is explicitly withheld, so a
+    downstream consumer never receives a pseudo-correlation-length for an
+    oscillating field.
+    """
+    f = np.asarray(x, dtype=float).ravel()
+    reg = diagnose_regime(f, dx)
+    out = {"regime": reg.to_dict(), "method": method, "dx_m": float(dx),
+           "quantity": None, "value_m": float("nan")}
+    if reg.label == "periodic":
+        per = dominant_period(f, dx)
+        out.update({"quantity": "period", "value_m": per["period_m"],
+                    "period": per,
+                    "lambda_withheld": True,
+                    "reason": "strictly periodic record: lambda would be a pseudo-length"})
+        return out
+    if reg.label == "white_noise":
+        out.update({"quantity": "none", "lambda_withheld": True,
+                    "reason": "white noise: no measurable memory on this record"})
+        return out
+    val = estimate_all(f, dx, methods=(method,))[method]
+    L = float(record_length) if record_length is not None else f.size * dx
+    corr = float("nan")
+    if models and method in models:
+        m = models[method]
+        from .calibration import BiasModel
+        bm = m if isinstance(m, BiasModel) else BiasModel(method=method,
+                                                          form=m.get("form", "inv_poly"),
+                                                          params=tuple(m.get("params", ())))
+        corr = float(correct_length(float(val), L, bm))
+    out.update({"quantity": "correlation_length", "value_m": float(val),
+                "value_corrected_m": corr, "L_over_lambda": float(L / val) if val > 0 else float("inf")})
+    return out
