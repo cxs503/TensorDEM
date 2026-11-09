@@ -1,0 +1,921 @@
+{
+  "schema": "external_anchor_ledger/v1",
+  "task_key": "paper-exp-ice-ridge-pipeline-seabed-bearing-1",
+  "project": "ice-ridge-pipeline-seabed-bearing",
+  "title": "ISO 19906 外部锚核销与同口径换算（实验 1：锚核销）",
+  "generated_at_utc": "2026-11-08T15:50:46Z",
+  "generator_script": "benchmarks/anchors/ice_ridge_pipeline_seabed_bearing.py",
+  "generator_sha256": "030a6c351039dfc504b9ec57500a9ad588ab177e8895f284e2e53adecd8964d4",
+  "preregistration": {
+    "path": "prereg/ice_ridge_pipeline_seabed_bearing_prereg.json",
+    "sha256": "3483671a7095d93cfe7af0e7e8a27548ab0dc1d617c02431f1e94864df5459e6",
+    "registered_before_inspection": true
+  },
+  "preregistered_criteria": [
+    {
+      "id": "C1",
+      "text": "引句 + 表号/页码 + 数值逐字录入工件（值=来源原值，禁改写/禁四舍五入到失真）",
+      "metric": "verbatim_verified_anchors",
+      "threshold": ">= 1"
+    },
+    {
+      "id": "C2",
+      "text": "同口径换算脚本落盘且可复算（复算残差 <1e-9）",
+      "metric": "max_relative_residual",
+      "threshold": "< 1e-9"
+    },
+    {
+      "id": "C3",
+      "text": "量纲齐次与内部一致性机检通过",
+      "metric": "dimension_exponent_mismatches + internal_consistency_violations",
+      "threshold": "== 0"
+    },
+    {
+      "id": "C4",
+      "text": "未核候选登记值不得直接引用（只能作为核对对照）",
+      "metric": "unverified_entries_usable_for_claim",
+      "threshold": "== 0"
+    }
+  ],
+  "form_assumption": "压力-面积关系以幂律 p(A) = C_R * (A/A_ref)**n 表述（C_R 以 Pa 计、n 无量纲、A_ref = 1 m^2）。该函数形式本身是形式假设 ASSERTION_FORMAL（非逐字来源）；其是否等于 ISO 19906 Annex A 的原始表述属 C1 待核项 —— 因此本工件的 p(A) 数值只作换算链演示与核对对照，不作达标声明。",
+  "constants": {
+    "A_ref_m2": 1.0,
+    "MPa_to_Pa": 1000000.0,
+    "unit_axial_length_m": 1.0
+  },
+  "case_caliber": {
+    "source_file": "scripts/run_ridge_iso_grounding.py",
+    "source_sha256": "8980618dbf29d7459ab9deea5562d7fc3a23005b491cdda6ed9a157e98de402a",
+    "injection": "AST_LITERAL_MODULE_CONSTANT (no hand copy)",
+    "line_numbers": {
+      "KEEL": 50,
+      "SECTION": 51,
+      "BASE_SOIL": 53,
+      "DRAINED_SOIL": 57
+    },
+    "values": {
+      "KEEL": {
+        "keel_depth": 12.0,
+        "keel_width": 24.0,
+        "porosity": 0.1
+      },
+      "SECTION": {
+        "outer_diameter": 0.914,
+        "wall_thickness": 0.0159,
+        "young_modulus": 207000000000.0,
+        "yield_strength": 448000000.0
+      },
+      "BASE_SOIL": {
+        "friction_angle_deg": 0.0,
+        "cohesion": 30000.0,
+        "saturated_unit_weight": 18000.0,
+        "young_modulus": 10000000.0,
+        "poisson_ratio": 0.3,
+        "water_unit_weight": 10060.0,
+        "undrained": true
+      },
+      "DRAINED_SOIL": {
+        "friction_angle_deg": 30.0,
+        "cohesion": 5000.0,
+        "saturated_unit_weight": 20000.0,
+        "young_modulus": 30000000.0,
+        "poisson_ratio": 0.3,
+        "water_unit_weight": 10060.0,
+        "undrained": false
+      }
+    }
+  },
+  "case_numbers": {
+    "pipe_outer_diameter_m": 0.914,
+    "pipe_wall_thickness_m": 0.0159,
+    "keel_depth_m": 12.0,
+    "keel_width_m": 24.0,
+    "contact_area_local_m2": 0.914,
+    "contact_area_global_m2": 288.0
+  },
+  "conversion_chain": {
+    "items": [
+      {
+        "item": "unit_roundtrip_C=0.5MPa",
+        "residual": 0.0
+      },
+      {
+        "item": "unit_roundtrip_C=1.2MPa",
+        "residual": 0.0
+      },
+      {
+        "item": "unit_roundtrip_C=3.0MPa",
+        "residual": 0.0
+      },
+      {
+        "item": "powerlaw_two_paths C=3.0 n=-0.45 A=0.9140",
+        "residual": 1.043452557362406e-15
+      },
+      {
+        "item": "powerlaw_two_paths C=3.0 n=-0.45 A=288.0000",
+        "residual": 7.566331267189277e-15
+      },
+      {
+        "item": "powerlaw_two_paths C=3.0 n=-0.45 A=0.2500",
+        "residual": 2.8281393248458987e-15
+      },
+      {
+        "item": "powerlaw_two_paths C=3.0 n=-0.45 A=20.0000",
+        "residual": 3.4362141543651665e-15
+      },
+      {
+        "item": "powerlaw_two_paths C=1.2 n=-0.307 A=0.9140",
+        "residual": 1.887423572663535e-16
+      },
+      {
+        "item": "powerlaw_two_paths C=1.2 n=-0.307 A=288.0000",
+        "residual": 1.2831733995207281e-14
+      },
+      {
+        "item": "powerlaw_two_paths C=1.2 n=-0.307 A=0.2500",
+        "residual": 2.7890041223775493e-15
+      },
+      {
+        "item": "powerlaw_two_paths C=1.2 n=-0.307 A=20.0000",
+        "residual": 6.935694666325828e-15
+      },
+      {
+        "item": "powerlaw_two_paths C=2.4 n=-0.55 A=0.9140",
+        "residual": 3.5085922626589327e-15
+      },
+      {
+        "item": "powerlaw_two_paths C=2.4 n=-0.55 A=288.0000",
+        "residual": 8.74087192143042e-15
+      },
+      {
+        "item": "powerlaw_two_paths C=2.4 n=-0.55 A=0.2500",
+        "residual": 2.3534189463396125e-15
+      },
+      {
+        "item": "powerlaw_two_paths C=2.4 n=-0.55 A=20.0000",
+        "residual": 6.173500438899017e-15
+      },
+      {
+        "item": "powerlaw_two_paths C=1.0 n=-0.5 A=0.9140",
+        "residual": 2.0033449982191266e-15
+      },
+      {
+        "item": "powerlaw_two_paths C=1.0 n=-0.5 A=288.0000",
+        "residual": 8.39644247677967e-15
+      },
+      {
+        "item": "powerlaw_two_paths C=1.0 n=-0.5 A=0.2500",
+        "residual": 6.984919309616089e-16
+      },
+      {
+        "item": "powerlaw_two_paths C=1.0 n=-0.5 A=20.0000",
+        "residual": 5.466564037778367e-15
+      },
+      {
+        "item": "force_inversion C=3.0 n=-0.45",
+        "residual": 0.0
+      },
+      {
+        "item": "force_inversion C=1.2 n=-0.307",
+        "residual": 0.0
+      },
+      {
+        "item": "force_log_slope C=3.0 n=-0.45",
+        "residual": 2.0185873175002844e-15
+      },
+      {
+        "item": "force_log_slope C=1.2 n=-0.307",
+        "residual": 3.3643121958338075e-15
+      },
+      {
+        "item": "iso_form_term_sum d/D=1.0",
+        "residual": 0.0
+      },
+      {
+        "item": "iso_form_term_sum d/D=2.0",
+        "residual": 0.0
+      },
+      {
+        "item": "iso_form_term_sum d/D=4.0",
+        "residual": 0.0
+      },
+      {
+        "item": "iso_form_term_sum d/D=8.0",
+        "residual": 0.0
+      }
+    ],
+    "max_relative_residual": 1.2831733995207281e-14,
+    "worst_item": "powerlaw_two_paths C=1.2 n=-0.307 A=288.0000",
+    "note": "路径 A=直接幂律(Pa)；路径 B=对数网格 polyfit 反演 (n,C) 后评估；两路径数值独立"
+  },
+  "dimension_check": {
+    "checks": [
+      {
+        "check": "area_ratio_dimensionless",
+        "lhs": {
+          "s": 0.0,
+          "kg": 0.0,
+          "m": 0.0
+        },
+        "rhs": {},
+        "mismatch": {},
+        "note": ""
+      },
+      {
+        "check": "pressure_law_dimension",
+        "lhs": {
+          "s": -2.0,
+          "kg": 1.0,
+          "m": -1.0
+        },
+        "rhs": {
+          "m": -1,
+          "kg": 1,
+          "s": -2
+        },
+        "mismatch": {},
+        "note": ""
+      },
+      {
+        "check": "force_equals_pressure_times_area_per_length",
+        "lhs": {
+          "s": -2.0,
+          "kg": 1.0,
+          "m": 0.0
+        },
+        "rhs": {
+          "m": 0,
+          "kg": 1,
+          "s": -2
+        },
+        "mismatch": {},
+        "note": "A/L = [m^2]/[m] = [m]; Pa*m = N/m"
+      },
+      {
+        "check": "iso_overburden_term",
+        "lhs": {
+          "s": -2.0,
+          "kg": 1.0,
+          "m": 0.0
+        },
+        "rhs": {
+          "m": 0,
+          "kg": 1,
+          "s": -2
+        },
+        "mismatch": {},
+        "note": "N_q dimensionless, gamma'[kN/m^3]*h[m]*D[m]"
+      },
+      {
+        "check": "iso_cohesion_term",
+        "lhs": {
+          "s": -2.0,
+          "kg": 1.0,
+          "m": 0.0
+        },
+        "rhs": {
+          "m": 0,
+          "kg": 1,
+          "s": -2
+        },
+        "mismatch": {},
+        "note": ""
+      },
+      {
+        "check": "stress_times_length",
+        "lhs": {
+          "m": 0,
+          "kg": 1,
+          "s": -2
+        },
+        "rhs": {
+          "m": 0,
+          "kg": 1,
+          "s": -2
+        },
+        "mismatch": {},
+        "note": ""
+      },
+      {
+        "check": "force_log_slope_dimensionless",
+        "lhs": {
+          "s": 0.0,
+          "kg": 0.0,
+          "m": 0.0
+        },
+        "rhs": {},
+        "mismatch": {},
+        "note": ""
+      }
+    ],
+    "exponent_mismatches": 0
+  },
+  "internal_consistency": {
+    "violations": 0,
+    "issues": [],
+    "metrics": {
+      "p_at_A_ref_Pa": 3000000.0,
+      "C_R_Pa": 3000000.0,
+      "monotone_decreasing": true,
+      "force_exponent_identity_ok": true,
+      "iso_V_d_over_D1_N_per_m": 197314.31999999998,
+      "iso_n_q": 1.0,
+      "iso_n_c": 7.195999999999999,
+      "cohesion_linearity_residual": 0.0
+    }
+  },
+  "anchors": [
+    {
+      "anchor_id": "iso19906_annexA_pressure_area_power_law",
+      "anchors": "Annex A 压力-面积关系 p(A) 的幂律指数 n 与系数 C_R（含局部/全球压力分档）",
+      "required_verbatim_fields": [
+        "verbatim_quote",
+        "table_or_page",
+        "numeric_values"
+      ],
+      "verbatim_quote": null,
+      "table_or_page": null,
+      "numeric_values": {},
+      "provenance": {
+        "status": "WITHHELD_NO_LICENSED_SOURCE",
+        "provenance_level": "WITHHELD_NO_LICENSED_SOURCE",
+        "reason": "工作树内无 ISO 19906:2019 的许可原文或数字化副本（见 search_log）；本主体无该标准访问授权（iso.org 目录页 403）。按溯源纪律禁凭记忆写数，故 numeric_values 留空，不以任何惯例值代填。",
+        "search_log": {
+          "files_scanned": 1090,
+          "files_mentioning_iso19906": 16,
+          "hits": [
+            {
+              "path": "src/tensordem/ice_steel_friction.py",
+              "pattern_hits": 5,
+              "has_verbatim_clause_text": false
+            },
+            {
+              "path": "src/tensordem/plate_on_foundation.py",
+              "pattern_hits": 2,
+              "has_verbatim_clause_text": false
+            },
+            {
+              "path": "src/tensordem/ridge_geotech.py",
+              "pattern_hits": 1,
+              "has_verbatim_clause_text": false
+            },
+            {
+              "path": "src/tensordem/ridge_grounding.py",
+              "pattern_hits": 2,
+              "has_verbatim_clause_text": false
+            },
+            {
+              "path": "src/tensordem/ridge_iso19906.py",
+              "pattern_hits": 4,
+              "has_verbatim_clause_text": false
+            },
+            {
+              "path": "src/tensordem/rudder_ice_load.py",
+              "pattern_hits": 1,
+              "has_verbatim_clause_text": false
+            },
+            {
+              "path": "docs/ICE_CONTACT_PRESSURE_ROLLING_PROXY.md",
+              "pattern_hits": 1,
+              "has_verbatim_clause_text": false
+            },
+            {
+              "path": "docs/ice_channel_dem.md",
+              "pattern_hits": 2,
+              "has_verbatim_clause_text": false
+            },
+            {
+              "path": "docs/ice_ridge_pipeline_grounding.md",
+              "pattern_hits": 1,
+              "has_verbatim_clause_text": false
+            },
+            {
+              "path": "docs/ice_sheet_plate_on_foundation.md",
+              "pattern_hits": 2,
+              "has_verbatim_clause_text": false
+            },
+            {
+              "path": "docs/rudder_ice_load_dem_fsm.md",
+              "pattern_hits": 1,
+              "has_verbatim_clause_text": false
+            },
+            {
+              "path": "scripts/make_ice_contact_report.py",
+              "pattern_hits": 2,
+              "has_verbatim_clause_text": false
+            },
+            {
+              "path": "scripts/make_ridge_iso_grounding_figures.py",
+              "pattern_hits": 4,
+              "has_verbatim_clause_text": false
+            },
+            {
+              "path": "scripts/run_ridge_iso_grounding.py",
+              "pattern_hits": 1,
+              "has_verbatim_clause_text": false
+            },
+            {
+              "path": "benchmarks/ice_channel_dem.py",
+              "pattern_hits": 2,
+              "has_verbatim_clause_text": false
+            },
+            {
+              "path": "tests/test_ridge_iso_grounding.py",
+              "pattern_hits": 1,
+              "has_verbatim_clause_text": false
+            }
+          ],
+          "verbatim_clause_corpus_found": false,
+          "network_probe": {
+            "attempted": "https://www.iso.org/standard/65712.html (ISO 19906:2019 catalogue page)",
+            "result": "HTTP 403 Forbidden from this sandbox; no licensed full text accessible",
+            "conclusion": "primary 级原文不可得 -> 两个锚均登记 WITHHELD_NO_LICENSED_SOURCE"
+          }
+        },
+        "standard": "ISO 19906:2019 Annex A (pressure-area)"
+      },
+      "usable_for_compliance_claim": false,
+      "allowed_use": "无（未核销）；同一形式族(Power law)仅可作核对对照"
+    },
+    {
+      "anchor_id": "iso19906_clause14_15_global_ice_load",
+      "anchors": "Clause 14/15 设计全球冰力（global ice load）及其随宽度/厚度/面积的标定系数",
+      "required_verbatim_fields": [
+        "verbatim_quote",
+        "table_or_page",
+        "numeric_values"
+      ],
+      "verbatim_quote": null,
+      "table_or_page": null,
+      "numeric_values": {},
+      "provenance": {
+        "status": "WITHHELD_NO_LICENSED_SOURCE",
+        "provenance_level": "WITHHELD_NO_LICENSED_SOURCE",
+        "reason": "工作树内无 ISO 19906:2019 的许可原文或数字化副本（见 search_log）；本主体无该标准访问授权（iso.org 目录页 403）。按溯源纪律禁凭记忆写数，故 numeric_values 留空，不以任何惯例值代填。",
+        "search_log": {
+          "files_scanned": 1090,
+          "files_mentioning_iso19906": 16,
+          "hits": [
+            {
+              "path": "src/tensordem/ice_steel_friction.py",
+              "pattern_hits": 5,
+              "has_verbatim_clause_text": false
+            },
+            {
+              "path": "src/tensordem/plate_on_foundation.py",
+              "pattern_hits": 2,
+              "has_verbatim_clause_text": false
+            },
+            {
+              "path": "src/tensordem/ridge_geotech.py",
+              "pattern_hits": 1,
+              "has_verbatim_clause_text": false
+            },
+            {
+              "path": "src/tensordem/ridge_grounding.py",
+              "pattern_hits": 2,
+              "has_verbatim_clause_text": false
+            },
+            {
+              "path": "src/tensordem/ridge_iso19906.py",
+              "pattern_hits": 4,
+              "has_verbatim_clause_text": false
+            },
+            {
+              "path": "src/tensordem/rudder_ice_load.py",
+              "pattern_hits": 1,
+              "has_verbatim_clause_text": false
+            },
+            {
+              "path": "docs/ICE_CONTACT_PRESSURE_ROLLING_PROXY.md",
+              "pattern_hits": 1,
+              "has_verbatim_clause_text": false
+            },
+            {
+              "path": "docs/ice_channel_dem.md",
+              "pattern_hits": 2,
+              "has_verbatim_clause_text": false
+            },
+            {
+              "path": "docs/ice_ridge_pipeline_grounding.md",
+              "pattern_hits": 1,
+              "has_verbatim_clause_text": false
+            },
+            {
+              "path": "docs/ice_sheet_plate_on_foundation.md",
+              "pattern_hits": 2,
+              "has_verbatim_clause_text": false
+            },
+            {
+              "path": "docs/rudder_ice_load_dem_fsm.md",
+              "pattern_hits": 1,
+              "has_verbatim_clause_text": false
+            },
+            {
+              "path": "scripts/make_ice_contact_report.py",
+              "pattern_hits": 2,
+              "has_verbatim_clause_text": false
+            },
+            {
+              "path": "scripts/make_ridge_iso_grounding_figures.py",
+              "pattern_hits": 4,
+              "has_verbatim_clause_text": false
+            },
+            {
+              "path": "scripts/run_ridge_iso_grounding.py",
+              "pattern_hits": 1,
+              "has_verbatim_clause_text": false
+            },
+            {
+              "path": "benchmarks/ice_channel_dem.py",
+              "pattern_hits": 2,
+              "has_verbatim_clause_text": false
+            },
+            {
+              "path": "tests/test_ridge_iso_grounding.py",
+              "pattern_hits": 1,
+              "has_verbatim_clause_text": false
+            }
+          ],
+          "verbatim_clause_corpus_found": false,
+          "network_probe": {
+            "attempted": "https://www.iso.org/standard/65712.html (ISO 19906:2019 catalogue page)",
+            "result": "HTTP 403 Forbidden from this sandbox; no licensed full text accessible",
+            "conclusion": "primary 级原文不可得 -> 两个锚均登记 WITHHELD_NO_LICENSED_SOURCE"
+          }
+        },
+        "standard": "ISO 19906:2019 Clause 14 / Clause 15"
+      },
+      "usable_for_compliance_claim": false,
+      "allowed_use": "无（未核销）"
+    }
+  ],
+  "candidate_registry": [
+    {
+      "candidate_id": "CAND_n_045",
+      "label": "p(A) 指数 0.45（工程惯例带下缘）",
+      "value": 0.45,
+      "provenance_level": "MEMORY_OR_CONVENTION",
+      "source": "仓内惯例引用（docs/pressure_area_index_dem.md 定性表述 ex ~ 0.5 的邻域），未取原文",
+      "usable_for_compliance_claim": false
+    },
+    {
+      "candidate_id": "CAND_n_050",
+      "label": "p(A) 指数 0.50（经典 -0.5 幂律）",
+      "value": 0.5,
+      "provenance_level": "MEMORY_OR_CONVENTION",
+      "source": "仓内惯例引用（同上），未取原文",
+      "usable_for_compliance_claim": false
+    },
+    {
+      "candidate_id": "CAND_n_055",
+      "label": "p(A) 指数 0.55（工程惯例带上缘）",
+      "value": 0.55,
+      "provenance_level": "MEMORY_OR_CONVENTION",
+      "source": "仓内惯例引用（同上），未取原文",
+      "usable_for_compliance_claim": false
+    },
+    {
+      "candidate_id": "CAND_C_R_1p2MPa",
+      "label": "参考压力 C_R = 1.2 MPa @ A = 1 m^2（惯例量级）",
+      "value_MPa": 1.2,
+      "provenance_level": "MEMORY_OR_CONVENTION",
+      "source": "仓内其它工件转述的惯例量级，未取原文",
+      "usable_for_compliance_claim": false
+    },
+    {
+      "candidate_id": "CAND_C_R_3p0MPa",
+      "label": "参考压力 C_R = 3.0 MPa @ A = 1 m^2（惯例量级）",
+      "value_MPa": 3.0,
+      "provenance_level": "MEMORY_OR_CONVENTION",
+      "source": "仓内其它工件转述的惯例量级，未取原文",
+      "usable_for_compliance_claim": false
+    }
+  ],
+  "candidate_registry_note": "惯例/记忆级候选：usable_for_compliance_claim 恒 False，仅作核对对照（C4 机检）。",
+  "conversion_to_case_caliber": [
+    {
+      "C_R_MPa": 1.2,
+      "C_R_source": "CAND_C_R_1p2MPa",
+      "exponent": 0.45,
+      "exponent_source": "CANDIDATE_MEMORY",
+      "A_local_m2": 0.914,
+      "p_local_MPa": 1.2495552339796736,
+      "F_local_N_per_m": 1142093.4838574217,
+      "A_global_m2": 288.0,
+      "p_global_MPa": 0.0938543976026708,
+      "F_global_N": 27030066.50956919,
+      "usable_for_compliance_claim": false
+    },
+    {
+      "C_R_MPa": 1.2,
+      "C_R_source": "CAND_C_R_1p2MPa",
+      "exponent": 0.5,
+      "exponent_source": "CANDIDATE_MEMORY",
+      "A_local_m2": 0.914,
+      "p_local_MPa": 1.2551861779659117,
+      "F_local_N_per_m": 1147240.1666608434,
+      "A_global_m2": 288.0,
+      "p_global_MPa": 0.07071067811865475,
+      "F_global_N": 20364675.298172567,
+      "usable_for_compliance_claim": false
+    },
+    {
+      "C_R_MPa": 1.2,
+      "C_R_source": "CAND_C_R_1p2MPa",
+      "exponent": 0.55,
+      "exponent_source": "CANDIDATE_MEMORY",
+      "A_local_m2": 0.914,
+      "p_local_MPa": 1.2608424970050602,
+      "F_local_N_per_m": 1152410.0422626252,
+      "A_global_m2": 288.0,
+      "p_global_MPa": 0.05327400875947569,
+      "F_global_N": 15342914.522728998,
+      "usable_for_compliance_claim": false
+    },
+    {
+      "C_R_MPa": 1.2,
+      "C_R_source": "CAND_C_R_1p2MPa",
+      "exponent": 0.307,
+      "exponent_source": "DEM_MEASURED",
+      "A_local_m2": 0.914,
+      "p_local_MPa": 1.2335897835868324,
+      "F_local_N_per_m": 1127501.0621983649,
+      "A_global_m2": 288.0,
+      "p_global_MPa": 0.21093456531184207,
+      "F_global_N": 60749154.80981052,
+      "usable_for_compliance_claim": false
+    },
+    {
+      "C_R_MPa": 3.0,
+      "C_R_source": "CAND_C_R_3p0MPa",
+      "exponent": 0.45,
+      "exponent_source": "CANDIDATE_MEMORY",
+      "A_local_m2": 0.914,
+      "p_local_MPa": 3.1238880849491837,
+      "F_local_N_per_m": 2855233.709643554,
+      "A_global_m2": 288.0,
+      "p_global_MPa": 0.234635994006677,
+      "F_global_N": 67575166.27392298,
+      "usable_for_compliance_claim": false
+    },
+    {
+      "C_R_MPa": 3.0,
+      "C_R_source": "CAND_C_R_3p0MPa",
+      "exponent": 0.5,
+      "exponent_source": "CANDIDATE_MEMORY",
+      "A_local_m2": 0.914,
+      "p_local_MPa": 3.1379654449147796,
+      "F_local_N_per_m": 2868100.4166521085,
+      "A_global_m2": 288.0,
+      "p_global_MPa": 0.17677669529663687,
+      "F_global_N": 50911688.245431416,
+      "usable_for_compliance_claim": false
+    },
+    {
+      "C_R_MPa": 3.0,
+      "C_R_source": "CAND_C_R_3p0MPa",
+      "exponent": 0.55,
+      "exponent_source": "CANDIDATE_MEMORY",
+      "A_local_m2": 0.914,
+      "p_local_MPa": 3.1521062425126507,
+      "F_local_N_per_m": 2881025.105656563,
+      "A_global_m2": 288.0,
+      "p_global_MPa": 0.13318502189868922,
+      "F_global_N": 38357286.30682249,
+      "usable_for_compliance_claim": false
+    },
+    {
+      "C_R_MPa": 3.0,
+      "C_R_source": "CAND_C_R_3p0MPa",
+      "exponent": 0.307,
+      "exponent_source": "DEM_MEASURED",
+      "A_local_m2": 0.914,
+      "p_local_MPa": 3.0839744589670812,
+      "F_local_N_per_m": 2818752.6554959123,
+      "A_global_m2": 288.0,
+      "p_global_MPa": 0.5273364132796052,
+      "F_global_N": 151872887.0245263,
+      "usable_for_compliance_claim": false
+    }
+  ],
+  "iso_form_decomposition": [
+    {
+      "soil": "BASE_SOIL",
+      "cover_ratio_d_over_D": 1.0,
+      "cover_depth_m": 0.914,
+      "N_q": 1.0,
+      "N_c": 7.195999999999999,
+      "q_term_N_per_m": 0.0,
+      "c_term_N_per_m": 197314.31999999998,
+      "gamma_term_N_per_m": 0.0,
+      "V_N_per_m": 197314.31999999998,
+      "note": "ISO 形式算术（仓内 Vesic/Skempton 闭式已验证）；系数归属 ISO 19906 原文=WITHHELD"
+    },
+    {
+      "soil": "BASE_SOIL",
+      "cover_ratio_d_over_D": 2.0,
+      "cover_depth_m": 1.828,
+      "N_q": 1.0,
+      "N_c": 7.5,
+      "q_term_N_per_m": 0.0,
+      "c_term_N_per_m": 205650.0,
+      "gamma_term_N_per_m": 0.0,
+      "V_N_per_m": 205650.0,
+      "note": "ISO 形式算术（仓内 Vesic/Skempton 闭式已验证）；系数归属 ISO 19906 原文=WITHHELD"
+    },
+    {
+      "soil": "BASE_SOIL",
+      "cover_ratio_d_over_D": 4.0,
+      "cover_depth_m": 3.656,
+      "N_q": 1.0,
+      "N_c": 7.5,
+      "q_term_N_per_m": 0.0,
+      "c_term_N_per_m": 205650.0,
+      "gamma_term_N_per_m": 0.0,
+      "V_N_per_m": 205650.0,
+      "note": "ISO 形式算术（仓内 Vesic/Skempton 闭式已验证）；系数归属 ISO 19906 原文=WITHHELD"
+    },
+    {
+      "soil": "BASE_SOIL",
+      "cover_ratio_d_over_D": 8.0,
+      "cover_depth_m": 7.312,
+      "N_q": 1.0,
+      "N_c": 7.5,
+      "q_term_N_per_m": 0.0,
+      "c_term_N_per_m": 205650.0,
+      "gamma_term_N_per_m": 0.0,
+      "V_N_per_m": 205650.0,
+      "note": "ISO 形式算术（仓内 Vesic/Skempton 闭式已验证）；系数归属 ISO 19906 原文=WITHHELD"
+    },
+    {
+      "soil": "DRAINED_SOIL",
+      "cover_ratio_d_over_D": 1.0,
+      "cover_depth_m": 0.914,
+      "N_q": 18.401122218708668,
+      "N_c": 30.139627791519086,
+      "q_term_N_per_m": 393818.8776663441,
+      "c_term_N_per_m": 192833.3386101391,
+      "gamma_term_N_per_m": 0.0,
+      "V_N_per_m": 586652.2162764831,
+      "note": "ISO 形式算术（仓内 Vesic/Skempton 闭式已验证）；系数归属 ISO 19906 原文=WITHHELD"
+    },
+    {
+      "soil": "DRAINED_SOIL",
+      "cover_ratio_d_over_D": 2.0,
+      "cover_depth_m": 1.828,
+      "N_q": 18.401122218708668,
+      "N_c": 30.139627791519086,
+      "q_term_N_per_m": 590728.3164995163,
+      "c_term_N_per_m": 192833.3386101391,
+      "gamma_term_N_per_m": 0.0,
+      "V_N_per_m": 783561.6551096553,
+      "note": "ISO 形式算术（仓内 Vesic/Skempton 闭式已验证）；系数归属 ISO 19906 原文=WITHHELD"
+    },
+    {
+      "soil": "DRAINED_SOIL",
+      "cover_ratio_d_over_D": 4.0,
+      "cover_depth_m": 3.656,
+      "N_q": 18.401122218708668,
+      "N_c": 30.139627791519086,
+      "q_term_N_per_m": 984547.1941658607,
+      "c_term_N_per_m": 192833.3386101391,
+      "gamma_term_N_per_m": 0.0,
+      "V_N_per_m": 1177380.5327759997,
+      "note": "ISO 形式算术（仓内 Vesic/Skempton 闭式已验证）；系数归属 ISO 19906 原文=WITHHELD"
+    },
+    {
+      "soil": "DRAINED_SOIL",
+      "cover_ratio_d_over_D": 8.0,
+      "cover_depth_m": 7.312,
+      "N_q": 18.401122218708668,
+      "N_c": 30.139627791519086,
+      "q_term_N_per_m": 1772184.9494985489,
+      "c_term_N_per_m": 192833.3386101391,
+      "gamma_term_N_per_m": 0.0,
+      "V_N_per_m": 1965018.2881086878,
+      "note": "ISO 形式算术（仓内 Vesic/Skempton 闭式已验证）；系数归属 ISO 19906 原文=WITHHELD"
+    }
+  ],
+  "domain_comparison": {
+    "domain_result": {
+      "source_file": "docs/pressure_area_index_dem.md",
+      "source_sha256": "bf049e6c93a016bd8d755d0a0a9ba743821d6bca46b3b815662272daed22a5c4",
+      "line_number": 24,
+      "injection": "REGEX_FROM_DOC_TABLE (no hand copy)",
+      "quantity": "DEM 压力-面积指数 ex（bonded-particle 冲压扫描拟合, 负值约定为 p ∝ A^-ex）",
+      "ex": 0.307,
+      "ci95": [
+        0.253,
+        0.358
+      ],
+      "r2": 0.398,
+      "samples": 210,
+      "raw_line": "| primary (A = 0.5–10 m^2, m=2, l=0.1 m) | 0.307 | [0.253, 0.358] | 0.398 | 210 | 30 seeds/area |"
+    },
+    "comparison_rows": [
+      {
+        "vs_candidate": "CAND_n_045",
+        "candidate_n": 0.45,
+        "dem_ex": 0.307,
+        "relative_difference": -0.3177777777777778,
+        "within_dem_ci95": false,
+        "compliance_claim_allowed": false,
+        "note": "对照 only；候选未核销，不得用于达标声明"
+      },
+      {
+        "vs_candidate": "CAND_n_050",
+        "candidate_n": 0.5,
+        "dem_ex": 0.307,
+        "relative_difference": -0.386,
+        "within_dem_ci95": false,
+        "compliance_claim_allowed": false,
+        "note": "对照 only；候选未核销，不得用于达标声明"
+      },
+      {
+        "vs_candidate": "CAND_n_055",
+        "candidate_n": 0.55,
+        "dem_ex": 0.307,
+        "relative_difference": -0.4418181818181819,
+        "within_dem_ci95": false,
+        "compliance_claim_allowed": false,
+        "note": "对照 only；候选未核销，不得用于达标声明"
+      }
+    ],
+    "candidates_inside_dem_ci95": 0,
+    "statement": "本课题 DEM 压力-面积指数 ex=0.307（95% CI [0.253, 0.358]）与惯例候选带 0.45-0.55 的相对差 -31.8% ~ -44.2%；但因锚未核销，该差值只能作为核对对照，不构成与 ISO 19906 的合规级偏差声明。",
+    "iso_form_vs_dem_capacity": {
+      "status": "BLOCKED_ANCHOR_WITHHELD",
+      "reason": "本单不重跑耦合 DEM；且 ISO 系数归属未核销，承载力对比留给后续实验",
+      "planned_experiment": "research_plan 第 2 项（领域实验 vs 形式包络）"
+    }
+  },
+  "checks": [
+    {
+      "id": "C1",
+      "criterion": "引句 + 表号/页码 + 数值逐字录入工件（值=来源原值，禁改写/禁四舍五入到失真）",
+      "threshold": ">= 1",
+      "measured": {
+        "verbatim_verified_anchors": 0,
+        "registered_anchors": 2
+      },
+      "status": "FAIL",
+      "evidence": "anchors[*].provenance.status=WITHHELD_NO_LICENSED_SOURCE; repo 语料命中 16 个文件, 逐字条款语料=0 → 无法逐字抄录"
+    },
+    {
+      "id": "C2",
+      "criterion": "同口径换算脚本落盘且可复算（复算残差 <1e-9）",
+      "threshold": "< 1e-9",
+      "measured": 1.2831733995207281e-14,
+      "worst_item": "powerlaw_two_paths C=1.2 n=-0.307 A=288.0000",
+      "status": "PASS",
+      "evidence": "benchmarks/anchors/ice_ridge_pipeline_seabed_bearing.py::conversion_recompute_residual"
+    },
+    {
+      "id": "C3",
+      "criterion": "量纲齐次与内部一致性机检通过",
+      "threshold": "== 0",
+      "measured": {
+        "dimension_exponent_mismatches": 0,
+        "internal_consistency_violations": 0,
+        "violated_items": []
+      },
+      "status": "PASS",
+      "evidence": "dimension_checks() + internal_consistency()"
+    },
+    {
+      "id": "C4",
+      "criterion": "未核候选登记值不得直接引用（只能作为核对对照）",
+      "threshold": "== 0",
+      "measured": 0,
+      "status": "PASS",
+      "evidence": "5 个惯例候选 + 2 个未核锚全部 usable_for_compliance_claim=False"
+    }
+  ],
+  "gate_summary": {
+    "C1_verbatim_anchor_verified": false,
+    "C2_conversion_recomputable": true,
+    "C3_dimension_and_consistency": true,
+    "C4_unverified_not_citable": true
+  },
+  "verdict": "HONEST_FAIL_ON_C1",
+  "honest_fail_note": "C1 未达标：工作树内无 ISO 19906:2019 许可原文（iso.org 目录页 403），两个锚的 verbatim_quote/table_or_page/numeric_values 全部留空，provenance_level=WITHHELD_NO_LICENSED_SOURCE。判据未改、未以惯例值代填。C2/C3/C4 已机检通过，换算链与量纲/一致性结论与本算例口径无关地成立，可复用。",
+  "figures": [
+    {
+      "name": "pressure_area_family.png",
+      "path": "benchmarks/anchors/figs/pressure_area_family.png",
+      "caption": "图1 压力-面积幂律族：惯例候选带(0.45/0.50/0.55, 未核) 与 本课题DEM实测指数 0.307；竖线=本算例局部/全局接触面积。"
+    },
+    {
+      "name": "exponent_discrepancy.png",
+      "path": "benchmarks/anchors/figs/exponent_discrepancy.png",
+      "caption": "图2 本课题DEM指数相对惯例候选带的偏差（负=DEM 指数更小），误差棒为 DEM 95% CI 传播。"
+    },
+    {
+      "name": "iso_form_decomposition.png",
+      "path": "benchmarks/anchors/figs/iso_form_decomposition.png",
+      "caption": "图3 本算例口径下的 ISO 形式承载力项分解（V 与黏聚项 vs 覆盖深度）；系数归属 ISO 19906 原文仍为 WITHHELD，仅为形式级算术。"
+    }
+  ],
+  "next_experiment": "research_plan 第 2 项：领域实验（DEM 耦合承载力）vs ISO 形式包络（锚一旦可核销即可升级为合规级对比）"
+}
