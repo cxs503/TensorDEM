@@ -693,13 +693,16 @@ def _seed_generator(seed: int) -> torch.Generator:
 
 def generate_keel_assembly(keel: RidgeKeel, material: RidgeMaterial, *,
                            tip_height: float = 1.0, submerged: bool = True,
-                           thickness: float = 1.0) -> dict:
+                           thickness: float = 1.0, x_offset: float = 0.0) -> dict:
     """Build the triangular keel as a bonded disk assembly.
 
     ``tip_height`` is the height of the keel tip above the mudline (y = 0) at
-    the start of the run.  Particles are placed on a triangular lattice with
-    spacing ``2 r`` and then randomly thinned to the requested porosity; the
-    top-most row is kinematic and acts as the drive platen.
+    the start of the run; ``x_offset`` shifts the whole section sideways, which
+    is what a *lateral* (drifting-ridge) case needs: the keel has to start
+    beside the pipeline and be driven into it, not on top of it.  Particles are
+    placed on a triangular lattice with spacing ``2 r`` and then randomly
+    thinned to the requested porosity; the top-most row is kinematic and acts
+    as the drive platen.
 
     Returns a dict with ``assembly``, ``info`` (particle count, porosity after
     thinning, bond count, driven count, keel tip position) and ``driven``.
@@ -726,6 +729,11 @@ def generate_keel_assembly(keel: RidgeKeel, material: RidgeMaterial, *,
     positions = torch.tensor(points, dtype=torch.float64)
     if positions.shape[0] < 8:
         raise ValueError("keel lattice too small: increase keel size or reduce radius")
+    if x_offset:
+        if not math.isfinite(x_offset):
+            raise ValueError("x_offset must be finite")
+        positions = positions + torch.tensor((float(x_offset), 0.0),
+                                             dtype=torch.float64)
     positions = _remove_initial_overlaps(positions, radius, generator)
     bonds = _bond_pairs(positions, 1.15 * spacing)
     remove_fraction = 1.0 - (1.0 - keel.porosity) / (1.0 - TRIANGULAR_PACKING_POROSITY)
