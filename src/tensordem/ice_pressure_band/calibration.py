@@ -319,6 +319,33 @@ def _measure(K_values, n_real: int, dx_over_lam: float, kind: str, seed: int,
     return out
 
 
+def loglog_fit(x, y) -> dict:
+    """Ordinary least squares of ``log y`` on ``log x`` with ``R**2``.
+
+    Returns ``slope``, ``intercept``, ``slope_se``, ``r2`` and ``n``.  The
+    coefficient of determination is reported because a scaling law is only
+    evidence if the power law actually describes the data: a slope estimate on
+    its own can be produced by a scatter plot with no trend.
+    """
+    x = np.asarray(x, dtype=float)
+    y = np.asarray(y, dtype=float)
+    ok = np.isfinite(x) & np.isfinite(y) & (x > 0.0) & (y > 0.0)
+    n = int(ok.sum())
+    if n < 3:
+        return {"slope": float("nan"), "intercept": float("nan"),
+                "slope_se": float("nan"), "r2": float("nan"), "n": n}
+    lx, ly = np.log(x[ok]), np.log(y[ok])
+    design = np.column_stack([np.ones(n), lx])
+    coef, *_ = np.linalg.lstsq(design, ly, rcond=None)
+    resid = ly - design @ coef
+    ss_tot = float(np.sum((ly - ly.mean()) ** 2))
+    r2 = float(1.0 - np.sum(resid**2) / ss_tot) if ss_tot > 0.0 else float("nan")
+    s2 = float(np.sum(resid**2) / max(n - 2, 1))
+    cov = s2 * np.linalg.inv(design.T @ design)
+    return {"slope": float(coef[1]), "intercept": float(coef[0]),
+            "slope_se": float(np.sqrt(max(cov[1, 1], 0.0))), "r2": r2, "n": n}
+
+
 def _var_exponent(K, sd):
     K = np.asarray(K, dtype=float)
     sd = np.asarray(sd, dtype=float)
@@ -477,44 +504,136 @@ def run_bias_study(
 
 
 def run_variance_family(
-    *, lam_values, fixed_length_over_lam: float = 20.0, n_real: int = 400,
+    *, lam_values, record_length: float = 40.0, n_real: int = 400,
     dx_over_lam: float = 0.05, kind: str = "spectral", seed: int = 0,
-    methods: tuple[str, ...] = METHODS,
+    methods: tuple[str, ...] = PRIMARY_METHODS, lam_ref: float = 1.0,
+    fixed_length_over_lam: float | None = None,
 ) -> dict:
-    """Second variance-scaling test: fixed record length ``L``, varying ``lam``.
+    """Second variance-scaling test: fixed **absolute** record length ``L``.
 
-    ``Var(lam_hat) ~ lam/L`` implies ``sd(lam_hat) ~ lam**1.5 L**-0.5`` at fixed
-    ``L``, i.e. a log-log slope of ``+1.5`` in ``lam`` (relative sd).  Run on an
-    independent seed so it does not reuse the calibration ensemble.
+    ``Var(lam_hat) ~ lam/L`` means that at fixed ``L`` the relative standard
+    deviation grows like ``lam**0.5`` and ``sd(lam_hat)`` like ``lam**1.5``, while
+    ``K = L/lam`` sweeps from large to small.  ``record_length`` is therefore an
+    absolute length in the units of ``lam_ref`` (``L = record_length * lam_ref``);
+    the sampling step stays ``dx = dx_over_lam * lam`` so every cell has the same
+    discretisation error.
+
+    .. note::
+       An earlier release tied the record length to ``lam``
+       (``n = fixed_length_over_lam / dx_over_lam``), which holds ``L/lam``
+       *constant* and makes the fitted slope zero by construction -- it cannot
+       test the scaling law at all.  The argument is renamed and the semantics
+       fixed here; the regression now also reports ``R**2``.
     """
+    if fixed_length_over_lam is not None:
+        raise ValueError(
+            "fixed_length_over_lam was removed: it held L/lam -- not L -- constant "
+            "(n = fixed_length_over_lam / dx_over_lam), so lam and L varied together "
+            "and the fitted variance-scaling slope was zero by construction. Use "
+            "record_length (an absolute length) instead."
+        )
     rng = np.random.default_rng(seed + 991)
     lam_values = np.asarray(lam_values, dtype=float)
-    n = int(round(fixed_length_over_lam / dx_over_lam))
+    L = float(record_length) * float(lam_ref)
     out = {"lam_values": lam_values.tolist(),
-           "L_over_lam": (fixed_length_over_lam / lam_values).tolist()}
+           "record_length": L,
+           "L_over_lam": (L / lam_values).tolist()}
     for m in methods:
-        rel_sd = []
+        rel_sd, sd_abs = [], []
         for lam in lam_values:
+            n = int(round(L / (dx_over_lam * lam)))
+            if n < 16:
+                rel_sd.append(float("nan"))
+                sd_abs.append(float("nan"))
+                continue
             vals = np.empty(n_real)
             for j in range(n_real):
                 x = windowed_field(n, lam * dx_over_lam, lam, rng, kind=kind)
                 vals[j] = estimate_all(x, lam * dx_over_lam, methods=(m,))[m] / lam
             ok = np.isfinite(vals)
             rel_sd.append(float(np.nanstd(vals[ok], ddof=1)) if ok.sum() > 2 else float("nan"))
-        rel_sd = np.asarray(rel_sd, dtype=float)
-        ok = np.isfinite(rel_sd) & (rel_sd > 0.0)
-        slope = float("nan")
-        se = float("nan")
-        if ok.sum() >= 3:
-            design = np.column_stack([np.ones(int(ok.sum())), np.log(lam_values[ok])])
-            coef, *_ = np.linalg.lstsq(design, np.log(rel_sd[ok]), rcond=None)
-            resid = np.log(rel_sd[ok]) - design @ coef
-            s2 = float(np.sum(resid**2) / max(int(ok.sum()) - 2, 1))
-            cov = s2 * np.linalg.inv(design.T @ design)
-            slope = float(coef[1])
-            se = float(np.sqrt(max(cov[1, 1], 0.0)))
-        out[m] = {"rel_sd": rel_sd.tolist(), "sd_vs_lam_slope": slope,
-                  "sd_vs_lam_slope_se": se, "theory_slope": 1.5}
+            sd_abs.append(rel_sd[-1] * float(lam))
+        fit_rel = loglog_fit(lam_values, rel_sd)          # theory slope +0.5
+        fit_abs = loglog_fit(lam_values, sd_abs)          # theory slope +1.5
+        out[m] = {
+            "rel_sd": rel_sd,
+            "sd_abs": sd_abs,
+            "sd_vs_lam_slope": fit_rel["slope"],
+            "sd_vs_lam_slope_se": fit_rel["slope_se"],
+            "rel_sd_vs_lam_slope": fit_rel["slope"],
+            "rel_sd_vs_lam_r2": fit_rel["r2"],
+            "abs_sd_vs_lam_slope": fit_abs["slope"],
+            "abs_sd_vs_lam_r2": fit_abs["r2"],
+            "theory_slope": 0.5,
+            "theory_slope_abs": 1.5,
+        }
+    return out
+
+
+def variance_scaling_grid(
+    *,
+    K_values=(2.0, 3.0, 4.0, 6.0, 8.0, 12.0, 16.0, 24.0, 32.0, 48.0),
+    lam_values=(0.5, 1.0, 2.0, 4.0),
+    n_real: int = 400,
+    dx_over_lam: float = 0.05,
+    kind: str = "spectral",
+    seed: int = 0,
+    methods: tuple[str, ...] = PRIMARY_METHODS,
+    lam_ref: float = 1.0,
+) -> dict:
+    """Pooled ``Var(lam_hat) ~ lam / L`` test over a 2-D ``(L, lam)`` grid.
+
+    Each cell is a Monte-Carlo ensemble of ``n_real`` records of length
+    ``L = K * lam`` at step ``dx = dx_over_lam * lam``.  The criterion of the
+    campaign is a **high** coefficient of determination for
+    ``log Var(lam_hat/lam)`` against ``log(lam/L)`` (slope 1) -- equivalently
+    ``log Var(lam_hat)`` against ``log(lam**3/L)`` -- over the whole grid, not a
+    sign check on a slope.
+    """
+    lam_values = np.asarray(lam_values, dtype=float)
+    K_values = np.asarray(K_values, dtype=float)
+    rng = np.random.default_rng(seed + 4242)
+    cells = []
+    for lam in lam_values:
+        for K in K_values:
+            L = float(K * lam)
+            n = int(round(L / (dx_over_lam * lam)))
+            if n < 24:
+                continue
+            row = {"lam": float(lam), "K": float(K), "L": L, "n_samples": n}
+            for m in methods:
+                vals = np.array([
+                    estimate_all(windowed_field(n, dx_over_lam * lam, lam, rng, kind=kind),
+                                 dx_over_lam * lam, methods=(m,))[m] / lam
+                    for _ in range(n_real)
+                ])
+                ok = np.isfinite(vals)
+                row[m] = {
+                    "rel_var": float(np.var(vals[ok], ddof=1)) if ok.sum() > 2 else float("nan"),
+                    "rel_sd": float(np.std(vals[ok], ddof=1)) if ok.sum() > 2 else float("nan"),
+                    "rel_bias": float(np.mean(vals[ok]) - 1.0) if ok.sum() else float("nan"),
+                    "failure_rate": float(1.0 - ok.mean()),
+                }
+            cells.append(row)
+    out = {"K_values": K_values.tolist(), "lam_values": lam_values.tolist(),
+           "n_real": n_real, "kind": kind, "cells": cells, "per_method": {}}
+    for m in methods:
+        lamL, relvar, lam3overL, relsd = [], [], [], []
+        for c in cells:
+            v = c[m]["rel_var"]
+            lamL.append(c["lam"] / c["L"])
+            lam3overL.append(c["lam"] ** 3 / c["L"])
+            relvar.append(v)
+            relsd.append(c[m]["rel_sd"])
+        f_rel = loglog_fit(lamL, relvar)     # Var(lam_hat/lam) vs lam/L : slope 1
+        f_abs = loglog_fit(lam3overL, relvar)  # Var(lam_hat) ~ lam^3/L    : slope 1
+        f_sd = loglog_fit(lamL, relsd)       # sd(lam_hat/lam) vs lam/L   : slope 0.5
+        out["per_method"][m] = {
+            "relvar_vs_lam_over_L": f_rel,
+            "absvar_vs_lam3_over_L": f_abs,
+            "relsd_vs_lam_over_L": f_sd,
+            "n_cells": len(cells),
+        }
     return out
 
 

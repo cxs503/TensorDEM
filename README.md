@@ -50,6 +50,34 @@ e 折遗留法做对照）的有限窗偏差在已知解析 ACF 的合成场上�
 `--reuse-dem`（合成长域 DEM 结果）；方法、判据数字与局限见
 `docs/ice_pressure_band_lambda_x.md`，工件见 `artifacts/pressure_band_lambda/`。
 
+### 成熟化（p48w3-n02）：级交叉估计量 · 方差标度律 · 记录长度门槛
+
+在上一节点（P204-N08）的估计量链路上，本节点新增级交叉估计量 `crossing`（ACF 穿越
+`R = 0.6` 的滞后反演，条件数 ~3），并修复两处可复现缺陷：
+
+* `run_variance_family` 名义上「固定记录长度」，实际固定的是 `L/lam`（`n = K/dx`），斜率按
+  **构造恒为 0**，无法检验标度律；现固定绝对 `L` 并返回 `R^2`；
+* bootstrap 的百分位区间会出现**不含点估计**的格点；现给出以点估计为中心的 basic 区间并
+  逐格报告 `contains_point`（同时修掉 `models=None` 时全部重采样为 NaN 的静默失效）。
+
+结果（全部由 `scripts/pressure_band_maturation.py` 程序生成，判据落
+`artifacts/pressure_band_lambda_maturation/criteria.json`）：
+
+* 方差标度 `Var(λ̂/λ) ∝ λ/L` 在二维 `(L, λ)` 网格上成立：`crossing` 斜率 1.01/1.04、
+  `R² = 0.97/0.94`（ar1/spectral），`lagslope` 0.94/0.93、`R² = 0.98`；首零点截断的
+  `integral` 不成立（`R² = 0.01/0.26`）——上一节点的 honest FAIL 由此定位到**估计量选择**，
+  修法是换估计量而不是把曲线拟合得更用力；
+* 记录长度门槛：严格 5 % 规则下三法全达标 `K* = 12.6`，工程建议 `K ≥ 25`（单条记录相对
+  sd 在 K=25 仍为 33 %–66 %，10 % 不确定度需 `K ~ O(10²)`）；
+* 长域 DEM 压力带（`B/h = 40–60`，`d50/h = 0.125/0.25/0.40`）原生 `λ_x/h = 0.058`
+  （0.041–0.082），仍落在文献带 1.5–3 之外：`λ_x/dy = 0.66–1.31` 个网格、对 `d50` 的对数
+  斜率仅 0.21（`R² = 0.20`）、自诊断全部判 `white_noise`、打乱对照 = 0.50 网格、分辨率阶梯
+  恒为 `O(1)` —— **所报长度是压力沉积核尺度，不是连续介质斑块尺度**（honest FAIL，机制量化）。
+
+方法、数字表、图与误差判定见 `docs/ice_pressure_band_lambda_x_maturation.md`；
+脚本 `scripts/pressure_band_maturation.py`＋`scripts/pressure_band_maturation_report.py`；
+测试 `tests/test_ice_pressure_band_maturation.py`。
+
 ## 面向 Agent 科研工厂的职责
 
 在以 Agent 为科研主体的黑灯科研工厂中，TensorDEM 是一个**可编程、可观测、可验证的离散元数值实验设备**，负责颗粒运动、接触、键合与断裂等数值内核及专项验证。TensorPhysics 负责实验编排与跨求解器协调；TensorPlatform 负责数据、产物、研究记录和模型资产治理。
