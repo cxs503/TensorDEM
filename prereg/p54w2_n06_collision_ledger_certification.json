@@ -1,0 +1,73 @@
+{
+  "task": "p54w2-N06 成熟化：刚性碰撞能量账本收敛阶认证 (TensorDEM)",
+  "timestamp_utc": "2026-11-09T02:45:00Z",
+  "authored_before_results": true,
+  "frozen_before_runs": true,
+  "parent_node": "in54w1-N01（口径定义＋四通道诊断，留一项 honest FAIL：平均速度口径 |slope-2| 无法满足）",
+  "contract": {
+    "module": "src/tensordem/collision_ledger_certification.py",
+    "driver": "scripts/p54w2_n06_collision_ledger_certification.py",
+    "metrics": "artifacts/collision_ledger_certification/metrics.json",
+    "certificate": "artifacts/collision_ledger_certification/certification.json",
+    "figures": "artifacts/collision_ledger_certification/figures/",
+    "report": "docs/p54w2-n06-collision-ledger-certification/REPORT.md",
+    "tests": "tests/test_collision_ledger_certification.py",
+    "depends_on": [
+      "tensordem.contact_energy_order (1-D 链式积分器、四口径、fit_order、newton_cradle、m5404_level)",
+      "tensordem.floe_rigid6dof (产生 m5404 残差的已交付求解器)"
+    ]
+  },
+  "central_hypothesis": {
+    "H1": "上一节点的 honest FAIL 不是数值问题而是口径问题：平均速度（梯形）通量口径相对离散状态的闭合是 velocity-Verlet 恒等式（阶不存在），因此不能对闭合残差拟合斜率；把同一口径改判在『相对连续解精确做功的求积精度』轴上测量，则可给出确定的阶。",
+    "H2": "该口径的合法阶依赖力律：Hertz（δ^1.5）下 O(h²)，线性弹簧律下梯形对 F(δ) 精确（阶无穷）。",
+    "H3": "m5404 的 5.111e-07 属口径/离散误差（convention_error），可用两探针（中途探缺陷可见性、后分离探阶）分离判定。"
+  },
+  "acceptance_criteria": {
+    "a_flux_closure": {
+      "statement": "通量口径（一致时间层）闭合残差 |ΔKE − W_flux|/E0 在弹性 Hertz、阻尼线性、5 球链三算例取最大值",
+      "target": "< 1e-9",
+      "note": "SI 归一化，E0=½m_eff v0²；闭合恒等式在任意 dt 下都应成立"
+    },
+    "b_slopes": {
+      "statement": "Hertz 参考脉冲（压缩半程）上的求积阶",
+      "targets": {
+        "explicit": "|slope − 1| < 0.2",
+        "flux_mean_velocity": "|slope − 2| < 0.2"
+      },
+      "pre_registered_measurement_window": "压缩半程 0→δ_max，参考轨迹为 DOP853 rtol=1e-13 的精确解；闭合全脉冲不作为判据（两端误差反号部分抵消，实测斜率 ~1.65，仅作范围说明）"
+    },
+    "c_restitution": {
+      "statement": "相位平均恢复系数 vs 解析 clamped 值，在充分解析段 N_c ≥ 128",
+      "target": "< 1e-3",
+      "phase_averaging": "8 个亚步相位偏移；单相位阶梯非单调（相位噪声），故判据必须建立在相位平均上"
+    },
+    "d_momentum": {
+      "statement": "5 球 Newton 摆总动量相对误差",
+      "target": "< 1e-12",
+      "note": "结构性守恒（成对等值反向力）→ 绝对下限而非阶"
+    },
+    "e_m5404": {
+      "statement": "残差复现 + 类别判定",
+      "targets": {
+        "reproduction_rel_dev": "< 1e-6",
+        "verdict": "convention_error 或 implementation_error（必须出具）",
+        "decision_rule": "后分离探针斜率 ≥ 0.8 且中途探针注入 1e-3 状态函数缺陷的信号 ≥ 10×5.111e-07 → convention_error；后分离斜率 ≤ 0.3 → implementation_error；否则 undetermined（如实报）"
+      }
+    },
+    "f_pytest": {
+      "statement": "全链 pytest（新认证用例 + 既有 contact_energy_order 守卫）",
+      "target": "exit code 0，0 failed"
+    }
+  },
+  "falsification_conditions": [
+    "若 flux 口径闭合残差在某算例 > 1e-9 → (a) 判 FAIL，说明闭合恒等式在实现中已被破坏",
+    "若 Hertz 压缩半程 flux 求积斜率落在 [1.8,2.2] 之外 → 上一节点的 FAIL 无法由『换轴测量』化解，(b2) 维持 honest FAIL",
+    "若相位平均后 N_c ≥ 128 段仍有 |Δe| > 1e-3 → (c) FAIL，恢复系数判据不可用",
+    "若后分离探针斜率 < 0.8 或缺陷分辨力 < 10 倍 → (e) 判 undetermined，不给出类别结论"
+  ],
+  "honesty_rules": [
+    "上一节点的 FAIL 不得删除或覆盖，只能追加解释与其在正确口径下的替代判据",
+    "闭合全脉冲、单相位恢复系数等不适合判据的测量值必须留在报告里作为范围说明",
+    "任何未达阈值的判据如实记 FAIL，不做四舍五入式粉饰"
+  ]
+}

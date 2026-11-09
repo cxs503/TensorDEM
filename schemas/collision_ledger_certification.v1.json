@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/cxs503/TensorDEM/schemas/collision_ledger_certification.v1.json",
+  "title": "Rigid-contact collision energy-ledger certificate (p54w2-N06)",
+  "description": "Machine-readable acceptance certificate for the two-axis energy-ledger conventions of rigid contact collision. Produced by scripts/p54w2_n06_collision_ledger_certification.py; consumed by tests/test_collision_ledger_certification.py and the campaign DAG.",
+  "type": "object",
+  "required": ["task", "thresholds", "criteria", "summary", "all_pass", "m5404"],
+  "properties": {
+    "task": {"const": "p54w2-N06 rigid-contact collision energy ledger certification"},
+    "generated_utc": {"type": "string", "format": "date-time"},
+    "thresholds": {
+      "type": "object",
+      "description": "Pre-registered acceptance thresholds (mirrored in prereg/p54w2_n06_collision_ledger_certification.json).",
+      "required": ["flux_closure_max", "explicit_slope_tol", "flux_accuracy_slope_tol",
+                   "restitution_tol", "restitution_resolved_nc", "momentum_max",
+                   "m5404_reproduction_tol", "m5404_defect_separation_min"],
+      "additionalProperties": {"type": "number"}
+    },
+    "criteria": {
+      "type": "array",
+      "minItems": 8,
+      "items": {
+        "type": "object",
+        "required": ["id", "statement", "measured", "threshold", "pass"],
+        "properties": {
+          "id": {"enum": ["a", "b1", "b2", "c", "d", "e1", "e2", "f"]},
+          "statement": {"type": "string"},
+          "measured": {},
+          "threshold": {"type": "string"},
+          "pass": {"type": "boolean"},
+          "artifact": {"type": "string"}
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "required": ["flux_closure_max", "explicit_slope", "flux_slope",
+                   "restitution_error_resolved", "momentum_error_max",
+                   "m5404_verdict", "n_criteria", "n_pass"],
+      "properties": {
+        "flux_closure_max": {"type": "number"},
+        "explicit_slope": {"type": "number"},
+        "flux_slope": {"type": "number"},
+        "flux_slope_full_pulse": {"type": "number",
+          "description": "Range note only: the closed pulse cancels the two half-stroke O(h^2) errors, so it must not be used to claim an order."},
+        "flux_slope_linear_law": {"type": "number"},
+        "restitution_error_resolved": {"type": "number"},
+        "momentum_error_max": {"type": "number"},
+        "m5404_verdict": {"enum": ["convention_error", "implementation_error", "undetermined", "not run"]},
+        "n_criteria": {"type": "integer"},
+        "n_pass": {"type": "integer"}
+      }
+    },
+    "all_pass": {"type": "boolean"},
+    "m5404": {
+      "type": "object",
+      "required": ["verdict", "reproduction_rel_dev"],
+      "properties": {
+        "verdict": {"enum": ["convention_error", "implementation_error", "undetermined", "not run"]},
+        "verdict_statement": {"type": "string"},
+        "reproduced_residual": {"type": ["number", "null"]},
+        "reproduction_rel_dev": {"type": ["number", "null"]},
+        "defect_separation": {"type": ["number", "null"],
+          "description": "Mid-probe injected-defect signal divided by the reported 5.111e-07; the case is only discriminating above m5404_defect_separation_min."}
+      }
+    },
+    "artifacts": {"type": "object", "additionalProperties": {"type": "string"}}
+  }
+}
