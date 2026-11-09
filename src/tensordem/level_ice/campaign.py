@@ -77,6 +77,10 @@ class CaseSpec:
     strength_scale: float = 1.0
     flexural_strength_pa: float = 0.5e6
     compressive_strength_pa: float = 1.5e6
+    #: optional elastic modulus [Pa]; ``None`` keeps ``SheetConfig`` default
+    #: (5.0 GPa).  Added so an age-dependent modulus (multi-year ice) can enter
+    #: the bonded-particle sheet without duplicating the sheet configuration.
+    elastic_modulus_pa: float | None = None
     contact_stiffness_scale: float = 1.0
     window_fraction: tuple[float, float] = (0.55, 0.98)
     label: str = ""
@@ -95,6 +99,8 @@ class CaseSpec:
             hull_speed_m_s=self.speed_m_s,
             hull_friction=HULLS[self.hull].friction_coefficient,
             crush_cap_pa=self.compressive_strength_pa,
+            **({} if self.elastic_modulus_pa is None
+               else {"elastic_modulus_pa": float(self.elastic_modulus_pa)}),
             contact_stiffness_scale=self.contact_stiffness_scale,
             strength_scale=self.strength_scale,
             mass_scale=self.mass_scale,
@@ -108,6 +114,9 @@ class CaseSpec:
             "length_m": self.length_m, "advance_m": self.advance_m,
             "bow_angle_deg": self.bow_angle_deg, "mass_scale": self.mass_scale,
             "buoyancy": self.buoyancy, "strength_scale": self.strength_scale,
+            "flexural_strength_pa": self.flexural_strength_pa,
+            "compressive_strength_pa": self.compressive_strength_pa,
+            "elastic_modulus_pa": self.elastic_modulus_pa,
             "window_fraction": list(self.window_fraction), "label": self.label,
         }
 
