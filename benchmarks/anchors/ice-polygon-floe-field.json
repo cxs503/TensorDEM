@@ -1,0 +1,1432 @@
+{
+ "task_key": "paper-exp-ice-polygon-floe-field-1",
+ "mission_id": 7514,
+ "topic": "ice-polygon-floe-field",
+ "experiment": "research_plan #1 —— 外部锚核销（逐字抄录 + 同口径换算 + 一致性机检）",
+ "generated_by": "benchmarks/anchors/build_ice_polygon_floe_field.py",
+ "generated_at": "2026-11-08T15:55:46+00:00",
+ "repo": {
+  "name": "TensorDEM",
+  "branch": "agent/m7514",
+  "commit": "88131d2871845cb77d01ee71a057ccd225147368"
+ },
+ "research_question": "本课题的外部定量锚（ISO 19906 冰压力-面积关系与全球冰载荷）能否被逐字核销并换算到本算例口径？核销后本课题领域实验结果与之相差多少？",
+ "design": {
+  "decision": "能否把 ISO 19906:2019 的 p(A) 与全球冰力条款作为本课题的定量外部锚使用",
+  "alternatives": [
+   "A 从正本逐字抄录两个锚位并换算 → 可给出领域-规范差额",
+   "B 正本不可得 → 锚位 WITHHELD，只核销算子层（代数/量纲/一致性），差额不计算，记 honest FAIL",
+   "C 用二手/记忆中的指数当作规范值 → 违反溯源纪律，事前排除"
+  ],
+  "hypothesis": "能核销：正本引句可得且换算闭环（C1..C4 全 PASS）",
+  "metrics": [
+   "逐字锚位数（0/2..2/2）",
+   "复算残差（相对）",
+   "量纲齐次行通过率",
+   "一致性机检违例数",
+   "登记纪律违例数"
+  ],
+  "baseline": "无锚时的算子层基线（本工件 operators 表）",
+  "predeclared_thresholds": {
+   "recompute_residual_max_rel": 1e-09,
+   "integral_identity_residual_max_rel": 1e-10,
+   "log_log_fit_residual": 1e-10,
+   "scale_invariance_rel": 1e-12,
+   "verified_anchors_required": 2
+  },
+  "stopping_rule": "每个来源通道只探一次（tcp/http/文件系统清单）；探完即判，不得为凑达标反复试探或改判据",
+  "variables": {
+   "controlled": [
+    "FSD 族",
+    "floe 数 N=400",
+    "覆盖率 φ",
+    "厚度 h=0.1·median r_eq",
+    "κ=0.5 接触斑口径",
+    "p0=1 Pa / A_ref=1 m² 单位归一"
+   ],
+   "changed": [
+    "指数 n（0.20..0.70 扫描，含候选值 ± CI95）"
+   ]
+  },
+  "confounders": [
+   "n 未核销 → 所有绝对量不可声明；相对量随 n 的漂移即其敏感度",
+   "κ 与 h 的口径选择影响 floe_patch 口径的绝对值（不影响比值口径结论等级）",
+   "锚位未核销时任何『与规范一致』的说法不可检验"
+  ],
+  "repetitions": "4 个 seed × 3 覆盖率 × 4 FSD 族；算子层为确定性解析式（无需重复）",
+  "environment": {
+   "python": "3.11.6",
+   "numpy": "2.4.6",
+   "platform": "Linux-6.6.52-1.7.lns23.loongarch64-loongarch64-with-glibc2.38"
+  },
+  "analysis": "全量写工件；数值由脚本注入；比值与敏感度带宽为主要输出",
+  "limits": "本单只做锚核销，不做领域-规范比对；不写论文正文"
+ },
+ "criteria_pre_registered": [
+  "引句 + 表号/页码 + 数值逐字录入工件（值=来源原值，禁改写/禁四舍五入失真）",
+  "同口径换算脚本落盘且可复算（复算残差 <1e-9），并换算到本算例口径",
+  "量纲齐次与内部一致性机检通过",
+  "未核候选登记值不得直接引用（只能作为核对对照）"
+ ],
+ "criteria": [
+  {
+   "id": "C1",
+   "statement": "引句 + 表号/页码 + 数值逐字录入工件（值=来源原值，禁改写/禁四舍五入失真）",
+   "status": "FAIL",
+   "measured": {
+    "verified_anchors": 0,
+    "required": 2,
+    "quotes_present": 0,
+    "slots": [
+     {
+      "id": "iso19906-2019-AnnexA-pA",
+      "transcription_status": "WITHHELD"
+     },
+     {
+      "id": "iso19906-2019-Clause14-15-global",
+      "transcription_status": "WITHHELD"
+     }
+    ]
+   },
+   "value_source_id": null,
+   "gap": "0/2 锚位核销：ISO 19906:2019 正本不可得 → 引句/表号/页码/原值全空，状态 WITHHELD；不以记忆或二手转述填数",
+   "criterion_pre_registered": true,
+   "requires_anchor_value": true
+  },
+  {
+   "id": "C2",
+   "statement": "同口径换算脚本落盘且可复算（复算残差 <1e-9），并换算到本算例口径",
+   "status": "PASS(operator) / WITHHELD(absolute)",
+   "measured": {
+    "recompute_residual_max_rel": 0.0,
+    "threshold": 1e-09,
+    "operator_layer": "PASS",
+    "absolute_layer": "WITHHELD",
+    "absolute_loads_N": null
+   },
+   "value_source_id": null,
+   "gap": "算子层已复算达标（残差 <1e-9，脚本落盘可复跑）；绝对层需要 p0 与 A_ref （Annex A 原文），故『换到本算例口径』的牛顿数不可声明",
+   "criterion_pre_registered": true,
+   "requires_anchor_value": true
+  },
+  {
+   "id": "C3",
+   "statement": "量纲齐次与内部一致性机检通过",
+   "status": "PASS",
+   "measured": {
+    "dimensional_pass": true,
+    "dimensional_rows": 6,
+    "consistency_pass": true,
+    "consistency_rows": 7
+   },
+   "value_source_id": null,
+   "gap": null,
+   "criterion_pre_registered": true,
+   "requires_anchor_value": false
+  },
+  {
+   "id": "C4",
+   "statement": "未核候选登记值不得直接引用（只能作为核对对照）",
+   "status": "PASS",
+   "measured": {
+    "violations": [],
+    "verified_slots": []
+   },
+   "value_source_id": null,
+   "gap": null,
+   "criterion_pre_registered": true,
+   "requires_anchor_value": false
+  }
+ ],
+ "verdict": "FAIL",
+ "verdict_reason": "外部锚未核销（C1 FAIL，状态 WITHHELD）→ 本课题与规范的差额无法计算；算子层/量纲/一致性已机检通过（C2 operator, C3, C4），按诚实纪律记 honest FAIL，不粉饰、不改判据",
+ "case_caliber": {
+  "source_of_truth": [
+   "tensordem.polygon_floe_field.generate_polygon_floe_field",
+   "tensordem.fsd_packing.PowerLawFSD/LogNormalFSD/BimodalFSD/DeltaFSD"
+  ],
+  "fields": {
+   "PowerLawFSD(2.5)|phi=0.60": {
+    "family": "PowerLawFSD(2.5)",
+    "coverage": 0.6,
+    "n_floes": 400,
+    "seeds": [
+     0,
+     1,
+     2,
+     3
+    ],
+    "area_mean_m2": 107.183489244431,
+    "r_eq_median_m": 5.00002080390238,
+    "thickness_m": 0.500002686577704,
+    "box_m": [
+     338.1257978830656,
+     211.328623676916
+    ],
+    "patch_area_mean_m2": 2.780662553839898,
+    "wall_s": 1.0106124877929688
+   },
+   "PowerLawFSD(2.5)|phi=0.85": {
+    "family": "PowerLawFSD(2.5)",
+    "coverage": 0.85,
+    "n_floes": 400,
+    "seeds": [
+     0,
+     1,
+     2,
+     3
+    ],
+    "area_mean_m2": 107.183489244431,
+    "r_eq_median_m": 5.000020803902379,
+    "thickness_m": 0.5000026865777037,
+    "box_m": [
+     284.0824924030422,
+     177.55155775190136
+    ],
+    "patch_area_mean_m2": 2.780662553839896,
+    "wall_s": 0.9352728724479675
+   },
+   "PowerLawFSD(2.5)|phi=0.90": {
+    "family": "PowerLawFSD(2.5)",
+    "coverage": 0.9,
+    "n_floes": 400,
+    "seeds": [
+     0,
+     1,
+     2,
+     3
+    ],
+    "area_mean_m2": 107.183489244431,
+    "r_eq_median_m": 5.000020803902379,
+    "thickness_m": 0.5000026865777033,
+    "box_m": [
+     276.0785578949824,
+     172.54909868436403
+    ],
+    "patch_area_mean_m2": 2.780662553839894,
+    "wall_s": 0.9671353697776794
+   },
+   "LogNormalFSD(0.5)|phi=0.60": {
+    "family": "LogNormalFSD(0.5)",
+    "coverage": 0.6,
+    "n_floes": 400,
+    "seeds": [
+     0,
+     1,
+     2,
+     3
+    ],
+    "area_mean_m2": 122.26308175760325,
+    "r_eq_median_m": 4.999981865320693,
+    "thickness_m": 0.5000005476778914,
+    "box_m": [
+     361.1287220296619,
+     225.7054512685387
+    ],
+    "patch_area_mean_m2": 2.7937327713229454,
+    "wall_s": 2.3475603461265564
+   },
+   "LogNormalFSD(0.5)|phi=0.85": {
+    "family": "LogNormalFSD(0.5)",
+    "coverage": 0.85,
+    "n_floes": 400,
+    "seeds": [
+     0,
+     1,
+     2,
+     3
+    ],
+    "area_mean_m2": 122.26308175760327,
+    "r_eq_median_m": 4.999981865320693,
+    "thickness_m": 0.5000005476778915,
+    "box_m": [
+     303.4088143371737,
+     189.63050896073352
+    ],
+    "patch_area_mean_m2": 2.7937327713229454,
+    "wall_s": 2.371780514717102
+   },
+   "LogNormalFSD(0.5)|phi=0.90": {
+    "family": "LogNormalFSD(0.5)",
+    "coverage": 0.9,
+    "n_floes": 400,
+    "seeds": [
+     0,
+     1,
+     2,
+     3
+    ],
+    "area_mean_m2": 122.26308175760325,
+    "r_eq_median_m": 4.999981865320695,
+    "thickness_m": 0.5000005476778914,
+    "box_m": [
+     294.8603668120181,
+     184.2877292575113
+    ],
+    "patch_area_mean_m2": 2.793732771322945,
+    "wall_s": 2.321715533733368
+   },
+   "BimodalFSD()|phi=0.60": {
+    "family": "BimodalFSD()",
+    "coverage": 0.6,
+    "n_floes": 400,
+    "seeds": [
+     0,
+     1,
+     2,
+     3
+    ],
+    "area_mean_m2": 99.63632332743263,
+    "r_eq_median_m": 4.9995169203604135,
+    "thickness_m": 0.4999518679396614,
+    "box_m": [
+     326.004209915447,
+     203.75263119715433
+    ],
+    "patch_area_mean_m2": 2.450378118875962,
+    "wall_s": 2.3872262239456177
+   },
+   "BimodalFSD()|phi=0.85": {
+    "family": "BimodalFSD()",
+    "coverage": 0.85,
+    "n_floes": 400,
+    "seeds": [
+     0,
+     1,
+     2,
+     3
+    ],
+    "area_mean_m2": 99.63632332743265,
+    "r_eq_median_m": 4.999516920360412,
+    "thickness_m": 0.4999518679396621,
+    "box_m": [
+     273.8983214723322,
+     171.18645092020765
+    ],
+    "patch_area_mean_m2": 2.450378118875966,
+    "wall_s": 2.2471503019332886
+   },
+   "BimodalFSD()|phi=0.90": {
+    "family": "BimodalFSD()",
+    "coverage": 0.9,
+    "n_floes": 400,
+    "seeds": [
+     0,
+     1,
+     2,
+     3
+    ],
+    "area_mean_m2": 99.63632332743263,
+    "r_eq_median_m": 4.999516920360419,
+    "thickness_m": 0.4999518679396614,
+    "box_m": [
+     266.1813227640071,
+     166.36332672750444
+    ],
+    "patch_area_mean_m2": 2.450378118875962,
+    "wall_s": 1.954559564590454
+   },
+   "DeltaFSD(5.0)|phi=0.60": {
+    "family": "DeltaFSD(5.0)",
+    "coverage": 0.6,
+    "n_floes": 400,
+    "seeds": [
+     0,
+     1,
+     2,
+     3
+    ],
+    "area_mean_m2": 78.53981633974482,
+    "r_eq_median_m": 4.999990020574586,
+    "thickness_m": 0.49999922330626934,
+    "box_m": [
+     289.44050182330705,
+     180.9003136395669
+    ],
+    "patch_area_mean_m2": 2.4999961128371164,
+    "wall_s": 0.2574129104614258
+   },
+   "DeltaFSD(5.0)|phi=0.85": {
+    "family": "DeltaFSD(5.0)",
+    "coverage": 0.85,
+    "n_floes": 400,
+    "seeds": [
+     0,
+     1,
+     2,
+     3
+    ],
+    "area_mean_m2": 78.53981633974482,
+    "r_eq_median_m": 4.999990020574591,
+    "thickness_m": 0.49999922330626956,
+    "box_m": [
+     243.17866212854983,
+     151.98666383034362
+    ],
+    "patch_area_mean_m2": 2.4999961128371173,
+    "wall_s": 0.26625770330429077
+   },
+   "DeltaFSD(5.0)|phi=0.90": {
+    "family": "DeltaFSD(5.0)",
+    "coverage": 0.9,
+    "n_floes": 400,
+    "seeds": [
+     0,
+     1,
+     2,
+     3
+    ],
+    "area_mean_m2": 78.53981633974482,
+    "r_eq_median_m": 4.999990020574588,
+    "thickness_m": 0.4999992233062693,
+    "box_m": [
+     236.32718012073545,
+     147.70448757545964
+    ],
+    "patch_area_mean_m2": 2.499996112837116,
+    "wall_s": 0.2517324686050415
+   }
+  },
+  "caliber_definition": {
+   "floe_patch": "A_i = κ·2·r_eq,i·h（floe 接触斑，随 FSD 变化）",
+   "structure_face": "A = W·h（宽结构名义接触面，W=field box 横向宽，h=0.5 m）",
+   "force": "F = p(A)·A；场聚合 F_field = Σ_i p(A_i)·A_i"
+  }
+ },
+ "sources": [
+  {
+   "id": "iso19906-2019-AnnexA-pA",
+   "standard": "ISO 19906:2019 Petroleum and natural gas industries — Arctic offshore structures",
+   "anchor_kind": "pressure-area law p(A) 的幂律指数 n 与参考压力 p0 / 参考面积 A_ref",
+   "clause": "Annex A（压力-面积关系）",
+   "quote_verbatim": null,
+   "quote_lang": "en",
+   "table_or_page": null,
+   "value": null,
+   "value_units": {
+    "n": "1 (dimensionless)",
+    "p0": "Pa",
+    "A_ref": "m^2"
+   },
+   "transcription_status": "WITHHELD",
+   "withheld_reason": "沙箱内无 ISO 19906:2019 正本；该标准为付费出版物，公开渠道只有范围/目录级预览，不含 Annex A 正文。按溯源纪律『禁凭记忆写数』，本槽位留空。",
+   "value_must_come_from": "原文逐字抄录（quote_verbatim + table_or_page 非空 + value 原值）"
+  },
+  {
+   "id": "iso19906-2019-Clause14-15-global",
+   "standard": "ISO 19906:2019 Petroleum and natural gas industries — Arctic offshore structures",
+   "anchor_kind": "设计全球冰力（global ice action）条款式与条款值",
+   "clause": "Clause 14 / Clause 15（全球冰作用 / 设计方法）",
+   "quote_verbatim": null,
+   "quote_lang": "en",
+   "table_or_page": null,
+   "value": null,
+   "value_units": {
+    "F": "N"
+   },
+   "transcription_status": "WITHHELD",
+   "withheld_reason": "同上：无正本副本，表号/页码不可得；不以二手转述或记忆中的系数替代原文。",
+   "value_must_come_from": "原文逐字抄录（quote_verbatim + table_or_page 非空 + value 原值）"
+  }
+ ],
+ "source_access_probe": [
+  {
+   "ts": "2026-11-08T15:54:30+00:00",
+   "method": "tcp_connect",
+   "target": "www.iso.org:443",
+   "result": "OK"
+  },
+  {
+   "ts": "2026-11-08T15:54:30+00:00",
+   "method": "tcp_connect",
+   "target": "iso.org:443",
+   "result": "OK"
+  },
+  {
+   "ts": "2026-11-08T15:54:30+00:00",
+   "method": "http_get",
+   "target": "https://www.iso.org/standard/72701.html",
+   "result": "FAIL HTTPError: HTTP Error 403: Forbidden"
+  },
+  {
+   "ts": "2026-11-08T15:54:30+00:00",
+   "method": "http_get",
+   "target": "https://www.iso.org/obp/ui/#iso:std:iso:19906:ed-2:v1:en",
+   "result": "FAIL HTTPError: HTTP Error 403: Forbidden"
+  },
+  {
+   "ts": "2026-11-08T15:54:30+00:00",
+   "method": "filesystem_inventory",
+   "target": [
+    "/root/tp-agent/work/m7514",
+    "/root/tp-agent/docs",
+    "/root/tp-agent/knowledge-center",
+    "/root/ice_docs",
+    "/root/ice_docs2"
+   ],
+   "files_scanned": 1214,
+   "hits": [
+    {
+     "path": "/root/tp-agent/work/m7514/benchmarks/ice_channel_dem.py",
+     "kind": "text_mention"
+    },
+    {
+     "path": "/root/tp-agent/work/m7514/benchmarks/verified/lbm_dem_drag_calibration/result.json",
+     "kind": "text_mention"
+    },
+    {
+     "path": "/root/tp-agent/work/m7514/benchmarks/verified/lbm_dem_drag_calibration/parts/settling_d6.json",
+     "kind": "text_mention"
+    },
+    {
+     "path": "/root/tp-agent/work/m7514/benchmarks/anchors/polygon_floe_anchor.py",
+     "kind": "text_mention"
+    },
+    {
+     "path": "/root/tp-agent/work/m7514/benchmarks/anchors/build_ice_polygon_floe_field.py",
+     "kind": "text_mention"
+    },
+    {
+     "path": "/root/tp-agent/work/m7514/benchmarks/anchors/ice-polygon-floe-field.json",
+     "kind": "text_mention"
+    },
+    {
+     "path": "/root/tp-agent/work/m7514/docs/ICE_CONTACT_PRESSURE_ROLLING_PROXY.md",
+     "kind": "text_mention"
+    },
+    {
+     "path": "/root/tp-agent/work/m7514/docs/ice_channel_dem.md",
+     "kind": "text_mention"
+    },
+    {
+     "path": "/root/tp-agent/work/m7514/docs/ice_ridge_pipeline_grounding.md",
+     "kind": "text_mention"
+    },
+    {
+     "path": "/root/tp-agent/work/m7514/docs/ice_sheet_plate_on_foundation.md",
+     "kind": "text_mention"
+    },
+    {
+     "path": "/root/tp-agent/work/m7514/docs/rudder_ice_load_dem_fsm.md",
+     "kind": "text_mention"
+    },
+    {
+     "path": "/root/tp-agent/work/m7514/docs/artifacts/ridge_grounding_refresh/main_case_history.csv",
+     "kind": "text_mention"
+    },
+    {
+     "path": "/root/tp-agent/work/m7514/docs/artifacts/ridge_winkler_subgrade/subgrade_modulus_verification.json",
+     "kind": "text_mention"
+    },
+    {
+     "path": "/root/tp-agent/work/m7514/docs/calibrated-wet/wet_12_time_half.json",
+     "kind": "text_mention"
+    },
+    {
+     "path": "/root/tp-agent/work/m7514/docs/calibrated-wet/wet_18.json",
+     "kind": "text_mention"
+    },
+    {
+     "path": "/root/tp-agent/work/m7514/docs/coupling/smooth-plane/grid-16.json",
+     "kind": "text_mention"
+    },
+    {
+     "path": "/root/tp-agent/work/m7514/docs/coupling/smooth-plane/grid-32.json",
+     "kind": "text_mention"
+    },
+    {
+     "path": "/root/tp-agent/work/m7514/docs/coupling/smooth-plane/grid-64.json",
+     "kind": "text_mention"
+    },
+    {
+     "path": "/root/tp-agent/work/m7514/docs/dem3d-rolling-resistance/results.json",
+     "kind": "text_mention"
+    },
+    {
+     "path": "/root/tp-agent/work/m7514/docs/lattice-waves/lattice_waves_report.json",
+     "kind": "text_mention"
+    },
+    {
+     "path": "/root/tp-agent/work/m7514/docs/m2247/outputs/dem3d_hertz_verification/hertz_verification_report.json",
+     "kind": "text_mention"
+    },
+    {
+     "path": "/root/tp-agent/work/m7514/docs/material-calibration/dynamic.json",
+     "kind": "text_mention"
+    },
+    {
+     "path": "/root/tp-agent/work/m7514/docs/moving-plane-dynamic-impulse/audit.json",
+     "kind": "text_mention"
+    },
+    {
+     "path": "/root/tp-agent/work/m7514/docs/rolling_resistance_validation/threshold_sweep.csv",
+     "kind": "text_mention"
+    },
+    {
+     "path": "/root/tp-agent/work/m7514/scripts/make_ice_contact_report.py",
+     "kind": "text_mention"
+    },
+    {
+     "path": "/root/tp-agent/work/m7514/scripts/make_ridge_iso_grounding_figures.py",
+     "kind": "text_mention"
+    },
+    {
+     "path": "/root/tp-agent/work/m7514/scripts/run_ridge_iso_grounding.py",
+     "kind": "text_mention"
+    },
+    {
+     "path": "/root/tp-agent/work/m7514/src/tensordem/ice_channel.py",
+     "kind": "text_mention"
+    },
+    {
+     "path": "/root/tp-agent/work/m7514/src/tensordem/ice_rideup.py",
+     "kind": "text_mention"
+    },
+    {
+     "path": "/root/tp-agent/work/m7514/src/tensordem/ice_steel_friction.py",
+     "kind": "text_mention"
+    },
+    {
+     "path": "/root/tp-agent/work/m7514/src/tensordem/plate_on_foundation.py",
+     "kind": "text_mention"
+    },
+    {
+     "path": "/root/tp-agent/work/m7514/src/tensordem/ridge_geotech.py",
+     "kind": "text_mention"
+    },
+    {
+     "path": "/root/tp-agent/work/m7514/src/tensordem/ridge_grounding.py",
+     "kind": "text_mention"
+    },
+    {
+     "path": "/root/tp-agent/work/m7514/src/tensordem/ridge_iso19906.py",
+     "kind": "filename_match"
+    },
+    {
+     "path": "/root/tp-agent/work/m7514/src/tensordem/rudder_ice_load.py",
+     "kind": "text_mention"
+    },
+    {
+     "path": "/root/tp-agent/work/m7514/tests/test_ridge_iso_grounding.py",
+     "kind": "text_mention"
+    },
+    {
+     "path": "/root/ice_docs2/TensorPhysics/docs__HULLGIRDER_ICE_EXTREME_BENDING.md",
+     "kind": "text_mention"
+    }
+   ],
+   "primary_text_hits": 0
+  }
+ ],
+ "candidates_unverified": [
+  {
+   "id": "cand-report842-pA-exponent",
+   "quantity": "p(A) 面积指数 n",
+   "value": 0.4284,
+   "uncertainty": {
+    "ci95": [
+     0.42,
+     0.4362
+    ]
+   },
+   "provenance": {
+    "type": "平台内部先例（二手，非 ISO 原文）",
+    "ref": "tensor_reports #842 / W6-N07（scenario ice_load, 2026-10-31）判据行",
+    "how_obtained_there": "平台极值统计 MLE/bootstrap 估得，非从 ISO 正文抄录"
+   },
+   "verified_against_primary": false,
+   "usage": "comparison_only",
+   "usage_rule": "只可作核对对照/敏感性带宽；不得进入任何 PASS 判据的 measured"
+  }
+ ],
+ "conversion_chain": {
+  "law": "p(A) = p0·(A/A_ref)^(-n);  F(A) = p(A)·A = p0·A_ref·(A/A_ref)^(1-n)",
+  "field_law": "F_field = Σ_i p(A_i)·A_i = p0·A_ref^n·K(n),  K(n)=Σ_i A_i^(1-n)",
+  "exponent_used": 0.4284,
+  "exponent_provenance": "candidates_unverified[0]（reference-only，未核销）",
+  "normalization": {
+   "p0_Pa": 1.0,
+   "A_ref_m2": 1.0,
+   "status": "unit_normalization_only",
+   "warning": "p0=1 Pa / A_ref=1 m² 只是单位归一，不是标准原值"
+  },
+  "absolute_layer_status": "WITHHELD",
+  "absolute_layer_reason": "p0 与 A_ref 属 ISO 19906 Annex A 正文（未核销）；本链只复算无量纲算子与相对量",
+  "samples": {
+   "A_m2": [
+    0.05,
+    0.1,
+    0.5,
+    1.0,
+    5.0,
+    10.0,
+    88.8
+   ],
+   "p_norm_Pa": [
+    3.6087870042960604,
+    2.68163706676073,
+    1.345740275232426,
+    1.0,
+    0.5018353497246388,
+    0.3729065399621526,
+    0.1463187173704029
+   ],
+   "F_norm_N": [
+    0.18043935021480303,
+    0.26816370667607303,
+    0.672870137616213,
+    1.0,
+    2.509176748623194,
+    3.7290653996215264,
+    12.993102102491775
+   ],
+   "log_log_slope": -0.4284,
+   "log_log_fit_residual": 2.220446049250313e-16
+  },
+  "calibers": {
+   "floe_patch": {
+    "kappa": 0.5,
+    "definition": "A_i = kappa·2·r_eq,i·h（floe 接触斑）",
+    "kernel_over_fields": {
+     "PowerLawFSD(2.5)|phi=0.60": {
+      "kernel_K_n_m2_1mn": 709.4003571498159,
+      "kernel_at_n0_m2": 1112.2650939020482,
+      "log_sensitivity_dlnK_dn": -1.0290461982305785,
+      "kernel_over_n_grid": {
+       "n_min": 0.2,
+       "K_min": 899.6142110512992,
+       "n_ci_lo": 0.42,
+       "K_ci_lo": 715.5613974877447,
+       "n_ci_hi": 0.4362,
+       "K_ci_hi": 703.7311480775875,
+       "n_max": 0.7,
+       "K_max": 538.3013762683104
+      }
+     },
+     "PowerLawFSD(2.5)|phi=0.85": {
+      "kernel_K_n_m2_1mn": 709.4003571498158,
+      "kernel_at_n0_m2": 1112.2650939020477,
+      "log_sensitivity_dlnK_dn": -1.029046198230578,
+      "kernel_over_n_grid": {
+       "n_min": 0.2,
+       "K_min": 899.6142110512989,
+       "n_ci_lo": 0.42,
+       "K_ci_lo": 715.5613974877446,
+       "n_ci_hi": 0.4362,
+       "K_ci_hi": 703.7311480775872,
+       "n_max": 0.7,
+       "K_max": 538.3013762683104
+      }
+     },
+     "PowerLawFSD(2.5)|phi=0.90": {
+      "kernel_K_n_m2_1mn": 709.4003571498154,
+      "kernel_at_n0_m2": 1112.2650939020466,
+      "log_sensitivity_dlnK_dn": -1.029046198230577,
+      "kernel_over_n_grid": {
+       "n_min": 0.2,
+       "K_min": 899.6142110512983,
+       "n_ci_lo": 0.42,
+       "K_ci_lo": 715.5613974877442,
+       "n_ci_hi": 0.4362,
+       "K_ci_hi": 703.7311480775868,
+       "n_max": 0.7,
+       "K_max": 538.3013762683102
+      }
+     },
+     "LogNormalFSD(0.5)|phi=0.60": {
+      "kernel_K_n_m2_1mn": 700.3217525434632,
+      "kernel_at_n0_m2": 1117.4928598908868,
+      "log_sensitivity_dlnK_dn": -1.0433378845230763,
+      "kernel_over_n_grid": {
+       "n_min": 0.2,
+       "K_min": 893.9261376479134,
+       "n_ci_lo": 0.42,
+       "K_ci_lo": 706.491904817463,
+       "n_ci_hi": 0.4362,
+       "K_ci_hi": 694.6503266858488,
+       "n_max": 0.7,
+       "K_max": 531.8493072749206
+      }
+     },
+     "LogNormalFSD(0.5)|phi=0.85": {
+      "kernel_K_n_m2_1mn": 700.3217525434632,
+      "kernel_at_n0_m2": 1117.4928598908868,
+      "log_sensitivity_dlnK_dn": -1.0433378845230767,
+      "kernel_over_n_grid": {
+       "n_min": 0.2,
+       "K_min": 893.9261376479135,
+       "n_ci_lo": 0.42,
+       "K_ci_lo": 706.4919048174631,
+       "n_ci_hi": 0.4362,
+       "K_ci_hi": 694.6503266858489,
+       "n_max": 0.7,
+       "K_max": 531.8493072749206
+      }
+     },
+     "LogNormalFSD(0.5)|phi=0.90": {
+      "kernel_K_n_m2_1mn": 700.3217525434632,
+      "kernel_at_n0_m2": 1117.4928598908868,
+      "log_sensitivity_dlnK_dn": -1.0433378845230763,
+      "kernel_over_n_grid": {
+       "n_min": 0.2,
+       "K_min": 893.9261376479134,
+       "n_ci_lo": 0.42,
+       "K_ci_lo": 706.4919048174631,
+       "n_ci_hi": 0.4362,
+       "K_ci_hi": 694.6503266858488,
+       "n_max": 0.7,
+       "K_max": 531.8493072749206
+      }
+     },
+     "BimodalFSD()|phi=0.60": {
+      "kernel_K_n_m2_1mn": 639.0456349593771,
+      "kernel_at_n0_m2": 980.1512441767811,
+      "log_sensitivity_dlnK_dn": -0.9285281603311155,
+      "kernel_over_n_grid": {
+       "n_min": 0.2,
+       "K_min": 797.0147813374001,
+       "n_ci_lo": 0.42,
+       "K_ci_lo": 644.0574219281707,
+       "n_ci_hi": 0.4362,
+       "K_ci_hi": 634.440845524313,
+       "n_max": 0.7,
+       "K_max": 503.35669542607434
+      }
+     },
+     "BimodalFSD()|phi=0.85": {
+      "kernel_K_n_m2_1mn": 639.0456349593778,
+      "kernel_at_n0_m2": 980.1512441767825,
+      "log_sensitivity_dlnK_dn": -0.9285281603311166,
+      "kernel_over_n_grid": {
+       "n_min": 0.2,
+       "K_min": 797.0147813374011,
+       "n_ci_lo": 0.42,
+       "K_ci_lo": 644.0574219281714,
+       "n_ci_hi": 0.4362,
+       "K_ci_hi": 634.4408455243135,
+       "n_max": 0.7,
+       "K_max": 503.35669542607457
+      }
+     },
+     "BimodalFSD()|phi=0.90": {
+      "kernel_K_n_m2_1mn": 639.0456349593771,
+      "kernel_at_n0_m2": 980.151244176781,
+      "log_sensitivity_dlnK_dn": -0.9285281603311152,
+      "kernel_over_n_grid": {
+       "n_min": 0.2,
+       "K_min": 797.0147813374001,
+       "n_ci_lo": 0.42,
+       "K_ci_lo": 644.0574219281707,
+       "n_ci_hi": 0.4362,
+       "K_ci_hi": 634.4408455243129,
+       "n_max": 0.7,
+       "K_max": 503.3566954260744
+      }
+     },
+     "DeltaFSD(5.0)|phi=0.60": {
+      "kernel_K_n_m2_1mn": 675.3394413199047,
+      "kernel_at_n0_m2": 999.9984453533825,
+      "log_sensitivity_dlnK_dn": -0.9162891774066094,
+      "kernel_over_n_grid": {
+       "n_min": 0.2,
+       "K_min": 832.5521717731708,
+       "n_ci_lo": 0.42,
+       "K_ci_lo": 680.5574689509682,
+       "n_ci_hi": 0.4362,
+       "K_ci_hi": 670.5299600822997,
+       "n_max": 0.7,
+       "K_max": 526.5526360132449
+      }
+     },
+     "DeltaFSD(5.0)|phi=0.85": {
+      "kernel_K_n_m2_1mn": 675.339441319905,
+      "kernel_at_n0_m2": 999.998445353383,
+      "log_sensitivity_dlnK_dn": -0.9162891774066098,
+      "kernel_over_n_grid": {
+       "n_min": 0.2,
+       "K_min": 832.552171773171,
+       "n_ci_lo": 0.42,
+       "K_ci_lo": 680.5574689509684,
+       "n_ci_hi": 0.4362,
+       "K_ci_hi": 670.5299600822999,
+       "n_max": 0.7,
+       "K_max": 526.5526360132449
+      }
+     },
+     "DeltaFSD(5.0)|phi=0.90": {
+      "kernel_K_n_m2_1mn": 675.3394413199047,
+      "kernel_at_n0_m2": 999.9984453533823,
+      "log_sensitivity_dlnK_dn": -0.9162891774066091,
+      "kernel_over_n_grid": {
+       "n_min": 0.2,
+       "K_min": 832.5521717731706,
+       "n_ci_lo": 0.42,
+       "K_ci_lo": 680.5574689509682,
+       "n_ci_hi": 0.4362,
+       "K_ci_hi": 670.5299600822996,
+       "n_max": 0.7,
+       "K_max": 526.5526360132449
+      }
+     }
+    }
+   },
+   "structure_face": {
+    "A_ref_face_m2": 88.776255882007,
+    "note": "W=field box 横向宽度，h=0.5 m；半宽面用于给出锚无关系数",
+    "ratio_halfwidth_over_full": 0.672870137616213,
+    "ratio_over_n_grid": [
+     {
+      "n": 0.2,
+      "ratio": 0.5743491774985174
+     },
+     {
+      "n": 0.42,
+      "ratio": 0.668963777393056
+     },
+     {
+      "n": 0.4284,
+      "ratio": 0.672870137616213
+     },
+     {
+      "n": 0.4362,
+      "ratio": 0.6765178943189455
+     },
+     {
+      "n": 0.7,
+      "ratio": 0.8122523963562355
+     }
+    ]
+   },
+   "caliber_difference": "两口径不是同一物理问题：floe_patch 随 FSD 变化，structure_face 只随 W·h 变化（同一 p(A) 律）"
+  },
+  "anchor_free_ratios": {
+   "PowerLawFSD(2.5)|phi=0.60 / PowerLawFSD(2.5)|phi=0.85": {
+    "n": 0.4284,
+    "ratio": 1.0000000000000002,
+    "ratio_over_n_grid": [
+     {
+      "n": 0.2,
+      "ratio": 1.0000000000000004
+     },
+     {
+      "n": 0.42,
+      "ratio": 1.0000000000000002
+     },
+     {
+      "n": 0.4284,
+      "ratio": 1.0000000000000002
+     },
+     {
+      "n": 0.4362,
+      "ratio": 1.0000000000000002
+     },
+     {
+      "n": 0.7,
+      "ratio": 1.0
+     }
+    ]
+   },
+   "PowerLawFSD(2.5)|phi=0.90 / PowerLawFSD(2.5)|phi=0.85": {
+    "n": 0.4284,
+    "ratio": 0.9999999999999993,
+    "ratio_over_n_grid": [
+     {
+      "n": 0.2,
+      "ratio": 0.9999999999999993
+     },
+     {
+      "n": 0.42,
+      "ratio": 0.9999999999999996
+     },
+     {
+      "n": 0.4284,
+      "ratio": 0.9999999999999993
+     },
+     {
+      "n": 0.4362,
+      "ratio": 0.9999999999999993
+     },
+     {
+      "n": 0.7,
+      "ratio": 0.9999999999999996
+     }
+    ]
+   },
+   "LogNormalFSD(0.5)|phi=0.60 / PowerLawFSD(2.5)|phi=0.85": {
+    "n": 0.4284,
+    "ratio": 0.9872024245338301,
+    "ratio_over_n_grid": [
+     {
+      "n": 0.2,
+      "ratio": 0.9936772081482146
+     },
+     {
+      "n": 0.42,
+      "ratio": 0.9873253466409403
+     },
+     {
+      "n": 0.4284,
+      "ratio": 0.9872024245338301
+     },
+     {
+      "n": 0.4362,
+      "ratio": 0.9870961781121314
+     },
+     {
+      "n": 0.7,
+      "ratio": 0.9880140209967181
+     }
+    ]
+   },
+   "LogNormalFSD(0.5)|phi=0.85 / PowerLawFSD(2.5)|phi=0.85": {
+    "n": 0.4284,
+    "ratio": 0.9872024245338301,
+    "ratio_over_n_grid": [
+     {
+      "n": 0.2,
+      "ratio": 0.9936772081482147
+     },
+     {
+      "n": 0.42,
+      "ratio": 0.9873253466409404
+     },
+     {
+      "n": 0.4284,
+      "ratio": 0.9872024245338301
+     },
+     {
+      "n": 0.4362,
+      "ratio": 0.9870961781121316
+     },
+     {
+      "n": 0.7,
+      "ratio": 0.9880140209967181
+     }
+    ]
+   },
+   "LogNormalFSD(0.5)|phi=0.90 / PowerLawFSD(2.5)|phi=0.85": {
+    "n": 0.4284,
+    "ratio": 0.9872024245338301,
+    "ratio_over_n_grid": [
+     {
+      "n": 0.2,
+      "ratio": 0.9936772081482146
+     },
+     {
+      "n": 0.42,
+      "ratio": 0.9873253466409404
+     },
+     {
+      "n": 0.4284,
+      "ratio": 0.9872024245338301
+     },
+     {
+      "n": 0.4362,
+      "ratio": 0.9870961781121314
+     },
+     {
+      "n": 0.7,
+      "ratio": 0.9880140209967181
+     }
+    ]
+   },
+   "BimodalFSD()|phi=0.60 / PowerLawFSD(2.5)|phi=0.85": {
+    "n": 0.4284,
+    "ratio": 0.9008250820832605,
+    "ratio_over_n_grid": [
+     {
+      "n": 0.2,
+      "ratio": 0.8859517463669233
+     },
+     {
+      "n": 0.42,
+      "ratio": 0.900072899669244
+     },
+     {
+      "n": 0.4284,
+      "ratio": 0.9008250820832605
+     },
+     {
+      "n": 0.4362,
+      "ratio": 0.9015386731956407
+     },
+     {
+      "n": 0.7,
+      "ratio": 0.935083426528677
+     }
+    ]
+   },
+   "BimodalFSD()|phi=0.85 / PowerLawFSD(2.5)|phi=0.85": {
+    "n": 0.4284,
+    "ratio": 0.9008250820832614,
+    "ratio_over_n_grid": [
+     {
+      "n": 0.2,
+      "ratio": 0.8859517463669244
+     },
+     {
+      "n": 0.42,
+      "ratio": 0.9000728996692449
+     },
+     {
+      "n": 0.4284,
+      "ratio": 0.9008250820832614
+     },
+     {
+      "n": 0.4362,
+      "ratio": 0.9015386731956415
+     },
+     {
+      "n": 0.7,
+      "ratio": 0.9350834265286775
+     }
+    ]
+   },
+   "BimodalFSD()|phi=0.90 / PowerLawFSD(2.5)|phi=0.85": {
+    "n": 0.4284,
+    "ratio": 0.9008250820832605,
+    "ratio_over_n_grid": [
+     {
+      "n": 0.2,
+      "ratio": 0.8859517463669233
+     },
+     {
+      "n": 0.42,
+      "ratio": 0.900072899669244
+     },
+     {
+      "n": 0.4284,
+      "ratio": 0.9008250820832605
+     },
+     {
+      "n": 0.4362,
+      "ratio": 0.9015386731956405
+     },
+     {
+      "n": 0.7,
+      "ratio": 0.9350834265286772
+     }
+    ]
+   },
+   "DeltaFSD(5.0)|phi=0.60 / PowerLawFSD(2.5)|phi=0.85": {
+    "n": 0.4284,
+    "ratio": 0.9519863283312135,
+    "ratio_over_n_grid": [
+     {
+      "n": 0.2,
+      "ratio": 0.9254546688410373
+     },
+     {
+      "n": 0.42,
+      "ratio": 0.9510818657075812
+     },
+     {
+      "n": 0.4284,
+      "ratio": 0.9519863283312135
+     },
+     {
+      "n": 0.4362,
+      "ratio": 0.9528212043960471
+     },
+     {
+      "n": 0.7,
+      "ratio": 0.9781744190651864
+     }
+    ]
+   },
+   "DeltaFSD(5.0)|phi=0.85 / PowerLawFSD(2.5)|phi=0.85": {
+    "n": 0.4284,
+    "ratio": 0.9519863283312139,
+    "ratio_over_n_grid": [
+     {
+      "n": 0.2,
+      "ratio": 0.9254546688410376
+     },
+     {
+      "n": 0.42,
+      "ratio": 0.9510818657075815
+     },
+     {
+      "n": 0.4284,
+      "ratio": 0.9519863283312139
+     },
+     {
+      "n": 0.4362,
+      "ratio": 0.9528212043960474
+     },
+     {
+      "n": 0.7,
+      "ratio": 0.9781744190651864
+     }
+    ]
+   },
+   "DeltaFSD(5.0)|phi=0.90 / PowerLawFSD(2.5)|phi=0.85": {
+    "n": 0.4284,
+    "ratio": 0.9519863283312135,
+    "ratio_over_n_grid": [
+     {
+      "n": 0.2,
+      "ratio": 0.925454668841037
+     },
+     {
+      "n": 0.42,
+      "ratio": 0.9510818657075812
+     },
+     {
+      "n": 0.4284,
+      "ratio": 0.9519863283312135
+     },
+     {
+      "n": 0.4362,
+      "ratio": 0.952821204396047
+     },
+     {
+      "n": 0.7,
+      "ratio": 0.9781744190651864
+     }
+    ]
+   }
+  }
+ },
+ "checks": {
+  "dimensional": {
+   "rows": [
+    {
+     "check": "A/A_ref 无量纲（指数段不携带量纲）",
+     "lhs": {},
+     "rhs": {},
+     "pass": true,
+     "note": ""
+    },
+    {
+     "check": "p(A)=p0·(A/A_ref)^(-n) 量纲 = [Pa]",
+     "lhs": {
+      "kg": "1",
+      "m": "-1",
+      "s": "-2"
+     },
+     "rhs": {
+      "kg": "1",
+      "m": "-1",
+      "s": "-2"
+     },
+     "pass": true,
+     "note": ""
+    },
+    {
+     "check": "F=p(A)·A 量纲 = [N]",
+     "lhs": {
+      "kg": "1",
+      "m": "1",
+      "s": "-2"
+     },
+     "rhs": {
+      "kg": "1",
+      "m": "1",
+      "s": "-2"
+     },
+     "pass": true,
+     "note": ""
+    },
+    {
+     "check": "K(n)=ΣA_i^(1-n) 量纲 = m^(2(1-n))",
+     "lhs": {
+      "m": "5148515094009951/4503599627370496"
+     },
+     "rhs": {
+      "m": "5148515094009951/4503599627370496"
+     },
+     "pass": true,
+     "note": "非无量纲：n≠1 时 K 带量纲，故不能单独当作物理力"
+    },
+    {
+     "check": "F=p0·A_ref^n·K(n) 量纲 = [N]（A_ref 指数必须抵消 K）",
+     "lhs": {
+      "kg": "1",
+      "m": "1",
+      "s": "-2"
+     },
+     "rhs": {
+      "kg": "1",
+      "m": "1",
+      "s": "-2"
+     },
+     "pass": true,
+     "note": ""
+    },
+    {
+     "check": "A_ref 归一化敏感性（A_ref 取 1 m 只是单位选择）",
+     "exponent_used": 0.0,
+     "resulting_dims": {
+      "kg": "1",
+      "m": "1",
+      "s": "-2"
+     },
+     "equals_N": true,
+     "pass": true,
+     "note": "A_ref=1 m 时 F 的量纲退化为 m^(2-2n)/…，数值不是牛顿"
+    }
+   ],
+   "pass": true
+  },
+  "consistency": {
+   "rows": [
+    {
+     "check": "p(A) 严格递减（401 点零违例）",
+     "violations": 0,
+     "pass": true
+    },
+    {
+     "check": "F(A)=p·A 递增且亚线性（0<n<1）",
+     "violations": 0,
+     "pass": true
+    },
+    {
+     "check": "d ln p / d ln A = -n",
+     "fitted": -0.42840000000000017,
+     "expected": -0.4284,
+     "fit_residual": 2.6645352591003757e-15,
+     "pass": true
+    },
+    {
+     "check": "尺度不变性 p(λA)/p(A) = λ^(-n)（λ=10）",
+     "ratio": 0.3729065399621526,
+     "expected": 0.3729065399621526,
+     "pass": true
+    },
+    {
+     "check": "局部-平均一致性 p(A)·A = ∫_0^A p_loc da（4 个面积点）",
+     "residual_max": 2.734307520079576e-16,
+     "pass": true,
+     "note": "把『面积平均压力』与『局部接触压力幂律』钉在一起；无锚位也能检"
+    },
+    {
+     "check": "聚合双路一致：Σ p(A_i)A_i vs p0·A_ref^n·K(n)",
+     "direct": 8172.321557917683,
+     "via_kernel": 8172.321557917683,
+     "rel_residual": 0.0,
+     "pass": true
+    },
+    {
+     "check": "口径退化机检：同一 FSD 不同 φ 的 floe 接触斑集合一致",
+     "residual_max": 2.8724542215201576e-14,
+     "pass": true,
+     "note": "floe_patch 口径下堆积浓度不改变聚合算子（半径抽样与 φ 无关）；载荷对浓度的依赖只能来自力链/堵塞，属算子层之外，须由 DEM 实验回答"
+    }
+   ],
+   "pass": true
+  },
+  "registry_discipline": {
+   "verified_slots": [],
+   "violations": [],
+   "pass": true,
+   "rule": "未核候选/二手值只能出现在 comparison 字段；PASS 判据的 measured 必须溯源到 VERIFIED 原文锚位"
+  }
+ },
+ "recompute": {
+  "residual_max_rel_p": 0.0,
+  "residual_max_rel_F": 0.0,
+  "residual_max_rel_K": 0.0,
+  "n_recovered_from_stored_samples": 0.4284,
+  "residual_rel_n_recovered": 0.0,
+  "residual_max": 0.0,
+  "threshold": 1e-09,
+  "pass": true,
+  "method": "以工件内 (A, p) 采样点反演指数 n，再与工件内 n 及 F=p·A 复算比对"
+ },
+ "gaps": [
+  "ISO 19906:2019 正本（Annex A / Clause 14 / Clause 15）不可得且无合法免费渠道 → 引句、表号/页码、p0、A_ref 全部 WITHHELD",
+  "绝对层未闭环：K(n) 带量纲 m^(2(1-n))，缺 A_ref 无法化为牛顿 → 本算例的全球冰力数值不可声明",
+  "『领域实验 vs 规范锚』的差额未计算，故本工件不含任何一致性百分比",
+  "口径退化已查明：floe_patch 口径下同族 FSD 的聚合算子与浓度无关（残差 0），因此本工件不能给出『载荷随冰密集度变化』的任何结论"
+ ],
+ "next_steps": [
+  "取得授权正本后把 quote_verbatim/table_or_page/value/p0/A_ref 写入注入文件，以 --anchor-file 复跑：C1/C2 自动翻 PASS，绝对力与差额随即可算",
+  "C1 通过后用同一脚本把 anchor_free_ratios 换成绝对牛顿数并做 κ、h 敏感性",
+  "领域侧：对 φ=0.60/0.90 与四族 FSD 跑 DEM 压缩实验，检验本工件预登记的比值预测"
+ ],
+ "predictions_for_domain_test": {
+  "note": "锚无关系数预测（可在锚未核销时先登记，供后续 DEM 判据用）",
+  "ratios_at_candidate_n": {
+   "PowerLawFSD(2.5)|phi=0.60 / PowerLawFSD(2.5)|phi=0.85": 1.0000000000000002,
+   "PowerLawFSD(2.5)|phi=0.90 / PowerLawFSD(2.5)|phi=0.85": 0.9999999999999993,
+   "LogNormalFSD(0.5)|phi=0.60 / PowerLawFSD(2.5)|phi=0.85": 0.9872024245338301,
+   "LogNormalFSD(0.5)|phi=0.85 / PowerLawFSD(2.5)|phi=0.85": 0.9872024245338301,
+   "LogNormalFSD(0.5)|phi=0.90 / PowerLawFSD(2.5)|phi=0.85": 0.9872024245338301,
+   "BimodalFSD()|phi=0.60 / PowerLawFSD(2.5)|phi=0.85": 0.9008250820832605,
+   "BimodalFSD()|phi=0.85 / PowerLawFSD(2.5)|phi=0.85": 0.9008250820832614,
+   "BimodalFSD()|phi=0.90 / PowerLawFSD(2.5)|phi=0.85": 0.9008250820832605,
+   "DeltaFSD(5.0)|phi=0.60 / PowerLawFSD(2.5)|phi=0.85": 0.9519863283312135,
+   "DeltaFSD(5.0)|phi=0.85 / PowerLawFSD(2.5)|phi=0.85": 0.9519863283312139,
+   "DeltaFSD(5.0)|phi=0.90 / PowerLawFSD(2.5)|phi=0.85": 0.9519863283312135
+  },
+  "band_over_n_0.20_0.70": {
+   "PowerLawFSD(2.5)|phi=0.60 / PowerLawFSD(2.5)|phi=0.85": [
+    1.0,
+    1.0000000000000004
+   ],
+   "PowerLawFSD(2.5)|phi=0.90 / PowerLawFSD(2.5)|phi=0.85": [
+    0.9999999999999993,
+    0.9999999999999996
+   ],
+   "LogNormalFSD(0.5)|phi=0.60 / PowerLawFSD(2.5)|phi=0.85": [
+    0.9870961781121314,
+    0.9936772081482146
+   ],
+   "LogNormalFSD(0.5)|phi=0.85 / PowerLawFSD(2.5)|phi=0.85": [
+    0.9870961781121316,
+    0.9936772081482147
+   ],
+   "LogNormalFSD(0.5)|phi=0.90 / PowerLawFSD(2.5)|phi=0.85": [
+    0.9870961781121314,
+    0.9936772081482146
+   ],
+   "BimodalFSD()|phi=0.60 / PowerLawFSD(2.5)|phi=0.85": [
+    0.8859517463669233,
+    0.935083426528677
+   ],
+   "BimodalFSD()|phi=0.85 / PowerLawFSD(2.5)|phi=0.85": [
+    0.8859517463669244,
+    0.9350834265286775
+   ],
+   "BimodalFSD()|phi=0.90 / PowerLawFSD(2.5)|phi=0.85": [
+    0.8859517463669233,
+    0.9350834265286772
+   ],
+   "DeltaFSD(5.0)|phi=0.60 / PowerLawFSD(2.5)|phi=0.85": [
+    0.9254546688410373,
+    0.9781744190651864
+   ],
+   "DeltaFSD(5.0)|phi=0.85 / PowerLawFSD(2.5)|phi=0.85": [
+    0.9254546688410376,
+    0.9781744190651864
+   ],
+   "DeltaFSD(5.0)|phi=0.90 / PowerLawFSD(2.5)|phi=0.85": [
+    0.925454668841037,
+    0.9781744190651864
+   ]
+  }
+ },
+ "honesty": {
+  "no_compliance_claim": true,
+  "memory_or_secondhand_values_used_as_anchor": false,
+  "candidate_values_used_only_as_comparison": true,
+  "hand_typed_numbers": false,
+  "absolute_layer_declared": false
+ },
+ "wall_s": 76.35,
+ "figures": [
+  {
+   "name": "fig1_operator.png",
+   "caption": "p(A)=p0(A/A_ref)^-n 与 F=p·A 算子（单位归一 p0=1, A_ref=1；n 取候选值 ± 扫描带）。绝对值不可声明：p0/A_ref 未核销。"
+  },
+  {
+   "name": "fig2_field_kernels.png",
+   "caption": "左：IN32-N01 生成场各 floe 接触斑面积分布（φ=0.85，4 个 FSD 族）；右：锚无关系数 F_field(B)/F_field(A) 随指数 n 的敏感性——缺失锚的代价由带宽量化。"
+  },
+  {
+   "name": "fig3_checks.png",
+   "caption": "量纲齐次与内部一致性机检逐条结果（全部 PASS，含 A_ref 归一化陷阱行）。"
+  }
+ ]
+}
