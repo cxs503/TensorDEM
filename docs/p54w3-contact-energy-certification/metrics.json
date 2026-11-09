@@ -1,0 +1,406 @@
+{
+ "meta": {
+  "generated_utc": "2026-11-09T08:06:54+00:00",
+  "tensordem_version": "0.1.0",
+  "python": "3.11.6",
+  "platform": "Linux-6.6.52-1.7.lns23.loongarch64-loongarch64-with-glibc2.38",
+  "wall_s": 112.21673607826233,
+  "argv": [
+   "--all",
+   "--levels",
+   "8",
+   "--m5404-levels",
+   "4"
+  ]
+ },
+ "criteria": {
+  "a_flux_convention_below_1e-9": true,
+  "b_explicit_slope_one": true,
+  "b_trapezoid_slope_two": true,
+  "c_restitution_within_1e-3": true,
+  "d_cradle_momentum_below_1e-12": true,
+  "e_m5404_verdict_given": true
+ },
+ "all_passed": true,
+ "thresholds": {
+  "flux": 1e-09,
+  "slope_tolerance": 0.2,
+  "restitution": 0.001,
+  "momentum": 1e-12
+ },
+ "key_numbers": {
+  "flux_residual_max": 2.734357879008442e-15,
+  "slope_explicit": 0.9863733685257661,
+  "slope_trapezoid": 1.9893223380372635,
+  "restitution_error": 7.662637362870761e-05,
+  "e_measured": 0.5716634012111481,
+  "e_target": 0.5717400275847768,
+  "cradle_momentum_error_max": 1.1102230246251565e-15,
+  "cradle_flux_residual_max": 6.044097107570437e-14,
+  "m5404_slope_state": 1.4705827908203855,
+  "m5404_verdict": "convention"
+ },
+ "study": {
+  "case": {
+   "law": "linear spring, undamped (exact solution available)",
+   "stiffness_n_m": 100000.0,
+   "m_eff_kg": 1.0,
+   "v0_m_s": 1.0,
+   "gap0_m": 0.02,
+   "checkpoint_fraction": 0.3,
+   "refinements_per_contact": [
+    8,
+    16,
+    32,
+    64,
+    128,
+    256,
+    512,
+    1024
+   ],
+   "levels": 8
+  },
+  "rows": [
+   {
+    "dt": 0.0012418235332245127,
+    "steps_per_contact": 7.999999999999998,
+    "checkpoint_steps": 19,
+    "checkpoint_time_rel": 0.0035946471312657408,
+    "checkpoint_frac": 0.3618315158205187,
+    "e0_j": 0.5,
+    "dke_exact_j": -0.41156211607587406,
+    "dke_discrete_j": -0.4159093857682282,
+    "w_flux_full_j": -0.0034520714465815505,
+    "w_explicit_checkpoint_j": -0.279070813100276,
+    "w_trapezoid_checkpoint_j": -0.43229556298183225,
+    "residual_flux_full": 1.1102230246251565e-16,
+    "residual_explicit": 0.26498260595119616,
+    "residual_trapezoid": 0.04146689381191637,
+    "residual_state_full": 0.00690414289316299
+   },
+   {
+    "dt": 0.0006209117666122563,
+    "steps_per_contact": 15.999999999999996,
+    "checkpoint_steps": 37,
+    "checkpoint_time_rel": 0.002973735364653469,
+    "checkpoint_frac": 0.2993315158205171,
+    "e0_j": 0.5,
+    "dke_exact_j": -0.32625491081394364,
+    "dke_discrete_j": -0.32814411187434767,
+    "w_flux_full_j": -0.0003021172385269475,
+    "w_explicit_checkpoint_j": -0.2614380991300227,
+    "w_trapezoid_checkpoint_j": -0.3313064399883551,
+    "residual_flux_full": 6.279698983036042e-16,
+    "residual_explicit": 0.1296336233678419,
+    "residual_trapezoid": 0.010103058348822858,
+    "residual_state_full": 0.000604234477053267
+   },
+   {
+    "dt": 0.0003104558833061282,
+    "steps_per_contact": 31.999999999999993,
+    "checkpoint_steps": 74,
+    "checkpoint_time_rel": 0.0029737353646534445,
+    "checkpoint_frac": 0.29933151582051465,
+    "e0_j": 0.5,
+    "dke_exact_j": -0.32625491081394,
+    "dke_discrete_j": -0.3268456691750926,
+    "w_flux_full_j": -1.0556498624576197e-05,
+    "w_explicit_checkpoint_j": -0.29285115999261996,
+    "w_trapezoid_checkpoint_j": -0.3276322913069671,
+    "residual_flux_full": 2.3158558404290375e-16,
+    "residual_explicit": 0.06680750164264004,
+    "residual_trapezoid": 0.0027547609860542055,
+    "residual_state_full": 2.111299724938398e-05
+   },
+   {
+    "dt": 0.0001552279416530641,
+    "steps_per_contact": 63.999999999999986,
+    "checkpoint_steps": 148,
+    "checkpoint_time_rel": 0.002973735364653514,
+    "checkpoint_frac": 0.29933151582052164,
+    "e0_j": 0.5,
+    "dke_exact_j": -0.3262549108139505,
+    "dke_discrete_j": -0.3263544826485047,
+    "w_flux_full_j": 5.260509267848148e-06,
+    "w_explicit_checkpoint_j": -0.3091611327972711,
+    "w_trapezoid_checkpoint_j": -0.3265510985320421,
+    "residual_flux_full": 4.618701254788249e-16,
+    "residual_explicit": 0.03418755603335888,
+    "residual_trapezoid": 0.000592375436183179,
+    "residual_state_full": 1.0521018536158167e-05
+   },
+   {
+    "dt": 7.761397082653204e-05,
+    "steps_per_contact": 127.99999999999997,
+    "checkpoint_steps": 296,
+    "checkpoint_time_rel": 0.0029737353646534306,
+    "checkpoint_frac": 0.29933151582051326,
+    "e0_j": 0.5,
+    "dke_exact_j": -0.32625491081393787,
+    "dke_discrete_j": -0.32628861703181555,
+    "w_flux_full_j": 3.5607626573002683e-07,
+    "w_explicit_checkpoint_j": -0.3176455538587255,
+    "w_trapezoid_checkpoint_j": -0.3263377531358811,
+    "residual_flux_full": 3.7426658994199613e-16,
+    "residual_explicit": 0.017218713910424732,
+    "residual_trapezoid": 0.00016568464388644344,
+    "residual_state_full": 7.121525318343203e-07
+   },
+   {
+    "dt": 3.880698541326602e-05,
+    "steps_per_contact": 255.99999999999994,
+    "checkpoint_steps": 592,
+    "checkpoint_time_rel": 0.002973735364653625,
+    "checkpoint_frac": 0.2993315158205328,
+    "e0_j": 0.5,
+    "dke_exact_j": -0.3262549108139672,
+    "dke_discrete_j": -0.3262638362739245,
+    "w_flux_full_j": -3.1370938492975356e-08,
+    "w_explicit_checkpoint_j": -0.3219301635784227,
+    "w_trapezoid_checkpoint_j": -0.32627611976229853,
+    "residual_flux_full": 2.734357879008442e-15,
+    "residual_explicit": 0.008649494471088981,
+    "residual_trapezoid": 4.2417896662705346e-05,
+    "residual_state_full": 6.274187425159283e-08
+   },
+   {
+    "dt": 1.940349270663301e-05,
+    "steps_per_contact": 511.9999999999999,
+    "checkpoint_steps": 1184,
+    "checkpoint_time_rel": 0.002973735364653906,
+    "checkpoint_frac": 0.2993315158205611,
+    "e0_j": 0.5,
+    "dke_exact_j": -0.3262549108140095,
+    "dke_discrete_j": -0.32625686299087797,
+    "w_flux_full_j": 7.313923706259162e-09,
+    "w_explicit_checkpoint_j": -0.3240869647169312,
+    "w_trapezoid_checkpoint_j": -0.32625993384214313,
+    "residual_flux_full": 1.8110513089197866e-15,
+    "residual_explicit": 0.004335892194156532,
+    "residual_trapezoid": 1.0046056267309922e-05,
+    "residual_state_full": 1.4627845601467016e-08
+   },
+   {
+    "dt": 9.701746353316505e-06,
+    "steps_per_contact": 1023.9999999999998,
+    "checkpoint_steps": 2369,
+    "checkpoint_time_rel": 0.002983437111007365,
+    "checkpoint_frac": 0.30030807832057543,
+    "e0_j": 0.5,
+    "dke_exact_j": -0.32771434672882394,
+    "dke_discrete_j": -0.327714927598442,
+    "w_flux_full_j": -5.924447868052574e-11,
+    "w_explicit_checkpoint_j": -0.32662758911833933,
+    "w_trapezoid_checkpoint_j": -0.3277156987425207,
+    "residual_flux_full": 1.8301332671555315e-16,
+    "residual_explicit": 0.002173515220969202,
+    "residual_trapezoid": 2.704027393551911e-06,
+    "residual_state_full": 1.1848877434772476e-10
+   }
+  ],
+  "fits": {
+   "residual_explicit": {
+    "slope": 0.9863733685257661,
+    "intercept": 5.2633007010515405,
+    "r2": 0.9999524975601165,
+    "ratio_coarse_over_fine": 121.91430885542019,
+    "n_points": 8,
+    "dt_min": 9.701746353316505e-06,
+    "dt_max": 0.0012418235332245127
+   },
+   "residual_trapezoid": {
+    "slope": 1.9893223380372635,
+    "intercept": 10.111274431788424,
+    "r2": 0.9997927804592613,
+    "ratio_coarse_over_fine": 15335.23436589412,
+    "n_points": 8,
+    "dt_min": 9.701746353316505e-06,
+    "dt_max": 0.0012418235332245127
+   }
+  },
+  "flux_residual_max": 2.734357879008442e-15,
+  "slope_explicit": 0.9863733685257661,
+  "slope_trapezoid": 1.9893223380372635,
+  "flux_closes": true,
+  "explicit_first_order": true,
+  "trapezoid_second_order": true
+ },
+ "restitution": {
+  "zeta": 0.2,
+  "stiffness_n_m": 100000.0,
+  "damping_n_s_m": 126.49110640673518,
+  "e_target": 0.5717400275847768,
+  "e_measured": 0.5716634012111481,
+  "restitution_error": 7.662637362870761e-05,
+  "steps_per_contact": 1024.0,
+  "coarse_steps_per_contact": 32.0,
+  "coarse_restitution_error": 0.000859432239672997,
+  "error_shrinks_with_refinement": true,
+  "within_tolerance": true
+ },
+ "cradle": {
+  "n": 5,
+  "radius_m": 0.05,
+  "mass_kg": 1.0,
+  "stiffness_n_m": 10000000.0,
+  "velocity_m_s": 1.0,
+  "levels": 3,
+  "dt": [
+   0.0004830677106261852,
+   0.0002415338553130926,
+   0.0001207669276565463
+  ],
+  "steps_per_contact": [
+   8.0,
+   16.0,
+   32.0
+  ],
+  "momentum_error_max": 1.1102230246251565e-15,
+  "flux_residual_max": 6.044097107570437e-14,
+  "state_residual": [
+   6.126753352009295e-05,
+   0.0006052028505632023,
+   1.9163869569238656e-05
+  ],
+  "explicit_residual": [
+   0.94351524786498,
+   0.46065335604441554,
+   0.22909001307216556
+  ],
+  "slope_explicit": 1.021065632833699,
+  "e_measured": [
+   0.9904540110914669,
+   0.9895472811244139,
+   0.9888959440552271
+  ],
+  "v_last_ball_final": [
+   0.9904540110914669,
+   0.9895472811244139,
+   0.9888959440552271
+  ],
+  "momentum_conserved": true,
+  "flux_closes": true
+ },
+ "m5404": {
+  "reported_residual": 5.111290246429849e-07,
+  "reproduced_residual": 5.111290246429849e-07,
+  "ratio_to_reported": 1.0,
+  "slope_state": 1.4705827908203855,
+  "slope_trapezoid": 2.03053095559159,
+  "slope_injected_defect": -0.005487915863655327,
+  "state_residual_ratio": 18.027904020535363,
+  "defect_plateau_ratio": 0.9895394707840238,
+  "rows": [
+   {
+    "k": 0,
+    "dt": 0.0002,
+    "steps": 2501,
+    "residual_state": 5.111290246429849e-07,
+    "residual_trapezoid": 2.3152074702662755e-05,
+    "residual_state_injected_defect": 4.814792060178704e-05,
+    "contact_elastic_j": 133.86104552232928,
+    "initial_energy_j": 2751.000000000001,
+    "max_penetration_m": 0.019386437827088265,
+    "v_floe_a": 0.004641020859028572,
+    "v_floe_b": 0.49535897914097143
+   },
+   {
+    "k": 1,
+    "dt": 0.0001,
+    "steps": 5001,
+    "residual_state": 3.9642417466163686e-07,
+    "residual_trapezoid": 5.295456184112046e-06,
+    "residual_state_injected_defect": 4.8282592704852025e-05,
+    "contact_elastic_j": 133.9159754355648,
+    "initial_energy_j": 2751.000000000001,
+    "max_penetration_m": 0.019385213157665726,
+    "v_floe_a": 0.004649513497660509,
+    "v_floe_b": 0.49535048650234
+   },
+   {
+    "k": 2,
+    "dt": 5e-05,
+    "steps": 10001,
+    "residual_state": 8.691616005229523e-08,
+    "residual_trapezoid": 1.3869981982339385e-06,
+    "residual_state_injected_defect": 4.8597085256604195e-05,
+    "contact_elastic_j": 133.92968789722497,
+    "initial_energy_j": 2751.000000000001,
+    "max_penetration_m": 0.019384760882179997,
+    "v_floe_a": 0.0046515117630724755,
+    "v_floe_b": 0.4953484882369272
+   },
+   {
+    "k": 3,
+    "dt": 2.5e-05,
+    "steps": 20001,
+    "residual_state": 2.83521048293115e-08,
+    "residual_trapezoid": 3.319173796234836e-07,
+    "residual_state_injected_defect": 4.865689749964079e-05,
+    "contact_elastic_j": 133.9331216619225,
+    "initial_energy_j": 2751.000000000001,
+    "max_penetration_m": 0.01938464749603841,
+    "v_floe_a": 0.004652020328289711,
+    "v_floe_b": 0.49534797967171207
+   }
+  ],
+  "fits": {
+   "residual_state": {
+    "slope": 1.4705827908203855,
+    "intercept": -1.66184460891185,
+    "r2": 0.9410515158548295,
+    "ratio_coarse_over_fine": 18.027904020535363,
+    "n_points": 4,
+    "dt_min": 2.5e-05,
+    "dt_max": 0.0002
+   },
+   "residual_trapezoid": {
+    "slope": 2.03053095559159,
+    "intercept": 6.598400624896766,
+    "r2": 0.9996910185423338,
+    "ratio_coarse_over_fine": 69.75252313972148,
+    "n_points": 4,
+    "dt_min": 2.5e-05,
+    "dt_max": 0.0002
+   },
+   "residual_state_injected_defect": {
+    "slope": -0.005487915863655327,
+    "intercept": -9.98803155289782,
+    "r2": 0.939897038331513,
+    "ratio_coarse_over_fine": 0.9895394707840238,
+    "n_points": 4,
+    "dt_min": 2.5e-05,
+    "dt_max": 0.0002
+   }
+  },
+  "verdict": "convention",
+  "verdict_rule": "convention iff fitted slope of the state residual >= 0.8",
+  "statement": "5.111e-07 \u662f**\u53e3\u5f84\u8bef\u5dee**\uff08\u79bb\u6563/\u8bb0\u8d26\u91cf\uff09\uff0c\u4e0d\u662f\u5b9e\u73b0\u7f3a\u9677\uff1a\u72b6\u6001\u91cf\u53e3\u5f84\u6b8b\u5dee\u5728 4 \u7ea7 \u0394t \u7ec6\u5316\u4e0b\u6309\u659c\u7387 1.47 \u5e42\u5f8b\u584c\u7f29\uff08\u7c97/\u7ec6 18.0\u00d7\uff09\uff0c\u800c\u540c\u4e00\u7b97\u4f8b\u6ce8\u5165 1e-3 \u72b6\u6001\u51fd\u6570\u7f3a\u9677\u540e\u6b8b\u5dee\u5448\u5e73\u53f0\uff08\u659c\u7387 -0.005\uff0c\u7c97/\u7ec6 0.990\u00d7\uff09\uff0c\u8bf4\u660e\u8be5\u5224\u636e\u5bf9\u5b9e\u73b0\u7f3a\u9677\u6709\u5206\u8fa8\u529b\uff0c5.111e-07 \u672a\u5448\u73b0\u5e73\u53f0\u884c\u4e3a\u3002",
+  "convention_identified": true
+ },
+ "controls": {
+  "flux_clean": 4.618701254788249e-16,
+  "flux_dropped_second_kick": 0.10894090587036365,
+  "flux_explicit_kick": 0.08015239615663217
+ },
+ "conventions": {
+  "flux": {
+   "cn": "\u901a\u91cf\u53e3\u5f84",
+   "formula": "W = sum_n (1/2)(P_n + P_{n+1}) h,  P_n = F_n v_n",
+   "reference": "same-run discrete dKE (full episode, contact-free ends)",
+   "expected": "identity: round-off (< 1e-9); residual would be a defect"
+  },
+  "explicit": {
+   "cn": "\u663e\u5f0f\u53e3\u5f84",
+   "formula": "W = sum_n F_n (x_{n+1} - x_n)",
+   "reference": "analytic dKE(t*) at the interior checkpoint t* = 0.3 t_c",
+   "expected": "first order: slope 1"
+  },
+  "trapezoid": {
+   "cn": "\u68af\u5f62\u53e3\u5f84",
+   "formula": "W = sum_n (1/2)(F_n + F_{n+1}) (x_{n+1} - x_n)",
+   "reference": "analytic dKE(t*) at the interior checkpoint t* = 0.3 t_c",
+   "expected": "second order: slope 2 (= trajectory order under Verlet)"
+  }
+ }
+}
