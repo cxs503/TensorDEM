@@ -1,0 +1,68 @@
+{
+  "task": "IN69-N06 · 固定结构周围冰碎堆积演化：DEM碎冰-结构接触 × 堆积体几何增长律 × 载荷屏蔽/放大时变效应",
+  "mission": 7586,
+  "repo": "TensorDEM",
+  "timestamp_utc": "2026-11-09T00:20:00Z",
+  "frozen_before_sweep": true,
+  "decision": {
+    "question": "Can a depth-averaged (plan-view) 2-D broken-ice DEM, with buoyant-overburden friction, reproduce (i) exponential rubble-pile growth, (ii) steady-state pile geometry scaling with Fr and ice concentration compatible within 20% of a momentum-balance (arrest/strength) reference, and (iii) load shielding at low Fr that turns into amplification at high Fr?",
+    "alternatives": {
+      "A_chosen": "Plan-view depth-averaged 2-D DEM (polydisperse rigid disks, one piece thickness h_i, water-drag drive, cylinder SDF, buoyant-overburden friction cap). Pile thickness H_p recovered from areal solid fraction with the Timco & O'Brien porosity anchor.",
+      "B_rejected": "Full 3-D buoyant DEM of the same problem: ~8-20x cost per unit physical time inside this node's budget, and the repo has no water-column/added-mass closure for multi-layer buoyant rubble, so a 3-D run would trade a controlled idealisation for an uncontrolled one.",
+      "C_rejected": "Closed-form 1-D pile model only: cannot produce contact-force time series, hence no shielding ratio, which is 2 of the 6 acceptance criteria."
+    }
+  },
+  "hypothesis": {
+    "H1_growth": "Pile geometry saturates monotonically and is described by X_p(t)=X_inf*(1-exp(-t/tau_X)) with R^2>0.95 for X in {B,H,L}.",
+    "H2_scaling": "Steady geometry follows the momentum-balance reference: H_inf/h_i = C_i Fr^2 / (mu (1-n) (1-rho_i/rho_w)); L_inf/h_i = (rho_i/(rho_w-rho_i)) Fr^2 / (2 mu H_inf/h_i); B_inf/L_inf ~ 2 mu. Predicted log-log exponents: dlnH/dlnFr=2, dlnH/dlnC=1, dlnL/dlnFr=2, dlnL/dlnD=0 (weak), dlnB/dlnFr=2.",
+    "H3_shielding": "R_shield = p_front/p_0 with p_0 from a pile-clearing control: R_shield<1 when the driving momentum flux rho_i C_i v_i^2 is below the pile strength mu (1-n)(rho_w-rho_i) g H_inf (Fr below Fr_t), R_shield>1 above Fr_t.",
+    "H4_conservation": "Pile mass equals the gate-ledger influx minus bypass/outflux within 2%."
+  },
+  "outcome_metrics": {
+    "growth_fit_r2": "coefficient of determination of the exponential fit, per case and per geometry variable",
+    "scale_exponents": "OLS slope of ln(geometric ratio) vs ln(Fr), ln(C_i), ln(D); with 1-sigma standard error",
+    "R_shield": "window-averaged structure front pressure ratio; plateau value over the last 25% of the run; crossover Fr (first Fr at which plateau R_shield exceeds 1)",
+    "mass_closure": "|dm_pile - (m_in - m_out)| / m_in from per-step gate crossings",
+    "penetration": "max overlap / particle radius (numerical-quality guard)"
+  },
+  "baseline_and_controls": {
+    "p0_baseline": "Pile-clearing control: an identical run (same seed, same ice flux, same geometry) in which every piece entering the exclusion disc of radius D/2 + 1.5 d_max is teleported to the upstream end of the periodic flume. Operational definition of the 'no-accumulation' load p_0; mass is preserved exactly.",
+    "p0_secondary_anchor": "Analytic momentum-flux estimate p_0 ~ rho_i C_i v_i^2 (direct impingement); the measured control load must agree within a factor of 3, otherwise the control is flagged.",
+    "negative_controls": {"C_i=0": "no pieces -> no pile, zero load", "v_i=0": "no drive -> no pile growth"},
+    "reproducibility": "base case repeated with 3 seeds; DEM-vs-DEM spread must be below the 20% scaling tolerance, otherwise the tolerance itself is declared unresolved."
+  },
+  "predeclared_thresholds": {
+    "r2_growth": 0.95,
+    "exponent_tolerance_relative": 0.20,
+    "mass_closure_relative": 0.02,
+    "max_penetration_over_radius": 0.05,
+    "control_load_anchor_factor": 3.0,
+    "saturation_exclusion": "a case is excluded from the steady-geometry scaling if the fitted growth is not saturated by the end of the run, i.e. |X(t_end)-X_inf|/X_inf > 0.10 or tau_X > 0.7 * t_end"
+  },
+  "sweep_design": {
+    "base": {"v_i": 0.3, "h_i": 0.3, "C_i": 0.3, "D": 3.0},
+    "v_sweep": [0.1, 0.2, 0.3, 0.5, 0.7, 1.0],
+    "h_sweep": [0.1, 0.2, 0.3, 0.4, 0.5],
+    "C_sweep": [0.1, 0.2, 0.3, 0.4, 0.5],
+    "D_sweep": [1.0, 2.0, 3.0, 4.0, 5.0],
+    "one_at_a_time": "one-factor-at-a-time rows from the base case (17 distinct parameter rows after de-duplication), each run in the accumulation mode AND in the clearing-control mode (34 runs) + 3 seed repeats + 2 negative/sensitivity runs",
+    "rationale": "A full 6x5x5x5 factorial (750 runs) is outside the node budget; OFAT resolves every pre-declared exponent with one degree of freedom each. Interaction structure is NOT estimable with OFAT and is declared as a limitation, not claimed."
+  },
+  "analysis_plan": {
+    "growth": "scipy.optimize.curve_fit on X_inf*(1-exp(-t/tau)); R^2 = 1 - SSE/SST on the sampled series",
+    "exponents": "OLS in log-log space with standard error; reported exponents compared with the pre-registered reference exponents above (relative deviation)",
+    "aggregation": "pile quantities are per-case maxima over a 1-s moving window; R_shield plateau = mean over the last 25% of the run",
+    "outliers": "no post-hoc exclusion other than the pre-declared saturation rule; every excluded case is listed with its numbers",
+    "literature_status": "no digitised experimental dataset for the B_p/H_p/L_p vs Fr,C_i laws is available offline in this worktree; the literature-anchored part of criterion (b) is graded WITHHELD and the reference used is the analytic momentum-balance model with literature material constants (rho_i, rho_w, n=0.32+-0.05 Timco & O'Brien, mu). This is declared before the sweep, not after."
+  },
+  "environment": {
+    "python": "3.11+", "numpy": "2.x", "scipy": "1.x",
+    "hardware": "CPU only (no GPU dependency); heavy sweep sharded on the loong64 cluster",
+    "determinism": "numpy default_rng(seed); neighbour list from cKDTree with sorted pair keys; single-threaded np.add.at accumulation"
+  },
+  "safety_and_resource_limits": {
+    "per_run_wall_seconds_estimate": 60,
+    "total_cpu_minutes_estimate": 45,
+    "guard": "runs abort if max penetration > 20% of the particle radius or if any particle leaves the periodic box (NaN guard)"
+  }
+}
