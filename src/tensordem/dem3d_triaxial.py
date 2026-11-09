@@ -39,6 +39,16 @@ from .dem3d import DEM3DConfig, IceDEM3D
 from .dem3d_energy import EnergyAuditedIceDEM3D
 
 
+def servo_velocity(error: float, gain: float, v_max: float) -> float:
+    """Clamped velocity-proportional servo law (shared pressure controller).
+
+    ``v = gain * error`` saturated to ``+-v_max``.  ``error`` is a force or a
+    force-proxy (pressure times area) residual; the sign convention is that a
+    positive error drives the platen *inward* (compressing the specimen).
+    """
+    return max(-v_max, min(v_max, gain * error))
+
+
 # --------------------------------------------------------------------------
 # Configuration
 # --------------------------------------------------------------------------
@@ -210,10 +220,10 @@ class TriaxialRunner:
         g = self.cfg.servo_gain
         vmax = self.cfg.servo_v_max
         # x_min moves +x into the specimen to raise x pressure; x_max moves -x.
-        vx_min = max(-vmax, min(vmax, g * ex))
-        vx_max = max(-vmax, min(vmax, -g * ex))
-        vy_min = max(-vmax, min(vmax, g * ey))
-        vy_max = max(-vmax, min(vmax, -g * ey))
+        vx_min = servo_velocity(ex, g, vmax)
+        vx_max = servo_velocity(-ex, g, vmax)
+        vy_min = servo_velocity(ey, g, vmax)
+        vy_max = servo_velocity(-ey, g, vmax)
         sim.lateral_platen_velocity[0] = vx_min
         sim.lateral_platen_velocity[1] = vx_max
         sim.lateral_platen_velocity[2] = vy_min
