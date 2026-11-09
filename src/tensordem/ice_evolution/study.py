@@ -30,6 +30,7 @@ from .sintering import (
 from .refreezing import RefreezeConfig, run_refreezing
 from .strength import StrengthConfig, rubble_strength
 from .channel import ChannelConfig, run_channel_evolution
+from .resistance import PlatenConfig
 from .energy import EnergyBudget, energy_closure, sinter_surface_energy_j_m3
 
 # Timco & Frederking (1996) uniaxial compressive strength of sea ice (Pa),
@@ -40,6 +41,24 @@ TIMCO_FREDERKING_1996 = {
     263.15: 1.5e6,   # -10 C
     268.15: 1.2e6,   # -5 C
 }
+
+# Fast platen config for study/verification (reduced particles + shorter duration)
+FAST_PLATEN = PlatenConfig(
+    n_particles=60,
+    mean_radius=0.012,
+    box_width=1.0,
+    box_height=0.25,
+    platen_speed=0.4,
+    duration_s=1.5,
+    mu=0.3,
+    kn=2.0e5,
+    damping_ratio=0.3,
+    dt_s=2.0e-4,
+    seed=0,
+    k_bond=0.0,
+    f_bond=0.0,
+    thickness_m=0.2,
+)
 
 
 def _criterion_a(temperature_k: float, particle_radius_m: float) -> dict:
@@ -100,7 +119,7 @@ def _criterion_c(cfg: StrengthConfig, duration_s: float) -> dict:
 def _criterion_e(cfg: RefreezeConfig, duration_s: float,
                  e_sinter_j_m3: float):
     res = run_refreezing(cfg, duration_s=duration_s,
-                          record_every_s=60.0, e_sinter_j_m3=e_sinter)
+                          record_every_s=60.0, e_sinter_j_m3=e_sinter_j_m3)
     budget = EnergyBudget(
         e_latent=res.e_latent_j_m2,
         e_sinter=res.e_sinter_j_m3 * cfg.thickness_m,
@@ -125,7 +144,8 @@ def run_study(out_dir, *,
               interval_h: float = 6.0,
               n_transits: int = 24,
               particle_radius_m: float = 0.010,
-              make_figures: bool = True) -> dict:
+              make_figures: bool = True,
+              platen: PlatenConfig | None = None) -> dict:
     """Run the full verification chain; write the ledger + figures."""
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
@@ -150,10 +170,14 @@ def run_study(out_dir, *,
                                         n_contacts, ICE_SURFACE_ENERGY)
     crit_e, _ = _criterion_e(refz_cfg, total, e_sinter)
 
-    ch_cfg = ChannelConfig(n_transits=n_transits, interval_s=interval_s,
-                            temperature_k=temperature_k, phi_0=phi_0,
-                            particle_radius_m=particle_radius_m,
-                            refreeze=refz_cfg, strength=str_cfg)
+    ch_cfg = ChannelConfig(
+        n_transits=n_transits, interval_s=interval_s,
+        temperature_k=temperature_k, phi_0=phi_0,
+        particle_radius_m=particle_radius_m,
+        n_calibration=4,
+        platen=platen or FAST_PLATEN,
+        refreeze=refz_cfg, strength=str_cfg,
+    )
     ch = run_channel_evolution(ch_cfg)
     crit_d = {
         "alpha": ch.alpha,
