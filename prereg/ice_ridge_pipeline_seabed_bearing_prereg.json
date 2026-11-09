@@ -1,0 +1,70 @@
+{
+  "task_key": "paper-exp-ice-ridge-pipeline-seabed-bearing-1",
+  "topic": "ice-ridge-pipeline-seabed-bearing",
+  "experiment": 1,
+  "experiment_name": "外部锚核销（逐字抄录 + 同口径换算 + 一致性机检）",
+  "registered_at_utc": "2026-11-08T12:20:00Z",
+  "registered_before_data_inspection": true,
+  "research_question": "本课题的外部定量锚（ISO 19906 Annex A 压力-面积关系与 Clause 14/15 设计全球冰力）能否被逐字核销并换算到本算例口径？在锚核销之后，本课题的领域实验结果与之相差多少？",
+  "decision": {
+    "question": "外部锚是否可用于本课题的达标声明（合规级引用）？",
+    "alternatives": [
+      "A1 锚可核销：逐字原文 + 表号/页码 + 数值齐全，换算链可复算 -> 可用作达标声明，并做领域对比",
+      "A2 锚不可核销：无许可原文 -> 只能登记为 WITHHELD，候选值仅作核对对照，不做达标声明",
+      "A3 锚数值自相矛盾：原文可取但内部换算不自洽 -> 记为 FALSIFIED 锚，退回不采信"
+    ]
+  },
+  "hypothesis": "H1: 工作树与平台可访问语料内不存在 ISO 19906:2019 的许可原文，因此两个锚的 primary 级核销均不可能；只有 secondary 引用级引句（若可从公开可核验源取得）可供对照。H0（备择）：存在可核验原文，则 C1 可在 primary 级通过。",
+  "outcome_metrics": {
+    "verbatim_verified_anchors": "含非空 verbatim_quote + table_or_page + numeric_values 且来源可独立核验（URL 或仓内路径 + sha256）的锚数量",
+    "max_relative_residual": "换算链两条独立路径的最大相对残差",
+    "dimension_exponent_mismatches": "SI 量纲指数向量不匹配项数",
+    "internal_consistency_violations": "内部一致性机检违约项数",
+    "unverified_entries_usable_for_claim": "被标为可用于达标声明的未核登记值数量"
+  },
+  "predeclared_criteria": [
+    {
+      "id": "C1",
+      "text": "引句 + 表号/页码 + 数值逐字录入工件（值=来源原值，禁改写/禁四舍五入到失真）",
+      "metric": "verbatim_verified_anchors",
+      "threshold": ">= 1 (每个锚均须含非空 verbatim_quote/table_or_page/numeric_values, provenance_level in {PRIMARY_TEXT_READ, SECONDARY_VERBATIM}, 且带可独立核验的来源标识)",
+      "falsification": "若 0 个锚通过 -> C1 FAIL, 工件如实记 HONEST_FAIL, 禁以候选值代填"
+    },
+    {
+      "id": "C2",
+      "text": "同口径换算脚本落盘且可复算（复算残差 <1e-9）",
+      "metric": "max_relative_residual_two_independent_paths",
+      "threshold": "< 1e-9",
+      "falsification": "残差 >= 1e-9 -> C2 FAIL"
+    },
+    {
+      "id": "C3",
+      "text": "量纲齐次与内部一致性机检通过",
+      "metric": "dimension_exponent_mismatches + internal_consistency_violations",
+      "threshold": "== 0",
+      "falsification": "任一违约 -> C3 FAIL, 违约项逐条列出"
+    },
+    {
+      "id": "C4",
+      "text": "未核候选登记值不得直接引用（只能作为核对对照）",
+      "metric": "unverified_entries_usable_for_claim",
+      "threshold": "== 0",
+      "falsification": "任何未核登记值 usable_for_compliance_claim=True -> C4 FAIL"
+    }
+  ],
+  "provenance_levels": {
+    "PRIMARY_TEXT_READ": "本主体直接读取许可原文（本单不可得，见 search_log）",
+    "SECONDARY_VERBATIM": "公开可核验二级源逐字引句（须带 URL/路径 + sha256 + 该源内部页码/式号）",
+    "MEMORY_OR_CONVENTION": "记忆或惯例值，禁止进入达标声明，只能作为核对对照"
+  },
+  "case_caliber_source": "scripts/run_ridge_iso_grounding.py: KEEL/SECTION/BASE_SOIL/DRAINED_SOIL 模块级字面量（AST 程序化注入, 零手抄）",
+  "domain_source": "docs/pressure_area_index_dem.md §3.1 primary 行（正则注入, 带行号与 sha256）",
+  "stopping_rule": "单次运行即裁定；不因结果重复抽样调阈值；阈值不得事后修改",
+  "resource_limits": "CPU-only, 单进程, < 60 s；无 DEM 重跑（本单只做锚核销与换算）",
+  "analysis_plan": "脚本一次输出全部判据实测值与工件 JSON；判据由脚本注入 JSON，禁手抄；未达判据项如实写 honest_fail_note",
+  "interpretation_limits": [
+    "C1 通过（若）仅意味着引句可核验，不等于 ISO 委员会原文可作合规声明；primary 级仍标 WITHHELD",
+    "领域对比只用 DEM 压力-面积指数与形式换算，不构成本算例承载力的验证",
+    "二维平面应变、单位厚度：压力-面积指数可迁移，绝对压力不可直接外推三维"
+  ]
+}
