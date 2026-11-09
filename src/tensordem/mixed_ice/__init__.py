@@ -24,6 +24,8 @@ Public surface
                test of the linear mixture rule ``R_mix = (1-p)R_FY + p R_MY``
                (artifact ``artifacts/mixed_ice_dem_field/``, report
                ``docs/mixed_ice_dem_field.md``).
+``literature_validation``  validation of MY ice resistance against literature data.
+``ridge_resistance``  ice ridge resistance in mixed ice fields.
 
 Evidence grades used here are those of :mod:`tensordem.level_ice.formula`:
 ``DERIVED`` (re-derived from a stated assumption), ``CONVENTION`` (pinned
@@ -45,6 +47,10 @@ from .field import (FloeDistribution, MixedFieldSpec, FieldSample,
                     quadrature_field, sample_field)
 from .resistance import (MixedResistance, mixed_resistance,
                          resistance_sensitivity)
+from .literature_validation import (LiteratureCase, LITERATURE_CASES,
+                                     validate_my_resistance, compute_validation_metrics)
+from .ridge_resistance import (IceRidge, RidgeFieldSpec, ridge_resistance,
+                                mixed_field_with_ridges)
 
 __all__ = [
     "COEFFICIENT_LEDGER", "IceAgeState", "aging_ledger_sha256",
@@ -53,4 +59,7 @@ __all__ = [
     "FloeDistribution", "MixedFieldSpec", "FieldSample",
     "quadrature_field", "sample_field",
     "MixedResistance", "mixed_resistance", "resistance_sensitivity",
+    "LiteratureCase", "LITERATURE_CASES", "validate_my_resistance",
+    "compute_validation_metrics",
+    "IceRidge", "RidgeFieldSpec", "ridge_resistance", "mixed_field_with_ridges",
 ]
