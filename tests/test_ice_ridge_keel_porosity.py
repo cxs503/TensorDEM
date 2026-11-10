@@ -331,61 +331,51 @@ class TestSchema:
 # ============================================================================
 
 class TestAcceptanceCriteria:
-    """Tests for machine-verifiable acceptance criteria."""
+    """Acceptance criteria of the keel-porosity node.
 
-    def test_c1_initial_porosity_range(self):
-        """C1: n_keel(t=0) ∈ [0.35, 0.45].
+    The criteria are no longer asserted against hard-coded constants (an earlier
+    version did exactly that, which proved nothing): the real end-to-end checks
+    with DEM output live in ``tests/test_keel_porosity_p302_n04.py`` (C1-C7 on a
+    300-block run, plus the cluster campaign artifacts).  What is verified here
+    are the model identities those tests rely on.
+    """
 
-        Note: This is a soft check - RSA packing may not hit exactly 0.4.
-        We verify the model can produce porosities in this range.
-        """
-        # Test with synthetic initial condition
-        n_0 = 0.40
-        assert 0.35 <= n_0 <= 0.45
+    def test_c1_c2_composite_endpoints(self):
+        """C1/C2: the composite law starts at n_0 and lands on the calibration."""
+        from tensordem.ice_ridge_keel_porosity import composite_porosity
 
-    def test_c2_asymptotic_porosity_range(self):
-        """C2: n_keel(t→∞) ∈ [0.15, 0.25].
+        n0, n_m, f_eq, tau_p, tau_m = 0.42, 0.35, 0.4286, 600.0, 120.0
+        n = composite_porosity(np.array([0.0, 1.0e9]), n0, n_m, tau_m, f_eq, tau_p)
+        assert 0.35 <= n[0] <= 0.45
+        assert 0.15 <= n[1] <= 0.25
+        assert n[1] == pytest.approx(n_m * (1.0 - f_eq), rel=1e-6)
 
-        The model parameterization targets this range.
-        """
-        n_inf = 0.20
-        assert 0.15 <= n_inf <= 0.25
+    def test_c3_fit_recovers_known_tau(self):
+        """C3: the fitter recovers a known exponential to R^2 > 0.95."""
+        t = np.linspace(0.0, 5000.0, 60)
+        n_true = exponential_decay(t, 0.40, 0.20, 800.0)
+        rng = np.random.default_rng(0)
+        n_noisy = n_true + rng.normal(0.0, 0.002, len(t))
+        _, _, tau, r2, _ = fit_exponential_decay(t, n_noisy)
+        assert r2 > 0.95
+        assert tau == pytest.approx(800.0, rel=0.05)
 
-    def test_c3_exponential_fit_quality(self):
-        """C3: R² > 0.95 for exponential decay fit."""
-        # Synthetic data with known parameters
-        t = np.linspace(0, 1000, 50)
-        n_true = exponential_decay(t, 0.4, 0.2, 200.0)
-        rng = np.random.default_rng(42)
-        n_noisy = n_true + rng.normal(0, 0.003, len(t))
+    def test_c4_pore_time_scale_in_window(self):
+        """C4: the pore-ice time scale derived from a keel packing is physical."""
+        from tensordem.ice_ridge_keel_porosity import (polydisperse_radii,
+                                                       pore_ice_time_scale)
 
-        _, _, _, r2, _ = fit_exponential_decay(t, n_noisy)
-        assert r2 > 0.95, f"R² = {r2} < 0.95"
+        radii = polydisperse_radii(500, 0.2, 0.5, "uniform", -2.0,
+                                   np.random.default_rng(1))
+        tau_p = pore_ice_time_scale(radii, 0.40)
+        assert 1.0e2 <= tau_p <= 1.0e4
 
-    def test_c4_tau_range(self):
-        """C4: τ ∈ [10², 10⁴] s.
+    def test_c5_tau_parameterization_monotone(self):
+        """C5: tau(A) from the fitted power law decreases with amplitude."""
+        from tensordem.ice_ridge_keel_porosity import tau_parameterization
 
-        The fitted τ from synthetic data should be in this range.
-        """
-        t = np.linspace(0, 2000, 50)
-        n_true = exponential_decay(t, 0.4, 0.2, 500.0)
-        rng = np.random.default_rng(42)
-        n_noisy = n_true + rng.normal(0, 0.003, len(t))
-
-        _, _, tau, _, _ = fit_exponential_decay(t, n_noisy)
-        assert 100 <= tau <= 10000, f"τ = {tau} not in [100, 10000]"
-
-    def test_c5_monotonicity_wave_amplitude(self):
-        """C5: τ decreases with wave amplitude (monotonicity).
-
-        Test with synthetic data showing the expected trend.
-        """
-        # Simulate τ(A) relationship
-        A_values = np.array([0.1, 0.3, 0.5, 1.0, 2.0])
-        # Expected: τ ∝ A^(-0.5) approximately
-        tau_values = 500.0 * A_values ** (-0.5)
-
-        # Check monotonicity
-        for i in range(len(A_values) - 1):
-            assert tau_values[i] > tau_values[i + 1], \
-                f"τ not monotonically decreasing: τ({A_values[i]})={tau_values[i]}, τ({A_values[i+1]})={tau_values[i+1]}"
+        wave_params = {"c": 900.0, "alpha": -0.5}
+        grad_params = {"c": 1.0, "alpha": 0.0}
+        taus = [tau_parameterization(A, 2.5, wave_params, grad_params)
+                for A in (1.0, 2.0, 4.0, 8.0)]
+        assert all(a > b for a, b in zip(taus, taus[1:]))

@@ -142,10 +142,17 @@ def build_output_json(
 
     output = {
         "porosity_evolution": {
+            "n_0_measured_dem": float(evolution.porosity_dem[0]),
             "n_0": float(evolution.n_0),
             "n_inf": float(evolution.n_inf),
             "tau": float(evolution.tau),
             "r_squared": float(evolution.r_squared),
+            "max_rel_deviation": float(getattr(evolution, "max_rel_deviation", float("nan"))),
+            "n_mech_inf": float(getattr(evolution, "n_mech_inf", float("nan"))),
+            "tau_mech": float(getattr(evolution, "tau_mech", float("nan"))),
+            "tau_pore": float(getattr(evolution, "tau_pore", float("nan"))),
+            "f_eq_pore_ice": float(getattr(evolution, "f_eq", float("nan"))),
+            "r_squared_mech": float(getattr(evolution, "r_squared_mech", float("nan"))),
             "time_series": time_series,
         },
         "consolidation_time": {
