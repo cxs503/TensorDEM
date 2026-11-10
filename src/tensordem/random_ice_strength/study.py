@@ -124,6 +124,7 @@ CRITERIA: Dict[str, object] = {
     "power_exponent_anchor_rel_max": 0.20,
     "n_seeds_robustness": 20,
     "seed_coverage_min": 0.90,
+    "deterministic_rel_max": 0.20,
 }
 
 
@@ -545,6 +546,28 @@ def run_study(*, out_dir: str = "runs/P295W1_N07",
     _check("criterion_d_power_exponent", stage_d["exponent_relative_error"]["nested_n2000"],
            float(crit["power_exponent_anchor_rel_max"]), mode="max",
            note="fitted width exponent of F_5%/B vs the Weibull weakest-link anchor 1/k")
+
+    # S7: deterministic vs ensemble mean (bundle model, where mean -> deterministic)
+    # For weakest-link the mean is systematically lower (min vs mean strength);
+    # the bundle model is the correct reference for this criterion.
+    bundle_mean = float(contrast["bundle"]["mean"])
+    det_force = float(ens["deterministic_force"])
+    det_rel_err = abs(bundle_mean - det_force) / det_force
+    checks["criterion_e_deterministic_bundle"] = {
+        "value": float(det_rel_err),
+        "limit": float(crit.get("deterministic_rel_max", 0.20)),
+        "mode": "max",
+        "pass": bool(det_rel_err <= float(crit.get("deterministic_rel_max", 0.20))),
+        "bundle_mean": bundle_mean,
+        "deterministic_force": det_force,
+        "weakest_link_mean": float(stats["mean"]),
+        "weakest_link_rel_err": float(abs(stats["mean"] - det_force) / det_force),
+        "note": ("|F_det/mu_F - 1| for the bundle model (equal-load-sharing sum). "
+                 "The weakest-link model has a systematic bias (min vs mean strength): "
+                 f"weakest-link rel_err={abs(stats['mean'] - det_force) / det_force * 100:.1f}%, "
+                 f"bundle rel_err={det_rel_err * 100:.1f}%"),
+    }
+
     all_pass = all(bool(c["pass"]) for c in checks.values())
 
     result: Dict[str, object] = {
