@@ -6,3 +6,4 @@ build/
 dist/
 results/
 .scratch/
+artifacts/ridge_freeze_bond_age_quick/
