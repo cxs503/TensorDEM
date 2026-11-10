@@ -167,6 +167,23 @@ class DEM3DConfig:
     friction_coefficient: float = 0.0        # mu: Coulomb friction coefficient
     rolling_resistance_coefficient: float = 0.0  # mu_r: rolling resistance coefficient
     restitution_coefficient: float = 1.0     # e: coefficient of restitution (0,1]
+    # --- Opt-in static/dynamic dual-coefficient friction regularization ---
+    # "none" (default) keeps the single-coefficient Coulomb cone bit-for-bit.
+    # "tanh" is the smooth slip regularization used by ice-friction closures:
+    #     mu(|v_t|) = mu_d + (mu_s - mu_d) * 0.5 * (1 - tanh(|v_t| / v_c))
+    #   so mu -> mu_s as the slip speed vanishes and mu -> mu_d once sliding.
+    # "dual" is the classical static/dynamic pair, decided by the *elastic*
+    #   cone and not by the slip speed, so it needs no extra state: while the
+    #   tangential spring force stays inside the static cone (|F_t| <= mu_s N)
+    #   the contact sticks at mu_s; as soon as the elastic force would exceed it
+    #   the contact slips and the cone drops to mu_d N, which is the residual
+    #   (post-peak) strength.  A sliding contact therefore never keeps a
+    #   static-cone force, and mu(v_c) plays no role.
+    # Both laws reduce to ``friction_coefficient`` when mu_s == mu_d.
+    friction_regularization: str = "none"          # "none" | "tanh" | "dual"
+    static_friction_coefficient: float | None = None    # mu_s; None -> friction_coefficient
+    dynamic_friction_coefficient: float | None = None   # mu_d; None -> friction_coefficient
+    friction_transition_speed: float = 1.0e-3      # m/s, v_c of both regularizations
     # --- Contact law selection: legacy linear penalty (default) or Hertz ---
     contact_model: str = "linear"            # "linear" | "hertz"
     young_modulus: float = 1.0e9             # Pa, used only by contact_model="hertz"
@@ -277,6 +294,21 @@ class DEM3DConfig:
             raise ValueError("friction_coefficient must be finite and nonnegative")
         if not math.isfinite(self.rolling_resistance_coefficient) or self.rolling_resistance_coefficient < 0:
             raise ValueError("rolling_resistance_coefficient must be finite and nonnegative")
+        if self.friction_regularization not in ("none", "tanh", "dual"):
+            raise ValueError(
+                "friction_regularization must be 'none', 'tanh' or 'dual'")
+        mu_s, mu_d = self.static_friction_coefficient, self.dynamic_friction_coefficient
+        for name, value in (("static_friction_coefficient", mu_s),
+                            ("dynamic_friction_coefficient", mu_d)):
+            if value is not None and (not math.isfinite(value) or value < 0.0):
+                raise ValueError(f"{name} must be finite and nonnegative, or None")
+        if mu_s is not None and mu_d is not None and mu_d > mu_s:
+            raise ValueError(
+                "dynamic_friction_coefficient must not exceed "
+                "static_friction_coefficient")
+        if not math.isfinite(self.friction_transition_speed) or \
+                self.friction_transition_speed <= 0.0:
+            raise ValueError("friction_transition_speed must be finite and positive")
         if not (0.0 < self.restitution_coefficient <= 1.0):
             raise ValueError("restitution_coefficient must be in (0, 1]")
         if self.tangential_stiffness is not None and (
@@ -353,6 +385,67 @@ class DEM3DConfig:
     @property
     def mass(self) -> float:
         return self.density * (4.0 / 3.0) * math.pi * self.radius**3
+
+    @property
+    def friction_coefficient_pair(self) -> tuple[float, float]:
+        """Return ``(mu_s, mu_d)`` actually used by the friction regularization.
+
+        ``None`` entries fall back to the legacy single ``friction_coefficient``,
+        so with both ``None`` the pair is ``(mu, mu)`` and every regularization
+        law reproduces the legacy Coulomb cone exactly.
+        """
+        mu = float(self.friction_coefficient)
+        mu_s = mu if self.static_friction_coefficient is None else float(
+            self.static_friction_coefficient)
+        mu_d = mu if self.dynamic_friction_coefficient is None else float(
+            self.dynamic_friction_coefficient)
+        return mu_s, mu_d
+
+    def friction_cone_limit(self, tangential_force_mag: torch.Tensor,
+                            normal_force: torch.Tensor,
+                            slip_speed: torch.Tensor, *,
+                            coefficient: float | None = None
+                            ) -> torch.Tensor | float:
+        """Coulomb cone limit ``|F_t| <= mu N`` for the active regularization.
+
+        * ``"none"`` -- the legacy scalar cone ``friction_coefficient * N``
+          (returned as a float, so legacy trajectories stay bit-for-bit).
+        * ``"tanh"`` -- the smooth slip regularization
+          ``mu = mu_d + (mu_s - mu_d) * (1 - tanh(|v_t|/v_c)) / 2``.
+        * ``"dual"`` -- the static/dynamic pair selected by the *elastic* cone:
+          ``mu_s`` while ``|F_t| <= mu_s N`` (stick), ``mu_d`` once that would be
+          exceeded (slip), i.e. the force drops to the dynamic cone instead of
+          following the velocity.  State-free and unconditionally conservative
+          against the dynamic (residual) strength.
+
+        ``coefficient`` is the scalar the *call site* uses as its legacy
+        coefficient -- ``friction_coefficient`` for particle contacts and
+        ``platen_friction_coefficient`` for the plane law -- and also the fallback
+        of the static/dynamic pair, so the two branches cannot drift apart.
+        """
+        fallback = float(self.friction_coefficient if coefficient is None
+                         else coefficient)
+        mode = self.friction_regularization
+        if mode == "none":
+            # Legacy single-coefficient cone: same expression as before the
+            # regularization existed (bit-for-bit).
+            return fallback * normal_force
+        mu_s = (fallback if self.static_friction_coefficient is None
+                else float(self.static_friction_coefficient))
+        mu_d = (fallback if self.dynamic_friction_coefficient is None
+                else float(self.dynamic_friction_coefficient))
+        if mu_s == mu_d:
+            return mu_s * normal_force
+        if mode == "tanh":
+            blend = 0.5 * (1.0 - torch.tanh(slip_speed / float(
+                self.friction_transition_speed)))
+            return (mu_d + (mu_s - mu_d) * blend) * normal_force
+        static_limit = mu_s * normal_force
+        return torch.where(tangential_force_mag > static_limit,
+                           torch.as_tensor(mu_d, dtype=normal_force.dtype,
+                                           device=normal_force.device)
+                           * normal_force,
+                           static_limit)
 
     @property
     def effective_tangential_stiffness(self) -> float:
@@ -984,6 +1077,20 @@ class IceDEM3D:
     # SIR-PC2|F05: Coulomb friction + rolling resistance helpers
     # ------------------------------------------------------------------
     @staticmethod
+    # The Coulomb coefficient law lives on the config (it is a parameter map, not
+    # state); these wrappers make it reachable from the force kernel.
+    def friction_coefficient_pair(self) -> tuple[float, float]:
+        return self.config.friction_coefficient_pair
+
+    def friction_cone_limit(self, tangential_force_mag: torch.Tensor,
+                            normal_force: torch.Tensor,
+                            slip_speed: torch.Tensor, *,
+                            coefficient: float | None = None
+                            ) -> torch.Tensor | float:
+        return self.config.friction_cone_limit(tangential_force_mag, normal_force,
+                                               slip_speed, coefficient=coefficient)
+
+    @staticmethod
     def _pair_key(i: int, j: int) -> int:
         """Deterministic key for a sorted particle pair."""
         return min(i, j) * 1_000_003 + max(i, j)
@@ -1040,10 +1147,13 @@ class IceDEM3D:
         """
         cfg = self.config
         eps = torch.finfo(self.dtype).eps
-        mu = cfg.platen_friction_coefficient
         v_tangent = torch.where(mask[:, None], self.velocities, torch.zeros_like(self.velocities))
         v_tangent = torch.stack(
             (v_tangent[:, 0], v_tangent[:, 1], torch.zeros_like(v_tangent[:, 2])), dim=1)
+        # The platen law shares the particle-particle slip regularization, so a
+        # static/dynamic coefficient pair can be measured on a shear cell with a
+        # single constitutive branch (see bpm_identifiability.shear_cell_*).
+        slip_speed = torch.linalg.vector_norm(v_tangent, dim=1)
         if update_history:
             tang_disp = tang_disp + v_tangent * self.dt
             tang_disp = torch.where(mask[:, None], tang_disp, torch.zeros_like(tang_disp))
@@ -1051,8 +1161,10 @@ class IceDEM3D:
         # (the plane does not translate tangentially), so the spring pulls the
         # particle back towards its anchor: F = -k_t * delta, saturated at mu*N.
         spring = -self.platen_friction_k * tang_disp
-        limit = mu * normal_mag
         magnitude = torch.linalg.vector_norm(spring, dim=1)
+        limit = self.friction_cone_limit(
+            magnitude, normal_mag, slip_speed,
+            coefficient=cfg.platen_friction_coefficient)
         scale = torch.where(magnitude > limit, limit / magnitude.clamp_min(eps),
                             torch.ones_like(magnitude))
         return spring * scale[:, None], tang_disp
@@ -1273,7 +1385,9 @@ class IceDEM3D:
 
                     F_t_raw = k_t[:, None] * tang_disp
                     F_t_mag = torch.linalg.vector_norm(F_t_raw, dim=1)
-                    F_limit = cfg.friction_coefficient * contact_mag
+                    F_limit = self.friction_cone_limit(
+                        F_t_mag, contact_mag,
+                        torch.linalg.vector_norm(v_tangent, dim=1))
 
                     # Coulomb saturation
                     scale = torch.where(
