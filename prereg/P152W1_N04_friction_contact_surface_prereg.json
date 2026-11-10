@@ -1,0 +1,87 @@
+{
+  "node": "P152W1-N04",
+  "repo": "TensorDEM",
+  "title": "Friction-contact verification surface: repose / direct shear / packing density",
+  "registered_utc": "2026-11-10T00:00:00Z",
+  "registered_before_runs": true,
+  "principle": "Thresholds, materials, protocols, numerical resolutions and the failure semantics are fixed here BEFORE any production run. Results are never used to re-tune a threshold. honest FAIL stays in the record.",
+  "contact_laws_under_test": {
+    "tangential": "F_t = min(mu*F_n, k_t*delta_t) + c_t*v_t   (declared form, cap_total=False)",
+    "tangential_default_in_kernel": "F_t = proj_cone( min(mu*F_n, k_t*delta_t)*delta_hat + c_t*v_t ; mu*F_n )   (cap_total=True)",
+    "normal": "F_n = max(k_n*overlap - c_n*v_n, 0), c_n = 2*zeta_n*sqrt(k_n*m_eff), zeta_n = |ln e|/sqrt(pi^2+ln^2 e)",
+    "rolling": "M_r = min(mu_r*R_eff*F_n, k_r*|theta_r|) + c_r*|omega_rel|, opposed to relative spin"
+  },
+  "criteria": [
+    {
+      "id": "C0-law-onset",
+      "statement": "Irrotational slider sliding-onset angle equals arctan(mu) (c_t = 0, cap_total=False)",
+      "threshold": {"abs_error_deg_max": 0.5},
+      "gate": true
+    },
+    {
+      "id": "C0-law-rolling",
+      "statement": "Sphere rolling-onset angle on an incline equals arctan(mu_r)",
+      "threshold": {"abs_error_deg_max": 0.5},
+      "gate": true
+    },
+    {
+      "id": "A-repose-negative-control",
+      "statement": "mu = 0, mu_r = 0 frictionless pile has no stable slope: repose angle < 5 deg",
+      "threshold": {"theta_r_deg_max": 5.0},
+      "gate": true
+    },
+    {
+      "id": "B-repose-experiment",
+      "statement": "Predicted repose angle vs experiment, two materials (glass beads, quartz sand)",
+      "threshold": {"relative_error_max": 0.10},
+      "gate": true,
+      "materials": {
+        "glass_beads": {
+          "theta_exp_deg": 23.0,
+          "theta_exp_band_deg": [21.0, 25.0],
+          "source": "literature experimental band for dry monodisperse soda-lime glass beads (d ~ 0.5-1.0 mm), see docs limitation note; not measured in this work"
+        },
+        "quartz_sand": {
+          "theta_exp_deg": 32.0,
+          "theta_exp_band_deg": [30.0, 34.0],
+          "source": "literature experimental band for dry rounded-to-subrounded medium quartz sand; not measured in this work"
+        }
+      },
+      "protocol": "micro-parameters taken from literature (mu_s of the material pair), NOT fitted to theta. mu_r is a single shape surrogate calibrated once on glass beads and transferred unchanged to sand (out-of-sample)."
+    },
+    {
+      "id": "C-packing-density",
+      "statement": "Frictionless random close packing of monodisperse spheres reaches phi = 0.64 (Scott & Kilgour)",
+      "threshold": {"relative_error_max": 0.05},
+      "gate": true,
+      "protocol": "Lubachevsky-Stillinger soft-sphere inflation, two independent system sizes; cross-checked against the geometric quasi-static route of tensordem.bedcoupling.packing"
+    },
+    {
+      "id": "D-direct-shear-mohr-coulomb",
+      "statement": "Direct-shear peak and residual strength predicted by the fitted Mohr-Coulomb envelope, worst relative deviation over all normal stresses",
+      "threshold": {"relative_error_max": 0.10},
+      "gate": true,
+      "protocol": "split shear box, 4 normal stress levels, peak = max over strain window, residual = mean of the last shear-strain window; envelope least-squares fit (c, phi) per branch"
+    },
+    {
+      "id": "D2-mohr-coulomb-bound",
+      "statement": "Measured macroscopic friction angle respects the rigorous single-contact bound phi_macro <= arctan(mu + mu_r)",
+      "threshold": {"violation_deg_max": 0.0},
+      "gate": true
+    },
+    {
+      "id": "D3-cohesion",
+      "statement": "Cohesionless specimen: fitted cohesion magnitude is small relative to the smallest measured shear strength",
+      "threshold": {"cohesion_over_min_tau_max": 0.10},
+      "gate": false,
+      "note": "reported, informational (a box with rough side walls can show apparent cohesion)"
+    }
+  ],
+  "negative_results_policy": "If a gated criterion fails, the artifact verdict stays FAIL and the failure is reported with the numbers. No threshold may be relaxed after seeing the data; a re-run with different physics must be registered as a new node.",
+  "limitations_declared_up_front": [
+    "monodisperse spheres (no polydispersity, no angularity); rolling resistance stands in for shape effects",
+    "literature experimental theta values are quoted bands, not measurements performed here",
+    "direct shear box side walls are frictional and finite, so the stress field is non-uniform (standard box artefact)",
+    "stiffness is softened relative to real glass to keep the timestep affordable; stiffness affects dilatancy, not the friction bound"
+  ]
+}
