@@ -1,0 +1,79 @@
+{
+  "node": "p256w1-n04-ice-collision-hardening",
+  "title": "Strain-hardening hinges + ISO 19906 pressure-area indentation for ice-region ship collisions",
+  "builds_on": "IN63-N01 (prereg/IN63_N01_hull_collision_energy.json)",
+  "decision": "Does replacing the rigid-perfectly-plastic hinge by a bilinear (and power-law) hardening hinge, and the rigid ice indenter by the ISO 19906 pressure-area relation with a pressure-integral damage length, (a) reduce exactly to the N01 surface as the hardening modulus goes to zero, (b) agree with an independent fibre/Simpson route for the hardening energy increment, (c) keep the energy ledger closed at the N01 level, (e) reproduce the ISO 19906 scaling exponents, (f) reproduce the N01 surface in the no-hardening / constant-pressure limit - and can the Minorsky collision coefficient be recalibrated on full-scale data?",
+  "alternatives_considered": [
+    "Keep the N01 rigid-plastic hinge and only add an empirical hardening multiplier (rejected: no independent verifiable route, no closed form to falsify)",
+    "Full nonlinear shell FE with hardening (rejected: no machine-checkable closed-form anchor inside one campaign node)",
+    "Bilinear hinge with an exact section integral + fibre-quadrature cross-check + ISO 19906 pressure-area ice side + pressure-integral damage length (adopted)"
+  ],
+  "hypotheses": {
+    "H1": "E_h -> 0 reproduces the N01 penetration depth, energies, resistance and damage geometry exactly (<= 1e-3 relative, expected 0).",
+    "H2": "The closed-form hardening energy increment agrees with an independent fibre-quadrature + Simpson integration within 2 %, and stays below the rigid-hardening bound.",
+    "H3": "The coupled ledger E_k = E_steel + E_friction + E_ice + residual closes to <= 1e-6 relative at the N01 level.",
+    "H4": "The ISO 19906 pressure-area implementation reproduces the closed-form energy to 1e-6 and the closed-form scaling exponents 1/(2-alpha), -alpha/(2-alpha) to 2 %, with the identified exponents inside the ISO family interval.",
+    "H5": "The Minorsky coefficient C can be recalibrated on the Minorsky (1959) table plus ice-region records with a median relative residual <= 15 % on the ship-ship subset and a separately declared ice subset."
+  },
+  "outcome_metrics": {
+    "index_swap_relative": "max over V of |X_new - X_N01|/X_N01 for depth, structural energy, resistance, layer energies",
+    "hardening_increment_relative": "|dE_numeric - dE_closed|/dE_closed over the rotation table",
+    "bound_slack": "1 - dE_closed/dE_rigid_hardening_bound at well-developed plasticity",
+    "energy_residual_relative": "|E_k - E_steel - E_friction - E_ice|/E_k",
+    "coefficient_identity": "|C_from_volume - C_from_share|/C_from_share",
+    "minorsky_median_relative_residual": "median |V_i/(C*x_i) - 1| on one regime subset, regimes never pooled",
+    "scaling_exponent_relative": "|beta_numeric - beta_ISO|/|beta_ISO| and the same for gamma"
+  },
+  "predeclared_thresholds": {
+    "index_swap_relative_max": 1e-3,
+    "hardening_increment_relative_max": 0.02,
+    "hardening_bound_slack_max": 0.10,
+    "energy_residual_relative_max": 1e-6,
+    "coefficient_identity_relative_max": 1e-12,
+    "minorsky_median_relative_max": 0.15,
+    "scaling_exponent_relative_max": 0.02,
+    "iso_closed_form_relative_max": 1e-6,
+    "negative_control_relative_max": 1e-9,
+    "negative_control": "no hardening + constant pressure (rigid indenter, alpha irrelevant) must give d, E_steel, E_friction and the N01 box damage volume identically"
+  },
+  "comparison_domain_rule": {
+    "rule": "Minorsky-type coefficients are only compared per regime: the ship-ship baseline subset and the ice-region subset are fitted and reported separately, each with its own n. No pooled fit is permitted.",
+    "rationale": "Minorsky's 47.1 MJ/m^3 embeds fracture/tearing of fully damaged mild-steel structure; an ice-region impact has a different energy split (ice crushing, friction, higher-strength steel) so pooling the two mixes two different damaging mechanics.",
+    "dataset_rule": "If the case table is absent, the empirical residual is reported WITHHELD with n = 0 and no numbers are invented; the structured coefficient correction and its envelope are reported instead.",
+    "declared_before_acceptance_run": true
+  },
+  "variables": {
+    "controlled": ["scantlings and yield stress of the design case", "frame spacing", "contact patch", "friction coefficient", "effective mass"],
+    "changed": [
+      "impact velocity V = 2/4/6/8 m/s",
+      "hardening ratio E_h/E = 0 / 0.005 / 0.01 / 0.02 (design value 0.01)",
+      "pressure-area exponent alpha = 0.40/0.45/0.50/0.55/0.60",
+      "reference pressure p0 = 2/3/5/7 MPa",
+      "plate slenderness xi = t/span over t = 11/22/33/44 mm"
+    ],
+    "confounders": [
+      "strain-rate sensitivity of steel and ice (not modelled)",
+      "ice fracture, rubble build-up and local pressure spikes (not modelled)",
+      "fracture/tearing energy of the plating (not modelled; rotations are capped at the declared rotation capacity)",
+      "longitudinal hardening (lower-bound closure: only the plating section ratio is applied)"
+    ],
+    "repetition_rationale": "The surface is deterministic (closed form + bisection to 1e-12 m); repetitions would reproduce identical numbers, so the design uses cross-route agreement (fibre quadrature, Simpson integration, finite differences, N01 index swap) instead of stochastic repetition."
+  },
+  "analysis_plan": {
+    "aggregation": "per-case values only; envelopes (min/median/max) for the coefficient box",
+    "uncertainty": "deterministic modelling bias envelope over the declared xi x ice-face box, not a statistical confidence interval",
+    "exclusions": "no case is dropped; the empirical residual is WITHHELD, never replaced",
+    "stopping_rule": "run the single acceptance script once per commit; if any criterion fails, report FAIL and do not retune coefficients"
+  },
+  "environment": {
+    "python": "3.11",
+    "dependencies": ["matplotlib==3.10.8", "pytest>=8.3"],
+    "commands": [
+      "python -m pytest tests/test_ice_collision_hardening.py -q",
+      "python scripts/benchmark_ice_collision_hardening.py --output runs/ice_collision_hardening",
+      "python scripts/p256w1_n04_doc.py"
+    ],
+    "resource_limits": "pure Python scalar arithmetic; full acceptance run < 60 s on one core, no cluster job required"
+  },
+  "safety": "no external state, no network, no writes outside the run output directory and docs/"
+}
