@@ -28,3 +28,8 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.pytest.ini_options]
+markers = [
+    "slow: long-running integration test (DEM campaign sanity run)",
+]
