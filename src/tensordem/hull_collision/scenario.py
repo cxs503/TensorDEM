@@ -101,3 +101,52 @@ def design_case() -> DoubleHullSide:
         crush_depth=1.0,
     )
     return DoubleHullSide(layers=(outer, inner), friction_coefficient=FRICTION_COEFFICIENT)
+
+
+# ---------------------------------------------------------------------------
+# Ice-region collision refinement (campaign node p256w1-N04) - scenario data
+# ---------------------------------------------------------------------------
+#: Hardening ratio ``E_h/E`` of the side-shell steel used for the design case.
+#: 0.01 is the middle of the 0.005-0.02 range of bilinear fits to hull-grade
+#: steel (AH32/AH36) tension curves; it is *scenario data*, swept in the
+#: sensitivity table, never a library constant.
+HARDENING_RATIO = 0.01
+#: Rupture (total) strain used as the hinge rotation capacity [-].
+ROTATION_CAPACITY = 0.20
+#: ISO 19906 global pressure-area law: pressure at the reference area of 1 m^2
+#: and the exponent of the p(A) = p0*(A/A_ref)^(-alpha) family.  3 MPa sits in
+#: the first-year-ice global pressure band used for a 1 m^2 nominal contact; the
+#: exponent is the ISO 19906 / Masterson 0.4-0.6 family (swept 0.40-0.60).
+ICE_REFERENCE_PRESSURE = 3.0e6
+ICE_PRESSURE_EXPONENT = 0.50
+ICE_CONTACT_HEIGHT = CONTACT_HEIGHT
+ICE_CONTACT_LENGTH = CONTACT_LENGTH
+
+
+def ice_pressure_law(
+    reference_pressure: float = ICE_REFERENCE_PRESSURE,
+    exponent: float = ICE_PRESSURE_EXPONENT,
+):
+    """The ice-side pressure-area law of the design case."""
+    from .indentation import PressureAreaLaw
+
+    return PressureAreaLaw(
+        reference_pressure=reference_pressure, exponent=exponent, reference_area=1.0
+    )
+
+
+def hardened_design_case(
+    hardening_ratio: float = HARDENING_RATIO,
+    *,
+    rotation_capacity: float = ROTATION_CAPACITY,
+    hinge_length_factor: float = 1.0,
+):
+    """The design case with a bilinear hardening law on both shells."""
+    from .strain_hardening import build_hardened_side
+
+    return build_hardened_side(
+        design_case(),
+        hardening_ratio=hardening_ratio,
+        rotation_capacity=rotation_capacity,
+        hinge_length_factor=hinge_length_factor,
+    )
