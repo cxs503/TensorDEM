@@ -32,11 +32,11 @@ from .ice_bond_viscoelastic import (
     advance_branches,
     damage_increment,
     stored_energy as _bond_stored_energy,
+    weibull_bond_strengths,
 )
 
 from .buoyancy_wet3d import submerged_fraction_sphere_tensor
 from . import hertz_mindlin
-from .rolling_resistance import rolling_resistance_couple
 
 
 # --------------------------------------------------------------------------
@@ -207,6 +207,20 @@ class DEM3DConfig:
     bond_creep_exponent: int = 0          # m; 0 = brittle (strain) criterion only
     bond_creep_time_s: float = 1.0        # t_ref
     bond_creep_force_fraction: float = 1.0  # F_ref = fraction * k_unrelaxed * eps_b * L0
+    # --- Opt-in per-bond strength heterogeneity (Weibull scatter) ---
+    # 0 disables it: every bond breaks at the scalar ``breaking_strain``, which is
+    # the legacy (homogeneous) material and keeps old trajectories bit-for-bit.
+    # m > 0 draws each bond's tensile breaking strain from a Weibull distribution
+    # with modulus m whose *median* is exactly ``breaking_strain``, so the
+    # material keeps its nominal strength and only the scatter is added:
+    #     eps_b,i = breaking_strain * (-ln(1-U_i))**(1/m) / ln(2)**(1/m)
+    # The draw uses a private ``torch.Generator`` seeded by ``bond_strength_seed``,
+    # so it is reproducible and independent of the global RNG stream, and a
+    # restart reproduces the same thresholds from the stored config.
+    # Strength heterogeneity is what makes a bonded specimen fail by weakest link
+    # (size effect), see docs/ice_bond_weakest_link_chain.md.
+    bond_strength_weibull_modulus: float = 0.0   # m; 0 = homogeneous (legacy)
+    bond_strength_seed: int = 0
 
     def __post_init__(self) -> None:
         for name in ("nx", "ny", "nz"):
@@ -326,6 +340,15 @@ class DEM3DConfig:
             if not (math.isfinite(self.bond_creep_force_fraction)
                     and self.bond_creep_force_fraction > 0.0):
                 raise ValueError("bond_creep_force_fraction must be finite and positive")
+        if isinstance(self.bond_strength_weibull_modulus, bool) or not isinstance(
+                self.bond_strength_weibull_modulus, (int, float)):
+            raise TypeError("bond_strength_weibull_modulus must be a real number")
+        if not math.isfinite(self.bond_strength_weibull_modulus) or \
+                self.bond_strength_weibull_modulus < 0.0:
+            raise ValueError("bond_strength_weibull_modulus must be finite and nonnegative")
+        if isinstance(self.bond_strength_seed, bool) or not isinstance(
+                self.bond_strength_seed, int):
+            raise TypeError("bond_strength_seed must be an integer")
 
     @property
     def mass(self) -> float:
@@ -514,6 +537,22 @@ class IceDEM3D:
         self._bond_elongation_prev = torch.zeros(
             len(self.pairs), dtype=self.dtype, device=self.device)
         self.bond_damage = torch.zeros(len(self.pairs), dtype=self.dtype, device=self.device)
+        # Opt-in per-bond Weibull strength scatter (None -> homogeneous legacy
+        # scalar ``breaking_strain``, bit-for-bit unchanged trajectories).
+        self.bond_breaking_strain: torch.Tensor | None = None
+        self.bond_strength_factors: torch.Tensor | None = None
+        if config.bond_strength_weibull_modulus > 0.0 and len(self.pairs):
+            generator = torch.Generator(device="cpu").manual_seed(
+                int(config.bond_strength_seed))
+            # ``weibull_bond_strengths`` returns forces whose median is the
+            # argument; asking for median 1 gives dimensionless strength factors
+            # with median 1, so the per-bond threshold median stays ``eps_b``.
+            self.bond_strength_factors = weibull_bond_strengths(
+                len(self.pairs), 1.0, float(config.bond_strength_weibull_modulus),
+                generator=generator, dtype=self.dtype,
+            ).to(device=self.device)
+            self.bond_breaking_strain = (
+                config.breaking_strain * self.bond_strength_factors)
         self.cumulative_bond_dissipation_J = 0.0
         self._bond_keys = self.pairs[:, 0] * len(grid) + self.pairs[:, 1]
 
@@ -802,7 +841,11 @@ class IceDEM3D:
         bi, bj = self.bond_indices.T
         shear = self._objective_shear_strain()
         shear_bond = 0.5 * (shear[bi] + shear[bj])
-        tensile_fail = strain > cfg.breaking_strain
+        # Per-bond Weibull thresholds when heterogeneity is enabled; the scalar
+        # material value otherwise (identical arithmetic on the legacy path).
+        threshold = (cfg.breaking_strain if self.bond_breaking_strain is None
+                     else self.bond_breaking_strain)
+        tensile_fail = strain > threshold
         shear_fail = shear_bond > cfg.shear_breaking_strain
         old_alive = self.alive.clone()
         self.alive &= ~(tensile_fail | shear_fail)
@@ -880,8 +923,10 @@ class IceDEM3D:
         *time* comparison ``t_fail > (m + 1) t_ref`` and not by a tuned stress.
         """
         cfg = self.config
+        threshold = (cfg.breaking_strain if self.bond_breaking_strain is None
+                     else self.bond_breaking_strain)
         return (cfg.bond_creep_force_fraction * self.unrelaxed_bond_stiffness
-                * cfg.breaking_strain * self.rest_lengths)
+                * threshold * self.rest_lengths)
 
     @torch.no_grad()
     def _commit_creep_damage(self, force: torch.Tensor,
@@ -921,8 +966,15 @@ class IceDEM3D:
             "creep_time_s": float(cfg.bond_creep_time_s),
             "cumulative_bond_dissipation_J": float(self.cumulative_bond_dissipation_J),
             "creep_failed_bonds": int((self.failure_mode == 4).sum()),
+            "strength_weibull_modulus": float(cfg.bond_strength_weibull_modulus),
+            "strength_weibull_seed": int(cfg.bond_strength_seed),
             "max_bond_damage": float(self.bond_damage.max()) if len(self.bond_damage) else 0.0,
         }
+        if self.bond_breaking_strain is not None:
+            payload["bond_breaking_strain_median"] = float(
+                self.bond_breaking_strain.median())
+            payload["bond_breaking_strain_min"] = float(self.bond_breaking_strain.min())
+            payload["bond_breaking_strain_max"] = float(self.bond_breaking_strain.max())
         if self.bond_law is not None:
             payload["branch_stiffness_N_m"] = [float(k) for k in self.bond_law.branch_stiffness]
             payload["relaxation_time_s"] = [float(t) for t in self.bond_law.relaxation_time]
@@ -1035,13 +1087,30 @@ class IceDEM3D:
 
         Returns ``(f_i, f_j, torque_i, torque_j)``, each ``(N, 3)``.
         """
+        n_contacts = ci.numel()
         mu_r = self.config.rolling_resistance_coefficient
         R = self.config.radius
+
         relative_v = self.velocities[cj] - self.velocities[ci]
-        # Single implementation lives in tensordem.rolling_resistance; this
-        # wrapper only supplies the particle state (no duplicate law).
-        return rolling_resistance_couple(
-            relative_v, cnormal, contact_mag, R, mu_r=mu_r)
+        vn = (relative_v * cnormal).sum(dim=1, keepdim=True)
+        v_tangent = relative_v - vn * cnormal
+        v_t_mag = torch.linalg.vector_norm(v_tangent, dim=1, keepdim=True)
+
+        # Kinetic resistance opposes the *relative* slip velocity
+        # v_rel = v_j - v_i: the force on j is -|f| * v_rel_hat and the force on
+        # i is its reaction.  No force when there is no slip (v_t == 0).
+        slip_hat = torch.where(
+            v_t_mag > 1e-15,
+            v_tangent / v_t_mag.clamp_min(torch.finfo(self.dtype).eps),
+            torch.zeros_like(v_tangent),
+        )
+        f_mag = (mu_r * contact_mag)[:, None]
+        force_j = -f_mag * slip_hat
+        force_i = -force_j
+
+        torque_i = R * torch.linalg.cross(cnormal, force_i)
+        torque_j = -torque_i
+        return force_i, force_j, torque_i, torque_j
 
     # ------------------------------------------------------------------
     # Main force evaluation
