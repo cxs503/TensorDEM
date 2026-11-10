@@ -1,0 +1,53 @@
+{
+  "campaign_node": "IN69-N06",
+  "title": "Rubble accumulation around a fixed cylinder: geometry growth law, shielding factor, steady-state scaling",
+  "registered_at_utc": "2026-11-08T12:40:00Z",
+  "decision": "Does a 3-D soft-sphere DEM of a driven broken-ice field reproduce (a) an exponential saturation of the accumulation geometry, (b) a Froude-number controlled shielding-to-amplification transition of the front pressure, and (c) a mass-conserving open-system balance? Decision = accept / honest-FAIL per observable, never a single global pass.",
+  "alternatives": [
+    "A. 3-D soft-sphere DEM with a force-limited servo platen, blocks = 2-D-periodic flume cross-section (chosen: only route that keeps grain-scale contact mechanics while bounding cost)",
+    "B. Continuum shallow-granular (depth-averaged) pile model: cheap but not DEM, no contact statistics, rejected as it cannot be checked against contact-level conservation",
+    "C. 2-D vertical-plane wedge model: cannot express the plan-view width B_p, which is one of the three required geometry observables"
+  ],
+  "hypothesis": [
+    "H1: L_p(t), B_p(t), H_p(t) follow y = y_inf (1 - exp(-t/tau)) with R^2 > 0.95 once the pile is in the flux-limited growth regime",
+    "H2: R_shield = p_front / p_0 < 1 at low Fr (accumulation spreads the load) and >= 1 at high Fr (the pile cannot consolidate and the resident blocks load the structure dynamically), with a crossover Fr",
+    "H3: the steady geometry scales as a power law in Fr and C_i",
+    "H4: mass closes to < 2 % between the kinematic inventory and the outflow bookkeeping"
+  ],
+  "metrics": {
+    "geometry": "L_p = (-R) - x_2%, B_p = 2|y|_98%, H_p = z_98% + r - z_ref  (percentiles over the resident pile set)",
+    "resident_definition": "hypot(x,y) <= R + 0.75 D and |v| < 0.5 v_i",
+    "load": "p_front = mean(Fx on the upstream half of the cylinder)/(D h_i), time-averaged over the last 25 % of the run",
+    "baseline": "p_0 from the *sweeper* twin: identical field, geometry and driving, blocks inside R + 2.5 r removed every step",
+    "steady_geometry": "exponential plateau y_inf, cross-checked with the time average over the last 25 %"
+  },
+  "predeclared_thresholds": {
+    "growth_fit_pass": "R^2 > 0.95 on the fitted window, reported raw and with a fixed 11-sample centred moving average",
+    "fit_window_rule": "starts when the measured quantity first exceeds 2 % of its run maximum (the feed transit is not part of the growth law)",
+    "mass_closure_pass": "partition error < 0.02 relative; capture-zone crossing-vs-inventory error < 0.05 (Euler integration of the crossings)",
+    "convergence": "y(t_end)/y_inf >= 0.95 for L, B and H; otherwise the case is flagged and excluded from the steady-state scaling fits",
+    "resolution": "h_i/(2r) >= 0.75 (at least three-quarter of a block diameter across the ice sheet); below that the case is flagged unresolved and excluded from the scaling fits",
+    "negative_controls": "C_i = 0 -> zero blocks and zero pile; v_i = 0 -> pile mass and H_p exactly zero (no growth)",
+    "component_of_change": "exponents from log-log least squares with the standard error reported; a literature comparison is only claimed where a single authoritative value exists, otherwise range containment is reported and the exponent claim is WITHHELD"
+  },
+  "variables_and_confounders": {
+    "controlled": ["block diameter 2r = h_i / layer_target (capped by the particle budget)", "contact law and stiffness (target_static_overlap = 0.01)", "ice-ice friction 0.35, ice-steel 0.10", "driving pressure 20 kPa", "domain in units of D (upstream 2D, downstream 1D, half width 1.25D)", "seed 0"],
+    "independent": ["v_i in {0.1, 0.3, 0.6, 1.0} m/s", "h_i in {0.1, 0.25, 0.5} m", "C_i in {0.1, 0.3, 0.5}", "D in {1, 3, 5} m"],
+    "confounders": ["number of block layers across the sheet (varies with D/h_i given the count budget)", "domain confinement (half width 1.25 D) which limits lateral bypass", "driving pressure (sets the absolute load level; a sensitivity case at 2x particle budget is included)", "surface tension/freeze bonding absent, so the pile cannot be cohesive"],
+    "repetitions": "one seed for the full grid (126 cases); determinism verified by a same-seed duplicate in the unit tests; a doubled and a halved particle budget at (D=3, h=0.25, C=0.5, v=0.3) probes the resolution sensitivity"
+  },
+  "stopping_rule": "each case runs to t_end = 3 tau_flux + 0.5 transit, tau_flux = 0.8 D/(C_i v_i), capped at 150 s of physical time and 26 000 timesteps; the sweep stops when all cases are done. No case is extended because of its result.",
+  "environment": {"python": "3.11", "numpy": "2.4.6", "scipy": "1.16.0", "matplotlib": "3.10.8", "arch": "x86_64", "workers": 44},
+  "analysis": {
+    "aggregation": "plateau values from the per-case fit; steady-window means as a cross-check",
+    "power_law_fit": "ordinary least squares in log-log space, exponent with standard error and R^2",
+    "outliers": "none removed; cases that fail the convergence, resolution or plateau checks are flagged and excluded from the scaling fit only",
+    "uncertainty": "standard error of the exponent; no bootstrap (single seed per case)"
+  },
+  "interpretation_limits": [
+    "blocks are spheres: no interlocking, no freeze bonds, no crushing; the emergent internal friction is a model property",
+    "the flume idealisation (free-slip lateral walls at 1.25 D) suppresses lateral bypass, so the accumulation is stronger than at an isolated cylinder in an unbounded field",
+    "the number of block layers across the sheet is 1-3, so the sail height is resolved to about one block diameter",
+    "p_front is a time-averaged momentum flux on the upstream half, not a local pressure distribution"
+  ]
+}
