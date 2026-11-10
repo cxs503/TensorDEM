@@ -1,0 +1,34 @@
+{
+  "node": "P233W2-N04",
+  "mission_id": 10683,
+  "repo": "TensorDEM",
+  "title": "Dynamic (inertial, time-stepped) DEM floe breakage: kernel K(d,d'), energy ledger, FSD power law",
+  "registered_before_runs": true,
+  "delta_vs_p233w1_n04": {
+    "w1_instrument": "quasi-static displacement-controlled lattice fracture (no inertia, no absolute rate, energy ledger is an identity U(before)-U(after))",
+    "w2_instrument": "explicit central-difference dynamics of the same bonded lattice: rigid-wall impact loading, real time axis, kinetic energy in the ledger, breakage hazard measured as events per unit TIME (1/s) instead of per unit applied strain",
+    "w1_verdict": "AC2 FAIL: differential alpha = 3.415 outside [2.0,3.0]; W1 note flagged that pure-breakage PBE has no steady state",
+    "w2_question": "with the dynamic kernel, does the same population balance reach a power-law steady state and where does the exponent sit?"
+  },
+  "acceptance_criteria": {
+    "AC1": "kernel calibration: daughter-distribution summary fitted on the calibration half predicts the held-out half (held-out = own lattice sizes and impact velocities) with residual <= 10%",
+    "AC2": "power-law steady state at t = 1000 s: alpha in [2.0, 3.0] with log-linear R^2 >= 0.95",
+    "AC3": "breakage energy ledger: |E0 - (KE + U_elastic + U_wall + E_dissipated + E_fracture)| / E0 <= 10%",
+    "AC4": "mass conservation: bond breaking conserves node mass, so fragment area sum residual <= 1e-6, and the population balance area moment drift <= 1e-6",
+    "AC5": "time-step convergence: DEM runs at dt and dt/2 give |delta alpha| < 0.1",
+    "AC6": "paper-quality report with FSD evolution and power-law figures"
+  },
+  "conventions_fixed_in_advance": {
+    "conserved_measure": "floe area A ~ d^2 (constant floe thickness), so daughter normalisation is sum x_i^2 = 1",
+    "alpha_convention": "alpha_differential = slope of log10 n(d) vs log10 d; alpha_cumulative = alpha_differential - 1. Observation window [-3,-2] is quoted for the CUMULATIVE (N(>d)) convention; the differential window is then [2,3]. Both are reported, no convention switching after the fact.",
+    "scaling_range": "sections strictly inside [d_min*2, d_max/2] on a 2-per-octave area grid, only sections with n > 0",
+    "sink_law": "lateral melt: floe diameter shrinks at a constant lateral melt velocity, so the first-order removal rate is mu(d) = 2*v_lat/d, i.e. exponent p = 1 in mu = mu_ref (d/d_ref)^-p. p is taken from the perimeter/area geometry (independent science, Maykut & Perovich 1987 lateral melt 1e-6..1e-5 m/s), NOT tuned to land in the window. mu_ref reported; sensitivity to mu_ref is reported as a curve.",
+    "source_law": "level-ice calving into the largest 1-2 sections at a fixed area injection rate",
+    "no_post_hoc_windows": "if alpha misses the window the node reports honest FAIL; the sink exponent may not be re-fitted to the fitted alpha"
+  },
+  "falsifiable_predictions": {
+    "P1": "flux-balance scaling law: alpha_differential = 1 + q + r, where q is the measured breakage-rate exponent nu(d) ~ d^q and r is the measured exponent of the cumulative daughter count C(x) = E[#daughters smaller than x*d'] ~ x^r. The law is tested, not assumed.",
+    "P2": "energy-size law: specific breakage energy (threshold impact kinetic energy per floe mass) follows a power of d; exponents 0.5 (Bond, E ~ d^2.5 with mass ~ d^2), 0.0 (Kick) and -1.0 (Rittinger, E ~ new surface ~ d) are the three classical candidates and are compared against the measurement."
+  },
+  "environment": {"python": ">=3.10", "numpy": "2.4.6", "scipy": "1.16.0"}
+}
