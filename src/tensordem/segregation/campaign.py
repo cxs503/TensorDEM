@@ -75,6 +75,7 @@ class CaseSpec:
     fit_start_fraction: float = 0.10   # rise-velocity fit window (of run_time)
     stiffness_scale: float = 1.0       # kn multiplier (stiffness sensitivity)
     loose_fraction: float = 0.52        # RSA target before gravity compaction
+    n_blocks: int = 8                  # temporal blocks for the sampling error of S
     snapshot_sample: int = 0            # >0: store a position subsample for figures
 
     def to_json(self) -> dict:
@@ -162,7 +163,32 @@ def run_case(spec: CaseSpec) -> dict:
     t_wall = time.time()
     bed, radii, is_large = _make_bed(spec)
     steps_settle = int(round(spec.settle_time / spec.dt))
-    bed.step(steps_settle)
+    if spec.settle_damping_time > 0.0:
+        # Damped, quasi-static compaction: the specimen is built by random
+        # sequential adsorption at a loose fraction (~0.5), so a free-fall
+        # collapse to the settled fraction (~0.82) would reach impact speeds at
+        # which a soft contact (k_n chosen for a 2 % static overlap) is
+        # penetrated by more than the particle radius, i.e. the run would blow
+        # up for a numerical reason unrelated to the physics under test.  The
+        # viscous term caps the settling speed at ``g * settle_damping_time``.
+        # Settling stops early once the bed is quiescent *and* its height has
+        # stopped changing, so a case never pays for settling time it does not
+        # need.
+        chunk = 4000
+        done = 0
+        h_prev = None
+        while done < steps_settle:
+            n = min(chunk, steps_settle - done)
+            bed.step(n)
+            done += n
+            v_max = float(np.max(np.abs(bed.vel)))
+            h_now = float(np.quantile(bed.pos[:, 1] + bed.radii, 0.995))
+            if h_prev is not None and v_max < 0.02 and abs(h_now - h_prev) < 1.0e-3:
+                break
+            h_prev = h_now
+        steps_settle = done
+    else:
+        bed.step(steps_settle)
     bed.config = _run_cfg(spec)
     bed.vel *= 0.0
     bed.omega *= 0.0
@@ -170,6 +196,14 @@ def run_case(spec: CaseSpec) -> dict:
     z_edges = np.linspace(0.0, spec.height, spec.n_z_bins + 1)
     x_edges = np.linspace(0.0, spec.width, spec.n_x_zones + 1)
     stats = BedStatistics(z_edges=z_edges, x_edges=x_edges)
+    # Temporal blocks: the bed is sampled into ``n_blocks`` consecutive windows so
+    # that the segregation index carries a *measured* sampling error instead of an
+    # assumed one.  The blocks are contiguous in time (not interleaved), so their
+    # spread also exposes a slow drift (a bed that has not reached its steady
+    # segregation state).
+    n_blocks = max(1, int(spec.n_blocks))
+    block_stats = [BedStatistics(z_edges=z_edges, x_edges=x_edges)
+                   for _ in range(n_blocks)]
     base_sum = np.zeros(spec.n_x_zones)
     base_peak = np.zeros(spec.n_x_zones)
     base_cnt = np.zeros(spec.n_x_zones)
@@ -182,6 +216,13 @@ def run_case(spec: CaseSpec) -> dict:
 
     reference_measure = float(np.sum(bed.measure))
     z_com_initial = float(np.sum(bed.measure * bed.pos[:, 1]) / reference_measure)
+    # Composition *before* the drive is switched on.  Gravity settling alone can
+    # already produce a size gradient (kinetic sieving during the collapse), so
+    # the initial state has to be measured instead of assumed mixed: the driven
+    # segregation is then reported as Delta S = S(end) - S(start).
+    stats_init = BedStatistics(z_edges=z_edges, x_edges=x_edges)
+    stats_init.add(bed.pos, bed.measure, bed.is_large)
+    settled_height = float(np.quantile(bed.pos[:, 1] + bed.radii, 0.995))
     started = bed.time
     if spec.drive == "vib":
         amplitude = bed.set_vibration_gamma(spec.gamma, spec.frequency, gravity=GRAVITY)
@@ -194,6 +235,11 @@ def run_case(spec: CaseSpec) -> dict:
     for _ in range(n_chunks):
         bed.step(spec.sample_every)
         stats.add(bed.pos, bed.measure, bed.is_large)
+        # block index from the *sample* counter (the samples are already spaced by
+        # ``sample_every``, so dividing by it again would pin every sample to the
+        # first block and silently destroy the measured sampling error)
+        block_stats[min(n_samples * n_blocks // max(n_chunks, 1),
+                        n_blocks - 1)].add(bed.pos, bed.measure, bed.is_large)
         times.append(bed.time)
         zl, zs = bed.species_mean_height()
         mean_z_large.append(zl)
@@ -231,9 +277,7 @@ def run_case(spec: CaseSpec) -> dict:
         "prep_loose_fraction_requested": spec.loose_fraction,
         "prep_loose_fraction_realised": float(getattr(bed, "prep_loose_fraction", float("nan"))),
         "prep_loose_height_m": float(getattr(bed, "prep_loose_height_m", float("nan"))),
-        "settled_bed_height_m": float(
-            np.quantile(bed.pos[:, 1] + bed.radii, 0.995)
-        ),
+        "settled_bed_height_m": settled_height,
         "initial_z_com_m": z_com_initial,
         "series": {
             "time_s": times_a.tolist(),
@@ -249,6 +293,11 @@ def run_case(spec: CaseSpec) -> dict:
             "zone_length_m": [seg] * spec.n_x_zones,
             "mean_pressure_Pa": (base_sum / max(n_samples, 1) / seg).tolist(),
             "peak_pressure_Pa": (base_peak / seg).tolist(),
+        },
+        "stats_initial": {
+            "z_area": stats_init.z_area.tolist(),
+            "z_large": stats_init.z_large.tolist(),
+            "n_samples": stats_init.n_samples,
         },
         "stats": {
             "z_area": stats.z_area.tolist(),
@@ -269,6 +318,17 @@ def run_case(spec: CaseSpec) -> dict:
             "z_edges": z_edges.tolist(),
             "x_edges": x_edges.tolist(),
         },
+        "stats_blocks": [
+            {
+                "z_area": b.z_area.tolist(),
+                "z_large": b.z_large.tolist(),
+                "z_moment": b.z_moment.tolist(),
+                "x_area": b.x_area.tolist(),
+                "total_measure": b.total_measure,
+                "n_samples": b.n_samples,
+            }
+            for b in block_stats
+        ],
     }
     z_com_final = float(np.sum(bed.measure * bed.pos[:, 1]) / np.sum(bed.measure))
     if spec.snapshot_sample > 0:
@@ -290,6 +350,69 @@ def run_case(spec: CaseSpec) -> dict:
     }
     record["metrics"] = derive_metrics(record)
     return record
+
+
+def segregation_blocks(record: dict, spec: "CaseSpec") -> dict:
+    """Segregation index and rise speed evaluated on the temporal blocks.
+
+    The mean of the per-block values is the best estimate of the steady value;
+    their spread is the *measured* sampling error of the case, which is what the
+    negative control of criterion (a) has to be judged against (a fixed 0.02
+    tolerance is only meaningful if the estimator noise is smaller than it).
+    """
+    blocks = record.get("stats_blocks") or []
+    s_fine: list[float] = []
+    s_bn: list[float] = []
+    times = np.asarray(record["series"]["time_s"], dtype=np.float64)
+    zl = np.asarray(record["series"]["mean_z_large_m"], dtype=np.float64)
+    n_chunks = times.size
+    n_blk = max(1, len(blocks))
+    v_up: list[float] = []
+    for i, blk in enumerate(blocks):
+        if blk.get("n_samples", 0) < 1:
+            continue
+        st = BedStatistics(z_edges=np.asarray(record["stats"]["z_edges"], dtype=np.float64),
+                           x_edges=np.asarray(record["stats"]["x_edges"], dtype=np.float64))
+        st.z_area = np.asarray(blk["z_area"], dtype=np.float64)
+        st.z_large = np.asarray(blk["z_large"], dtype=np.float64)
+        st.z_moment = np.asarray(blk["z_moment"], dtype=np.float64)
+        st.x_area = np.asarray(blk["x_area"], dtype=np.float64)
+        st.total_measure = float(blk["total_measure"])
+        st.total_moment = float(np.sum(st.z_moment))
+        st.n_samples = int(blk["n_samples"])
+        try:
+            idx = segregation_indices(st, top_fraction=spec.top_fraction,
+                                      h_ref_m=record.get("settled_bed_height_m"))
+        except ValueError:
+            # The fixed geometric reference (the settled height) can be above the
+            # whole bed in a block where the specimen is still compacting: the
+            # block then falls back to its own detected surface instead of being
+            # dropped from the sample.
+            try:
+                idx = segregation_indices(st, top_fraction=spec.top_fraction)
+            except ValueError:
+                continue
+        s_fine.append(idx["S_fine"])
+        s_bn.append(idx["S_bn"])
+        lo = i * n_chunks // n_blk
+        hi = max(lo + 2, (i + 1) * n_chunks // n_blk)
+        if hi <= n_chunks:
+            try:
+                v_up.append(rise_velocity(times[lo:hi], zl[lo:hi], t_start=times[lo])["v_up_m_s"])
+            except ValueError:
+                pass
+    out: dict = {"n_blocks": len(blocks), "S_fine": s_fine, "S_bn": s_bn,
+                 "v_up_m_s": v_up}
+    for key in ("S_fine", "S_bn", "v_up_m_s"):
+        arr = np.asarray(out[key], dtype=np.float64)
+        if arr.size:
+            out[f"{key}_mean"] = float(arr.mean())
+            out[f"{key}_std"] = float(arr.std(ddof=1)) if arr.size > 1 else 0.0
+            # a single block carries no information about the spread: report the
+            # sampling error as undefined rather than as a fake zero
+            out[f"{key}_stderr"] = (out[f"{key}_std"] / math.sqrt(arr.size)
+                                    if arr.size > 1 else float("nan"))
+    return out
 
 
 def stats_from_record(record: dict) -> BedStatistics:
@@ -330,10 +453,30 @@ def derive_metrics(record: dict) -> dict:
     )
     rise = rise_velocity(times, zl, t_start=fit_start)
     rise_small = rise_velocity(times, zs, t_start=fit_start)
+    blocks = segregation_blocks(record, spec)
+    seg_initial = {}
+    st0 = record.get("stats_initial")
+    if st0 and st0.get("n_samples", 0) > 0:
+        b0 = BedStatistics(z_edges=stats.z_edges, x_edges=stats.x_edges)
+        b0.z_area = np.asarray(st0["z_area"], dtype=np.float64)
+        b0.z_large = np.asarray(st0["z_large"], dtype=np.float64)
+        b0.n_samples = int(st0["n_samples"])
+        try:
+            seg_initial = segregation_indices(
+                b0, top_fraction=spec.top_fraction,
+                h_ref_m=record.get("settled_bed_height_m"))
+        except ValueError:
+            seg_initial = {}
     audit = mass_moment_audit(stats, density=1000.0, thickness=1.0)
     profile = stats.profile()
     return {
         "segregation": seg_idx,
+        "segregation_initial": seg_initial,
+        "delta_S_fine": (float(seg_idx["S_fine"] - seg_initial["S_fine"])
+                         if seg_initial else None),
+        "delta_S_bn": (float(seg_idx["S_bn"] - seg_initial["S_bn"])
+                       if seg_initial else None),
+        "segregation_blocks": blocks,
         "rise_large": rise,
         "rise_small": rise_small,
         "audit": audit,
