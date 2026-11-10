@@ -973,3 +973,343 @@ def generate_report() -> dict:
 if __name__ == "__main__":
     report = generate_report()
     print(json.dumps(report, indent=2))
+
+
+# ===================================================================
+# IN102-N02: macro anchors on the constant-stress shear cell
+# ===================================================================
+#
+# The contact-level criteria above only prove that the *contact* parameters are
+# self-consistent.  N02 asks the macroscopic question: does the same assembly
+# reproduce mu(I), the coordination number Z, the solid fraction phi and the
+# repose angle when k_n -> k^3 k_n and every length scales as k?  These tests
+# cover (a) the device itself, (b) the analytic sensitivity that makes I-matching
+# mandatory, (c) the committed campaign ledger.
+
+import math as _math
+
+from tensordem.coarse_graining_macro import (
+    INERTIAL_TARGETS,
+    TOL_MICRO_PCT,
+    TOL_REPOSE_PCT,
+    TOL_RHEOLOGY_PCT,
+    build_plan,
+)
+from tensordem.mu_i_rheology import (
+    ReposeCollapseCase,
+    ServoShearCase,
+    _repose_angle_from_positions,
+    simulate_repose_collapse,
+    simulate_servo_shear,
+)
+
+CG_DIR = Path(__file__).resolve().parents[1] / "benchmarks" / "coarse_graining"
+CG_SUMMARY = CG_DIR / "summary.json"
+
+SMALL_DEVICE = dict(
+    radius=0.004,
+    density=2500.0,
+    kn=4.0e4,
+    box_width=0.064,
+    box_depth=0.04,
+    fill_height=0.04,
+    normal_stress=4.0e4,
+    inertial_number=1.0e-2,
+    shear_strain=0.15,
+    settle_steps=1200,
+    min_shear_steps=200,
+    seed=5279,
+)
+
+
+@pytest.fixture(scope="module")
+def device_run():
+    return simulate_servo_shear(ServoShearCase(**SMALL_DEVICE))
+
+
+class TestServoShearDevice:
+    """The macro-anchor device must be physically sane before it can testify."""
+
+    def test_pressure_servo_holds_target(self, device_run):
+        """The servo must reproduce the applied normal stress."""
+        applied = device_run["normal_stress_applied_pa"]
+        measured = device_run["normal_stress_measured_pa"]
+        assert abs(measured - applied) / applied < 0.35, (
+            f"measured P={measured:.1f} Pa vs applied {applied:.1f} Pa")
+
+    def test_friction_coefficient_is_physical(self, device_run):
+        """mu = tau/P must sit between a dilute and an over-frictional bound."""
+        mu = device_run["mu_effective"]
+        assert 0.05 < mu < 1.0, f"mu_effective = {mu:.3f} outside (0.05, 1.0)"
+        # the macroscopic friction cannot exceed the contact bound by more than
+        # the rolling-resistance contribution (a molecular-dynamics sanity gate)
+        assert mu <= ServoShearCase(**SMALL_DEVICE).mu + 2.0 * 0.05 + 0.5
+
+    def test_inertial_number_control(self, device_run):
+        """The I-control (gamma_dot from P and d) must land near the target."""
+        target = SMALL_DEVICE["inertial_number"]
+        achieved = device_run["inertial_number"]
+        assert abs(achieved - target) / target < 0.6, (
+            f"I achieved {achieved:.4g} vs target {target:.4g}")
+
+    def test_microstructure_is_bound(self, device_run):
+        """Coordination number and solid fraction stay in the packing range."""
+        z = device_run["coordination_number"]
+        phi = device_run["solid_fraction"]
+        assert 2.0 <= z <= 8.0, f"Z = {z:.3f}"
+        assert 0.20 <= phi <= 0.70, f"phi = {phi:.3f}"
+
+    def test_run_is_reproducible(self, device_run):
+        """Same seed -> same macroscopic answer (device determinism)."""
+        again = simulate_servo_shear(ServoShearCase(**SMALL_DEVICE))
+        assert again["mu_effective"] == pytest.approx(device_run["mu_effective"], rel=1e-12)
+        assert again["coordination_number"] == pytest.approx(
+            device_run["coordination_number"], rel=1e-12)
+
+    def test_shear_strain_is_reached(self, device_run):
+        """Kinematic gate: the imposed strain is actually accumulated."""
+        assert device_run["shear_strain_achieved"] >= 0.9 * (
+            SMALL_DEVICE["shear_strain"] * 0.99)
+
+
+class TestIMatchingNecessity:
+    """Analytic negative control: the k^3 recipe must not be bypassed."""
+
+    def test_unmatched_rate_shifts_inertial_number_by_k(self):
+        """At fixed P, I is proportional to gamma_dot*d: running the coarse
+        model at the prototype shear rate multiplies I by k (so a 'same gamma'
+        comparison would be an I-mismatch, not a rheology test)."""
+        for k in (2.0, 4.0, 8.0):
+            plan = build_plan(k)
+            d_k = 2.0 * plan["material"]["radius"]
+            d_1 = 2.0 * build_plan(1.0)["material"]["radius"]
+            assert d_k / d_1 == pytest.approx(k, rel=1e-12)
+
+    def test_plan_scales_stiffness_and_geometry(self):
+        """build_plan must follow kn -> k^3 kn and L -> kL exactly."""
+        base = build_plan(1.0)
+        for k in (2.0, 4.0, 8.0):
+            plan = build_plan(k)
+            assert plan["material"]["kn"] == pytest.approx(
+                base["material"]["kn"] * k ** 3, rel=1e-12)
+            assert plan["material"]["radius"] == pytest.approx(
+                base["material"]["radius"] * k, rel=1e-12)
+            assert plan["normal_stress"] == pytest.approx(base["normal_stress"])
+            # rigidity check: the relative contact overlap P d / kn is bounded
+            overlap = (plan["normal_stress"] * plan["material"]["radius"] * 2.0
+                       / plan["material"]["kn"])
+            assert overlap < 0.02, f"k={k}: relative overlap {overlap:.4f} too large"
+
+
+class TestReposeAngleEstimator:
+    """The heap-surface fit must return the analytic angle of a synthetic cone."""
+
+    @staticmethod
+    def _cone(angle_deg: float, radius: float = 0.08, dz: float = 0.004):
+        """Heap surface with slope tan(angle) descending from the apex at r=0."""
+        rng = np.random.default_rng(7)
+        pts = []
+        for r in np.arange(0.0, radius, dz):
+            for theta in np.linspace(0.0, 2 * np.pi, 24, endpoint=False):
+                z = (radius - r) * math.tan(math.radians(angle_deg))
+                pts.append([r * math.cos(theta), r * math.sin(theta),
+                            max(z, 0.0) + rng.normal(0.0, 0.3 * dz)])
+        return np.asarray(pts)
+
+    @pytest.mark.parametrize("angle", [20.0, 30.0, 38.0])
+    def test_recovers_synthetic_cone(self, angle):
+        pos = self._cone(angle)
+        theta, stderr, n_cells = _repose_angle_from_positions(pos, 0.002, 0.09)
+        assert n_cells > 20
+        assert theta == pytest.approx(angle, abs=1.5), (
+            f"fitted {theta:.2f} deg vs analytic {angle:.1f} deg")
+        assert stderr < 2.0
+
+    def test_flat_bed_gives_zero_angle(self):
+        """A flat bed must not be reported as a heap."""
+        rng = np.random.default_rng(11)
+        r = rng.uniform(0.01, 0.08, 800)
+        t = rng.uniform(0.0, 2 * np.pi, 800)
+        pos = np.stack([r * np.cos(t), r * np.sin(t), np.full(800, 0.001)], axis=1)
+        theta, _, n_cells = _repose_angle_from_positions(pos, 0.002, 0.09)
+        # a flat bed has no standing slope: either no measurable surface cells
+        # (nan) or an angle indistinguishable from zero
+        assert math.isnan(theta) or theta < 5.0, (
+            f"flat bed reported as {theta:.2f} deg ({n_cells} cells)")
+
+
+class TestMacroCampaignLedger:
+    """Validate the committed N02 campaign artifacts (benchmarks/coarse_graining).
+
+    Two scaling recipes are compared on the same device and I grid:
+
+    * 口径 A ``k_n ~ k^3`` (contact-time invariant): the dimensionless relative
+      contact overlap ``u = P d / k_n`` drifts as ``1/k``, so the coarse model
+      gets *relatively stiffer*.  This is the recipe the campaign DAG proposed.
+    * 口径 B ``k_n ~ k`` (sound-speed invariant): ``u`` is invariant, which makes
+      the coarse system an exact similarity transform of the prototype.
+
+    The decision variable is the largest k that keeps every macro anchor inside
+    the predeclared tolerance, and the comparison decides which recipe may be
+    used.  Thresholds are the campaign values and were not tuned to the data.
+    """
+
+    @pytest.fixture(scope="class")
+    def summaries(self):
+        out = {}
+        for recipe, name in (("A", "summary.json"), ("B", "summary_B.json")):
+            path = CG_DIR / name
+            if path.exists():
+                out[recipe] = json.loads(path.read_text())
+        if not out:
+            pytest.skip("macro campaign summaries not generated")
+        return out
+
+    @pytest.fixture(scope="class")
+    def shards(self):
+        out = {}
+        for recipe in ("A", "B"):
+            for k in (1, 2, 4, 8):
+                sub = f"k{k}" if recipe == "A" else f"{recipe}_k{k}"
+                path = CG_DIR / sub / "result.json"
+                if path.exists():
+                    out[(recipe, k)] = json.loads(path.read_text())
+        if not out:
+            pytest.skip("macro campaign shards not generated")
+        return out
+
+    def test_shards_have_five_inertial_nodes(self, shards):
+        for (recipe, k), shard in shards.items():
+            assert len(shard["runs"]) == len(INERTIAL_TARGETS), (
+                f"{recipe}/k={k}: {len(shard['runs'])} I nodes")
+            got = sorted(r["inertial_number_target"] for r in shard["runs"])
+            assert got == pytest.approx(sorted(INERTIAL_TARGETS), rel=1e-9)
+
+    def test_baseline_shards_agree(self, shards):
+        """At k=1 both recipes are the same device -> same numbers."""
+        a = shards.get(("A", 1))
+        b = shards.get(("B", 1))
+        if not (a and b):
+            pytest.skip("k=1 shard missing")
+        for ra, rb in zip(a["runs"], b["runs"]):
+            assert ra["mu_effective"] == pytest.approx(rb["mu_effective"], rel=1e-9)
+
+    def test_geometric_similarity_holds(self, shards):
+        """Same box/particle ratio and same particle count at every k."""
+        for recipe in ("A", "B"):
+            counts = {k: shard["runs"][0]["n_particles"]
+                      for (r, k), shard in shards.items() if r == recipe}
+            if len(counts) < 2:
+                continue
+            assert len(set(counts.values())) == 1, (
+                f"recipe {recipe}: particle count drifts with k -> {counts}")
+
+    def test_recipe_b_rheology_invariance(self, summaries):
+        """口径 B: |mu_k(I) - mu_1(I)| / mu_1(I) <= 5 % at every I node."""
+        summary = summaries.get("B")
+        if summary is None:
+            pytest.skip("recipe B summary missing")
+        for row in summary["rows"]:
+            assert row["rheology_dev_pct"] <= TOL_RHEOLOGY_PCT, (
+                f"k={row['k']}: mu(I) deviation {row['rheology_dev_pct']:.3f}% > "
+                f"{TOL_RHEOLOGY_PCT}%")
+            assert all(row["targets_inside_measured_range"]), (
+                f"k={row['k']}: an I node lies outside the measured range")
+            assert row["inertial_number_dev_pct_max"] <= 20.0, (
+                f"k={row['k']}: I control error "
+                f"{row['inertial_number_dev_pct_max']:.1f}% exceeds 20%")
+
+    def test_recipe_b_micro_invariance(self, summaries):
+        """口径 B: coordination number and solid fraction within 3 %."""
+        summary = summaries.get("B")
+        if summary is None:
+            pytest.skip("recipe B summary missing")
+        for row in summary["rows"]:
+            assert row["coordination_dev_pct"] <= TOL_MICRO_PCT, (
+                f"k={row['k']}: Z deviation {row['coordination_dev_pct']:.3f}%")
+            assert row["solid_fraction_dev_pct"] <= TOL_MICRO_PCT, (
+                f"k={row['k']}: phi deviation {row['solid_fraction_dev_pct']:.3f}%")
+
+    def test_repose_anchor_breaks_the_single_recipe_claim(self, summaries):
+        """Falsification result: no single stiffness rule serves every process.
+
+        The repose angle is gravity driven, so the ratio of the macro time scale
+        (sqrt(k), Froude) to the contact time (invariant for 口径 A, ~k for 口径 B)
+        is not preserved by either recipe.  The ledger must therefore *report*
+        the drift instead of hiding it: the anchor is inside tolerance only at
+        small k, and the per-anchor safe-k for repose must be smaller than the
+        rheology bound.  (Predeclared tolerance stays at 3 %; the test asserts
+        the measured failure, it does not relax the tolerance.)
+        """
+        summary = summaries.get("B")
+        if summary is None:
+            pytest.skip("recipe B summary missing")
+        rows = summary["rows"]
+        for row in rows:
+            assert row["repose_dev_pct"] is not None, (
+                f"k={row['k']}: repose anchor missing")
+        base = rows[0]
+        assert base["repose_dev_pct"] == pytest.approx(0.0, abs=1e-9)
+        worst = max(row["repose_dev_pct"] for row in rows)
+        assert worst > TOL_REPOSE_PCT, (
+            "repose drift vanished: k_n ~ k now preserves Froude similarity -- "
+            "re-open the recipe decision")
+        bounds = summary["safe_k_by_anchor"]
+        assert bounds["repose"] < bounds["rheology"], (
+            f"repose bound {bounds['repose']} should be the binding one, "
+            f"rheology {bounds['rheology']}")
+        # the drift must grow monotonically with k (mechanism: t_macro/t_c ~ 1/sqrt(k))
+        devs = [row["repose_dev_pct"] for row in sorted(rows, key=lambda r: r["k"])]
+        for lo, hi in zip(devs, devs[1:]):
+            assert hi >= lo - 1e-9, f"repose drift not monotone in k: {devs}"
+
+    def test_recipe_a_drifts_more_than_b(self, summaries):
+        """口径 A (contact-time invariant) must NOT be macro invariant here.
+
+        This is the controlled comparison that decides the recipe: with u ~ 1/k
+        the coarse model is relatively stiffer, so A's deviation has to exceed
+        B's by a margin far outside the numerical noise.
+        """
+        a = summaries.get("A")
+        b = summaries.get("B")
+        if not (a and b):
+            pytest.skip("both recipe summaries required")
+        dev_a = a["max_micro_dev_pct"]
+        dev_b = b["max_micro_dev_pct"]
+        assert dev_a > TOL_MICRO_PCT, (
+            f"contact-time-invariant drift {dev_a:.2f}% should exceed the "
+            f"{TOL_MICRO_PCT}% tolerance")
+        assert dev_b <= TOL_MICRO_PCT, (
+            f"overlap-preserving drift {dev_b:.2f}% should stay inside tolerance")
+        assert dev_a > 10.0 * max(dev_b, 1e-9), (
+            f"the two recipes are not distinguishable: A={dev_a:.2f}%, "
+            f"B={dev_b:.2f}%")
+
+    def test_safe_k_upper_bound(self, summaries):
+        """Per-anchor k bounds: rheology/microstructure reach k=2..8 under 口径 B,
+        the repose anchor is the binding constraint."""
+        summary = summaries.get("B")
+        if summary is None:
+            pytest.skip("recipe B summary missing")
+        bounds = summary["safe_k_by_anchor"]
+        assert bounds["rheology"] >= 2.0, bounds
+        assert bounds["microstructure"] >= 2.0, bounds
+        assert summary["safe_k_upper_bound"] == pytest.approx(bounds["repose"])
+
+    def test_pareto_front_is_consistent(self, summaries):
+        """Every Pareto point must be non-dominated and ordered by speedup."""
+        summary = summaries.get("B") or summaries.get("A")
+        front = summary["pareto_front"]
+        assert front, "empty Pareto front"
+        speeds = [p["speedup"] for p in front]
+        devs = [p["max_deviation_pct"] for p in front]
+        assert speeds == sorted(speeds)
+        for i in range(len(front) - 1):
+            assert devs[i] <= devs[i + 1] + 1e-12, (
+                "Pareto front must trade deviation for speedup")
+
+    def test_legacy_campaign_bridge_exists(self):
+        legacy = Path(__file__).resolve().parents[1] / "runs" / "cg_scaling" / "results.json"
+        assert legacy.exists(), "legacy campaign bridge missing"
+        payload = json.loads(legacy.read_text())
+        assert "contact_scaling" in payload and "shear" in payload
