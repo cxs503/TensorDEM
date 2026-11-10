@@ -12,6 +12,30 @@ from .clump_contact import (  # noqa: F401
     sphere_box_contacts,
     union_find_clusters,
 )
+from .friction_law import (  # noqa: F401
+    FrictionLawParams,
+    friction_law,
+    friction_law_vectorised,
+    log_likelihood,
+    log_posterior,
+    log_prior,
+    run_mcmc,
+    gelman_rubin,
+    SobolResult,
+    sobol_indices,
+    sobol_saltelli_sample,
+    calibration_residuals,
+    LITERATURE_DATA,
+    DEFAULT_P0_MPA,
+)
+from .ice_hull_friction import (  # noqa: F401
+    IceResistanceConfig,
+    IceResistanceResult,
+    compute_ice_resistance,
+    lindqvist_resistance,
+    run_straight_ahead_with_uncertainty,
+    compare_with_lindqvist,
+)
 
 __all__ = [
     "BoxObstacle",
@@ -25,4 +49,26 @@ __all__ = [
     "merge_junction_candidates",
     "sphere_box_contacts",
     "union_find_clusters",
+    # Friction law
+    "FrictionLawParams",
+    "friction_law",
+    "friction_law_vectorised",
+    "log_likelihood",
+    "log_posterior",
+    "log_prior",
+    "run_mcmc",
+    "gelman_rubin",
+    "SobolResult",
+    "sobol_indices",
+    "sobol_saltelli_sample",
+    "calibration_residuals",
+    "LITERATURE_DATA",
+    "DEFAULT_P0_MPA",
+    # Ice-hull friction integration
+    "IceResistanceConfig",
+    "IceResistanceResult",
+    "compute_ice_resistance",
+    "lindqvist_resistance",
+    "run_straight_ahead_with_uncertainty",
+    "compare_with_lindqvist",
 ]
