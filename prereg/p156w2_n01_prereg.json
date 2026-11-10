@@ -1,0 +1,64 @@
+{
+ "node": "p156w2-n01-dem-ice-resistance",
+ "repo": "TensorDEM",
+ "created": "2026-11-10",
+ "status": "predeclared before any production case was run",
+ "decision": "Does the plan-view floe DEM with a zero-offset crushing law, a recycling inlet (steady state over 10 ship lengths) and a compliant pack boundary reproduce the Lindqvist level-ice resistance within 15% in the consolidated limit (C=0.90), and does its contact-level energy ledger close?",
+ "alternatives": {
+  "H1_measurement_limited": "domain/pack-boundary artefacts caused the earlier 91% shortfall; R/R_Lindqvist -> 1 as C -> 0.9069",
+  "H2_structure_limited": "a plan-view disk pack cannot host out-of-plane bending/submersion, so R/R_Lindqvist stays bounded below 1 at every C"
+ },
+ "primary_configuration": {
+  "concentration": 0.9,
+  "note": "the consolidated limit; the maximum coverage of non-overlapping equal disks is the hexagonal limit 0.9069, so 0.90 is the highest defensible setting and a request above the limit is refused, not clamped",
+  "thickness_m": 1.0,
+  "speed_m_s": 3.0,
+  "floe_diameter_m": 10.0,
+  "pack_width_m": 100.0,
+  "hull": "MT Uikku equivalent transport hull (L=105 m, B=26 m, 18 deg entry)",
+  "route_ship_lengths": 10.0,
+  "time_step_s": 0.005
+ },
+ "metrics": {
+  "resistance": "steady-window mean of the hull reaction along the track, with std, SEM, peak and a linear stationarity drift",
+  "energy": "per-channel energies (water drag, hull dashpot, hull sliding, floe-floe dashpot, floe-floe sliding, pack wall, heave damping, stored KE/PE, recycled out) plus the ledger residual",
+  "sensitivity": "R(C), R(h), R(sigma_c) surfaces plus the declared model choices (pack width, floe size, hull form, time step, seed)"
+ },
+ "thresholds_predeclared": {
+  "E1_rel_error_vs_lindqvist": 0.15,
+  "E2_ledger_residual_rel": 0.1,
+  "E3_null_field_kN": 1.0,
+  "E4_concentration_pearson_r": 0.9,
+  "E5_thickness_pearson_r": 0.95,
+  "E5_thickness_exponent_band": [
+   1.0,
+   3.0
+  ],
+  "E6_strength_pearson_r": 0.9,
+  "E7_stationarity_drift": 0.15,
+  "E8_seed_relative_spread": 0.3,
+  "E9_min_tests": 12,
+  "E10_min_route_ship_lengths": 10.0
+ },
+ "stopping_rule": "the case set is fixed by CASE_SPECS and is not extended after a resistance number is seen; no coefficient of the graded ledger is re-tuned after the first standard-case result",
+ "exclusions": "cases whose wall time would exceed the campaign budget are not silently dropped: the case list is fixed in code and every listed case is reported",
+ "controlled_variables": "material, friction, hull form, ice thickness (except in the thickness sweep), speed, time step (except in dt_fine)",
+ "changed_variables": "concentration, thickness, crushing strength, seed, pack width, floe size, hull form, time step",
+ "confounders": [
+  "floe-size polydispersity is geometrically coupled to concentration (a high-concentration field of non-overlapping disks must be nearly monodisperse); the realised spread is reported with every case",
+  "the recycling inlet re-injects ice at rest, which is exact only for a stationary far field",
+  "the pack boundary is a declared model substitute for the surrounding ice",
+  "the resistance is impact dominated, so single-realisation differences below the seed spread are not interpreted"
+ ],
+ "environment": "single CPU core per case, torch float64, deterministic seeds; the campaign runs on the 702 cluster (loong64 nodes)",
+ "analysis": "criteria evaluated by tensordem.ice_transit.campaign.evaluate_criteria (pure function); trends by Pearson correlation and a log-log exponent; uncertainty by SEM over the steady window and by the seed ensemble; no outlier removal",
+ "safety_and_limits": {
+  "max_steps_per_case": 400000,
+  "core_per_case": 1,
+  "declared_time_step_range_s": [
+   0.0025,
+   0.005
+  ]
+ },
+ "interpretation_limits": "agreement with Lindqvist can only be structural because the coefficient values are WITHHELD offline; the broken-ice channel measurements of the source paper are not transcribed, so the absolute DEM level stays WITHHELD against experiment"
+}
