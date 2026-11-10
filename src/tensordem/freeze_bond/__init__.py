@@ -24,6 +24,14 @@ The package has four layers, each with its own machine-checkable face:
     closure, biaxial and channel tests as a function of ``kappa = sigma_fb /
     sigma_bulk``, the ``kappa_c`` detection and the self-sustain protocol.
 
+``thermal_profile``
+    1-D enthalpy-method freezing of the bond layer (implicit finite volume,
+    phase change with the full latent heat, energy closure ~1e-12) with
+    sub-cell freezing-front tracking anchored on the Stefan/Neumann solutions,
+    the Cox & Weeks / Timco-Frederking saline reduction and the
+    ``tau_eff``-versus-``tau_uniform`` (m7439) deviation caliper
+    (P316-W1-N03, ``tests/test_thermal_profile.py``).
+
 Evidence grades are stated per module.  The freeze-bond *law* is a declared
 hypothesis (self-consistent, not physically validated); the energy ledger and the
 DEM bookkeeping are verified by ``tests/test_freeze_bond_*.py``.
