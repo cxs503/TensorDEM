@@ -122,17 +122,27 @@ def hcp_positions_in_cylinder(radius: float, cylinder_radius: float,
 
 def hcp_positions_in_box(radius: float, box_width: float, box_depth: float,
                          fill_height: float, *, packing_gap: float = 0.02,
-                         jitter: float = 0.0, seed: int = 0) -> np.ndarray:
-    """Deterministic HCP packing inside a rectangular box (shear cell)."""
+                         jitter: float = 0.0, seed: int = 0,
+                         margin: float | None = None) -> np.ndarray:
+    """Deterministic HCP packing inside a rectangular box (shear cell).
+
+    ``margin`` is the wall clearance; the legacy default is an absolute 1 mm,
+    which is *not* scale invariant -- pass a fraction of ``radius`` (the
+    coarse-graining device uses ``0.2 r``) when comparing geometrically scaled
+    systems, otherwise the lattice registration and the particle count change
+    with the scale and contaminate the comparison.
+    """
     r = radius
+    if margin is None:
+        margin = 1.0e-3
     spacing = 2.0 * r * (1.0 + packing_gap)
     layer_dz = spacing * math.sqrt(2.0 / 3.0)
     n_layers = max(1, int(math.floor((fill_height - r) / layer_dz)) + 1)
     row_pitch = spacing * math.sqrt(3.0) / 2.0
     shift_x = 0.5 * spacing
     shift_y = spacing / (2.0 * math.sqrt(3.0))
-    x_min, x_max = r + 1e-3, box_width - r - 1e-3
-    y_min, y_max = r + 1e-3, box_depth - r - 1e-3
+    x_min, x_max = r + margin, box_width - r - margin
+    y_min, y_max = r + margin, box_depth - r - margin
     pts: list[tuple[float, float, float]] = []
     for layer in range(n_layers):
         z = r + layer * layer_dz
