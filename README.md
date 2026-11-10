@@ -346,3 +346,7 @@ python -m tensordem.run_manifest --output results --run-id dem-run-001 \
 ```
 
 Set `TENSORPLATFORM_URL`, `TENSORPLATFORM_API_TOKEN`, and `TENSORPLATFORM_ORGANIZATION_ID`; install TensorPhysics in the same Python environment. This command registers metadata only and does not upload or verify remote objects. Set `TENSORDEM_GIT_REVISION` to the actual source commit when running from a Git checkout. This is provenance plumbing, not physical validation.
+
+## License
+
+See [LICENSE](LICENSE) for the software license and [LICENSE_SCOPE.md](LICENSE_SCOPE.md) for the boundary between project software and third-party or content assets. Dataset, paper, model, customer, and other non-software assets retain their own rights and restrictions.
