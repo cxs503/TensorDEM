@@ -6,15 +6,23 @@ description = "A PyTorch bonded-particle DEM prototype for ice breaking"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "torch==2.14.1",
-
-    "scipy>=1.10",]
+    "numpy>=1.24",
+    "scipy>=1.10",
+]
 
 [project.optional-dependencies]
+torch = [
+    "torch>=2.0",
+]
 test = [
     "pytest>=8.3",
 ]
 viz = [
+    "matplotlib>=3.8",
+    "pillow>=10.0",
+]
+all = [
+    "torch>=2.0",
     "matplotlib>=3.8",
     "pillow>=10.0",
 ]
