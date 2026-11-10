@@ -1,0 +1,57 @@
+{
+  "node": "IN63-N01",
+  "title": "Ice-region ship-ice collision energy-conservation surface (plastic hinge + double shell + Minorsky cross-check)",
+  "decision": "Does a rigid-plastic hinge + membrane resistance model, solved by energy conservation, reproduce (a) its own closed-form anchor within 1 %, (b) the collision kinetic energy within 2 %, (c) the Minorsky (1959) empirical damaged volume within 30 % in his calibration regime - or must the collision energy surface be declared WITHHELD for ice-region damage-stability input?",
+  "alternatives_considered": [
+    "Full nonlinear FE shell crush simulation (rejected: no verifiable closed-form anchor, far outside a single campaign node, and would not give a machine-checkable analytic criterion)",
+    "Pure Minorsky/empirical formula only (rejected: no physics, cannot output penetration depth or per-layer allocation, and gives no negative control)",
+    "Rigid-plastic hinge with membrane stretching + serial layer allocation + energy-conservation root solve (adopted)"
+  ],
+  "hypotheses": {
+    "H1": "The plastic hinge energy E = M_p*theta_max reproduces an independent fibre-section/virtual-work route within 1 %.",
+    "H2": "Energy conservation E_k = E_plastic(d) + E_friction(d) can be closed for the penetration depth with residual <= 2 % and is monotone in impact velocity.",
+    "H3": "The model damaged steel volume agrees with the yield-scaled Minorsky (1959) relation within 30 % for collisions inside Minorsky's calibration regime."
+  },
+  "outcome_metrics": {
+    "residual_relative": "|E_k - E_plastic - E_friction| / E_k",
+    "anchor_max_relative_error": "max over routes/mechanisms of |E_numeric - E_closed| / E_closed and |Z_fiber - b*t^2/4|/(b*t^2/4)",
+    "allocation_relative_error": "|Simpson integral of dE/dd - sum_k E_k| / sum_k E_k",
+    "minorsky_relative_error": "(V_model - V_Minorsky) / V_Minorsky",
+    "monotonicity": "d(V) strictly increasing over V = 2/4/6/8 m/s"
+  },
+  "predeclared_thresholds": {
+    "energy_residual_relative_max": 0.02,
+    "anchor_relative_error_max": 0.01,
+    "allocation_relative_error_max": 0.02,
+    "minorsky_relative_error_max": 0.30,
+    "negative_control": "V = 0 must give exactly d = 0 and V = 2 m/s must give d > 0, otherwise FAIL"
+  },
+  "comparison_domain_rule": {
+    "rule": "The Minorsky cross-check is judged only for cases with collision energy in 10-400 MJ (Minorsky's 1959 data range) AND a fully developed plastic mechanism, d/frame_span >= 0.75.",
+    "rationale": "Minorsky's 47.1 MJ/m^3 embeds fracture/tearing of fully damaged structure; the panel-level rigid-plastic model pins a whole bay as yielded the moment the mechanism forms, so below full plasticity the model cannot resolve partial yielding and its damaged volume is a mechanism-level granularity artefact. Cases outside the domain are reported with their error and marked WITHHELD, never silently dropped.",
+    "declared_before_acceptance_run": true,
+    "note": "The rule and the 30 % threshold were fixed during model design, before the acceptance sweep was executed; no threshold or coefficient was changed after seeing the acceptance numbers. This file is a design record, not a time-stamped pre-registration server entry."
+  },
+  "variables": {
+    "controlled": ["scantlings and yield stress of the design case", "frame spacing", "contact patch dimensions", "friction coefficient", "striking mass and added-mass coefficient"],
+    "changed": ["impact velocity V = 2/4/6/8 m/s (sweep) and striking mass 2.2e6 / 4.5e6 kg (severe and overload cases)"],
+    "confounders": ["strain-rate sensitivity of the yield stress (not modelled)", "ice crushing energy (indenter modelled rigid)", "fracture/tearing energy (not modelled)", "elastic hinge contribution (neglected)"],
+    "repetition_rationale": "The surface is deterministic (closed-form + bisection to 1e-12 m): repetitions would return identical numbers, so the design uses cross-route agreement (fibre integration, virtual work, Simpson quadrature, closed-form root) instead of stochastic repetition. The only numerical parameter (bisection steps) is checked for sufficiency by comparing against the closed-form root (<= 1e-6 relative)."
+  },
+  "analysis_plan": {
+    "aggregation": "per-case values only; no cross-case averaging",
+    "uncertainty": "not statistical; the reported quantity is a deterministic modelling bias, bounded by the limitation list",
+    "exclusions": "cases outside the comparison domain are labelled WITHHELD, not excluded from the report",
+    "stopping_rule": "run the single acceptance script once per commit; if any criterion fails, report FAIL and do not retune coefficients"
+  },
+  "environment": {
+    "python": "3.11",
+    "dependencies": ["torch==2.14.1 (repository requirement, unused by this surface)", "matplotlib==3.10.8", "pytest>=8.3"],
+    "commands": [
+      "python -m pytest tests/test_hull_collision_energy.py -q",
+      "python scripts/benchmark_hull_collision_energy.py --output runs/hull_collision_energy"
+    ],
+    "resource_limits": "pure Python + numpy-free scalar arithmetic; runtime < 60 s on one core, no cluster job required"
+  },
+  "safety": "no external state, no network, no writes outside the run output directory"
+}
