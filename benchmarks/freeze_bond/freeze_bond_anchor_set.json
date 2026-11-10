@@ -1,0 +1,63 @@
+{
+  "dataset_id": "molenaar1996_freeze_bond_anchor_v1",
+  "source": {
+    "citation": "Molenaar, A. P. (1996) freeze-bond / ice-structure interaction test programme (freshwater ice on mild steel, displacement-controlled pull-off and shear tests)",
+    "reported_ranges_used": {
+      "adhesion_strength_mpa": [0.35, 0.95],
+      "adhesion_strength_mpa_temperature_c": [-2.0, -8.0],
+      "cohesive_peak_mpa": [0.70, 0.90],
+      "initial_stiffness_N_per_m": [8.0e7, 9.2e7],
+      "post_peak_separation_um": [10.0, 50.0],
+      "failure_mode_transition_c": [-10.0, -8.0]
+    }
+  },
+  "provenance": {
+    "digitization": "reconstructed",
+    "evidence_grade": "WITHHELD",
+    "agent": "m9155",
+    "date": "2026-11-10",
+    "note": "NOT point-digitized originals. Peak forces, initial stiffness, post-peak separations and the failure-mode transition interval were taken from the reported ranges above; the individual coordinates of the two F-u curves were reconstructed to be consistent with those ranges (peak, initial slope, area) and carry a deliberate ~2-5% shape deviation from the bilinear cohesive law so that the shape test is not tautological. Every number computed against this file is a comparison against a DECLARED ANCHOR, not against measured data. Replace this file with a true digitization to upgrade the evidence grade from WITHHELD to REAL; the comparison machinery needs no change.",
+    "how_to_upgrade": "write the digitized (u_um, F_N) coordinates and peak_tests rows measured in the source, keep the same schema, set provenance.digitization='point_digitized' and provenance.evidence_grade='REAL'"
+  },
+  "test_conditions": {
+    "area_m2": 1.0e-4,
+    "contact_time_s": 600.0,
+    "t_melt_c": 0.0,
+    "material": "freshwater granular ice / mild steel",
+    "loading": "displacement controlled, 0.05 mm/s",
+    "specimen_thickness_m": 0.01
+  },
+  "transition": {
+    "T_trans_c": -9.0,
+    "band_c": 1.0,
+    "warmest_cohesive_test_c": -10.0,
+    "coldest_adhesive_test_c": -8.0,
+    "note": "bracketed by the warmest cohesive and the coldest adhesive peak test; the band is the bracket half-width, both bracketing points are flagged in_transition_band and excluded from the mode-agreement score"
+  },
+  "peak_tests": [
+    {"T_c": -20.0, "F_peak_N": 86.4, "mode": "cohesive", "k_N_per_m": 9.2e7, "in_transition_band": false},
+    {"T_c": -16.0, "F_peak_N": 80.3, "mode": "cohesive", "k_N_per_m": 9.1e7, "in_transition_band": false},
+    {"T_c": -13.0, "F_peak_N": 77.5, "mode": "cohesive", "k_N_per_m": 9.0e7, "in_transition_band": false},
+    {"T_c": -11.0, "F_peak_N": 75.2, "mode": "cohesive", "k_N_per_m": 9.0e7, "in_transition_band": false},
+    {"T_c": -10.0, "F_peak_N": 74.0, "mode": "cohesive", "k_N_per_m": 8.9e7, "in_transition_band": true},
+    {"T_c": -8.0, "F_peak_N": 70.2, "mode": "adhesive", "k_N_per_m": 8.8e7, "in_transition_band": true},
+    {"T_c": -5.0, "F_peak_N": 53.1, "mode": "adhesive", "k_N_per_m": 8.6e7, "in_transition_band": false},
+    {"T_c": -2.0, "F_peak_N": 40.6, "mode": "adhesive", "k_N_per_m": 8.4e7, "in_transition_band": false}
+  ],
+  "curves": [
+    {
+      "T_c": -5.0,
+      "mode": "adhesive",
+      "G_f_J_m2": 3.84,
+      "u_um": [0.0, 0.15, 0.30, 0.45, 0.55, 0.62, 0.80, 1.50, 3.00, 5.00, 7.00, 9.00, 10.50, 11.60, 12.40],
+      "F_N": [0.0, 11.2, 24.1, 38.0, 46.9, 53.1, 52.3, 50.4, 46.6, 39.4, 31.6, 22.4, 13.2, 5.4, 0.4]
+    },
+    {
+      "T_c": -15.0,
+      "mode": "cohesive",
+      "G_f_J_m2": 20.97,
+      "u_um": [0.0, 0.2, 0.5, 0.9, 1.2, 2.0, 5.0, 10.0, 18.0, 26.0, 34.0, 40.0, 44.0, 47.0, 49.0],
+      "F_N": [0.0, 18.0, 44.8, 80.6, 79.5, 77.9, 74.0, 68.2, 58.0, 41.0, 28.0, 18.0, 9.0, 3.0, 0.3]
+    }
+  ]
+}
