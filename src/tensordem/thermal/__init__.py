@@ -13,6 +13,9 @@ Modules
 ``stefan_adapter``
     Adapter layer that couples the static-bed conductivity to the discrete
     Stefan melting front implemented in ``tensordem.threefield.thermal``.
+``lattice_conductivity``
+    Effective thermal conductivity of SC/BCC/FCC sphere lattices with Hertz
+    contact thermal resistance; comparison with Zehner-Schluender correlation.
 """
 from __future__ import annotations
 
@@ -56,6 +59,15 @@ from .stefan_adapter import (
     melt_time_from_conductivity,
     melt_time_sensitivity,
 )
+from .lattice_conductivity import (
+    LatticeType,
+    LatticeThermalConductivity,
+    lattice_porosity,
+    lattice_coordination,
+    lattice_constant,
+    lattice_effective_conductivity,
+    lattice_vs_zehner_schluender,
+)
 
 __all__ = [
     "BondGateResult",
@@ -92,6 +104,13 @@ __all__ = [
     "melt_time_sensitivity",
     "wiener_bounds",
     "zehner_schluender_conductivity",
+    "LatticeType",
+    "LatticeThermalConductivity",
+    "lattice_porosity",
+    "lattice_coordination",
+    "lattice_constant",
+    "lattice_effective_conductivity",
+    "lattice_vs_zehner_schluender",
 ]
 # p74-n11 additions
 from .packed_bed import (
