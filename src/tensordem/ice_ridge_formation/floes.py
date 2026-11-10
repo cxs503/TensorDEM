@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import math
-from typing import List, Tuple
+from typing import List, Tuple, Union
 
 import numpy as np
 import torch
@@ -212,7 +212,7 @@ class FloePopulation:
     
     @property
     def total_mass(self) -> float:
-        """Total mass of all floes (kg)."""
+        """Total mass of the floe (kg)."""
         return sum(floe.mass for floe in self.floes)
     
     @property
@@ -298,38 +298,68 @@ def generate_power_law_floes(config: FloePopulationConfig) -> FloePopulation:
     freeboard = config.thickness - draft
     
     # Generate floe positions (avoid overlap)
-    # Floes should be positioned so their centre is at the waterline minus draft
+    # Use a grid-based approach for better packing
     positions = []
-    max_attempts = 1000
-    for i in range(config.n_floes):
-        for attempt in range(max_attempts):
-            x = rng.uniform(0, config.domain_size[0])
+    domain_width = config.domain_size[0]
+    domain_height = config.domain_size[1]
+    
+    # Sort diameters to place larger floes first (better packing)
+    sorted_indices = np.argsort(-diameters)
+    placed_diameters = np.zeros(config.n_floes)
+    
+    for idx in sorted_indices:
+        d = diameters[idx]
+        placed = False
+        
+        # Try multiple random positions
+        for attempt in range(500):
+            x = rng.uniform(d/2, domain_width - d/2)
             # Position floe centre at waterline minus half the draft
-            # This ensures the floe floats with correct buoyancy
-            y = -draft / 2  # Centre is below waterline by half the draft
+            y = -draft / 2
             
             # Check for overlap with existing floes
             overlap = False
-            for j, (px, py, d) in enumerate(positions):
+            for px, py, pd in positions:
                 dist = math.sqrt((x - px) ** 2 + (y - py) ** 2)
-                if dist < 0.5 * (diameters[i] + d):
+                # Use slightly relaxed overlap check (90% of sum of radii)
+                if dist < 0.45 * (d + pd):
                     overlap = True
                     break
             
             if not overlap:
-                positions.append((x, y, diameters[i]))
+                positions.append((x, y, d))
+                placed_diameters[idx] = d
+                placed = True
                 break
-        else:
-            # If we couldn't place the floe, skip it
-            continue
+        
+        # If we couldn't place it with random positions, try a grid search
+        if not placed:
+            grid_spacing = d * 0.6
+            for gx in np.arange(d/2, domain_width - d/2, grid_spacing):
+                for gy in [-draft / 2]:
+                    overlap = False
+                    for px, py, pd in positions:
+                        dist = math.sqrt((gx - px) ** 2 + (gy - py) ** 2)
+                        if dist < 0.45 * (d + pd):
+                            overlap = True
+                            break
+                    if not overlap:
+                        positions.append((gx, gy, d))
+                        placed_diameters[idx] = d
+                        placed = True
+                        break
+                if placed:
+                    break
     
-    # Generate polygonal shapes using Voronoi tessellation
+    # Generate polygonal shapes
     floes = []
+    floe_id = 0
     for i, (x, y, d) in enumerate(positions):
         # Generate random points around the centre
         n_points = max(5, int(d * 3))  # More points for larger floes
         angles = np.linspace(0, 2 * np.pi, n_points, endpoint=False)
-        radii = d * 0.5 * (1.0 + 0.2 * rng.standard_normal(n_points))
+        radii = d * 0.5 * (1.0 + 0.15 * rng.standard_normal(n_points))
+        radii = np.clip(radii, d * 0.35, d * 0.65)  # Clamp radii
         
         # Create polygon vertices
         vertices_x = x + radii * np.cos(angles)
@@ -344,8 +374,9 @@ def generate_power_law_floes(config: FloePopulationConfig) -> FloePopulation:
             thickness=config.thickness,
             density=config.density,
             bending_strength=config.bending_strength,
-            floe_id=i,
+            floe_id=floe_id,
         )
         floes.append(floe)
+        floe_id += 1
     
     return FloePopulation(floes, config)
