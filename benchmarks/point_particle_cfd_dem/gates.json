@@ -1,0 +1,49 @@
+{
+  "node": "p158w1-n03-cfd-dem",
+  "all_passed": true,
+  "n_passed": 5,
+  "n_gates": 5,
+  "gates": [
+    {
+      "gate": "stokes_terminal_velocity",
+      "criterion": "|U_container - v_t| / v_t <= 2 %  with v_t = (rho_p-rho_f) g d^2 / (18 mu)",
+      "measured": 0.01983999170329101,
+      "threshold": 0.02,
+      "passed": true,
+      "evidence": "U=0.054453, v_t=0.055556, Re_t=0.1111; uncorrected baseline U=0.065847 (err=0.185)"
+    },
+    {
+      "gate": "added_mass_oscillation_frequency",
+      "criterion": "|omega_num - sqrt(k/(m_p + C_A m_a))| / omega <= 5 %",
+      "measured": 0.008636966284839454,
+      "threshold": 0.05,
+      "passed": true,
+      "evidence": "omega_num=0.991363, omega_theory=1.000000, C_A=0.5, counterfactual C_A=0 error=0.1180"
+    },
+    {
+      "gate": "interphase_momentum_conservation",
+      "criterion": "|d(sum m_p u_p) + d(p_fluid)| / max(|d p_p|,|d p_f|) <= 1e-6",
+      "measured": 1.9514184313699833e-14,
+      "threshold": 1e-06,
+      "passed": true,
+      "evidence": "adjoint residual=1.951e-14; +2 % exchange-bias counterfactual residual=1.961e-02"
+    },
+    {
+      "gate": "richardson_zaki_settling",
+      "criterion": "|u_s,container - u_t eps^n| / (u_t eps^n) <= 10 %",
+      "measured": 0.08681253012514571,
+      "threshold": 0.1,
+      "passed": true,
+      "evidence": "u_s=0.040762, u_t eps^n=0.044637, eps=0.9540, n=4.6500, phi=0.0460, N=512; uncorrected baseline err=0.0868"
+    },
+    {
+      "gate": "pressure_gradient_force",
+      "criterion": "grid: |grad p - analytic| / (A k) <= 1e-10 ; interpolated: residual / |F_pg| <= 2 %",
+      "measured": 0.008163295447322822,
+      "threshold": 0.02,
+      "passed": true,
+      "evidence": "operator_error=2.756e-15, interpolation_error=8.163e-03, force_error=8.164e-03 (k h = 0.262)",
+      "operator_passed": true
+    }
+  ]
+}
