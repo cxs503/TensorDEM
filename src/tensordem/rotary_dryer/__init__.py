@@ -5,6 +5,10 @@ This module implements:
 2. Particle-wall heat transfer (contact conduction + radiation)
 3. Residence Time Distribution (RTD) via tracer particle method
 4. Nusselt number validation against literature correlations (Tscheng 1979, Descoin 1990)
+5. Moist-particle drying: psychrometrics, Ranz-Marshall heat/mass transfer,
+   wet-bulb pinning, thin-layer (Lewis/Page) kinetics, and the coupled
+   gas-solid bed with water and energy ledgers
+   (``psychrometrics``, ``moist_transfer``, ``moist_bed``)
 
 References
 ----------
@@ -45,6 +49,27 @@ from .literature import (
 from .api import (
     calculate_rotary_dryer,
 )
+from . import psychrometrics
+from .moist_transfer import (
+    nusselt_ranz_marshall,
+    sherwood_ranz_marshall,
+    sherwood_whitaker,
+    transfer_coefficients,
+    evaporation_rate,
+    sorption_activity,
+    wet_bulb_from_closures,
+    simulate_single_particle,
+    fit_thin_layer,
+    page_model,
+    lewis_model,
+)
+from .moist_bed import (
+    DryerBedConfig,
+    simulate_moist_drying,
+    simulate_dry_heating,
+    solve_steady_profile,
+    bed_ledger,
+)
 
 __all__ = [
     "RotaryDryerConfig",
@@ -66,4 +91,22 @@ __all__ = [
     "descoin_correlation",
     "nusselt_literature",
     "calculate_rotary_dryer",
+    # moist drying
+    "psychrometrics",
+    "nusselt_ranz_marshall",
+    "sherwood_ranz_marshall",
+    "sherwood_whitaker",
+    "transfer_coefficients",
+    "evaporation_rate",
+    "sorption_activity",
+    "wet_bulb_from_closures",
+    "simulate_single_particle",
+    "fit_thin_layer",
+    "page_model",
+    "lewis_model",
+    "DryerBedConfig",
+    "simulate_moist_drying",
+    "simulate_dry_heating",
+    "solve_steady_profile",
+    "bed_ledger",
 ]
