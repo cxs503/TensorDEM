@@ -1,0 +1,62 @@
+{
+  "protocol_id": "tensordem-ridge-keel-granular-flow-v1",
+  "node": "p257w2-n05-ridge-keel-granular-flow",
+  "repo": "TensorDEM",
+  "registered_before_campaign_run": true,
+  "decision": "Does a plane-strain poly-disperse Hertz-Mindlin + freeze-bond DEM of a ship-bow wedge penetrating a ridge keel (i) conserve mass and energy, (ii) produce force chains and Coulomb shear bands with the textbook orientations, and (iii) land within 30 % of a Lindqvist-family keel buoyancy-friction resistance anchor?",
+  "alternatives": [
+    "DEM satisfies all criteria -> the grain-scale mechanism picture is consistent with the Lindqvist friction anchor at the 30 % level.",
+    "DEM satisfies C1-C6 but misses C7 -> anchor and mechanism disagree in magnitude; the deviation band is reported and the anchor stays WITHHELD, no threshold tuning.",
+    "Any of C1-C6 fails -> the DEM implementation is not yet trustworthy and the anchor comparison is not interpretable (honest FAIL)."
+  ],
+  "outcome_metrics": {
+    "C1_particle_conservation": "number of particles identical at every step (no insertion/deletion)",
+    "C2_energy_closure": "residual = [W_wedge + W_body] - [dKE + E_diss + dE_elastic]; |residual|/W_ext < 0.05",
+    "C3_force_chain_angle": "angle between the force-weighted strong-contact (F_n > 2 F_mean) direction and the major compressive principal stress direction < 15 deg",
+    "C4_shear_band_angle": "theta_shear (band axis vs minor principal stress direction) in [45 + phi/2 - 10, 45 + phi/2 + 10] deg, phi from an independent biaxial test in the same engine",
+    "C5_chain_load_fraction": "share of total normal force carried by contacts with F_n > 2 F_mean >= 0.60",
+    "C6_porosity_evolution": "delta_phi (porosity change of the keel region, local packing measure) in [-0.10, +0.20]",
+    "C7_lindqvist": "|F_DEM - F_Lindqvist| / F_Lindqvist < 0.30 with F_Lindqvist = mu_h * rho_i * g * (1 - n) * (h_k / sin(alpha))",
+    "C8_test_coverage": "pytest tests/test_ridge_keel.py exercises C1-C7 and the anchor algebra"
+  },
+  "definitions_fixed_a_priori": {
+    "force_chain": "contact with normal force F_n > 2 * mean(F_n) over the measurement window; chains = connected components of the strong-contact graph",
+    "major_principal_stress_direction": "eigenvector of the contact stress tensor sigma_ij = -(1/A) sum_c f_i l_j (compression positive) with the largest compressive eigenvalue",
+    "theta_shear": "acute angle between the localized-band axis (gamma-weighted PCA of the upper-quartile shear-strain cells) and the minor principal stress direction in the same window; theoretical value 45 + phi/2 deg",
+    "porosity": "phi = 1 - nu, nu = per-particle local solid fraction from a Gaussian coarse-graining kernel (R = 1.5 * mean diameter), reported for keel-region particles alive in both windows",
+    "F_DEM": "time-averaged wedge face force per unit out-of-plane thickness [N/m] over the steady window s in [0.5, 1.0] * s_max",
+    "F_Lindqvist": "mu_h * rho_i * g * (1 - n) * h_k / sin(alpha), keel term only (no consolidated layer), coefficient set graded WITHHELD"
+  },
+  "fixed_parameters": {
+    "keel_depth_m": 8.0,
+    "keel_width_m": 24.0,
+    "psd": {"kind": "power_law_number_pdf", "d_min_m": 0.15, "d_max_m": 2.0, "exponent": 1.8},
+    "rho_ice_kg_m3": 917.0,
+    "rho_water_kg_m3": 1025.0,
+    "young_modulus_Pa": 1.0e9,
+    "poisson_ratio": 0.3,
+    "particle_friction": 0.55,
+    "rolling_friction_coefficient": 0.05,
+    "restitution": 0.4,
+    "bond_normal_strength_Pa": 20000.0,
+    "bond_shear_strength_Pa": 10000.0,
+    "wedge_half_angle_deg_primary": 30.0,
+    "wedge_speed_m_s_primary": 1.0,
+    "hull_friction": 0.3,
+    "lid_friction": 0.2,
+    "water_drag_time_s": 0.5,
+    "primary_case": "unbonded rubble (friction only), alpha = 30 deg, V = 1.0 m/s",
+    "bonded_case": "same geometry with freeze bonds sigma_n = 20 kPa, sigma_t = 10 kPa",
+    "sensitivity": "alpha in {15, 30, 45} deg at V = 1 m/s; V in {0.5, 1.0, 3.0} m/s at alpha = 30 deg"
+  },
+  "stopping_rule": "penetration s = 4.0 m (half the keel mouldline half-width) or wall-clock 900 s per case, whichever first",
+  "repetition_rationale": "one realisation per parameter point (2-D, N ~ 800 grains) with the steady-window average as the estimator; three speeds and three angles give the trend, and the primary case is repeated with a second seed to bound realisation noise",
+  "analysis": "steady-window time averages; force/patch statistics unweighted means; energy residual relative to external work; all raw numbers exported to benchmarks/pending/ridge_keel/results/*.json",
+  "known_confounders": [
+    "2-D plane strain: out-of-plane rubble escape is not represented, so absolute resistance is a section value, not a 3-D ship load",
+    "freeze bonds are rate-independent springs with a strength cutoff: no viscoelastic ice creep",
+    "polydispersity is truncated at d in [0.15, 2.0] m; real keels carry sub-0.15 m fines",
+    "the lid represents the consolidated layer and is rigid (no cracking) -> it enforces no-heave, which biases resistance upward"
+  ],
+  "decision_thresholds_not_to_be_changed_after_results": true
+}
