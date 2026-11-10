@@ -1,0 +1,57 @@
+{
+  "amendment": 2,
+  "campaign_node": "IN69-N06",
+  "date": "2026-11-10",
+  "depends_on": "prereg/rubble_accumulation_amendment1.json",
+  "decision_records": {
+    "D1_sheet_thrust_as_sail_mechanism": {
+      "rule": "amendment 1: accept if H_p/(2r) > 1.5 AND H_p(sigma=20kPa) >= 1.5 H_p(sigma=0) at >= 2 of the 4 operating points",
+      "measured": {
+        "cases": "D = 3 m, h_i = 0.25 m, particle budget 800, 4000 steps, seed 0, D = 1 m flume (log: logs/exp_thrust2.log)",
+        "H_over_two_r_sigma0": [0.25, 0.37, 0.32, 0.35],
+        "H_over_two_r_sigma20kPa": [0.39, 0.44, 0.46, 0.52],
+        "paired_ratio_sigma_over_control": [1.56, 1.19, 1.44, 1.49],
+        "p_front_pa_sigma0": [201.3, 650.8, 310.2, 978.2],
+        "p_front_pa_sigma20kPa": [649.5, 797.8, 1097.4, 1231.7],
+        "pile_mass_kg_sigma0": [230.7, 156.5, 320.6, 216.8],
+        "pile_mass_kg_sigma20kPa": [56.7, 43.8, 135.1, 54.1]
+      },
+      "verdict": "REJECT",
+      "reason": "H_p/(2r) > 1.5 in 0 of 4 points and the paired height ratio reaches 1.5 in only 1 of 4 points, so the pre-registered decision rule fails. Physically the 20 kPa sheet thrust does not build a sail in this model: it drives a thin, fast-moving ribbon of blocks against the structure (pile mass drops by 3-4x) while the front load rises by 1.2-3.5x. A sail needs interlocking (angular, non-spherical, freeze-bonded blocks); with friction-only spheres the emergent heap cannot stand above one block diameter.",
+      "consequence": "The height observable H_p is declared NOT RESOLVED by this model and the steady-geometry scaling claim (criterion (b)) is WITHHELD rather than silently restated. The thrust boundary is kept in the campaign grid, but strictly as a *load* mechanism (a paired treatment over the Fr/C_i space), never as a sail mechanism."
+    },
+    "implementation_defect_found_and_fixed_during_D1": {
+      "symptom": "first thrust implementation (per-block sigma (2r)^2 applied to every block in the feed band, no speed condition) gave p_front = 6.2-16.5 kPa, 1.4-3.1 m block launches and empty resident sets (log: logs/exp1.log, amendment-1 run)",
+      "cause": "a pressure boundary applied to a dilute stream pumps energy: the per-block force (528 N for r = 0.081 m) is ~26x the block weight and nothing limits the resulting speed",
+      "fix": "the thrust acts only while v_x < v_i: an ice sheet drifting at v_i cannot accelerate a block beyond its own speed, so the term transmits a jam pressure instead of injecting kinetic energy",
+      "evidence": "logs/exp_thrust2.log (the capped version): p_front back to 0.6-1.2 kPa, no launches, H_p/(2r) in 0.39-0.52"
+    },
+    "D2_dual_shielding_baseline": {
+      "rule": "amendment 1: R_shield_A (momentum-flux baseline) finite for all pairs and R_shield_B (cleared-cylinder twin) finite wherever p0 > 0, with the sign agreement reported",
+      "sweeper_defect_found": "the cleared-cylinder twin removed a block on its first contact with the structure, and the stored amendment-0 artifacts showed p0 = 0 in every twin (artifacts/rubble_accumulation/sweep.json: all 13 sweeper rows), which made R_shield undefined everywhere",
+      "fix": "the twin now removes a block only after it has been resident (|v| < 0.5 v_i) inside the removal shell for sweep_dwell_time = 0.05 s, so contacts deliver their impulse before the block disappears; the removal shell is R + 1.02 r (block radii beyond the surface), not the capture-zone radius",
+      "evidence": "logs/exp_sweep.log: p0 = 94.7 Pa (C_i=0.3, v_i=0.3) and 625.6 Pa (C_i=0.5, v_i=1.0), no longer zero",
+      "notice": "the amendment-0 artifacts were produced by an earlier revision of the sweeper and are superseded by this run; they are kept only as the record of the defect"
+    },
+    "definition_note_resident_filter": "the pre-registered pile definition (|v| < 0.5 v_i inside the capture shell) is NOT changed. Under the 20 kPa thrust it under-reports the pile, because a driven jam is in motion: the thrust rows therefore carry a smaller pile mass and a smaller L_p than the reference rows at the same load. This is reported as a limitation of the metric, not corrected after the fact."
+  },
+  "main_design": {
+    "drive_of_the_reference_cases": "mass-flux feed at the inlet + horizontal water drag towards v_i, no thrust pressure (thrust_pressure = 0)",
+    "G1_core": "D = 3 m, h_i = 0.25 m, C_i in {0.1, 0.3, 0.5}, v_i in {0.1, 0.3, 1.0} m/s (9 cases)",
+    "G2_sheet_thickness": "D = 3 m, h_i in {0.1, 0.5} m, C_i = 0.3, v_i in {0.3, 1.0} (4 cases)",
+    "G3_diameter": "D in {1, 5} m, h_i = 0.25 m, C_i = 0.3, v_i in {0.3, 1.0} (4 cases)",
+    "G4_cleared_cylinder_twins": "one twin per G1 and G3 case (13 cases)",
+    "G5_negative_controls": "C_i = 0 (v_i = 0.3) and v_i = 0 (C_i = 0.3) at the G1 centre point (2 cases)",
+    "G6_block_size_sensitivity": "G1 centre point at particle budget 1200 and 12000 (2 cases)",
+    "G7_thrust_treatment": "the G1 core re-run with the 20 kPa sheet pressure ON, paired (9 cases)",
+    "total": 43,
+    "budget": "particle budget 3000 (blocks sized by h_i/(2*layer_target), raised if the budget is exceeded), 9000 steps max per case, samples 200, seed 0",
+    "stopping_rule": "each case runs to min(9000 steps, time_factor*flux_time_scale + 0.5 transit); no case is extended or reseeded because of its result",
+    "thresholds": "unchanged from amendment 0 (growth R^2 > 0.95, scaling exponents within 20 % of literature where a literature value exists, mass closure < 2 %, negative controls exactly zero, pytest >= 10)"
+  },
+  "analysis_notes": [
+    "the growth-law fit window is the pre-registered rule (start when the signal first exceeds 2 % of its run maximum), with a fixed 11-sample centred moving average reported alongside the raw fit",
+    "criterion (b) is decided WITHHELD: no authoritative literature value exists for the Fr/C_i exponents of B_inf/D, H_inf/h_i or L_inf/D around a cylinder in a broken-ice field, so the exponents are reported as measured ranges and standard errors only",
+    "criteria are decided one observable at a time; one FAIL does not overwrite another observable's result"
+  ]
+}
