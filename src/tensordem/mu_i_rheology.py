@@ -191,8 +191,7 @@ def simulate_shear(case: MuICase, *, return_history: bool = False) -> dict:
         torque = torch.zeros_like(positions)
 
         # Particle-particle contacts with periodic x
-        dvec = positions[ju] - positions[iu := torch.arange(n).repeat_interleave(n - torch.arange(n) - 1)]
-        # Simpler approach: use triu_indices
+        # all distinct pairs (i < j), the upstream ordering of the pair forces
         aiu, aju = _pair_index(n)
         dvec = positions[aju] - positions[aiu]
         # Apply minimum image in x
