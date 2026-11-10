@@ -1,0 +1,75 @@
+{
+  "mission": "m6910",
+  "node": "IN13-W3-N02",
+  "repository": "TensorDEM",
+  "decision": "Accept the Glen/Norton creep implementation if every pre-declared threshold below is met; otherwise report honest FAIL per item.",
+  "alternatives": [
+    "A: Norton dashpot in series with the bond spring + Kelvin branch + Rabotnov damage (implemented)",
+    "B: Maxwell-Wiechert Prony-series bond (already in ice_bond_viscoelastic) - linear, cannot give sigma^n",
+    "C: empirical strain-time fits (no constitutive law) - rejected: not extrapolable in stress/temperature"
+  ],
+  "hypothesis": "A bonded-sphere DEM with a Norton bond dashpot reproduces (i) the Norton exponent n, (ii) the three creep stages, (iii) F(t) ~ t^(-1/(n+1)) at constant penetration for n=3, (iv) Arrhenius A(T).",
+  "metrics": [
+    "relative error of trace/biaxial ratios",
+    "fitted log-log exponent vs n",
+    "steady rate vs A*sigma^n",
+    "RK4 vs closed form error",
+    "fitted relaxation exponent vs -1/(n+1)",
+    "recovered Q vs input Q"
+  ],
+  "baseline_control": [
+    "analytic Glen/Norton expressions",
+    "closed-form single-bond relaxation",
+    "closed-form Rabotnov damage integral",
+    "maxwell_wiechert linear bond as the n=1 control"
+  ],
+  "thresholds": {
+    "glen_incompressibility_rel": 1e-12,
+    "glen_uniaxial_vs_norton_rel": 1e-12,
+    "norton_exponent_analytic_rel": 0.01,
+    "norton_exponent_dem_rel": 0.05,
+    "steady_rate_vs_norton_rel": 0.03,
+    "rk4_vs_closed_form_rel": 1e-06,
+    "single_bond_relaxation_rel": 0.01,
+    "punch_exponent_rel_n3": 0.03,
+    "punch_exponent_rel_n1_n5": 0.03,
+    "arrhenius_closed_form_rel": 1e-12,
+    "recovered_Q_rel": 0.01
+  },
+  "stopping_rule": "Stop when the stress exponent sweep, the three-stage run, the plate relaxation sweep and the temperature table have all been executed once at their declared resolutions; no re-tuning of thresholds after seeing results.",
+  "variables": {
+    "controlled": [
+      "lattice geometry",
+      "bond stiffness",
+      "temperatures",
+      "time step (declared per run)",
+      "creep_step_ratio<0.5"
+    ],
+    "changed": [
+      "stress exponent n",
+      "applied stress sigma0",
+      "fluidity A_ref",
+      "temperature T"
+    ],
+    "confounders": [
+      "lattice discretisation factor on the absolute rate",
+      "window choice for power-law fits",
+      "explicit-Euler truncation"
+    ]
+  },
+  "repetition_rationale": "Deterministic model - no sampling noise; the only stochastic element is a fixed-seed rotation matrix. Repetition is replaced by resolution studies (three fit windows, three lattice sizes 3^3/4^3/6^3, 200-2000 steps).",
+  "environment": {
+    "python": "3.11",
+    "numpy": "dense assembly + scipy LU",
+    "matplotlib": "Agg",
+    "platform": "loong64 workstation"
+  },
+  "analysis": "least-squares log-log fits with R2, relative errors against closed forms, window sensitivity reported for every fitted exponent",
+  "safety_resource_limits": {
+    "max_wall_s": 600,
+    "max_particles": 216,
+    "note": "explicit step kept at creep_step_ratio<0.5"
+  },
+  "declared_before_runs": "thresholds fixed before the validation driver was first executed",
+  "result_source": "artifacts/ice_creep/results.json (programme-written)"
+}
