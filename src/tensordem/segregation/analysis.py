@@ -189,9 +189,22 @@ def evaluate_criteria(records: dict[str, dict], *, geometry: HoldGeometry | None
                                      "note": "no d_l/d_s = 1 case in the run set"}
 
     # ---- (b) monotonicity in d_l/d_s + rise-velocity exponent ----------
+    # The designed campaign sweeps *both* the diameter ratio (at Gamma = 3) and
+    # the drive (at d_l/d_s = 2), so a bare ``ratio`` filter silently mixes
+    # several Gamma levels in the d_l/d_s = 2 family and dilutes its S.  The
+    # scaling law is a fixed-drive statement, so the ratio families are pinned
+    # to one common drive level: the largest Gamma present for *every* ratio
+    # (i.e. the highest saturated point of the matrix).
+    ratio_gammas = []
+    for ratio in RATIOS:
+        fam_all = _family(records, ratio=ratio, fraction=0.3)
+        ratio_gammas.append({round(r["spec"]["gamma"], 9) for r in fam_all})
+    common_gammas = set.intersection(*ratio_gammas) if ratio_gammas else set()
+    drive_gamma = max(common_gammas) if common_gammas else None
+
     by_ratio = {}
     for ratio in RATIOS:
-        fam = _family(records, ratio=ratio, fraction=0.3)
+        fam = _family(records, ratio=ratio, fraction=0.3, gamma=drive_gamma)
         if not fam:
             continue
         s_vals = [r["metrics"]["segregation"]["S_bn"] for r in fam]
@@ -220,6 +233,7 @@ def evaluate_criteria(records: dict[str, dict], *, geometry: HoldGeometry | None
         if np.isfinite(p_fit.get("p", float("nan"))) else float("nan")
     )
     out["b_ratio_scaling"] = {
+        "drive_gamma": None if drive_gamma is None else float(drive_gamma),
         "by_ratio": by_ratio,
         "strictly_monotone": monotone,
         "power_law": p_fit,
@@ -276,15 +290,25 @@ def evaluate_criteria(records: dict[str, dict], *, geometry: HoldGeometry | None
             transfer_cases[name] = {"error": repr(exc)}
             continue
         shard = zone_moment_check(dist)
-        # homogeneous reference: same mass, uniform fill at the mean height
+        # Homogeneous reference: same mass, uniform fill whose centre of gravity
+        # is the *pre-drive* centre of gravity of the bed.  Using the segregated
+        # state's own mean height here would make dVCG identically zero by
+        # construction (the mapping would compare a state with itself), which is
+        # what an earlier revision did -- the reference must not be a function of
+        # the state under test.
         state_mass = dist.total_mass_kg
         z_mean = float(dist.z_moment_kg_m.sum() / max(state_mass, 1e-30))
+        z_ref = rec.get("initial_z_com_m")
+        if not (isinstance(z_ref, (int, float)) and math.isfinite(z_ref) and z_ref > 0.0):
+            h_settled = rec.get("settled_bed_height_m")
+            z_ref = 0.5 * float(h_settled) if isinstance(h_settled, (int, float)) \
+                and math.isfinite(h_settled) and h_settled > 0.0 else z_mean
         uniform = type(dist)(
             geometry=geo, mass_kg=dist.mass_kg,
-            z_moment_kg_m=dist.mass_kg * z_mean,
+            z_moment_kg_m=dist.mass_kg * z_ref,
             x_moment_kg_m=dist.mass_kg * (dist.geometry.length_m * 0.5),
             y_moment_kg_m=dist.mass_kg * geo.breadth_m * 0.5,
-            z2_moment_kg_m2=dist.mass_kg * z_mean**2,
+            z2_moment_kg_m2=dist.mass_kg * z_ref**2,
         )
         void = rec.get("void_fraction", 0.18)
         gm = gm_mapping(uniform, dist, displacement_t=displacement_t, km_m=km_m,
@@ -296,6 +320,8 @@ def evaluate_criteria(records: dict[str, dict], *, geometry: HoldGeometry | None
         transfer_cases[name] = {
             "shard_check": shard,
             "gm": gm,
+            "reference_vcg_m": float(z_ref),
+            "segregated_vcg_m": float(z_mean),
             "pressure": press,
         }
     if transfer_cases:

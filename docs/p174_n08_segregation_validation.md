@@ -19,7 +19,9 @@ When a granular bed containing two particle sizes is subjected to shear or vibra
 ## 2. Methodology
 
 ### Implementation
-- **Module**: `src/tensordem/segregation.py` (28KB)
+- **Module**: `src/tensordem/segregation/legacy.py` (28KB; the former flat
+  `src/tensordem/segregation.py`, folded into the package and re-exported from
+  `tensordem.segregation`)
 - **Tests**: `tests/test_segregation.py` (17KB, 26 tests)
 
 ### Key Components
@@ -107,7 +109,8 @@ Kozeny-Carman permeability k(z) varies with local particle size distribution.
 
 ## 7. Artifacts
 
-- `src/tensordem/segregation.py`: Core module
+- `src/tensordem/segregation/legacy.py`: Core flat driver (re-exported at
+  `tensordem.segregation`; `src/tensordem/segregation/` holds the modular surface)
 - `tests/test_segregation.py`: Test suite (26 tests pass)
 - `artifacts/m7319/`: Figures
 - `docs/report_m7319.json`: JSON report
