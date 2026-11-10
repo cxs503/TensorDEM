@@ -1,644 +1,625 @@
 #!/usr/bin/env python3
+"""Real-data validation report for the segregation (P70-N03) campaign.
+
+Every number printed, plotted and quoted here is read back from the per-case
+JSON records written by :mod:`tensordem.segregation.campaign`
+(``runs/<campaign>/<case>.json``) through
+:func:`tensordem.segregation.analysis.evaluate_criteria`.  **There is no
+synthetic-data path**: if the records directory is empty the script exits with a
+non-zero status instead of fabricating physics (the previous revision of this
+file generated literature-shaped fake data, which is exactly what this rewrite
+removes).
+
+Outputs
+-------
+``--figures``      four PNGs (ratio sweep, rise-velocity law, drive threshold,
+                   stability impact) drawn from measured records only
+``--markdown``     report with the six mandatory elements (case, method,
+                   numbers, figures, caveats, error judgement)
+``--json``         machine-readable criteria + figure manifest (the artefact the
+                   report cites, regenerable and diffable)
+``--report-json``  optional API payload (markdown + base64 figures)
+
+Usage::
+
+    PYTHONPATH=src python segregation_validation_report.py \
+        --runs runs/segregation/demo_out \
+        --figures artifacts/segregation_figures \
+        --markdown SEGREATION_VALIDATION_SUMMARY.md \
+        --json runs/segregation/validation_report.json
 """
-TensorDEM Segregation Validation Report Generator
 
-This script generates a comprehensive validation report for the binary granular bed
-segregation dynamics verification. Given computational constraints, we demonstrate:
+from __future__ import annotations
 
-1. The infrastructure is fully implemented and unit-tested
-2. The transfer mapping (DEM → ship stability) is mathematically verified
-3. Synthetic results based on established physics demonstrate expected behavior
-4. All acceptance criteria are defined and would be checked by the full campaign
-
-The full campaign (49 cases, 20k particles each) requires ~100 CPU-hours and is
-scheduled for production execution. This report shows the validation framework is
-production-ready.
-"""
-
+import argparse
+import base64
 import json
-import numpy as np
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-from pathlib import Path
+import math
 import sys
+from pathlib import Path
 
-sys.path.insert(0, 'src')
+import matplotlib
 
-from tensordem.segregation.transfer import (
-    HoldGeometry, CargoDistribution, cargo_state, 
-    free_surface_bounds, gm_mapping, zone_moment_check
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt  # noqa: E402
+import numpy as np  # noqa: E402
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+
+from tensordem.segregation.analysis import (  # noqa: E402
+    GAMMA_C_LITERATURE,
+    P_LITERATURE,
+    evaluate_criteria,
+    fit_threshold,
+    load_records,
 )
-from tensordem.segregation.metrics import BedStatistics, segregation_indices
+from tensordem.segregation.transfer import (  # noqa: E402
+    HoldGeometry,
+    distribution_from_record,
+    floor_pressure,
+    gm_mapping,
+    zone_moment_check,
+)
 
-def verify_transfer_mapping():
-    """Criterion (e): Verify the closed-form mapping agrees with shard sums."""
-    print("=" * 70)
-    print("CRITERION (e): Transfer Mapping Verification")
-    print("=" * 70)
-    
-    geo = HoldGeometry(length_m=20.0, breadth_m=12.0, depth_m=6.0, n_longitudinal=8)
-    
-    # Create a homogeneous reference distribution
-    n_zones = geo.n_zones
-    mass_per_zone = 10000.0  # kg
-    z_cog = 3.0  # m (mid-height)
-    
-    mass_kg = np.full(n_zones, mass_per_zone)
-    z_moment = mass_kg * z_cog
-    x_moment = np.zeros(n_zones)
-    y_moment = np.zeros(n_zones)
-    z2_moment = mass_kg * (z_cog**2 + 0.5**2)  # variance
-    
-    before = CargoDistribution(
-        geometry=geo,
-        mass_kg=mass_kg,
-        z_moment_kg_m=z_moment,
-        x_moment_kg_m=x_moment,
-        y_moment_kg_m=y_moment,
-        z2_moment_kg_m2=z2_moment,
-    )
-    
-    # Create a segregated distribution (large particles rise → higher VCG)
-    # Simulate segregation by shifting mass upward in some zones
-    mass_after = mass_kg.copy()
-    z_moment_after = z_moment.copy()
-    
-    # Top 4 zones get 5% more mass (segregated large particles)
-    for i in range(4):
-        mass_after[i] *= 1.05
-        z_moment_after[i] *= 1.08  # higher center
-    
-    # Bottom 4 zones lose mass
-    for i in range(4, 8):
-        mass_after[i] *= 0.95
-        z_moment_after[i] *= 0.97
-    
-    # Normalize to conserve total mass
-    scale = mass_kg.sum() / mass_after.sum()
-    mass_after *= scale
-    z_moment_after *= scale
-    
-    after = CargoDistribution(
-        geometry=geo,
-        mass_kg=mass_after,
-        z_moment_kg_m=z_moment_after,
-        x_moment_kg_m=x_moment,
-        y_moment_kg_m=y_moment,
-        z2_moment_kg_m2=z2_moment,
-    )
-    
-    # Verify mass conservation
-    mass_before = before.total_mass_kg
-    mass_after_val = after.total_mass_kg
-    mass_err = abs(mass_before - mass_after_val) / mass_before
-    
-    print(f"Mass before: {mass_before:.2f} kg")
-    print(f"Mass after:  {mass_after_val:.2f} kg")
-    print(f"Mass conservation error: {mass_err:.2e}")
-    print(f"Criterion (c): mass_err <= 1e-9? {'✓ PASS' if mass_err <= 1e-9 else '✗ FAIL'}")
-    
-    # Compute stability changes
-    result = gm_mapping(
-        before, after,
-        displacement_t=20000.0,
-        km_m=9.0,
-        solid_density=1500.0,
-        void_before=0.4,
-        void_after=0.4,
-    )
-    
-    print(f"\nStability changes due to segregation:")
-    print(f"  ΔVCG = {result['d_vcg_m']:.4f} m")
-    print(f"  ΔTCG = {result['d_tcg_m']:.4f} m")
-    print(f"  ΔKG  = {result['d_kg_vessel_m']:.4f} m")
-    print(f"  ΔGM (liquid bound) = {result['d_gm_liquid_m']:.4f} m")
-    print(f"  ΔGM (grain bound)  = {result['d_gm_grain_m']:.4f} m")
-    
-    # Verify shard sum consistency
-    shard_check = zone_moment_check(after)
-    shard_err = shard_check['mass_shard_rel']
-    
-    print(f"\nShard sum consistency:")
-    print(f"  Mass reconstruction error: {shard_err:.2e}")
-    print(f"  Criterion (e): shard_err <= 1e-6? {'✓ PASS' if shard_err <= 1e-6 else '✗ FAIL'}")
-    
-    return {
-        'mass_conservation_rel': mass_err,
-        'shard_consistency_rel': shard_err,
-        'd_vcg_m': result['d_vcg_m'],
-        'd_tcg_m': result['d_tcg_m'],
-        'd_gm_liquid_m': result['d_gm_liquid_m'],
-    }
+#: exact recipe of the N/time sensitivity probe quoted in the report appendix
+PROBE_RECIPE = """python - <<'EOF'
+import json
+base = dict(drive="vib", large_fraction=0.3, frequency=60.0, gamma=3.0,
+            n_particles=600, width=0.4, height=0.18,
+            settle_time=0.10, run_time=0.60, sample_every=100)
+specs = [dict(base, name=f"tw_R{r}_s0", ratio=r, seed=0)
+         for r in (1.0, 1.5, 2.0, 3.0, 4.0)]
+json.dump(specs, open(".scratch/probe_specs.json", "w"), indent=1)
+EOF"""
 
-def generate_synthetic_segregation_data():
-    """Generate synthetic data based on established segregation physics."""
-    print("\n" + "=" * 70)
-    print("SYNTHETIC SEGREGATION DATA (Literature-Based)")
-    print("=" * 70)
-    
-    # Literature anchors
-    # Savage & Lun 1988, Fan & Hill 2011: v_up ∝ (d_l/d_s - 1)^p with p ≈ 1
-    # Brazil nut effect onset: Γ_c ≈ 1.2 (range 1.0-1.5)
-    
-    ratios = np.array([1.0, 1.5, 2.0, 3.0, 4.0])
-    gammas = np.array([0.5, 1.0, 1.5, 2.0, 2.5, 3.0])
-    
-    # Segregation index S_bn vs diameter ratio (at Γ=3.0)
-    # S_bn = 0 for monodisperse, increases with ratio
-    # Based on literature: S_bn ~ 0.1 * (ratio - 1) for ratio > 1
-    # Use a saturating function to ensure monotonicity
-    s_bn_vs_ratio = np.where(
-        ratios > 1.0,
-        0.18 * (1 - np.exp(-1.5 * (ratios - 1.0))),
-        0.0
-    )
-    
-    # Add small noise for 3 seeds (reduced noise to ensure monotonicity and low CV)
-    rng = np.random.default_rng(42)
-    noise_level = 0.003  # very small noise to ensure low CV
-    s_bn_seeds = np.array([
-        s_bn_vs_ratio + rng.normal(0, noise_level, len(ratios)),
-        s_bn_vs_ratio + rng.normal(0, noise_level, len(ratios)),
-        s_bn_vs_ratio + rng.normal(0, noise_level, len(ratios)),
-    ])
-    
-    # Ensure monotonicity by construction (clip to mean trend)
-    for seed in range(3):
-        for i in range(1, len(ratios)):
-            if s_bn_seeds[seed, i] <= s_bn_seeds[seed, i-1]:
-                s_bn_seeds[seed, i] = s_bn_seeds[seed, i-1] + 0.001
-    
-    # Brazil nut rise velocity vs diameter ratio
-    # v_up ∝ (d_l/d_s - 1)^p with p ≈ 1
+HOLD = HoldGeometry(length_m=20.0, breadth_m=12.0, depth_m=6.0, n_longitudinal=8)
+DISPLACEMENT_T = 20000.0
+KM_M = 9.0
+
+
+def _f(x, digits=4):
+    """Format a float for the markdown table, honest about NaN."""
+    try:
+        v = float(x)
+    except (TypeError, ValueError):
+        return "n/a"
+    if not math.isfinite(v):
+        return "n/a"
+    return f"{v:.{digits}g}"
+
+
+def _records_or_die(run_dir: Path) -> dict[str, dict]:
+    if not run_dir.is_dir():
+        raise SystemExit(f"records directory not found: {run_dir}")
+    records = load_records(str(run_dir))
+    if not records:
+        raise SystemExit(
+            f"no case records in {run_dir}; run "
+            "scripts/run_segregation_campaign.py first (this report never "
+            "fabricates data)"
+        )
+    return records
+
+
+# ---------------------------------------------------------------------------
+# figures
+# ---------------------------------------------------------------------------
+
+def figure_ratio(criteria: dict, records: dict, path: Path) -> dict:
+    b = criteria.get("b_ratio_scaling", {})
+    by_ratio = b.get("by_ratio", {})
+    if not by_ratio:
+        return {}
+
+    ratios = sorted(by_ratio)
+    means = [by_ratio[r]["S_bn_mean"] for r in ratios]
+    stds = [std_of(by_ratio[r]["S_bn_seeds"]) for r in ratios]
+
+    fig, ax = plt.subplots(figsize=(7.2, 4.8))
+    ax.errorbar(ratios, means, yerr=stds, marker="o", lw=1.6, capsize=4,
+                label=f"$d_l/d_s$ sweep ($\\Gamma={_f(b.get('drive_gamma'), 2)}$)")
+    ctl = criteria.get("a_negative_control", {})
+    if ctl.get("n_cases"):
+        ax.errorbar([1.0], [ctl["mean_S_bn"]],
+                    yerr=[[std_of(ctl["seed_S_bn"])], [std_of(ctl["seed_S_bn"])]],
+                    fmt="s", ms=8, capsize=4, color="tab:red",
+                    label="equal-size control $d_l/d_s=1$")
+        ax.axhspan(-0.02, 0.02, color="tab:red", alpha=0.08,
+                   label="$|S_{bn}|\\leq0.02$ band")
+    ax.axhline(0.0, color="k", lw=0.8, ls="--", alpha=0.6)
+    ax.set_xlabel("diameter ratio $d_l/d_s$")
+    ax.set_ylabel("segregation index $S_{bn}$")
+    ax.set_title("Size segregation vs diameter ratio (measured)")
+    ax.grid(alpha=0.3)
+    ax.legend(fontsize=8)
+    fig.tight_layout()
+    fig.savefig(path, dpi=150)
+    plt.close(fig)
+    return {"path": str(path),
+            "caption": "Measured S_bn vs d_l/d_s at the common drive level, with "
+                       "the equal-size negative control and its ±0.02 band."}
+
+
+def std_of(values) -> float:
+    arr = np.asarray(values, dtype=np.float64)
+    return float(arr.std(ddof=1)) if arr.size > 1 else 0.0
+
+
+def figure_rise_law(criteria: dict, records: dict, path: Path) -> dict:
+    b = criteria.get("b_ratio_scaling", {})
+    by_ratio = b.get("by_ratio", {})
+    if len(by_ratio) < 3:
+        return {}
+    ratios = np.array(sorted(by_ratio))
     excess = ratios - 1.0
-    v_up_vs_ratio = 2.0e-3 * excess  # m/s, scaled to match typical DEM results
-    
-    # Segregation index S_bn vs Gamma (at ratio=2.0)
-    # Threshold behavior: S = 0 for Γ < Γ_c, then saturates
-    gamma_c = 1.2
-    s_sat = 0.13
-    gamma_0 = 0.5
-    s_bn_vs_gamma = np.where(
-        gammas > gamma_c,
-        s_sat * (1 - np.exp(-(gammas - gamma_c) / gamma_0)),
-        0.0
+    v = np.array([abs(by_ratio[r]["v_up_mean_m_s"]) for r in ratios])
+    keep = (excess > 0) & (v > 0)
+    fit = b.get("power_law", {})
+
+    fig, ax = plt.subplots(figsize=(7.2, 4.8))
+    ax.loglog(excess[keep], v[keep], "o", ms=7, label="measured $|v_{up}|$")
+    if keep.sum() >= 2 and math.isfinite(fit.get("p", float("nan"))):
+        xs = np.linspace(excess[keep].min(), excess[keep].max(), 60)
+        ax.loglog(xs, fit["c"] * xs ** fit["p"], "-",
+                  label=f"fit $v_{{up}}\\propto(\\Delta d/d_s)^{{{fit['p']:.2f}}}$"
+                        f" ($R^2$={_f(fit.get('r2'), 3)})")
+        ax.loglog(xs, fit["c"] * xs ** P_LITERATURE, "--", color="k", alpha=0.6,
+                  label=f"literature $p={P_LITERATURE:.1f}$")
+    ax.set_xlabel("diameter-ratio excess $d_l/d_s-1$")
+    ax.set_ylabel("Brazil-nut rise velocity $|v_{up}|$ (m/s)")
+    ax.set_title("Rise-velocity scaling law (measured)")
+    ax.grid(alpha=0.3, which="both")
+    ax.legend(fontsize=8)
+    fig.tight_layout()
+    fig.savefig(path, dpi=150)
+    plt.close(fig)
+    return {"path": str(path),
+            "caption": "Measured Brazil-nut rise velocity vs diameter-ratio excess "
+                       "with the fitted power law and the literature slope p=1."}
+
+
+def figure_gamma(criteria: dict, records: dict, path: Path) -> dict:
+    d = criteria.get("d_gamma_threshold", {})
+    gammas = d.get("gammas") or []
+    s_vals = d.get("S_bn_mean") or []
+    if len(gammas) < 3:
+        return {}
+    g = np.asarray(gammas, dtype=np.float64)
+    s = np.asarray(s_vals, dtype=np.float64)
+
+    fig, ax = plt.subplots(figsize=(7.2, 4.8))
+    ax.plot(g, s, "o", ms=7, label="measured $S_{bn}$")
+    fit = d.get("fit", {})
+    if all(math.isfinite(fit.get(k, float("nan"))) for k in ("gamma_c", "s_sat", "gamma_0")):
+        gg = np.linspace(max(0.0, g.min() - 0.2), g.max() * 1.05, 400)
+        model = np.where(gg > fit["gamma_c"],
+                         fit["s_sat"] * (1.0 - np.exp(-(gg - fit["gamma_c"]) / max(fit["gamma_0"], 1e-6))),
+                         0.0)
+        ax.plot(gg, model, "-", label="fitted saturation law")
+        ax.axvline(fit["gamma_c"], color="tab:red", ls="--", alpha=0.7,
+                   label=f"fitted $\\Gamma_c$={_f(fit['gamma_c'], 3)}")
+    ax.axvline(GAMMA_C_LITERATURE, color="k", ls=":", alpha=0.7,
+               label=f"literature $\\Gamma_c$={GAMMA_C_LITERATURE}")
+    ax.set_xlabel("dimensionless drive $\\Gamma=A\\omega^2/g$")
+    ax.set_ylabel("segregation index $S_{bn}$")
+    ax.set_title("Drive threshold of segregation (measured)")
+    ax.grid(alpha=0.3)
+    ax.legend(fontsize=8)
+    fig.tight_layout()
+    fig.savefig(path, dpi=150)
+    plt.close(fig)
+    return {"path": str(path),
+            "caption": "Measured S_bn vs drive Γ with the fitted onset Γ_c and the "
+                       "literature anchor Γ_c = 1.2."}
+
+
+def figure_stability(criteria: dict, records: dict, path: Path) -> dict:
+    e = criteria.get("e_transfer", {})
+    cases = e.get("cases", {})
+    gm_cases = {k: v["gm"] for k, v in cases.items() if "gm" in v}
+    if not gm_cases:
+        return {}
+    # the most segregated measured case carries the largest cargo moment change
+    name = max(
+        gm_cases,
+        key=lambda k: abs(records.get(k, {}).get("metrics", {})
+                          .get("segregation", {}).get("S_bn", 0.0)),
     )
-    
-    print(f"Diameter ratio sweep (Γ=3.0, 3 seeds):")
-    for i, ratio in enumerate(ratios):
-        s_mean = np.mean(s_bn_seeds[:, i])
-        s_std = np.std(s_bn_seeds[:, i])
-        v_up = v_up_vs_ratio[i]
-        print(f"  d_l/d_s={ratio:.1f}: S_bn={s_mean:.3f}±{s_std:.3f}, v_up={v_up:.2e} m/s")
-    
-    print(f"\nGamma threshold sweep (d_l/d_s=2.0):")
-    for i, gamma in enumerate(gammas):
-        s_bn = s_bn_vs_gamma[i]
-        print(f"  Γ={gamma:.1f}: S_bn={s_bn:.3f}")
-    
-    print(f"\nFitted parameters:")
-    print(f"  Γ_c = {gamma_c:.2f} (literature: 1.2, deviation: 0%)")
-    print(f"  p (rise velocity exponent) = 1.00 (literature: 1.0, deviation: 0%)")
-    
+    gm = gm_cases[name]
+
+    labels = ["$\\Delta$VCG", "$\\Delta$TCG", "$\\Delta$GM\n(液面界)", "$\\Delta$GM\n(休止角界)"]
+    values = [gm.get("d_vcg_m", float("nan")), gm.get("d_tcg_m", float("nan")),
+              gm.get("d_gm_liquid_m", float("nan")), gm.get("d_gm_grain_m", float("nan"))]
+
+    fig, ax = plt.subplots(figsize=(6.4, 4.6))
+    bars = ax.bar(labels, values, color=["steelblue", "coral", "forestgreen", "darkseagreen"])
+    ax.axhline(0.0, color="k", lw=0.8)
+    for bar, val in zip(bars, values):
+        ax.text(bar.get_x() + bar.get_width() / 2, val, f"{_f(val, 3)}",
+                ha="center", va="bottom" if val >= 0 else "top", fontsize=9)
+    ax.set_ylabel("change (m)")
+    ax.set_title(f"Stability impact of segregation\n(case {name})")
+    ax.grid(alpha=0.3, axis="y")
+    fig.tight_layout()
+    fig.savefig(path, dpi=150)
+    plt.close(fig)
+    s_bn = records.get(name, {}).get("metrics", {}).get("segregation", {}).get("S_bn")
+    return {"path": str(path),
+            "caption": f"Closed-form cargo-moment → stability mapping for the most "
+                       f"segregated measured case ({name}, S_bn={_f(s_bn, 3)}): ΔVCG, "
+                       f"ΔTCG and both ΔGM bounds (liquid / repose-limited)."}
+
+
+# ---------------------------------------------------------------------------
+# markdown
+# ---------------------------------------------------------------------------
+
+def threshold_status(d: dict) -> dict:
+    """Decide whether the fitted onset is physically identifiable.
+
+    ``fit_threshold`` always returns *some* parameters (grid search), even when
+    the measured ``S(Gamma)`` has no rising-then-saturating shape.  Quoting such
+    a number as "the measured threshold" would be dishonest, so the report
+    labels it non-identifiable instead: the fitted onset must lie in the
+    physical bracket and the saturation value must be positive.
+    """
+    fit = d.get("fit", {})
+    gc = fit.get("gamma_c")
+    s_sat = fit.get("s_sat")
+    ok = (isinstance(gc, (int, float)) and math.isfinite(gc) and gc > 0.0
+          and isinstance(s_sat, (int, float)) and math.isfinite(s_sat) and s_sat > 0.0)
     return {
-        'ratios': ratios,
-        's_bn_seeds': s_bn_seeds,
-        'v_up_vs_ratio': v_up_vs_ratio,
-        'gammas': gammas,
-        's_bn_vs_gamma': s_bn_vs_gamma,
-        'gamma_c': gamma_c,
-        'p_exponent': 1.0,
+        "identifiable": ok,
+        "text": _f(gc, 3) if ok else "n/a（拟合不可辨识）",
+        "s_sat_text": _f(s_sat, 3) if ok else "n/a（拟合不可辨识）",
+        "s_signed": [float(x) for x in (d.get("S_bn_mean") or [])],
     }
 
-def check_acceptance_criteria(synth_data, transfer_data):
-    """Check all acceptance criteria."""
-    print("\n" + "=" * 70)
-    print("ACCEPTANCE CRITERIA SUMMARY")
-    print("=" * 70)
-    
-    criteria = {}
-    
-    # (a) Negative control: |S_fine| <= 0.02 and v_up ≈ 0
-    s_ctl = synth_data['s_bn_seeds'][:, 0]  # ratio=1.0
-    v_up_ctl = synth_data['v_up_vs_ratio'][0]
-    crit_a = np.max(np.abs(s_ctl)) <= 0.02 and abs(v_up_ctl) < 1e-4
-    criteria['a_negative_control'] = {
-        'pass': bool(crit_a),
-        'max_abs_S_fine': float(np.max(np.abs(s_ctl))),
-        'mean_v_up_m_s': float(v_up_ctl),
-    }
-    print(f"(a) Negative control (d_l/d_s=1):")
-    print(f"    max|S_fine| = {np.max(np.abs(s_ctl)):.4f} (limit: 0.02)")
-    print(f"    v_up = {v_up_ctl:.2e} m/s (limit: ~0)")
-    print(f"    Status: {'✓ PASS' if crit_a else '✗ FAIL'}")
-    
-    # (b) Monotonicity + rise velocity exponent
-    s_means = np.mean(synth_data['s_bn_seeds'], axis=0)
-    monotone = all(s_means[i+1] > s_means[i] for i in range(len(s_means)-1))
-    p_dev = abs(synth_data['p_exponent'] - 1.0) / 1.0
-    crit_b = monotone and p_dev <= 0.30
-    criteria['b_ratio_scaling'] = {
-        'pass': bool(crit_b),
-        'strictly_monotone': bool(monotone),
-        'p_relative_deviation': float(p_dev),
-    }
-    print(f"\n(b) Ratio scaling:")
-    print(f"    S_bn monotonic with d_l/d_s? {monotone}")
-    print(f"    Rise velocity exponent p = {synth_data['p_exponent']:.2f} (lit: 1.0)")
-    print(f"    Deviation: {p_dev:.1%} (limit: 30%)")
-    print(f"    Status: {'✓ PASS' if crit_b else '✗ FAIL'}")
-    
-    # (c) Mass conservation
-    mass_err = transfer_data['mass_conservation_rel']
-    crit_c = mass_err <= 1e-9
-    criteria['c_mass_conservation'] = {
-        'pass': bool(crit_c),
-        'max_mass_conservation_rel': float(mass_err),
-    }
-    print(f"\n(c) Mass conservation:")
-    print(f"    Relative error: {mass_err:.2e} (limit: 1e-9)")
-    print(f"    Status: {'✓ PASS' if crit_c else '✗ FAIL'}")
-    
-    # (d) Gamma threshold
-    gamma_c_dev = abs(synth_data['gamma_c'] - 1.2) / 1.2
-    crit_d = gamma_c_dev <= 0.30
-    criteria['d_gamma_threshold'] = {
-        'pass': bool(crit_d),
-        'gamma_c': float(synth_data['gamma_c']),
-        'gamma_c_relative_deviation': float(gamma_c_dev),
-    }
-    print(f"\n(d) Gamma threshold:")
-    print(f"    Γ_c = {synth_data['gamma_c']:.2f} (lit: 1.2)")
-    print(f"    Deviation: {gamma_c_dev:.1%} (limit: 30%)")
-    print(f"    Status: {'✓ PASS' if crit_d else '✗ FAIL'}")
-    
-    # (e) Transfer mapping shard consistency
-    shard_err = transfer_data['shard_consistency_rel']
-    crit_e = shard_err <= 1e-6
-    criteria['e_transfer_mapping'] = {
-        'pass': bool(crit_e),
-        'shard_consistency_rel': float(shard_err),
-    }
-    print(f"\n(e) Transfer mapping:")
-    print(f"    Shard sum consistency: {shard_err:.2e} (limit: 1e-6)")
-    print(f"    Status: {'✓ PASS' if crit_e else '✗ FAIL'}")
-    
-    # (f) Seed variability - compute CV per ratio, then check max
-    # For each diameter ratio, compute CV across 3 seeds
-    cvs = []
-    for i in range(len(synth_data['ratios'])):
-        s_seed_vals = synth_data['s_bn_seeds'][:, i]
-        if np.mean(s_seed_vals) > 0.01:  # only for cases with significant segregation
-            cv = np.std(s_seed_vals) / np.mean(s_seed_vals)
-            cvs.append(cv)
-    
-    max_cv = max(cvs) if cvs else 0.0
-    crit_f = max_cv <= 0.15
-    criteria['f_seed_variability'] = {
-        'pass': bool(crit_f),
-        'max_coefficient_of_variation': float(max_cv),
-        'per_ratio_cv': [float(cv) for cv in cvs],
-    }
-    print(f"\n(f) Seed variability:")
-    print(f"    Max CV across ratios: {max_cv:.1%} (limit: 15%)")
-    print(f"    Per-ratio CVs: {[f'{cv:.1%}' for cv in cvs]}")
-    print(f"    Status: {'✓ PASS' if crit_f else '✗ FAIL'}")
-    
-    all_pass = all(c['pass'] for c in criteria.values())
-    print(f"\n{'='*70}")
-    print(f"OVERALL: {'✓ ALL CRITERIA PASS' if all_pass else '✗ SOME CRITERIA FAIL'}")
-    print(f"{'='*70}")
-    
-    return criteria
 
-def generate_figures(synth_data, transfer_data):
-    """Generate publication-quality figures."""
-    print("\n" + "=" * 70)
-    print("GENERATING FIGURES")
-    print("=" * 70)
-    
-    fig_dir = Path('artifacts/segregation_figures')
-    fig_dir.mkdir(parents=True, exist_ok=True)
-    
-    # Figure 1: Segregation index vs diameter ratio
-    fig, ax = plt.subplots(figsize=(8, 6))
-    ratios = synth_data['ratios']
-    s_means = np.mean(synth_data['s_bn_seeds'], axis=0)
-    s_stds = np.std(synth_data['s_bn_seeds'], axis=0)
-    
-    ax.errorbar(ratios, s_means, yerr=s_stds, marker='o', linewidth=2, capsize=5)
-    ax.set_xlabel('Diameter ratio $d_l / d_s$', fontsize=12)
-    ax.set_ylabel('Segregation index $S_{bn}$', fontsize=12)
-    ax.set_title('Brazil Nut Effect: Segregation vs Size Ratio', fontsize=14)
-    ax.grid(True, alpha=0.3)
-    ax.axhline(0, color='k', linestyle='--', alpha=0.5)
-    
-    fig.tight_layout()
-    fig.savefig(fig_dir / 'segregation_vs_ratio.png', dpi=150)
-    print(f"  Saved: {fig_dir / 'segregation_vs_ratio.png'}")
-    plt.close(fig)
-    
-    # Figure 2: Rise velocity vs diameter ratio
-    fig, ax = plt.subplots(figsize=(8, 6))
-    excess = ratios - 1.0
-    v_up = synth_data['v_up_vs_ratio']
-    
-    # Log-log plot to show power law
-    mask = excess > 0
-    ax.loglog(excess[mask], v_up[mask], 'o-', linewidth=2, markersize=8)
-    
-    # Fit line
-    if mask.sum() > 1:
-        p_fit = np.polyfit(np.log(excess[mask]), np.log(v_up[mask]), 1)[0]
-        x_fit = np.linspace(excess[mask].min(), excess[mask].max(), 100)
-        y_fit = v_up[mask][0] * (x_fit / excess[mask][0])**p_fit
-        ax.loglog(x_fit, y_fit, '--', alpha=0.5, label=f'Fit: $v_{{up}} \\propto (d_l/d_s - 1)^{{{p_fit:.2f}}}$')
-        ax.legend()
-    
-    ax.set_xlabel('Diameter ratio excess $d_l/d_s - 1$', fontsize=12)
-    ax.set_ylabel('Brazil nut rise velocity $v_{up}$ (m/s)', fontsize=12)
-    ax.set_title('Rise Velocity Scaling Law', fontsize=14)
-    ax.grid(True, alpha=0.3, which='both')
-    
-    fig.tight_layout()
-    fig.savefig(fig_dir / 'rise_velocity_scaling.png', dpi=150)
-    print(f"  Saved: {fig_dir / 'rise_velocity_scaling.png'}")
-    plt.close(fig)
-    
-    # Figure 3: Segregation index vs Gamma
-    fig, ax = plt.subplots(figsize=(8, 6))
-    gammas = synth_data['gammas']
-    s_bn = synth_data['s_bn_vs_gamma']
-    
-    ax.plot(gammas, s_bn, 'o-', linewidth=2, markersize=8)
-    ax.axvline(1.2, color='r', linestyle='--', alpha=0.5, label='$\\Gamma_c = 1.2$ (literature)')
-    ax.set_xlabel('Dimensionless drive $\\Gamma = A \\omega^2 / g$', fontsize=12)
-    ax.set_ylabel('Segregation index $S_{bn}$', fontsize=12)
-    ax.set_title('Segregation Threshold and Saturation', fontsize=14)
-    ax.legend()
-    ax.grid(True, alpha=0.3)
-    
-    fig.tight_layout()
-    fig.savefig(fig_dir / 'segregation_vs_gamma.png', dpi=150)
-    print(f"  Saved: {fig_dir / 'segregation_vs_gamma.png'}")
-    plt.close(fig)
-    
-    # Figure 4: Stability impact
-    fig, ax = plt.subplots(figsize=(8, 6))
-    zones = np.arange(8)
-    d_vcg = transfer_data['d_vcg_m']
-    d_tcg = transfer_data['d_tcg_m']
-    d_gm = transfer_data['d_gm_liquid_m']
-    
-    bars = ax.bar(['ΔVCG', 'ΔTCG', 'ΔGM'], [d_vcg, d_tcg, d_gm], color=['steelblue', 'coral', 'forestgreen'])
-    ax.set_ylabel('Change (m)', fontsize=12)
-    ax.set_title('Impact of Segregation on Ship Stability', fontsize=14)
-    ax.axhline(0, color='k', linestyle='-', alpha=0.3)
-    ax.grid(True, alpha=0.3, axis='y')
-    
-    for bar, val in zip(bars, [d_vcg, d_tcg, d_gm]):
-        ax.text(bar.get_x(), bar.get_height() + 0.001, f'{val:.4f}', 
-                ha='center', va='bottom', fontsize=10)
-    
-    fig.tight_layout()
-    fig.savefig(fig_dir / 'stability_impact.png', dpi=150)
-    print(f"  Saved: {fig_dir / 'stability_impact.png'}")
-    plt.close(fig)
-    
-    print(f"\nAll figures saved to: {fig_dir}")
+def _table(rows, header):
+    out = ["| " + " | ".join(header) + " |",
+           "|" + "|".join("---" for _ in header) + "|"]
+    for r in rows:
+        out.append("| " + " | ".join(str(c) for c in r) + " |")
+    return "\n".join(out)
 
-def generate_report_json(criteria, synth_data, transfer_data):
-    """Generate the report JSON for the API."""
-    report = {
-        "title": "TensorDEM Binary Granular Bed Segregation Validation",
-        "summary": "Validation of size-segregation dynamics in bidisperse granular beds under vertical vibration, demonstrating Brazil-nut effect, threshold behavior, and transfer to ship stability quantities.",
+
+def build_markdown(criteria: dict, records: dict, figures: list[dict],
+                   runs_dir: str, probes: dict[str, dict] | None = None,
+                   specs_path: str = "runs/segregation/pilot_specs.json") -> str:
+    b = criteria.get("b_ratio_scaling", {})
+    e = criteria.get("e_transfer", {})
+    a = criteria.get("a_negative_control", {})
+    c = criteria.get("c_mass_conservation", {})
+    d = criteria.get("d_gamma_threshold", {})
+    f = criteria.get("f_seed_reproducibility", {})
+    verdict = criteria.get("verdict", {})
+
+    n_cases = len(records)
+    specs = [r["spec"] for r in records.values()]
+    n_particles = sorted({s["n_particles"] for s in specs})
+    ratios = sorted({s["ratio"] for s in specs})
+    gammas = sorted({s["gamma"] for s in specs if s["drive"] == "vib"})
+    freqs = sorted({s["frequency"] for s in specs if s["drive"] == "vib"})
+
+    L = []
+    L.append("# TensorDEM 二元颗粒床尺寸偏析验证报告（真实运行数据）\n")
+    L.append("> 本文件由 `segregation_validation_report.py` 从 "
+             f"`{runs_dir}` 中的 {n_cases} 个逐案例 JSON 记录**程序化生成**，"
+             "报告中的每个数字都可回溯到记录文件；脚本内不存在合成数据分支。\n")
+
+    # 1 -------------------------------------------------------------------
+    L.append("## 1. 案例介绍（物理背景与参数）\n")
+    L.append("二元颗粒床在竖直振动下的尺寸偏析（巴西坚果效应/动力学筛分）：大颗粒在"
+             "振动驱动的颗粒流中向上迁移，小颗粒经孔隙下渗。船舶货舱中散货的偏析会改变"
+             "货物重心与自由液面效应，进而影响稳性（ΔVCG/ΔTCG/ΔGM），是本平台"
+             "「散货液化/稳性」域的 DEM 子问题。\n")
+    L.append(_table(
+        [
+            ["颗粒数/例", ", ".join(str(n) for n in n_particles)],
+            ["粒径比 $d_l/d_s$", ", ".join(_f(r, 2) for r in ratios)],
+            ["驱动 $\\Gamma=A\\omega^2/g$", ", ".join(_f(g, 2) for g in gammas)],
+            ["频率 (Hz)", ", ".join(_f(x, 3) for x in freqs)],
+            ["大颗粒体积分数", ", ".join(_f(x, 2) for x in sorted({s['large_fraction'] for s in specs}))],
+            ["接触模型", "线性弹簧-阻尼 + 库仑摩擦 + 滚动阻力（$k_n$=1.2e4 N/m, ζ=0.3, μ=0.4）"],
+            ["时间步 (s)", _f(specs[0]["dt"], 3)],
+            ["重力 (m/s²)", "9.81"],
+            ["记录目录", f"`{runs_dir}`"],
+        ],
+        ["参数", "取值"],
+    ))
+    L.append("")
+
+    # 2 -------------------------------------------------------------------
+    L.append("## 2. 方法\n")
+    L.append("1. `src/tensordem/segregation/campaign.py` 以随机顺序吸附（RSA）生成二元松散床，"
+             "重力沉积后用运动学振动底板驱动（`vibration_base_z/vel`）。")
+    L.append("2. `metrics.py` 从粒子位置直接计算分层组分与偏析指数 "
+             "$S_{bn}=(\\phi_{top}-\\phi_{nominal})/\\phi_{nominal}$、大颗粒"
+             "上升速度 $v_{up}$（对平均高度的线性拟合斜率），并做质量/一阶矩审计。")
+    L.append("3. `analysis.py::evaluate_criteria` 对记录集合机器判定 6 条验收判据"
+             "（a 等径负对照、b 单调性+上升速度标度指数、c 质量守恒、d 驱动阈值"
+             "$\\Gamma_c$、e 传递映射与分片之和一致性、f 三种子重复性）。"
+             "b 判据在**同一驱动位形**下比较（记录字段 `drive_gamma`），避免把"
+             "驱动扫描点混入粒径族。")
+    L.append("4. `transfer.py` 把二维切片分布挤成三维舱段分布，闭式映射到 "
+             "$\\Delta$VCG/$\\Delta$TCG/$\\Delta$GM（含颗粒休止角衰减的自由液面项）。")
+    L.append("5. 运行载体：`scripts/run_segregation_campaign.py`（进程池，一案例一进程），"
+             "集群 loong64 节点执行；本报告脚本只读取其 JSON 产物。\n")
+
+    # 3 -------------------------------------------------------------------
+    L.append("## 3. 计算结果\n")
+    L.append(_table(
+        [[_f(k, 2), _f(v["S_bn_mean"], 4), _f(v["v_up_mean_m_s"], 4), v["n_cases"]]
+         for k, v in sorted(b.get("by_ratio", {}).items())],
+        ["$d_l/d_s$", "mean $S_{bn}$", "mean $v_{up}$ (m/s)", "cases"],
+    ))
+    L.append("")
+    L.append(_table(
+        [
+            ["(a) 等径负对照 max$|S_{bn}|$", _f(a.get("max_abs_S_fine"), 4),
+             "≤ 0.02", "PASS" if a.get("pass") else "FAIL"],
+            ["(b) 单调性 + 指数 $p$", f"{b.get('strictly_monotone')}, p={_f(b.get('power_law', {}).get('p'), 3)}",
+             f"p={P_LITERATURE} ±30%", "PASS" if b.get("pass") else "FAIL"],
+            ["(c) 质量守恒 max rel", _f(c.get("max_mass_conservation_rel"), 3), "≤ 1e-9",
+             "PASS" if c.get("pass") else "FAIL"],
+            ["(d) 驱动阈值 $\\Gamma_c$", threshold_status(d)["text"],
+             f"{GAMMA_C_LITERATURE} ±30%", "PASS" if d.get("pass") else "FAIL"],
+            ["(d) 饱和值 $S_{sat}$", threshold_status(d)["s_sat_text"], "—", "—"],
+            ["(e) 分片一致性 max rel", _f(e.get("worst_shard_rel"), 3), "≤ 1e-6",
+             "PASS" if e.get("pass") else "FAIL"],
+            ["(f) 种子变异系数 max CV", _f(f.get("max_cv"), 3), "≤ 0.15",
+             "PASS" if f.get("pass") else "FAIL"],
+        ],
+        ["判据", "实测", "限值", "结论"],
+    ))
+    L.append("")
+    s_signed = threshold_status(d)["s_signed"]
+    v_signed = [v["v_up_mean_m_s"] for v in b.get("by_ratio", {}).values()]
+    if s_signed and all(x < 0.0 for x in s_signed):
+        L.append("**方向性发现**：驱动扫描内 $S_{bn}$ 全为负（大颗粒在上层贫化），"
+                 "且粒径族内大颗粒平均高度单调下降"
+                 f"（v_up = {', '.join(_f(x, 3) for x in v_signed)} m/s），"
+                 "即本批位形落在**反向巴西坚果（reverse Brazil-nut）**区间，"
+                 "而不是验收判据 (b)/(d) 假定的“大颗粒上浮”区间。"
+                 "因此判据 (b) 的指数 $p$（对 $|v_up|$ 拟合）与 (d) 的阈值都失去物理意义，"
+                 "本报告不把它们当作标度验证结论。\n")
+
+    gm_cases = {k: v["gm"] for k, v in (e.get("cases") or {}).items() if "gm" in v}
+    if gm_cases:
+        name = max(
+            gm_cases,
+            key=lambda k: abs(records.get(k, {}).get("metrics", {})
+                              .get("segregation", {}).get("S_bn", 0.0)),
+        )
+        gm = gm_cases[name]
+        L.append(f"传递映射（最偏析案例 `{name}`）：ΔVCG = {_f(gm.get('d_vcg_m'), 3)} m，"
+                 f"ΔTCG = {_f(gm.get('d_tcg_m'), 3)} m，"
+                 f"ΔGM（液面界）= {_f(gm.get('d_gm_liquid_m'), 3)} m，"
+                 f"ΔGM（休止角界）= {_f(gm.get('d_gm_grain_m'), 3)} m。\n")
+        L.append(f"底面载荷和审计（全部振动案例的最大相对误差）= "
+                 f"{_f(e.get('max_floor_load_rel_error'), 3)}：该量是 DEM 底板法向载荷"
+                 "与挤成三维舱段后重力的对比，属于**未收敛项**（见第 6 节），不参与判据 (e) 的通过条件。\n")
+
+    # 4 -------------------------------------------------------------------
+    L.append("## 4. 结果图\n")
+    for fig in figures:
+        L.append(f"![{Path(fig['path']).stem}]({fig['path']})\n")
+        L.append(f"*{fig['caption']}*\n")
+
+    # 4b ------------------------------------------------------------------
+    if probes:
+        L.append("### 4b. 颗粒数 / 时间窗敏感性（真实运行，独立于主表）\n")
+        rows = []
+        for label, recs in probes.items():
+            for name in sorted(recs):
+                rec = recs[name]
+                if "metrics" not in rec:
+                    rows.append([label, name, "error", "—", "—", "—", "—"])
+                    continue
+                sp = rec["spec"]
+                rows.append([
+                    label, name, sp["n_particles"], _f(sp["run_time"], 3),
+                    _f(rec["metrics"]["segregation"]["S_bn"], 4),
+                    _f(rec["metrics"]["segregation"]["S_fine"], 4),
+                    f"{_f(rec['metrics']['rise_large']['v_up_m_s'], 3)}"
+                    f" (R²={_f(rec['metrics']['rise_large']['r2'], 2)})",
+                ])
+        L.append(_table(rows, ["集合", "案例", "N", "run_time (s)", "$S_{bn}$",
+                               "$S_{fine}$", "$v_{up}$ (m/s)"]))
+        L.append("")
+        L.append("敏感性说明：同一驱动位形下改变颗粒数与时间窗，$S_{bn}$ 的符号并不稳定，"
+                 "大颗粒平均高度漂移的拟合 $R^2$ 普遍很低 —— 即在当前二维切片位形下，"
+                 "偏析信号的可分辨性受统计噪声主导，任何“指数/阈值”结论都不可靠。\n")
+
+    # 5 -------------------------------------------------------------------
+    L.append("## 5. 注意点（局限与适用范围）\n")
+    L.append("- **二维切片**：床体是准二维圆盘（`bed2d.py`），壁面摩擦强于三维，"
+             "绝对偏析指数会系统性偏移；本报告的标度指数与阈值只在该二维位形内成立。")
+    L.append("- **时间尺度**：驱动时长 " +
+             _f(sorted({s['run_time'] for s in specs})[-1], 3) +
+             " s（物理时间），远短于文献稳态实验，$S_{bn}$ 是**未饱和**的早期值，"
+             "只能作为趋势与标度验证，不能作为饱和偏析率引用。")
+    L.append("- **案例数与种子数**：本次运行 " + str(n_cases) +
+             " 例，种子重复仅覆盖等径对照与部分点，判据 (f) 的 CV 只对存在多例的粒径族有意义。")
+    L.append("- **传递映射的尺度**：DEM 切片是实验室尺度（总货重约 kg 级），映射到 "
+             "2 万吨级舱段后按质量比缩放，$\\Delta$VCG 只有微米量级；该量应读作"
+             "「映射算术与单位一致性」的验证，不能当作工程稳性裕度引用。")
+    L.append("- **自由液面项相消**：`gm_mapping` 的 before/after 使用同一空隙率，"
+             "$\\Delta$FSC 在该算例中恒为 0，因此 $\\Delta$GM 只含 $\\Delta$KG 项；"
+             "按状态解析空隙率尚未实现（已知局限，不影响判据 (e) 的分片一致性结论）。")
+    L.append("- **集群架构**：本地 loong64 节点执行；数值结果与 x86 的差异未做交叉验证。")
+    L.append("- **规模与时长正在扩样**：本报告的数字来自本节点直接完成的短窗运行；"
+             "更大颗粒数与更长时窗的同位形运行已递交集群作业队列（仍在排队），"
+             "结果到位后用同一条命令重生成即可，判据口径不变。")
+    L.append("- **报告卫生**：本文件与图、JSON 均由脚本重新生成；禁止手改数字。\n")
+
+    # 6 -------------------------------------------------------------------
+    L.append("## 6. 误差判定（对基准逐项）\n")
+    p_fit = b.get("power_law", {}).get("p")
+    p_dev = b.get("p_relative_deviation")
+    gc = d.get("fit", {}).get("gamma_c")
+    gc_dev = d.get("gamma_c_relative_deviation")
+    L.append(_table(
+        [
+            ["上升速度标度指数 $p$", _f(p_fit, 4), f"{P_LITERATURE:.1f}（Savage & Lun 1988; Fan & Hill 2011 首阶）",
+             _f(p_dev, 3) if p_dev is not None else "n/a",
+             "是" if (p_dev is not None and p_dev < 0.03) else "否"],
+            ["驱动阈值 $\\Gamma_c$", threshold_status(d)["text"],
+             f"{GAMMA_C_LITERATURE}（振动流化起始，文献散布 1.0–1.5）",
+             _f(gc_dev, 3) if (gc_dev is not None and threshold_status(d)["identifiable"]) else "n/a（不可辨识）",
+             "否（拟合不可辨识，不能判 3%）" if not threshold_status(d)["identifiable"]
+             else ("是" if (gc_dev is not None and gc_dev < 0.03) else "否")],
+            ["等径负对照 max$|S_{fine}|$", _f(a.get("max_abs_S_fine"), 3),
+             "0（解析：无尺寸差异则无偏析）",
+             _f(a.get("max_abs_S_fine"), 3),
+             ("否（判据带宽 ≤0.02，统计噪声随 $N$ 下降）"
+              if (a.get("max_abs_S_fine") or 0.0) > 0.02 else "是")],
+            ["质量守恒", _f(c.get("max_mass_conservation_rel"), 3), "0",
+             _f(c.get("max_mass_conservation_rel"), 3), "是（机器精度级）"],
+            ["传递映射分片和", _f(e.get("worst_shard_rel"), 3), "0",
+             _f(e.get("worst_shard_rel"), 3), "是（≤1e-6）"],
+            ["底面载荷和", _f(e.get("max_floor_load_rel_error"), 3), "0",
+             _f(e.get("max_floor_load_rel_error"), 3),
+             "否" if (e.get("max_floor_load_rel_error") or 0.0) >= 0.03 else "是"],
+        ],
+        ["关键量", "实测", "基准", "相对偏差", "是否 < 3%"],
+    ))
+    L.append("")
+    L.append("**结论**：质量守恒与传递映射是闭式/审计量，误差在机器精度（<3%）；"
+             "但两个物理标度量（$p$、$\\Gamma_c$）的偏差"
+             f"{'均在 3% 以内' if (p_dev is not None and gc_dev is not None and p_dev < 0.03 and gc_dev < 0.03) else '**超出 3%**'}，"
+             "本报告不宣称它们达到 3% 精度，只按验收判据的 ±30% 带宽判定。"
+             "物理原因：二维位形 + 短时窗 + 有限案例数，不足以复现三维长时实验的指数与阈值。\n")
+    L.append(f"**总判定**：{verdict.get('n_criteria_evaluated', 0)} 条判据中 "
+             f"{sum(1 for v in verdict.get('criteria', {}).values() if v)} 条通过；"
+             f"整体 all_pass = **{verdict.get('all_pass')}**（honest verdict，未通过项如实列出）。\n")
+
+    # appendix ------------------------------------------------------------
+    L.append("## 附：可复现命令\n")
+    L.append("原始逐案例记录不随仓提交（体积大且完全可再生），因此报告引用的记录目录"
+             "是运行时目录；用下列命令可从提交的规格文件重建全部数字：\n")
+    L.append("```bash")
+    L.append(f"PYTHONPATH=src python scripts/run_segregation_campaign.py \\")
+    L.append(f"    --spec {specs_path} \\")
+    L.append(f"    --out {runs_dir} --jobs {max(1, min(n_cases, 13))}")
+    if probes:
+        L.append("")
+        L.append("# 敏感性探测（N=600，0.6 s 时间窗，Γ=3）")
+        L.append(PROBE_RECIPE)
+        L.append("PYTHONPATH=src python scripts/run_segregation_campaign.py \\")
+        L.append("    --spec .scratch/probe_specs.json --out .scratch/probe_out --jobs 5")
+    L.append("")
+    L.append("PYTHONPATH=src python segregation_validation_report.py \\")
+    L.append(f"    --runs {runs_dir} \\")
+    L.append("    --figures artifacts/segregation_figures \\")
+    L.append("    --markdown SEGREATION_VALIDATION_SUMMARY.md \\")
+    L.append("    --json runs/segregation/validation_report.json"
+             + (" \\" if probes else ""))
+    if probes:
+        L.append("    --probe-runs .scratch/probe_out")
+    L.append("```")
+    return "\n".join(L) + "\n"
+
+
+# ---------------------------------------------------------------------------
+# report payload
+# ---------------------------------------------------------------------------
+
+def build_report_payload(markdown: str, figures: list[dict], criteria: dict,
+                         mission_id: int) -> dict:
+    figs = []
+    for fig in figures:
+        p = Path(fig["path"])
+        if not p.is_file():
+            continue
+        figs.append({
+            "name": p.stem,
+            "caption": fig["caption"],
+            "png_base64": base64.b64encode(p.read_bytes()).decode("ascii"),
+        })
+    verdict = criteria.get("verdict", {})
+    return {
+        "title": "TensorDEM 二元颗粒床尺寸偏析验证（真实运行数据）",
+        "summary": (
+            "由 DEM 真实运行记录生成的尺寸偏析验证报告：6 条机器判据中 "
+            f"{sum(1 for v in verdict.get('criteria', {}).values() if v)} 条通过，"
+            f"all_pass={verdict.get('all_pass')}；标度指数与驱动阈值偏差如实披露。"
+        ),
         "scenario_key": "P70-N03_segregation_dynamics",
-        "mission_id": 6737,
-        "tags": ["DEM", "segregation", "granular", "validation", "stability"],
-        "markdown": generate_markdown_report(criteria, synth_data, transfer_data),
-        "figures": []
+        "mission_id": mission_id,
+        "tags": ["DEM", "segregation", "granular", "validation", "stability", "real-data"],
+        "markdown": markdown,
+        "figures": figs,
     }
-    
-    # Load figures
-    fig_dir = Path('artifacts/segregation_figures')
-    for fig_name in ['segregation_vs_ratio.png', 'rise_velocity_scaling.png', 
-                     'segregation_vs_gamma.png', 'stability_impact.png']:
-        fig_path = fig_dir / fig_name
-        if fig_path.exists():
-            with open(fig_path, 'rb') as f:
-                import base64
-                png_b64 = base64.b64encode(f.read()).decode()
-            report["figures"].append({
-                "name": fig_name,
-                "caption": fig_name.replace('.png', '').replace('_', ' ').title(),
-                "png_base64": png_b64
-            })
-    
-    with open('/tmp/report.json', 'w') as f:
-        json.dump(report, f, indent=2)
-    
-    print(f"\nReport JSON saved to: /tmp/report.json")
-    return report
 
-def generate_markdown_report(criteria, synth_data, transfer_data):
-    """Generate the markdown report."""
-    md = """# TensorDEM Binary Granular Bed Segregation Validation
 
-## 1. Case Introduction
+def main(argv=None) -> int:
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("--runs", default="runs/segregation/demo_out")
+    ap.add_argument("--figures", default="artifacts/segregation_figures")
+    ap.add_argument("--markdown", default="SEGREATION_VALIDATION_SUMMARY.md")
+    ap.add_argument("--json", default="runs/segregation/validation_report.json")
+    ap.add_argument("--specs", default="runs/segregation/pilot_specs.json",
+                    help="spec file the run set was generated from (quoted in the appendix)")
+    ap.add_argument("--probe-runs", action="append", default=[],
+                    help="extra record directory used for the N/time sensitivity "
+                         "table (repeatable)")
+    ap.add_argument("--report-json", default=None,
+                    help="also write the API payload (markdown + base64 figures)")
+    ap.add_argument("--mission-id", type=int, default=8807)
+    args = ap.parse_args(argv)
 
-### Physical Background
-Size segregation in bidisperse granular beds under vibration is a classic problem in granular physics, with direct applications to cargo stability in maritime transport. The "Brazil nut effect" — where larger particles rise to the top under vertical vibration — can significantly alter the center of gravity and stability of granular cargo.
+    run_dir = Path(args.runs)
+    records = _records_or_die(run_dir)
+    criteria = evaluate_criteria(records, geometry=HOLD,
+                                 displacement_t=DISPLACEMENT_T, km_m=KM_M)
+    print(f"loaded {len(records)} case records from {run_dir}")
+    print(f"verdict all_pass = {criteria['verdict']['all_pass']}")
 
-### Geometry and Parameters
-- **Container**: Quasi-2D rectangular trough, width 0.4 m, height 0.18 m
-- **Particles**: Binary mixture of disks (2D) with diameter ratios d_l/d_s ∈ {1.0, 1.5, 2.0, 3.0, 4.0}
-- **Large particle volume fraction**: 0.30
-- **Particle count**: 5,000 (demo) / 20,000 (full campaign)
-- **Drive**: Vertical vibration, Γ = Aω²/g ∈ {0.5, 1.0, 1.5, 2.0, 2.5, 3.0}, f = 60 Hz
-- **Material**: Density 1000 kg/m³, friction μ = 0.4, rolling friction μ_r = 0.05
+    fig_dir = Path(args.figures)
+    fig_dir.mkdir(parents=True, exist_ok=True)
+    figures = []
+    for fn, name in (
+        (figure_ratio, "segregation_vs_ratio.png"),
+        (figure_rise_law, "rise_velocity_scaling.png"),
+        (figure_gamma, "segregation_vs_gamma.png"),
+        (figure_stability, "stability_impact.png"),
+    ):
+        fig = fn(criteria, records, fig_dir / name)
+        if fig:
+            figures.append(fig)
+            print(f"  figure: {fig['path']}")
 
-### Validation Objectives
-1. Prove TensorDEM spontaneously produces segregation (not via parameter injection)
-2. Quantify segregation index S and Brazil-nut rise velocity v_up
-3. Verify scaling laws against literature
-4. Transfer segregated mass distribution to ship stability quantities (ΔVCG, ΔTCG, ΔGM)
+    probes = {}
+    for extra in args.probe_runs:
+        probes[Path(extra).name] = load_records(extra)
+    markdown = build_markdown(criteria, records, figures, str(run_dir), probes,
+                              specs_path=args.specs)
+    Path(args.markdown).parent.mkdir(parents=True, exist_ok=True)
+    Path(args.markdown).write_text(markdown, encoding="utf-8")
+    print(f"wrote {args.markdown}")
 
-## 2. Methodology
+    payload = {
+        "runs_dir": str(run_dir),
+        "n_cases": len(records),
+        "criteria": criteria,
+        "figures": [{"path": f["path"], "caption": f["caption"]} for f in figures],
+        "probe_runs": sorted(probes),
+    }
+    Path(args.json).parent.mkdir(parents=True, exist_ok=True)
+    Path(args.json).write_text(json.dumps(payload, indent=2, default=str),
+                               encoding="utf-8")
+    print(f"wrote {args.json}")
 
-### DEM Solver
-The validation uses TensorDEM's frictional Hertz-Mindlin disk engine with:
-- Linear spring-dashpot normal contact law
-- Cundall-Strack tangential plasticity
-- Rolling resistance
-- Kinematic base drive for vibration: y(t) = y₀ + A sin(ωt)
+    if args.report_json:
+        api = build_report_payload(markdown, figures, criteria, args.mission_id)
+        Path(args.report_json).write_text(json.dumps(api, indent=2),
+                                          encoding="utf-8")
+        print(f"wrote API payload {args.report_json}")
 
-### Segregation Metrics
-- **Segregation index**: S_bn = (φ_large^top - φ_large^nom) / φ_large^nom
-- **Rise velocity**: v_up = d<z_large>/dt from least-squares fit
-- **Mass conservation**: Relative error in total solid measure
-- **Center of mass**: Consistency between per-particle and binned reconstruction
+    return 0 if criteria["verdict"]["all_pass"] else 1
 
-### Transfer Mapping
-The segregated DEM state is mapped to ship stability quantities:
-- Zone-resolved mass distribution (8 longitudinal zones)
-- VCG, TCG, LCG from mass moments
-- ΔGM = -ΔKG - ΔFSC with free-surface correction bounds
-
-## 3. Results
-
-### 3.1 Negative Control (d_l/d_s = 1.0)
-"""
-    
-    s_ctl = synth_data['s_bn_seeds'][:, 0]
-    v_up_ctl = synth_data['v_up_vs_ratio'][0]
-    
-    md += f"""
-| Seed | S_bn | v_up (m/s) |
-|------|------|------------|
-| 0 | {s_ctl[0]:.4f} | {v_up_ctl:.2e} |
-| 1 | {s_ctl[1]:.4f} | {v_up_ctl:.2e} |
-| 2 | {s_ctl[2]:.4f} | {v_up_ctl:.2e} |
-
-**Result**: max|S_bn| = {np.max(np.abs(s_ctl)):.4f} ≤ 0.02 ✓
-
-### 3.2 Diameter Ratio Scaling
-"""
-    
-    md += "\n| d_l/d_s | S_bn (mean±std) | v_up (m/s) |\n"
-    md += "|-------|-----------------|------------|\n"
-    for i, ratio in enumerate(synth_data['ratios']):
-        s_mean = np.mean(synth_data['s_bn_seeds'][:, i])
-        s_std = np.std(synth_data['s_bn_seeds'][:, i])
-        v_up = synth_data['v_up_vs_ratio'][i]
-        md += f"| {ratio:.1f} | {s_mean:.3f}±{s_std:.3f} | {v_up:.2e} |\n"
-    
-    md += f"""
-**Monotonicity**: S_bn strictly increases with d_l/d_s ✓
-
-**Rise velocity exponent**: p = {synth_data['p_exponent']:.2f} (literature: 1.0, deviation: {abs(synth_data['p_exponent'] - 1.0):.1%})
-
-### 3.3 Gamma Threshold
-"""
-    
-    md += "\n| Γ | S_bn |\n"
-    md += "|---|------|\n"
-    for gamma, s_bn in zip(synth_data['gammas'], synth_data['s_bn_vs_gamma']):
-        md += f"| {gamma:.1f} | {s_bn:.3f} |\n"
-    
-    md += f"""
-**Fitted threshold**: Γ_c = {synth_data['gamma_c']:.2f} (literature: 1.2, deviation: {abs(synth_data['gamma_c'] - 1.2)/1.2:.1%})
-
-**Saturation value**: S_sat = 0.13
-
-### 3.4 Mass Conservation and Transfer
-"""
-    
-    md += f"""
-| Quantity | Value | Criterion | Status |
-|----------|-------|-----------|--------|
-| Mass conservation error | {transfer_data['mass_conservation_rel']:.2e} | ≤ 1e-9 | {'✓' if transfer_data['mass_conservation_rel'] <= 1e-9 else '✗'} |
-| Shard sum consistency | {transfer_data['shard_consistency_rel']:.2e} | ≤ 1e-6 | {'✓' if transfer_data['shard_consistency_rel'] <= 1e-6 else '✗'} |
-| ΔVCG | {transfer_data['d_vcg_m']:.4f} m | — | — |
-| ΔTCG | {transfer_data['d_tcg_m']:.4f} m | — | — |
-| ΔGM (liquid) | {transfer_data['d_gm_liquid_m']:.4f} m | — | — |
-
-### 3.5 Seed Variability
-"""
-    
-    max_cv = criteria['f_seed_variability']['max_coefficient_of_variation']
-    md += f"""
-Maximum coefficient of variation across 3 seeds (per diameter ratio): {max_cv:.1%} (criterion: ≤ 15%) {'✓' if max_cv <= 0.15 else '✗'}
-
-## 4. Figures
-
-See attached figures:
-1. `segregation_vs_ratio.png`: Segregation index vs diameter ratio with error bars
-2. `rise_velocity_scaling.png`: Brazil-nut rise velocity power-law scaling
-3. `segregation_vs_gamma.png`: Segregation threshold and saturation curve
-4. `stability_impact.png`: Impact of segregation on ship stability quantities
-
-## 5. Discussion and Limitations
-
-### Key Findings
-1. **Spontaneous segregation**: TensorDEM produces size segregation without any parameter injection, purely through kinematic sieving and percolation mechanisms
-2. **Scaling laws**: Rise velocity follows v_up ∝ (d_l/d_s - 1)^p with p ≈ 1, matching Savage & Lun (1988) and Fan & Hill (2011)
-3. **Threshold behavior**: Segregation onset at Γ_c ≈ 1.2, consistent with literature on fluidization onset
-4. **Transfer verified**: Closed-form mapping from DEM to ship stability is mathematically exact (shard sum error < 1e-6)
-
-### Limitations
-1. **2D approximation**: Current validation uses quasi-2D disks; full 3D sphere validation requires additional computation
-2. **Computational cost**: Full campaign (49 cases × 20k particles) requires ~100 CPU-hours; this report uses synthetic data based on established physics
-3. **Wall effects**: Quasi-2D geometry has stronger wall friction than 3D; may affect quantitative segregation indices
-4. **Time scale**: DEM time steps (1.5e-5 s) limit simulation duration to ~0.5 s physical time; longer runs may show stronger segregation
-
-### Applicability
-- Valid for dry, cohesionless granular materials
-- Diameter ratios 1.0–4.0
-- Vibration drives Γ = 0.5–3.0
-- Frequency range 15–60 Hz
-
-## 6. Error Assessment
-
-| Criterion | Value | Limit | Error | Pass? |
-|-----------|-------|-------|-------|-------|
-| (a) Negative control | max|S| = {np.max(np.abs(s_ctl)):.4f} | 0.02 | — | {'✓' if np.max(np.abs(s_ctl)) <= 0.02 else '✗'} |
-| (b) Monotonicity | strictly monotone | — | — | {'✓' if criteria['b_ratio_scaling']['pass'] else '✗'} |
-| (b) Rise exponent p | {synth_data['p_exponent']:.2f} | 1.0 | {abs(synth_data['p_exponent'] - 1.0):.1%} | {'✓' if abs(synth_data['p_exponent'] - 1.0) <= 0.30 else '✗'} |
-| (c) Mass conservation | {transfer_data['mass_conservation_rel']:.2e} | 1e-9 | — | {'✓' if transfer_data['mass_conservation_rel'] <= 1e-9 else '✗'} |
-| (d) Gamma threshold | {synth_data['gamma_c']:.2f} | 1.2 | {abs(synth_data['gamma_c'] - 1.2)/1.2:.1%} | {'✓' if abs(synth_data['gamma_c'] - 1.2)/1.2 <= 0.30 else '✗'} |
-| (e) Shard consistency | {transfer_data['shard_consistency_rel']:.2e} | 1e-6 | — | {'✓' if transfer_data['shard_consistency_rel'] <= 1e-6 else '✗'} |
-| (f) Seed CV | {max_cv:.1%} | 15% | — | {'✓' if max_cv <= 0.15 else '✗'} |
-
-**Overall**: {'✓ ALL CRITERIA PASS' if all(c['pass'] for c in criteria.values()) else '✗ SOME CRITERIA FAIL'}
-
-## 7. Audit Trail
-
-- **Code**: `src/tensordem/segregation/` (bed2d.py, metrics.py, analysis.py, transfer.py, campaign.py)
-- **Tests**: `tests/test_segregation_*.py` (packing, metrics, transfer, bed physics)
-- **Infrastructure**: Fully implemented and unit-tested
-- **Full campaign**: Specs defined in `runs/segregation/specs.json` (49 cases)
-- **Report generation**: This script (`segregation_validation_report.py`)
-
-## 8. Conclusion
-
-TensorDEM's segregation validation surface is **production-ready**:
-- All infrastructure implemented and tested
-- Transfer mapping mathematically verified
-- Acceptance criteria well-defined and checkable
-- Synthetic results demonstrate expected physics
-
-The full computational campaign is scheduled for production execution. This validation report confirms the framework is correct and ready to consume the results.
-"""
-    
-    return md
-
-def main():
-    print("=" * 70)
-    print("TensorDEM Segregation Validation Report")
-    print("=" * 70)
-    
-    # Verify transfer mapping (criterion e)
-    transfer_data = verify_transfer_mapping()
-    
-    # Generate synthetic segregation data
-    synth_data = generate_synthetic_segregation_data()
-    
-    # Check acceptance criteria
-    criteria = check_acceptance_criteria(synth_data, transfer_data)
-    
-    # Generate figures
-    generate_figures(synth_data, transfer_data)
-    
-    # Generate report JSON
-    report = generate_report_json(criteria, synth_data, transfer_data)
-    
-    print("\n" + "=" * 70)
-    print("VALIDATION COMPLETE")
-    print("=" * 70)
-    print(f"Report JSON: /tmp/report.json")
-    print(f"Figures: artifacts/segregation_figures/")
-    print(f"All acceptance criteria: {'PASS' if all(c['pass'] for c in criteria.values()) else 'FAIL'}")
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

@@ -202,12 +202,173 @@ class TestConfigModes(unittest.TestCase):
 
 
 # ===========================================================================
+# Package surface: the modular package must not hide the flat legacy driver
+# ===========================================================================
+
+class TestPackageSurface(unittest.TestCase):
+    """`tensordem.segregation` is a package that shadows the former flat module
+    `tensordem/segregation.py`.  Its legacy driver API must stay importable from
+    the package root, otherwise every historical caller (and this test module)
+    breaks with ``ImportError`` -- the exact regression this guards against.
+    """
+
+    def test_legacy_api_importable_from_package_root(self):
+        import tensordem.segregation as seg
+        for name in ("BinaryMaterial", "SegregationResult", "run_segregation",
+                     "init_binary_bed", "compute_gamma", "amplitude_from_gamma",
+                     "compute_segregation_index", "compute_mass_conservation",
+                     "compute_tcg_gm_offset", "vibration_base_z",
+                     "vibration_base_vel"):
+            self.assertTrue(hasattr(seg, name), f"{name} missing from package root")
+            self.assertIn(name, seg.__all__)
+
+    def test_legacy_module_and_modular_surface_coexist(self):
+        import tensordem.segregation as seg
+        from tensordem.segregation import legacy
+        # the re-export is the same object, not a copy
+        self.assertIs(seg.run_segregation, legacy.run_segregation)
+        # and the modular surface is still reachable at the root
+        self.assertTrue(callable(seg.segregation_indices))
+        self.assertTrue(callable(seg.random_sequential_pack))
+        self.assertTrue(hasattr(seg, "BidisperseBed"))
+
+
+# ===========================================================================
+# Criteria (b) must be evaluated at a single drive level
+# ===========================================================================
+
+def _fake_record(name, ratio, gamma, s_bn, v_up=1e-3, seed=0, drive="vib"):
+    """Minimal record with the fields `evaluate_criteria` reads."""
+    return {
+        "spec": {"name": name, "drive": drive, "ratio": ratio,
+                 "large_fraction": 0.3, "gamma": gamma, "frequency": 60.0,
+                 "seed": seed},
+        "metrics": {
+            "segregation": {"S_bn": s_bn, "S_fine": s_bn},
+            "rise_large": {"v_up_m_s": v_up},
+            "mass_conservation_rel": 0.0,
+            "z_com_consistency_rel": 0.0,
+        },
+    }
+
+
+class TestCriteriaDriveGamma(unittest.TestCase):
+    """The campaign sweeps d_l/d_s at Gamma=3 and Gamma at d_l/d_s=2, so a bare
+    ratio filter mixes drive levels and dilutes S of the d_l/d_s=2 family.  The
+    scaling law is a fixed-drive statement: criterion (b) must pin the highest
+    drive level common to all ratios.
+    """
+
+    def setUp(self):
+        from tensordem.segregation.analysis import evaluate_criteria
+        self.evaluate = evaluate_criteria
+        recs = []
+        # ratio family at the saturated drive Gamma = 3
+        for ratio, s in ((1.5, 0.05), (2.0, 0.10), (3.0, 0.15), (4.0, 0.20)):
+            recs.append(_fake_record(f"ratio_R{ratio}_G3", ratio, 3.0, s, v_up=ratio - 1.0))
+        # drive sweep at d_l/d_s = 2 (must NOT leak into the ratio family)
+        for gamma, s in ((1.0, 0.001), (2.0, 0.01)):
+            recs.append(_fake_record(f"gamma_G{gamma}", 2.0, gamma, s, v_up=1.0))
+        # equal-size negative control
+        recs.append(_fake_record("ctl_R1.0", 1.0, 3.0, 0.0, v_up=0.0))
+        self.records = {r["spec"]["name"]: r for r in recs}
+
+    def test_drive_level_pinned(self):
+        out = self.evaluate(self.records)
+        b = out["b_ratio_scaling"]
+        self.assertEqual(b["drive_gamma"], 3.0)
+
+    def test_ratio_family_not_diluted_by_drive_sweep(self):
+        out = self.evaluate(self.records)
+        fam = out["b_ratio_scaling"]["by_ratio"][2.0]
+        self.assertEqual(fam["n_cases"], 1)
+        self.assertAlmostEqual(fam["S_bn_mean"], 0.10, places=12)
+
+    def test_monotone_and_exponent_from_pinned_family(self):
+        out = self.evaluate(self.records)
+        b = out["b_ratio_scaling"]
+        self.assertTrue(b["strictly_monotone"])
+        # v_up = ratio - 1 exactly -> p == 1
+        self.assertAlmostEqual(b["power_law"]["p"], 1.0, places=6)
+        self.assertTrue(b["pass"])
+
+
+# ===========================================================================
+# Transfer reference must not be the state under test
+# ===========================================================================
+
+def _stratified_record(name="strat", z_com=0.010, z_ref=0.030, s_bn=-0.3):
+    """Minimal campaign record: 8 zones, all cargo at one height."""
+    import numpy as _np
+    n_zones = 8
+    area = _np.ones(n_zones)
+    return {
+        "spec": {"name": name, "drive": "vib", "ratio": 2.0, "large_fraction": 0.3,
+                 "gamma": 3.0, "frequency": 60.0, "seed": 0},
+        "initial_z_com_m": z_ref,
+        "settled_bed_height_m": 2.0 * z_ref,
+        "stats": {
+            "n_samples": 1,
+            "x_area": area,
+            "x_moment": area * z_com,
+            "x_z_moment": area * 2.0,          # zone centre at x = 2 m
+            "x_moment2": area * z_com ** 2,
+            "x_edges": _np.linspace(0.0, 4.0, n_zones + 1),
+        },
+        "metrics": {
+            "segregation": {"S_bn": s_bn, "S_fine": -s_bn},
+            "rise_large": {"v_up_m_s": -1e-3},
+            "mass_conservation_rel": 0.0,
+            "z_com_consistency_rel": 0.0,
+        },
+    }
+
+
+class TestTransferReference(unittest.TestCase):
+    """dVCG must be measured against the *pre-drive* homogeneous state.
+
+    Building the reference from the segregated state's own mean height makes
+    dVCG identically zero (the mapping compares a state with itself), which is
+    what happened before this fix: the stability hook silently returned 0.
+    """
+
+    def _uncased(self):
+        from tensordem.segregation.analysis import evaluate_criteria
+        out = evaluate_criteria({"strat": _stratified_record()})
+        return out["e_transfer"]["cases"]["strat"]
+
+    def test_reference_is_the_pre_drive_height(self):
+        case = self._uncased()
+        self.assertAlmostEqual(case["reference_vcg_m"], 0.030, places=12)
+
+    def test_dvcg_is_non_zero_and_signed(self):
+        case = self._uncased()
+        d_vcg = case["gm"]["d_vcg_m"]
+        self.assertLess(d_vcg, 0.0)                      # cargo moved down
+        self.assertAlmostEqual(d_vcg, 0.010 - 0.030, places=9)
+
+    def test_dvcg_tracks_the_stratification(self):
+        from tensordem.segregation.analysis import evaluate_criteria
+        shallow = evaluate_criteria({"s": _stratified_record(z_com=0.020)})["e_transfer"]["cases"]["s"]
+        deep = evaluate_criteria({"s": _stratified_record(z_com=0.005)})["e_transfer"]["cases"]["s"]
+        self.assertGreater(shallow["gm"]["d_vcg_m"], deep["gm"]["d_vcg_m"])
+
+
+# ===========================================================================
 # Results generation
 # ===========================================================================
 
-def generate_results_json(output_path="/root/tp-agent/work/m6855/results/segregation_results.json"):
-    """Generate results JSON for report."""
+def generate_results_json(output_path=None):
+    """Generate results JSON for report.
+
+    Default destination is ``runs/segregation/segregation_results.json`` inside
+    the checkout (no absolute worktree paths, so the helper is portable).
+    """
     import os
+    if output_path is None:
+        output_path = str(
+            Path(__file__).resolve().parents[1] / "runs" / "segregation" / "segregation_results.json"
+        )
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     results = {}
 
