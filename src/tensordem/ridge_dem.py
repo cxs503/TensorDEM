@@ -244,8 +244,22 @@ class RidgeAssembly:
     def __init__(self, positions, radii, masses, bonds, material: RidgeMaterial,
                  *, planes=None, cylinders=None, soil: MohrCoulombSoil | None = None,
                  driven=None, body_force=None, thickness: float = 1.0,
-                 mudline: float | None = None):
+                 mudline: float | None = None,
+                 bond_contact_mode: str = "exclusive"):
         self.material = material
+        #: runtime bond strengths.  They start at the material values and can be
+        #: re-set with :meth:`set_bond_strengths` (age-dependent freeze bonds).
+        self.bond_tensile_strength = float(material.bond_tensile_strength)
+        self.bond_shear_strength = float(material.bond_shear_strength)
+        if bond_contact_mode not in ("exclusive", "parallel"):
+            raise ValueError("bond_contact_mode must be 'exclusive' or 'parallel'")
+        #: ``"exclusive"`` (default, historical): a bonded pair transmits only
+        #: through its bond spring -- the unbonded contact law is switched off
+        #: for that pair.  ``"parallel"``: the bond acts *in addition* to the
+        #: contact, which is what a frozen lens filling a real gap does; it is
+        #: needed when the load path must not lose the frictional capacity of a
+        #: bonded contact (age-dependent keel strength).
+        self.bond_contact_mode = bond_contact_mode
         self.pos = torch.as_tensor(positions, dtype=torch.float64).reshape(-1, 2)
         self.radii = torch.as_tensor(radii, dtype=torch.float64).reshape(-1)
         self.mass = torch.as_tensor(masses, dtype=torch.float64).reshape(-1)
@@ -312,6 +326,29 @@ class RidgeAssembly:
         self.driven_velocity = torch.zeros_like(self.pos)
         if bool(self.driven.any()):
             self.driven_velocity[self.driven] = v
+
+    def set_bond_strengths(self, tensile: float, shear: float | None = None) -> None:
+        """Replace the freeze-bond strengths at run time (Pa).
+
+        ``shear`` defaults to the material ratio ``bond_shear_strength /
+        bond_tensile_strength`` applied to ``tensile``.  This is the hook the
+        age-dependent freeze bond uses: :mod:`tensordem.ridge_freeze_bond_age`
+        evaluates ``sigma_b(t)`` / ``tau_b(t)`` and installs them here, instead
+        of rebuilding the assembly with a new (frozen) material.
+        """
+        for name, value in (("tensile", tensile), ("shear", shear)):
+            if value is None:
+                continue
+            if isinstance(value, bool) or not isinstance(value, (int, float)):
+                raise TypeError(f"{name} strength must be a real number")
+            if not math.isfinite(value) or value < 0.0:
+                raise ValueError(f"{name} strength must be finite and non-negative")
+        if shear is None:
+            ratio = (self.material.bond_shear_strength
+                     / self.material.bond_tensile_strength)
+            shear = tensile * ratio
+        self.bond_tensile_strength = float(tensile)
+        self.bond_shear_strength = float(shear)
 
     def kinetic_energy(self) -> float:
         return float(0.5 * (self.mass[:, None] * self.vel ** 2).sum())
@@ -435,8 +472,8 @@ class RidgeAssembly:
             shear_rate = (relative_velocity * tangent).sum(dim=1)
             shear_force = -m.bond_shear_stiffness * self.bond_shear_disp
             area = m.bond_area * self.thickness
-            broken = alive & ((normal_force > m.bond_tensile_strength * area)
-                              | (shear_force.abs() > m.bond_shear_strength * area))
+            broken = alive & ((normal_force > self.bond_tensile_strength * area)
+                              | (shear_force.abs() > self.bond_shear_strength * area))
             if break_bonds and bool(broken.any()):
                 released = (0.5 * m.bond_stiffness * extension[broken] ** 2
                             + 0.5 * m.bond_shear_stiffness
@@ -461,7 +498,7 @@ class RidgeAssembly:
         distance = (delta * delta).sum(dim=1).sqrt()
         overlap = self.radii[index_i] + self.radii[index_j] - distance
         active = overlap > 0.0
-        if self.bonds.numel():
+        if self.bonds.numel() and self.bond_contact_mode == "exclusive":
             active = active & ~self._bonded[index_i * count + index_j]
         contact_count = int(active.sum())
         if contact_count:
