@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 import urllib.request
 
 base = os.environ.get("TENSOR_API_BASE", "http://127.0.0.1:8010/api/v1")
@@ -18,9 +19,13 @@ tok = login_body.get("access_token") or login_body.get("token")
 if not tok:
     raise SystemExit(f"login did not return a token: {login_body}")
 
-# Post report
-with open("/tmp/report.json", "r") as f:
+# Post report -- the payload path is an argument on purpose: /tmp/report.json is
+# shared by every concurrent agent on this host, so a fixed path silently posts
+# somebody else's report (observed 2026-11-10).
+path = sys.argv[1] if len(sys.argv) > 1 else "/tmp/report.json"
+with open(path, "r") as f:
     payload = json.load(f)
+assert payload.get("mission_id") == 7049, f"payload mission is {payload.get('mission_id')}, expected 7049"
 
 req = urllib.request.Request(base + "/tensor/reports", data=json.dumps(payload).encode(), headers={"Content-Type": "application/json", "Authorization": "Bearer " + tok}, method="POST")
 with urllib.request.urlopen(req, timeout=180) as resp:
