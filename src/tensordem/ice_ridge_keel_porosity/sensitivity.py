@@ -102,7 +102,7 @@ def _run_single(
     )
     consolidation_config = ConsolidationConfig(
         total_time=total_time,
-        record_interval=total_time / 50,
+        record_interval=max(total_time / 40.0, 1.0),
         wave_amplitude=wave_amplitude,
         wave_period=10.0,
         seed=seed,
@@ -119,6 +119,11 @@ def _run_single(
         "tau": result.tau,
         "r_squared": result.r_squared,
         "residual_rms": result.residual_rms,
+        "tau_mech": result.tau_mech,
+        "n_mech_inf": result.n_mech_inf,
+        "tau_pore": result.tau_pore,
+        "f_eq": result.f_eq,
+        "r_squared_mech": result.r_squared_mech,
     }
 
 
