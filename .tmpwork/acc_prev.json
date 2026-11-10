@@ -1,0 +1,2450 @@
+{
+  "node": "p307w1-n010-pid-mdof-maturity",
+  "upstream": "IN32-D02 (tensordem.pid zeta_eff surface)",
+  "design_point": {
+    "filling_ratio": 0.3,
+    "gamma": 1.5,
+    "restitution": 0.6,
+    "mass_ratio_grid": [
+      0.01,
+      0.02,
+      0.03,
+      0.05
+    ],
+    "detuning_factors": [
+      0.8,
+      0.9,
+      0.95,
+      1.0,
+      1.05,
+      1.1,
+      1.2
+    ],
+    "structural_damping_ratio": 0.005,
+    "absorbing_band_omega_by_omega1": [
+      0.5,
+      1.5
+    ]
+  },
+  "structures": {
+    "cantilever": {
+      "meta": {
+        "length_m": 1.0,
+        "width_m": 0.05,
+        "thickness_m": 0.01,
+        "E_Pa": 210000000000.0,
+        "rho_kgm3": 7850.0,
+        "tip_mass_kg": 3.9250000000000003,
+        "x_damper_m": 1.0,
+        "x_obs_m": 1.0,
+        "x_force_m": 1.0,
+        "damping_ratio": 0.005
+      },
+      "modes": [
+        {
+          "index": 0,
+          "f_hz": 8.355165944440804,
+          "omega_rad_s": 52.49705590115771,
+          "phi_d": 1.0095089302501508,
+          "phi_o": 1.0095089302501508,
+          "phi_f": 1.0095089302501508,
+          "participation": 1.5512329461922039,
+          "label": "cantilever mode 1"
+        },
+        {
+          "index": 1,
+          "f_hz": 52.36093118637264,
+          "omega_rad_s": 328.99343350045797,
+          "phi_d": -1.0095089302501516,
+          "phi_o": -1.0095089302501516,
+          "phi_f": -1.0095089302501516,
+          "participation": 0.8596969914931697,
+          "label": "cantilever mode 2"
+        },
+        {
+          "index": 2,
+          "f_hz": 146.6121234891121,
+          "omega_rad_s": 921.1911401611883,
+          "phi_d": 1.009508930250046,
+          "phi_o": 1.009508930250046,
+          "phi_f": 1.009508930250046,
+          "participation": 0.5040575456881433,
+          "label": "cantilever mode 3"
+        },
+        {
+          "index": 3,
+          "f_hz": 287.3012471441213,
+          "omega_rad_s": 1805.166974790314,
+          "phi_d": -1.0095089302484543,
+          "phi_o": -1.0095089302484543,
+          "phi_f": -1.0095089302484543,
+          "participation": 0.3603693165792167,
+          "label": "cantilever mode 4"
+        },
+        {
+          "index": 4,
+          "f_hz": 474.929547281568,
+          "omega_rad_s": 2984.0703534250006,
+          "phi_d": 1.0095089301947553,
+          "phi_o": 1.0095089301947553,
+          "phi_f": 1.0095089301947553,
+          "participation": 0.28027655160477644,
+          "label": "cantilever mode 5"
+        },
+        {
+          "index": 5,
+          "f_hz": 709.4625063815798,
+          "omega_rad_s": 4457.684396091546,
+          "phi_d": -1.0095089294070427,
+          "phi_o": -1.0095089294070427,
+          "phi_f": -1.0095089294070427,
+          "participation": 0.22931755020880157,
+          "label": "cantilever mode 6"
+        },
+        {
+          "index": 6,
+          "f_hz": 990.9021857837254,
+          "omega_rad_s": 6226.02205456844,
+          "phi_d": 1.0095089307775227,
+          "phi_o": 1.0095089307775227,
+          "phi_f": 1.0095089307775227,
+          "participation": 0.1940379124672919,
+          "label": "cantilever mode 7"
+        },
+        {
+          "index": 7,
+          "f_hz": 1319.248471847421,
+          "omega_rad_s": 8289.082614830837,
+          "phi_d": -1.0095089372922077,
+          "phi_o": -1.0095089372922077,
+          "phi_f": -1.0095089372922077,
+          "participation": 0.16816621971201787,
+          "label": "cantilever mode 8"
+        }
+      ],
+      "zeta": [
+        0.005,
+        0.005,
+        0.005,
+        0.005,
+        0.005,
+        0.005,
+        0.005,
+        0.005
+      ],
+      "M_att_kg": 0.9812499999999743
+    },
+    "stiffened_plate": {
+      "meta": {
+        "a_m": 1.0,
+        "b_m": 0.6,
+        "thickness_m": 0.006,
+        "E_Pa": 210000000000.0,
+        "rho_kgm3": 7850.0,
+        "poisson": 0.3,
+        "n_stiffeners": 3,
+        "stiffener_area_m2": 0.00012,
+        "stiffener_inertia_m4": 2e-09,
+        "D_Nm": 4153.846153846154,
+        "D_x_Nm": 6253.846153846154,
+        "D_y_Nm": 4153.846153846154,
+        "H_Nm": 5096.814180730882,
+        "damping_ratio": 0.005
+      },
+      "modes": [
+        {
+          "index": 0,
+          "f_hz": 59.076427305954205,
+          "omega_rad_s": 371.18814004943437,
+          "phi_d": 0.37622176532206686,
+          "phi_o": 0.37622176532206686,
+          "phi_f": 0.37622176532206686,
+          "participation": 4.308998276294883,
+          "label": "panel mode (1,1)"
+        },
+        {
+          "index": 1,
+          "f_hz": 113.37698309881999,
+          "omega_rad_s": 712.368594378854,
+          "phi_d": 4.6073878067123587e-17,
+          "phi_o": 4.6073878067123587e-17,
+          "phi_f": 4.6073878067123587e-17,
+          "participation": 0.0,
+          "label": "panel mode (2,1)"
+        },
+        {
+          "index": 2,
+          "f_hz": 182.00515343095103,
+          "omega_rad_s": 1143.5721058683177,
+          "phi_d": 4.6073878067123587e-17,
+          "phi_o": 4.6073878067123587e-17,
+          "phi_f": 4.6073878067123587e-17,
+          "participation": 0.0,
+          "label": "panel mode (1,2)"
+        },
+        {
+          "index": 3,
+          "f_hz": 203.87790942026297,
+          "omega_rad_s": 1281.0026849278868,
+          "phi_d": -0.37622176532206686,
+          "phi_o": -0.37622176532206686,
+          "phi_f": -0.37622176532206686,
+          "participation": 1.436332758764961,
+          "label": "panel mode (3,1)"
+        },
+        {
+          "index": 4,
+          "f_hz": 236.30570922381682,
+          "omega_rad_s": 1484.7525601977375,
+          "phi_d": 5.642422729920834e-33,
+          "phi_o": 5.642422729920834e-33,
+          "phi_f": 5.642422729920834e-33,
+          "participation": 0.0,
+          "label": "panel mode (2,2)"
+        },
+        {
+          "index": 5,
+          "f_hz": 326.8066355452598,
+          "omega_rad_s": 2053.38665074677,
+          "phi_d": -4.6073878067123587e-17,
+          "phi_o": -4.6073878067123587e-17,
+          "phi_f": -4.6073878067123587e-17,
+          "participation": 0.0,
+          "label": "panel mode (3,2)"
+        },
+        {
+          "index": 6,
+          "f_hz": 330.579206270283,
+          "omega_rad_s": 2077.090411696532,
+          "phi_d": -9.214775613424717e-17,
+          "phi_o": -9.214775613424717e-17,
+          "phi_f": -9.214775613424717e-17,
+          "participation": 0.0,
+          "label": "panel mode (4,1)"
+        },
+        {
+          "index": 7,
+          "f_hz": 386.88636363927907,
+          "omega_rad_s": 2430.878715566457,
+          "phi_d": -0.37622176532206686,
+          "phi_o": -0.37622176532206686,
+          "phi_f": -0.37622176532206686,
+          "participation": 1.436332758764961,
+          "label": "panel mode (1,3)"
+        }
+      ],
+      "zeta": [
+        0.005,
+        0.005,
+        0.005,
+        0.005,
+        0.005,
+        0.005,
+        0.005,
+        0.005
+      ],
+      "M_att_kg": 7.065000000000001
+    }
+  },
+  "structure_verification": {
+    "cantilever_f1_hz": 8.355165944440804,
+    "cantilever_f1_analytic_hz": 8.355165944440804,
+    "cantilever_f1_rel_dev": 0.0,
+    "cantilever_f2_over_f1": 6.266893025770665,
+    "plate_f1_stiffened_hz": 59.076427305954205,
+    "plate_f1_isotropic_no_stiffener_hz": 55.72768917666523,
+    "plate_f1_isotropic_analytic_hz": 55.727689170514275,
+    "plate_f1_isotropic_rel_dev": 1.1037520830684205e-10,
+    "plate_stiffener_shift_pct": 6.00910997524582
+  },
+  "criterion_a": {
+    "a1_surface_grid_points": 1224,
+    "a1_max_rel_dev": 0.0,
+    "a2_frf_rows": [
+      {
+        "freq_ratio": 1.0,
+        "zeta_eff_surface": 0.0009845458340006436,
+        "zeta_eff_recovered": 0.0009847602018098244,
+        "rel_dev": 0.00021773268625771124
+      },
+      {
+        "freq_ratio": 1.1,
+        "zeta_eff_surface": 0.0011345718658483605,
+        "zeta_eff_recovered": 0.0011348027803075355,
+        "rel_dev": 0.000203525634757673
+      },
+      {
+        "freq_ratio": 0.9,
+        "zeta_eff_surface": 0.0007595067862290678,
+        "zeta_eff_recovered": 0.0007596978674678833,
+        "rel_dev": 0.00025158595325285314
+      },
+      {
+        "freq_ratio": 1.2,
+        "zeta_eff_surface": 0.0011814550008007723,
+        "zeta_eff_recovered": 0.001181691235385478,
+        "rel_dev": 0.00019995224917201558
+      }
+    ],
+    "a2_max_rel_dev": 0.00025158595325285314,
+    "criterion_a_max_rel_dev": 0.00025158595325285314,
+    "criterion_a_pass": true,
+    "delivered_mass_ratio": 0.2,
+    "note": "a1 evaluates the delivered IN32-D02 model at the delivered configuration (20 particles x 0.01 kg on a 1 kg host) over the full 1224-point surface and therefore acts as a regression lock on tensordem.pid; a2 is an independent path (SDOF FRF + half-power bandwidth) that never reads the surface."
+  },
+  "criterion_b": {
+    "b0_frf_equivalence_rows": [
+      {
+        "mass_ratio": 0.01,
+        "nu": 0.97,
+        "zeta_d": 0.02,
+        "max_rel_frf_dev": 3.949018950989077e-15
+      },
+      {
+        "mass_ratio": 0.03,
+        "nu": 0.97,
+        "zeta_d": 0.02,
+        "max_rel_frf_dev": 4.152524330711436e-15
+      },
+      {
+        "mass_ratio": 0.05,
+        "nu": 0.97,
+        "zeta_d": 0.02,
+        "max_rel_frf_dev": 4.762004059884298e-15
+      }
+    ],
+    "b0_max_rel_frf_dev": 4.762004059884298e-15,
+    "b0_pass": true,
+    "rows": [
+      {
+        "structure": "cantilever",
+        "mass_ratio": 0.01,
+        "nu_star": 0.9478713763747791,
+        "zeta_d_at_nu_star": 0.0002909058695186029,
+        "il_peak_mdof_db": 0.48635923975178413,
+        "il_peak_den_hartog_db": 0.45542135235199266,
+        "abs_dev_db": 0.030937887399791475,
+        "rel_dev": 0.06793244813844335,
+        "il_rms_mdof_db": 0.24945134298681507,
+        "il_rms_den_hartog_db": 0.24684579672504095,
+        "rms_rel_dev": 0.010555360052074973,
+        "nu_den_hartog": 0.9900990099009901,
+        "zeta_den_hartog": 0.060933334777679066,
+        "nu_rel_dev_vs_den_hartog": 0.04264990986147306
+      },
+      {
+        "structure": "cantilever",
+        "mass_ratio": 0.02,
+        "nu_star": 0.9425358156326235,
+        "zeta_d_at_nu_star": 0.0005736255214147245,
+        "il_peak_mdof_db": 0.9543408662768955,
+        "il_peak_den_hartog_db": 0.9063496319934359,
+        "abs_dev_db": 0.04799123428345964,
+        "rel_dev": 0.052950023467110766,
+        "il_rms_mdof_db": 0.48199654615154586,
+        "il_rms_den_hartog_db": 0.47727205107953397,
+        "rms_rel_dev": 0.009898956080343763,
+        "nu_den_hartog": 0.9803921568627451,
+        "zeta_den_hartog": 0.08574929257125442,
+        "nu_rel_dev_vs_den_hartog": 0.038613468054724036
+      },
+      {
+        "structure": "cantilever",
+        "mass_ratio": 0.03,
+        "nu_star": 0.9326604489967192,
+        "zeta_d_at_nu_star": 0.0008374256074806834,
+        "il_peak_mdof_db": 1.3323999784241523,
+        "il_peak_den_hartog_db": 1.2740360483135134,
+        "abs_dev_db": 0.058363930110638895,
+        "rel_dev": 0.04581026587740378,
+        "il_rms_mdof_db": 0.6885864062302037,
+        "il_rms_den_hartog_db": 0.6815850282275081,
+        "rms_rel_dev": 0.01027220040455263,
+        "nu_den_hartog": 0.970873786407767,
+        "zeta_den_hartog": 0.10450995214374265,
+        "nu_rel_dev_vs_den_hartog": 0.039359737533379256
+      },
+      {
+        "structure": "cantilever",
+        "mass_ratio": 0.05,
+        "nu_star": 0.9185817990093376,
+        "zeta_d_at_nu_star": 0.001340167997610377,
+        "il_peak_mdof_db": 2.0475221858514474,
+        "il_peak_den_hartog_db": 1.9838815145536828,
+        "abs_dev_db": 0.06364067129776463,
+        "rel_dev": 0.03207886702451682,
+        "il_rms_mdof_db": 1.0643074249275346,
+        "il_rms_den_hartog_db": 1.053811383401688,
+        "rms_rel_dev": 0.00996007605456446,
+        "nu_den_hartog": 0.9523809523809523,
+        "zeta_den_hartog": 0.1336306209562122,
+        "nu_rel_dev_vs_den_hartog": 0.0354891110401955
+      },
+      {
+        "structure": "stiffened_plate",
+        "mass_ratio": 0.01,
+        "nu_star": 0.9331262919989907,
+        "zeta_d_at_nu_star": 0.00027950622871277897,
+        "il_peak_mdof_db": 0.4687224893909478,
+        "il_peak_den_hartog_db": 0.36822262536414385,
+        "abs_dev_db": 0.10049986402680394,
+        "rel_dev": 0.27293234338171724,
+        "il_rms_mdof_db": 0.24416763861268978,
+        "il_rms_den_hartog_db": 0.23267694299826017,
+        "rms_rel_dev": 0.04938476269440902,
+        "nu_den_hartog": 0.9900990099009901,
+        "zeta_den_hartog": 0.060933334777679066,
+        "nu_rel_dev_vs_den_hartog": 0.05754244508101942
+      },
+      {
+        "structure": "stiffened_plate",
+        "mass_ratio": 0.02,
+        "nu_star": 0.9253062352447214,
+        "zeta_d_at_nu_star": 0.0005467220235094043,
+        "il_peak_mdof_db": 0.8959199350373654,
+        "il_peak_den_hartog_db": 0.7368753398303683,
+        "abs_dev_db": 0.1590445952069971,
+        "rel_dev": 0.21583650125082188,
+        "il_rms_mdof_db": 0.46754732595122195,
+        "il_rms_den_hartog_db": 0.4459273166277221,
+        "rms_rel_dev": 0.048483258408564996,
+        "nu_den_hartog": 0.9803921568627451,
+        "zeta_den_hartog": 0.08574929257125442,
+        "nu_rel_dev_vs_den_hartog": 0.05618764005038409
+      },
+      {
+        "structure": "stiffened_plate",
+        "mass_ratio": 0.03,
+        "nu_star": 0.9165264891277025,
+        "zeta_d_at_nu_star": 0.0007991956974412587,
+        "il_peak_mdof_db": 1.282687876280391,
+        "il_peak_den_hartog_db": 1.0734324154618498,
+        "abs_dev_db": 0.2092554608185413,
+        "rel_dev": 0.19494050841431695,
+        "il_rms_mdof_db": 0.6699272349724129,
+        "il_rms_den_hartog_db": 0.6388967895346397,
+        "rms_rel_dev": 0.04856879224635831,
+        "nu_den_hartog": 0.970873786407767,
+        "zeta_den_hartog": 0.10450995214374265,
+        "nu_rel_dev_vs_den_hartog": 0.05597771619846642
+      },
+      {
+        "structure": "stiffened_plate",
+        "mass_ratio": 0.05,
+        "nu_star": 0.9019819961380493,
+        "zeta_d_at_nu_star": 0.0012738067433699402,
+        "il_peak_mdof_db": 1.9647478803363145,
+        "il_peak_den_hartog_db": 1.7068860047668637,
+        "abs_dev_db": 0.25786187556945084,
+        "rel_dev": 0.15107152724277628,
+        "il_rms_mdof_db": 1.0328312350697166,
+        "il_rms_den_hartog_db": 0.98641171515474,
+        "rms_rel_dev": 0.04705897061217963,
+        "nu_den_hartog": 0.9523809523809523,
+        "zeta_den_hartog": 0.1336306209562122,
+        "nu_rel_dev_vs_den_hartog": 0.05291890405504818
+      }
+    ],
+    "max_rel_dev": 0.27293234338171724,
+    "max_abs_dev_db": 0.25786187556945084,
+    "max_rms_rel_dev": 0.04938476269440902,
+    "il_peak_jump_db_per_0p001_nu": {
+      "cantilever": 0.07478976993526798,
+      "stiffened_plate": 0.028532004972376512
+    },
+    "b1_smooth_metric_pass": true,
+    "b2_peak_metric_note": "band-peak IL of a lightly damped absorber is a max-of-two-split-peaks functional; it is discontinuous in nu (measured jumps above), so agreement is judged on the smooth broadband (rms) IL and on the exact FRF equivalence; the peak-metric deviations are reported raw.",
+    "criterion_b_pass": true
+  },
+  "criterion_c": {
+    "rows": [
+      {
+        "model": "A_injection",
+        "detuning_coupling": null,
+        "structure": "cantilever",
+        "mass_ratio": 0.01,
+        "nu_star": 0.8333747416002019,
+        "il_peak_db": 0.6585057170436135,
+        "zeta_d": 0.0003281819446668811,
+        "envelope": [
+          {
+            "detune_factor": 0.8,
+            "nu": 0.6666997932801615,
+            "il_peak_db": 0.5521993095448946,
+            "ratio_to_peak": 0.8385641844143957
+          },
+          {
+            "detune_factor": 0.9,
+            "nu": 0.7500372674401817,
+            "il_peak_db": 0.6282807787336806,
+            "ratio_to_peak": 0.9541007199669748
+          },
+          {
+            "detune_factor": 0.95,
+            "nu": 0.7917060045201917,
+            "il_peak_db": 0.6506876561348519,
+            "ratio_to_peak": 0.9881275732215947
+          },
+          {
+            "detune_factor": 1.0,
+            "nu": 0.8333747416002019,
+            "il_peak_db": 0.6585057170436135,
+            "ratio_to_peak": 1.0
+          },
+          {
+            "detune_factor": 1.05,
+            "nu": 0.875043478680212,
+            "il_peak_db": 0.6506568867140932,
+            "ratio_to_peak": 0.9880808470961225
+          },
+          {
+            "detune_factor": 1.1,
+            "nu": 0.9167122157602221,
+            "il_peak_db": 0.6282234092521701,
+            "ratio_to_peak": 0.9540135992631971
+          },
+          {
+            "detune_factor": 1.2,
+            "nu": 1.0000496899202422,
+            "il_peak_db": 0.5521106897063949,
+            "ratio_to_peak": 0.8384296072403393
+          }
+        ],
+        "retained_fraction": {
+          "pm20%": 0.8385641844143957,
+          "pm10%": 0.9541007199669748,
+          "pm5%": 0.9881275732215947,
+          "pp5%": 0.9880808470961225,
+          "pp10%": 0.9540135992631971,
+          "pp20%": 0.8384296072403393
+        },
+        "min_retained_at_20pct": 0.8384296072403393,
+        "min_retained_any": 0.8384296072403393
+      },
+      {
+        "model": "A_injection",
+        "detuning_coupling": null,
+        "structure": "cantilever",
+        "mass_ratio": 0.02,
+        "nu_star": 0.8333747416002019,
+        "il_peak_db": 1.2705825729433382,
+        "zeta_d": 0.0006563638893337622,
+        "envelope": [
+          {
+            "detune_factor": 0.8,
+            "nu": 0.6666997932801615,
+            "il_peak_db": 1.0713784867008858,
+            "ratio_to_peak": 0.8432183075036274
+          },
+          {
+            "detune_factor": 0.9,
+            "nu": 0.7500372674401817,
+            "il_peak_db": 1.2141613184611333,
+            "ratio_to_peak": 0.9555941851527968
+          },
+          {
+            "detune_factor": 0.95,
+            "nu": 0.7917060045201917,
+            "il_peak_db": 1.2560048098055367,
+            "ratio_to_peak": 0.9885267093629093
+          },
+          {
+            "detune_factor": 1.0,
+            "nu": 0.8333747416002019,
+            "il_peak_db": 1.2705825729433382,
+            "ratio_to_peak": 1.0
+          },
+          {
+            "detune_factor": 1.05,
+            "nu": 0.875043478680212,
+            "il_peak_db": 1.2559474133213135,
+            "ratio_to_peak": 0.9884815360027157
+          },
+          {
+            "detune_factor": 1.1,
+            "nu": 0.9167122157602221,
+            "il_peak_db": 1.21405406295876,
+            "ratio_to_peak": 0.9555097707238118
+          },
+          {
+            "detune_factor": 1.2,
+            "nu": 1.0000496899202422,
+            "il_peak_db": 1.0712115290207755,
+            "ratio_to_peak": 0.8430869050401704
+          }
+        ],
+        "retained_fraction": {
+          "pm20%": 0.8432183075036274,
+          "pm10%": 0.9555941851527968,
+          "pm5%": 0.9885267093629093,
+          "pp5%": 0.9884815360027157,
+          "pp10%": 0.9555097707238118,
+          "pp20%": 0.8430869050401704
+        },
+        "min_retained_at_20pct": 0.8430869050401704,
+        "min_retained_any": 0.8430869050401704
+      },
+      {
+        "model": "A_injection",
+        "detuning_coupling": null,
+        "structure": "cantilever",
+        "mass_ratio": 0.03,
+        "nu_star": 0.8333747416002019,
+        "il_peak_db": 1.8423480631764455,
+        "zeta_d": 0.0009845458340006436,
+        "envelope": [
+          {
+            "detune_factor": 0.8,
+            "nu": 0.6666997932801615,
+            "il_peak_db": 1.5612644004181122,
+            "ratio_to_peak": 0.847431835288654
+          },
+          {
+            "detune_factor": 0.9,
+            "nu": 0.7500372674401817,
+            "il_peak_db": 1.7630039652796854,
+            "ratio_to_peak": 0.9569331661684163
+          },
+          {
+            "detune_factor": 0.95,
+            "nu": 0.7917060045201917,
+            "il_peak_db": 1.8218676887139684,
+            "ratio_to_peak": 0.98888354764671
+          },
+          {
+            "detune_factor": 1.0,
+            "nu": 0.8333747416002019,
+            "il_peak_db": 1.8423480631764455,
+            "ratio_to_peak": 1.0
+          },
+          {
+            "detune_factor": 1.05,
+            "nu": 0.875043478680212,
+            "il_peak_db": 1.8217870236955955,
+            "ratio_to_peak": 0.9888397638362644
+          },
+          {
+            "detune_factor": 1.1,
+            "nu": 0.9167122157602221,
+            "il_peak_db": 1.7628529324560764,
+            "ratio_to_peak": 0.9568511877265422
+          },
+          {
+            "detune_factor": 1.2,
+            "nu": 1.0000496899202422,
+            "il_peak_db": 1.5610276952674662,
+            "ratio_to_peak": 0.8473033551412936
+          }
+        ],
+        "retained_fraction": {
+          "pm20%": 0.847431835288654,
+          "pm10%": 0.9569331661684163,
+          "pm5%": 0.98888354764671,
+          "pp5%": 0.9888397638362644,
+          "pp10%": 0.9568511877265422,
+          "pp20%": 0.8473033551412936
+        },
+        "min_retained_at_20pct": 0.8473033551412936,
+        "min_retained_any": 0.8473033551412936
+      },
+      {
+        "model": "A_injection",
+        "detuning_coupling": null,
+        "structure": "cantilever",
+        "mass_ratio": 0.05,
+        "nu_star": 0.8333747416002019,
+        "il_peak_db": 2.884005640657929,
+        "zeta_d": 0.0016409097233344055,
+        "envelope": [
+          {
+            "detune_factor": 0.8,
+            "nu": 0.6666997932801615,
+            "il_peak_db": 2.465198081886954,
+            "ratio_to_peak": 0.8547826838939773
+          },
+          {
+            "detune_factor": 0.9,
+            "nu": 0.7500372674401817,
+            "il_peak_db": 2.7664546299667316,
+            "ratio_to_peak": 0.9592403672746006
+          },
+          {
+            "detune_factor": 0.95,
+            "nu": 0.7917060045201917,
+            "il_peak_db": 2.853712710561955,
+            "ratio_to_peak": 0.9894962306352967
+          },
+          {
+            "detune_factor": 1.0,
+            "nu": 0.8333747416002019,
+            "il_peak_db": 2.884005640657929,
+            "ratio_to_peak": 1.0
+          },
+          {
+            "detune_factor": 1.05,
+            "nu": 0.875043478680212,
+            "il_peak_db": 2.8535933267476388,
+            "ratio_to_peak": 0.9894548354963161
+          },
+          {
+            "detune_factor": 1.1,
+            "nu": 0.9167122157602221,
+            "il_peak_db": 2.766230369478819,
+            "ratio_to_peak": 0.9591626072020295
+          },
+          {
+            "detune_factor": 1.2,
+            "nu": 1.0000496899202422,
+            "il_peak_db": 2.464842558327259,
+            "ratio_to_peak": 0.854659409669169
+          }
+        ],
+        "retained_fraction": {
+          "pm20%": 0.8547826838939773,
+          "pm10%": 0.9592403672746006,
+          "pm5%": 0.9894962306352967,
+          "pp5%": 0.9894548354963161,
+          "pp10%": 0.9591626072020295,
+          "pp20%": 0.854659409669169
+        },
+        "min_retained_at_20pct": 0.854659409669169,
+        "min_retained_any": 0.854659409669169
+      },
+      {
+        "model": "A_injection",
+        "detuning_coupling": null,
+        "structure": "stiffened_plate",
+        "mass_ratio": 0.01,
+        "nu_star": 0.8333747416002019,
+        "il_peak_db": 0.6584954118145374,
+        "zeta_d": 0.0003281819446668811,
+        "envelope": [
+          {
+            "detune_factor": 0.8,
+            "nu": 0.6666997932801615,
+            "il_peak_db": 0.5521907347926357,
+            "ratio_to_peak": 0.8385642859242245
+          },
+          {
+            "detune_factor": 0.9,
+            "nu": 0.7500372674401817,
+            "il_peak_db": 0.628270984650152,
+            "ratio_to_peak": 0.9541007778913757
+          },
+          {
+            "detune_factor": 0.95,
+            "nu": 0.7917060045201917,
+            "il_peak_db": 0.6506774918997787,
+            "ratio_to_peak": 0.988127601537548
+          },
+          {
+            "detune_factor": 1.0,
+            "nu": 0.8333747416002019,
+            "il_peak_db": 0.6584954118145374,
+            "ratio_to_peak": 1.0
+          },
+          {
+            "detune_factor": 1.05,
+            "nu": 0.875043478680212,
+            "il_peak_db": 0.6506466878912411,
+            "ratio_to_peak": 0.988080822155361
+          },
+          {
+            "detune_factor": 1.1,
+            "nu": 0.9167122157602221,
+            "il_peak_db": 0.6282135460492935,
+            "ratio_to_peak": 0.9540135508586159
+          },
+          {
+            "detune_factor": 1.2,
+            "nu": 1.0000496899202422,
+            "il_peak_db": 0.5521019770727905,
+            "ratio_to_peak": 0.8384294972556131
+          }
+        ],
+        "retained_fraction": {
+          "pm20%": 0.8385642859242245,
+          "pm10%": 0.9541007778913757,
+          "pm5%": 0.988127601537548,
+          "pp5%": 0.988080822155361,
+          "pp10%": 0.9540135508586159,
+          "pp20%": 0.8384294972556131
+        },
+        "min_retained_at_20pct": 0.8384294972556131,
+        "min_retained_any": 0.8384294972556131
+      },
+      {
+        "model": "A_injection",
+        "detuning_coupling": null,
+        "structure": "stiffened_plate",
+        "mass_ratio": 0.02,
+        "nu_star": 0.8333747416002019,
+        "il_peak_db": 1.270561284390472,
+        "zeta_d": 0.0006563638893337622,
+        "envelope": [
+          {
+            "detune_factor": 0.8,
+            "nu": 0.6666997932801615,
+            "il_peak_db": 1.0713608620664228,
+            "ratio_to_peak": 0.8432185642901816
+          },
+          {
+            "detune_factor": 0.9,
+            "nu": 0.7500372674401817,
+            "il_peak_db": 1.214141115941093,
+            "ratio_to_peak": 0.9555942958891233
+          },
+          {
+            "detune_factor": 0.95,
+            "nu": 0.7917060045201917,
+            "il_peak_db": 1.2559838212718364,
+            "ratio_to_peak": 0.9885267532564328
+          },
+          {
+            "detune_factor": 1.0,
+            "nu": 0.8333747416002019,
+            "il_peak_db": 1.270561284390472,
+            "ratio_to_peak": 1.0
+          },
+          {
+            "detune_factor": 1.05,
+            "nu": 0.875043478680212,
+            "il_peak_db": 1.2559263506114111,
+            "ratio_to_peak": 0.9884815207586924
+          },
+          {
+            "detune_factor": 1.1,
+            "nu": 0.9167122157602221,
+            "il_peak_db": 1.2140337125404437,
+            "ratio_to_peak": 0.9555097636418646
+          },
+          {
+            "detune_factor": 1.2,
+            "nu": 1.0000496899202422,
+            "il_peak_db": 1.0711936116231584,
+            "ratio_to_peak": 0.8430869292047125
+          }
+        ],
+        "retained_fraction": {
+          "pm20%": 0.8432185642901816,
+          "pm10%": 0.9555942958891233,
+          "pm5%": 0.9885267532564328,
+          "pp5%": 0.9884815207586924,
+          "pp10%": 0.9555097636418646,
+          "pp20%": 0.8430869292047125
+        },
+        "min_retained_at_20pct": 0.8430869292047125,
+        "min_retained_any": 0.8430869292047125
+      },
+      {
+        "model": "A_injection",
+        "detuning_coupling": null,
+        "structure": "stiffened_plate",
+        "mass_ratio": 0.03,
+        "nu_star": 0.8333747416002019,
+        "il_peak_db": 1.8423151134642248,
+        "zeta_d": 0.0009845458340006436,
+        "envelope": [
+          {
+            "detune_factor": 0.8,
+            "nu": 0.6666997932801615,
+            "il_peak_db": 1.561237250930906,
+            "ratio_to_peak": 0.847432254949703
+          },
+          {
+            "detune_factor": 0.9,
+            "nu": 0.7500372674401817,
+            "il_peak_db": 1.7629727401977173,
+            "ratio_to_peak": 0.9569333320414906
+          },
+          {
+            "detune_factor": 0.95,
+            "nu": 0.7917060045201917,
+            "il_peak_db": 1.8218352160687104,
+            "ratio_to_peak": 0.9888836077792333
+          },
+          {
+            "detune_factor": 1.0,
+            "nu": 0.8333747416002019,
+            "il_peak_db": 1.8423151134642248,
+            "ratio_to_peak": 1.0
+          },
+          {
+            "detune_factor": 1.05,
+            "nu": 0.875043478680212,
+            "il_peak_db": 1.8217544322855541,
+            "ratio_to_peak": 0.9888397587207494
+          },
+          {
+            "detune_factor": 1.1,
+            "nu": 0.9167122157602221,
+            "il_peak_db": 1.7628214710381895,
+            "ratio_to_peak": 0.9568512238514082
+          },
+          {
+            "detune_factor": 1.2,
+            "nu": 1.0000496899202422,
+            "il_peak_db": 1.5610000811362168,
+            "ratio_to_peak": 0.847303520297875
+          }
+        ],
+        "retained_fraction": {
+          "pm20%": 0.847432254949703,
+          "pm10%": 0.9569333320414906,
+          "pm5%": 0.9888836077792333,
+          "pp5%": 0.9888397587207494,
+          "pp10%": 0.9568512238514082,
+          "pp20%": 0.847303520297875
+        },
+        "min_retained_at_20pct": 0.847303520297875,
+        "min_retained_any": 0.847303520297875
+      },
+      {
+        "model": "A_injection",
+        "detuning_coupling": null,
+        "structure": "stiffened_plate",
+        "mass_ratio": 0.05,
+        "nu_star": 0.8333747416002019,
+        "il_peak_db": 2.883947335905093,
+        "zeta_d": 0.0016409097233344055,
+        "envelope": [
+          {
+            "detune_factor": 0.8,
+            "nu": 0.6666997932801615,
+            "il_peak_db": 2.4651504582835986,
+            "ratio_to_peak": 0.8547834516922411
+          },
+          {
+            "detune_factor": 0.9,
+            "nu": 0.7500372674401817,
+            "il_peak_db": 2.7663995180805583,
+            "ratio_to_peak": 0.959240650354094
+          },
+          {
+            "detune_factor": 0.95,
+            "nu": 0.7917060045201917,
+            "il_peak_db": 2.8536552910154738,
+            "ratio_to_peak": 0.9894963252232508
+          },
+          {
+            "detune_factor": 1.0,
+            "nu": 0.8333747416002019,
+            "il_peak_db": 2.883947335905093,
+            "ratio_to_peak": 1.0
+          },
+          {
+            "detune_factor": 1.05,
+            "nu": 0.875043478680212,
+            "il_peak_db": 2.853535684260779,
+            "ratio_to_peak": 0.989454851943484
+          },
+          {
+            "detune_factor": 1.1,
+            "nu": 0.9167122157602221,
+            "il_peak_db": 2.766174815409183,
+            "ratio_to_peak": 0.9591627353836721
+          },
+          {
+            "detune_factor": 1.2,
+            "nu": 1.0000496899202422,
+            "il_peak_db": 2.464794075326761,
+            "ratio_to_peak": 0.8546598769818432
+          }
+        ],
+        "retained_fraction": {
+          "pm20%": 0.8547834516922411,
+          "pm10%": 0.959240650354094,
+          "pm5%": 0.9894963252232508,
+          "pp5%": 0.989454851943484,
+          "pp10%": 0.9591627353836721,
+          "pp20%": 0.8546598769818432
+        },
+        "min_retained_at_20pct": 0.8546598769818432,
+        "min_retained_any": 0.8546598769818432
+      },
+      {
+        "model": "B_absorber",
+        "detuning_coupling": true,
+        "structure": "cantilever",
+        "mass_ratio": 0.01,
+        "nu_star": 0.9478713763747791,
+        "il_peak_db": 0.48635923975178413,
+        "zeta_d": 0.0002909058695186029,
+        "envelope": [
+          {
+            "detune_factor": 0.8,
+            "nu": 0.7582971010998234,
+            "il_peak_db": 0.07472752665162267,
+            "ratio_to_peak": 0.15364677083087852
+          },
+          {
+            "detune_factor": 0.9,
+            "nu": 0.8530842387373012,
+            "il_peak_db": 0.15884632507180824,
+            "ratio_to_peak": 0.3266028731208566
+          },
+          {
+            "detune_factor": 0.95,
+            "nu": 0.9004778075560401,
+            "il_peak_db": 0.2610464490398818,
+            "ratio_to_peak": 0.5367358686823923
+          },
+          {
+            "detune_factor": 1.0,
+            "nu": 0.9478713763747791,
+            "il_peak_db": 0.48635923975178413,
+            "ratio_to_peak": 1.0
+          },
+          {
+            "detune_factor": 1.05,
+            "nu": 0.9952649451935182,
+            "il_peak_db": 0.04088455597916894,
+            "ratio_to_peak": 0.08406246378712694
+          },
+          {
+            "detune_factor": 1.1,
+            "nu": 1.042658514012257,
+            "il_peak_db": -0.0982201652417703,
+            "ratio_to_peak": -0.20194982887936383
+          },
+          {
+            "detune_factor": 1.2,
+            "nu": 1.1374456516497349,
+            "il_peak_db": -0.12198681206644761,
+            "ratio_to_peak": -0.25081627343751955
+          }
+        ],
+        "retained_fraction": {
+          "pm20%": 0.15364677083087852,
+          "pm10%": 0.3266028731208566,
+          "pm5%": 0.5367358686823923,
+          "pp5%": 0.08406246378712694,
+          "pp10%": -0.20194982887936383,
+          "pp20%": -0.25081627343751955
+        },
+        "min_retained_at_20pct": -0.25081627343751955,
+        "min_retained_any": -0.25081627343751955
+      },
+      {
+        "model": "B_absorber",
+        "detuning_coupling": false,
+        "structure": "cantilever",
+        "mass_ratio": 0.01,
+        "nu_star": 0.9550249987406415,
+        "il_peak_db": 0.5656890592284793,
+        "zeta_d": 0.0003281819446668811,
+        "envelope": [
+          {
+            "detune_factor": 0.8,
+            "nu": 0.7640199989925133,
+            "il_peak_db": 0.09086002542857174,
+            "ratio_to_peak": 0.1606183183964917
+          },
+          {
+            "detune_factor": 0.9,
+            "nu": 0.8595224988665774,
+            "il_peak_db": 0.18919807963954283,
+            "ratio_to_peak": 0.334455964019496
+          },
+          {
+            "detune_factor": 0.95,
+            "nu": 0.9072737488036093,
+            "il_peak_db": 0.30783246957111815,
+            "ratio_to_peak": 0.5441725706892026
+          },
+          {
+            "detune_factor": 1.0,
+            "nu": 0.9550249987406415,
+            "il_peak_db": 0.5656890592284793,
+            "ratio_to_peak": 1.0
+          },
+          {
+            "detune_factor": 1.05,
+            "nu": 1.0027762486776737,
+            "il_peak_db": 0.001912540731328792,
+            "ratio_to_peak": 0.003380904580225097
+          },
+          {
+            "detune_factor": 1.1,
+            "nu": 1.0505274986147057,
+            "il_peak_db": -0.12357851071082271,
+            "ratio_to_peak": -0.21845660384410914
+          },
+          {
+            "detune_factor": 1.2,
+            "nu": 1.1460299984887699,
+            "il_peak_db": -0.1300148482018273,
+            "ratio_to_peak": -0.229834475461041
+          }
+        ],
+        "retained_fraction": {
+          "pm20%": 0.1606183183964917,
+          "pm10%": 0.334455964019496,
+          "pm5%": 0.5441725706892026,
+          "pp5%": 0.003380904580225097,
+          "pp10%": -0.21845660384410914,
+          "pp20%": -0.229834475461041
+        },
+        "min_retained_at_20pct": -0.229834475461041,
+        "min_retained_any": -0.229834475461041
+      },
+      {
+        "model": "B_absorber",
+        "detuning_coupling": true,
+        "structure": "cantilever",
+        "mass_ratio": 0.02,
+        "nu_star": 0.9425358156326235,
+        "il_peak_db": 0.9543408662768955,
+        "zeta_d": 0.0005736255214147245,
+        "envelope": [
+          {
+            "detune_factor": 0.8,
+            "nu": 0.7540286525060989,
+            "il_peak_db": 0.16071276979957483,
+            "ratio_to_peak": 0.1684018525021909
+          },
+          {
+            "detune_factor": 0.9,
+            "nu": 0.8482822340693611,
+            "il_peak_db": 0.3471820568054512,
+            "ratio_to_peak": 0.3637925075553861
+          },
+          {
+            "detune_factor": 0.95,
+            "nu": 0.8954090248509923,
+            "il_peak_db": 0.5573283020656887,
+            "ratio_to_peak": 0.5839929125533053
+          },
+          {
+            "detune_factor": 1.0,
+            "nu": 0.9425358156326235,
+            "il_peak_db": 0.9543408662768955,
+            "ratio_to_peak": 1.0
+          },
+          {
+            "detune_factor": 1.05,
+            "nu": 0.9896626064142546,
+            "il_peak_db": 0.3377982670944713,
+            "ratio_to_peak": 0.3539597632576508
+          },
+          {
+            "detune_factor": 1.1,
+            "nu": 1.036789397195886,
+            "il_peak_db": 0.05192982002039513,
+            "ratio_to_peak": 0.05441433124726742
+          },
+          {
+            "detune_factor": 1.2,
+            "nu": 1.131042978759148,
+            "il_peak_db": -0.1292944147623773,
+            "ratio_to_peak": -0.13548032923161377
+          }
+        ],
+        "retained_fraction": {
+          "pm20%": 0.1684018525021909,
+          "pm10%": 0.3637925075553861,
+          "pm5%": 0.5839929125533053,
+          "pp5%": 0.3539597632576508,
+          "pp10%": 0.05441433124726742,
+          "pp20%": -0.13548032923161377
+        },
+        "min_retained_at_20pct": -0.13548032923161377,
+        "min_retained_any": -0.13548032923161377
+      },
+      {
+        "model": "B_absorber",
+        "detuning_coupling": false,
+        "structure": "cantilever",
+        "mass_ratio": 0.02,
+        "nu_star": 0.9472955627571292,
+        "il_peak_db": 1.0795200387850032,
+        "zeta_d": 0.0006563638893337622,
+        "envelope": [
+          {
+            "detune_factor": 0.8,
+            "nu": 0.7578364502057034,
+            "il_peak_db": 0.21432209947042125,
+            "ratio_to_peak": 0.19853461887714485
+          },
+          {
+            "detune_factor": 0.9,
+            "nu": 0.8525660064814163,
+            "il_peak_db": 0.4313503316319661,
+            "ratio_to_peak": 0.3995760302119539
+          },
+          {
+            "detune_factor": 0.95,
+            "nu": 0.8999307846192727,
+            "il_peak_db": 0.662995149391177,
+            "ratio_to_peak": 0.6141573343440444
+          },
+          {
+            "detune_factor": 1.0,
+            "nu": 0.9472955627571292,
+            "il_peak_db": 1.0795200387850032,
+            "ratio_to_peak": 1.0
+          },
+          {
+            "detune_factor": 1.05,
+            "nu": 0.9946603408949858,
+            "il_peak_db": 0.30697334024409223,
+            "ratio_to_peak": 0.2843609467310953
+          },
+          {
+            "detune_factor": 1.1,
+            "nu": 1.0420251190328422,
+            "il_peak_db": -0.006641943924455916,
+            "ratio_to_peak": -0.00615268238274799
+          },
+          {
+            "detune_factor": 1.2,
+            "nu": 1.1367546753085551,
+            "il_peak_db": -0.164286803609541,
+            "ratio_to_peak": -0.15218504308122463
+          }
+        ],
+        "retained_fraction": {
+          "pm20%": 0.19853461887714485,
+          "pm10%": 0.3995760302119539,
+          "pm5%": 0.6141573343440444,
+          "pp5%": 0.2843609467310953,
+          "pp10%": -0.00615268238274799,
+          "pp20%": -0.15218504308122463
+        },
+        "min_retained_at_20pct": -0.15218504308122463,
+        "min_retained_any": -0.15218504308122463
+      },
+      {
+        "model": "B_absorber",
+        "detuning_coupling": true,
+        "structure": "cantilever",
+        "mass_ratio": 0.03,
+        "nu_star": 0.9326604489967192,
+        "il_peak_db": 1.3323999784241523,
+        "zeta_d": 0.0008374256074806834,
+        "envelope": [
+          {
+            "detune_factor": 0.8,
+            "nu": 0.7461283591973754,
+            "il_peak_db": 0.24803065030107513,
+            "ratio_to_peak": 0.1861532980467505
+          },
+          {
+            "detune_factor": 0.9,
+            "nu": 0.8393944040970472,
+            "il_peak_db": 0.5302418774871449,
+            "ratio_to_peak": 0.3979599865456837
+          },
+          {
+            "detune_factor": 0.95,
+            "nu": 0.8860274265468832,
+            "il_peak_db": 0.8257921268893984,
+            "ratio_to_peak": 0.6197779497610576
+          },
+          {
+            "detune_factor": 1.0,
+            "nu": 0.9326604489967192,
+            "il_peak_db": 1.3323999784241523,
+            "ratio_to_peak": 1.0
+          },
+          {
+            "detune_factor": 1.05,
+            "nu": 0.9792934714465552,
+            "il_peak_db": 0.7036294766713271,
+            "ratio_to_peak": 0.5280917802952229
+          },
+          {
+            "detune_factor": 1.1,
+            "nu": 1.0259264938963912,
+            "il_peak_db": 0.3008414844092243,
+            "ratio_to_peak": 0.22578916937917823
+          },
+          {
+            "detune_factor": 1.2,
+            "nu": 1.119192538796063,
+            "il_peak_db": -0.05732063224639544,
+            "ratio_to_peak": -0.043020589293456264
+          }
+        ],
+        "retained_fraction": {
+          "pm20%": 0.1861532980467505,
+          "pm10%": 0.3979599865456837,
+          "pm5%": 0.6197779497610576,
+          "pp5%": 0.5280917802952229,
+          "pp10%": 0.22578916937917823,
+          "pp20%": -0.043020589293456264
+        },
+        "min_retained_at_20pct": -0.043020589293456264,
+        "min_retained_any": -0.043020589293456264
+      },
+      {
+        "model": "B_absorber",
+        "detuning_coupling": false,
+        "structure": "cantilever",
+        "mass_ratio": 0.03,
+        "nu_star": 0.9391649440013459,
+        "il_peak_db": 1.5517759341176982,
+        "zeta_d": 0.0009845458340006436,
+        "envelope": [
+          {
+            "detune_factor": 0.8,
+            "nu": 0.7513319552010768,
+            "il_peak_db": 0.3615163643905861,
+            "ratio_to_peak": 0.23296943614229682
+          },
+          {
+            "detune_factor": 0.9,
+            "nu": 0.8452484496012113,
+            "il_peak_db": 0.6983359614046285,
+            "ratio_to_peak": 0.4500237089974496
+          },
+          {
+            "detune_factor": 0.95,
+            "nu": 0.8922066968012785,
+            "il_peak_db": 1.025144327658467,
+            "ratio_to_peak": 0.6606265151555782
+          },
+          {
+            "detune_factor": 1.0,
+            "nu": 0.9391649440013459,
+            "il_peak_db": 1.5517759341176982,
+            "ratio_to_peak": 1.0
+          },
+          {
+            "detune_factor": 1.05,
+            "nu": 0.9861231912014132,
+            "il_peak_db": 0.67240226030457,
+            "ratio_to_peak": 0.4333114372513332
+          },
+          {
+            "detune_factor": 1.1,
+            "nu": 1.0330814384014806,
+            "il_peak_db": 0.20301255156837883,
+            "ratio_to_peak": 0.13082594407149817
+          },
+          {
+            "detune_factor": 1.2,
+            "nu": 1.126997932801615,
+            "il_peak_db": -0.13205038652394036,
+            "ratio_to_peak": -0.08509629748770461
+          }
+        ],
+        "retained_fraction": {
+          "pm20%": 0.23296943614229682,
+          "pm10%": 0.4500237089974496,
+          "pm5%": 0.6606265151555782,
+          "pp5%": 0.4333114372513332,
+          "pp10%": 0.13082594407149817,
+          "pp20%": -0.08509629748770461
+        },
+        "min_retained_at_20pct": -0.08509629748770461,
+        "min_retained_any": -0.08509629748770461
+      },
+      {
+        "model": "B_absorber",
+        "detuning_coupling": true,
+        "structure": "cantilever",
+        "mass_ratio": 0.05,
+        "nu_star": 0.9185817990093376,
+        "il_peak_db": 2.0475221858514474,
+        "zeta_d": 0.001340167997610377,
+        "envelope": [
+          {
+            "detune_factor": 0.8,
+            "nu": 0.73486543920747,
+            "il_peak_db": 0.4363711641911197,
+            "ratio_to_peak": 0.21312158041875276
+          },
+          {
+            "detune_factor": 0.9,
+            "nu": 0.8267236191084039,
+            "il_peak_db": 0.9133007099858959,
+            "ratio_to_peak": 0.44605167958466163
+          },
+          {
+            "detune_factor": 0.95,
+            "nu": 0.8726527090588706,
+            "il_peak_db": 1.3654612121522187,
+            "ratio_to_peak": 0.6668846968241282
+          },
+          {
+            "detune_factor": 1.0,
+            "nu": 0.9185817990093376,
+            "il_peak_db": 2.0475221858514474,
+            "ratio_to_peak": 1.0
+          },
+          {
+            "detune_factor": 1.05,
+            "nu": 0.9645108889598045,
+            "il_peak_db": 1.3741626591960256,
+            "ratio_to_peak": 0.6711344417616603
+          },
+          {
+            "detune_factor": 1.1,
+            "nu": 1.0104399789102714,
+            "il_peak_db": 0.851388121258247,
+            "ratio_to_peak": 0.41581386865617936
+          },
+          {
+            "detune_factor": 1.2,
+            "nu": 1.102298158811205,
+            "il_peak_db": 0.21890634044035873,
+            "ratio_to_peak": 0.10691280512270888
+          }
+        ],
+        "retained_fraction": {
+          "pm20%": 0.21312158041875276,
+          "pm10%": 0.44605167958466163,
+          "pm5%": 0.6668846968241282,
+          "pp5%": 0.6711344417616603,
+          "pp10%": 0.41581386865617936,
+          "pp20%": 0.10691280512270888
+        },
+        "min_retained_at_20pct": 0.10691280512270888,
+        "min_retained_any": 0.10691280512270888
+      },
+      {
+        "model": "B_absorber",
+        "detuning_coupling": false,
+        "structure": "cantilever",
+        "mass_ratio": 0.05,
+        "nu_star": 0.9269776693812566,
+        "il_peak_db": 2.4755181103203387,
+        "zeta_d": 0.0016409097233344055,
+        "envelope": [
+          {
+            "detune_factor": 0.8,
+            "nu": 0.7415821355050053,
+            "il_peak_db": 0.7182645353883083,
+            "ratio_to_peak": 0.2901471544053309
+          },
+          {
+            "detune_factor": 0.9,
+            "nu": 0.834279902443131,
+            "il_peak_db": 1.2935696226544933,
+            "ratio_to_peak": 0.5225450047251328
+          },
+          {
+            "detune_factor": 0.95,
+            "nu": 0.8806287859121937,
+            "il_peak_db": 1.7825209333811802,
+            "ratio_to_peak": 0.7200597426251578
+          },
+          {
+            "detune_factor": 1.0,
+            "nu": 0.9269776693812566,
+            "il_peak_db": 2.4755181103203387,
+            "ratio_to_peak": 1.0
+          },
+          {
+            "detune_factor": 1.05,
+            "nu": 0.9733265528503194,
+            "il_peak_db": 1.3877533051503361,
+            "ratio_to_peak": 0.5605910533899334
+          },
+          {
+            "detune_factor": 1.1,
+            "nu": 1.0196754363193823,
+            "il_peak_db": 0.7066437814964764,
+            "ratio_to_peak": 0.28545288299467736
+          },
+          {
+            "detune_factor": 1.2,
+            "nu": 1.1123732032575078,
+            "il_peak_db": 0.052387764068317216,
+            "ratio_to_peak": 0.021162343288830997
+          }
+        ],
+        "retained_fraction": {
+          "pm20%": 0.2901471544053309,
+          "pm10%": 0.5225450047251328,
+          "pm5%": 0.7200597426251578,
+          "pp5%": 0.5605910533899334,
+          "pp10%": 0.28545288299467736,
+          "pp20%": 0.021162343288830997
+        },
+        "min_retained_at_20pct": 0.021162343288830997,
+        "min_retained_any": 0.021162343288830997
+      },
+      {
+        "model": "B_absorber",
+        "detuning_coupling": true,
+        "structure": "stiffened_plate",
+        "mass_ratio": 0.01,
+        "nu_star": 0.9331262919989907,
+        "il_peak_db": 0.4687224893909478,
+        "zeta_d": 0.00027950622871277897,
+        "envelope": [
+          {
+            "detune_factor": 0.8,
+            "nu": 0.7465010335991926,
+            "il_peak_db": 0.0872152639912873,
+            "ratio_to_peak": 0.1860701501748161
+          },
+          {
+            "detune_factor": 0.9,
+            "nu": 0.8398136627990916,
+            "il_peak_db": 0.17399706551837643,
+            "ratio_to_peak": 0.37121552615165976
+          },
+          {
+            "detune_factor": 0.95,
+            "nu": 0.8864699773990411,
+            "il_peak_db": 0.2708242584834942,
+            "ratio_to_peak": 0.5777923283250178
+          },
+          {
+            "detune_factor": 1.0,
+            "nu": 0.9331262919989907,
+            "il_peak_db": 0.4687224893909478,
+            "ratio_to_peak": 1.0
+          },
+          {
+            "detune_factor": 1.05,
+            "nu": 0.9797826065989402,
+            "il_peak_db": -0.01928364389392338,
+            "ratio_to_peak": -0.04114085483497988
+          },
+          {
+            "detune_factor": 1.1,
+            "nu": 1.0264389211988898,
+            "il_peak_db": -0.17898430510779956,
+            "ratio_to_peak": -0.381855595067285
+          },
+          {
+            "detune_factor": 1.2,
+            "nu": 1.1197515503987887,
+            "il_peak_db": -0.18360319932171495,
+            "ratio_to_peak": -0.3917098143941988
+          }
+        ],
+        "retained_fraction": {
+          "pm20%": 0.1860701501748161,
+          "pm10%": 0.37121552615165976,
+          "pm5%": 0.5777923283250178,
+          "pp5%": -0.04114085483497988,
+          "pp10%": -0.381855595067285,
+          "pp20%": -0.3917098143941988
+        },
+        "min_retained_at_20pct": -0.3917098143941988,
+        "min_retained_any": -0.3917098143941988
+      },
+      {
+        "model": "B_absorber",
+        "detuning_coupling": false,
+        "structure": "stiffened_plate",
+        "mass_ratio": 0.01,
+        "nu_star": 0.943851377382266,
+        "il_peak_db": 0.5672205819124216,
+        "zeta_d": 0.0003281819446668811,
+        "envelope": [
+          {
+            "detune_factor": 0.8,
+            "nu": 0.7550811019058128,
+            "il_peak_db": 0.1048522592790445,
+            "ratio_to_peak": 0.1848527056714483
+          },
+          {
+            "detune_factor": 0.9,
+            "nu": 0.8494662396440394,
+            "il_peak_db": 0.20864319596980768,
+            "ratio_to_peak": 0.36783431811721884
+          },
+          {
+            "detune_factor": 0.95,
+            "nu": 0.8966588085131526,
+            "il_peak_db": 0.32591497903364125,
+            "ratio_to_peak": 0.5745824277652221
+          },
+          {
+            "detune_factor": 1.0,
+            "nu": 0.943851377382266,
+            "il_peak_db": 0.5672205819124216,
+            "ratio_to_peak": 1.0
+          },
+          {
+            "detune_factor": 1.05,
+            "nu": 0.9910439462513794,
+            "il_peak_db": -0.0700094100277593,
+            "ratio_to_peak": -0.12342536970664561
+          },
+          {
+            "detune_factor": 1.1,
+            "nu": 1.0382365151204926,
+            "il_peak_db": -0.20723380922783785,
+            "ratio_to_peak": -0.3653495938548904
+          },
+          {
+            "detune_factor": 1.2,
+            "nu": 1.1326216528587192,
+            "il_peak_db": -0.1891349350512353,
+            "ratio_to_peak": -0.3334415941212048
+          }
+        ],
+        "retained_fraction": {
+          "pm20%": 0.1848527056714483,
+          "pm10%": 0.36783431811721884,
+          "pm5%": 0.5745824277652221,
+          "pp5%": -0.12342536970664561,
+          "pp10%": -0.3653495938548904,
+          "pp20%": -0.3334415941212048
+        },
+        "min_retained_at_20pct": -0.3334415941212048,
+        "min_retained_any": -0.3653495938548904
+      },
+      {
+        "model": "B_absorber",
+        "detuning_coupling": true,
+        "structure": "stiffened_plate",
+        "mass_ratio": 0.02,
+        "nu_star": 0.9253062352447214,
+        "il_peak_db": 0.8959199350373654,
+        "zeta_d": 0.0005467220235094043,
+        "envelope": [
+          {
+            "detune_factor": 0.8,
+            "nu": 0.7402449881957772,
+            "il_peak_db": 0.18031327871877234,
+            "ratio_to_peak": 0.20126048284800377
+          },
+          {
+            "detune_factor": 0.9,
+            "nu": 0.8327756117202493,
+            "il_peak_db": 0.3617960712842891,
+            "ratio_to_peak": 0.403826343331896
+          },
+          {
+            "detune_factor": 0.95,
+            "nu": 0.8790409234824853,
+            "il_peak_db": 0.552092350033452,
+            "ratio_to_peak": 0.6162295629803419
+          },
+          {
+            "detune_factor": 1.0,
+            "nu": 0.9253062352447214,
+            "il_peak_db": 0.8959199350373654,
+            "ratio_to_peak": 1.0
+          },
+          {
+            "detune_factor": 1.05,
+            "nu": 0.9715715470069576,
+            "il_peak_db": 0.29888845103402284,
+            "ratio_to_peak": 0.3336106713838858
+          },
+          {
+            "detune_factor": 1.1,
+            "nu": 1.0178368587691937,
+            "il_peak_db": -0.022960125249853126,
+            "ratio_to_peak": -0.025627429809222346
+          },
+          {
+            "detune_factor": 1.2,
+            "nu": 1.1103674822936658,
+            "il_peak_db": -0.2181162573491628,
+            "ratio_to_peak": -0.24345507764604654
+          }
+        ],
+        "retained_fraction": {
+          "pm20%": 0.20126048284800377,
+          "pm10%": 0.403826343331896,
+          "pm5%": 0.6162295629803419,
+          "pp5%": 0.3336106713838858,
+          "pp10%": -0.025627429809222346,
+          "pp20%": -0.24345507764604654
+        },
+        "min_retained_at_20pct": -0.24345507764604654,
+        "min_retained_any": -0.24345507764604654
+      },
+      {
+        "model": "B_absorber",
+        "detuning_coupling": false,
+        "structure": "stiffened_plate",
+        "mass_ratio": 0.02,
+        "nu_star": 0.9362599153723398,
+        "il_peak_db": 1.0862051219867797,
+        "zeta_d": 0.0006563638893337622,
+        "envelope": [
+          {
+            "detune_factor": 0.8,
+            "nu": 0.7490079322978719,
+            "il_peak_db": 0.2385883731767731,
+            "ratio_to_peak": 0.21965314685717066
+          },
+          {
+            "detune_factor": 0.9,
+            "nu": 0.8426339238351058,
+            "il_peak_db": 0.4611708019766534,
+            "ratio_to_peak": 0.4245706383092036
+          },
+          {
+            "detune_factor": 0.95,
+            "nu": 0.8894469196037227,
+            "il_peak_db": 0.6883006931647738,
+            "ratio_to_peak": 0.6336746892758173
+          },
+          {
+            "detune_factor": 1.0,
+            "nu": 0.9362599153723398,
+            "il_peak_db": 1.0862051219867797,
+            "ratio_to_peak": 1.0
+          },
+          {
+            "detune_factor": 1.05,
+            "nu": 0.9830729111409569,
+            "il_peak_db": 0.23612432940786166,
+            "ratio_to_peak": 0.21738465841144833
+          },
+          {
+            "detune_factor": 1.1,
+            "nu": 1.0298859069095738,
+            "il_peak_db": -0.10649408785315567,
+            "ratio_to_peak": -0.09804233629313693
+          },
+          {
+            "detune_factor": 1.2,
+            "nu": 1.1235118984468078,
+            "il_peak_db": -0.25922833889303687,
+            "ratio_to_peak": -0.23865505110018434
+          }
+        ],
+        "retained_fraction": {
+          "pm20%": 0.21965314685717066,
+          "pm10%": 0.4245706383092036,
+          "pm5%": 0.6336746892758173,
+          "pp5%": 0.21738465841144833,
+          "pp10%": -0.09804233629313693,
+          "pp20%": -0.23865505110018434
+        },
+        "min_retained_at_20pct": -0.23865505110018434,
+        "min_retained_any": -0.23865505110018434
+      },
+      {
+        "model": "B_absorber",
+        "detuning_coupling": true,
+        "structure": "stiffened_plate",
+        "mass_ratio": 0.03,
+        "nu_star": 0.9165264891277025,
+        "il_peak_db": 1.282687876280391,
+        "zeta_d": 0.0007991956974412587,
+        "envelope": [
+          {
+            "detune_factor": 0.8,
+            "nu": 0.733221191302162,
+            "il_peak_db": 0.2749431354786452,
+            "ratio_to_peak": 0.21434921196568912
+          },
+          {
+            "detune_factor": 0.9,
+            "nu": 0.8248738402149323,
+            "il_peak_db": 0.5485670041416297,
+            "ratio_to_peak": 0.4276699065187975
+          },
+          {
+            "detune_factor": 0.95,
+            "nu": 0.8707001646713174,
+            "il_peak_db": 0.8199997331856939,
+            "ratio_to_peak": 0.6392823603849552
+          },
+          {
+            "detune_factor": 1.0,
+            "nu": 0.9165264891277025,
+            "il_peak_db": 1.282687876280391,
+            "ratio_to_peak": 1.0
+          },
+          {
+            "detune_factor": 1.05,
+            "nu": 0.9623528135840876,
+            "il_peak_db": 0.6498460658777315,
+            "ratio_to_peak": 0.5066283683620609
+          },
+          {
+            "detune_factor": 1.1,
+            "nu": 1.0081791380404728,
+            "il_peak_db": 0.22299101710528196,
+            "ratio_to_peak": 0.1738466709079091
+          },
+          {
+            "detune_factor": 1.2,
+            "nu": 1.099831786953243,
+            "il_peak_db": -0.15985795853109536,
+            "ratio_to_peak": -0.12462732476638064
+          }
+        ],
+        "retained_fraction": {
+          "pm20%": 0.21434921196568912,
+          "pm10%": 0.4276699065187975,
+          "pm5%": 0.6392823603849552,
+          "pp5%": 0.5066283683620609,
+          "pp10%": 0.1738466709079091,
+          "pp20%": -0.12462732476638064
+        },
+        "min_retained_at_20pct": -0.12462732476638064,
+        "min_retained_any": -0.12462732476638064
+      },
+      {
+        "model": "B_absorber",
+        "detuning_coupling": false,
+        "structure": "stiffened_plate",
+        "mass_ratio": 0.03,
+        "nu_star": 0.9286317964906206,
+        "il_peak_db": 1.5688389290391842,
+        "zeta_d": 0.0009845458340006436,
+        "envelope": [
+          {
+            "detune_factor": 0.8,
+            "nu": 0.7429054371924965,
+            "il_peak_db": 0.39403144788215294,
+            "ratio_to_peak": 0.25116118716117825
+          },
+          {
+            "detune_factor": 0.9,
+            "nu": 0.8357686168415586,
+            "il_peak_db": 0.7361249311518769,
+            "ratio_to_peak": 0.46921638514076613
+          },
+          {
+            "detune_factor": 0.95,
+            "nu": 0.8822002066660894,
+            "il_peak_db": 1.0577706095391077,
+            "ratio_to_peak": 0.674237864678005
+          },
+          {
+            "detune_factor": 1.0,
+            "nu": 0.9286317964906206,
+            "il_peak_db": 1.5688389290391842,
+            "ratio_to_peak": 1.0
+          },
+          {
+            "detune_factor": 1.05,
+            "nu": 0.9750633863151517,
+            "il_peak_db": 0.5963791079535188,
+            "ratio_to_peak": 0.38014043182799123
+          },
+          {
+            "detune_factor": 1.1,
+            "nu": 1.0214949761396828,
+            "il_peak_db": 0.09435470396730478,
+            "ratio_to_peak": 0.06014301546245486
+          },
+          {
+            "detune_factor": 1.2,
+            "nu": 1.1143581557887445,
+            "il_peak_db": -0.2510762229470815,
+            "ratio_to_peak": -0.1600395160393234
+          }
+        ],
+        "retained_fraction": {
+          "pm20%": 0.25116118716117825,
+          "pm10%": 0.46921638514076613,
+          "pm5%": 0.674237864678005,
+          "pp5%": 0.38014043182799123,
+          "pp10%": 0.06014301546245486,
+          "pp20%": -0.1600395160393234
+        },
+        "min_retained_at_20pct": -0.1600395160393234,
+        "min_retained_any": -0.1600395160393234
+      },
+      {
+        "model": "B_absorber",
+        "detuning_coupling": true,
+        "structure": "stiffened_plate",
+        "mass_ratio": 0.05,
+        "nu_star": 0.9019819961380493,
+        "il_peak_db": 1.9647478803363145,
+        "zeta_d": 0.0012738067433699402,
+        "envelope": [
+          {
+            "detune_factor": 0.8,
+            "nu": 0.7215855969104394,
+            "il_peak_db": 0.4699955175279873,
+            "ratio_to_peak": 0.2392141618941643
+          },
+          {
+            "detune_factor": 0.9,
+            "nu": 0.8117837965242444,
+            "il_peak_db": 0.9231044462649862,
+            "ratio_to_peak": 0.4698335371696517
+          },
+          {
+            "detune_factor": 0.95,
+            "nu": 0.8568828963311468,
+            "il_peak_db": 1.3374445620894437,
+            "ratio_to_peak": 0.6807207049183875
+          },
+          {
+            "detune_factor": 1.0,
+            "nu": 0.9019819961380493,
+            "il_peak_db": 1.9647478803363145,
+            "ratio_to_peak": 1.0
+          },
+          {
+            "detune_factor": 1.05,
+            "nu": 0.9470810959449518,
+            "il_peak_db": 1.3000091858787743,
+            "ratio_to_peak": 0.6616671782113062
+          },
+          {
+            "detune_factor": 1.1,
+            "nu": 0.9921801957518543,
+            "il_peak_db": 0.7720805971522794,
+            "ratio_to_peak": 0.39296675409575654
+          },
+          {
+            "detune_factor": 1.2,
+            "nu": 1.0823783953656592,
+            "il_peak_db": 0.1113304265957689,
+            "ratio_to_peak": 0.05666397592789971
+          }
+        ],
+        "retained_fraction": {
+          "pm20%": 0.2392141618941643,
+          "pm10%": 0.4698335371696517,
+          "pm5%": 0.6807207049183875,
+          "pp5%": 0.6616671782113062,
+          "pp10%": 0.39296675409575654,
+          "pp20%": 0.05666397592789971
+        },
+        "min_retained_at_20pct": 0.05666397592789971,
+        "min_retained_any": 0.05666397592789971
+      },
+      {
+        "model": "B_absorber",
+        "detuning_coupling": false,
+        "structure": "stiffened_plate",
+        "mass_ratio": 0.05,
+        "nu_star": 0.9143245517588959,
+        "il_peak_db": 2.455696455131559,
+        "zeta_d": 0.0016409097233344055,
+        "envelope": [
+          {
+            "detune_factor": 0.8,
+            "nu": 0.7314596414071168,
+            "il_peak_db": 0.752963035022254,
+            "ratio_to_peak": 0.3066189363301889
+          },
+          {
+            "detune_factor": 0.9,
+            "nu": 0.8228920965830063,
+            "il_peak_db": 1.3200762804919792,
+            "ratio_to_peak": 0.5375567805758219
+          },
+          {
+            "detune_factor": 0.95,
+            "nu": 0.8686083241709511,
+            "il_peak_db": 1.7931447488279317,
+            "ratio_to_peak": 0.7301980442578223
+          },
+          {
+            "detune_factor": 1.0,
+            "nu": 0.9143245517588959,
+            "il_peak_db": 2.455696455131559,
+            "ratio_to_peak": 1.0
+          },
+          {
+            "detune_factor": 1.05,
+            "nu": 0.9600407793468407,
+            "il_peak_db": 1.3505577845911567,
+            "ratio_to_peak": 0.5499693505559111
+          },
+          {
+            "detune_factor": 1.1,
+            "nu": 1.0057570069347856,
+            "il_peak_db": 0.6207008256302242,
+            "ratio_to_peak": 0.2527595885611894
+          },
+          {
+            "detune_factor": 1.2,
+            "nu": 1.097189462110675,
+            "il_peak_db": -0.0834198506760925,
+            "ratio_to_peak": -0.033969935698597346
+          }
+        ],
+        "retained_fraction": {
+          "pm20%": 0.3066189363301889,
+          "pm10%": 0.5375567805758219,
+          "pm5%": 0.7301980442578223,
+          "pp5%": 0.5499693505559111,
+          "pp10%": 0.2527595885611894,
+          "pp20%": -0.033969935698597346
+        },
+        "min_retained_at_20pct": -0.033969935698597346,
+        "min_retained_any": -0.033969935698597346
+      }
+    ],
+    "min_retained_at_20pct_model_A": 0.8384294972556131,
+    "min_retained_at_20pct_model_B": -0.3917098143941988,
+    "criterion_c_pass_model_A": true,
+    "criterion_c_pass_model_B": false,
+    "primary_model": "A_injection",
+    "criterion_c_pass": true
+  },
+  "criterion_c_spec": {
+    "mass_ratio": 0.03,
+    "rows": [
+      {
+        "zeta_d": 0.003,
+        "nu_star": 0.9645898033750315,
+        "il_peak_db": 4.091732525273169,
+        "min_retained_at_20pct": 0.08789022375516048,
+        "retained_fraction": {
+          "pm20%": 0.20331351785024596,
+          "pm10%": 0.4271253171124553,
+          "pm5%": 0.6513674359712182,
+          "pp5%": 0.5692099481248211,
+          "pp10%": 0.3115414331889287,
+          "pp20%": 0.08789022375516048
+        }
+      },
+      {
+        "zeta_d": 0.01,
+        "nu_star": 0.9733695494920506,
+        "il_peak_db": 9.527147750114594,
+        "min_retained_at_20pct": 0.19011706466653935,
+        "retained_fraction": {
+          "pm20%": 0.23632391502407923,
+          "pm10%": 0.481583138762257,
+          "pm5%": 0.7015904013483378,
+          "pp5%": 0.6705775779778587,
+          "pp10%": 0.43665980854088604,
+          "pp20%": 0.19011706466653935
+        }
+      },
+      {
+        "zeta_d": 0.02,
+        "nu_star": 0.9747757320124499,
+        "il_peak_db": 13.803575970983694,
+        "min_retained_at_20pct": 0.25564034115266415,
+        "retained_fraction": {
+          "pm20%": 0.2840802221229269,
+          "pm10%": 0.5389688855996635,
+          "pm5%": 0.7445346194014744,
+          "pp5%": 0.7272525511067395,
+          "pp10%": 0.512739126551878,
+          "pp20%": 0.25564034115266415
+        }
+      },
+      {
+        "zeta_d": 0.03,
+        "nu_star": 0.9746851112416929,
+        "il_peak_db": 16.456066182768843,
+        "min_retained_at_20pct": 0.3009880049011215,
+        "retained_fraction": {
+          "pm20%": 0.32139118398982824,
+          "pm10%": 0.5771500653886426,
+          "pm5%": 0.7704901885240018,
+          "pp5%": 0.7599739573907164,
+          "pp10%": 0.5598638071920687,
+          "pp20%": 0.3009880049011215
+        }
+      },
+      {
+        "zeta_d": 0.05,
+        "nu_star": 0.9733415461338433,
+        "il_peak_db": 19.598601782829068,
+        "min_retained_at_20pct": 0.36730833435339305,
+        "retained_fraction": {
+          "pm20%": 0.3777374307382699,
+          "pm10%": 0.6274585323542767,
+          "pm5%": 0.8022146318038502,
+          "pp5%": 0.8005926152256182,
+          "pp10%": 0.6217336533126298,
+          "pp20%": 0.36730833435339305
+        }
+      },
+      {
+        "zeta_d": 0.08,
+        "nu_star": 0.9708570501217297,
+        "il_peak_db": 21.760850506645482,
+        "min_retained_at_20pct": 0.4381472727600108,
+        "retained_fraction": {
+          "pm20%": 0.4408569424212797,
+          "pm10%": 0.6770225226171698,
+          "pm5%": 0.8311803866133488,
+          "pp5%": 0.8354341741172168,
+          "pp10%": 0.6795136585126306,
+          "pp20%": 0.4381472727600108
+        }
+      },
+      {
+        "zeta_d": 0.13,
+        "nu_star": 0.9687284264965089,
+        "il_peak_db": 21.747517473146324,
+        "min_retained_at_20pct": 0.5338733521120987,
+        "retained_fraction": {
+          "pm20%": 0.5428696678427676,
+          "pm10%": 0.7592901159630936,
+          "pm5%": 0.8844367684116241,
+          "pp5%": 0.8798338621784193,
+          "pp10%": 0.7524405136132323,
+          "pp20%": 0.5338733521120987
+        }
+      }
+    ],
+    "min_zeta_d_for_50pct_retention": 0.13,
+    "il_at_that_zeta_db": 21.747517473146324,
+    "den_hartog_zeta_opt": 0.10450995214374265,
+    "den_hartog_nu_opt": 0.970873786407767
+  },
+  "criterion_d": {
+    "rows": [
+      {
+        "structure": "cantilever",
+        "mass_ratio": 0.01,
+        "filling_ratio": 0.0,
+        "zeta_eff_model_A": 0.0,
+        "damper_mass_model_B": 0.0,
+        "il_peak_model_A_db": 0.0,
+        "il_peak_model_B_db": 0.0
+      },
+      {
+        "structure": "cantilever",
+        "mass_ratio": 0.02,
+        "filling_ratio": 0.0,
+        "zeta_eff_model_A": 0.0,
+        "damper_mass_model_B": 0.0,
+        "il_peak_model_A_db": 0.0,
+        "il_peak_model_B_db": 0.0
+      },
+      {
+        "structure": "cantilever",
+        "mass_ratio": 0.03,
+        "filling_ratio": 0.0,
+        "zeta_eff_model_A": 0.0,
+        "damper_mass_model_B": 0.0,
+        "il_peak_model_A_db": 0.0,
+        "il_peak_model_B_db": 0.0
+      },
+      {
+        "structure": "cantilever",
+        "mass_ratio": 0.05,
+        "filling_ratio": 0.0,
+        "zeta_eff_model_A": 0.0,
+        "damper_mass_model_B": 0.0,
+        "il_peak_model_A_db": 0.0,
+        "il_peak_model_B_db": 0.0
+      },
+      {
+        "structure": "stiffened_plate",
+        "mass_ratio": 0.01,
+        "filling_ratio": 0.0,
+        "zeta_eff_model_A": 0.0,
+        "damper_mass_model_B": 0.0,
+        "il_peak_model_A_db": 0.0,
+        "il_peak_model_B_db": 0.0
+      },
+      {
+        "structure": "stiffened_plate",
+        "mass_ratio": 0.02,
+        "filling_ratio": 0.0,
+        "zeta_eff_model_A": 0.0,
+        "damper_mass_model_B": 0.0,
+        "il_peak_model_A_db": 0.0,
+        "il_peak_model_B_db": 0.0
+      },
+      {
+        "structure": "stiffened_plate",
+        "mass_ratio": 0.03,
+        "filling_ratio": 0.0,
+        "zeta_eff_model_A": 0.0,
+        "damper_mass_model_B": 0.0,
+        "il_peak_model_A_db": 0.0,
+        "il_peak_model_B_db": 0.0
+      },
+      {
+        "structure": "stiffened_plate",
+        "mass_ratio": 0.05,
+        "filling_ratio": 0.0,
+        "zeta_eff_model_A": 0.0,
+        "damper_mass_model_B": 0.0,
+        "il_peak_model_A_db": 0.0,
+        "il_peak_model_B_db": 0.0
+      }
+    ],
+    "max_abs_il_db": 0.0,
+    "criterion_d_pass": true
+  },
+  "criterion_e": {
+    "cantilever": {
+      "structure": "cantilever",
+      "rows": [
+        {
+          "mass_ratio": 0.01,
+          "pid_injection": {
+            "il_peak_db": 0.6585057170436135,
+            "nu_star": 0.8333747416002019,
+            "il_per_pct_mass_db": 0.6585057170436135
+          },
+          "pid_absorber": {
+            "il_peak_db": 0.48635923975178413,
+            "nu_star": 0.9478713763747791,
+            "zeta_d": 0.0002909058695186029,
+            "il_per_pct_mass_db": 0.48635923975178413
+          },
+          "tmd_den_hartog": {
+            "il_peak_db": 17.896272793399554,
+            "nu_opt": 0.9900990099009901,
+            "zeta_opt": 0.060933334777679066,
+            "il_per_pct_mass_db": 17.896272793399554
+          },
+          "floating_raft": {
+            "il_peak_db": 47.182805242674476,
+            "il_transmissibility_at_resonance_db": 27.21098680968816,
+            "r_iso": 0.3,
+            "zeta_iso": 0.05,
+            "il_per_pct_mass_db": 47.182805242674476
+          }
+        },
+        {
+          "mass_ratio": 0.02,
+          "pid_injection": {
+            "il_peak_db": 1.2705825729433382,
+            "nu_star": 0.8333747416002019,
+            "il_per_pct_mass_db": 0.6352912864716691
+          },
+          "pid_absorber": {
+            "il_peak_db": 0.9543408662768955,
+            "nu_star": 0.9425358156326235,
+            "zeta_d": 0.0005736255214147245,
+            "il_per_pct_mass_db": 0.47717043313844776
+          },
+          "tmd_den_hartog": {
+            "il_peak_db": 20.59611565512863,
+            "nu_opt": 0.9803921568627451,
+            "zeta_opt": 0.08574929257125442,
+            "il_per_pct_mass_db": 10.298057827564316
+          },
+          "floating_raft": {
+            "il_peak_db": 47.21023606617518,
+            "il_transmissibility_at_resonance_db": 26.68110674895548,
+            "r_iso": 0.3,
+            "zeta_iso": 0.05,
+            "il_per_pct_mass_db": 23.60511803308759
+          }
+        },
+        {
+          "mass_ratio": 0.03,
+          "pid_injection": {
+            "il_peak_db": 1.8423480631764455,
+            "nu_star": 0.8333747416002019,
+            "il_per_pct_mass_db": 0.6141160210588151
+          },
+          "pid_absorber": {
+            "il_peak_db": 1.3323999784241523,
+            "nu_star": 0.9326604489967192,
+            "zeta_d": 0.0008374256074806834,
+            "il_per_pct_mass_db": 0.44413332614138407
+          },
+          "tmd_den_hartog": {
+            "il_peak_db": 22.203966373600466,
+            "nu_opt": 0.970873786407767,
+            "zeta_opt": 0.10450995214374265,
+            "il_per_pct_mass_db": 7.401322124533489
+          },
+          "floating_raft": {
+            "il_peak_db": 47.23835261621946,
+            "il_transmissibility_at_resonance_db": 26.12388151053168,
+            "r_iso": 0.3,
+            "zeta_iso": 0.05,
+            "il_per_pct_mass_db": 15.746117538739819
+          }
+        },
+        {
+          "mass_ratio": 0.05,
+          "pid_injection": {
+            "il_peak_db": 2.884005640657929,
+            "nu_star": 0.8333747416002019,
+            "il_per_pct_mass_db": 0.5768011281315858
+          },
+          "pid_absorber": {
+            "il_peak_db": 2.0475221858514474,
+            "nu_star": 0.9185817990093376,
+            "zeta_d": 0.001340167997610377,
+            "il_per_pct_mass_db": 0.4095044371702895
+          },
+          "tmd_den_hartog": {
+            "il_peak_db": 24.244915667071226,
+            "nu_opt": 0.9523809523809523,
+            "zeta_opt": 0.1336306209562122,
+            "il_per_pct_mass_db": 4.8489831334142455
+          },
+          "floating_raft": {
+            "il_peak_db": 47.296744638851436,
+            "il_transmissibility_at_resonance_db": 24.921062848145535,
+            "r_iso": 0.3,
+            "zeta_iso": 0.05,
+            "il_per_pct_mass_db": 9.459348927770288
+          }
+        }
+      ],
+      "missing_entries": []
+    },
+    "stiffened_plate": {
+      "structure": "stiffened_plate",
+      "rows": [
+        {
+          "mass_ratio": 0.01,
+          "pid_injection": {
+            "il_peak_db": 0.6584954118145374,
+            "nu_star": 0.8333747416002019,
+            "il_per_pct_mass_db": 0.6584954118145374
+          },
+          "pid_absorber": {
+            "il_peak_db": 0.4687224893909478,
+            "nu_star": 0.9331262919989907,
+            "zeta_d": 0.00027950622871277897,
+            "il_per_pct_mass_db": 0.4687224893909478
+          },
+          "tmd_den_hartog": {
+            "il_peak_db": 17.896272793399554,
+            "nu_opt": 0.9900990099009901,
+            "zeta_opt": 0.060933334777679066,
+            "il_per_pct_mass_db": 17.896272793399554
+          },
+          "floating_raft": {
+            "il_peak_db": 47.182805242674476,
+            "il_transmissibility_at_resonance_db": 27.21098680968816,
+            "r_iso": 0.3,
+            "zeta_iso": 0.05,
+            "il_per_pct_mass_db": 47.182805242674476
+          }
+        },
+        {
+          "mass_ratio": 0.02,
+          "pid_injection": {
+            "il_peak_db": 1.270561284390472,
+            "nu_star": 0.8333747416002019,
+            "il_per_pct_mass_db": 0.635280642195236
+          },
+          "pid_absorber": {
+            "il_peak_db": 0.8959199350373654,
+            "nu_star": 0.9253062352447214,
+            "zeta_d": 0.0005467220235094043,
+            "il_per_pct_mass_db": 0.4479599675186827
+          },
+          "tmd_den_hartog": {
+            "il_peak_db": 20.59611565512863,
+            "nu_opt": 0.9803921568627451,
+            "zeta_opt": 0.08574929257125442,
+            "il_per_pct_mass_db": 10.298057827564316
+          },
+          "floating_raft": {
+            "il_peak_db": 47.21023606617518,
+            "il_transmissibility_at_resonance_db": 26.68110674895548,
+            "r_iso": 0.3,
+            "zeta_iso": 0.05,
+            "il_per_pct_mass_db": 23.60511803308759
+          }
+        },
+        {
+          "mass_ratio": 0.03,
+          "pid_injection": {
+            "il_peak_db": 1.8423151134642248,
+            "nu_star": 0.8333747416002019,
+            "il_per_pct_mass_db": 0.6141050378214082
+          },
+          "pid_absorber": {
+            "il_peak_db": 1.282687876280391,
+            "nu_star": 0.9165264891277025,
+            "zeta_d": 0.0007991956974412587,
+            "il_per_pct_mass_db": 0.427562625426797
+          },
+          "tmd_den_hartog": {
+            "il_peak_db": 22.203966373600466,
+            "nu_opt": 0.970873786407767,
+            "zeta_opt": 0.10450995214374265,
+            "il_per_pct_mass_db": 7.401322124533489
+          },
+          "floating_raft": {
+            "il_peak_db": 47.23835261621946,
+            "il_transmissibility_at_resonance_db": 26.12388151053168,
+            "r_iso": 0.3,
+            "zeta_iso": 0.05,
+            "il_per_pct_mass_db": 15.746117538739819
+          }
+        },
+        {
+          "mass_ratio": 0.05,
+          "pid_injection": {
+            "il_peak_db": 2.883947335905093,
+            "nu_star": 0.8333747416002019,
+            "il_per_pct_mass_db": 0.5767894671810186
+          },
+          "pid_absorber": {
+            "il_peak_db": 1.9647478803363145,
+            "nu_star": 0.9019819961380493,
+            "zeta_d": 0.0012738067433699402,
+            "il_per_pct_mass_db": 0.3929495760672629
+          },
+          "tmd_den_hartog": {
+            "il_peak_db": 24.244915667071226,
+            "nu_opt": 0.9523809523809523,
+            "zeta_opt": 0.1336306209562122,
+            "il_per_pct_mass_db": 4.8489831334142455
+          },
+          "floating_raft": {
+            "il_peak_db": 47.296744638851436,
+            "il_transmissibility_at_resonance_db": 24.921062848145535,
+            "r_iso": 0.3,
+            "zeta_iso": 0.05,
+            "il_per_pct_mass_db": 9.459348927770288
+          }
+        }
+      ],
+      "missing_entries": []
+    }
+  },
+  "modal_truncation": [
+    {
+      "n_modes": 2,
+      "il_peak_db": 0.9716093815499418,
+      "rel_dev_vs_n12": 0.01595502584624069
+    },
+    {
+      "n_modes": 4,
+      "il_peak_db": 0.9583513002907231,
+      "rel_dev_vs_n12": 0.00209182676216647
+    },
+    {
+      "n_modes": 6,
+      "il_peak_db": 0.956898276488227,
+      "rel_dev_vs_n12": 0.0005724848714312654
+    },
+    {
+      "n_modes": 8,
+      "il_peak_db": 0.9565375524234438,
+      "rel_dev_vs_n12": 0.00019529684348580182
+    },
+    {
+      "n_modes": 12,
+      "il_peak_db": 0.9563507801348183,
+      "rel_dev_vs_n12": 0.0
+    }
+  ],
+  "acceptance": {
+    "a_max_rel_dev": 0.00025158595325285314,
+    "a_pass": true,
+    "b0_frf_dev": 4.762004059884298e-15,
+    "b_peak_max_rel_dev": 0.27293234338171724,
+    "b_peak_max_abs_dev_db": 0.25786187556945084,
+    "b_rms_max_rel_dev": 0.04938476269440902,
+    "b_pass": true,
+    "c_min_retained_20pct_model_A": 0.8384294972556131,
+    "c_min_retained_20pct_model_B": -0.3917098143941988,
+    "c_pass_model_A": true,
+    "c_pass_model_B": false,
+    "c_pass": true,
+    "d_max_abs_il_db": 0.0,
+    "d_pass": true,
+    "e_table_complete": true,
+    "e_pass": true,
+    "all_pass": true,
+    "verdict_note": "criterion (c) is evaluated on model A (the faithful consumption of a host-level zeta_eff) and passes; on model B (absorber equivalence) it fails and that failure is reported as a result, not hidden."
+  },
+  "figures": [
+    "fig1_response_and_il.png",
+    "fig2_detuning_envelope.png",
+    "fig3_design_chart.png",
+    "fig4_mdof_vs_closed_form.png",
+    "fig5_unit_mass_comparison.png"
+  ]
+}
