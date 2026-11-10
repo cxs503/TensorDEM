@@ -33,6 +33,22 @@ Cundall–Strack 切向饱和，输出局部压力 `p_c` 与滑移距离 `L_slip
 工件见 `artifacts/ice_abrasion/`，API 合约 `ice_abrasion_calculation`
 对应 `POST /api/v1/calculations/structure/ice_abrasion`。
 
+## 稳态碎冰场直航阻力与接触级能量账本（`tensordem.ice_transit`）
+
+在平面视图碎冰场上做**稳态**直航：回收入口把落到船尾之后的浮冰重新放回船首前方，
+因此可以用 ~60 块浮冰跑满 10 倍船长航程，得到真正的稳态阻力而不是不断增大的冰塞；
+两侧的可压缩冰堆边界（刚度锚在浮冰自身静水刚度 ρ_w g A_wp）代替周围冰盖。
+接触律改为**零偏置**压碎律 `F = σ_c h [2√(2R(δ+ε)) − 2√(2Rε)]`（ε = σ_c R / E 为冰缘
+达到压碎强度的弹性压入量），`F(0)=0` 且有闭式势能 `dU/dδ = F`；船体几何改用精确的
+点到多边形距离（`ShipForm.signed_distance` 的面距离在 18° 船首尖点会把 7 m 之外的浮冰
+判为接触）。每个接触上报弹性势能与阻尼/库仑耗散功率，于是
+
+`W_thrust + W_数值注入 + W_注入 − W_移出 − W_耗散 = Δ(动能 + 势能 + 接触弹性能)`
+
+是恒等式而不是断言。方法、判据与局限见 `docs/ICE_TRANSIT_RESISTANCE_SURFACE.md`，
+工件见 `artifacts/ice_transit/`，运行
+`python scripts/run_ice_transit_campaign.py --workers 23` 与 `--report`。
+
 ## 冰压带相关长度 λ_x 的标定估计量（`tensordem.ice_pressure_band`）
 
 冰–结构压力带沿面相关长度 λ_x 通常以文献锚定值 λ_x/h = 1.5–3 直接引用。本模块把它改成
