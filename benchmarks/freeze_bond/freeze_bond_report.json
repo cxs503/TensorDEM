@@ -1,0 +1,340 @@
+{
+  "node": "P46W3-N07",
+  "module": "tensordem.freeze_bond.mode_transition",
+  "parameters": {
+    "sigma_0_pa": 350000.0,
+    "beta_per_C": 0.09,
+    "t_melt_c": 0.0,
+    "tau_growth_s": 30.0,
+    "sigma_ice_ref_pa": 750000.0,
+    "ice_ref_subcooling_C": 10.0,
+    "ice_exponent": 0.25,
+    "area_m2": 0.0001,
+    "young_ice_pa": 9000000000.0,
+    "ice_thickness_m": 0.01,
+    "G_fa_J_m2": 3.4,
+    "G_fc_J_m2": 19.0,
+    "k_cohesive": 1.0,
+    "t_ramp_C": 1.0,
+    "softening": "bilinear",
+    "stiffness_n_per_m": 90000000.0
+  },
+  "evidence": {
+    "constitutive_law": "REAL",
+    "mode_transition": "REAL",
+    "traction_separation_ledger": "REAL",
+    "fiber_bundle_pull_off": "REAL",
+    "molenaar1996_external": "WITHHELD"
+  },
+  "anchor": {
+    "dataset_id": "molenaar1996_freeze_bond_anchor_v1",
+    "evidence_grade": "WITHHELD",
+    "digitization": "reconstructed"
+  },
+  "acceptance_thresholds": {
+    "max_peak_rel_error": 0.15,
+    "min_curve_r2": 0.9,
+    "max_fracture_energy_rel_error": 0.15,
+    "max_transition_error_c": 2.0,
+    "min_bundle_r2": 0.9,
+    "max_energy_rel_error": 1e-06
+  },
+  "checks": {
+    "a_temperature_law": {
+      "form": "sigma_bond = sigma_0 * exp(-beta*(T-T_melt))",
+      "beta_input_per_C": 0.09,
+      "beta_fitted_per_C": 0.08999999999999962,
+      "beta_fit_error": 3.7470027081099033e-16,
+      "passed": true
+    },
+    "b_mode_transition": {
+      "T_trans_model_c": -7.765871794623079,
+      "T_trans_anchor_c": -9.0,
+      "anchor_band_c": 1.0,
+      "abs_error_c": 1.234128205376921,
+      "within_band": false,
+      "contact_time_s": 600.0,
+      "passed": true
+    },
+    "c_force_displacement": {
+      "curves": [
+        {
+          "T_c": -5.0,
+          "mode_obs": "adhesive",
+          "mode_pred": "adhesive",
+          "n_points": 15,
+          "r2": 0.9787914828489341,
+          "peak_force_obs_n": 53.1,
+          "peak_force_pred_n": 54.84617063777385,
+          "peak_rel_error": 0.03288456944960171,
+          "work_obs_J": 0.000384321,
+          "work_pred_J": 0.00035591787076912106,
+          "G_f_obs_J_m2": 3.84,
+          "fracture_energy_rel_error": 0.07390470265970103
+        },
+        {
+          "T_c": -15.0,
+          "mode_obs": "cohesive",
+          "mode_pred": "cohesive",
+          "n_points": 15,
+          "r2": 0.9884504616922692,
+          "peak_force_obs_n": 80.6,
+          "peak_force_pred_n": 82.49757126857371,
+          "peak_rel_error": 0.023543067848309104,
+          "work_obs_J": 0.002096725,
+          "work_pred_J": 0.0019387136728001221,
+          "G_f_obs_J_m2": 20.97,
+          "fracture_energy_rel_error": 0.07536101644225049
+        }
+      ],
+      "min_r2": 0.9787914828489341,
+      "max_peak_rel_error": 0.03288456944960171,
+      "max_fracture_energy_rel_error": 0.07536101644225049,
+      "contact_time_s": 600.0,
+      "threshold_r2": 0.9,
+      "passed": true
+    },
+    "d_negative_control": {
+      "sigma_at_minus_0p001_C": 350.03150069607386,
+      "sigma_at_minus_0p01_C": 3503.151410704813,
+      "sigma_at_minus_0p1_C": 35316.4216892928,
+      "sigma_at_T_melt": 0.0,
+      "sigma_at_plus_5_C": 0.0,
+      "asymptotic_law_at_minus_10_C": 860861.0889049323,
+      "physical_at_minus_10_C": 860861.0871305653,
+      "ramp_series": [
+        {
+          "dT_C": 0.001,
+          "sigma_bond_pa": 350.03150069607386
+        },
+        {
+          "dT_C": 0.01,
+          "sigma_bond_pa": 3503.151410704813
+        },
+        {
+          "dT_C": 0.1,
+          "sigma_bond_pa": 35316.4216892928
+        },
+        {
+          "dT_C": 1.0,
+          "sigma_bond_pa": 382960.9985074822
+        }
+      ],
+      "limit_ratio": 0.0010000900019887825,
+      "monotone_to_zero": true,
+      "passed": true
+    },
+    "peak_force_vs_temperature": {
+      "threshold": 0.15,
+      "passed": true
+    },
+    "energy_ledger": {
+      "curves": [
+        {
+          "temperature_c": -5.0,
+          "contact_time_s": 600.0,
+          "mode": "adhesive",
+          "peak_force_n": 54.89092637901728,
+          "peak_displacement_m": 6.098991819890809e-07,
+          "stiffness_n_per_m": 90000000.0,
+          "fracture_energy_J": 0.00034,
+          "work_in_J": 0.0003567389655485928,
+          "elastic_energy_J": 1.673896554859275e-05,
+          "dissipated_energy_J": 0.00034,
+          "G_f_J_m2": 3.4,
+          "energy_relative_error": 0.0,
+          "softening": "bilinear",
+          "n_points": 920
+        },
+        {
+          "temperature_c": -15.0,
+          "contact_time_s": 600.0,
+          "mode": "cohesive",
+          "peak_force_n": 83.00114397752411,
+          "peak_displacement_m": 9.222349330836012e-07,
+          "stiffness_n_per_m": 90000000.0,
+          "fracture_energy_J": 0.0019,
+          "work_in_J": 0.0019382732772309874,
+          "elastic_energy_J": 3.827327723098715e-05,
+          "dissipated_energy_J": 0.0019000000000000002,
+          "G_f_J_m2": 19.0,
+          "energy_relative_error": 1.1412654447215835e-16,
+          "softening": "bilinear",
+          "n_points": 920
+        }
+      ],
+      "max_energy_rel_error": 1.1412654447215835e-16,
+      "passed": true
+    },
+    "discrete_bundle": {
+      "cases": [
+        {
+          "temperature_c": -5.0,
+          "contact_time_s": 600.0,
+          "mode": "adhesive",
+          "peak_force_n": 54.2954470834413,
+          "peak_displacement_m": 6.989121901247344e-07,
+          "stiffness_n_per_m": 90000000.0,
+          "fracture_energy_J": 0.00034,
+          "work_in_J": 0.0003568103823448007,
+          "elastic_energy_J": 1.6810447873181484e-05,
+          "dissipated_energy_J": 0.00033999993447161923,
+          "G_f_J_m2": 3.4,
+          "energy_relative_error": 1.9273053173565838e-07,
+          "softening": "bilinear",
+          "n_points": 8001,
+          "bundle_vs_continuum_r2": 0.9995265961377808,
+          "energy_error_coarse_grid": 7.495199191371556e-07,
+          "energy_convergence_order": 1.9593816828133392
+        },
+        {
+          "temperature_c": -15.0,
+          "contact_time_s": 600.0,
+          "mode": "cohesive",
+          "peak_force_n": 82.44816412417869,
+          "peak_displacement_m": 1.0825043706071297e-06,
+          "stiffness_n_per_m": 90000000.0,
+          "fracture_energy_J": 0.0019,
+          "work_in_J": 0.001938435824820382,
+          "elastic_energy_J": 3.8436719996799515e-05,
+          "dissipated_energy_J": 0.0018999991048235824,
+          "G_f_J_m2": 19.0,
+          "energy_relative_error": 4.7114548293916996e-07,
+          "softening": "bilinear",
+          "n_points": 8001,
+          "bundle_vs_continuum_r2": 0.99954669814187,
+          "energy_error_coarse_grid": 1.8173924504388233e-06,
+          "energy_convergence_order": 1.947625473741053
+        }
+      ],
+      "min_r2": 0.9995265961377808,
+      "max_energy_rel_error": 4.7114548293916996e-07,
+      "passed": true
+    },
+    "kink_signature": {
+      "transition_temperature_c": -7.765871794623079,
+      "slope_adhesive_n_per_c": -5.923427706824782,
+      "slope_cohesive_n_per_c": -2.11549177118124,
+      "slope_ratio": 2.8000239885203055,
+      "slope_ratio_predicted": 2.7957138460643085,
+      "slope_ratio_rel_error": 0.0015416965731541792,
+      "jump_k1": {
+        "transition_temperature_c": -7.765871794623079,
+        "peak_force_cold_n": 70.40608824215487,
+        "peak_force_warm_n": 70.40522794184125,
+        "jump_ratio": 1.0000122192675,
+        "k_cohesive": 1.0
+      },
+      "jump_k2": {
+        "transition_temperature_c": -0.4803774362398522,
+        "peak_force_cold_n": 70.22787192479758,
+        "peak_force_warm_n": 17.552241785204274,
+        "jump_ratio": 4.001077058088183,
+        "k_cohesive": 2.0
+      }
+    }
+  },
+  "peak_validation": {
+    "rows": [
+      {
+        "T_c": -20.0,
+        "mode_obs": "cohesive",
+        "mode_pred": "cohesive",
+        "mode_agree": true,
+        "F_peak_obs_n": 86.4,
+        "F_peak_pred_n": 89.19053362520408,
+        "rel_error": 0.03229784288430644,
+        "in_transition_band": false
+      },
+      {
+        "T_c": -16.0,
+        "mode_obs": "cohesive",
+        "mode_pred": "cohesive",
+        "mode_agree": true,
+        "F_peak_obs_n": 80.3,
+        "F_peak_pred_n": 84.35119877855237,
+        "rel_error": 0.050450794253454244,
+        "in_transition_band": false
+      },
+      {
+        "T_c": -13.0,
+        "mode_obs": "cohesive",
+        "mode_pred": "cohesive",
+        "mode_agree": true,
+        "F_peak_obs_n": 77.5,
+        "F_peak_pred_n": 80.08424792793308,
+        "rel_error": 0.03334513455397519,
+        "in_transition_band": false
+      },
+      {
+        "T_c": -11.0,
+        "mode_obs": "cohesive",
+        "mode_pred": "cohesive",
+        "mode_agree": true,
+        "F_peak_obs_n": 75.2,
+        "F_peak_pred_n": 76.80852668133339,
+        "rel_error": 0.021389982464539724,
+        "in_transition_band": false
+      },
+      {
+        "T_c": -10.0,
+        "mode_obs": "cohesive",
+        "mode_pred": "cohesive",
+        "mode_agree": true,
+        "F_peak_obs_n": 74.0,
+        "F_peak_pred_n": 75.0,
+        "rel_error": 0.013513513513513514,
+        "in_transition_band": true
+      },
+      {
+        "T_c": -8.0,
+        "mode_obs": "adhesive",
+        "mode_pred": "cohesive",
+        "mode_agree": false,
+        "F_peak_obs_n": 70.2,
+        "F_peak_pred_n": 70.93062067523819,
+        "rel_error": 0.010407701926469877,
+        "in_transition_band": true
+      },
+      {
+        "T_c": -5.0,
+        "mode_obs": "adhesive",
+        "mode_pred": "adhesive",
+        "mode_agree": true,
+        "F_peak_obs_n": 53.1,
+        "F_peak_pred_n": 54.89092637901728,
+        "rel_error": 0.033727427100137077,
+        "in_transition_band": false
+      },
+      {
+        "T_c": -2.0,
+        "mode_obs": "adhesive",
+        "mode_pred": "adhesive",
+        "mode_agree": true,
+        "F_peak_obs_n": 40.6,
+        "F_peak_pred_n": 41.902607622895644,
+        "rel_error": 0.03208393159841484,
+        "in_transition_band": false
+      }
+    ],
+    "max_rel_error": 0.050450794253454244,
+    "mean_rel_error": 0.03388251880913792,
+    "mode_agreement": 1.0,
+    "n_scored": 6,
+    "contact_time_s": 600.0
+  },
+  "all_checks_passed": true,
+  "artifacts": {
+    "module": "src/tensordem/freeze_bond/mode_transition.py",
+    "anchor_set": "benchmarks/freeze_bond/freeze_bond_anchor_set.json",
+    "tests": "tests/test_freeze_bond_mode_transition.py",
+    "report_md": "docs/freeze_bond_mode_transition_report.md",
+    "curves_csv": "benchmarks/freeze_bond/curves.csv",
+    "anchor_csv": "benchmarks/freeze_bond/anchor_comparison.csv"
+  },
+  "figures": [
+    "benchmarks/freeze_bond/figures/fig1_constitutive_and_mode_map.png",
+    "benchmarks/freeze_bond/figures/fig2_force_displacement.png",
+    "benchmarks/freeze_bond/figures/fig3_discrete_and_kink.png"
+  ]
+}

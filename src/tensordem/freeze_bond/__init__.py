@@ -172,3 +172,29 @@ __all__ = [
     "transition_temperature_analytic",
     "transition_temperature_numeric",
 ]
+
+# Failure-mode transition + laboratory anchor validation (node P46W3-N07)
+from .mode_transition import (  # noqa: E402
+    ACCEPTANCE,
+    BondInterfaceParams,
+    ForceDisplacement,
+    bond_area_fraction,
+    bond_strength,
+    bond_strength_temperature,
+    failure_mode,
+    failure_mode_map,
+    failure_stress,
+    fiber_bundle_pull_off,
+    ice_tensile_strength,
+    load_anchor_set,
+    melt_ramp,
+    peak_force,
+    peak_jump_ratio,
+    peak_slope_kink,
+    pull_off_curve,
+    r_squared,
+    run_validation_report,
+    traction_separation,
+    transition_temperature,
+    validate_against_anchor,
+)

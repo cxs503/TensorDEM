@@ -1,0 +1,9 @@
+T_C,mode_obs,mode_pred,mode_agree,F_peak_obs_N,F_peak_pred_N,rel_error,in_transition_band
+-20.0,cohesive,cohesive,True,86.4,89.1905,0.03230,False
+-16.0,cohesive,cohesive,True,80.3,84.3512,0.05045,False
+-13.0,cohesive,cohesive,True,77.5,80.0842,0.03335,False
+-11.0,cohesive,cohesive,True,75.2,76.8085,0.02139,False
+-10.0,cohesive,cohesive,True,74.0,75.0000,0.01351,True
+-8.0,adhesive,cohesive,False,70.2,70.9306,0.01041,True
+-5.0,adhesive,adhesive,True,53.1,54.8909,0.03373,False
+-2.0,adhesive,adhesive,True,40.6,41.9026,0.03208,False
