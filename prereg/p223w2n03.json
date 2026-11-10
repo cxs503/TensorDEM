@@ -1,0 +1,25 @@
+{
+ "node": "p223w2-n03-dem-ice-granular",
+ "registered_before_runs": true,
+ "criteria": {
+  "AC1": "rafting threshold stress vs field observation (Keinonen et al. 1996), |rel err| < 0.15; measured at half climb of a 45-degree ramp, h=0.5 m, L=6 m, mu=0.3",
+  "AC2": "ridge sail/keel ratio vs observation (Timco & Burden 1994), |rel err| < 0.10, chain must be stable",
+  "AC3": "Brazil-nut segregation timescale (63.2% rise) vs experiment (Shinbrot et al. 1996 regime), |rel err| < 0.10",
+  "AC4": "reverse Brazil-nut phase boundary vs experiment (Hong, Quinn & Luding 2001), boundary must lie in the reported window",
+  "AC5": "negative control: no vibration -> no segregation (drift < 25% of the shaken signal)",
+  "AC6": "pytest >= 20 cases + four artifacts png"
+ },
+ "operational_definitions": {
+  "tau_raft": "piston line load divided by thickness at leading-edge climb = 0.5 h",
+  "tau_deg": "free-surface (top 25% of filled bed) area-weighted large-fraction enrichment",
+  "tau_seg": "cycles at which |dz| reaches 63.2% of its late-time asymptote (tail 25% mean)",
+  "rbne_boundary": "linear interpolation of the dz sign change along density ratio at fixed Gamma"
+ },
+ "anchors": {
+  "rafting_onset_h050": "1.5e4 Pa, range 1.0e4-2.5e4 Pa (Keinonen et al. 1996 compilation, scatter +/-50%)",
+  "sail_keel_ratio": "0.227, range 0.18-0.33 (Timco & Burden 1994: H_k = 4.4 H_s)",
+  "segregation_timescale": "30 cycles, range 15-60 (few tens of cycles; scatter +/-50%)",
+  "rbne_density_boundary": "2.0, range 1.4-3.4 for d_l/d_s = 2 (Hong, Quinn & Luding 2001)"
+ },
+ "no_post_hoc_tuning": "anchors and the measurement points were fixed before the campaign; the two honest FAILs (AC1, AC2) are reported as they came out"
+}
