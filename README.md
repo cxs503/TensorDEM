@@ -113,8 +113,15 @@ python -m tensordem --device cuda --output results/cuda
 ```bash
 python -m tensordem --nx 31 --ny 5 --speed 0.5 --breaking-strain 0.01 \
     --shear-breaking-strain 0.02 --steps 5000 --save-every 25 --output results/slow
-python -m unittest discover -s tests -v
+python -m pytest -q        # 全套测试（CI 用同一条命令）
 ```
+
+测试套件是 **pytest 风格**（2026-11 巡检快照：343 个测试文件、2714 个模块级 `test_*` 函数、
+319 个 `unittest.TestCase` 类，计数脚本见 `scripts/readme_api_audit.py:_test_style`）。<!-- audit-allow: test-runner: 本句是解释为何改用 pytest 的说明，不是可执行命令 -->
+`python -m unittest discover -s tests` 只认 `TestCase`
+子类，会**静默跳过**这 2714 个函数并照样打印 `OK`（假绿，本仓库 2026-11 已实测：
+`-p test_tutorial_first_verified_run.py` 报 `Ran 0 tests ... OK`），因此本文档统一用
+`python -m pytest -q`。
 
 步数与实际时间的关系为 `总时间 = steps × dt`。增大粒子数会减小自动时间步长，
 因此可能需要增加步数才能让破冰头接触冰层。`--dt` 可指定更小步长，
@@ -230,7 +237,7 @@ nodal external loads, and fracture-event arrays in the saved trajectory.
 python -m tensordem.dem3d_cli --nx 9 --ny 5 --nz 3 --steps 1000 --save-every 10 --output results-3d
 # Or after installation:
 tensordem-3d --nx 9 --ny 5 --nz 3 --steps 1000 --device cuda --output results-3d-cuda
-python -m unittest discover -s tests -v
+python -m pytest -q
 ```
 
 Python API: `DEM3DConfig` and `IceDEM3D` from `tensordem`. The state uses
@@ -312,7 +319,7 @@ After running the benchmark cases, assemble comparison figures and an index of g
 ```bash
 python -m pip install -e ".[test,viz]"
 python scripts/plot_dem3d_benchmark_paper.py --input-root . --output results-dem3d-paper-figures
-python -m unittest discover -s tests -p test_dem3d_paper_figures.py
+python -m pytest -q tests/test_dem3d_paper_figures.py
 ```
 
 The figure script consumes existing CSV outputs only. It never fabricates absent results; consult `paper_figure_manifest.json` and `paper_figures_index.md` to see which plots were actually generated. Benchmark PASS status means only that the configured software checks passed, not that physical ice properties or full-scale ship resistance have been validated.
