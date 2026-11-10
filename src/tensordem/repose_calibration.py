@@ -57,6 +57,8 @@ from typing import Iterable, Sequence
 
 import torch
 
+from .rolling_resistance import RollingResistanceConfig, rolling_resistance_torque
+
 DTYPE = torch.float64
 
 
@@ -226,6 +228,36 @@ def _damping_ratio(restitution: float) -> float:
     return abs(ln_e) / math.sqrt(math.pi ** 2 + ln_e ** 2)
 
 
+
+def _epsd_rolling_torque(
+    spin: torch.Tensor,
+    normal_force_mag: torch.Tensor,
+    mu_r: float,
+    k_r: float,
+    radius: float,
+    roll_state: torch.Tensor,
+    dt: float,
+) -> tuple[torch.Tensor, torch.Tensor]:
+    """EPSD rolling moment through the single shared implementation.
+
+    Thin adapter around :func:`tensordem.rolling_resistance.rolling_resistance_torque`
+    (Ai et al. 2011 ``"epsd"`` branch).  The caller stores the elastic *spin*
+    history ``roll_state`` (rad); the library stores the elastic *moment*
+    ``-k_r * roll_state`` (N*m), so the two are converted at the boundary.
+
+    Returns ``(torque_on_j, roll_state_next)`` with ``|torque_on_j| <= mu_r R F_n``.
+    """
+    config = RollingResistanceConfig(model="epsd", mu_r=float(mu_r), k_r=float(k_r))
+    moment, moment_next = rolling_resistance_torque(
+        spin,
+        normal_force_mag,
+        torch.full_like(normal_force_mag, float(radius)),
+        config,
+        dt=dt,
+        torque_state=-float(k_r) * roll_state,
+    )
+    return moment_next, -moment_next / float(k_r)
+
 def simulate(case: ReposeCase, *, return_particles: bool = False
              ) -> dict[str, object]:
     """Run one column-collapse case and measure the repose angle.
@@ -308,17 +340,12 @@ def simulate(case: ReposeCase, *, return_particles: bool = False
                 torque.index_add_(0, iu[idx], contact_torque)
                 torque.index_add_(0, ju[idx], contact_torque)
                 spin = omega[ju[idx]] - omega[iu[idx]]
-                roll_new = roll[idx] + spin * dt
-                roll_norm = torch.linalg.vector_norm(roll_new, dim=1)
-                cap_r = (case.mu_rolling * r * f_n) / kr
-                scale_r = torch.where(roll_norm > cap_r,
-                                      cap_r / roll_norm.clamp_min(1e-30),
-                                      torch.ones_like(roll_norm))
-                roll_new = roll_new * scale_r[:, None]
+                # Internal couple opposing the relative spin (equal and
+                # opposite, so it removes relative spin energy).  Single EPSD
+                # implementation: tensordem.rolling_resistance.
+                torque_r, roll_new = _epsd_rolling_torque(
+                    spin, f_n, case.mu_rolling, kr, r, roll[idx], dt)
                 roll[idx] = roll_new
-                # Internal couple opposing the relative spin: equal and
-                # opposite, so it removes relative spin energy.
-                torque_r = -kr * roll_new          # torque on j
                 torque.index_add_(0, iu[idx], -torque_r)
                 torque.index_add_(0, ju[idx], torque_r)
             inactive = ~active
@@ -354,15 +381,11 @@ def simulate(case: ReposeCase, *, return_particles: bool = False
                     len(idx), 3)
                 torque.index_add_(0, idx, torch.linalg.cross(
                     contact_arm, ft_floor))
-                roll_new = floor_roll[idx] + omega[idx] * dt
-                roll_norm = torch.linalg.vector_norm(roll_new, dim=1)
-                cap_r = (case.wall_mu_rolling * r * fn_floor) / kr
-                scale_r = torch.where(roll_norm > cap_r,
-                                      cap_r / roll_norm.clamp_min(1e-30),
-                                      torch.ones_like(roll_norm))
-                roll_new = roll_new * scale_r[:, None]
+                torque_r, roll_new = _epsd_rolling_torque(
+                    omega[idx], fn_floor, case.wall_mu_rolling, kr, r,
+                    floor_roll[idx], dt)
                 floor_roll[idx] = roll_new
-                torque.index_add_(0, idx, -kr * roll_new)
+                torque.index_add_(0, idx, torque_r)
         floor_tang[~touching] = 0.0
         floor_roll[~touching] = 0.0
         floor_n[~touching] = 0.0

@@ -415,3 +415,257 @@ def advance_tangential_contact(
     disp_new = reset_tangential_displacement(disp_new, active)
     sliding = sliding & active
     return k_t * disp_new, disp_new, sliding
+# ===================================================================
+# Part 4 — Mindlin spring-damper-slip history model (loading/unloading)
+# ===================================================================
+#
+# Why a second tangential model
+# -----------------------------
+# Cundall-Strack (Part 3) uses a *constant* tangential stiffness and a Coulomb
+# cap on the stored displacement.  For a granular assembly used as a macroscopic
+# anchor (angle of repose, packing fraction) that is not enough: the contact
+# needs (i) the Mindlin elastic-plastic tangential backbone, so that the
+# incremental stiffness softens as the contact approaches gross slip,
+# (ii) an explicit unloading branch, so that a load reversal unloads elastically
+# with the no-slip stiffness instead of ratcheting, (iii) a tangential dashpot,
+# and (iv) per-contact memory of the tangential displacement increment.
+#
+# Model (incremental, vectorial, closed-loop)
+# ------------------------------------------
+# State per contact: tangential force ``F``, elastic anchor ``(delta_r, F_r)``
+# and the accumulated tangential displacement ``delta``.
+#
+#   delta     <- delta + v_t * dt                       (memory increment)
+#   elastic predictor  F* = F_r + k_t0 (delta - delta_r)
+#   envelope           env(|delta|) = min( mu_s |F_n| , backbone(|delta|) )
+#   if |F*| > env : F = env * F*/|F*|,  delta_r = delta, F_r = F   (plastic)
+#   else          : F = F*
+#   output force       F_out = F - gamma_t * v_t          (Mindlin dashpot)
+#
+# backbone "linear"   : backbone(x) = k_t0 x            (exactly Cundall-Strack)
+# backbone "mindlin"  : backbone(x) = mu_s |F_n| [1 - (1 - min(x/d*,1))^{3/2}]
+#                       d* = 3 mu_s |F_n| / (2 k_t0)     (Mindlin-Deresiewicz
+#                       virgin loading curve, see Johnson, Contact Mechanics,
+#                       §4.2; the initial slope is k_t0 and the asymptote is
+#                       the Coulomb cap)
+#
+# Properties that are machine-checked (tests/test_contact_mindlin_history.py):
+#   * "linear" + gamma_t = 0 reproduces advance_tangential_contact exactly;
+#   * virgin loading follows the closed-form backbone;
+#   * unloading from any state has slope exactly k_t0 (no ratcheting);
+#   * the steady stick-slip loop is CLOSED and dissipates the analytic
+#     Cundall-Strack value 4 mu_s F_n (a - mu_s F_n / k_t0) per cycle --
+#     the same anchor already used by tests/test_tangential_friction_verification;
+#   * the cumulative work over a closed cycle is negative semidefinite;
+#   * gamma_t > 0 dissipates exactly gamma_t * integral|v_t|^2 dt.
+
+BACKBONES = ("linear", "mindlin")
+
+
+@dataclass(frozen=True)
+class MindlinTangentialConfig:
+    """Mindlin-type tangential contact parameters (all SI).
+
+    Attributes:
+        k_t0:             No-slip tangential stiffness at contact onset, N/m.
+        mu_s:             Coulomb (sliding) friction coefficient.
+        backbone:         ``"linear"`` or ``"mindlin"`` (virgin backbone shape).
+        gamma_t:          Tangential dashpot coefficient, N*s/m (0 = off).
+        unloading_ratio:  Elastic unloading stiffness multiplier.  ``1.0`` is
+                          the physically conservative Mindlin elastic branch;
+                          values > 1 select a Masing-type stiffening unloading
+                          branch and are flagged experimental.
+    """
+
+    k_t0: float
+    mu_s: float = 0.5
+    backbone: str = "mindlin"
+    gamma_t: float = 0.0
+    unloading_ratio: float = 1.0
+
+    def __post_init__(self) -> None:
+        if not math.isfinite(self.k_t0) or self.k_t0 <= 0.0:
+            raise ValueError(f"k_t0 must be finite and positive, got {self.k_t0}")
+        if not math.isfinite(self.mu_s) or self.mu_s < 0.0:
+            raise ValueError(f"mu_s must be finite and nonnegative, got {self.mu_s}")
+        if self.backbone not in BACKBONES:
+            raise ValueError(f"backbone must be one of {BACKBONES}, got {self.backbone!r}")
+        if not math.isfinite(self.gamma_t) or self.gamma_t < 0.0:
+            raise ValueError(f"gamma_t must be finite and nonnegative, got {self.gamma_t}")
+        if not math.isfinite(self.unloading_ratio) or self.unloading_ratio < 1.0:
+            raise ValueError(
+                f"unloading_ratio must be finite and >= 1, got {self.unloading_ratio}")
+
+    @property
+    def enabled(self) -> bool:
+        """False when friction is switched off (mu_s = 0): no tangential force."""
+        return self.mu_s > 0.0
+
+
+def mindlin_backbone(
+    delta_mag: torch.Tensor,
+    normal_force_mag: torch.Tensor,
+    config: MindlinTangentialConfig,
+) -> torch.Tensor:
+    """Elastic-plastic tangential envelope ``env(|delta|)`` (magnitude, N).
+
+    ``"linear"``: ``k_t0 |delta|`` capped by ``mu_s |F_n|``.
+    ``"mindlin"``: ``mu_s |F_n| [1 - (1 - x)^{3/2}]`` with ``x = |delta|/d*``
+    clamped to unity and ``d* = 3 mu_s |F_n| / (2 k_t0)``.
+
+    Args:
+        delta_mag:        (N,) magnitude of the accumulated tangential displacement.
+        normal_force_mag: (N,) normal force magnitude (>= 0).
+        config:           :class:`MindlinTangentialConfig`.
+
+    Returns:
+        (N,) envelope magnitude.
+    """
+    delta_mag = torch.as_tensor(delta_mag)
+    f_n = torch.as_tensor(normal_force_mag).to(delta_mag.dtype)
+    cap = config.mu_s * f_n
+    if config.backbone == "linear":
+        return torch.minimum(config.k_t0 * delta_mag, cap)
+    tiny = torch.finfo(delta_mag.dtype).tiny
+    d_star = 3.0 * cap / (2.0 * config.k_t0)
+    x = (delta_mag / d_star.clamp_min(tiny)).clamp(0.0, 1.0)
+    return cap * (1.0 - (1.0 - x).clamp_min(0.0).pow(1.5))
+
+
+def mindlin_tangential_step(
+    tangential_force: torch.Tensor,
+    tangential_disp: torch.Tensor,
+    anchor_force: torch.Tensor,
+    anchor_disp: torch.Tensor,
+    tangential_velocity: torch.Tensor,
+    normal_force_mag: torch.Tensor,
+    config: MindlinTangentialConfig,
+    dt: float,
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+    """One Mindlin tangential increment with elastic unloading and slip limit.
+
+    Args:
+        tangential_force:  (N, D) stored tangential force at the last committed step.
+        tangential_disp:   (N, D) accumulated tangential displacement (memory).
+        anchor_force:      (N, D) elastic anchor force ``F_r``.
+        anchor_disp:       (N, D) elastic anchor displacement ``delta_r``.
+        tangential_velocity: (N, D) contact-point slip velocity (normal part removed).
+        normal_force_mag:  (N,) normal force magnitude (>= 0).  Contacts with
+                           ``F_n == 0`` are inactive: state is zeroed.
+        config:            :class:`MindlinTangentialConfig`.
+        dt:                Time step, s.
+
+    Returns:
+        ``(force_out, force_state, disp_state, anchor_force, anchor_disp,
+        sliding_mask)`` where ``force_out = force_state - gamma_t * v_t`` is the
+        force to apply, the following four are the state to carry forward and
+        ``sliding_mask`` flags gross slip (envelope saturation).
+    """
+    if not math.isfinite(dt) or dt <= 0.0:
+        raise ValueError(f"dt must be finite and positive, got {dt}")
+    F = torch.as_tensor(tangential_force)
+    delta = torch.as_tensor(tangential_disp)
+    F_r = torch.as_tensor(anchor_force)
+    d_r = torch.as_tensor(anchor_disp)
+    v_t = torch.as_tensor(tangential_velocity)
+    f_n = torch.as_tensor(normal_force_mag).to(F.dtype)
+
+    if F.shape != delta.shape or F.shape != F_r.shape or F.shape != d_r.shape:
+        raise ValueError("force and displacement state tensors must share one shape")
+    if v_t.shape != F.shape:
+        raise ValueError("tangential_velocity must match the state shape")
+    if f_n.shape != (F.shape[0],):
+        raise ValueError("normal_force_mag must have shape (N,)")
+
+    active = f_n > 0.0
+    keep = active.to(F.dtype)[:, None]
+    # A separated contact forgets its history entirely.
+    F = F * keep
+    delta = delta * keep
+    F_r = F_r * keep
+    d_r = d_r * keep
+
+    delta_new = delta + v_t * dt
+    k_unload = config.k_t0 * config.unloading_ratio
+    # Elastic predictor from the anchor: the tangential force OPPOSES the
+    # tangential displacement increment (F = F_r - k (delta - delta_r)), which
+    # is the Cundall-Strack sign convention (F = -k delta).
+    trial = F_r - k_unload * (delta_new - d_r)
+
+    delta_mag = torch.linalg.vector_norm(delta_new, dim=1)
+    env = mindlin_backbone(delta_mag, f_n, config) if config.enabled else torch.zeros_like(delta_mag)
+    trial_mag = torch.linalg.vector_norm(trial, dim=1)
+    tiny = torch.finfo(F.dtype).tiny
+    sliding = (trial_mag > env) & active
+    scale = torch.where(sliding, env / trial_mag.clamp_min(tiny), torch.ones_like(trial_mag))
+    F_new = trial * scale[:, None]
+    # Plastic flow moves the anchor onto the yield surface (kinematic hardening).
+    F_r_new = torch.where(sliding[:, None], F_new, F_r)
+    d_r_new = torch.where(sliding[:, None], delta_new, d_r)
+
+    # Inactive contacts have no force and no memory.
+    F_new = F_new * keep
+    F_r_new = F_r_new * keep
+    d_r_new = d_r_new * keep
+    delta_new = delta_new * keep
+
+    force_out = F_new - config.gamma_t * v_t
+    force_out = force_out * keep
+    return force_out, F_new, delta_new, F_r_new, d_r_new, sliding & active
+
+
+# ===================================================================
+# Part 5 — SI-3 rolling-resistance mount
+# ===================================================================
+#
+# ``rolling_resistance`` is the single implementation of the rolling laws
+# (cdt / viscous / epsd).  This mount is the SI-3 attachment point on the
+# tangential contact: callers that already own the tangential contact only need
+# to hand in the relative spin, the normal and |F_n|.
+
+def rolling_resistance_si3(
+    omega_rel: torch.Tensor,
+    normal: torch.Tensor,
+    normal_force_mag: torch.Tensor,
+    r_eff: torch.Tensor,
+    *,
+    mu_r: float,
+    model: str = "epsd",
+    k_r: float = 0.0,
+    dt: float | None = None,
+    torque_state: torch.Tensor | None = None,
+    omega_tol: float = 0.0,
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    """Rolling-resistance torque from the shared ``rolling_resistance`` module.
+
+    Implements ``M_r <= mu_r r_eff |F_n|`` (Ai et al. 2011 convention) and
+    routes to :func:`tensordem.rolling_resistance.rolling_resistance_torque` so
+    there is exactly one rolling model in the code base.
+
+    Args:
+        omega_rel:        (N, 3) relative spin ``omega_j - omega_i``.
+        normal:           (N, 3) unit contact normal (i -> j).
+        normal_force_mag: (N,) normal force magnitude.
+        r_eff:            (N,) effective radius ``r_i r_j / (r_i + r_j)``.
+        mu_r:             Rolling-resistance coefficient (Luding prior 0.05).
+        model:            ``"epsd"`` (default, history-bearing), ``"cdt"`` or
+                          ``"viscous"``.
+        k_r:              Rolling spring stiffness, N*m/rad (``"epsd"`` only).
+        dt:               Time step, s (``"epsd"`` only).
+        torque_state:     (N, 3) EPSD elastic torque state from the last step.
+        omega_tol:        Dead-band for ``"cdt"``.
+
+    Returns:
+        ``(torque_on_j, new_torque_state, dissipated_power)``.  The torque on
+        ``i`` is ``-torque_on_j``; the dissipated power (<= 0) is
+        ``torque_on_j . omega_rel``.
+    """
+    from . import rolling_resistance as _rr
+
+    config = _rr.RollingResistanceConfig(
+        model=model, mu_r=mu_r, k_r=k_r, omega_tol=omega_tol)
+    torque_j, state = _rr.rolling_resistance_torque(
+        omega_rel, normal_force_mag, r_eff, config,
+        normal=normal, torque_state=torque_state, dt=dt)
+    power = (torque_j * omega_rel).sum(dim=1)
+    return torque_j, state, power
