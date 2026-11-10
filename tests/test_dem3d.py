@@ -184,6 +184,16 @@ class DEM3DTests(unittest.TestCase):
         for key, value in before.items():
             if isinstance(value, torch.Tensor):
                 self.assertTrue(torch.equal(value, after[key]), key)
+            elif isinstance(value, dict):
+                # Nested dict (``bond_law``): compare entry by entry, because
+                # assertEqual on a dict of tensors raises "Boolean value of
+                # Tensor ... is ambiguous".
+                for sub, sub_value in value.items():
+                    if isinstance(sub_value, torch.Tensor):
+                        self.assertTrue(torch.equal(sub_value, after[key][sub]),
+                                        f"{key}.{sub}")
+                    else:
+                        self.assertEqual(sub_value, after[key][sub], f"{key}.{sub}")
             else:
                 self.assertEqual(value, after[key], key)
         self.assertTrue(torch.equal(sim.last_reaction, reaction_before))
@@ -225,6 +235,18 @@ class DEM3DTests(unittest.TestCase):
             for field, value in original.items():
                 if isinstance(value, torch.Tensor):
                     self.assertTrue(torch.equal(value, after[field]), field)
+                elif isinstance(value, dict):
+                    # ``bond_law`` is a nested dict of tensors/scalars; comparing
+                    # it with assertEqual raises "Boolean value of Tensor ...
+                    # ambiguous", so the nested entries are compared one by one.
+                    for sub, sub_value in value.items():
+                        if isinstance(sub_value, torch.Tensor):
+                            self.assertTrue(
+                                torch.equal(sub_value, after[field][sub]),
+                                f"{field}.{sub}")
+                        else:
+                            self.assertEqual(sub_value, after[field][sub],
+                                             f"{field}.{sub}")
                 else:
                     self.assertEqual(value, after[field], field)
 
