@@ -75,3 +75,69 @@ __all__ = [
     "minorsky_damage_volume",
     "minorsky_energy_J",
 ]
+
+
+# --- p256w1-N04: strain hardening + ISO 19906 ice pressure indentation --------
+from .strain_hardening import (  # noqa: E402
+    DEFAULT_ROTATION_CAPACITY,
+    ELASTIC_MODULUS_STEEL_PA,
+    BilinearHinge,
+    HardenedLayer,
+    HardenedSide,
+    PowerLawHinge,
+    bilinear_moment_increment_closed_form,
+    build_hardened_side,
+    energy_increment_numeric,
+    moment_increment_fibre,
+    section_moment_per_width,
+)
+from .indentation import (  # noqa: E402
+    ISO_PRESSURE_AREA_EXPONENTS,
+    IndentationSolution,
+    PressureAreaLaw,
+    damage_geometry_pressure_driven,
+    force_history,
+    iso19906_scaling_exponents,
+    solve_indentation,
+    structural_coefficients_per_length,
+)
+from .recalibration import (  # noqa: E402
+    DATASET_STATUS_PRESENT,
+    DATASET_STATUS_WITHHELD,
+    coefficient_uncertainty,
+    collision_coefficient_from_share,
+    collision_coefficient_from_volume,
+    energy_ledger,
+    load_collision_dataset,
+    recalibrate_coefficient,
+)
+
+__all__ += [
+    "DEFAULT_ROTATION_CAPACITY",
+    "ELASTIC_MODULUS_STEEL_PA",
+    "BilinearHinge",
+    "HardenedLayer",
+    "HardenedSide",
+    "PowerLawHinge",
+    "bilinear_moment_increment_closed_form",
+    "build_hardened_side",
+    "energy_increment_numeric",
+    "moment_increment_fibre",
+    "section_moment_per_width",
+    "ISO_PRESSURE_AREA_EXPONENTS",
+    "IndentationSolution",
+    "PressureAreaLaw",
+    "damage_geometry_pressure_driven",
+    "force_history",
+    "iso19906_scaling_exponents",
+    "solve_indentation",
+    "structural_coefficients_per_length",
+    "DATASET_STATUS_PRESENT",
+    "DATASET_STATUS_WITHHELD",
+    "coefficient_uncertainty",
+    "collision_coefficient_from_share",
+    "collision_coefficient_from_volume",
+    "energy_ledger",
+    "load_collision_dataset",
+    "recalibrate_coefficient",
+]
