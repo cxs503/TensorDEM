@@ -215,6 +215,75 @@ def rolling_resistance_torque(
     return new_state, new_state
 
 
+def rolling_resistance_couple(
+    relative_velocity: torch.Tensor,
+    normal: torch.Tensor,
+    normal_force_mag: torch.Tensor,
+    radius: float,
+    *,
+    mu_r: float,
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+    """Rotationless realisation of rolling resistance as a momentum-carrying couple.
+
+    The 3-D bonded-sphere / point-particle DEM carries no rotational degree of
+    freedom.  The rolling-resistance moment ``M_r <= mu_r R |F_n|`` therefore
+    cannot act on a particle orientation; it is realised as an equal-and-opposite
+    couple of tangential contact forces
+
+        ``f_j = -mu_r |F_n| v_hat_rel``,  ``f_i = -f_j``,
+
+    with ``v_hat_rel`` the unit relative-slip direction in the contact tangent
+    plane.  Properties:
+
+    * ``f_i + f_j = 0`` -- the couple conserves linear momentum;
+    * ``f_j . v_rel <= 0`` -- strictly dissipative, and it vanishes as
+      ``|v_t| -> 0``;
+    * the moment of the couple about each particle centre with lever arm ``R``
+      reproduces the declared law ``|T| = mu_r R |F_n|``, i.e. the equivalent
+      coefficient in the equal-sphere convention of Ai et al. (2011),
+      ``M_lim = mu_r R* |F_n|`` with ``R* = R/2``, is ``mu_r_Ai = 2 mu_r``.
+
+    This function is the **single** implementation of that rotationless
+    surrogate: ``tensordem.dem3d`` (SIR-PC2|F05) and any other caller delegate
+    here instead of carrying a private copy.
+
+    Args:
+        relative_velocity: (N, 3) relative velocity ``v_j - v_i``.
+        normal:            (N, 3) unit contact normal from ``i`` to ``j``.
+        normal_force_mag:  (N,) normal force magnitude (``>= 0``).
+        radius:            Particle radius ``R``, m.
+        mu_r:              Rolling-resistance coefficient (dimensionless).
+
+    Returns:
+        ``(force_i, force_j, torque_i, torque_j)``, each ``(N, 3)``; the
+        torques are the diagnostic moments of the couple (lever arm ``R``).
+    """
+    if relative_velocity.ndim != 2 or relative_velocity.shape[1] != 3:
+        raise ValueError("relative_velocity must have shape (N, 3)")
+    if normal.shape != relative_velocity.shape:
+        raise ValueError("normal must have the same shape as relative_velocity")
+    if normal_force_mag.shape != (relative_velocity.shape[0],):
+        raise ValueError("normal_force_mag must have shape (N,)")
+    if not math.isfinite(radius) or radius <= 0.0:
+        raise ValueError(f"radius must be finite and positive, got {radius}")
+    if not math.isfinite(mu_r) or mu_r < 0.0:
+        raise ValueError(f"mu_r must be finite and nonnegative, got {mu_r}")
+
+    vn = (relative_velocity * normal).sum(dim=1, keepdim=True)
+    v_tangent = relative_velocity - vn * normal
+    v_t_mag = torch.linalg.vector_norm(v_tangent, dim=1)
+    tiny = torch.finfo(relative_velocity.dtype).tiny
+    slip_hat = torch.where(
+        (v_t_mag > tiny)[:, None],
+        v_tangent / v_t_mag.clamp_min(tiny)[:, None],
+        torch.zeros_like(v_tangent),
+    )
+    force_j = -(mu_r * normal_force_mag)[:, None] * slip_hat
+    force_i = -force_j
+    torque_i = radius * torch.linalg.cross(normal, force_i)
+    torque_j = -torque_i
+    return force_i, force_j, torque_i, torque_j
+
 def _deactivate(values: torch.Tensor, inactive: torch.Tensor) -> torch.Tensor:
     """Zero rows flagged as inactive."""
     if not bool(inactive.any()):

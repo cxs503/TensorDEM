@@ -36,6 +36,7 @@ from .ice_bond_viscoelastic import (
 
 from .buoyancy_wet3d import submerged_fraction_sphere_tensor
 from . import hertz_mindlin
+from .rolling_resistance import rolling_resistance_couple
 
 
 # --------------------------------------------------------------------------
@@ -164,14 +165,6 @@ class DEM3DConfig:
     lateral_platen_gap: float = 0.0
     # --- SIR-PC2|F05: Coulomb friction + rolling resistance ---
     friction_coefficient: float = 0.0        # mu: Coulomb friction coefficient
-    # --- Dual-coefficient friction regularization (static/dynamic) ---
-    # When both are positive, replaces the single friction_coefficient with a
-    # velocity-dependent law: mu(v) = mu_d + (mu_s - mu_d)*exp(-|v|/v_c)
-    # This captures stick-slip transition more physically than tanh regularization.
-    # friction_coefficient is used as fallback when these are zero.
-    static_friction_coefficient: float = 0.0   # mu_s: static friction (zero slip)
-    dynamic_friction_coefficient: float = 0.0  # mu_d: dynamic friction (full slip)
-    friction_transition_velocity: float = 1e-3 # v_c: transition velocity scale (m/s)
     rolling_resistance_coefficient: float = 0.0  # mu_r: rolling resistance coefficient
     restitution_coefficient: float = 1.0     # e: coefficient of restitution (0,1]
     # --- Contact law selection: legacy linear penalty (default) or Hertz ---
@@ -268,15 +261,6 @@ class DEM3DConfig:
         # Validate friction / rolling / restitution parameters
         if not math.isfinite(self.friction_coefficient) or self.friction_coefficient < 0:
             raise ValueError("friction_coefficient must be finite and nonnegative")
-        # Validate dual-coefficient friction parameters
-        if not math.isfinite(self.static_friction_coefficient) or self.static_friction_coefficient < 0:
-            raise ValueError("static_friction_coefficient must be finite and nonnegative")
-        if not math.isfinite(self.dynamic_friction_coefficient) or self.dynamic_friction_coefficient < 0:
-            raise ValueError("dynamic_friction_coefficient must be finite and nonnegative")
-        if self.static_friction_coefficient > 0 and self.dynamic_friction_coefficient > self.static_friction_coefficient:
-            raise ValueError("dynamic_friction_coefficient must be <= static_friction_coefficient")
-        if not math.isfinite(self.friction_transition_velocity) or self.friction_transition_velocity <= 0:
-            raise ValueError("friction_transition_velocity must be finite and positive")
         if not math.isfinite(self.rolling_resistance_coefficient) or self.rolling_resistance_coefficient < 0:
             raise ValueError("rolling_resistance_coefficient must be finite and nonnegative")
         if not (0.0 < self.restitution_coefficient <= 1.0):
@@ -1051,30 +1035,13 @@ class IceDEM3D:
 
         Returns ``(f_i, f_j, torque_i, torque_j)``, each ``(N, 3)``.
         """
-        n_contacts = ci.numel()
         mu_r = self.config.rolling_resistance_coefficient
         R = self.config.radius
-
         relative_v = self.velocities[cj] - self.velocities[ci]
-        vn = (relative_v * cnormal).sum(dim=1, keepdim=True)
-        v_tangent = relative_v - vn * cnormal
-        v_t_mag = torch.linalg.vector_norm(v_tangent, dim=1, keepdim=True)
-
-        # Kinetic resistance opposes the *relative* slip velocity
-        # v_rel = v_j - v_i: the force on j is -|f| * v_rel_hat and the force on
-        # i is its reaction.  No force when there is no slip (v_t == 0).
-        slip_hat = torch.where(
-            v_t_mag > 1e-15,
-            v_tangent / v_t_mag.clamp_min(torch.finfo(self.dtype).eps),
-            torch.zeros_like(v_tangent),
-        )
-        f_mag = (mu_r * contact_mag)[:, None]
-        force_j = -f_mag * slip_hat
-        force_i = -force_j
-
-        torque_i = R * torch.linalg.cross(cnormal, force_i)
-        torque_j = -torque_i
-        return force_i, force_j, torque_i, torque_j
+        # Single implementation lives in tensordem.rolling_resistance; this
+        # wrapper only supplies the particle state (no duplicate law).
+        return rolling_resistance_couple(
+            relative_v, cnormal, contact_mag, R, mu_r=mu_r)
 
     # ------------------------------------------------------------------
     # Main force evaluation
@@ -1237,18 +1204,7 @@ class IceDEM3D:
 
                     F_t_raw = k_t[:, None] * tang_disp
                     F_t_mag = torch.linalg.vector_norm(F_t_raw, dim=1)
-                    # --- Dual-coefficient friction regularization ---
-                    # When static and dynamic friction are both positive, use
-                    # velocity-dependent law: mu(v) = mu_d + (mu_s - mu_d)*exp(-|v|/v_c)
-                    # Otherwise fall back to single friction_coefficient.
-                    if cfg.static_friction_coefficient > 0 and cfg.dynamic_friction_coefficient > 0:
-                        v_slip_mag = torch.linalg.vector_norm(v_tangent, dim=1)
-                        mu_eff = cfg.dynamic_friction_coefficient + (
-                            cfg.static_friction_coefficient - cfg.dynamic_friction_coefficient
-                        ) * torch.exp(-v_slip_mag / cfg.friction_transition_velocity)
-                        F_limit = mu_eff * contact_mag
-                    else:
-                        F_limit = cfg.friction_coefficient * contact_mag
+                    F_limit = cfg.friction_coefficient * contact_mag
 
                     # Coulomb saturation
                     scale = torch.where(
