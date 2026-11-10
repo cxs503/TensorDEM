@@ -43,6 +43,22 @@ References
 - m7439: uniform temperature assumption in ice_ridge_freeze_bond_evolution.py.
 
 All quantities SI (m, kg, s, K, N, Pa).
+
+.. warning::
+   **Known defect (recorded by P316-W1-N03).**  The apparent heat capacity
+   below integrates the latent heat to ``L/2`` only (cosine window amplitude
+   ``L/(2b)`` over ``[-b, b]`` gives ``int c_app dT = c_p 2b + L/2``) and the
+   freezing front is located on a cell mask without sub-cell interpolation.
+   On the anchor case (DeltaT = 15 K, t = 1 h, n = 400) this yields
+   ``x_f = 0.0625 m`` against the analytical ``sqrt(2 k DeltaT t/(rho L)) =
+   0.02773 m``, i.e. **+125 %**.  The tests in
+   ``tests/test_stefan_freezing_front.py`` only assert ``x_f > 0.01 m`` /
+   energy positivity, so they do not catch it.
+
+   For production use the verified replacement
+   :mod:`tensordem.freeze_bond.thermal_profile` (full latent heat, enthalpy
+   Newton, sub-cell front tracking, energy closure ~1e-12, front anchored on
+   the Stefan/Neumann solutions).
 """
 from __future__ import annotations
 
