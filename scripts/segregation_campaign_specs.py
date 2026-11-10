@@ -1,134 +1,126 @@
-"""Emit the JSON spec list of the size-segregation validation campaign.
+#!/usr/bin/env python3
+"""Generate the case matrix of the size-segregation validation campaign.
 
-The matrix is organised so that every acceptance criterion of the node is backed
-by a dedicated family, and every family shares the same preparation protocol
-(same packing algorithm, same settle time, same sampling) so that differences
-between cases are differences of physics, not of protocol.
+The matrix is written to a JSON file consumed by
+``scripts/run_segregation_campaign.py`` (one process per case).  Generating it
+from code keeps the design reproducible: the families below are the whole
+design, and the resulting file is a build artefact, not a hand-edited list.
 
 Families
 --------
-``ctl``    ``d_l/d_s = 1`` equal-size negative control (3 seeds)
-``ratio``  ``d_l/d_s in {1.5, 2, 3, 4}`` at fixed drive, 3 seeds
-``gamma``  drive sweep ``Gamma in {0.5 ... 5}`` at 60 Hz
-``freq``   frequency sweep 15-60 Hz at ``Gamma = 1.5``
-``frac``   large-species volume fraction 0.2 / 0.4
-``stiff``  contact-stiffness sensitivity (kn x 4, dt / 2)
-``pour``   gravity pour of a gated block (heap morphology family)
-``size``   particle-count check at 6000 particles
+``ratio``   diameter-ratio sweep at a fixed drive, three seeds each (criteria b, f)
+``gamma``   drive sweep at fixed ratio (criterion d: threshold and saturation)
+``fraction`` large-species loading sweep (design parameter of the node)
+``freq``    frequency sweep at fixed ``Gamma`` (drive is not a single variable)
+``pour``    gravity pour, gate release (independent driver, heap morphology)
 
-Geometry note
--------------
-The vibrated trough is deliberately **wide and shallow** (1.2 m x 0.18 m for
-2x10^4 disks of 1-4 mm): a cargo-hold-like layer, no side-wall convection roll,
-so whatever segregation is measured comes from size percolation and not from a
-convection cell.  This is stated in the report as a scope limitation.
+Units are SI.  All cases of one family share the contact model and timestep, so
+the only difference between them is the parameter under test.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import os
 
-BASE = dict(
-    small_radius=1.0e-3,
-    dt=1.5e-5,
-    kn=1.20e4,
-    mu=0.40,
-    mu_rolling=0.05,
-    zeta=0.30,
-    settle_time=0.22,
-    settle_damping_time=0.0,
-    run_time=0.40,
-    sample_every=150,
-    top_fraction=0.25,
-    n_z_bins=240,
-    n_x_zones=8,
-    n_particles=20000,
-    width=1.20,
-    height=0.18,
-    loose_fraction=0.50,
-)
-
-POUR = dict(
-    BASE,
-    height=0.40,
-    run_time=0.75,
-    gate_fraction=0.50,
-    sample_every=200,
-)
-
-SHOWCASE = ("ratio_R3.0_G3.0_f60_s0", "ctl_R1.0_G3.0_f60_s0", "pour_R1.0_s0", "pour_R3.0_s0")
+GRAVITY = 9.81
 
 
-def build() -> list[dict]:
-    specs: list[dict] = []
+def case(name: str, *, drive: str = "vib", ratio: float = 2.0,
+         large_fraction: float = 0.30, gamma: float = 3.0, frequency: float = 20.0,
+         seed: int = 0, n_particles: int = 4000, small_radius: float = 4.0e-3,
+         width: float = 0.60, height: float = 1.0, dt: float = 1.8e-5,
+         cycles: float = 50.0, settle_time: float = 4.0,
+         sample_per_cycle: int = 10, **extra) -> dict:
+    """One campaign point.
 
-    def add(**kw) -> None:
-        spec = dict(BASE)
-        spec.update(kw)
-        spec.setdefault("name", "case")
-        if spec["name"] in SHOWCASE:
-            spec["snapshot_sample"] = 4000
-        specs.append(spec)
+    ``cycles`` fixes the duration in *vibration periods* rather than seconds, so
+    the same family comparison is not biased by the frequency sweep.  The pour
+    cases read it as a plain duration in seconds.
+    """
+    if drive == "vib":
+        run_time = cycles / frequency
+        sample_every = max(25, int(round(1.0 / (frequency * dt) / sample_per_cycle)))
+    else:
+        run_time = cycles
+        sample_every = max(25, int(round(2.0e-4 / dt)))
+    spec = dict(
+        name=name, drive=drive, ratio=ratio, large_fraction=large_fraction,
+        gamma=gamma, frequency=frequency, seed=seed, n_particles=n_particles,
+        small_radius=small_radius, width=width, height=height, dt=dt,
+        kn=2.0e5, kt_ratio=0.5, zeta=0.3, mu=0.4, mu_rolling=0.05,
+        settle_time=settle_time, run_time=run_time, settle_damping_time=1.0e-2,
+        sample_every=sample_every, top_fraction=0.25, n_z_bins=240, n_x_zones=8,
+        gate_fraction=0.35, fit_start_fraction=0.15, stiffness_scale=1.0,
+        loose_fraction=0.55, n_blocks=8, snapshot_sample=4000,
+    )
+    spec.update(extra)
+    return spec
 
-    # A. equal-size negative control
-    for seed in (0, 1, 2):
-        add(name=f"ctl_R1.0_G3.0_f60_s{seed}", ratio=1.0, gamma=3.0, frequency=60.0, seed=seed)
 
-    # B. diameter-ratio family
-    for ratio in (1.5, 2.0, 3.0, 4.0):
-        for seed in (0, 1, 2):
-            add(name=f"ratio_R{ratio:.1f}_G3.0_f60_s{seed}", ratio=ratio, gamma=3.0,
-                frequency=60.0, seed=seed)
+def build(full: bool = True) -> list[dict]:
+    out: list[dict] = []
+    ratios = (1.0, 1.5, 2.0, 3.0, 4.0)
+    seeds = (0, 1, 2) if full else (0,)
+    gamma_drive = 3.0
+    freq = 15.0
 
-    # C. drive sweep at fixed frequency
-    for gamma in (0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0):
-        for seed in (0, 1):
-            add(name=f"gamma_R2.0_G{gamma:.1f}_f60_s{seed}", ratio=2.0, gamma=gamma,
-                frequency=60.0, seed=seed)
+    # ---- ratio family (three seeds) ----------------------------------
+    for ratio in ratios:
+        for seed in seeds:
+            out.append(case(f"vib_R{ratio:.1f}_g{gamma_drive:.0f}_f{freq:.0f}_s{seed}",
+                            ratio=ratio, gamma=gamma_drive, frequency=freq, seed=seed))
+    # damped settling variant: does the driven segregation depend on a
+    # segregation that already happened during the gravity compaction?
+    out.append(case(f"vib_R2.0_g{gamma_drive:.0f}_f{freq:.0f}_damp", ratio=2.0,
+                    gamma=gamma_drive, frequency=freq, settle_damping_time=2.0e-3))
 
-    # D. frequency sweep at fixed drive (the 60 Hz point already exists)
-    for freq in (15.0, 20.0, 30.0, 45.0):
-        add(name=f"freq_R2.0_G1.5_f{freq:.0f}_s0", ratio=2.0, gamma=1.5, frequency=freq,
-            seed=0)
+    # ---- drive family (threshold + saturation) ------------------------
+    for gamma in (0.75, 1.0, 1.5, 2.0, 2.5, 4.0):
+        out.append(case(f"vib_R2.0_g{gamma:.2f}_f{freq:.0f}_s0", ratio=2.0,
+                        gamma=gamma, frequency=freq, seed=0,
+                        cycles=70.0 if gamma < 1.0 else 50.0))
 
-    # E. composition sensitivity
-    for frac in (0.2, 0.4):
-        for seed in (0, 1):
-            add(name=f"frac_R3.0_fv{frac:.1f}_G3.0_f60_s{seed}", ratio=3.0,
-                large_fraction=frac, gamma=3.0, frequency=60.0, seed=seed)
+    # ---- large-fraction family ---------------------------------------
+    if full:
+        for fraction in (0.20, 0.40):
+            for ratio in (2.0, 4.0):
+                out.append(case(
+                    f"vib_R{ratio:.1f}_g{gamma_drive:.0f}_f{freq:.0f}_phi{fraction:.1f}_s0",
+                    ratio=ratio, gamma=gamma_drive, frequency=freq, seed=0,
+                    large_fraction=fraction))
 
-    # F. contact-stiffness sensitivity (kn x 4 -> dt / 2 for stability)
-    add(name="stiff_R3.0_G3.0_f60_s0", ratio=3.0, gamma=3.0, frequency=60.0, seed=0,
-        stiffness_scale=4.0, dt=7.5e-6, run_time=0.30)
+    # ---- frequency family at fixed Gamma -----------------------------
+    for f in (25.0, 40.0, 60.0):
+        out.append(case(f"vib_R2.0_g{gamma_drive:.0f}_f{f:.0f}_s0", ratio=2.0,
+                        gamma=gamma_drive, frequency=f, seed=0))
 
-    # G. gravity pour
-    for ratio in (1.0, 2.0, 3.0, 4.0):
-        for seed in (0, 1):
-            spec = dict(POUR)
-            spec.update(dict(name=f"pour_R{ratio:.1f}_s{seed}", drive="pour", ratio=ratio,
-                             gamma=0.0, frequency=0.0, seed=seed))
-            if spec["name"] in SHOWCASE:
-                spec["snapshot_sample"] = 4000
-            specs.append(spec)
+    # ---- gravity pour (independent driver) ---------------------------
+    pour_seeds = (0, 1) if full else (0,)
+    for ratio in ratios:
+        for seed in pour_seeds:
+            out.append(case(f"pour_R{ratio:.1f}_s{seed}", drive="pour", ratio=ratio,
+                            seed=seed, height=1.4, gate_fraction=0.8,
+                            cycles=2.2, settle_time=4.0))
 
-    # H. particle-count check (same physics, quarter of the particles)
-    add(name="size_R3.0_G3.0_f60_N6000_s0", ratio=3.0, gamma=3.0, frequency=60.0, seed=0,
-        n_particles=6000, width=0.65, height=0.12, loose_fraction=0.50)
-    return specs
+    # de-duplicate by name, keeping the first definition
+    seen: dict[str, dict] = {}
+    for spec in out:
+        seen.setdefault(spec["name"], spec)
+    return sorted(seen.values(), key=lambda s: s["name"])
 
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", required=True)
+    ap.add_argument("--quick", action="store_true", help="one seed, no fraction family")
     args = ap.parse_args(argv)
-    specs = build()
-    names = [s["name"] for s in specs]
-    if len(names) != len(set(names)):
-        raise SystemExit("duplicate case names")
+    specs = build(full=not args.quick)
+    os.makedirs(os.path.dirname(os.path.abspath(args.out)), exist_ok=True)
     with open(args.out, "w") as fh:
         json.dump(specs, fh, indent=1)
-    print(f"wrote {len(specs)} case specs to {args.out}")
+    print(f"{len(specs)} cases -> {args.out}")
     return 0
 
 
