@@ -228,3 +228,20 @@ PYTHONPATH=src python scripts/m5052_clump_rolling_calibration.py --figures-only
   force a rebuild on release. (2) Keying the outlet height to the highest grain
   (including airborne ones) ratchets the source upward and no heap forms; key it
   to the settled apex (`|v| < 0.05 m/s`).
+
+<!-- P143W2C-N02 BEGIN -->
+
+## P143W2C-N02 write-back (BPM micro-parameter identifiability)
+
+| row | before | now | evidence | open part |
+|---|---|---|---|---|
+| m6335 "UCS 偏低 54.8 %" honest FAIL | STUB (statistics only, no engine run) | **REAL** on the bonded-specimen path: UCS = 5.45 MPa (3/3 literature intervals) | `src/tensordem/bpm_identifiability.py`, `artifacts/p143w2c_n02/numbers.json`, `tests/test_bpm_identifiability.py` | literature intervals overlap (consistency check, not independent); primary sources not digitized in-tree |
+| mass-scaling independence of the macro strength | WITHHELD (never measured) | **REAL (measured)**: max drift of sigma_peak +0.00%, E +0.00% over beta = 100..3600 | `beta_scan` / `beta_drift_gate` + shard records | the measured drift is a property of this lattice and damping; the ramp (non-relaxed) protocol fails the KE gate by ~10x |
+| Weibull modulus m identifiability (size effect) | MOCK (synthetic generator only) | **REAL (engine)**: extended design CI width 0.7092, m = 5.66; minimum design (3 families, n = 8) width 0.7408 -> identifiable | same files | the CI width, not the point estimate, carries the verdict; the engine-level negative control fails (a size effect exists without bond disorder, see the report §5.9) |
+| friction regularization: static/dynamic dual coefficients | NOT_SUPPORTED | **REAL (opt-in)** `friction_regularization="dual"` (elastic-cone switch, no extra state) | `DEM3DConfig.static_friction_coefficient`/`dynamic_friction_coefficient`, `shear_cell_residual` (max |bias| 0.10% vs the analytic mu_d N) | specimen-level residual is carried by the surviving bond skeleton as well, so the contact-level statement is the strong one |
+| positive / negative control of the identifiability pipeline | missing | **REAL**: m = 6 recovered to 0.31%; homogeneous bonds (m_bond = inf) -> identifiable (WRONG) | `positive_control`, `run_negative_control`, `tests/test_bpm_identifiability.py` | negative control uses deterministic strength, so the sentinel band is returned by construction |
+
+<!-- P143W2C-N02 END -->
+
+
+
