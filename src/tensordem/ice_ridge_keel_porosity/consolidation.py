@@ -1,121 +1,132 @@
-"""DEM consolidation simulation: rubble rearrangement under gravity + wave loading.
+"""Keel consolidation: deposition + wave-shaken DEM of the rubble skeleton.
 
-This module simulates the time evolution of keel porosity by modelling the
-rubble as a granular assembly undergoing:
+Pipeline
+--------
+1. **Parcel mapping** -- the keel frustum volume that holds the block set at the
+   target initial porosity is mapped onto an equivalent periodic cell
+   (:func:`..keel_bed.parcel_from_keel`): the cell footprint is the keel
+   cross-section at the parcel mid-depth, the cell height follows from mass
+   balance.
+2. **Deposition** -- blocks are scattered dilutely in the cell and settle under
+   gravity.  The end of this stage is ``t = 0`` of the evolution: the loosely
+   packed, freshly formed keel.
+3. **Wave shaking** -- a cyclic horizontal acceleration
+   ``a_x = A sin(2 pi t / T)`` (plus the secondary y component) shakes the bed at
+   the wave period; the rubble rearranges and the void ratio decays.
+4. **Recording** -- the void ratio is measured two independent ways
+   (:func:`..rubble_dem.cell_porosity`): the oedometer/void-ratio definition and
+   a Monte-Carlo point estimator.  Their agreement is the estimator's control.
 
-1. **Gravity settling**: particles settle under self-weight, finding stable
-   configurations through contact forces
-2. **Wave-induced shaking**: cyclic horizontal acceleration simulates the
-   effect of wave passage on the keel rubble
-
-The simulation uses a simplified DEM approach:
-- Linear spring-dashpot contact law (normal direction)
-- Coulomb friction (tangential direction)
-- Rolling resistance
-- Periodic boundary conditions in horizontal directions (within keel walls)
-- Rigid keel walls (no deformation of container)
-
-The key output is the porosity time series n(t), which shows how the keel
-densifies over time.
-
-Physical scaling:
-- DEM time scale: seconds to minutes
-- Prototype time scale: hours to months (via Froude or other scaling)
-- The consolidation time τ extracted from DEM is in DEM time units;
-  scaling to prototype requires care (see sensitivity module).
+The DEM is :class:`..rubble_dem.RubbleDEM`.  Everything downstream of the DEM
+(maintenance of ``ConsolidationConfig``/``ConsolidationResult`` and
+:func:`compute_porosity_timeseries`) keeps the historical names so existing
+callers and tests continue to work.
 """
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 import math
-from typing import List, Tuple
 
 import numpy as np
-from scipy.spatial import cKDTree
 
 from .geometry import KeelGeometry
 from .packing import PackingResult, ICE_DENSITY
+from .keel_bed import (CellParcel, dilute_cell_positions, parcel_from_keel,
+                       solid_volume_of)
+from .rubble_dem import DEMRubbleConfig, RubbleDEM, net_effective_gravity
 
 __all__ = [
     "ConsolidationConfig",
     "ConsolidationResult",
     "run_consolidation",
     "compute_porosity_timeseries",
+    "build_cell",
 ]
 
 
 @dataclass(frozen=True)
 class ConsolidationConfig:
-    """Configuration for DEM consolidation simulation.
+    """Configuration of the keel consolidation run.
 
     Attributes
     ----------
     dt : float
-        Time step (s). Default 1e-3.
+        DEM time step (s).  Must respect ``dt < 0.2 sqrt(m_min/k_n)``; the
+        smallest block (d = 0.2 m) sets the bound, see
+        :attr:`..rubble_dem.RubbleDEM.dt_max_stable`.
+    deposit_time : float
+        Duration of the deposition stage (s); excluded from the recorded
+        evolution time series (it ends at t = 0).
     total_time : float
-        Total simulation time (s). Default 500.0.
+        Duration of the shaken (consolidation) stage (s).
     record_interval : float
-        Interval for recording porosity (s). Default 5.0.
+        Sampling interval of the porosity record (s).
+    wave_amplitude, wave_period : float
+        Shaking amplitude (m/s2) and period (s).
     gravity : float
-        Gravitational acceleration (m/s²). Default 9.81.
-    kn : float
-        Normal contact stiffness (N/m). Default 1e5.
-    kt_ratio : float
-        Tangential/normal stiffness ratio. Default 0.5.
-    friction : float
-        Friction coefficient μ. Default 0.5.
-    rolling_friction : float
-        Rolling friction coefficient μ_r. Default 0.05.
-    restitution : float
-        Coefficient of restitution. Default 0.3.
-    damping_ratio : float
-        Bulk viscous damping ratio (fraction of critical). Default 0.1.
-    wave_amplitude : float
-        Wave-induced horizontal acceleration amplitude (m/s²). Default 0.5.
-    wave_period : float
-        Wave period (s). Default 10.0.
-    wave_enabled : bool
-        Whether to apply wave loading. Default True.
-    seed : int
-        Random seed. Default 42.
+        Net *effective* gravity of the skeleton (m/s2, +z downward).  The
+        default is the dry self-weight idealisation; use
+        :func:`..rubble_dem.net_effective_gravity` for the submerged (buoyant)
+        value, which is negative for ice.
+    mode : str
+        ``"cell"`` (periodic cell, default) or ``"keel"`` (rigid frustum walls;
+        arches and jams, kept for the geometry-sensitivity study).
     """
-    dt: float = 1e-3
-    total_time: float = 500.0
+
+    dt: float = 1.0e-3
+    deposit_time: float = 20.0
+    total_time: float = 600.0
     record_interval: float = 5.0
     gravity: float = 9.81
-    kn: float = 1e5
+    kn: float = 2.0e4
     kt_ratio: float = 0.5
-    friction: float = 0.5
+    friction: float = 0.70
     rolling_friction: float = 0.05
-    restitution: float = 0.3
-    damping_ratio: float = 0.1
+    restitution: float = 0.25
+    wall_friction: float = 0.30
+    damping_ratio: float = 0.10
     wave_amplitude: float = 0.5
     wave_period: float = 10.0
     wave_enabled: bool = True
+    placement_porosity: float = 0.75
+    porosity_points: int = 40000
+    mode: str = "cell"
+    rotation: bool = False
     seed: int = 42
+
+    def to_dem(self, parcel: CellParcel) -> DEMRubbleConfig:
+        return DEMRubbleConfig(
+            mode=self.mode,
+            box_size=parcel.box_size,
+            floor_depth=parcel.floor,
+            dt=self.dt,
+            kn=self.kn,
+            kt_ratio=self.kt_ratio,
+            friction=self.friction,
+            rolling_friction=self.rolling_friction,
+            restitution=self.restitution,
+            wall_friction=self.wall_friction,
+            damping_ratio=self.damping_ratio,
+            gravity=self.gravity,
+            wave_amplitude=self.wave_amplitude,
+            wave_period=self.wave_period,
+            wave_enabled=self.wave_enabled,
+            rotation=self.rotation,
+            wave_start_time=self.deposit_time,
+            total_time=self.deposit_time + self.total_time,
+            record_interval=self.record_interval,
+            porosity_points=self.porosity_points,
+            seed=self.seed,
+        )
 
 
 @dataclass
 class ConsolidationResult:
-    """Result of consolidation simulation.
+    """Result of a keel consolidation run.
 
-    Attributes
-    ----------
-    time : np.ndarray
-        Time stamps (s), shape (n_records,).
-    porosity : np.ndarray
-        Porosity at each time stamp, shape (n_records,).
-    mean_height : np.ndarray
-        Mean particle height (m) at each time stamp.
-    kinetic_energy : np.ndarray
-        Total kinetic energy (J) at each time stamp.
-    final_positions : np.ndarray
-        Final particle positions, shape (N, 3).
-    final_radii : np.ndarray
-        Final particle radii, shape (N,).
-    config : ConsolidationConfig
-        Configuration used.
+    ``time`` starts at 0, the end of the deposition stage (freshly formed keel).
     """
+
     time: np.ndarray
     porosity: np.ndarray
     mean_height: np.ndarray
@@ -123,267 +134,101 @@ class ConsolidationResult:
     final_positions: np.ndarray
     final_radii: np.ndarray
     config: ConsolidationConfig
+    porosity_point: np.ndarray | None = None
+    surface_depth: np.ndarray | None = None
+    coordination: np.ndarray | None = None
+    elastic_energy: np.ndarray | None = None
+    energy_ledger: dict = field(default_factory=dict)
+    parcel: CellParcel | None = None
+    deposition: dict = field(default_factory=dict)
+    seed: int = 42
+    wall_penetration_max: float = 0.0
+
+    @property
+    def solid_volume(self) -> float:
+        return solid_volume_of(self.final_radii)
 
 
-def _damping_coefficient(restitution: float, mass: float, kn: float) -> float:
-    """Compute dashpot coefficient from restitution coefficient."""
-    e = max(min(restitution, 0.999), 0.001)
-    ln_e = math.log(e)
-    zeta = abs(ln_e) / math.sqrt(math.pi**2 + ln_e**2)
-    m_eff = 0.5 * mass  # reduced mass for equal particles
-    return 2.0 * zeta * math.sqrt(kn * m_eff)
-
-
-def _contact_force_normal(
-    delta: float,
-    v_n: float,
-    kn: float,
-    gamma: float,
-) -> float:
-    """Normal contact force (linear spring-dashpot).
-
-    F_n = max(k_n * delta - gamma * v_n, 0)
-
-    Positive = repulsive (compression).
-    """
-    if delta <= 0:
-        return 0.0
-    return max(kn * delta - gamma * v_n, 0.0)
-
-
-def _wave_acceleration(t: float, amplitude: float, period: float) -> Tuple[float, float]:
-    """Compute wave-induced horizontal acceleration at time t.
-
-    Returns (a_x, a_y) in m/s².
-    Model: sinusoidal horizontal shaking with decaying envelope.
-    """
-    omega = 2 * math.pi / period
-    # Horizontal acceleration (primarily x-direction, some y)
-    a_x = amplitude * math.sin(omega * t)
-    a_y = 0.3 * amplitude * math.cos(0.7 * omega * t)  # secondary component
-    return a_x, a_y
+def build_cell(radii: np.ndarray, geom: KeelGeometry,
+               config: ConsolidationConfig | None = None) -> CellParcel:
+    """Parcel mapping for a block set (keel volume -> periodic cell)."""
+    cfg = config or ConsolidationConfig()
+    return parcel_from_keel(geom, solid_volume_of(radii), porosity=0.40,
+                            placement_porosity=cfg.placement_porosity)
 
 
 def run_consolidation(
-    packing: PackingResult,
+    packing: PackingResult | np.ndarray,
     geom: KeelGeometry,
-    config: ConsolidationConfig = None,
+    config: ConsolidationConfig | None = None,
 ) -> ConsolidationResult:
-    """Run DEM consolidation simulation.
-
-    This is a simplified DEM that captures the essential physics of
-    granular rearrangement under gravity + cyclic loading:
-
-    1. Particles settle under gravity
-    2. Contact forces prevent overlap (spring-dashpot)
-    3. Friction resists sliding
-    4. Wave loading adds cyclic horizontal acceleration
-    5. Porosity is tracked over time
-
-    The simulation uses an explicit time integration (Velocity Verlet)
-    with a spatial hash for neighbor detection.
+    """Deposit the rubble, then shake it and record the void ratio.
 
     Parameters
     ----------
-    packing : PackingResult
-        Initial packing (positions, radii).
+    packing : PackingResult or ndarray
+        Either a :class:`..packing.PackingResult` or the block radii (N,).
     geom : KeelGeometry
-        Keel container geometry.
-    config : ConsolidationConfig
-        Simulation configuration.
+        Keel container geometry (sets the parcel size and the container walls).
+    config : ConsolidationConfig, optional
 
     Returns
     -------
     ConsolidationResult
-        Time series of porosity and other quantities.
     """
     if config is None:
         config = ConsolidationConfig()
+    radii = packing.radii if hasattr(packing, "radii") else np.asarray(packing, dtype=float)
+    radii = np.asarray(radii, dtype=float)
+    if len(radii) == 0:
+        raise ValueError("empty block set, cannot run consolidation")
 
+    parcel = build_cell(radii, geom, config)
     rng = np.random.default_rng(config.seed)
-    N = packing.n_placed
-    if N == 0:
-        raise ValueError("Empty packing, cannot run consolidation")
+    dilute = dilute_cell_positions(parcel, radii, rng,
+                                   placement_porosity=config.placement_porosity)
+    dem_cfg = config.to_dem(parcel)
+    sim = RubbleDEM(dilute.positions, dilute.radii, geom, dem_cfg)
+    dem = sim.run()
 
-    # Initialize state
-    pos = packing.positions.copy()
-    radii = packing.radii.copy()
-    vel = np.zeros((N, 3))  # velocities
-    acc = np.zeros((N, 3))  # accelerations
+    t_all = dem.time
+    keep = t_all >= config.deposit_time - 1e-9
+    time = t_all[keep] - config.deposit_time
+    # Primary record = the oedometer / void-ratio definition
+    # n = 1 - V_solid/(A*h_bed), the classical measure of a bed in a container.
+    # The Monte-Carlo point estimator is kept as the independent cross-check:
+    # the two differ by the half-block caps above the mean free surface and by
+    # the contact overlap, measured at ~0.01 (see the docs' error table).
+    porosity = dem.porosity_slab[keep]
+    porosity_point = dem.porosity_point[keep]
+    surface = dem.surface_depth[keep]
+    coordination = dem.coordination[keep]
+    ke = dem.kinetic_energy[keep]
+    ee = dem.elastic_energy[keep]
+    # mean block depth below the free surface (bed thickness measure)
+    mean_height = np.array([float(np.mean(r)) for r in [surface]]) * 0.0
+    bed_thickness = float(np.max(surface) - np.min(surface)) if len(surface) else 0.0
+    mean_height = np.full(len(time), bed_thickness)
 
-    # Material properties
-    density = ICE_DENSITY
-    masses = density * 4 / 3 * np.pi * radii**3
-    inertia = 0.4 * masses * radii**2
-
-    # Damping
-    gamma_n = np.array([
-        _damping_coefficient(config.restitution, m, config.kn)
-        for m in masses
-    ])
-
-    # Recording
-    n_records = int(config.total_time / config.record_interval) + 1
-    time_list = []
-    porosity_list = []
-    height_list = []
-    ke_list = []
-
-    # Container volume (fixed)
-    V_container = geom.L_top * geom.W_top * geom.depth  # approximate
-
-    # Time integration loop
-    t = 0.0
-    step = 0
-    next_record = 0.0
-    dt = config.dt
-    n_steps = int(config.total_time / dt)
-
-    # Subsample for performance: only do full neighbor search every few steps
-    neighbor_update_interval = 10
-
-    for step in range(n_steps):
-        # Record at intervals
-        if t >= next_record:
-            # Compute porosity
-            solid_vol = np.sum(4 / 3 * np.pi * radii**3)
-            # Estimate occupied volume from particle extent
-            z_min = np.min(pos[:, 2] - radii)
-            z_max = np.max(pos[:, 2] + radii)
-            occupied_height = max(z_max - z_min, 0.1)
-            # Average cross-section at mean height
-            z_mean = 0.5 * (z_min + z_max)
-            L_mean, W_mean = geom.cross_section(min(z_mean, geom.depth))
-            V_occupied = L_mean * W_mean * occupied_height
-            porosity = 1.0 - solid_vol / max(V_occupied, solid_vol * 1.01)
-            porosity = min(max(porosity, 0.05), 0.95)  # clamp
-
-            time_list.append(t)
-            porosity_list.append(porosity)
-            height_list.append(np.mean(pos[:, 2]))
-            ke_list.append(0.5 * np.sum(masses * np.sum(vel**2, axis=1)))
-
-            next_record += config.record_interval
-
-        # Update neighbor list periodically
-        if step % neighbor_update_interval == 0:
-            tree = cKDTree(pos)
-            max_r = np.max(radii)
-            pairs = tree.query_pairs(2.0 * max_r * 1.1)
-
-        # Compute accelerations
-        acc_new = np.zeros((N, 3))
-
-        # Gravity
-        acc_new[:, 2] -= config.gravity
-
-        # Wave loading
-        if config.wave_enabled:
-            a_x, a_y = _wave_acceleration(t, config.wave_amplitude, config.wave_period)
-            acc_new[:, 0] += a_x
-            acc_new[:, 1] += a_y
-
-        # Contact forces (simplified: only detect overlaps, apply repulsion)
-        for i, j in pairs:
-            rij = pos[j] - pos[i]
-            dist = np.linalg.norm(rij)
-            overlap = radii[i] + radii[j] - dist
-            if overlap > 0 and dist > 1e-10:
-                # Normal direction
-                n_vec = rij / dist
-                # Relative velocity
-                v_rel = vel[j] - vel[i]
-                v_n = np.dot(v_rel, n_vec)
-                # Normal force
-                gamma_ij = 0.5 * (gamma_n[i] + gamma_n[j])
-                F_n = _contact_force_normal(overlap, v_n, config.kn, gamma_ij)
-                # Apply to particles (Newton's 3rd law)
-                F_vec = F_n * n_vec
-                acc_new[i] += F_vec / masses[i]
-                acc_new[j] -= F_vec / masses[j]
-
-                # Tangential friction (simplified Coulomb)
-                v_t = v_rel - v_n * n_vec
-                v_t_mag = np.linalg.norm(v_t)
-                if v_t_mag > 1e-10:
-                    F_t_mag = min(config.friction * F_n, config.kn * config.kt_ratio * v_t_mag * dt)
-                    F_t = -F_t_mag * v_t / v_t_mag
-                    acc_new[i] += F_t / masses[i]
-                    acc_new[j] -= F_t / masses[j]
-
-        # Bulk viscous damping (to settle to quasi-static)
-        acc_new -= config.damping_ratio * vel
-
-        # Velocity Verlet integration
-        vel += 0.5 * (acc + acc_new) * dt
-        pos += vel * dt + 0.5 * acc_new * dt**2
-        acc = acc_new
-
-        # Wall boundaries (keel geometry)
-        for i in range(N):
-            z = pos[i, 2]
-            r = radii[i]
-            # Floor
-            if z < r:
-                z = r
-                vel[i, 2] = abs(vel[i, 2]) * config.restitution
-            # Ceiling (waterline)
-            if z > geom.depth - r:
-                z = geom.depth - r
-                vel[i, 2] = -abs(vel[i, 2]) * config.restitution
-            # Side walls (at current depth)
-            L, W = geom.cross_section(z)
-            if pos[i, 0] < -L / 2 + r:
-                pos[i, 0] = -L / 2 + r
-                vel[i, 0] = abs(vel[i, 0]) * config.restitution
-            elif pos[i, 0] > L / 2 - r:
-                pos[i, 0] = L / 2 - r
-                vel[i, 0] = -abs(vel[i, 0]) * config.restitution
-            if pos[i, 1] < -W / 2 + r:
-                pos[i, 1] = -W / 2 + r
-                vel[i, 1] = abs(vel[i, 1]) * config.restitution
-            elif pos[i, 1] > W / 2 - r:
-                pos[i, 1] = W / 2 - r
-                vel[i, 1] = -abs(vel[i, 1]) * config.restitution
-            pos[i, 2] = z
-
-        t += dt
-
-    # Final recording
-    solid_vol = np.sum(4 / 3 * np.pi * radii**3)
-    z_min = np.min(pos[:, 2] - radii)
-    z_max = np.max(pos[:, 2] + radii)
-    occupied_height = max(z_max - z_min, 0.1)
-    z_mean = 0.5 * (z_min + z_max)
-    L_mean, W_mean = geom.cross_section(min(z_mean, geom.depth))
-    V_occupied = L_mean * W_mean * occupied_height
-    porosity = 1.0 - solid_vol / max(V_occupied, solid_vol * 1.01)
-    porosity = min(max(porosity, 0.05), 0.95)
-
-    time_list.append(t)
-    porosity_list.append(porosity)
-    height_list.append(np.mean(pos[:, 2]))
-    ke_list.append(0.5 * np.sum(masses * np.sum(vel**2, axis=1)))
-
+    deposition = dict(
+        placement_porosity=dilute.placement_porosity,
+        n_blocks=int(len(radii)),
+        deposit_time=config.deposit_time,
+        porosity_at_t0=float(porosity[0]) if len(porosity) else float("nan"),
+        porosity_point_at_t0=float(porosity_point[0]) if len(porosity_point) else float("nan"),
+        attempts_used=dilute.attempts_used,
+    )
     return ConsolidationResult(
-        time=np.array(time_list),
-        porosity=np.array(porosity_list),
-        mean_height=np.array(height_list),
-        kinetic_energy=np.array(ke_list),
-        final_positions=pos,
-        final_radii=radii,
-        config=config,
+        time=time, porosity=porosity, mean_height=mean_height,
+        kinetic_energy=ke, final_positions=dem.positions, final_radii=dem.radii,
+        config=config, porosity_point=porosity_point, surface_depth=surface,
+        coordination=coordination, elastic_energy=ee,
+        energy_ledger=dem.energy_ledger, parcel=parcel, deposition=deposition,
+        seed=config.seed,
+        wall_penetration_max=float(getattr(sim, "wall_penetration_max", 0.0)),
     )
 
 
-def compute_porosity_timeseries(result: ConsolidationResult) -> Tuple[np.ndarray, np.ndarray]:
-    """Extract porosity time series from consolidation result.
-
-    Returns
-    -------
-    time : np.ndarray
-        Time stamps (s).
-    porosity : np.ndarray
-        Porosity values.
-    """
+def compute_porosity_timeseries(result: ConsolidationResult):
+    """Return ``(time, porosity)`` from a consolidation result."""
     return result.time, result.porosity

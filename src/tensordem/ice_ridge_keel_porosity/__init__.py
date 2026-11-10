@@ -52,13 +52,44 @@ from .packing import (
 from .consolidation import (
     ConsolidationConfig,
     ConsolidationResult,
+    build_cell,
     run_consolidation,
     compute_porosity_timeseries,
 )
+from .keel_bed import (
+    CellParcel,
+    DiluteBed,
+    dilute_cell_positions,
+    dilute_positions,
+    parcel_from_keel,
+    slab_bounds,
+    solid_volume_of,
+)
+from .rubble_dem import (
+    DEMRubbleConfig,
+    DEMRubbleResult,
+    RubbleDEM,
+    bed_porosity,
+    cell_porosity,
+    cell_surface_depth,
+    container_volume,
+    net_effective_gravity,
+)
+from .pore_ice import (
+    PoreIceConfig,
+    filled_fraction,
+    hydraulic_pore_radius,
+    pore_filling_fraction_for,
+    pore_ice_time_scale,
+    pore_scale,
+)
 from .evolution import (
     PorosityEvolutionResult,
+    composite_porosity,
     exponential_decay,
     fit_exponential_decay,
+    fit_exponential_fixed_origin,
+    mechanical_consolidation,
     run_evolution_analysis,
 )
 from .sensitivity import (
@@ -79,14 +110,41 @@ __all__ = [
     "generate_rubble_packing",
     "initial_porosity",
     "polydisperse_radii",
+    # Rubble DEM / consolidation
+    "DEMRubbleConfig",
+    "DEMRubbleResult",
+    "RubbleDEM",
+    "bed_porosity",
+    "cell_porosity",
+    "cell_surface_depth",
+    "container_volume",
+    "net_effective_gravity",
+    "CellParcel",
+    "DiluteBed",
+    "dilute_cell_positions",
+    "dilute_positions",
+    "parcel_from_keel",
+    "slab_bounds",
+    "solid_volume_of",
+    # Pore-ice closure
+    "PoreIceConfig",
+    "filled_fraction",
+    "hydraulic_pore_radius",
+    "pore_filling_fraction_for",
+    "pore_ice_time_scale",
+    "pore_scale",
     # Consolidation
     "ConsolidationConfig",
+    "build_cell",
     "ConsolidationResult",
     "run_consolidation",
     "compute_porosity_timeseries",
     # Evolution
     "PorosityEvolutionResult",
+    "composite_porosity",
+    "mechanical_consolidation",
     "exponential_decay",
+    "fit_exponential_fixed_origin",
     "fit_exponential_decay",
     "run_evolution_analysis",
     # Sensitivity
