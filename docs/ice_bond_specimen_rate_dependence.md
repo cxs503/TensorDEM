@@ -87,6 +87,20 @@ Numbers are written to `artifacts/ice_bond_specimen/verification.json`; the
 report's tables and figures are generated from that file only (no hand
 transcription).
 
+## 3b. Correction notice (re-audit, m7574)
+
+The attribution of this campaign's honest FAIL to inertia does **not** survive a
+measurement: the gauge section carries 100 crossing bonds (not `nx*ny = 16`), so
+the "rigid-plate bound" used above is 6.25x too small, and every "peak strength"
+reported here is reached *after* the bond network has broken (a debris-compaction
+peak, not a specimen strength).  With the pre-failure gate applied, the elastic
+negative control becomes rate independent (exponent -0.035 vs +0.117), while the
+specimen-level ductile exponents become 0.438 (linear+creep) and 0.461
+(Maxwell-Wiechert+creep), i.e. the specimen-level `1/(m+1)` envelope is still
+**not verified**.  The numbers in sections 3-4 are left unedited as the record of
+what was measured; see `docs/ice_bond_specimen_attribution.md` and
+`artifacts/ice_bond_specimen_attribution/verification.json` for the re-audit.
+
 ## 4. Known limitations (stated, not implied)
 
 1. **No stiffness degradation.** Kachanov damage acts purely as a failure
