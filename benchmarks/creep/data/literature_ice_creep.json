@@ -1,0 +1,91 @@
+{
+  "schema": "tensordem.creep.literature.v1",
+  "mission": "P46W3-N02",
+  "provenance_discipline": [
+    "Every entry carries an explicit 'provenance' grade. Nothing in this file is a digitized",
+    "curve: the numbers are standard ice-mechanics constants and bands as summarised in the",
+    "cited literature, with an honest uncertainty. A value that is only a band is stored as a",
+    "band, never as an invented point value.",
+    "Curve-level overlays of Cole (1998) / Schulson (2001) laboratory creep records are NOT",
+    "bundled; see 'withheld_digitizations' and benchmarks/creep/data/README.md for the",
+    "injection format. The gate reports those comparisons as WITHHELD, never as PASS."
+  ],
+  "quantities": {
+    "glen_exponent_n": {
+      "kind": "point_with_band",
+      "value": 3.0,
+      "band": [2.0, 4.5],
+      "unit": "-",
+      "applies_to": "secondary (steady) creep of polycrystalline ice, dislocation creep regime",
+      "source": "Glen (1955) Proc. R. Soc. A 228:519; ISO 19906:2010 Annex A uses n = 3",
+      "provenance": "standard-constant"
+    },
+    "activation_energy_warm": {
+      "kind": "point_with_band",
+      "value": 60000.0,
+      "band": [40000.0, 80000.0],
+      "unit": "J/mol",
+      "applies_to": "-10 degC <= T <= 0 degC",
+      "source": "Hobbs (1974) Ice Physics; Paterson (1994) Physics of Glaciers",
+      "provenance": "literature-summary-band"
+    },
+    "activation_energy_cold": {
+      "kind": "point_with_band",
+      "value": 120000.0,
+      "band": [80000.0, 160000.0],
+      "unit": "J/mol",
+      "applies_to": "-40 degC <= T <= -10 degC (two-branch Arrhenius patch)",
+      "source": "Hobbs (1974); Paterson (1994)",
+      "provenance": "literature-summary-band"
+    },
+    "fluidity_minus10C": {
+      "kind": "point_with_band",
+      "value": 3.5e-25,
+      "band": [1.0e-26, 1.0e-24],
+      "unit": "Pa^-3 s^-1",
+      "applies_to": "uniaxial Norton law edot = A sigma^n at -10 degC; ~1 decade scatter between textures and histories",
+      "source": "Barnes, Tabor & Walker (1971) Proc. R. Soc. A 324:127, value as tabulated in standard ice-mechanics summaries (e.g. Sanderson 1983, Ice Mechanics)",
+      "provenance": "literature-summary-band"
+    },
+    "effective_viscosity_1MPa": {
+      "kind": "band",
+      "band": [1.0e11, 1.0e13],
+      "unit": "Pa s",
+      "applies_to": "eta_eff = sigma / edot at 1 MPa, -10 degC, secondary creep",
+      "source": "textbook range for polycrystalline ice (Schulson & Duval 2009, Creep and Fracture of Ice)",
+      "provenance": "literature-summary-band"
+    },
+    "min_creep_rate_1MPa_minus10C": {
+      "kind": "point_with_band",
+      "value": 3.5e-7,
+      "band": [1.0e-8, 1.0e-6],
+      "unit": "1/s",
+      "applies_to": "minimum (secondary) creep rate, 1 MPa uniaxial, -10 degC",
+      "source": "consistent with A = 3.5e-25 Pa^-3 s^-1, n = 3: edot = A sigma^3",
+      "provenance": "derived-consistency-band"
+    },
+    "andrade_primary_exponent": {
+      "kind": "point_with_band",
+      "value": 0.3333333333333333,
+      "band": [0.2, 0.4],
+      "unit": "1",
+      "applies_to": "primary creep eps = eps_0 + beta t^alpha of ice at constant stress",
+      "source": "Andrade (1910); Glen (1955) Proc. R. Soc. A: primary creep of ice follows t^(1/3); the same exponent is the one fitted to laboratory creep records in the Cole (1998) / Schulson (2001) line of work designated by the mission",
+      "provenance": "standard-constant"
+    }
+  },
+  "withheld_digitizations": [
+    {
+      "name": "cole_1998_lab_creep",
+      "citation": "Cole, D. M. (1998) - laboratory ice creep records as designated by mission P46W3-N02",
+      "status": "WITHHELD",
+      "reason": "no digitized strain-time points are bundled in this repository; inventing them would be fabrication. The gate reports the comparison as WITHHELD."
+    },
+    {
+      "name": "schulson_2001_creep_compilation",
+      "citation": "Schulson, E. M. (2001); Schulson & Duval (2009) creep data compilation, as designated by mission P46W3-N02",
+      "status": "WITHHELD",
+      "reason": "as above: curve-level overlay requires an injected dataset (see data/README.md)"
+    }
+  ]
+}
