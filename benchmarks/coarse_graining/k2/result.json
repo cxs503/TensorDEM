@@ -1,0 +1,142 @@
+{
+  "k": 2,
+  "device": "servo_shear_cell",
+  "scaling": {
+    "recipe": "A: contact-time invariant (kn ~ k^3)",
+    "radius": "k R",
+    "box_width/depth/fill_height": "k L",
+    "kn": "k^3 kn      (contact time invariant, u = P d/kn ~ 1/k)",
+    "kt": "k^3 kt",
+    "density": "invariant",
+    "mu / mu_rolling / restitution": "invariant",
+    "normal_stress": "invariant (servo target)",
+    "shear_rate": "gamma_dot / k   (I matched at fixed P)",
+    "gravity": "invariant (0 in the shear box)",
+    "collapse_time": "sqrt(k) t   (Froude similarity)"
+  },
+  "material": {
+    "radius": 0.01,
+    "density": 2500.0,
+    "mu": 0.5,
+    "mu_rolling": 0.05,
+    "restitution": 0.3,
+    "kn": 500000.0,
+    "kt_ratio": 0.5
+  },
+  "runs": [
+    {
+      "inertial_number_target": 0.001,
+      "inertial_number": 0.000999635012165394,
+      "mu_effective": 0.35213139034120366,
+      "shear_stress_pa": 21960.145981866408,
+      "normal_stress_pa": 62545.64846950925,
+      "coordination_number": 3.322515829335642,
+      "solid_fraction": 0.4047635094177247,
+      "porosity": 0.5952364905822753,
+      "n_particles": 294,
+      "shear_steps": 24885,
+      "settle_steps": 9172,
+      "dt": 3.214875667906916e-05,
+      "plate_height": 0.10257067120284075,
+      "max_velocity": 1.2788685789293306,
+      "wall_clock_s": 165.98759762011468
+    },
+    {
+      "inertial_number_target": 0.003,
+      "inertial_number": 0.002939769509394533,
+      "mu_effective": 0.38780166030019797,
+      "shear_stress_pa": 24998.548893673382,
+      "normal_stress_pa": 65087.25627154012,
+      "coordination_number": 3.191444752105197,
+      "solid_fraction": 0.40103575060888724,
+      "porosity": 0.5989642493911127,
+      "n_particles": 294,
+      "shear_steps": 8295,
+      "settle_steps": 9172,
+      "dt": 3.214875667906916e-05,
+      "plate_height": 0.10257067120284075,
+      "max_velocity": 0.704802347855529,
+      "wall_clock_s": 77.95702330954373
+    },
+    {
+      "inertial_number_target": 0.01,
+      "inertial_number": 0.009900921458743156,
+      "mu_effective": 0.3246894123622412,
+      "shear_stress_pa": 20514.364494782498,
+      "normal_stress_pa": 63757.13401088617,
+      "coordination_number": 3.099988598791472,
+      "solid_fraction": 0.41464475190894023,
+      "porosity": 0.5853552480910598,
+      "n_particles": 294,
+      "shear_steps": 2489,
+      "settle_steps": 9172,
+      "dt": 3.214875667906916e-05,
+      "plate_height": 0.10257067120284075,
+      "max_velocity": 0.5630751588820526,
+      "wall_clock_s": 45.80627872981131
+    },
+    {
+      "inertial_number_target": 0.03,
+      "inertial_number": 0.04039042807888928,
+      "mu_effective": 0.3850132034277654,
+      "shear_stress_pa": 13195.87563800223,
+      "normal_stress_pa": 34479.86959556913,
+      "coordination_number": 2.7082900956992964,
+      "solid_fraction": 0.4278760125997745,
+      "porosity": 0.5721239874002255,
+      "n_particles": 294,
+      "shear_steps": 830,
+      "settle_steps": 9172,
+      "dt": 3.214875667906916e-05,
+      "plate_height": 0.10257067120284075,
+      "max_velocity": 0.9032967288177509,
+      "wall_clock_s": 36.42406355030835
+    },
+    {
+      "inertial_number_target": 0.1,
+      "inertial_number": 0.13044537561771935,
+      "mu_effective": 0.3324786527774576,
+      "shear_stress_pa": 12181.07937907333,
+      "normal_stress_pa": 36730.1449332521,
+      "coordination_number": 2.0386297376093294,
+      "solid_fraction": 0.4186927203307925,
+      "porosity": 0.5813072796692075,
+      "n_particles": 294,
+      "shear_steps": 400,
+      "settle_steps": 9172,
+      "dt": 3.214875667906916e-05,
+      "plate_height": 0.10257067120284075,
+      "max_velocity": 2.9806098621358577,
+      "wall_clock_s": 31.504890698939562
+    }
+  ],
+  "wall_clock_s_total": 357.69645057991147,
+  "repose": {
+    "device": "repose_column_collapse",
+    "repose_angle_deg": 27.071164178145423,
+    "repose_angle_stderr_deg": 0.8351222898044386,
+    "repose_angle_seeds": [
+      27.071164178145423
+    ],
+    "n_particles": 852,
+    "radius": 0.01,
+    "kn": 500000.0,
+    "cylinder_radius": 0.1,
+    "fill_height": 0.2,
+    "dt": 3.214875667906916e-05,
+    "steps": 21995,
+    "wall_clock_s": 157.52929564006627,
+    "seeds": [
+      {
+        "seed": 4970,
+        "theta_deg": 27.071164178145423,
+        "stderr_deg": 0.8351222898044386,
+        "n_bins": 211,
+        "n_particles": 852,
+        "steps": 21995,
+        "dt": 3.214875667906916e-05,
+        "max_velocity": 0.3707794186440529
+      }
+    ]
+  }
+}

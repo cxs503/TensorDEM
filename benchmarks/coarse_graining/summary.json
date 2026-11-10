@@ -1,0 +1,212 @@
+{
+  "campaign": "IN102-N02",
+  "recipe": "A",
+  "title": "DEM coarse-graining macro anchors: mu(I), coordination, porosity, repose",
+  "device": "tensordem.mu_i_rheology.simulate_servo_shear",
+  "inertial_targets": [
+    0.001,
+    0.003,
+    0.01,
+    0.03,
+    0.1
+  ],
+  "normal_stress_pa": 62500.0,
+  "base_material": {
+    "radius": 0.005,
+    "density": 2500.0,
+    "mu": 0.5,
+    "mu_rolling": 0.05,
+    "restitution": 0.3,
+    "kn": 62500.0,
+    "kt_ratio": 0.5
+  },
+  "base_geometry": {
+    "box_width": 0.12,
+    "box_depth": 0.05,
+    "fill_height": 0.06
+  },
+  "scaling_rule": {
+    "recipe": "A: contact-time invariant (kn ~ k^3)",
+    "radius": "k R",
+    "box_width/depth/fill_height": "k L",
+    "kn": "k^3 kn      (contact time invariant, u = P d/kn ~ 1/k)",
+    "kt": "k^3 kt",
+    "density": "invariant",
+    "mu / mu_rolling / restitution": "invariant",
+    "normal_stress": "invariant (servo target)",
+    "shear_rate": "gamma_dot / k   (I matched at fixed P)",
+    "gravity": "invariant (0 in the shear box)",
+    "collapse_time": "sqrt(k) t   (Froude similarity)"
+  },
+  "tolerances_pct": {
+    "rheology": 5.0,
+    "micro": 3.0,
+    "repose": 3.0
+  },
+  "rows": [
+    {
+      "k": 1,
+      "mu_at_targets": [
+        0.32945187944154625,
+        0.3289211730360071,
+        0.38138606996408253,
+        0.404649927110485,
+        0.4271750609174347
+      ],
+      "targets_inside_measured_range": [
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "rheology_dev_pct": 0.0,
+      "rheology_dev_by_i_pct": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "coordination_number": 3.64807207360282,
+      "solid_fraction": 0.3800950022877021,
+      "coordination_dev_pct": 0.0,
+      "solid_fraction_dev_pct": 0.0,
+      "micro_dev_pct": 0.0,
+      "repose_angle_deg": 29.032150249458933,
+      "repose_dev_pct": 0.0,
+      "max_deviation_pct": 0.0,
+      "inertial_number_dev_pct_max": 17.93312941875462,
+      "speedup": 1.0,
+      "wall_clock_s_total": 272.5989029984921,
+      "n_particles": 294
+    },
+    {
+      "k": 2,
+      "mu_at_targets": [
+        0.35214346194271723,
+        0.3867475633854636,
+        0.3251166348650591,
+        0.3722532692938567,
+        0.3443886821992219
+      ],
+      "targets_inside_measured_range": [
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "rheology_dev_pct": 19.37996533327911,
+      "rheology_dev_by_i_pct": [
+        6.887677356594679,
+        17.58062268102341,
+        14.753930342637494,
+        8.006095058008679,
+        19.37996533327911
+      ],
+      "coordination_number": 2.8721738027081876,
+      "solid_fraction": 0.4134025489732238,
+      "coordination_dev_pct": 21.268720991259325,
+      "solid_fraction_dev_pct": 8.762953073587248,
+      "micro_dev_pct": 21.268720991259325,
+      "repose_angle_deg": 27.071164178145423,
+      "repose_dev_pct": 6.754532662802186,
+      "max_deviation_pct": 21.268720991259325,
+      "inertial_number_dev_pct_max": 34.63476026296428,
+      "speedup": 6.096765065608991,
+      "wall_clock_s_total": 357.69645057991147,
+      "n_particles": 294
+    }
+  ],
+  "max_rheology_dev_pct": 19.37996533327911,
+  "max_micro_dev_pct": 21.268720991259325,
+  "max_repose_dev_pct": 6.754532662802186,
+  "safe_k_upper_bound": 1.0,
+  "safe_k_by_anchor": {
+    "rheology": 1.0,
+    "microstructure": 1.0,
+    "repose": 1.0,
+    "rheology_and_microstructure": 1.0
+  },
+  "pareto_front": [
+    {
+      "k": 1,
+      "mu_at_targets": [
+        0.32945187944154625,
+        0.3289211730360071,
+        0.38138606996408253,
+        0.404649927110485,
+        0.4271750609174347
+      ],
+      "targets_inside_measured_range": [
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "rheology_dev_pct": 0.0,
+      "rheology_dev_by_i_pct": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "coordination_number": 3.64807207360282,
+      "solid_fraction": 0.3800950022877021,
+      "coordination_dev_pct": 0.0,
+      "solid_fraction_dev_pct": 0.0,
+      "micro_dev_pct": 0.0,
+      "repose_angle_deg": 29.032150249458933,
+      "repose_dev_pct": 0.0,
+      "max_deviation_pct": 0.0,
+      "inertial_number_dev_pct_max": 17.93312941875462,
+      "speedup": 1.0,
+      "wall_clock_s_total": 272.5989029984921,
+      "n_particles": 294
+    },
+    {
+      "k": 2,
+      "mu_at_targets": [
+        0.35214346194271723,
+        0.3867475633854636,
+        0.3251166348650591,
+        0.3722532692938567,
+        0.3443886821992219
+      ],
+      "targets_inside_measured_range": [
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "rheology_dev_pct": 19.37996533327911,
+      "rheology_dev_by_i_pct": [
+        6.887677356594679,
+        17.58062268102341,
+        14.753930342637494,
+        8.006095058008679,
+        19.37996533327911
+      ],
+      "coordination_number": 2.8721738027081876,
+      "solid_fraction": 0.4134025489732238,
+      "coordination_dev_pct": 21.268720991259325,
+      "solid_fraction_dev_pct": 8.762953073587248,
+      "micro_dev_pct": 21.268720991259325,
+      "repose_angle_deg": 27.071164178145423,
+      "repose_dev_pct": 6.754532662802186,
+      "max_deviation_pct": 21.268720991259325,
+      "inertial_number_dev_pct_max": 34.63476026296428,
+      "speedup": 6.096765065608991,
+      "wall_clock_s_total": 357.69645057991147,
+      "n_particles": 294
+    }
+  ],
+  "k_available": [
+    1,
+    2
+  ]
+}
