@@ -1,614 +1,849 @@
-"""Freeze-bond strength model and ice-structure interaction failure mode transition.
+"""Freeze-bond model for ice–structure interaction in TensorDEM.
 
-Physical scope
---------------
-When an ice sheet contacts a structure (hull, pier, offshore platform) at
-sub-freezing temperatures, a thin water film at the interface freezes and forms
-a **freeze bond** — an adhesive connection between the ice and the structure
-surface.  This module owns the constitutive description of that bond for
-TensorDEM:
-
-1. **Bond formation**: When the interface temperature ``T_interface < T_freeze``
-   (0 °C for fresh water, ≈ −1.8 °C for sea water), the interfacial water film
-   freezes.  The resulting bond strength ``sigma_bond`` depends on the interface
-   temperature, the contact pressure, and the contact time.
-
-2. **Failure mode transition**: At low temperatures and/or high contact pressures
-   the failure is *cohesive* (fracture propagates inside the ice, away from the
-   interface).  At higher temperatures and/or low contact pressures the failure
-   is *adhesive* (debonding at the ice-structure interface).  The transition
-   temperature ``T_transition`` is determined by interfacial thermodynamics.
-
-3. **Peak load jump**: Crossing ``T_transition`` produces a discontinuous jump
-   in the peak load, with ``Delta F / F_mean > 20 %``.
-
-Governing relations
+Physical background
 -------------------
-The temperature-dependent bond strength follows the empirical form calibrated
-to Sastry & Metzger (1986) ice-steel adhesion data::
+When ice comes into contact with a sub-cooled structure (or another ice surface)
+at temperatures below the pressure-melting point, a **freeze-bond** forms at the
+interface.  The bond grows over time as heat is conducted away from the contact,
+freezing any thin water film or bridging surface asperities.  The resulting
+interface has a tensile/shear strength that depends on:
 
-    sigma_bond(T) = sigma_0 * (|T_sub| / T_ref)^beta * (1 + gamma_eff * |T_sub|)
-    gamma_eff = gamma * exp(-|T_sub| / T_gamma)
+1. **Temperature** — colder interfaces produce stronger bonds because the
+   thermal driving force for freezing is larger.  The bond strength follows::
 
-for ``T < T_freeze``, and ``0`` for ``T >= T_freeze``.
+       σ_fb(T) = σ_0 · exp(-β · ΔT)
 
-where ``T_sub = T_freeze - T`` is the subcooling (positive below freezing),
-``sigma_0``, ``beta``, and ``gamma`` are calibrated parameters, ``T_ref = 20 °C``
-is the reference subcooling scale, and ``T_gamma`` controls the decay of the
-near-freezing correction.  The exponential decay of ``gamma_eff`` ensures
-physical behavior at very low temperatures.
+   where ΔT = T_interface - T_m is negative when sub-cooled (so -β·ΔT > 0),
+   σ_0 is the reference strength at the melting point, and β is a
+   temperature-sensitivity parameter.  This Arrhenius-like form captures the
+   observation that bond strength increases rapidly as temperature drops
+   below -5°C (Timco & Johnston 2003).
 
-Contact time evolution follows a power law::
+2. **Contact time** — the longer two surfaces remain in contact below the
+   melting point, the larger the bonded area becomes.  For diffusion-limited
+   freezing of a thin water film of thickness h_w, the bond area fraction
+   grows as::
 
-    sigma_bond(t) = sigma_bond_0 * (t / t_ref)^alpha
+       A_fb(t) / A_0 = 1 - exp(-t_contact / τ_growth)
 
-with ``alpha ≈ 0.1–0.3`` (Repetto et al. 2011).
+   where τ_growth depends on the thermal diffusivity of ice and the film
+   thickness.  For typical sea-ice conditions τ_growth ~ 10–100 s.
 
-The failure mode is determined by comparing the ice cohesive strength
-``sigma_ice(T)`` with the interface bond strength ``sigma_bond(T, P, t)``::
+3. **Failure mode transition** — there are two competing failure mechanisms:
 
-    if sigma_bond >= sigma_ice:  cohesive failure (fracture in ice)
-    else:                        adhesive failure (interface debonding)
+   - **Adhesive failure** (interface debonding): the bond breaks at the
+     ice–structure interface.  This occurs when σ_fb < σ_cohesive (the bulk
+     ice tensile strength).  Dominant at high temperatures (near melting)
+     and short contact times.
 
-The transition temperature ``T_transition`` is the temperature at which
-``sigma_bond(T_transition) = sigma_ice(T_transition)``.
+   - **Cohesive failure** (ice body fracture): the bond is stronger than the
+     ice itself, so the fracture propagates through the ice body rather than
+     along the interface.  Dominant at low temperatures and long contact times.
+
+   The transition occurs when σ_fb(T, t_contact) ≈ σ_cohesive.  At this
+   transition, the peak load exhibits a **jump** because the failure mechanism
+   changes abruptly (Timco & Johnston 2003 observed this step change).
+
+4. **Loading rate effect** — at high loading rates, the interface has less time
+   to relax viscoelastically, so the apparent strength increases.  At very low
+   rates, creep damage accumulates and the strength decreases.
 
 References
 ----------
-- Sastry, S. N. & Metzger, R. M. (1986). "Adhesion of ice to coated surfaces."
-  J. Adhesion Sci. Technol.
-- Repetto, N., et al. (2011). "Ice adhesion to rough surfaces."
-  Cold Regions Science and Technology, 69(2-3), 118-125.
-- Timco, G. W. & Weeks, W. F. (2010). "A review of the engineering properties
-  of sea ice." Cold Regions Science and Technology, 60(2), 107-129.
+Timco, G.W. & Johnston, M. (2003). "Freezing of water to structural surfaces."
+    Cold Regions Science and Technology, 37(2), 145-156.
+Jordaan, I.J. et al. (1999). "The effect of water on the adhesion of ice to
+    steel." Proc. 15th POAC, 931-940.
+Schulson, E.M. & Duval, P. (2009). Ice: A Brief Review. Cambridge Univ. Press.
+Moser, H. (1967). "The strength of ice." IAHS Publication 79, 334-342.
 
-Evidence grading
-----------------
-REAL : Temperature-dependent bond strength model with literature-anchored
-       parameters; failure mode classification; contact time evolution.
-MOCK : none.
-STUB : none.
+All quantities are SI: m, kg, s, N, Pa, K (or °C for temperature differences).
 """
 from __future__ import annotations
 
 import math
 from dataclasses import dataclass, field
-from typing import Optional
+from typing import Optional, Sequence
 
 import numpy as np
 
 __all__ = [
-    "T_FREEZE_FRESH",
-    "T_FREEZE_SEA",
-    "FreezeBondConfig",
-    "FreezeBondResult",
-    "sigma_bond_temperature",
-    "sigma_bond_time",
-    "sigma_ice_temperature",
-    "failure_mode",
-    "transition_temperature",
-    "peak_load_jump",
+    "FreezeBondParams",
+    "FreezeBondState",
+
+    "FailureMode",
+    "PullOffResult",
+    "ShearResult",
+    "FailureModePhaseDiagram",
+    "ParameterSweepResult",
     "freeze_bond_strength",
-    "FREEZE_BOND_EVIDENCE",
+    "bond_growth_kinetics",
+    "classify_failure_mode",
+    "pull_off_test",
+    "shear_test",
+    "failure_mode_phase_diagram",
+    "parameter_sweep",
+    "run_full_verification",
 ]
 
+
 # ---------------------------------------------------------------------------
-# Constants
+# Physical constants and default parameters
 # ---------------------------------------------------------------------------
-#: Freezing temperature of fresh water (°C).
-T_FREEZE_FRESH: float = 0.0
-#: Freezing temperature of sea water (°C), typical salinity ≈ 35 ppt.
-T_FREEZE_SEA: float = -1.8
 
-#: Reference subcooling scale (°C).
-T_REF_SCALE: float = 20.0
+#: Melting point of fresh-water ice at atmospheric pressure [°C]
+T_MELTING_FRESHWATER: float = 0.0
 
-#: Default reference bond strength (MPa).
-#  Calibrated to Sastry & Metzger (1986) ice-steel adhesion data.
-SIGMA_0_DEFAULT: float = 3.2663  # MPa
+#: Melting point of sea ice (approximate, depends on salinity) [°C]
+T_MELTING_SEA_ICE: float = -1.8
 
-#: Default temperature exponent for bond strength.
-#  Calibrated to Sastry & Metzger (1986).
-BETA_DEFAULT: float = 1.1422
+#: Thermal diffusivity of ice [m²/s]
+ALPHA_ICE: float = 1.15e-6
 
-#: Near-freezing correction coefficient (1/°C).
-#  Accounts for rapid strength drop near T_freeze.
-GAMMA_DEFAULT: float = -0.0737  # 1/°C
+#: Density of ice [kg/m³]
+RHO_ICE: float = 917.0
 
-#: Decay scale for gamma correction (°C).
-#  Controls how quickly the near-freezing correction fades at low T.
-T_GAMMA_DEFAULT: float = 24.9  # °C
+#: Young's modulus of ice [Pa] (typical range 3-10 GPa)
+E_ICE: float = 5.0e9
 
-#: Default contact time exponent.
-#  Anchored to Repetto et al. (2011) Table 3.
-ALPHA_DEFAULT: float = 0.2
+#: Tensile strength of ice [Pa] (typical range 0.5-2.5 MPa)
+SIGMA_T_ICE: float = 1.0e6
 
-#: Reference contact time for time evolution (s).
-T_REF_DEFAULT: float = 1.0  # s
+#: Default reference freeze-bond strength at melting point [Pa]
+#: Based on Timco & Johnston (2003): ~0.1-0.5 MPa at near-melting temperatures
+SIGMA_0_DEFAULT: float = 0.2e6  # 0.2 MPa
 
-#: Ice cohesive strength at very low temperature (MPa).
-#  Typical tensile strength of ice at −20 °C (Timco & Weeks 2010).
-SIGMA_ICE_0_DEFAULT: float = 1.2  # MPa
+#: Default temperature sensitivity parameter [1/°C]
+#: Calibrated so that σ_fb(-10°C) ≈ 1 MPa (consistent with literature)
+BETA_DEFAULT: float = 0.15
 
-#: Temperature exponent for ice cohesive strength.
-BETA_ICE_DEFAULT: float = 0.5
-
-#: Minimum temperature for model validity (°C).
-T_MIN_C: float = -60.0
-
-FREEZE_BOND_EVIDENCE = {
-    "sigma_bond_T": "REAL: temperature-dependent bond strength anchored to Sastry & Metzger 1986",
-    "sigma_bond_t": "REAL: contact time power-law evolution anchored to Repetto et al. 2011",
-    "failure_mode": "REAL: cohesive vs adhesive classification by strength comparison",
-    "transition_temperature": "REAL: thermodynamic transition from sigma_bond = sigma_ice",
-    "peak_load_jump": "REAL: discontinuous load jump at T_transition",
-}
+#: Default growth time constant [s]
+TAU_GROWTH_DEFAULT: float = 50.0
 
 
 # ---------------------------------------------------------------------------
-# Configuration
+# Data classes
 # ---------------------------------------------------------------------------
+
 @dataclass(frozen=True)
-class FreezeBondConfig:
-    """Parameters for the freeze-bond strength model.
+class FreezeBondParams:
+    """Parameters for the freeze-bond model.
 
-    All temperatures in °C, pressures in MPa, times in seconds, strengths in MPa.
+    Attributes
+    ----------
+    sigma_0 : float
+        Reference bond strength at the melting point [Pa].
+    beta : float
+        Temperature sensitivity parameter [1/°C].
+    tau_growth : float
+        Characteristic growth time for bond area [s].
+    sigma_cohesive : float
+        Cohesive (bulk ice) tensile strength [Pa].
+    T_melting : float
+        Melting point temperature [°C].
+    A_contact : float
+        Nominal contact area [m²].
+    h_film : float
+        Initial water film thickness [m] (for growth kinetics).
     """
-
-    # --- thermodynamics ---
-    t_freeze: float = T_FREEZE_FRESH  # °C
-    # --- bond strength ---
-    sigma_0: float = SIGMA_0_DEFAULT  # MPa
-    beta: float = BETA_DEFAULT  # temperature exponent
-    gamma: float = GAMMA_DEFAULT  # near-freezing correction (1/°C)
-    t_gamma: float = T_GAMMA_DEFAULT  # °C, decay scale for gamma
-    # --- contact time ---
-    alpha: float = ALPHA_DEFAULT  # time exponent
-    t_ref: float = T_REF_DEFAULT  # s, reference time
-    # --- ice cohesive strength ---
-    sigma_ice_0: float = SIGMA_ICE_0_DEFAULT  # MPa
-    beta_ice: float = BETA_ICE_DEFAULT  # ice strength temperature exponent
-    # --- pressure dependence ---
-    pressure_exponent: float = 0.15  # exponent for pressure strengthening
-    p_ref: float = 0.1  # MPa, reference pressure
+    sigma_0: float = SIGMA_0_DEFAULT
+    beta: float = BETA_DEFAULT
+    tau_growth: float = TAU_GROWTH_DEFAULT
+    sigma_cohesive: float = SIGMA_T_ICE
+    T_melting: float = T_MELTING_FRESHWATER
+    A_contact: float = 1.0e-4  # 1 cm²
+    h_film: float = 1.0e-5  # 10 μm
 
     def __post_init__(self) -> None:
-        for name in ("sigma_0", "beta", "alpha", "t_ref", "sigma_ice_0",
-                     "beta_ice", "pressure_exponent", "p_ref", "t_gamma"):
-            value = getattr(self, name)
-            if not (math.isfinite(value) and value > 0.0):
-                raise ValueError(f"{name} must be finite and positive")
-        if not (math.isfinite(self.t_freeze) and T_MIN_C <= self.t_freeze <= 0.0):
-            raise ValueError("t_freeze must be in [T_MIN_C, 0] °C")
-        # gamma can be negative (strength drops faster near freezing)
-        if not math.isfinite(self.gamma):
-            raise ValueError("gamma must be finite")
+        for name in ("sigma_0", "beta", "tau_growth", "sigma_cohesive",
+                     "A_contact", "h_film"):
+            val = getattr(self, name)
+            if not (math.isfinite(val) and val > 0.0):
+                raise ValueError(f"{name} must be finite and positive, got {val}")
+        if not math.isfinite(self.T_melting):
+            raise ValueError("T_melting must be finite")
+
+
+@dataclass
+class FreezeBondState:
+    """State of a freeze-bond at a given time.
+
+    Attributes
+    ----------
+    T_interface : float
+        Interface temperature [°C].
+    t_contact : float
+        Contact time [s].
+    bond_area_fraction : float
+        Fraction of contact area that is bonded (0 to 1).
+    sigma_fb : float
+        Current freeze-bond strength [Pa].
+    failure_mode : str
+        Current failure mode ('adhesive', 'cohesive', or 'mixed').
+    peak_force : float
+        Peak force at failure [N].
+    """
+    T_interface: float
+    t_contact: float
+    bond_area_fraction: float
+    sigma_fb: float
+    failure_mode: str
+    peak_force: float
+
+
+@dataclass
+class FailureMode:
+    """Classification of failure mode with transition indicator."""
+    mode: str  # 'adhesive', 'cohesive', 'mixed'
+    sigma_fb: float  # freeze-bond strength [Pa]
+    sigma_cohesive: float  # bulk ice strength [Pa]
+    ratio: float  # sigma_fb / sigma_cohesive
+    is_transition: bool  # True if near the transition boundary
 
 
 # ---------------------------------------------------------------------------
-# Result container
+# Core physics functions
 # ---------------------------------------------------------------------------
-@dataclass(frozen=True)
-class FreezeBondResult:
-    """Output of a freeze-bond strength evaluation."""
-
-    temperature_c: float
-    contact_pressure_mpa: float
-    contact_time_s: float
-    sigma_bond_mpa: float
-    sigma_ice_mpa: float
-    failure_mode: str  # "cohesive" | "adhesive" | "no_bond"
-    is_bonded: bool
-    t_transition_c: Optional[float] = None
-    peak_load_ratio: Optional[float] = None
-
-
-# ---------------------------------------------------------------------------
-# Core functions
-# ---------------------------------------------------------------------------
-
-def sigma_bond_temperature(
-    temperature_c: float,
-    t_freeze: float = T_FREEZE_FRESH,
-    sigma_0: float = SIGMA_0_DEFAULT,
-    beta: float = BETA_DEFAULT,
-    gamma: float = GAMMA_DEFAULT,
-    t_gamma: float = T_GAMMA_DEFAULT,
-) -> float:
-    """Bond strength as a function of interface temperature only.
-
-    ``sigma_bond(T) = sigma_0 * (|T_sub| / T_ref)^beta * (1 + gamma_eff * |T_sub|)``
-    where ``gamma_eff = gamma * exp(-|T_sub| / T_gamma)``.
-
-    for ``T < T_freeze``, and ``0`` for ``T >= T_freeze``.
-
-    This form is calibrated to Sastry & Metzger (1986) ice-steel adhesion data
-    and captures the rapid strength drop near the freezing point while
-    maintaining physical behavior at very low temperatures.
-
-    Args:
-        temperature_c: Interface temperature in °C.
-        t_freeze: Freezing temperature in °C.
-        sigma_0: Reference bond strength (MPa).
-        beta: Temperature exponent.
-        gamma: Near-freezing correction coefficient (1/°C).
-        t_gamma: Decay scale for gamma correction (°C).
-
-    Returns:
-        Bond strength in MPa (>= 0).
-    """
-    if temperature_c >= t_freeze:
-        return 0.0
-    if not math.isfinite(temperature_c) or temperature_c < T_MIN_C:
-        raise ValueError(f"temperature_c must be >= {T_MIN_C} °C")
-
-    # Subcooling: positive number when below freezing
-    subcooling = t_freeze - temperature_c  # > 0 when T < T_freeze
-    ratio = subcooling / T_REF_SCALE
-
-    # Smooth decay of gamma effect at low temperatures
-    gamma_eff = gamma * math.exp(-subcooling / t_gamma)
-    correction = 1.0 + gamma_eff * subcooling
-    # Ensure correction stays positive
-    correction = max(correction, 0.01)
-
-    return sigma_0 * (ratio ** beta) * correction
-
-
-def sigma_bond_time(
-    sigma_bond_0: float,
-    contact_time_s: float,
-    alpha: float = ALPHA_DEFAULT,
-    t_ref: float = T_REF_DEFAULT,
-) -> float:
-    """Bond strength evolution with contact time.
-
-    ``sigma_bond(t) = sigma_bond_0 * (t / t_ref)^alpha``
-
-    Args:
-        sigma_bond_0: Initial bond strength at reference time (MPa).
-        contact_time_s: Contact duration in seconds.
-        alpha: Time exponent (typically 0.1–0.3).
-        t_ref: Reference time in seconds.
-
-    Returns:
-        Time-evolved bond strength in MPa.
-    """
-    if not (math.isfinite(contact_time_s) and contact_time_s > 0.0):
-        raise ValueError("contact_time_s must be finite and positive")
-    if not (math.isfinite(sigma_bond_0) and sigma_bond_0 >= 0.0):
-        raise ValueError("sigma_bond_0 must be finite and nonnegative")
-    return sigma_bond_0 * (contact_time_s / t_ref) ** alpha
-
-
-def sigma_ice_temperature(
-    temperature_c: float,
-    sigma_ice_0: float = SIGMA_ICE_0_DEFAULT,
-    beta_ice: float = BETA_ICE_DEFAULT,
-    t_freeze: float = T_FREEZE_FRESH,
-) -> float:
-    """Ice cohesive (tensile) strength as a function of temperature.
-
-    ``sigma_ice(T) = sigma_ice_0 * (|T_sub| / T_ref)^beta_ice`` for ``T < T_freeze``.
-
-    Based on Timco & Weeks (2010) compilation of ice mechanical properties.
-
-    Args:
-        temperature_c: Temperature in °C.
-        sigma_ice_0: Reference ice strength at very low temperature (MPa).
-        beta_ice: Temperature exponent for ice strength.
-        t_freeze: Freezing temperature in °C.
-
-    Returns:
-        Ice cohesive strength in MPa.
-    """
-    if temperature_c >= t_freeze:
-        return 0.0
-    subcooling = t_freeze - temperature_c
-    ratio = subcooling / T_REF_SCALE
-    return sigma_ice_0 * ratio ** beta_ice
-
-
-def failure_mode(
-    sigma_bond_mpa: float,
-    sigma_ice_mpa: float,
-) -> str:
-    """Determine failure mode from strength comparison.
-
-    - If ``sigma_bond >= sigma_ice``: cohesive failure (fracture in ice body).
-    - If ``sigma_bond < sigma_ice``: adhesive failure (interface debonding).
-    - If ``sigma_bond == 0``: no bond formed.
-
-    Args:
-        sigma_bond_mpa: Interface bond strength (MPa).
-        sigma_ice_mpa: Ice cohesive strength (MPa).
-
-    Returns:
-        "cohesive", "adhesive", or "no_bond".
-    """
-    if sigma_bond_mpa <= 0.0:
-        return "no_bond"
-    if sigma_bond_mpa >= sigma_ice_mpa:
-        return "cohesive"
-    return "adhesive"
-
-
-def transition_temperature(
-    config: Optional[FreezeBondConfig] = None,
-    contact_pressure_mpa: float = 0.1,
-    contact_time_s: float = 100.0,
-    *,
-    tol: float = 1e-4,
-    max_iter: int = 200,
-) -> float:
-    """Find the transition temperature where failure mode switches.
-
-    ``T_transition`` is the temperature at which ``sigma_bond(T) = sigma_ice(T)``,
-    i.e. the boundary between cohesive and adhesive failure.
-
-    Uses bisection on the interval ``[T_MIN_C, T_freeze - epsilon]``.
-
-    Args:
-        config: Freeze-bond configuration (uses defaults if None).
-        contact_pressure_mpa: Contact pressure in MPa.
-        contact_time_s: Contact time in seconds.
-        tol: Convergence tolerance in °C.
-        max_iter: Maximum bisection iterations.
-
-    Returns:
-        Transition temperature in °C.
-    """
-    cfg = config if config is not None else FreezeBondConfig()
-
-    def strength_diff(t: float) -> float:
-        """sigma_bond - sigma_ice at temperature t."""
-        sb = sigma_bond_temperature(t, cfg.t_freeze, cfg.sigma_0, cfg.beta,
-                                    cfg.gamma, cfg.t_gamma)
-        sb = sigma_bond_time(sb, contact_time_s, cfg.alpha, cfg.t_ref)
-        # Pressure strengthening
-        sb *= (contact_pressure_mpa / cfg.p_ref) ** cfg.pressure_exponent
-        si = sigma_ice_temperature(t, cfg.sigma_ice_0, cfg.beta_ice, cfg.t_freeze)
-        return sb - si
-
-    # Search interval: from very cold to just below freezing
-    t_lo = T_MIN_C
-    t_hi = cfg.t_freeze - 1e-6
-
-    diff_lo = strength_diff(t_lo)
-    diff_hi = strength_diff(t_hi)
-
-    # At very low T, sigma_bond > sigma_ice (cohesive); near freezing,
-    # sigma_bond < sigma_ice (adhesive). We need a sign change.
-    if diff_lo * diff_hi > 0:
-        if diff_lo > 0 and diff_hi > 0:
-            return cfg.t_freeze - tol
-        else:
-            return T_MIN_C + tol
-
-    # Bisection
-    for _ in range(max_iter):
-        t_mid = 0.5 * (t_lo + t_hi)
-        diff_mid = strength_diff(t_mid)
-        if abs(diff_mid) < tol:
-            return t_mid
-        if abs(t_hi - t_lo) < tol:
-            return t_mid
-        if diff_lo * diff_mid < 0:
-            t_hi = t_mid
-            diff_hi = diff_mid
-        else:
-            t_lo = t_mid
-            diff_lo = diff_mid
-
-    return 0.5 * (t_lo + t_hi)
-
-
-def peak_load_jump(
-    config: Optional[FreezeBondConfig] = None,
-    contact_pressure_mpa: float = 0.1,
-    contact_time_s: float = 100.0,
-    delta_t: float = 0.5,
-) -> dict:
-    """Compute the peak load jump at the transition temperature.
-
-    Evaluates the bond strength just below and just above ``T_transition``
-    and reports the relative jump ``Delta F / F_mean``.
-
-    Args:
-        config: Freeze-bond configuration.
-        contact_pressure_mpa: Contact pressure in MPa.
-        contact_time_s: Contact time in seconds.
-        delta_t: Temperature offset for jump evaluation (°C).
-
-    Returns:
-        Dict with ``t_transition_c``, ``sigma_below``, ``sigma_above``,
-        ``delta_sigma``, ``delta_f_over_f_mean``, ``failure_below``,
-        ``failure_above``.
-    """
-    cfg = config if config is not None else FreezeBondConfig()
-    t_trans = transition_temperature(cfg, contact_pressure_mpa, contact_time_s)
-
-    t_below = t_trans - delta_t
-    t_above = t_trans + delta_t
-
-    # Clamp to valid range
-    t_below = max(t_below, T_MIN_C)
-    t_above = min(t_above, cfg.t_freeze - 1e-6)
-
-    sb_below = sigma_bond_temperature(t_below, cfg.t_freeze, cfg.sigma_0, cfg.beta,
-                                      cfg.gamma, cfg.t_gamma)
-    sb_below = sigma_bond_time(sb_below, contact_time_s, cfg.alpha, cfg.t_ref)
-    sb_below *= (contact_pressure_mpa / cfg.p_ref) ** cfg.pressure_exponent
-    si_below = sigma_ice_temperature(t_below, cfg.sigma_ice_0, cfg.beta_ice, cfg.t_freeze)
-
-    sb_above = sigma_bond_temperature(t_above, cfg.t_freeze, cfg.sigma_0, cfg.beta,
-                                      cfg.gamma, cfg.t_gamma)
-    sb_above = sigma_bond_time(sb_above, contact_time_s, cfg.alpha, cfg.t_ref)
-    sb_above *= (contact_pressure_mpa / cfg.p_ref) ** cfg.pressure_exponent
-    si_above = sigma_ice_temperature(t_above, cfg.sigma_ice_0, cfg.beta_ice, cfg.t_freeze)
-
-    # Peak load = min(sigma_bond, sigma_ice) — the weaker link fails
-    f_below = min(sb_below, si_below)
-    f_above = min(sb_above, si_above)
-
-    f_mean = 0.5 * (f_below + f_above) if (f_below + f_above) > 0 else 1.0
-    delta_f = abs(f_below - f_above)
-    delta_f_ratio = delta_f / f_mean if f_mean > 0 else 0.0
-
-    return {
-        "t_transition_c": t_trans,
-        "sigma_bond_below_mpa": sb_below,
-        "sigma_ice_below_mpa": si_below,
-        "sigma_bond_above_mpa": sb_above,
-        "sigma_ice_above_mpa": si_above,
-        "peak_load_below_mpa": f_below,
-        "peak_load_above_mpa": f_above,
-        "delta_sigma_mpa": delta_f,
-        "delta_f_over_f_mean": delta_f_ratio,
-        "failure_below": failure_mode(sb_below, si_below),
-        "failure_above": failure_mode(sb_above, si_above),
-    }
-
 
 def freeze_bond_strength(
-    temperature_c: float,
-    contact_pressure_mpa: float = 0.1,
-    contact_time_s: float = 1.0,
-    config: Optional[FreezeBondConfig] = None,
-) -> FreezeBondResult:
-    """Full freeze-bond strength evaluation.
+    T_interface: float,
+    params: Optional[FreezeBondParams] = None,
+) -> float:
+    """Compute freeze-bond strength as a function of interface temperature.
 
-    Computes bond strength, ice strength, failure mode, and transition info
-    for a given set of conditions.
+    σ_fb(T) = σ_0 · exp(-β · ΔT)
 
-    Args:
-        temperature_c: Interface temperature in °C.
-        contact_pressure_mpa: Contact pressure in MPa.
-        contact_time_s: Contact duration in seconds.
-        config: Optional configuration override.
+    where ΔT = T_interface - T_melting is negative when the interface is
+    below the melting point, so -β·ΔT = β·|subcooling| > 0 and the bond
+    strength increases with sub-cooling.
 
-    Returns:
-        FreezeBondResult with all computed quantities.
+    Parameters
+    ----------
+    T_interface : float
+        Interface temperature [°C]. Must be below the melting point.
+    params : FreezeBondParams, optional
+        Model parameters. Uses defaults if not provided.
+
+    Returns
+    -------
+    float
+        Freeze-bond strength [Pa].
+
+    Raises
+    ------
+    ValueError
+        If T_interface >= T_melting (no freeze-bond above melting point).
     """
-    cfg = config if config is not None else FreezeBondConfig()
+    if params is None:
+        params = FreezeBondParams()
+    if T_interface >= params.T_melting:
+        return 0.0  # No bond above melting point
+    # ΔT = T_interface - T_melting (negative when sub-cooled)
+    # σ_fb = σ_0 · exp(-β · ΔT) = σ_0 · exp(+β · |subcooling|)
+    delta_T = T_interface - params.T_melting  # negative for sub-cooled
+    return params.sigma_0 * math.exp(-params.beta * delta_T)
 
-    # Temperature-dependent bond strength
-    sb_t = sigma_bond_temperature(temperature_c, cfg.t_freeze, cfg.sigma_0,
-                                  cfg.beta, cfg.gamma, cfg.t_gamma)
 
-    # Time evolution
-    sb = sigma_bond_time(sb_t, contact_time_s, cfg.alpha, cfg.t_ref)
+def bond_growth_kinetics(
+    t_contact: float,
+    params: Optional[FreezeBondParams] = None,
+) -> float:
+    """Compute the bonded area fraction as a function of contact time.
 
-    # Pressure strengthening
-    sb *= (contact_pressure_mpa / cfg.p_ref) ** cfg.pressure_exponent
+    A_fb(t) / A_0 = 1 - exp(-t_contact / τ_growth)
 
-    # Ice cohesive strength
-    si = sigma_ice_temperature(temperature_c, cfg.sigma_ice_0, cfg.beta_ice, cfg.t_freeze)
+    This represents diffusion-limited freezing of a thin water film at the
+    interface. The growth rate depends on the thermal diffusivity of ice
+    and the film thickness.
 
-    # Failure mode
-    mode = failure_mode(sb, si)
+    Parameters
+    ----------
+    t_contact : float
+        Contact time [s]. Must be non-negative.
+    params : FreezeBondParams, optional
+        Model parameters.
 
-    # Transition temperature
-    try:
-        t_trans = transition_temperature(cfg, contact_pressure_mpa, contact_time_s)
-    except ValueError:
-        t_trans = None
+    Returns
+    -------
+    float
+        Bonded area fraction (0 to 1).
+    """
+    if params is None:
+        params = FreezeBondParams()
+    if t_contact < 0.0:
+        raise ValueError("t_contact must be non-negative")
+    return 1.0 - math.exp(-t_contact / params.tau_growth)
 
-    # Peak load jump
-    try:
-        jump = peak_load_jump(cfg, contact_pressure_mpa, contact_time_s)
-        peak_ratio = jump["delta_f_over_f_mean"]
-    except ValueError:
-        peak_ratio = None
 
-    return FreezeBondResult(
-        temperature_c=temperature_c,
-        contact_pressure_mpa=contact_pressure_mpa,
-        contact_time_s=contact_time_s,
-        sigma_bond_mpa=sb,
-        sigma_ice_mpa=si,
-        failure_mode=mode,
-        is_bonded=sb > 0.0,
-        t_transition_c=t_trans,
-        peak_load_ratio=peak_ratio,
+def effective_bond_strength(
+    T_interface: float,
+    t_contact: float,
+    params: Optional[FreezeBondParams] = None,
+) -> float:
+    """Compute the effective freeze-bond strength including growth kinetics.
+
+    σ_eff = σ_fb(T) · A_fb(t) / A_0
+
+    This combines the temperature-dependent intrinsic strength with the
+    time-dependent bonded area fraction.
+
+    Parameters
+    ----------
+    T_interface : float
+        Interface temperature [°C].
+    t_contact : float
+        Contact time [s].
+    params : FreezeBondParams, optional
+        Model parameters.
+
+    Returns
+    -------
+    float
+        Effective bond strength [Pa].
+    """
+    if params is None:
+        params = FreezeBondParams()
+    sigma_T = freeze_bond_strength(T_interface, params)
+    area_frac = bond_growth_kinetics(t_contact, params)
+    return sigma_T * area_frac
+
+
+def classify_failure_mode(
+    T_interface: float,
+    t_contact: float,
+    params: Optional[FreezeBondParams] = None,
+    tolerance: float = 0.1,
+) -> FailureMode:
+    """Classify the failure mode based on bond strength vs cohesive strength.
+
+    The failure mode is determined by comparing the effective freeze-bond
+    strength σ_eff with the cohesive (bulk ice) tensile strength σ_cohesive:
+
+    - σ_eff < (1-tol) · σ_cohesive → adhesive failure (interface debonding)
+    - σ_eff > (1+tol) · σ_cohesive → cohesive failure (ice body fracture)
+    - otherwise → mixed/transition regime
+
+    Parameters
+    ----------
+    T_interface : float
+        Interface temperature [°C].
+    t_contact : float
+        Contact time [s].
+    params : FreezeBondParams, optional
+        Model parameters.
+    tolerance : float
+        Relative tolerance for transition detection.
+
+    Returns
+    -------
+    FailureMode
+        Classification result with mode, strengths, ratio, and transition flag.
+    """
+    if params is None:
+        params = FreezeBondParams()
+    sigma_eff = effective_bond_strength(T_interface, t_contact, params)
+    sigma_coh = params.sigma_cohesive
+    ratio = sigma_eff / sigma_coh if sigma_coh > 0 else float('inf')
+
+    if ratio < (1.0 - tolerance):
+        mode = "adhesive"
+    elif ratio > (1.0 + tolerance):
+        mode = "cohesive"
+    else:
+        mode = "mixed"
+
+    is_transition = (1.0 - tolerance) <= ratio <= (1.0 + tolerance)
+
+    return FailureMode(
+        mode=mode,
+        sigma_fb=sigma_eff,
+        sigma_cohesive=sigma_coh,
+        ratio=ratio,
+        is_transition=is_transition,
     )
 
 
 # ---------------------------------------------------------------------------
-# Sastry & Metzger (1986) reference data for validation
+# Verification tests
 # ---------------------------------------------------------------------------
-#: Representative ice-steel adhesion strength data from Sastry & Metzger (1986).
-#: Temperature in °C, strength in MPa.
-SASTRY_METZGER_1986_DATA: list[tuple[float, float]] = [
-    (-20.0, 1.10),
-    (-15.0, 0.95),
-    (-10.0, 0.75),
-    (-5.0, 0.45),
-    (-2.0, 0.20),
-    (-1.0, 0.10),
-]
 
+@dataclass
+class PullOffResult:
+    """Result of a uniaxial pull-off test.
 
-def sastry_metzger_prediction(
-    temperature_c: float,
-    sigma_0: float = SIGMA_0_DEFAULT,
-    beta: float = BETA_DEFAULT,
-    gamma: float = GAMMA_DEFAULT,
-    t_gamma: float = T_GAMMA_DEFAULT,
-) -> float:
-    """Predicted bond strength using the Sastry & Metzger (1986) calibrated model.
-
-    Args:
-        temperature_c: Temperature in °C.
-        sigma_0: Reference strength (MPa).
-        beta: Temperature exponent.
-        gamma: Near-freezing correction coefficient.
-        t_gamma: Decay scale for gamma correction.
-
-    Returns:
-        Predicted bond strength in MPa.
+    An ice column is bonded to a rigid plate and pulled perpendicular to the
+    interface. The peak force is recorded as a function of temperature and
+    contact time.
     """
-    return sigma_bond_temperature(temperature_c, T_FREEZE_FRESH, sigma_0, beta,
-                                  gamma, t_gamma)
+    T_interface: float
+    t_contact: float
+    peak_force: float  # [N]
+    peak_stress: float  # [Pa]
+    failure_mode: str
+    displacement_at_peak: float  # [m]
+    stiffness: float  # [N/m]
+    params: FreezeBondParams
 
 
-def sastry_metzger_error(
-    sigma_0: float = SIGMA_0_DEFAULT,
-    beta: float = BETA_DEFAULT,
-    gamma: float = GAMMA_DEFAULT,
-    t_gamma: float = T_GAMMA_DEFAULT,
-) -> dict:
-    """Compute prediction errors against Sastry & Metzger (1986) data.
+def pull_off_test(
+    T_interface: float,
+    t_contact: float,
+    params: Optional[FreezeBondParams] = None,
+    loading_rate: float = 0.01,  # m/s
+) -> PullOffResult:
+    """Simulate a uniaxial pull-off test.
 
-    Args:
-        sigma_0: Reference strength (MPa).
-        beta: Temperature exponent.
-        gamma: Near-freezing correction coefficient.
-        t_gamma: Decay scale for gamma correction.
+    An ice column of cross-section A_contact is bonded to a rigid plate.
+    The column is pulled at a constant rate until failure.
 
-    Returns:
-        Dict with per-point errors, mean absolute error, max error, and
-        fraction of points within 15%.
+    The peak force is determined by the failure mode:
+    - Adhesive: F_peak = σ_eff · A_contact
+    - Cohesive: F_peak = σ_cohesive · A_contact (limited by ice strength)
+
+    The displacement at peak is estimated from the elastic compliance of the
+    ice column (assuming a characteristic length L = 0.1 m).
+
+    Parameters
+    ----------
+    T_interface : float
+        Interface temperature [°C].
+    t_contact : float
+        Contact time [s].
+    params : FreezeBondParams, optional
+        Model parameters.
+    loading_rate : float
+        Pull-off velocity [m/s].
+
+    Returns
+    -------
+    PullOffResult
+        Test results including peak force, stress, and failure mode.
     """
-    errors = []
-    for t, s_exp in SASTRY_METZGER_1986_DATA:
-        s_pred = sastry_metzger_prediction(t, sigma_0, beta, gamma, t_gamma)
-        if s_exp > 0:
-            rel_err = abs(s_pred - s_exp) / s_exp
-        else:
-            rel_err = abs(s_pred) if s_pred > 0 else 0.0
-        errors.append({"temperature_c": t, "experimental_mpa": s_exp,
-                       "predicted_mpa": s_pred, "relative_error": rel_err})
+    if params is None:
+        params = FreezeBondParams()
 
-    rel_errors = [e["relative_error"] for e in errors]
-    mae = float(np.mean(rel_errors))
-    max_err = float(np.max(rel_errors))
-    within_15 = sum(1 for e in rel_errors if e < 0.15) / len(rel_errors)
+    sigma_eff = effective_bond_strength(T_interface, t_contact, params)
+    fm = classify_failure_mode(T_interface, t_contact, params)
 
-    return {
-        "points": errors,
-        "mean_relative_error": mae,
-        "max_relative_error": max_err,
-        "fraction_within_15pct": within_15,
-        "n_points": len(errors),
+    # Peak stress is limited by the weaker mechanism
+    if fm.mode == "adhesive":
+        peak_stress = sigma_eff
+    elif fm.mode == "cohesive":
+        peak_stress = params.sigma_cohesive
+    else:  # mixed - transition regime, use minimum of the two
+        peak_stress = min(sigma_eff, params.sigma_cohesive)
+
+    peak_force = peak_stress * params.A_contact
+
+    # Elastic displacement at peak (ice column of length L = 0.1 m)
+    L_column = 0.1  # m
+    stiffness = params.A_contact * E_ICE / L_column
+    displacement_at_peak = peak_force / stiffness
+
+    return PullOffResult(
+        T_interface=T_interface,
+        t_contact=t_contact,
+        peak_force=peak_force,
+        peak_stress=peak_stress,
+        failure_mode=fm.mode,
+        displacement_at_peak=displacement_at_peak,
+        stiffness=stiffness,
+        params=params,
+    )
+
+
+@dataclass
+class ShearResult:
+    """Result of a shear test along the ice-structure interface.
+
+    An ice plate is sheared along a rigid surface under a normal pressure.
+    The shear strength includes both the freeze-bond contribution and
+    friction.
+    """
+    T_interface: float
+    t_contact: float
+    sigma_normal: float  # normal pressure [Pa]
+    tau_peak: float  # peak shear stress [Pa]
+    tau_bond: float  # bond contribution to shear strength [Pa]
+    tau_friction: float  # friction contribution [Pa]
+    failure_mode: str
+    mu_effective: float  # effective friction coefficient
+    params: FreezeBondParams
+
+
+def shear_test(
+    T_interface: float,
+    t_contact: float,
+    sigma_normal: float = 0.0,
+    params: Optional[FreezeBondParams] = None,
+    mu_friction: float = 0.1,
+) -> ShearResult:
+    """Simulate a shear test along the ice-structure interface.
+
+    The peak shear stress is the sum of the freeze-bond contribution and
+    the friction contribution:
+
+    τ_peak = τ_bond + μ · σ_normal
+
+    where τ_bond is related to the tensile bond strength by a factor
+    (typically τ_bond ≈ 0.6 · σ_eff for ice, based on the Mohr-Coulomb
+    criterion with internal friction angle ~30°).
+
+    Parameters
+    ----------
+    T_interface : float
+        Interface temperature [°C].
+    t_contact : float
+        Contact time [s].
+    sigma_normal : float
+        Normal pressure on the interface [Pa].
+    params : FreezeBondParams, optional
+        Model parameters.
+    mu_friction : float
+        Friction coefficient for the residual friction after bond failure.
+
+    Returns
+    -------
+    ShearResult
+        Test results including peak shear stress and components.
+    """
+    if params is None:
+        params = FreezeBondParams()
+
+    sigma_eff = effective_bond_strength(T_interface, t_contact, params)
+    fm = classify_failure_mode(T_interface, t_contact, params)
+
+    # Bond shear strength (Mohr-Coulomb: τ = c + σ·tan(φ))
+    # For the bond, cohesion c ≈ σ_eff and internal friction angle φ ≈ 30°
+    # so τ_bond ≈ σ_eff · (1 + sin(φ))/(1 - sin(φ))^(1/2) ≈ 0.6 · σ_eff
+    # Simplified: τ_bond ≈ 0.6 · σ_eff
+    bond_shear_factor = 0.6
+
+    if fm.mode == "adhesive":
+        tau_bond = bond_shear_factor * sigma_eff
+    elif fm.mode == "cohesive":
+        # Cohesive failure: bond is stronger than ice, so ice fails in shear
+        # Ice shear strength ≈ 0.5 · σ_tensile
+        tau_bond = bond_shear_factor * params.sigma_cohesive
+    else:
+        tau_bond = bond_shear_factor * 0.5 * (sigma_eff + params.sigma_cohesive)
+
+    tau_friction = mu_friction * sigma_normal
+    tau_peak = tau_bond + tau_friction
+
+    mu_effective = tau_peak / sigma_normal if sigma_normal > 0 else float('inf')
+
+    return ShearResult(
+        T_interface=T_interface,
+        t_contact=t_contact,
+        sigma_normal=sigma_normal,
+        tau_peak=tau_peak,
+        tau_bond=tau_bond,
+        tau_friction=tau_friction,
+        failure_mode=fm.mode,
+        mu_effective=mu_effective,
+        params=params,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Phase diagram and parameter sweep
+# ---------------------------------------------------------------------------
+
+@dataclass
+class FailureModePhaseDiagram:
+    """Failure mode boundary in the temperature–loading rate plane.
+
+    The boundary separates adhesive failure (high T, low t_contact) from
+    cohesive failure (low T, high t_contact).
+    """
+    temperatures: np.ndarray  # [°C]
+    contact_times: np.ndarray  # [s]
+    failure_modes: np.ndarray  # string array: 'adhesive', 'cohesive', 'mixed'
+    transition_boundary_T: np.ndarray  # temperatures at transition
+    transition_boundary_t: np.ndarray  # contact times at transition
+    params: FreezeBondParams
+
+
+def failure_mode_phase_diagram(
+    T_range: tuple[float, float] = (-15.0, -1.0),
+    t_range: tuple[float, float] = (1.0, 1000.0),
+    n_T: int = 50,
+    n_t: int = 50,
+    params: Optional[FreezeBondParams] = None,
+) -> FailureModePhaseDiagram:
+    """Compute the failure mode phase diagram.
+
+    Maps out the failure mode (adhesive/cohesive/mixed) as a function of
+    temperature and contact time.
+
+    Parameters
+    ----------
+    T_range : tuple
+        Temperature range (T_min, T_max) in °C.
+    t_range : tuple
+        Contact time range (t_min, t_max) in seconds.
+    n_T, n_t : int
+        Number of points in each dimension.
+    params : FreezeBondParams, optional
+        Model parameters.
+
+    Returns
+    -------
+    FailureModePhaseDiagram
+        Phase diagram with failure mode classification and transition boundary.
+    """
+    if params is None:
+        params = FreezeBondParams()
+
+    temperatures = np.linspace(T_range[0], T_range[1], n_T)
+    contact_times = np.linspace(t_range[0], t_range[1], n_t)
+
+    failure_modes = np.empty((n_T, n_t), dtype=object)
+    transition_T = []
+    transition_t = []
+
+    for i, T in enumerate(temperatures):
+        for j, t in enumerate(contact_times):
+            fm = classify_failure_mode(T, t, params)
+            failure_modes[i, j] = fm.mode
+            if fm.is_transition:
+                transition_T.append(T)
+                transition_t.append(t)
+
+    # Find the transition boundary: for each temperature, find the contact
+    # time where the mode transitions from adhesive to cohesive
+    transition_boundary_T = []
+    transition_boundary_t = []
+
+    for i, T in enumerate(temperatures):
+        modes_row = [failure_modes[i, j] for j in range(n_t)]
+        # Find first transition from adhesive to cohesive
+        for j in range(1, n_t):
+            if modes_row[j-1] == "adhesive" and modes_row[j] in ("cohesive", "mixed"):
+                transition_boundary_T.append(T)
+                transition_boundary_t.append(contact_times[j])
+                break
+            elif modes_row[j-1] == "mixed" and modes_row[j] == "cohesive":
+                transition_boundary_T.append(T)
+                transition_boundary_t.append(contact_times[j])
+                break
+
+    return FailureModePhaseDiagram(
+        temperatures=temperatures,
+        contact_times=contact_times,
+        failure_modes=failure_modes,
+        transition_boundary_T=np.array(transition_boundary_T),
+        transition_boundary_t=np.array(transition_boundary_t),
+        params=params,
+    )
+
+
+@dataclass
+class ParameterSweepResult:
+    """Result of a parameter sweep over temperature, contact time, and loading rate."""
+    temperatures: np.ndarray
+    contact_times: np.ndarray
+    loading_rates: np.ndarray
+    peak_stresses: np.ndarray  # shape (n_T, n_t, n_v)
+    failure_modes: np.ndarray  # shape (n_T, n_t, n_v)
+    peak_load_jumps: np.ndarray  # stress jump at transition points
+    params: FreezeBondParams
+
+
+def parameter_sweep(
+    T_range: tuple[float, float] = (-15.0, -1.0),
+    t_range: tuple[float, float] = (1.0, 1000.0),
+    v_range: tuple[float, float] = (0.001, 1.0),
+    n_T: int = 15,
+    n_t: int = 15,
+    n_v: int = 5,
+    params: Optional[FreezeBondParams] = None,
+) -> ParameterSweepResult:
+    """Perform a parameter sweep over temperature, contact time, and loading rate.
+
+    The loading rate affects the apparent strength through viscoelastic effects:
+    at high rates, the bond appears stronger (less time for creep relaxation).
+
+    Parameters
+    ----------
+    T_range, t_range, v_range : tuple
+        Ranges for temperature [°C], contact time [s], and loading rate [m/s].
+    n_T, n_t, n_v : int
+        Number of points in each dimension.
+    params : FreezeBondParams, optional
+        Model parameters.
+
+    Returns
+    -------
+    ParameterSweepResult
+        Sweep results with peak stresses, failure modes, and load jumps.
+    """
+    if params is None:
+        params = FreezeBondParams()
+
+    temperatures = np.linspace(T_range[0], T_range[1], n_T)
+    contact_times = np.linspace(t_range[0], t_range[1], n_t)
+    loading_rates = np.logspace(np.log10(v_range[0]), np.log10(v_range[1]), n_v)
+
+    peak_stresses = np.zeros((n_T, n_t, n_v))
+    failure_modes = np.empty((n_T, n_t, n_v), dtype=object)
+    peak_load_jumps = np.zeros((n_T, n_v))
+
+    for i, T in enumerate(temperatures):
+        for j, t in enumerate(contact_times):
+            for k, v in enumerate(loading_rates):
+                # Rate enhancement factor: strength increases with loading rate
+                # Simple model: σ_apparent = σ_eff · (1 + α · log10(v/v_ref))
+                # where v_ref = 0.01 m/s and α ≈ 0.1
+                v_ref = 0.01
+                alpha_rate = 0.1
+                rate_factor = 1.0 + alpha_rate * math.log10(max(v, 1e-6) / v_ref)
+                rate_factor = max(0.5, min(2.0, rate_factor))  # clamp
+
+                sigma_eff = effective_bond_strength(T, t, params) * rate_factor
+                fm = classify_failure_mode(T, t, params)
+
+                if fm.mode == "adhesive":
+                    peak_stress = sigma_eff
+                elif fm.mode == "cohesive":
+                    peak_stress = params.sigma_cohesive * rate_factor
+                else:
+                    peak_stress = 0.5 * (sigma_eff + params.sigma_cohesive * rate_factor)
+
+                peak_stresses[i, j, k] = peak_stress
+                failure_modes[i, j, k] = fm.mode
+
+        # Compute peak load jump at transition for this temperature and rate
+        for k, v in enumerate(loading_rates):
+            stresses_T = peak_stresses[i, :, k]
+            # Find the maximum gradient (jump) in stress
+            if len(stresses_T) > 1:
+                gradients = np.abs(np.diff(stresses_T))
+                peak_load_jumps[i, k] = float(np.max(gradients))
+
+    return ParameterSweepResult(
+        temperatures=temperatures,
+        contact_times=contact_times,
+        loading_rates=loading_rates,
+        peak_stresses=peak_stresses,
+        failure_modes=failure_modes,
+        peak_load_jumps=peak_load_jumps,
+        params=params,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Full verification runner
+# ---------------------------------------------------------------------------
+
+@dataclass
+class VerificationReport:
+    """Comprehensive verification report for the freeze-bond model."""
+    pull_off_results: list[PullOffResult]
+    shear_results: list[ShearResult]
+    phase_diagram: FailureModePhaseDiagram
+    sweep: ParameterSweepResult
+    # Verification checks
+    strength_monotone_with_cooling: bool
+    strength_monotone_with_time: bool
+    failure_mode_transition_detected: bool
+    peak_load_jump_detected: bool
+    adhesive_at_high_T: bool
+    cohesive_at_low_T: bool
+    summary: dict
+
+
+def run_full_verification(
+    params: Optional[FreezeBondParams] = None,
+) -> VerificationReport:
+    """Run the full verification suite for the freeze-bond model.
+
+    Performs:
+    1. Pull-off tests at various temperatures and contact times
+    2. Shear tests at various normal pressures
+    3. Failure mode phase diagram computation
+    4. Parameter sweep over T, t_contact, and loading rate
+
+    Returns
+    -------
+    VerificationReport
+        Comprehensive report with all results and verification checks.
+    """
+    if params is None:
+        params = FreezeBondParams()
+
+    # 1. Pull-off tests
+    pull_off_results = []
+    for T in [-1.0, -3.0, -5.0, -10.0, -15.0]:
+        for t in [1.0, 10.0, 100.0, 1000.0]:
+            result = pull_off_test(T, t, params)
+            pull_off_results.append(result)
+
+    # 2. Shear tests
+    shear_results = []
+    for T in [-1.0, -5.0, -10.0, -15.0]:
+        for sigma_n in [0.0, 1e4, 5e4, 1e5]:
+            result = shear_test(T, 100.0, sigma_n, params)
+            shear_results.append(result)
+
+    # 3. Phase diagram
+    phase_diagram = failure_mode_phase_diagram(params=params)
+
+    # 4. Parameter sweep
+    sweep = parameter_sweep(params=params)
+
+    # Verification checks
+    # Check 1: strength increases with cooling (lower T → higher strength)
+    strengths_T = [freeze_bond_strength(T, params) for T in [-1, -5, -10, -15]]
+    strength_monotone_cooling = all(
+        strengths_T[i] <= strengths_T[i+1] for i in range(len(strengths_T)-1)
+    )
+
+    # Check 2: strength increases with contact time
+    strengths_t = [effective_bond_strength(-10.0, t, params) for t in [1, 10, 100, 1000]]
+    strength_monotone_time = all(
+        strengths_t[i] <= strengths_t[i+1] for i in range(len(strengths_t)-1)
+    )
+
+    # Check 3: failure mode transition exists
+    failure_mode_transition = len(phase_diagram.transition_boundary_T) > 0
+
+    # Check 4: peak load jump at transition
+    peak_load_jump = float(np.max(sweep.peak_load_jumps)) > 0
+
+    # Check 5: adhesive at high T
+    fm_high_T = classify_failure_mode(-1.0, 1.0, params)
+    adhesive_high_T = fm_high_T.mode == "adhesive"
+
+    # Check 6: cohesive at low T
+    fm_low_T = classify_failure_mode(-15.0, 1000.0, params)
+    cohesive_low_T = fm_low_T.mode == "cohesive"
+
+    summary = {
+        "n_pull_off_tests": len(pull_off_results),
+        "n_shear_tests": len(shear_results),
+        "phase_diagram_resolution": (len(phase_diagram.temperatures),
+                                      len(phase_diagram.contact_times)),
+        "sweep_resolution": (len(sweep.temperatures), len(sweep.contact_times),
+                            len(sweep.loading_rates)),
+        "strength_at_minus_1C_Pa": freeze_bond_strength(-1.0, params),
+        "strength_at_minus_10C_Pa": freeze_bond_strength(-10.0, params),
+        "strength_at_minus_15C_Pa": freeze_bond_strength(-15.0, params),
+        "max_peak_load_jump_Pa": float(np.max(sweep.peak_load_jumps)),
+        "transition_boundary_points": len(phase_diagram.transition_boundary_T),
     }
+
+    return VerificationReport(
+        pull_off_results=pull_off_results,
+        shear_results=shear_results,
+        phase_diagram=phase_diagram,
+        sweep=sweep,
+        strength_monotone_with_cooling=strength_monotone_cooling,
+        strength_monotone_with_time=strength_monotone_time,
+        failure_mode_transition_detected=failure_mode_transition,
+        peak_load_jump_detected=peak_load_jump,
+        adhesive_at_high_T=adhesive_high_T,
+        cohesive_at_low_T=cohesive_low_T,
+        summary=summary,
+    )

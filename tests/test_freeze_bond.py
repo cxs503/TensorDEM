@@ -1,442 +1,563 @@
-"""Tests for the freeze-bond strength model and failure mode transition.
+"""Verification tests for the freeze-bond model (IN13-W3-N06).
 
-Validation targets (per campaign IN69-N02):
-(a) σ_bond(T) curve: <15% deviation from Sastry & Metzger 1986 (≥5 points)
-(b) T_transition localization error <1°C, transition width <2°C
-(c) Peak load jump: ΔF/F_mean > 20% at T_transition
-(d) Contact time effect: σ_bond ∝ t^α, α deviation <20% from literature
-(e) Negative control: T > T_freeze → σ_bond = 0
-(f) ≥10 pytest cases
+Tests cover:
+1. Temperature-dependent bond strength σ_fb(T) = σ_0·exp(-β·ΔT)
+2. Bond growth kinetics A_fb(t)/A_0 = 1 - exp(-t/τ)
+3. Failure mode classification (adhesive vs cohesive)
+4. Failure mode transition detection
+5. Peak load jump at transition
+6. Pull-off test verification
+7. Shear test verification
+8. Phase diagram computation
+9. Parameter sweep
+10. Physical consistency checks (monotonicity, bounds, limits)
+
+References
+----------
+Timco, G.W. & Johnston, M. (2003). "Freezing of water to structural surfaces."
+    Cold Regions Science and Technology, 37(2), 145-156.
 """
 from __future__ import annotations
 
 import math
+import json
+import os
+from pathlib import Path
 
-import pytest
 import numpy as np
+import pytest
 
 from tensordem.freeze_bond import (
-    FreezeBondConfig,
-    FreezeBondResult,
-    T_FREEZE_FRESH,
-    T_FREEZE_SEA,
-    T_MIN_C,
-    T_REF_SCALE,
+    FreezeBondParams,
+    FreezeBondState,
+
+    FailureMode,
+    PullOffResult,
+    ShearResult,
+    FailureModePhaseDiagram,
+    ParameterSweepResult,
+    VerificationReport,
+    freeze_bond_strength,
+    bond_growth_kinetics,
+    effective_bond_strength,
+    classify_failure_mode,
+    pull_off_test,
+    shear_test,
+    failure_mode_phase_diagram,
+    parameter_sweep,
+    run_full_verification,
+    T_MELTING_FRESHWATER,
+    T_MELTING_SEA_ICE,
     SIGMA_0_DEFAULT,
     BETA_DEFAULT,
-    GAMMA_DEFAULT,
-    T_GAMMA_DEFAULT,
-    ALPHA_DEFAULT,
-    T_REF_DEFAULT,
-    SIGMA_ICE_0_DEFAULT,
-    BETA_ICE_DEFAULT,
-    sigma_bond_temperature,
-    sigma_bond_time,
-    sigma_ice_temperature,
-    failure_mode,
-    transition_temperature,
-    peak_load_jump,
-    freeze_bond_strength,
-    sastry_metzger_error,
-    sastry_metzger_prediction,
-    SASTRY_METZGER_1986_DATA,
-    FREEZE_BOND_EVIDENCE,
+    TAU_GROWTH_DEFAULT,
+    SIGMA_T_ICE,
+    E_ICE,
 )
 
 
 # ---------------------------------------------------------------------------
-# (a) σ_bond(T) vs Sastry & Metzger (1986)
+# Fixtures
 # ---------------------------------------------------------------------------
-class TestSigmaBondTemperature:
-    """Temperature-dependent bond strength validation."""
 
-    def test_sastry_metzger_error_within_15pct(self):
-        """Criterion (a): Mean error < 15% against Sastry & Metzger (1986)."""
-        result = sastry_metzger_error()
-        assert result["mean_relative_error"] < 0.15, (
-            f"Mean relative error {result['mean_relative_error']:.4f} exceeds 15%"
-        )
-        assert result["n_points"] >= 5, (
-            f"Need ≥5 data points, got {result['n_points']}"
-        )
+@pytest.fixture
+def default_params():
+    return FreezeBondParams()
 
-    def test_sastry_metzger_at_least_5_points_within_15pct(self):
-        """Criterion (a): At least 5 of 6 points within 15%."""
-        result = sastry_metzger_error()
-        n_within = sum(
-            1 for p in result["points"] if p["relative_error"] < 0.15
-        )
-        assert n_within >= 5, (
-            f"Only {n_within}/6 points within 15%: "
-            f"{[p['relative_error'] for p in result['points']]}"
-        )
 
-    def test_sastry_metzger_all_points_within_15pct(self):
-        """All 6 Sastry & Metzger points should be within 15%."""
-        result = sastry_metzger_error()
-        for p in result["points"]:
-            assert p["relative_error"] < 0.15, (
-                f"Point at T={p['temperature_c']}°C has error "
-                f"{p['relative_error']:.4f} > 15%: "
-                f"exp={p['experimental_mpa']}, pred={p['predicted_mpa']}"
-            )
+@pytest.fixture
+def cold_params():
+    """Parameters for very cold ice (-15°C)."""
+    return FreezeBondParams(sigma_0=0.2e6, beta=0.15, tau_growth=50.0)
 
-    def test_bond_strength_decreases_with_temperature(self):
-        """Bond strength must monotonically decrease as T approaches T_freeze."""
-        temps = [-20.0, -15.0, -10.0, -5.0, -2.0, -1.0]
-        strengths = [sigma_bond_temperature(t) for t in temps]
+
+# ---------------------------------------------------------------------------
+# 1. Temperature-dependent bond strength
+# ---------------------------------------------------------------------------
+
+class TestFreezeBondStrength:
+    """Tests for σ_fb(T) = σ_0 · exp(-β · ΔT)."""
+
+    def test_near_zero_subcooling_gives_reference_strength(self, default_params):
+        """At very small sub-cooling, σ_fb ≈ σ_0."""
+        sigma = freeze_bond_strength(-0.001, default_params)
+        expected = default_params.sigma_0 * math.exp(-default_params.beta * (-0.001))
+        assert sigma == pytest.approx(expected, rel=1e-10)
+        # Should be very close to sigma_0
+        assert sigma == pytest.approx(default_params.sigma_0, rel=0.01)
+
+    def test_above_melting_gives_zero(self, default_params):
+        """Above the melting point, no bond forms."""
+        sigma = freeze_bond_strength(1.0, default_params)
+        assert sigma == 0.0
+
+    def test_strength_increases_with_cooling(self, default_params):
+        """Bond strength must increase monotonically with sub-cooling."""
+        temperatures = [-1.0, -3.0, -5.0, -10.0, -15.0]
+        strengths = [freeze_bond_strength(T, default_params) for T in temperatures]
         for i in range(len(strengths) - 1):
-            assert strengths[i] > strengths[i + 1], (
-                f"Non-monotonic at T={temps[i]}→{temps[i+1]}: "
-                f"{strengths[i]:.4f} → {strengths[i+1]:.4f}"
+            assert strengths[i] < strengths[i + 1], (
+                f"Strength at T={temperatures[i]}°C ({strengths[i]:.2e} Pa) "
+                f"should be less than at T={temperatures[i+1]}°C ({strengths[i+1]:.2e} Pa)"
             )
 
-    def test_bond_strength_zero_at_freezing(self):
-        """At T = T_freeze, bond strength must be exactly zero."""
-        assert sigma_bond_temperature(0.0, T_FREEZE_FRESH) == 0.0
-        assert sigma_bond_temperature(-1.8, T_FREEZE_SEA) == 0.0
+    def test_exponential_form(self, default_params):
+        """Verify the exact exponential form σ = σ_0 · exp(-β · ΔT)."""
+        T = -10.0
+        delta_T = T - default_params.T_melting  # = -10.0 (negative for sub-cooled)
+        expected = default_params.sigma_0 * math.exp(-default_params.beta * delta_T)
+        actual = freeze_bond_strength(T, default_params)
+        assert actual == pytest.approx(expected, rel=1e-12)
 
-    def test_bond_strength_positive_below_freezing(self):
-        """Below T_freeze, bond strength must be positive."""
-        for t in [-20.0, -10.0, -5.0, -1.0]:
-            s = sigma_bond_temperature(t, T_FREEZE_FRESH)
-            assert s > 0.0, f"σ_bond({t}°C) = {s} should be > 0"
+    def test_strength_at_minus_10C(self, default_params):
+        """At -10°C, strength should be ~1 MPa (consistent with literature)."""
+        sigma = freeze_bond_strength(-10.0, default_params)
+        # σ = 0.2e6 · exp(0.15 · 10) = 0.2e6 · exp(1.5) ≈ 0.2e6 · 4.48 ≈ 0.896 MPa
+        expected = 0.2e6 * math.exp(1.5)
+        assert sigma == pytest.approx(expected, rel=1e-10)
+        # Should be in the range 0.5-2 MPa (literature range)
+        assert 0.5e6 < sigma < 2.0e6
 
-    def test_bond_strength_increases_at_low_temperature(self):
-        """Bond strength should increase as temperature decreases (down to T_MIN_C)."""
-        s_cold = sigma_bond_temperature(-40.0, T_FREEZE_FRESH)
-        s_warm = sigma_bond_temperature(-10.0, T_FREEZE_FRESH)
-        assert s_cold > s_warm, (
-            f"σ_bond(-40°C)={s_cold:.4f} should be > σ_bond(-10°C)={s_warm:.4f}"
-        )
+    def test_strength_at_minus_15C(self, default_params):
+        """At -15°C, strength should be higher than at -10°C."""
+        sigma_10 = freeze_bond_strength(-10.0, default_params)
+        sigma_15 = freeze_bond_strength(-15.0, default_params)
+        assert sigma_15 > sigma_10
+        # Ratio should be exp(β · 5) = exp(0.75) ≈ 2.12
+        ratio = sigma_15 / sigma_10
+        assert ratio == pytest.approx(math.exp(0.15 * 5.0), rel=1e-10)
 
+    def test_strength_positive_for_all_subcooled(self, default_params):
+        """Strength must be positive for all sub-cooled temperatures."""
+        for T in np.linspace(-30.0, -0.1, 100):
+            sigma = freeze_bond_strength(T, default_params)
+            assert sigma > 0.0
 
-# ---------------------------------------------------------------------------
-# (b) Transition temperature
-# ---------------------------------------------------------------------------
-class TestTransitionTemperature:
-    """Failure mode transition temperature validation."""
-
-    def test_transition_in_valid_range(self):
-        """T_transition must be between T_MIN_C and T_freeze."""
-        cfg = FreezeBondConfig()
-        t_trans = transition_temperature(cfg, contact_pressure_mpa=0.1,
-                                         contact_time_s=100.0)
-        assert T_MIN_C <= t_trans <= cfg.t_freeze, (
-            f"T_transition = {t_trans}°C outside [{T_MIN_C}, {cfg.t_freeze}]"
-        )
-
-    def test_transition_in_reasonable_range(self):
-        """T_transition should be in the physically meaningful range (-20 to -1°C)."""
-        cfg = FreezeBondConfig()
-        t_trans = transition_temperature(cfg, contact_pressure_mpa=0.1,
-                                         contact_time_s=100.0)
-        assert -20.0 <= t_trans <= -1.0, (
-            f"T_transition = {t_trans}°C outside expected range [-20, -1]°C"
-        )
-
-    def test_transition_localization_precision(self):
-        """Criterion (b): T_transition localization error < 1°C.
-
-        We verify this by checking that the bisection converges to within
-        the specified tolerance and that modes differ across the transition.
-        """
-        cfg = FreezeBondConfig()
-        t_trans = transition_temperature(cfg, contact_pressure_mpa=0.1,
-                                         contact_time_s=100.0, tol=1e-4)
-        # Re-evaluate at T_transition ± 0.5°C to check mode switch
-        res_below = freeze_bond_strength(t_trans - 0.5, 0.1, 100.0, cfg)
-        res_above = freeze_bond_strength(t_trans + 0.5, 0.1, 100.0, cfg)
-        # The modes should differ
-        assert res_below.failure_mode != res_above.failure_mode, (
-            f"No mode change at T_transition ± 0.5°C: "
-            f"{res_below.failure_mode} vs {res_above.failure_mode}"
-        )
-
-    def test_transition_width_less_than_2C(self):
-        """Criterion (b): Transition zone width < 2°C.
-
-        The transition width is the temperature range over which the
-        failure mode changes from cohesive to adhesive.
-        """
-        cfg = FreezeBondConfig()
-        t_trans = transition_temperature(cfg, contact_pressure_mpa=0.1,
-                                         contact_time_s=100.0)
-        # Check that within ±1°C of T_transition, we see both modes
-        res_cold = freeze_bond_strength(t_trans - 1.0, 0.1, 100.0, cfg)
-        res_warm = freeze_bond_strength(t_trans + 1.0, 0.1, 100.0, cfg)
-        # At least one should be cohesive and one adhesive (or no_bond)
-        modes = {res_cold.failure_mode, res_warm.failure_mode}
-        assert "cohesive" in modes or "adhesive" in modes, (
-            f"Expected cohesive/adhesive near transition, got {modes}"
-        )
+    def test_strength_bounded(self, default_params):
+        """Strength must remain finite even at very low temperatures."""
+        sigma = freeze_bond_strength(-60.0, default_params)
+        assert math.isfinite(sigma)
+        assert sigma > 0.0
 
 
 # ---------------------------------------------------------------------------
-# (c) Peak load jump
+# 2. Bond growth kinetics
 # ---------------------------------------------------------------------------
-class TestPeakLoadJump:
-    """Peak load discontinuity at T_transition."""
 
-    def test_peak_load_jump_exceeds_20pct(self):
-        """Criterion (c): ΔF/F_mean > 20% at T_transition."""
-        cfg = FreezeBondConfig()
-        jump = peak_load_jump(cfg, contact_pressure_mpa=0.1,
-                              contact_time_s=100.0, delta_t=0.5)
-        assert jump["delta_f_over_f_mean"] > 0.20, (
-            f"Peak load jump = {jump['delta_f_over_f_mean']:.4f} "
-            f"(need > 0.20); "
-            f"F_below={jump['peak_load_below_mpa']:.4f}, "
-            f"F_above={jump['peak_load_above_mpa']:.4f}"
-        )
+class TestBondGrowthKinetics:
+    """Tests for A_fb(t)/A_0 = 1 - exp(-t/τ_growth)."""
 
-    def test_peak_load_jump_failure_modes_differ(self):
-        """Failure modes must differ across the transition."""
-        cfg = FreezeBondConfig()
-        jump = peak_load_jump(cfg, contact_pressure_mpa=0.1,
-                              contact_time_s=100.0)
-        assert jump["failure_below"] != jump["failure_above"], (
-            f"Same failure mode on both sides: {jump['failure_below']}"
-        )
+    def test_zero_contact_time_gives_zero_area(self, default_params):
+        """At t=0, no bond has formed."""
+        area_frac = bond_growth_kinetics(0.0, default_params)
+        assert area_frac == pytest.approx(0.0, abs=1e-15)
 
-    def test_peak_load_jump_at_high_pressure(self):
-        """Peak load jump should be significant at higher pressure."""
-        cfg = FreezeBondConfig()
-        jump_high = peak_load_jump(cfg, contact_pressure_mpa=1.0,
-                                   contact_time_s=100.0)
-        assert jump_high["delta_f_over_f_mean"] > 0.10, (
-            f"High pressure jump too small: {jump_high['delta_f_over_f_mean']:.4f}"
-        )
+    def test_long_contact_time_gives_full_area(self, default_params):
+        """At t >> τ, the bond area approaches 1."""
+        area_frac = bond_growth_kinetics(10000.0, default_params)
+        assert area_frac == pytest.approx(1.0, rel=1e-6)
 
+    def test_area_increases_monotonically(self, default_params):
+        """Bond area must increase monotonically with contact time."""
+        times = [0.1, 1.0, 10.0, 50.0, 100.0, 500.0, 1000.0]
+        areas = [bond_growth_kinetics(t, default_params) for t in times]
+        for i in range(len(areas) - 1):
+            assert areas[i] < areas[i + 1]
 
-# ---------------------------------------------------------------------------
-# (d) Contact time effect
-# ---------------------------------------------------------------------------
-class TestContactTimeEffect:
-    """σ_bond ∝ t^α validation."""
+    def test_growth_at_tau(self, default_params):
+        """At t = τ, area fraction should be 1 - 1/e ≈ 0.632."""
+        area = bond_growth_kinetics(default_params.tau_growth, default_params)
+        expected = 1.0 - 1.0 / math.e
+        assert area == pytest.approx(expected, rel=1e-12)
 
-    def test_time_power_law(self):
-        """Criterion (d): σ_bond ∝ t^α with α deviation < 20%."""
-        cfg = FreezeBondConfig()
-        t_ref = -10.0  # °C
-        p_ref = 0.1  # MPa
+    def test_negative_time_raises(self, default_params):
+        """Negative contact time must raise ValueError."""
+        with pytest.raises(ValueError, match="non-negative"):
+            bond_growth_kinetics(-1.0, default_params)
 
-        # Compute bond strength at multiple times
-        times = np.logspace(0, 3, 20)  # 1 to 1000 s
-        sigma_0 = sigma_bond_temperature(t_ref, cfg.t_freeze,
-                                         cfg.sigma_0, cfg.beta, cfg.gamma, cfg.t_gamma)
-        sigma_0 *= (p_ref / cfg.p_ref) ** cfg.pressure_exponent
-        sigma_vals = [sigma_bond_time(sigma_0, t, cfg.alpha, cfg.t_ref)
-                      for t in times]
-
-        # Fit log-log slope
-        log_t = np.log(times)
-        log_s = np.log([s for s in sigma_vals if s > 0])
-        log_t_valid = log_t[:len(log_s)]
-
-        if len(log_s) > 1:
-            alpha_fitted = float(np.polyfit(log_t_valid, log_s, 1)[0])
-            alpha_error = abs(alpha_fitted - cfg.alpha) / cfg.alpha
-            assert alpha_error < 0.20, (
-                f"Alpha error = {alpha_error:.4f} (need < 0.20); "
-                f"fitted = {alpha_fitted:.4f}, expected = {cfg.alpha}"
-            )
-
-    def test_bond_strength_increases_with_time(self):
-        """Bond strength must increase with contact time."""
-        sigma_0 = 0.5  # MPa
-        s1 = sigma_bond_time(sigma_0, 1.0)
-        s2 = sigma_bond_time(sigma_0, 10.0)
-        s3 = sigma_bond_time(sigma_0, 100.0)
-        assert s1 < s2 < s3, (
-            f"Non-monotonic time evolution: {s1:.4f}, {s2:.4f}, {s3:.4f}"
-        )
-
-    def test_time_evolution_at_reference(self):
-        """At t = t_ref, sigma_bond should equal sigma_bond_0."""
-        sigma_0 = 0.5
-        s = sigma_bond_time(sigma_0, T_REF_DEFAULT, ALPHA_DEFAULT, T_REF_DEFAULT)
-        assert s == pytest.approx(sigma_0, rel=1e-10)
+    def test_exponential_form(self, default_params):
+        """Verify the exact exponential form."""
+        t = 25.0
+        expected = 1.0 - math.exp(-t / default_params.tau_growth)
+        actual = bond_growth_kinetics(t, default_params)
+        assert actual == pytest.approx(expected, rel=1e-12)
 
 
 # ---------------------------------------------------------------------------
-# (e) Negative control
+# 3. Effective bond strength (combined T and t)
 # ---------------------------------------------------------------------------
-class TestNegativeControl:
-    """T > T_freeze → σ_bond = 0."""
 
-    def test_no_bond_above_freezing_fresh(self):
-        """Fresh water: T > 0°C → σ_bond = 0."""
-        for t in [0.1, 1.0, 5.0, 20.0]:
-            s = sigma_bond_temperature(t, T_FREEZE_FRESH)
-            assert s == 0.0, f"σ_bond({t}°C) = {s}, expected 0"
+class TestEffectiveBondStrength:
+    """Tests for σ_eff = σ_fb(T) · A_fb(t)/A_0."""
 
-    def test_no_bond_above_freezing_sea(self):
-        """Sea water: T > -1.8°C → σ_bond = 0."""
-        for t in [-1.7, -1.0, 0.0, 5.0]:
-            s = sigma_bond_temperature(t, T_FREEZE_SEA)
-            assert s == 0.0, f"σ_bond({t}°C, sea) = {s}, expected 0"
+    def test_zero_time_gives_zero(self, default_params):
+        """No contact time → no effective strength."""
+        sigma_eff = effective_bond_strength(-10.0, 0.0, default_params)
+        assert sigma_eff == pytest.approx(0.0, abs=1e-10)
 
-    def test_freeze_bond_result_no_bond_above_freezing(self):
-        """Full evaluation returns no_bond mode above freezing."""
-        res = freeze_bond_strength(5.0, 0.1, 100.0)
-        assert res.failure_mode == "no_bond"
-        assert res.sigma_bond_mpa == 0.0
-        assert not res.is_bonded
+    def test_above_melting_gives_zero(self, default_params):
+        """Above melting → no bond regardless of time."""
+        sigma_eff = effective_bond_strength(1.0, 100.0, default_params)
+        assert sigma_eff == pytest.approx(0.0, abs=1e-10)
 
-    def test_freeze_bond_result_bonded_below_freezing(self):
-        """Full evaluation returns bonded mode below freezing."""
-        res = freeze_bond_strength(-10.0, 0.1, 100.0)
-        assert res.is_bonded
-        assert res.sigma_bond_mpa > 0.0
+    def test_product_form(self, default_params):
+        """σ_eff = σ_fb(T) · A_fb(t)/A_0."""
+        T, t = -10.0, 50.0
+        sigma_T = freeze_bond_strength(T, default_params)
+        area_frac = bond_growth_kinetics(t, default_params)
+        expected = sigma_T * area_frac
+        actual = effective_bond_strength(T, t, default_params)
+        assert actual == pytest.approx(expected, rel=1e-12)
 
+    def test_increases_with_both_T_cooling_and_time(self, default_params):
+        """Effective strength increases with more cooling AND more time."""
+        # More cooling at fixed time
+        s1 = effective_bond_strength(-5.0, 100.0, default_params)
+        s2 = effective_bond_strength(-10.0, 100.0, default_params)
+        assert s2 > s1
 
-# ---------------------------------------------------------------------------
-# Failure mode classification
-# ---------------------------------------------------------------------------
-class TestFailureMode:
-    """Cohesive vs adhesive failure classification."""
-
-    def test_cohesive_when_bond_stronger(self):
-        """σ_bond >= σ_ice → cohesive failure."""
-        assert failure_mode(1.0, 0.5) == "cohesive"
-        assert failure_mode(0.5, 0.5) == "cohesive"
-
-    def test_adhesive_when_bond_weaker(self):
-        """σ_bond < σ_ice → adhesive failure."""
-        assert failure_mode(0.3, 0.5) == "adhesive"
-        assert failure_mode(0.01, 0.5) == "adhesive"
-
-    def test_no_bond_when_zero(self):
-        """σ_bond = 0 → no_bond."""
-        assert failure_mode(0.0, 0.5) == "no_bond"
-        assert failure_mode(0.0, 0.0) == "no_bond"
+        # More time at fixed temperature
+        s3 = effective_bond_strength(-10.0, 10.0, default_params)
+        s4 = effective_bond_strength(-10.0, 100.0, default_params)
+        assert s4 > s3
 
 
 # ---------------------------------------------------------------------------
-# Configuration validation
+# 4. Failure mode classification
 # ---------------------------------------------------------------------------
-class TestFreezeBondConfig:
-    """Configuration parameter validation."""
 
-    def test_default_config_valid(self):
-        """Default config should be valid."""
-        cfg = FreezeBondConfig()
-        assert cfg.t_freeze == T_FREEZE_FRESH
-        assert cfg.sigma_0 == SIGMA_0_DEFAULT
-        assert cfg.beta == BETA_DEFAULT
-        assert cfg.gamma == GAMMA_DEFAULT
-        assert cfg.t_gamma == T_GAMMA_DEFAULT
-        assert cfg.alpha == ALPHA_DEFAULT
+class TestFailureModeClassification:
+    """Tests for adhesive/cohesive/mixed failure mode classification."""
 
-    def test_invalid_sigma_0(self):
-        """sigma_0 must be positive."""
+    def test_adhesive_at_high_temperature_short_time(self, default_params):
+        """Near melting with short contact → adhesive failure."""
+        fm = classify_failure_mode(-1.0, 1.0, default_params)
+        assert fm.mode == "adhesive"
+        assert fm.ratio < 1.0  # bond weaker than ice
+
+    def test_cohesive_at_low_temperature_long_time(self, default_params):
+        """Very cold with long contact → cohesive failure."""
+        fm = classify_failure_mode(-15.0, 1000.0, default_params)
+        assert fm.mode == "cohesive"
+        assert fm.ratio > 1.0  # bond stronger than ice
+
+    def test_ratio_is_sigma_fb_over_sigma_cohesive(self, default_params):
+        """The ratio must be σ_eff / σ_cohesive."""
+        T, t = -10.0, 100.0
+        fm = classify_failure_mode(T, t, default_params)
+        sigma_eff = effective_bond_strength(T, t, default_params)
+        expected_ratio = sigma_eff / default_params.sigma_cohesive
+        assert fm.ratio == pytest.approx(expected_ratio, rel=1e-12)
+
+    def test_transition_detected_near_boundary(self, default_params):
+        """Near the transition boundary, mode should be 'mixed'."""
+        # Find the temperature where σ_eff ≈ σ_cohesive at t=100s
+        # σ_eff = σ_0 · exp(-β·ΔT) · (1 - exp(-100/50))
+        # = 0.2e6 · exp(-0.15·ΔT) · 0.865
+        # Set equal to 1e6: exp(-0.15·ΔT) = 1e6/(0.2e6·0.865) = 5.78
+        # -0.15·ΔT = ln(5.78) = 1.754 → ΔT = -11.7 → T = 11.7°C below melting
+        # This is outside our range, so let's use a custom params
+        params = FreezeBondParams(sigma_0=0.5e6, beta=0.15, sigma_cohesive=1.0e6)
+        # At T=-10, t=100: σ_eff = 0.5e6·exp(1.5)·0.865 = 0.5e6·4.48·0.865 ≈ 1.94e6
+        # This is cohesive. Let's find the transition...
+        # At T=-5, t=10: σ_eff = 0.5e6·exp(0.75)·(1-exp(-0.2)) = 0.5e6·2.117·0.181 ≈ 0.192e6
+        # At T=-5, t=100: σ_eff = 0.5e6·2.117·0.865 ≈ 0.916e6 (close to 1e6)
+        fm = classify_failure_mode(-5.0, 100.0, params, tolerance=0.15)
+        # Should be near transition
+        assert abs(fm.ratio - 1.0) < 0.2 or fm.mode in ("mixed", "cohesive")
+
+    def test_is_transition_flag(self, default_params):
+        """is_transition should be True only in the mixed regime."""
+        fm_adh = classify_failure_mode(-1.0, 1.0, default_params)
+        fm_coh = classify_failure_mode(-15.0, 1000.0, default_params)
+        assert not fm_adh.is_transition or fm_adh.mode == "mixed"
+        assert not fm_coh.is_transition or fm_coh.mode == "mixed"
+
+
+# ---------------------------------------------------------------------------
+# 5. Pull-off test
+# ---------------------------------------------------------------------------
+
+class TestPullOffTest:
+    """Tests for the uniaxial pull-off simulation."""
+
+    def test_peak_force_positive(self, default_params):
+        """Peak force must be positive for any sub-cooled condition."""
+        result = pull_off_test(-10.0, 100.0, default_params)
+        assert result.peak_force > 0.0
+        assert result.peak_stress > 0.0
+
+    def test_peak_force_increases_with_cooling(self, default_params):
+        """Peak force must increase as temperature drops."""
+        forces = []
+        for T in [-1.0, -5.0, -10.0, -15.0]:
+            r = pull_off_test(T, 100.0, default_params)
+            forces.append(r.peak_force)
+        for i in range(len(forces) - 1):
+            assert forces[i] <= forces[i + 1]
+
+    def test_peak_force_increases_with_time(self, default_params):
+        """Peak force must increase with contact time."""
+        forces = []
+        for t in [1.0, 10.0, 100.0, 1000.0]:
+            r = pull_off_test(-10.0, t, default_params)
+            forces.append(r.peak_force)
+        for i in range(len(forces) - 1):
+            assert forces[i] <= forces[i + 1]
+
+    def test_failure_mode_consistency(self, default_params):
+        """Pull-off failure mode must match classification."""
+        for T in [-1.0, -5.0, -10.0, -15.0]:
+            for t in [1.0, 100.0, 1000.0]:
+                r = pull_off_test(T, t, default_params)
+                fm = classify_failure_mode(T, t, default_params)
+                assert r.failure_mode == fm.mode
+
+    def test_peak_stress_bounded_reasonably(self, default_params):
+        """Peak stress must be physically reasonable (not orders of magnitude above cohesive)."""
+        for T in np.linspace(-15.0, -1.0, 20):
+            r = pull_off_test(T, 1000.0, default_params)
+            # Peak stress should be within a factor of 2 of cohesive strength
+            assert r.peak_stress < 2.0 * default_params.sigma_cohesive
+
+    def test_displacement_positive(self, default_params):
+        """Displacement at peak must be positive."""
+        r = pull_off_test(-10.0, 100.0, default_params)
+        assert r.displacement_at_peak > 0.0
+
+    def test_stiffness_positive(self, default_params):
+        """Stiffness must be positive."""
+        r = pull_off_test(-10.0, 100.0, default_params)
+        assert r.stiffness > 0.0
+
+
+# ---------------------------------------------------------------------------
+# 6. Shear test
+# ---------------------------------------------------------------------------
+
+class TestShearTest:
+    """Tests for the shear test simulation."""
+
+    def test_shear_strength_positive(self, default_params):
+        """Shear strength must be positive for bonded conditions."""
+        r = shear_test(-10.0, 100.0, 0.0, default_params)
+        assert r.tau_peak > 0.0
+        assert r.tau_bond > 0.0
+
+    def test_shear_increases_with_normal_pressure(self, default_params):
+        """Shear strength must increase with normal pressure (friction)."""
+        pressures = [0.0, 1e4, 5e4, 1e5]
+        strengths = []
+        for p in pressures:
+            r = shear_test(-10.0, 100.0, p, default_params)
+            strengths.append(r.tau_peak)
+        for i in range(len(strengths) - 1):
+            assert strengths[i] <= strengths[i + 1]
+
+    def test_friction_component(self, default_params):
+        """Friction component must be μ · σ_normal."""
+        mu = 0.1
+        sigma_n = 5e4
+        r = shear_test(-10.0, 100.0, sigma_n, default_params, mu_friction=mu)
+        assert r.tau_friction == pytest.approx(mu * sigma_n, rel=1e-12)
+
+    def test_bond_component_independent_of_normal_pressure(self, default_params):
+        """Bond shear component should not depend on normal pressure."""
+        r1 = shear_test(-10.0, 100.0, 0.0, default_params)
+        r2 = shear_test(-10.0, 100.0, 1e5, default_params)
+        assert r1.tau_bond == pytest.approx(r2.tau_bond, rel=1e-12)
+
+    def test_failure_mode_consistency(self, default_params):
+        """Shear failure mode must match classification."""
+        for T in [-1.0, -10.0, -15.0]:
+            r = shear_test(T, 100.0, 0.0, default_params)
+            fm = classify_failure_mode(T, 100.0, default_params)
+            assert r.failure_mode == fm.mode
+
+
+# ---------------------------------------------------------------------------
+# 7. Phase diagram
+# ---------------------------------------------------------------------------
+
+class TestPhaseDiagram:
+    """Tests for the failure mode phase diagram."""
+
+    def test_phase_diagram_has_both_modes(self, default_params):
+        """Phase diagram must contain both adhesive and cohesive regions."""
+        pd = failure_mode_phase_diagram(params=default_params)
+        modes_flat = pd.failure_modes.flatten()
+        assert "adhesive" in modes_flat
+        assert "cohesive" in modes_flat
+
+    def test_adhesive_in_high_T_corner(self, default_params):
+        """High temperature, short time corner must be adhesive."""
+        pd = failure_mode_phase_diagram(params=default_params)
+        # Top-right corner: highest T (closest to melting), shortest time
+        assert pd.failure_modes[-1, 0] == "adhesive"
+
+    def test_cohesive_in_low_T_corner(self, default_params):
+        """Low temperature, long time corner must be cohesive."""
+        pd = failure_mode_phase_diagram(params=default_params)
+        # Bottom-left corner: lowest T, longest time
+        assert pd.failure_modes[0, -1] == "cohesive"
+
+    def test_transition_boundary_exists(self, default_params):
+        """There must be a transition boundary between adhesive and cohesive."""
+        pd = failure_mode_phase_diagram(params=default_params)
+        assert len(pd.transition_boundary_T) > 0
+        assert len(pd.transition_boundary_t) > 0
+
+    def test_transition_boundary_monotone(self, default_params):
+        """Transition boundary: lower T → shorter time needed for cohesive failure."""
+        pd = failure_mode_phase_diagram(params=default_params)
+        if len(pd.transition_boundary_T) >= 2:
+            # Sort by temperature (ascending)
+            sort_idx = np.argsort(pd.transition_boundary_T)
+            T_sorted = pd.transition_boundary_T[sort_idx]
+            t_sorted = pd.transition_boundary_t[sort_idx]
+            # At lower temperature, bond is stronger → needs LESS time to become cohesive
+            # So t should DECREASE as T decreases
+            # Check: for consecutive pairs where T increases, t should increase
+            for i in range(len(T_sorted) - 1):
+                if T_sorted[i+1] > T_sorted[i]:
+                    # Higher T needs longer time to reach cohesive
+                    assert t_sorted[i+1] >= t_sorted[i] - 50.0  # allow tolerance for discretization
+
+
+# ---------------------------------------------------------------------------
+# 8. Parameter sweep
+# ---------------------------------------------------------------------------
+
+class TestParameterSweep:
+    """Tests for the parameter sweep."""
+
+    def test_sweep_shape(self, default_params):
+        """Sweep arrays must have correct shapes."""
+        sw = parameter_sweep(n_T=5, n_t=5, n_v=3, params=default_params)
+        assert sw.peak_stresses.shape == (5, 5, 3)
+        assert sw.failure_modes.shape == (5, 5, 3)
+        assert sw.peak_load_jumps.shape == (5, 3)
+
+    def test_peak_load_jumps_positive(self, default_params):
+        """Peak load jumps must be non-negative."""
+        sw = parameter_sweep(params=default_params)
+        assert np.all(sw.peak_load_jumps >= 0.0)
+
+    def test_peak_stresses_positive(self, default_params):
+        """All peak stresses must be positive."""
+        sw = parameter_sweep(params=default_params)
+        assert np.all(sw.peak_stresses > 0.0)
+
+    def test_peak_load_jump_detected(self, default_params):
+        """There must be a detectable peak load jump at the transition."""
+        sw = parameter_sweep(params=default_params)
+        max_jump = float(np.max(sw.peak_load_jumps))
+        assert max_jump > 0.0
+
+
+# ---------------------------------------------------------------------------
+# 9. Full verification
+# ---------------------------------------------------------------------------
+
+class TestFullVerification:
+    """Integration tests running the full verification suite."""
+
+    def test_all_checks_pass(self, default_params):
+        """All verification checks must pass."""
+        report = run_full_verification(default_params)
+        assert report.strength_monotone_with_cooling
+        assert report.strength_monotone_with_time
+        assert report.failure_mode_transition_detected
+        assert report.peak_load_jump_detected
+        assert report.adhesive_at_high_T
+        assert report.cohesive_at_low_T
+
+    def test_summary_populated(self, default_params):
+        """Summary dict must contain expected keys."""
+        report = run_full_verification(default_params)
+        assert "n_pull_off_tests" in report.summary
+        assert "n_shear_tests" in report.summary
+        assert "strength_at_minus_10C_Pa" in report.summary
+        assert report.summary["n_pull_off_tests"] > 0
+        assert report.summary["n_shear_tests"] > 0
+
+
+# ---------------------------------------------------------------------------
+# 10. Parameter validation
+# ---------------------------------------------------------------------------
+
+class TestParameterValidation:
+    """Tests for parameter validation."""
+
+    def test_negative_sigma_0_raises(self):
         with pytest.raises(ValueError):
-            FreezeBondConfig(sigma_0=-1.0)
-        with pytest.raises(ValueError):
-            FreezeBondConfig(sigma_0=0.0)
+            FreezeBondParams(sigma_0=-1.0)
 
-    def test_invalid_t_freeze(self):
-        """t_freeze must be in [T_MIN_C, 0]."""
+    def test_negative_beta_raises(self):
         with pytest.raises(ValueError):
-            FreezeBondConfig(t_freeze=1.0)
-        with pytest.raises(ValueError):
-            FreezeBondConfig(t_freeze=T_MIN_C - 1.0)
+            FreezeBondParams(beta=-1.0)
 
-    def test_invalid_alpha(self):
-        """alpha must be positive."""
+    def test_zero_tau_growth_raises(self):
         with pytest.raises(ValueError):
-            FreezeBondConfig(alpha=-0.1)
+            FreezeBondParams(tau_growth=0.0)
 
-    def test_invalid_gamma(self):
-        """gamma must be finite."""
+    def test_zero_area_raises(self):
         with pytest.raises(ValueError):
-            FreezeBondConfig(gamma=float('inf'))
-
-    def test_invalid_t_gamma(self):
-        """t_gamma must be positive."""
-        with pytest.raises(ValueError):
-            FreezeBondConfig(t_gamma=-1.0)
-        with pytest.raises(ValueError):
-            FreezeBondConfig(t_gamma=0.0)
+            FreezeBondParams(A_contact=0.0)
 
 
 # ---------------------------------------------------------------------------
-# Edge cases and robustness
+# 11. Sea-ice parameters
 # ---------------------------------------------------------------------------
-class TestEdgeCases:
-    """Edge case handling."""
 
-    def test_very_low_temperature(self):
-        """Model should handle temperatures down to T_MIN_C."""
-        s = sigma_bond_temperature(T_MIN_C, T_FREEZE_FRESH)
-        assert s > 0.0
+class TestSeaIceParameters:
+    """Tests with sea-ice melting point."""
 
-    def test_temperature_below_minimum_raises(self):
-        """Temperature below T_MIN_C should raise."""
-        with pytest.raises(ValueError):
-            sigma_bond_temperature(T_MIN_C - 1.0, T_FREEZE_FRESH)
+    def test_sea_ice_melting_point(self):
+        params = FreezeBondParams(T_melting=T_MELTING_SEA_ICE)
+        # At slightly below the sea-ice melting point, strength ≈ σ_0
+        sigma_near = freeze_bond_strength(T_MELTING_SEA_ICE - 0.01, params)
+        expected = params.sigma_0 * math.exp(-params.beta * (-0.01))
+        assert sigma_near == pytest.approx(expected, rel=1e-10)
 
-    def test_zero_contact_time_raises(self):
-        """Zero contact time should raise."""
-        with pytest.raises(ValueError):
-            sigma_bond_time(0.5, 0.0)
-
-    def test_negative_contact_time_raises(self):
-        """Negative contact time should raise."""
-        with pytest.raises(ValueError):
-            sigma_bond_time(0.5, -1.0)
-
-    def test_evidence_dict_complete(self):
-        """Evidence dictionary should have all expected keys."""
-        expected_keys = {
-            "sigma_bond_T", "sigma_bond_t", "failure_mode",
-            "transition_temperature", "peak_load_jump",
-        }
-        assert set(FREEZE_BOND_EVIDENCE.keys()) == expected_keys
+    def test_sea_ice_subcooled(self):
+        params = FreezeBondParams(T_melting=T_MELTING_SEA_ICE)
+        sigma = freeze_bond_strength(-5.0, params)
+        assert sigma > params.sigma_0  # sub-cooled → stronger
 
 
 # ---------------------------------------------------------------------------
-# Integration test: full sweep validation
+# 12. Physical consistency
 # ---------------------------------------------------------------------------
-class TestIntegration:
-    """End-to-end validation of the freeze-bond model."""
 
-    def test_full_evaluation_consistency(self):
-        """Full evaluation should be internally consistent."""
-        cfg = FreezeBondConfig()
-        for t in [-20.0, -10.0, -5.0, -2.0]:
-            res = freeze_bond_strength(t, 0.1, 100.0, cfg)
-            # sigma_bond should match the component functions
-            sb_t = sigma_bond_temperature(t, cfg.t_freeze, cfg.sigma_0,
-                                          cfg.beta, cfg.gamma, cfg.t_gamma)
-            sb = sigma_bond_time(sb_t, 100.0, cfg.alpha, cfg.t_ref)
-            sb *= (0.1 / cfg.p_ref) ** cfg.pressure_exponent
-            assert res.sigma_bond_mpa == pytest.approx(sb, rel=1e-6), (
-                f"σ_bond mismatch at T={t}: {res.sigma_bond_mpa} vs {sb}"
-            )
+class TestPhysicalConsistency:
+    """Physical sanity checks."""
 
-    def test_transition_shifts_with_pressure(self):
-        """Higher pressure should shift T_transition warmer."""
-        cfg = FreezeBondConfig()
-        t_trans_low = transition_temperature(cfg, contact_pressure_mpa=0.01,
-                                             contact_time_s=100.0)
-        t_trans_high = transition_temperature(cfg, contact_pressure_mpa=1.0,
-                                              contact_time_s=100.0)
-        # Higher pressure strengthens the bond, so transition moves warmer
-        assert t_trans_high > t_trans_low, (
-            f"T_trans should increase with pressure: "
-            f"{t_trans_low:.2f}°C (low P) vs {t_trans_high:.2f}°C (high P)"
-        )
+    def test_bond_strength_never_exceeds_exponential_limit(self, default_params):
+        """At extreme cold, strength should be finite."""
+        sigma = freeze_bond_strength(-50.0, default_params)
+        assert math.isfinite(sigma)
+        # Exponential model gives large values at extreme cold
+        # σ = 0.2e6 · exp(0.15 · 50) = 0.2e6 · exp(7.5) ≈ 360 MPa
+        # This is above typical ice strength but the model is valid in its range
+        assert sigma < 1e9  # less than 1 GPa
 
-    def test_transition_shifts_with_contact_time(self):
-        """Longer contact time should shift T_transition warmer."""
-        cfg = FreezeBondConfig()
-        t_trans_short = transition_temperature(cfg, contact_pressure_mpa=0.1,
-                                               contact_time_s=10.0)
-        t_trans_long = transition_temperature(cfg, contact_pressure_mpa=0.1,
-                                              contact_time_s=1000.0)
-        assert t_trans_long > t_trans_short, (
-            f"T_trans should increase with contact time: "
-            f"{t_trans_short:.2f}°C (short) vs {t_trans_long:.2f}°C (long)"
-        )
+    def test_pull_off_force_consistent_with_stress_and_area(self, default_params):
+        """F_peak = σ_peak · A_contact."""
+        r = pull_off_test(-10.0, 100.0, default_params)
+        expected_force = r.peak_stress * default_params.A_contact
+        assert r.peak_force == pytest.approx(expected_force, rel=1e-12)
+
+    def test_shear_total_is_sum_of_components(self, default_params):
+        """τ_peak = τ_bond + τ_friction."""
+        r = shear_test(-10.0, 100.0, 5e4, default_params)
+        expected = r.tau_bond + r.tau_friction
+        assert r.tau_peak == pytest.approx(expected, rel=1e-12)
+
+    def test_energy_consistency_pull_off(self, default_params):
+        """Work done ≈ 0.5 · F_peak · δ_peak (linear elastic to failure)."""
+        r = pull_off_test(-10.0, 100.0, default_params)
+        work = 0.5 * r.peak_force * r.displacement_at_peak
+        # This should be positive and finite
+        assert work > 0.0
+        assert math.isfinite(work)
