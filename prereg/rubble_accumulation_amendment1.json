@@ -1,0 +1,54 @@
+{
+  "amendment": 1,
+  "campaign_node": "IN69-N06",
+  "date": "2026-11-10",
+  "status": "written before the amendment-1 runs were inspected",
+  "why_this_amendment": "The pre-registered run (prereg/rubble_accumulation_prereg.json) executed and failed three of its own criteria: (a) 0/11 cases reached R^2 > 0.95 on the growth fits, (c) R_shield was undefined (p0 == 0 in every sweeper twin) and (b) the steady-geometry exponents were meaningless because H_p was pinned at one block diameter. The diagnostic (logs/diag1.log, diag2.log, diag3.log) localised two defects that are about the *model and its baselines*, not about the thresholds: (i) the drive was feed + water drag only, i.e. the field arrived as a dilute stream of blocks with no sheet thrust, so nothing could compress the field against the structure and no multi-layer pile could exist; (ii) the sweeper baseline removed blocks on first contact with the cylinder and in several cases produced p0 = 0 identically, so the ratio was undefined. The thresholds of the original pre-registration are NOT changed by this amendment; what changes is (1) the drive has one extra, explicitly declared mechanism, decided by a controlled comparison with a pre-declared decision rule, and (2) the shielding factor gets a second, literature-anchored baseline so that it is defined even when the swept twin reads zero.",
+  "decision": "D1: does the accumulation model, with the sheet-thrust pressure boundary added, produce a pile that is geometrically distinguishable from the drag-only drive (specifically: a pile with more than one block layer and a growing height)? D2: is R_shield = p_front/p_0 defined and sign-resolved for every case with two independent baselines? Decision rule for D1 is pre-declared below and is evaluated *after* the runs, never tuned on the result.",
+  "alternatives": [
+    "A0 (baseline / control): drive = mass-flux feed at the inlet + weak horizontal water drag towards v_i, no sheet thrust (= the configuration of amendment 0).",
+    "A1 (treatment): A0 + thrust pressure sigma = 20 kPa applied to the blocks inside a one-diameter feed band at the upstream face, per-block force sigma (2r)^2. This is the thrust of the semi-infinite ice sheet that is not modelled, i.e. a pressure boundary condition.",
+    "A2 (rejected for this amendment): enable body rotation with a rolling-resistance torque as an interlocking surrogate. Rejected here because the torque path of the kernel is untested (rotation=False is the default everywhere) and a rotation bug would be confounded with the thrust effect; recorded as future work.",
+    "A3 (rejected): raise C_i only in the feed (over-feeding) to force a jam. Rejected because it breaks the mass-flux meaning of C_i and would make the mass ledger inconsistent with the declared ice condition."
+  ],
+  "hypothesis": [
+    "H1: with sigma = 20 kPa the pile height exceeds one block layer, H_p > 1.5 * (2r), at at least half of the four operating points.",
+    "H2: the thrust increases the pile height by >= 50 % relative to the same case at sigma = 0 (paired comparison, same seed and grid).",
+    "H3: the mass ledger stays closed under the thrust (zone-crossing closure error < 2 %), i.e. the extra boundary force does not silently create or destroy mass.",
+    "H4: R_shield is defined (> 0 baseline) for 100 % of the shielding pairs when the momentum-flux baseline is used, and the two baselines agree in sign."
+  ],
+  "metrics": {
+    "pile_height_blocks": "H_p / (2r) from the steady window (last 25 % of the run)",
+    "pile_geometry": "L_p, B_p, H_p exactly as pre-registered (percentile envelope over the resident set)",
+    "load": "p_front as pre-registered (impulse on the upstream half / (D h_i) over the steady window)",
+    "R_shield_A": "p_front / p_0^momentum with p_0^momentum = 0.5 * C_d * rho_i * C_i * v_i^2, C_d = 2.0 (potential-flow cylinder reference, declared a priori, no fitting)",
+    "R_shield_B": "p_front / p_0^swept, the cleared-cylinder twin (pre-registered route), reported only where p0 > 0"
+  },
+  "predeclared_thresholds": {
+    "D1_accept": "H_p/(2r) > 1.5 AND H_p(sigma=20kPa) >= 1.5 * H_p(sigma=0) at >= 2 of the 4 operating points (a paired median ratio >= 1.5 across the 4 points is reported as the summary statistic)",
+    "D1_reject": "otherwise the thrust is not accepted as the sail mechanism; the height observable is then declared NOT RESOLVED by this model and the steady-geometry scaling claim is WITHHELD (not silently replaced by the drag-only result)",
+    "D2_accept": "R_shield_A finite for all pairs and R_shield_B finite wherever p0 > 0; sign agreement reported, disagreements listed case by case",
+    "mass": "zone-closure error < 2 % in every accepted case (unchanged from amendment 0)",
+    "determinism": "one same-seed duplicate of a treatment case must reproduce H_p to 1e-12 relative (unit test)"
+  },
+  "variables_and_confounders": {
+    "controlled": ["geometry (D = 3 m, h_i = 0.25 m)", "block budget 3000, so r is identical across the 8 runs", "seed 0", "timestep rule, contact law, friction", "run length 5000 steps", "physical time per case is fixed by the step count, not by the result"],
+    "changed": ["thrust pressure 0 vs 20 kPa", "C_i in {0.3, 0.5}", "v_i in {0.3, 1.0} m/s (i.e. Fr in {0.19, 0.64})"],
+    "confounders": ["the thrust injects energy, so the field is not in the same dynamical regime (higher impact speeds) - reported as a physical difference, not averaged away", "the feed is load-limited by the same 20 kPa, so A1 can throttle the feed while A0 cannot at the same load", "single seed per case: the paired design removes the field-generation variance, but not the run-to-run chaos variance"],
+    "repetitions": "paired design over the same 4 operating points; determinism proven by a same-seed duplicate unit test; no seed averaging (declared, single seed)"
+  },
+  "stopping_rule": "the 8 amendment-1 runs are executed once; no run is extended or reseeded because of its result.",
+  "environment": {"python": "3.11", "numpy": "2.4.6", "scipy": "1.16.0", "arch": "x86_64", "workers": 8, "host": "shared 128-core control node"},
+  "analysis": {
+    "comparison": "paired (same D, h, C, v, seed) treatment-minus-control on H_p, H_p/(2r), pile mass and p_front; medians over the 4 pairs reported with the individual pairs",
+    "aggregation": "steady-window means (last 25 % of the run) for geometry and load; exponential-plateau fits as a cross-check",
+    "uncertainty": "spread over the 4 pairs is reported; no confidence intervals are claimed from a single seed",
+    "decision_recording": "the D1/D2 verdicts are written into artifacts/rubble_accumulation/acceptance.json with the numbers they were computed from"
+  },
+  "interpretation_limits": [
+    "amendment 0 limits still hold: spheres, no interlock, no freeze bonds, no crushing, free-slip flume walls at 1.25 D",
+    "the thrust boundary is a pressure idealisation of an unmodelled ice sheet; it is not calibrated against a measured sheet thrust",
+    "C_d = 2.0 for the momentum baseline is a declared reference value, not a model output; the momentum baseline therefore answers 'is the load above the free-stream momentum flux', not 'is the load above a measured bare-cylinder load'",
+    "a single seed per case: differences smaller than the paired spread are not resolved"
+  ]
+}
