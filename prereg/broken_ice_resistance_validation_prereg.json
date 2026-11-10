@@ -1,0 +1,96 @@
+{
+  "schema": "tensordem.prereg.v1",
+  "mission": "p247w1-N07",
+  "node": "DEM碎冰场直航冰阻力验证面成熟化: MT Uikku实冰实验锚对标 + Lindqvist解析交叉验证",
+  "repository": "TensorDEM",
+  "created_before_runs": true,
+  "decision": {
+    "question": "Can the plan-view floe DEM of this repository be promoted to a REAL (evidence-graded) broken-ice direct-navigation resistance model, validated against an analytic reference and against full-scale experiment?",
+    "alternatives": [
+      "A: promote to REAL if C1..C7 all pass (DEM within 15% of Lindqvist at the standard case and within 20% of the MT Uikku anchor)",
+      "B: keep WITHHELD and publish a quantified gap plus the missing-mechanism budget (honest FAIL)",
+      "C: declare NOT_SUPPORTED for plan-view DEM in broken ice and specify the required 2.5D/3D extension"
+    ],
+    "decision_rule": "A is adopted only if every criterion passes; otherwise the outcome is the strongest of {B, C} that the evidence supports, and C1 is reported as FAIL with its number."
+  },
+  "hypothesis": {
+    "H1": "A 60%-concentration broken-ice field at V = 3 m/s and h = 1.0 m gives a DEM resistance within 15% of the level-ice Lindqvist anchor for the same ship and ice.",
+    "H1_rationale_for_scepticism": "Lindqvist is an intact-sheet formula; broken ice is physically expected to sit BELOW it (the repository's own broken-ice closed form suppresses bending and adds momentum flux). H1 is therefore the strict version of the cross-check and is expected to be informative either way.",
+    "H2": "R_ice increases monotonically with ship speed V in [2, 5] m/s (Pearson r > 0.95).",
+    "H3": "R_ice increases monotonically with ice thickness h in [0.5, 1.5] m (Pearson r > 0.95).",
+    "H4": "R_ice -> 0 as the ice concentration -> 0.",
+    "H5": "The DEM reproduces the MT Uikku full-scale broken-ice resistance within 20%."
+  },
+  "outcome_metrics": {
+    "primary": "steady-window mean ice resistance R_ice [kN] (reaction of the floes on the hull along the track)",
+    "secondary": [
+      "standard deviation, standard error and stationarity drift of R_ice over the steady window",
+      "friction share of the hull power (audit: R V = P_drag + P_friction)",
+      "mean hull-floe contact count and mean floe speed",
+      "realised field concentration and floe count (field reproducibility)"
+    ]
+  },
+  "baseline_and_controls": {
+    "analytic_baseline": "tensordem.level_ice.formula.lindqvist_components for the same ship (MT Uikku transport hull), ice (MT Uikku sheet III material) and speed",
+    "like_for_like_analytic": "tensordem.ice_resistance_scaling.broken_ice_anchor (bending suppressed below the bending length, momentum flux added)",
+    "experimental_anchor": "benchmarks/dem3d/ship_ice_validation/mt_uikku_level_ice.csv (ten level-ice model tests)",
+    "negative_control": "field-free case (one 5 cm floe parked outside the track) must give R = 0; a 10 % concentration field must stay below 25 % of the standard resistance",
+    "numerical_controls": "contact-law A/B (crushing-limited vs linear penalty), hull-form A/B (wedge bow vs block), floe-size A/B (3 m vs 8 m), time-step halving (dt = 2 ms vs 4 ms), three field seeds"
+  },
+  "predeclared_thresholds": {
+    "C1_rel_error_vs_lindqvist": 0.15,
+    "C2_pearson_r_speed": 0.95,
+    "C3_pearson_r_thickness": 0.95,
+    "C4_rel_error_vs_mt_uikku": 0.20,
+    "C5_null_field_resistance_kN": 1e-09,
+    "C5_sparse_ratio": 0.25,
+    "C7_min_tests": 12
+  },
+  "stopping_rules": {
+    "success": "all of C1..C7 PASS -> evidence grade REAL for broken-ice direct-navigation resistance",
+    "honest_fail": "any criterion FAIL or WITHHELD -> criterion reported with its number; the evidence grade stays WITHHELD and the gap is quantified; no threshold is relaxed after seeing results",
+    "no_tuning_rule": "after the first standard-case number is seen, contact-law, hull-form, floe-size, friction and material parameters are frozen; the only permitted re-runs are the predeclared A/B, seed and dt variants",
+    "abort": "a case that exceeds 30 min wall time is reported with the steps it completed and marked incomplete"
+  },
+  "variables": {
+    "controlled": [
+      "floe placement (seeded jittered lattice), floe radius distribution, field concentration",
+      "ship outline (length 105 m, beam 26 m, draught 8 m, entry angle 18 deg), speed, start position",
+      "ice material (MT Uikku sheet III compressive/flexural strength, modulus)",
+      "contact law parameters (friction 0.10, normal damping 0.2, chord regularisation 5 mm)",
+      "time step, integrator (velocity Verlet), record interval, steady window"
+    ],
+    "changed_one_at_a_time": ["ship speed", "ice thickness", "ice concentration",
+                               "floe size", "contact law", "hull form", "time step", "seed"],
+    "confounders": [
+      "the 2D plan-view formulation has no vertical (heave) coupling to the hull, so the hydrostatic submersion term of intact-ice resistance has no counterpart",
+      "the floe pack has free lateral boundaries (no pack pressure from an unbounded field)",
+      "floes are rigid disks: no fracture, no ride-up, no rubble pile",
+      "the DEM resistance is dominated by isolated impacts, so the relative statistical noise is large"
+    ]
+  },
+  "repetitions": {
+    "seeds": [7, 11, 23],
+    "rationale": "the standard case is averaged over three independent field realisations because the resistance of an open pack is impact dominated; sweep points use seed 7 only and report std/SEM so the trend test is judged against the measured scatter as well",
+    "dt_convergence": "standard case repeated at half the time step"
+  },
+  "environment": {
+    "package": "tensordem.broken_ice_resistance",
+    "runtime": "python 3.11, torch 2.7.1 CPU, float64, one thread per case, one process per case",
+    "provenance": "every case record carries the ledger SHA-256 of the parameter ledger and the material state",
+    "artifacts": "artifacts/broken_ice_resistance_validation/",
+    "documentation": "docs/BROKEN_ICE_RESISTANCE_VALIDATION.md"
+  },
+  "analysis_plan": {
+    "steady_window": "records with the ship fully embedded in the field (stem abaft the ship length and forward of the field end), restricted to the last half of the transit",
+    "aggregation": "arithmetic mean over the window; standard deviation and standard error reported; stationarity drift = (second half - first half) / mean",
+    "trend_tests": "Pearson correlation of R_ice against V and against h, plus an explicit monotonicity check",
+    "outliers": "no point is discarded; the peak resistance is reported next to the mean",
+    "missing_data": "C4 is WITHHELD because the repository ships no broken-ice experimental case - the gap is named, not filled with a level-ice number"
+  },
+  "interpretation_limits": [
+    "a PASS of C1 would show magnitude agreement with a level-ice formula, not that the DEM is physically complete",
+    "the plan-view formulation cannot represent submersion, ride-up, fracture or rubble piling; a disagreement with Lindqvist is therefore expected to be a model-structure result, not a coefficient error",
+    "no broken-ice full-scale experiment is available in the repository, so absolute broken-ice accuracy stays WITHHELD regardless of the analytic cross-check"
+  ]
+}
