@@ -1,0 +1,20 @@
+{
+ "campaign": "IN29-B1",
+ "protocol": "sandpile-v1",
+ "priors": {"mu_s": 0.5, "mu_r": 0.05},
+ "cases": [
+  {"label": "scale_N1e3",   "n": 1000,   "pour_time": 1.0, "settle": 0.2, "control": "baseline"},
+  {"label": "scale_N3e3",   "n": 3000,   "pour_time": 1.0, "settle": 0.2, "control": "baseline"},
+  {"label": "scale_N1e4",   "n": 10000,  "pour_time": 1.0, "settle": 0.2, "control": "baseline"},
+  {"label": "scale_N3e4",   "n": 30000,  "pour_time": 1.0, "settle": 0.2, "control": "baseline"},
+  {"label": "scale_N1e5",   "n": 100000, "pour_time": 1.0, "settle": 0.2, "control": "baseline"},
+  {"label": "rate_fast_N1e4", "n": 10000, "pour_time": 0.5, "settle": 0.2, "control": "baseline"},
+  {"label": "rate_nom_N1e4",  "n": 10000, "pour_time": 1.0, "settle": 0.2, "control": "baseline"},
+  {"label": "rate_slow_N1e4", "n": 10000, "pour_time": 3.0, "settle": 0.2, "control": "baseline"},
+  {"label": "ctrl_mu_s_zero",  "n": 4000, "pour_time": 1.0, "settle": 0.2, "control": "mu_s_zero"},
+  {"label": "ctrl_mu_r_zero",  "n": 4000, "pour_time": 1.0, "settle": 0.2, "control": "mu_r_zero"},
+  {"label": "ctrl_no_memory",  "n": 4000, "pour_time": 1.0, "settle": 0.2, "control": "no_memory"},
+  {"label": "ctrl_instant_fill","n": 4000, "pour_time": 1.0, "settle": 0.2, "control": "instant_fill"},
+  {"label": "baseline_N4e3",   "n": 4000, "pour_time": 1.0, "settle": 0.2, "control": "baseline"}
+ ]
+}
