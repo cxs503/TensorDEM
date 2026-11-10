@@ -10,6 +10,12 @@ Sub-modules
 ``bed``       bed-scale force assembly, fixed-bed pressure drop, static-balance
               audit, semi-coupled batch-settling dynamics, power-law fitting.
 ``study``     the IN143-N09 acceptance study (six machine-checkable criteria).
+``fluidization``  onset of fluidisation (Wen--Yu / Ergun / closure root), the
+              per-step three-force ledger of an integrated column, and the
+              resolution-convergence sweep.
+``study_p142``the P142W3-N03 acceptance study (five machine-checkable criteria:
+              Ergun over Re in [1,1000], Stokes/Schiller--Naumann/RZ settling,
+              three-force ledger, U_mf, resolution convergence).
 
 Nothing here contains a domain-specific ship or ice constant: the module is a
 generic granular--fluid coupling layer for TensorDEM.
@@ -56,6 +62,17 @@ from .bed import (
     settling_sweep,
     simulate_settling,
     static_bed_force_audit,
+)
+from .fluidization import (
+    WEN_YU_COEFFICIENTS,
+    archimedes_number,
+    bed_weight_gradient,
+    column_dynamics,
+    ergun_minimum_fluidization,
+    ledger_residuals,
+    resolution_convergence,
+    simulated_minimum_fluidization,
+    wen_yu_minimum_fluidization,
 )
 from .study import run_acceptance_study, write_results
 
