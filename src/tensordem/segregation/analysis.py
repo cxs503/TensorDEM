@@ -64,6 +64,13 @@ def load_records(run_dir: str) -> dict[str, dict]:
     return out
 
 
+def _nan_mean(values) -> float:
+    """Mean that ignores NaNs and returns NaN (without a warning) if none are left."""
+    arr = np.asarray(list(values), dtype=np.float64)
+    arr = arr[np.isfinite(arr)]
+    return float(arr.mean()) if arr.size else float("nan")
+
+
 def _family(records, *, drive="vib", ratio=None, fraction=None, gamma=None,
             frequency=None) -> list[dict]:
     sel = []
@@ -154,8 +161,20 @@ def fit_threshold(gammas: np.ndarray, s_values: np.ndarray) -> dict:
 
 
 def evaluate_criteria(records: dict[str, dict], *, geometry: HoldGeometry | None = None,
-                      displacement_t: float = 20000.0, km_m: float = 9.0) -> dict:
-    """Evaluate the acceptance criteria and return a report-ready structure."""
+                      displacement_t: float = 20000.0, km_m: float = 9.0,
+                      index: str = "S_fine", gamma_ratio: float = 2.0,
+                      gamma_fraction: float = 0.30, gamma_frequency: float = 30.0) -> dict:
+    """Evaluate the acceptance criteria and return a report-ready structure.
+
+    ``index`` selects which segregation index the scaling criteria are judged on.
+    The node defines ``S`` on the *fine* species (the volume fraction of small
+    particles in the top layer, normalised by its nominal value), so ``S_fine`` is
+    the default; ``S_bn`` (the large-species index) is always reported alongside
+    it, and the sign of the two is what identifies the direction of migration
+    (Brazil-nut, large rising, versus reverse Brazil-nut, large sinking).
+    """
+    if index not in ("S_fine", "S_bn"):
+        raise ValueError("index must be 'S_fine' or 'S_bn'")
     geo = geometry or HoldGeometry(length_m=20.0, breadth_m=12.0, depth_m=6.0,
                                    n_longitudinal=8)
     out: dict[str, object] = {}
@@ -181,6 +200,12 @@ def evaluate_criteria(records: dict[str, dict], *, geometry: HoldGeometry | None
             "mean_S_bn": float(np.mean(s_bn)),
             "mean_v_up_m_s": float(np.mean(v_up)),
             "v_up_threshold_m_s": thr,
+            "mean_block_stderr": _nan_mean(
+                [(r["metrics"].get("segregation_blocks") or {}).get("S_fine_stderr", float("nan"))
+                 for r in control]),
+            "mean_v_up_stderr_m_s": _nan_mean(
+                [(r["metrics"].get("segregation_blocks") or {}).get("v_up_m_s_stderr", float("nan"))
+                 for r in control]),
             "pass": bool(max(abs(v) for v in s_fine) <= 0.02
                          and abs(float(np.mean(v_up))) <= thr),
         }
@@ -207,22 +232,42 @@ def evaluate_criteria(records: dict[str, dict], *, geometry: HoldGeometry | None
         fam = _family(records, ratio=ratio, fraction=0.3, gamma=drive_gamma)
         if not fam:
             continue
-        s_vals = [r["metrics"]["segregation"]["S_bn"] for r in fam]
+        s_vals = [r["metrics"]["segregation"][index] for r in fam]
         v_vals = [r["metrics"]["rise_large"]["v_up_m_s"] for r in fam]
         by_ratio[ratio] = {
             "n_cases": len(fam),
             "S_bn_mean": float(np.mean(s_vals)),
             "S_bn_seeds": s_vals,
+            "S_other_mean": float(np.mean(
+                [r["metrics"]["segregation"]["S_bn" if index == "S_fine" else "S_fine"]
+                 for r in fam])),
+            "S_stderr_mean": _nan_mean(
+                [(r["metrics"].get("segregation_blocks") or {}).get(f"{index}_stderr", float("nan"))
+                 for r in fam]),
             "S_fine_mean": float(np.mean([r["metrics"]["segregation"]["S_fine"] for r in fam])),
             "v_up_mean_m_s": float(np.mean(v_vals)),
             "v_up_seeds": v_vals,
+            "S_initial_mean": _nan_mean([
+                (r["metrics"].get("segregation_initial") or {}).get(index, float("nan"))
+                for r in fam]),
+            "delta_S_mean": _nan_mean([
+                r["metrics"].get(f"delta_S_{'fine' if index == 'S_fine' else 'bn'}",
+                                 float("nan"))
+                for r in fam]),
+            "delta_S_seeds": [
+                r["metrics"].get(f"delta_S_{'fine' if index == 'S_fine' else 'bn'}")
+                for r in fam],
             "names": [r["spec"]["name"] for r in fam],
         }
     monotone = None
+    monotone_other = None
     if len(by_ratio) >= 2:
         ratios_sorted = sorted(by_ratio)
-        s_seq = [by_ratio[r]["S_bn_mean"] for r in ratios_sorted]
+        s_seq = [by_ratio[r]["S_bn_mean"] for r in ratios_sorted]  # index-selected
+        o_seq = [by_ratio[r]["S_other_mean"] for r in ratios_sorted]
         monotone = all(b > a for a, b in zip(s_seq, s_seq[1:]))
+        monotone_other = all(b > a for a, b in zip(o_seq, o_seq[1:]))
+        monotone_magnitude = all(abs(b) > abs(a) for a, b in zip(s_seq, s_seq[1:]))
     p_fit = {"p": float("nan")}
     if len(by_ratio) >= 3:
         xs = np.array([r - 1.0 for r in sorted(by_ratio)])
@@ -236,6 +281,12 @@ def evaluate_criteria(records: dict[str, dict], *, geometry: HoldGeometry | None
         "drive_gamma": None if drive_gamma is None else float(drive_gamma),
         "by_ratio": by_ratio,
         "strictly_monotone": monotone,
+        # The two species indices are mirror images of one another: an upward
+        # migration of the large species makes the *large* index grow and the
+        # *fine* index fall.  Both monotonicity statements are reported so that a
+        # sign convention can never be mistaken for a failure of the physics.
+        "strictly_monotone_other_index": monotone_other,
+        "strictly_monotone_magnitude": bool(monotone_magnitude) if len(by_ratio) >= 2 else None,
         "power_law": p_fit,
         "p_literature": P_LITERATURE,
         "p_relative_deviation": float(p_dev) if np.isfinite(p_dev) else None,
@@ -256,22 +307,29 @@ def evaluate_criteria(records: dict[str, dict], *, geometry: HoldGeometry | None
         }
 
     # ---- (d) Gamma threshold and saturation ----------------------------
-    gscan = _family(records, ratio=2.0, fraction=0.3, frequency=30.0)
+    gscan = _family(records, ratio=gamma_ratio, fraction=gamma_fraction,
+                    frequency=gamma_frequency)
     if not gscan:
-        gscan = _family(records, ratio=2.0, fraction=0.3)
+        gscan = _family(records, ratio=gamma_ratio, fraction=gamma_fraction)
     if gscan:
         gammas = sorted({r["spec"]["gamma"] for r in gscan})
         s_by_gamma = []
+        s_signed = []
         for gam in gammas:
-            vals = [r["metrics"]["segregation"]["S_bn"] for r in gscan
+            vals = [r["metrics"]["segregation"][index] for r in gscan
                     if abs(r["spec"]["gamma"] - gam) < 1e-9]
-            s_by_gamma.append(float(np.mean(vals)))
+            s_by_gamma.append(float(np.mean(np.abs(vals))))
+            s_signed.append(float(np.mean(vals)))
         fit = fit_threshold(np.array(gammas), np.array(s_by_gamma))
         dev = (abs(fit["gamma_c"] - GAMMA_C_LITERATURE) / GAMMA_C_LITERATURE
                if np.isfinite(fit["gamma_c"]) else float("nan"))
         out["d_gamma_threshold"] = {
             "gammas": gammas,
-            "S_bn_mean": s_by_gamma,
+            "S_abs_mean": s_by_gamma,
+            "S_signed_mean": s_signed,
+            "index": index,
+            "family": {"ratio": gamma_ratio, "large_fraction": gamma_fraction,
+                       "frequency_hz": gamma_frequency},
             "fit": fit,
             "gamma_c_literature": GAMMA_C_LITERATURE,
             "gamma_c_relative_deviation": float(dev) if np.isfinite(dev) else None,
@@ -343,18 +401,35 @@ def evaluate_criteria(records: dict[str, dict], *, geometry: HoldGeometry | None
 
     # ---- (f) seed reproducibility -------------------------------------
     seed_stats = {}
+    excluded: list[float] = []
     for ratio in sorted(by_ratio):
-        vals = by_ratio[ratio]["S_bn_seeds"]
+        vals = by_ratio[ratio]["S_bn_seeds"]  # index-selected
+        if len(vals) < 2:
+            continue
         mean, std = _mean_std(vals)
-        cv = std / abs(mean) if mean else float("inf")
-        seed_stats[ratio] = {"mean_S_bn": mean, "std_S_bn": std, "cv": cv,
+        # A coefficient of variation is meaningless where the *mean* is inside the
+        # noise floor of the estimator (the equal-size control is exactly such a
+        # case: the true S is zero, so a CV would divide by the sampling error).
+        # Those ratios are listed as excluded rather than silently dropped.
+        if abs(mean) <= 0.02:
+            excluded.append(float(ratio))
+            continue
+        cv = std / abs(mean)
+        seed_stats[ratio] = {"mean_S": mean, "std_S": std, "cv": cv,
                              "n": len(vals)}
     if seed_stats:
         worst_cv = max(v["cv"] for v in seed_stats.values())
         out["f_seed_reproducibility"] = {
             "by_ratio": seed_stats,
+            "excluded_inside_noise_floor": excluded,
             "max_cv": float(worst_cv),
             "pass": bool(np.isfinite(worst_cv) and worst_cv <= 0.15),
+        }
+    elif by_ratio:
+        out["f_seed_reproducibility"] = {
+            "by_ratio": {}, "excluded_inside_noise_floor": excluded,
+            "max_cv": float("nan"), "pass": False,
+            "note": "no ratio family has a mean segregation index above the noise floor",
         }
 
     # ---- global verdict ------------------------------------------------
