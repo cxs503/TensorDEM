@@ -190,12 +190,11 @@ class DiskSystem:
         self.wall_force = np.zeros(2)
         self.hull_force_history: list[tuple[float, np.ndarray]] = []
         self.contact_history: list[dict[str, float]] = []
-        # Optional kinematic boundary drive: ``wall_velocity_field(points)``
-        # returns the boundary velocity (M, 2) at the given contact points.
-        # ``None`` keeps every boundary segment static (the default, unchanged
-        # behaviour); a non-zero field lets a segment be driven while the
-        # damping term still sees the correct wall velocity.
-        self.wall_velocity_field = None
+        # optional energy ledger (see enable_energy_ledger); None = disabled
+        self.energy_ledger: dict[str, float] | None = None
+        self._ledger_armed = False
+        self._elastic_normal = 0.0
+        self._elastic_tangential = 0.0
         self._rebuild_neighbors()
 
     # ------------------------------------------------------------------ setup
@@ -452,14 +451,11 @@ class DiskSystem:
         lever_i = -self.radii[disk_idx][:, None] * n_all
         lever_j = rad_other[:, None] * n_all
 
-        wsel_pre = slice(n_pair, n_pair + n_w)
         omega_j = np.zeros(m_all)
         omega_j[:n_pair] = self.omega[j]
         v_i = self.vel[disk_idx] + self._perp(self.omega[disk_idx][:, None] * lever_i)
         v_j = np.zeros_like(v_i)
         v_j[:n_pair] = self.vel[j] + self._perp(omega_j[:n_pair][:, None] * lever_j[:n_pair])
-        if n_w and self.wall_velocity_field is not None:
-            v_j[wsel_pre] = self.wall_velocity_field(wp)
         v_rel = v_i - v_j
         v_n = np.sum(v_rel * n_all, axis=1)
 
@@ -473,6 +469,7 @@ class DiskSystem:
         f_t_vec = -k_t * xi
         f_t_mag = np.linalg.norm(f_t_vec, axis=1)
         cap = cfg.mu * f_n
+        xi_pre_energy = 0.5 * (cfg.kt_ratio * cfg.kn) * np.sum(xi * xi, axis=1)
         scale = np.where(f_t_mag > cap, cap / np.maximum(f_t_mag, 1e-30), 1.0)
         f_t_vec *= scale[:, None]
         xi *= scale[:, None]
@@ -501,6 +498,7 @@ class DiskSystem:
         else:
             self.hull_force = np.zeros(2)
 
+        rolling_power = 0.0
         if cfg.mu_rolling > 0.0:
             roll = roll + (self.omega[disk_idx] - omega_j) * self.dt
             k_r = 0.25 * k_t * r_eff**2
@@ -512,6 +510,7 @@ class DiskSystem:
             np.add.at(torque, disk_idx[:n_pair], -m_r[:n_pair])
             np.add.at(torque, j, m_r[:n_pair])
             np.add.at(torque, disk_idx[n_pair:], -m_r[n_pair:])
+            rolling_power = -float(np.sum(m_r * (self.omega[disk_idx] - omega_j)))
 
         g = np.asarray(cfg.gravity, dtype=np.float64)
         if np.any(g != 0.0):
@@ -550,6 +549,19 @@ class DiskSystem:
             "overlap": ov_all,
             "point": point,
         }
+        self._elastic_normal = float(0.5 * cfg.kn * np.sum(ov_all * ov_all))
+        self._elastic_tangential = float(np.sum(xi_pre_energy))
+        if self._ledger_armed and self.energy_ledger is not None:
+            # Non-conservative work done *by* the contact forces on the relative
+            # motion over this step.  The spring parts are conservative (they are
+            # exchanged with the stored elastic energy), so only the normal
+            # dashpot, the tangential (Coulomb) force and the rolling torque are
+            # accumulated here.  Signs: work input to the system is positive.
+            led = self.energy_ledger
+            led["normal_dashpot"] += float(
+                np.sum((f_n - cfg.kn * ov_all) * v_n) * self.dt)
+            led["friction"] += float(np.sum(np.sum(f_t_vec * v_t, axis=1)) * self.dt)
+            led["rolling"] += rolling_power * self.dt
         self._state_keys = keys
         self._state_xi = xi
         self._state_roll = roll
@@ -564,7 +576,9 @@ class DiskSystem:
         if n < 0:
             raise ValueError("n must be nonnegative")
         for _ in range(n):
+            self._ledger_armed = self.energy_ledger is not None
             force, torque, _ = self._evaluate()
+            self._ledger_armed = False
             self.vel += self.dt * (force / self.mass[:, None])
             self.omega += self.dt * (torque / self.inertia)
             if self.config.damping_time > 0.0:
@@ -588,6 +602,51 @@ class DiskSystem:
                     "wall_fy": float(self.wall_force[1]),
                     "kinetic_energy": self.kinetic_energy(),
                 })
+
+    # -------------------------------------------------------- energy ledger
+    def enable_energy_ledger(self) -> dict[str, float]:
+        """Start (or reset) the non-conservative work ledger.
+
+        The ledger accumulates, over every :meth:`step`, the work done on the
+        relative motion by the *non-conservative* contact mechanisms, with the
+        convention that work delivered *to* the system is positive (all three
+        entries are therefore normally negative):
+
+        ``normal_dashpot``  normal viscous damper ``(f_n - k_n delta) v_n dt``;
+        ``friction``        tangential/Coulomb force ``f_t . v_t dt``;
+        ``rolling``         rolling-resistance torque ``M_r (omega_i - omega_j) dt``.
+
+        Together with the stored elastic energies (:meth:`energies`) this closes
+        the mechanical energy balance of a step to the order of the integrator.
+        Only :meth:`step` accumulates; :meth:`contact_forces` refreshes contacts
+        without touching the ledger.
+        """
+        self.energy_ledger = {
+            "normal_dashpot": 0.0,
+            "friction": 0.0,
+            "rolling": 0.0,
+            "kinetic_initial": self.kinetic_energy(),
+        }
+        return self.energy_ledger
+
+    def energies(self) -> dict[str, float]:
+        """Instantaneous mechanical energy components (J, or J/m in 2D)."""
+        cfg = self.config
+        g = np.asarray(cfg.gravity, dtype=np.float64)
+        pe = float(np.sum(self.mass * (self.pos @ g))) if np.any(g != 0.0) else 0.0
+        return {
+            "kinetic": self.kinetic_energy(),
+            "potential": pe,
+            "elastic_normal": self._elastic_normal,
+            "elastic_tangential": self._elastic_tangential,
+        }
+
+    def dissipated_work(self) -> float:
+        """Total non-conservative work released by the contacts (>= 0)."""
+        if self.energy_ledger is None:
+            raise ValueError("call enable_energy_ledger() first")
+        return -float(sum(self.energy_ledger[k] for k in
+                          ("normal_dashpot", "friction", "rolling")))
 
     def contact_forces(self) -> dict[str, np.ndarray]:
         """Evaluate forces and return the contact records without integrating."""
