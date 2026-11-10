@@ -1,0 +1,1698 @@
+{
+  "node": "p22w2-n08",
+  "repo": "TensorDEM",
+  "title": "Anchor drop impact on a subsea pipeline: soil penetration + local dent chain",
+  "generated_utc": "2026-11-10T10:22:38+00:00",
+  "provenance": {
+    "git_rev": "04daaddba438e7f7bee00ad3204af931c62e1002",
+    "python": "3.11.6",
+    "module": "src/tensordem/anchor_pipe_impact.py",
+    "module_sha256": "d31de325a372b3e6cb45ab30ef808e0c9762ebe05072d684c052f476bff129e5",
+    "driver": "benchmarks/anchor_pipe_impact/run.py",
+    "tests": "tests/test_anchor_pipe_impact.py",
+    "generated_utc": "2026-11-10T10:22:38+00:00"
+  },
+  "input": {
+    "pipe": {
+      "D": 0.508,
+      "t": 0.0206,
+      "sigma_y": 448000000.0,
+      "E": 210000000000.0,
+      "M_pl": 47528.32000000001,
+      "ring_limit_load": 748477.4803149607,
+      "dent_allow_ratio": 0.05
+    },
+    "soil": {
+      "c_u": 60000.0,
+      "N_c": 7.5,
+      "gamma_eff": 8000.0
+    },
+    "anchor_sphere": {
+      "mass": 3000.0,
+      "radius": 0.4501815196844866,
+      "C_a": 0.5,
+      "a_net": 5.686050955414012,
+      "weight_eff": 25587.229299363054
+    },
+    "drop_height": 5.0,
+    "cover": 0.5
+  },
+  "case_studies": {
+    "cover_0.0": {
+      "case": "sphere-3000kg-h5.0-cov0.00-c60",
+      "v0": 7.54059079609417,
+      "impact_energy": 127936.14649681524,
+      "z_end": 0.2315901027782762,
+      "delta": 0.2315901027782762,
+      "delta_over_D": 0.4558860290910949,
+      "E_soil": 28356.53566815197,
+      "E_dent": 105505.91100904215,
+      "E_soil_dynamic": 28356.53563750263,
+      "E_dent_dynamic": 105505.36800094222,
+      "E_weight": 5925.749063250811,
+      "ledger": {
+        "E_impact": 127936.14649681524,
+        "E_weight": 5925.749063250811,
+        "E_available": 133861.89556006604,
+        "E_soil": 28356.53566815197,
+        "E_dent": 105505.91100904215,
+        "f_soil_of_available": 0.21183426059754193,
+        "f_dent_of_available": 0.7881698564600104,
+        "f_dent_of_impact": 0.8246763240728728,
+        "closure_rel": 6.034860604683565e-08
+      },
+      "verdict_chain": false,
+      "delta_over_D_closed": 0.45588477948422224,
+      "verdict_closed": false,
+      "peak_force": 893761.0724689023,
+      "t_end": 0.051939999999998224,
+      "n_steps": 2597
+    },
+    "cover_0.5": {
+      "case": "sphere-3000kg-h5.0-cov0.50-c60",
+      "v0": 7.54059079609417,
+      "impact_energy": 127936.14649681524,
+      "z_end": 0.5760611795811185,
+      "delta": 0.07606117958111847,
+      "delta_over_D": 0.14972673145889462,
+      "E_soil": 122811.96753074358,
+      "E_dent": 19864.191275607438,
+      "E_soil_dynamic": 122811.97265453513,
+      "E_dent_dynamic": 19863.980998467232,
+      "E_weight": 14739.809492403636,
+      "ledger": {
+        "E_impact": 127936.14649681524,
+        "E_weight": 14739.809492403636,
+        "E_available": 142675.95598921887,
+        "E_soil": 122811.96753074358,
+        "E_dent": 19864.191275607438,
+        "f_soil_of_available": 0.8607755012345858,
+        "f_dent_of_available": 0.13922592028826813,
+        "f_dent_of_impact": 0.15526644986217342,
+        "closure_rel": -1.6374283194481656e-08
+      },
+      "verdict_chain": false,
+      "delta_over_D_closed": 0.14972612247674988,
+      "verdict_closed": false,
+      "peak_force": 681183.8346684552,
+      "t_end": 0.11302000000001326,
+      "n_steps": 5651
+    },
+    "cover_1.0": {
+      "case": "sphere-3000kg-h5.0-cov1.00-c60",
+      "v0": 7.54059079609417,
+      "impact_energy": 127936.14649681524,
+      "z_end": 0.6512901004744075,
+      "delta": 0.0,
+      "delta_over_D": 0.0,
+      "E_soil": 144600.84707257338,
+      "E_dent": 0.0,
+      "E_soil_dynamic": 144600.85365380035,
+      "E_dent_dynamic": 0.0,
+      "E_weight": 16664.709141243868,
+      "ledger": {
+        "E_impact": 127936.14649681524,
+        "E_weight": 16664.709141243868,
+        "E_available": 144600.85563805912,
+        "E_soil": 144600.84707257338,
+        "E_dent": 0.0,
+        "f_soil_of_available": 0.9999999407646262,
+        "f_dent_of_available": 0.0,
+        "f_dent_of_impact": 0.0,
+        "closure_rel": -1.3722316895482952e-08
+      },
+      "verdict_chain": true,
+      "delta_over_D_closed": 0.0,
+      "verdict_closed": true,
+      "peak_force": 289825.9702923833,
+      "t_end": 0.15150000000000666,
+      "n_steps": 7575
+    },
+    "cover_0.5_ring_coupled": {
+      "delta": 0.07944951247825349,
+      "delta_over_D": 0.15639667810679822,
+      "ratio_to_plateau": 1.0445474671283714,
+      "ledger_closure": -7.323671125937716e-08,
+      "E_dent_dynamic": 18969.91795621113,
+      "E_dent_plateau_law": 21206.214937429027
+    }
+  },
+  "acceptance": {
+    "criteria": {
+      "E1_rebound_le_2pct": true,
+      "E1_momentum_le_1e-6": true,
+      "E2_penetration_le_3pct": true,
+      "E3_ring_squash_le_5pct": true,
+      "E4_scaling_le_10pct": true,
+      "E5_agreement_ge_90pct": true,
+      "E6_anchor_arrested_with_soil": true,
+      "E6_no_soil_penetrates": true,
+      "E6_no_soil_amplifies_dent": true,
+      "E6_mass_scale_ge_5pct": true,
+      "E7_withheld_registered": true
+    },
+    "all_pass": true,
+    "E1": {
+      "cases": [
+        {
+          "h": 1.0,
+          "e": 0.5,
+          "zeta": 0.2154537619662468,
+          "dt": 8.042876279279525e-08,
+          "T_contact_measured": 0.00016093795434838682,
+          "v_in": 4.4294469180700204,
+          "v_out": -2.214721118648424,
+          "h_rebound": 0.2499994716303428,
+          "rebound_target": 0.25,
+          "rebound_rel_error": -2.113478628773535e-06,
+          "impulse_intFdt": 664.5746838050609,
+          "momentum_change": 664.5746838050601,
+          "momentum_rel_error": 1.1974694243465145e-15
+        },
+        {
+          "h": 2.0,
+          "e": 0.2,
+          "zeta": 0.4559498107691261,
+          "dt": 8.824644042066794e-08,
+          "T_contact_measured": 0.00017658112728176156,
+          "v_in": 6.26418390534633,
+          "v_out": -1.2528351415588057,
+          "h_rebound": 0.07999979061797516,
+          "rebound_target": 0.08000000000000002,
+          "rebound_rel_error": -2.6172753107150944e-06,
+          "impulse_intFdt": 751.8751307763764,
+          "momentum_change": 751.8751307763771,
+          "momentum_rel_error": 9.072264773877364e-16
+        },
+        {
+          "h": 0.5,
+          "e": 0.8,
+          "zeta": 0.07085030019536805,
+          "dt": 7.873768731356698e-08,
+          "T_contact_measured": 0.00015755411231444845,
+          "v_in": 3.132091952673165,
+          "v_out": -2.5056726914067022,
+          "h_rebound": 0.3199997775974162,
+          "rebound_target": 0.32000000000000006,
+          "rebound_rel_error": -6.95008074529102e-07,
+          "impulse_intFdt": 563.9310249921688,
+          "momentum_change": 563.9310249921672,
+          "momentum_rel_error": 2.822358865828904e-15
+        },
+        {
+          "h": 1.0,
+          "e": 0.3,
+          "zeta": 0.3578571305033167,
+          "dt": 8.410987945332959e-08,
+          "T_contact_measured": 0.00016830386878611292,
+          "v_in": 4.4294469180700204,
+          "v_out": -1.328832052274391,
+          "h_rebound": 0.08999972595065087,
+          "rebound_target": 0.09,
+          "rebound_rel_error": -3.044992768116058e-06,
+          "impulse_intFdt": 575.9930031297212,
+          "momentum_change": 575.9930031297204,
+          "momentum_rel_error": 1.381627658195853e-15
+        }
+      ],
+      "max_rebound_rel_error": 3.044992768116058e-06,
+      "max_momentum_rel_error": 2.822358865828904e-15
+    },
+    "E2": {
+      "rows": [
+        {
+          "case": "sphere-c30",
+          "analytic": 0.042114125337911326,
+          "settled": 0.04209085788138012,
+          "rel_error": -0.0005524858071850688
+        },
+        {
+          "case": "sphere-c60",
+          "analytic": 0.020564535796235246,
+          "settled": 0.020548440598481793,
+          "rel_error": -0.0007826676912590336
+        },
+        {
+          "case": "cone-c30",
+          "analytic": 0.32763559419846633,
+          "settled": 0.32759524140072976,
+          "rel_error": -0.00012316365636427437
+        },
+        {
+          "case": "cone-c60",
+          "analytic": 0.232538691209335,
+          "settled": 0.2325045136381,
+          "rel_error": -0.00014697584757726576
+        }
+      ],
+      "max_abs_rel_error": 0.0007826676912590336
+    },
+    "E3": {
+      "coarse": {
+        "P_num": 723868.2573700433,
+        "P_analytic": 748477.4803149607,
+        "rel_error": -0.03287904257929281,
+        "n_seg": 64,
+        "plateau_loads": [
+          703159.1975911458,
+          699327.2689855018,
+          695569.7903455354,
+          691913.6628074994
+        ]
+      },
+      "fine": {
+        "P_num": 723868.2573700433,
+        "P_analytic": 748477.4803149607,
+        "rel_error": -0.03287904257929281,
+        "n_seg": 64,
+        "plateau_loads": [
+          703159.1975911458,
+          699327.2689855018,
+          695569.7903455354,
+          691913.6628074994
+        ]
+      },
+      "curve": [
+        {
+          "delta": 0.0,
+          "delta_over_R": 0.0,
+          "flatten": 0.0,
+          "load": 0.0,
+          "load_over_analytic": 0.0,
+          "constraint_residual": 0.0,
+          "nit": 1,
+          "success": true
+        },
+        {
+          "delta": 0.003386666666666667,
+          "delta_over_R": 0.013333333333333336,
+          "flatten": 0.0033833475557532577,
+          "load": 208236.7581528141,
+          "load_over_analytic": 0.2782137921707246,
+          "constraint_residual": 3.3191109134094246e-06,
+          "nit": 402,
+          "success": true
+        },
+        {
+          "delta": 0.006773333333333334,
+          "delta_over_R": 0.026666666666666672,
+          "flatten": 0.006766760280891071,
+          "load": 412384.8727728617,
+          "load_over_analytic": 0.5509649703813793,
+          "constraint_residual": 6.573052442263375e-06,
+          "nit": 421,
+          "success": true
+        },
+        {
+          "delta": 0.010160000000000002,
+          "delta_over_R": 0.04000000000000001,
+          "flatten": 0.010150638514769106,
+          "load": 587327.5665786329,
+          "load_over_analytic": 0.7846963763445286,
+          "constraint_residual": 9.361485230896527e-06,
+          "nit": 539,
+          "success": true
+        },
+        {
+          "delta": 0.013546666666666669,
+          "delta_over_R": 0.053333333333333344,
+          "flatten": 0.013536715203516902,
+          "load": 624342.0238873101,
+          "load_over_analytic": 0.8341493769786978,
+          "constraint_residual": 9.951463149766165e-06,
+          "nit": 497,
+          "success": true
+        },
+        {
+          "delta": 0.016933333333333335,
+          "delta_over_R": 0.06666666666666667,
+          "flatten": 0.01692279711321079,
+          "load": 661028.92574,
+          "load_over_analytic": 0.883164748606515,
+          "constraint_residual": 1.0536220122543682e-05,
+          "nit": 479,
+          "success": true
+        },
+        {
+          "delta": 0.020320000000000005,
+          "delta_over_R": 0.08000000000000002,
+          "flatten": 0.020308884718452852,
+          "load": 697358.4962116499,
+          "load_over_analytic": 0.9317027092360883,
+          "constraint_residual": 1.1115281547152689e-05,
+          "nit": 538,
+          "success": true
+        },
+        {
+          "delta": 0.02370666666666667,
+          "delta_over_R": 0.09333333333333335,
+          "flatten": 0.023695128842825097,
+          "load": 723868.2573700433,
+          "load_over_analytic": 0.9671209574207071,
+          "constraint_residual": 1.1537823841573785e-05,
+          "nit": 471,
+          "success": true
+        },
+        {
+          "delta": 0.027093333333333337,
+          "delta_over_R": 0.10666666666666669,
+          "flatten": 0.027081864605730338,
+          "load": 719533.2480568022,
+          "load_over_analytic": 0.9613291875582166,
+          "constraint_residual": 1.1468727602999274e-05,
+          "nit": 464,
+          "success": true
+        },
+        {
+          "delta": 0.030480000000000004,
+          "delta_over_R": 0.12000000000000001,
+          "flatten": 0.030468598857092244,
+          "load": 715293.071032113,
+          "load_over_analytic": 0.9556641179519741,
+          "constraint_residual": 1.1401142907759704e-05,
+          "nit": 619,
+          "success": true
+        },
+        {
+          "delta": 0.03386666666666667,
+          "delta_over_R": 0.13333333333333333,
+          "flatten": 0.033855332029986585,
+          "load": 711120.5556781,
+          "load_over_analytic": 0.9500894474191249,
+          "constraint_residual": 1.1334636680085386e-05,
+          "nit": 671,
+          "success": true
+        },
+        {
+          "delta": 0.03725333333333334,
+          "delta_over_R": 0.1466666666666667,
+          "flatten": 0.037242062406384946,
+          "load": 707123.4888923382,
+          "load_over_analytic": 0.944749184163536,
+          "constraint_residual": 1.1270926948393767e-05,
+          "nit": 623,
+          "success": true
+        },
+        {
+          "delta": 0.04064000000000001,
+          "delta_over_R": 0.16000000000000003,
+          "flatten": 0.04062879226037089,
+          "load": 703159.1975911458,
+          "load_over_analytic": 0.9394527104479551,
+          "constraint_residual": 1.1207739629121027e-05,
+          "nit": 572,
+          "success": true
+        },
+        {
+          "delta": 0.04402666666666667,
+          "delta_over_R": 0.17333333333333334,
+          "flatten": 0.044015520004611786,
+          "load": 699327.2689855018,
+          "load_over_analytic": 0.9343330793215363,
+          "constraint_residual": 1.114666205488668e-05,
+          "nit": 553,
+          "success": true
+        },
+        {
+          "delta": 0.04741333333333334,
+          "delta_over_R": 0.1866666666666667,
+          "flatten": 0.04740224656218567,
+          "load": 695569.7903455354,
+          "load_over_analytic": 0.9293129167397773,
+          "constraint_residual": 1.1086771147673924e-05,
+          "nit": 691,
+          "success": true
+        },
+        {
+          "delta": 0.050800000000000005,
+          "delta_over_R": 0.2,
+          "flatten": 0.05078897150431205,
+          "load": 691913.6628074994,
+          "load_over_analytic": 0.9244281638458125,
+          "constraint_residual": 1.1028495687952222e-05,
+          "nit": 516,
+          "success": true
+        }
+      ],
+      "max_abs_rel_error": 0.03287904257929281,
+      "mesh_sensitivity": 0.0010889382899166662
+    },
+    "E4": {
+      "rows": [
+        {
+          "drop_height": 0.125,
+          "E_dent": 3850.2657715323976,
+          "delta": 0.02547473077844039,
+          "delta_over_D": 0.05014710783157557
+        },
+        {
+          "drop_height": 0.25,
+          "E_dent": 7404.924423885551,
+          "delta": 0.03939697566993462,
+          "delta_over_D": 0.07755310171246972
+        },
+        {
+          "drop_height": 0.5,
+          "E_dent": 14361.441441561308,
+          "delta": 0.061269991275428135,
+          "delta_over_D": 0.12061021904611838
+        },
+        {
+          "drop_height": 1.0,
+          "E_dent": 28036.183625028127,
+          "delta": 0.09570362643109703,
+          "delta_over_D": 0.18839296541554534
+        },
+        {
+          "drop_height": 2.0,
+          "E_dent": 55012.82142266665,
+          "delta": 0.15000016726891144,
+          "delta_over_D": 0.2952759198206918
+        }
+      ],
+      "rows_large_deflection": [
+        {
+          "drop_height": 4.0,
+          "E_dent": 108384.42418262013,
+          "delta": 0.23586151833141428,
+          "delta_over_D": 0.46429432742404386
+        },
+        {
+          "drop_height": 8.0,
+          "E_dent": 214773.10728467032,
+          "delta": 0.39373131022648394,
+          "delta_over_D": 0.7750616343041022
+        },
+        {
+          "drop_height": 16.0,
+          "E_dent": 427550.36946277646,
+          "delta": 0.709470739652817,
+          "delta_over_D": 1.3965959441984588
+        }
+      ],
+      "scaling": {
+        "exponents": [
+          0.6666666666666667,
+          0.6666666666666665,
+          0.6666666666666667,
+          0.6666666666666669
+        ],
+        "mean": 0.6666666666666667,
+        "analytic": 0.6666666666666666,
+        "rel_error": 1.6653345369377348e-16,
+        "n_intervals": 4
+      },
+      "ring_compliance_sensitivity": [
+        {
+          "drop_height": 0.125,
+          "delta": 0.02968118889175296,
+          "delta_plastic": 0.02547473077844039,
+          "ratio": 1.1651227700852702
+        },
+        {
+          "drop_height": 0.5,
+          "delta": 0.06640307854682449,
+          "delta_plastic": 0.061269991275428135,
+          "ratio": 1.0837781622706864
+        },
+        {
+          "drop_height": 2.0,
+          "delta": 0.16452082629704246,
+          "delta_plastic": 0.15000016726891144,
+          "ratio": 1.0968042855718902
+        }
+      ],
+      "scaling_large": {
+        "exponents": [
+          0.6666666666666667,
+          0.6666666666666665,
+          0.6666666666666667,
+          0.6666666666666669,
+          0.6674477889738819,
+          0.749269704660809,
+          0.8552783276652437
+        ],
+        "mean": 0.7055232125666573,
+        "analytic": 0.6666666666666666,
+        "rel_error": 0.058284818849985986,
+        "n_intervals": 7
+      }
+    },
+    "E5": {
+      "n": 108,
+      "agreement": 1.0,
+      "agreement_impact_energy_only": 0.9537037037037037,
+      "n_allowed_chain": 21,
+      "n_allowed_closed": 21
+    },
+    "E5_rows": [
+      {
+        "case": "sphere-2000kg-h2.0-cov0.00-c25",
+        "delta_over_D_chain": 0.22136508456420886,
+        "delta_over_D_closed": 0.22136400894396507,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "sphere-2000kg-h2.0-cov0.00-c60",
+        "delta_over_D_chain": 0.20746952177476977,
+        "delta_over_D_closed": 0.20746853662876671,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "sphere-2000kg-h2.0-cov0.50-c25",
+        "delta_over_D_chain": 0.06976627349520612,
+        "delta_over_D_closed": 0.06976601872065659,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": true,
+        "agree": true,
+        "agree_design": false
+      },
+      {
+        "case": "sphere-2000kg-h2.0-cov0.50-c60",
+        "delta_over_D_chain": 0.0,
+        "delta_over_D_closed": 0.0,
+        "verdict_chain": true,
+        "verdict_closed": true,
+        "verdict_closed_impact_energy_only": true,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "sphere-2000kg-h2.0-cov1.00-c25",
+        "delta_over_D_chain": 0.0,
+        "delta_over_D_closed": 0.0,
+        "verdict_chain": true,
+        "verdict_closed": true,
+        "verdict_closed_impact_energy_only": true,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "sphere-2000kg-h2.0-cov1.00-c60",
+        "delta_over_D_chain": 0.0,
+        "delta_over_D_closed": 0.0,
+        "verdict_chain": true,
+        "verdict_closed": true,
+        "verdict_closed_impact_energy_only": true,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "sphere-2000kg-h5.0-cov0.00-c25",
+        "delta_over_D_chain": 0.3992541284405967,
+        "delta_over_D_closed": 0.3992525582316374,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "sphere-2000kg-h5.0-cov0.00-c60",
+        "delta_over_D_chain": 0.3695216868628748,
+        "delta_over_D_closed": 0.3695202780427281,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "sphere-2000kg-h5.0-cov0.50-c25",
+        "delta_over_D_chain": 0.28491665689722395,
+        "delta_over_D_closed": 0.28491722914532147,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "sphere-2000kg-h5.0-cov0.50-c60",
+        "delta_over_D_chain": 0.06803223515901193,
+        "delta_over_D_closed": 0.06803222281723723,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": true,
+        "agree": true,
+        "agree_design": false
+      },
+      {
+        "case": "sphere-2000kg-h5.0-cov1.00-c25",
+        "delta_over_D_chain": 0.1352126443992077,
+        "delta_over_D_closed": 0.13521281051271222,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": true,
+        "agree": true,
+        "agree_design": false
+      },
+      {
+        "case": "sphere-2000kg-h5.0-cov1.00-c60",
+        "delta_over_D_chain": 0.0,
+        "delta_over_D_closed": 0.0,
+        "verdict_chain": true,
+        "verdict_closed": true,
+        "verdict_closed_impact_energy_only": true,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "sphere-2000kg-h8.0-cov0.00-c25",
+        "delta_over_D_chain": 0.5542809949876202,
+        "delta_over_D_closed": 0.5542788021693923,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "sphere-2000kg-h8.0-cov0.00-c60",
+        "delta_over_D_chain": 0.5041865491368821,
+        "delta_over_D_closed": 0.504184687900306,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "sphere-2000kg-h8.0-cov0.50-c25",
+        "delta_over_D_chain": 0.4425626856968095,
+        "delta_over_D_closed": 0.442563373183475,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "sphere-2000kg-h8.0-cov0.50-c60",
+        "delta_over_D_chain": 0.24404422470447867,
+        "delta_over_D_closed": 0.24404474058155753,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "sphere-2000kg-h8.0-cov1.00-c25",
+        "delta_over_D_chain": 0.3255594931883032,
+        "delta_over_D_closed": 0.32556009959535,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "sphere-2000kg-h8.0-cov1.00-c60",
+        "delta_over_D_chain": 0.0,
+        "delta_over_D_closed": 0.0,
+        "verdict_chain": true,
+        "verdict_closed": true,
+        "verdict_closed_impact_energy_only": true,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "sphere-3000kg-h2.0-cov0.00-c25",
+        "delta_over_D_chain": 0.2772338240942536,
+        "delta_over_D_closed": 0.2772328719811412,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "sphere-3000kg-h2.0-cov0.00-c60",
+        "delta_over_D_chain": 0.2570954884862903,
+        "delta_over_D_closed": 0.25709462544818956,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "sphere-3000kg-h2.0-cov0.50-c25",
+        "delta_over_D_chain": 0.1265625266360458,
+        "delta_over_D_closed": 0.12656281640101952,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "sphere-3000kg-h2.0-cov0.50-c60",
+        "delta_over_D_chain": 0.0,
+        "delta_over_D_closed": 0.0,
+        "verdict_chain": true,
+        "verdict_closed": true,
+        "verdict_closed_impact_energy_only": true,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "sphere-3000kg-h2.0-cov1.00-c25",
+        "delta_over_D_chain": 0.0,
+        "delta_over_D_closed": 0.0,
+        "verdict_chain": true,
+        "verdict_closed": true,
+        "verdict_closed_impact_energy_only": true,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "sphere-3000kg-h2.0-cov1.00-c60",
+        "delta_over_D_chain": 0.0,
+        "delta_over_D_closed": 0.0,
+        "verdict_chain": true,
+        "verdict_closed": true,
+        "verdict_closed_impact_energy_only": true,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "sphere-3000kg-h5.0-cov0.00-c25",
+        "delta_over_D_chain": 0.4995771472489363,
+        "delta_over_D_closed": 0.499575698296212,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "sphere-3000kg-h5.0-cov0.00-c60",
+        "delta_over_D_chain": 0.4558860290910949,
+        "delta_over_D_closed": 0.45588477948422224,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "sphere-3000kg-h5.0-cov0.50-c25",
+        "delta_over_D_chain": 0.37835171197751377,
+        "delta_over_D_closed": 0.3783521949399073,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "sphere-3000kg-h5.0-cov0.50-c60",
+        "delta_over_D_chain": 0.14972673145889462,
+        "delta_over_D_closed": 0.14972612247674988,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "sphere-3000kg-h5.0-cov1.00-c25",
+        "delta_over_D_chain": 0.23064060986342946,
+        "delta_over_D_closed": 0.23063996824839708,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "sphere-3000kg-h5.0-cov1.00-c60",
+        "delta_over_D_chain": 0.0,
+        "delta_over_D_closed": 0.0,
+        "verdict_chain": true,
+        "verdict_closed": true,
+        "verdict_closed_impact_energy_only": true,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "sphere-3000kg-h8.0-cov0.00-c25",
+        "delta_over_D_chain": 0.6994312375072146,
+        "delta_over_D_closed": 0.6994292379595208,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "sphere-3000kg-h8.0-cov0.00-c60",
+        "delta_over_D_chain": 0.6253686826343251,
+        "delta_over_D_closed": 0.6253670043397507,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "sphere-3000kg-h8.0-cov0.50-c25",
+        "delta_over_D_chain": 0.5763385754253032,
+        "delta_over_D_closed": 0.5763371922230361,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "sphere-3000kg-h8.0-cov0.50-c60",
+        "delta_over_D_chain": 0.3471697010975979,
+        "delta_over_D_closed": 0.34716994683458324,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "sphere-3000kg-h8.0-cov1.00-c25",
+        "delta_over_D_chain": 0.4503329661401114,
+        "delta_over_D_closed": 0.4503325118939756,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "sphere-3000kg-h8.0-cov1.00-c60",
+        "delta_over_D_chain": 0.0,
+        "delta_over_D_closed": 0.0,
+        "verdict_chain": true,
+        "verdict_closed": true,
+        "verdict_closed_impact_energy_only": true,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "sphere-5000kg-h2.0-cov0.00-c25",
+        "delta_over_D_chain": 0.3684478987175554,
+        "delta_over_D_closed": 0.36844708140324656,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "sphere-5000kg-h2.0-cov0.00-c60",
+        "delta_over_D_chain": 0.3364319160264389,
+        "delta_over_D_closed": 0.33643118875170325,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "sphere-5000kg-h2.0-cov0.50-c25",
+        "delta_over_D_chain": 0.21658277638135132,
+        "delta_over_D_closed": 0.21658306330846244,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "sphere-5000kg-h2.0-cov0.50-c60",
+        "delta_over_D_chain": 0.0,
+        "delta_over_D_closed": 0.0,
+        "verdict_chain": true,
+        "verdict_closed": true,
+        "verdict_closed_impact_energy_only": true,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "sphere-5000kg-h2.0-cov1.00-c25",
+        "delta_over_D_chain": 0.0,
+        "delta_over_D_closed": 0.0,
+        "verdict_chain": true,
+        "verdict_closed": true,
+        "verdict_closed_impact_energy_only": true,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "sphere-5000kg-h2.0-cov1.00-c60",
+        "delta_over_D_chain": 0.0,
+        "delta_over_D_closed": 0.0,
+        "verdict_chain": true,
+        "verdict_closed": true,
+        "verdict_closed_impact_energy_only": true,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "sphere-5000kg-h5.0-cov0.00-c25",
+        "delta_over_D_chain": 0.6654794151278384,
+        "delta_over_D_closed": 0.6654781255338096,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "sphere-5000kg-h5.0-cov0.00-c60",
+        "delta_over_D_chain": 0.5942197732103686,
+        "delta_over_D_closed": 0.5942186965685324,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "sphere-5000kg-h5.0-cov0.50-c25",
+        "delta_over_D_chain": 0.5317071989451768,
+        "delta_over_D_closed": 0.5317073688356685,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "sphere-5000kg-h5.0-cov0.50-c60",
+        "delta_over_D_chain": 0.273723877928055,
+        "delta_over_D_closed": 0.2737241682780223,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "sphere-5000kg-h5.0-cov1.00-c25",
+        "delta_over_D_chain": 0.38332316851662906,
+        "delta_over_D_closed": 0.3833234930179969,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "sphere-5000kg-h5.0-cov1.00-c60",
+        "delta_over_D_chain": 0.0,
+        "delta_over_D_closed": 0.0,
+        "verdict_chain": true,
+        "verdict_closed": true,
+        "verdict_closed_impact_energy_only": true,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "sphere-5000kg-h8.0-cov0.00-c25",
+        "delta_over_D_chain": 0.9402302035122062,
+        "delta_over_D_closed": 0.9402284025900371,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "sphere-5000kg-h8.0-cov0.00-c60",
+        "delta_over_D_chain": 0.819733394061335,
+        "delta_over_D_closed": 0.8197319319851887,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "sphere-5000kg-h8.0-cov0.50-c25",
+        "delta_over_D_chain": 0.8024552629429538,
+        "delta_over_D_closed": 0.8024558618590163,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "sphere-5000kg-h8.0-cov0.50-c60",
+        "delta_over_D_chain": 0.5127377507494633,
+        "delta_over_D_closed": 0.5127371425414823,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "sphere-5000kg-h8.0-cov1.00-c25",
+        "delta_over_D_chain": 0.6618180997331569,
+        "delta_over_D_closed": 0.661817494167735,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "sphere-5000kg-h8.0-cov1.00-c60",
+        "delta_over_D_chain": 0.14902849599595283,
+        "delta_over_D_closed": 0.149028511717006,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": true,
+        "agree": true,
+        "agree_design": false
+      },
+      {
+        "case": "cone-2000kg-h2.0-cov0.00-c25",
+        "delta_over_D_chain": 0.3736190197820119,
+        "delta_over_D_closed": 0.37361811132996076,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "cone-2000kg-h2.0-cov0.00-c60",
+        "delta_over_D_chain": 0.36937532267990875,
+        "delta_over_D_closed": 0.36937443867918773,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "cone-2000kg-h2.0-cov0.50-c25",
+        "delta_over_D_chain": 0.3008269065678019,
+        "delta_over_D_closed": 0.30082722435781767,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "cone-2000kg-h2.0-cov0.50-c60",
+        "delta_over_D_chain": 0.17499522591122363,
+        "delta_over_D_closed": 0.17499540126209465,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "cone-2000kg-h2.0-cov1.00-c25",
+        "delta_over_D_chain": 0.0,
+        "delta_over_D_closed": 0.0,
+        "verdict_chain": true,
+        "verdict_closed": true,
+        "verdict_closed_impact_energy_only": true,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "cone-2000kg-h2.0-cov1.00-c60",
+        "delta_over_D_chain": 0.0,
+        "delta_over_D_closed": 0.0,
+        "verdict_chain": true,
+        "verdict_closed": true,
+        "verdict_closed_impact_energy_only": true,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "cone-2000kg-h5.0-cov0.00-c25",
+        "delta_over_D_chain": 0.6693370138770263,
+        "delta_over_D_closed": 0.6693357354679392,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "cone-2000kg-h5.0-cov0.00-c60",
+        "delta_over_D_chain": 0.6526258139139136,
+        "delta_over_D_closed": 0.6526246004114,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "cone-2000kg-h5.0-cov0.50-c25",
+        "delta_over_D_chain": 0.5538944958371217,
+        "delta_over_D_closed": 0.5538949680349106,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "cone-2000kg-h5.0-cov0.50-c60",
+        "delta_over_D_chain": 0.40479543434807197,
+        "delta_over_D_closed": 0.4047957894972569,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "cone-2000kg-h5.0-cov1.00-c25",
+        "delta_over_D_chain": 0.23740327131351407,
+        "delta_over_D_closed": 0.2374034197191577,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "cone-2000kg-h5.0-cov1.00-c60",
+        "delta_over_D_chain": 0.0,
+        "delta_over_D_closed": 0.0,
+        "verdict_chain": true,
+        "verdict_closed": true,
+        "verdict_closed_impact_energy_only": true,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "cone-2000kg-h8.0-cov0.00-c25",
+        "delta_over_D_chain": 0.8997765051674556,
+        "delta_over_D_closed": 0.8997749845775617,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "cone-2000kg-h8.0-cov0.00-c60",
+        "delta_over_D_chain": 0.8670967618808954,
+        "delta_over_D_closed": 0.8670953605842442,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "cone-2000kg-h8.0-cov0.50-c25",
+        "delta_over_D_chain": 0.7518391404670802,
+        "delta_over_D_closed": 0.7518389390670563,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "cone-2000kg-h8.0-cov0.50-c60",
+        "delta_over_D_chain": 0.5769191835263036,
+        "delta_over_D_closed": 0.5769187152518497,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "cone-2000kg-h8.0-cov1.00-c25",
+        "delta_over_D_chain": 0.47024534017450614,
+        "delta_over_D_closed": 0.47024519192473235,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "cone-2000kg-h8.0-cov1.00-c60",
+        "delta_over_D_chain": 0.0,
+        "delta_over_D_closed": 0.0,
+        "verdict_chain": true,
+        "verdict_closed": true,
+        "verdict_closed_impact_energy_only": true,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "cone-3000kg-h2.0-cov0.00-c25",
+        "delta_over_D_chain": 0.49671903225447733,
+        "delta_over_D_closed": 0.49671824659617414,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "cone-3000kg-h2.0-cov0.00-c60",
+        "delta_over_D_chain": 0.4881671530100279,
+        "delta_over_D_closed": 0.4881663913374724,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "cone-3000kg-h2.0-cov0.50-c25",
+        "delta_over_D_chain": 0.42578654727104887,
+        "delta_over_D_closed": 0.42578683921328786,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "cone-3000kg-h2.0-cov0.50-c60",
+        "delta_over_D_chain": 0.2878363262066494,
+        "delta_over_D_closed": 0.2878359236174219,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "cone-3000kg-h2.0-cov1.00-c25",
+        "delta_over_D_chain": 0.06746886231964318,
+        "delta_over_D_closed": 0.06746887529061496,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": true,
+        "agree": true,
+        "agree_design": false
+      },
+      {
+        "case": "cone-3000kg-h2.0-cov1.00-c60",
+        "delta_over_D_chain": 0.0,
+        "delta_over_D_closed": 0.0,
+        "verdict_chain": true,
+        "verdict_closed": true,
+        "verdict_closed_impact_energy_only": true,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "cone-3000kg-h5.0-cov0.00-c25",
+        "delta_over_D_chain": 0.8801927286375569,
+        "delta_over_D_closed": 0.880191627899876,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "cone-3000kg-h5.0-cov0.00-c60",
+        "delta_over_D_chain": 0.8485504426506265,
+        "delta_over_D_closed": 0.848549425029887,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "cone-3000kg-h5.0-cov0.50-c25",
+        "delta_over_D_chain": 0.7482070988668439,
+        "delta_over_D_closed": 0.7482069166517248,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "cone-3000kg-h5.0-cov0.50-c60",
+        "delta_over_D_chain": 0.5714521945629977,
+        "delta_over_D_closed": 0.5714517701535442,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "cone-3000kg-h5.0-cov1.00-c25",
+        "delta_over_D_chain": 0.424093454731002,
+        "delta_over_D_closed": 0.4240934400540936,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "cone-3000kg-h5.0-cov1.00-c60",
+        "delta_over_D_chain": 0.0,
+        "delta_over_D_closed": 0.0,
+        "verdict_chain": true,
+        "verdict_closed": true,
+        "verdict_closed_impact_energy_only": true,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "cone-3000kg-h8.0-cov0.00-c25",
+        "delta_over_D_chain": 1.1748863476967415,
+        "delta_over_D_closed": 0.9999999999990904,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "cone-3000kg-h8.0-cov0.00-c60",
+        "delta_over_D_chain": 1.1155411895711225,
+        "delta_over_D_closed": 0.9999999999990904,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "cone-3000kg-h8.0-cov0.50-c25",
+        "delta_over_D_chain": 0.9991019194069334,
+        "delta_over_D_closed": 0.9991022019994484,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "cone-3000kg-h8.0-cov0.50-c60",
+        "delta_over_D_chain": 0.7847265496176665,
+        "delta_over_D_closed": 0.7847266368835336,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "cone-3000kg-h8.0-cov1.00-c25",
+        "delta_over_D_chain": 0.6983428161785535,
+        "delta_over_D_closed": 0.6983432240240288,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "cone-3000kg-h8.0-cov1.00-c60",
+        "delta_over_D_chain": 0.2221132269638171,
+        "delta_over_D_closed": 0.22211310909642634,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "cone-5000kg-h2.0-cov0.00-c25",
+        "delta_over_D_chain": 0.7145395802767456,
+        "delta_over_D_closed": 0.7145389174393131,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "cone-5000kg-h2.0-cov0.00-c60",
+        "delta_over_D_chain": 0.693924727903166,
+        "delta_over_D_closed": 0.6939241053269142,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "cone-5000kg-h2.0-cov0.50-c25",
+        "delta_over_D_chain": 0.6400155427033176,
+        "delta_over_D_closed": 0.6400152919895847,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "cone-5000kg-h2.0-cov0.50-c60",
+        "delta_over_D_chain": 0.47277656963835046,
+        "delta_over_D_closed": 0.4727765628658745,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "cone-5000kg-h2.0-cov1.00-c25",
+        "delta_over_D_chain": 0.31591309090885666,
+        "delta_over_D_closed": 0.3159129954101445,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "cone-5000kg-h2.0-cov1.00-c60",
+        "delta_over_D_chain": 0.0,
+        "delta_over_D_closed": 0.0,
+        "verdict_chain": true,
+        "verdict_closed": true,
+        "verdict_closed_impact_energy_only": true,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "cone-5000kg-h5.0-cov0.00-c25",
+        "delta_over_D_chain": 1.2409341380981815,
+        "delta_over_D_closed": 0.9999999999990904,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "cone-5000kg-h5.0-cov0.00-c60",
+        "delta_over_D_chain": 1.1725275709863183,
+        "delta_over_D_closed": 0.9999999999990904,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "cone-5000kg-h5.0-cov0.50-c25",
+        "delta_over_D_chain": 1.0758545186417048,
+        "delta_over_D_closed": 0.9999999999990904,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "cone-5000kg-h5.0-cov0.50-c60",
+        "delta_over_D_chain": 0.8443360300230635,
+        "delta_over_D_closed": 0.8443360815772394,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "cone-5000kg-h5.0-cov1.00-c25",
+        "delta_over_D_chain": 0.7321626322565139,
+        "delta_over_D_closed": 0.732162233908639,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "cone-5000kg-h5.0-cov1.00-c60",
+        "delta_over_D_chain": 0.2807890301549341,
+        "delta_over_D_closed": 0.2807890902686267,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "cone-5000kg-h8.0-cov0.00-c25",
+        "delta_over_D_chain": 1.6356957092122795,
+        "delta_over_D_closed": 0.9999999999990904,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "cone-5000kg-h8.0-cov0.00-c60",
+        "delta_over_D_chain": 1.515737764280515,
+        "delta_over_D_closed": 0.9999999999990904,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "cone-5000kg-h8.0-cov0.50-c25",
+        "delta_over_D_chain": 1.4103069111850506,
+        "delta_over_D_closed": 0.9999999999990904,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "cone-5000kg-h8.0-cov0.50-c60",
+        "delta_over_D_chain": 1.1211828334019744,
+        "delta_over_D_closed": 0.9999999999990904,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "cone-5000kg-h8.0-cov1.00-c25",
+        "delta_over_D_chain": 1.0807799909216742,
+        "delta_over_D_closed": 0.9999999999990904,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      },
+      {
+        "case": "cone-5000kg-h8.0-cov1.00-c60",
+        "delta_over_D_chain": 0.5446747408162649,
+        "delta_over_D_closed": 0.5446746472816811,
+        "verdict_chain": false,
+        "verdict_closed": false,
+        "verdict_closed_impact_energy_only": false,
+        "agree": true,
+        "agree_design": true
+      }
+    ],
+    "E6": {
+      "ref": {
+        "case": "sphere-3000kg-h5.0-cov1.00-c60",
+        "z_end": 0.6512901004744075,
+        "delta_over_D": 0.0
+      },
+      "no_soil": {
+        "case": "sphere-3000kg-h5.0-cov1.00-c60",
+        "z_end": 1.3147950415819545,
+        "delta_over_D": 0.6196752787046348,
+        "contact_attained": true
+      },
+      "deep_ref": {
+        "case": "sphere-3000kg-h8.0-cov3.00-c30",
+        "z_end": 1.8490583911449914,
+        "delta_over_D": 0.0,
+        "z_analytic": 1.8490587295905656
+      },
+      "deep_heavy": {
+        "case": "sphere-4500kg-h8.0-cov3.00-c30",
+        "z_end": 2.1679695991407693,
+        "delta_over_D": 0.0,
+        "z_analytic": 2.1679700168113305
+      },
+      "mass_scale_ratio_numeric": 1.1724722212792311,
+      "mass_scale_ratio_analytic": 1.172472232556605,
+      "mass_scale_rel_change": 0.17247222127923112,
+      "anchor_arrested_in_soil": true,
+      "no_soil_penetrates": true,
+      "no_soil_amplifies_dent": true
+    },
+    "E7": {
+      "status": "WITHHELD",
+      "reason": "No full-scale or flume anchor-drop-on-pipeline test data exist in this worktree; DNV-RP-F107 itself is a licensed document whose tables were not verified verbatim here. Only analytic anchors (rebound, bearing capacity, ring-squash limit load, dent-energy scaling, energy closure) are claimed.",
+      "claimed_scope": "analytic chain verification only"
+    }
+  },
+  "criterion_values": {
+    "E1_rebound_le_2pct": "3.04e-04 %",
+    "E1_momentum_le_1e-6": "2.8e-15",
+    "E2_penetration_le_3pct": "0.078 %",
+    "E3_ring_squash_le_5pct": "3.29 %",
+    "E4_scaling_le_10pct": "1.67e-14 %",
+    "E5_agreement_ge_90pct": "100.0 %",
+    "E6_mass_scale_ge_5pct": "+17.2 %",
+    "E6_no_soil_penetrates": "delta/D = 62.0 %",
+    "E6_anchor_arrested_with_soil": "delta/D = 0.0 %",
+    "E6_no_soil_amplifies_dent": "62.0 % > 0.0 %",
+    "E7_withheld_registered": "WITHHELD"
+  },
+  "figures": [
+    {
+      "name": "fig1_dynamics.png",
+      "caption": "贯入与碰撞力时程：覆土 0/0.5/1.0 m 三种情形（0 m 直接命中，凹陷最大；1.0 m 锚被土止住，管道未触及）。"
+    },
+    {
+      "name": "fig2_dent_energy.png",
+      "caption": "凹陷深度 vs 凹陷功（双对数）：刚塑性闭合与解析塑性功斜率 2/3 重合；方点为耦合环向铰曲线（早期抗力低 ⇒ 凹陷更深）。"
+    },
+    {
+      "name": "fig3_verdict_map.png",
+      "caption": "判定图：δ/D 随落高与锚质量变化，点线为 RP-F107 无修复限值 5 % D。"
+    },
+    {
+      "name": "fig4_verification.png",
+      "caption": "四联验证图：E1 反弹高度、E2 承载力-平衡深度、E3 环向压扁载荷曲线（对经典 4M_pl/R 归一）、E6 质量标度（数值 vs 解析）。"
+    }
+  ]
+}
