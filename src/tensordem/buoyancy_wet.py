@@ -279,6 +279,53 @@ def wave_elevation(
     return cfg.amplitude * torch.cos(k * x - omega * t + cfg.phase)
 
 
+def wave_kinematics_full(
+    x: torch.Tensor,
+    y: torch.Tensor,
+    t: float,
+    cfg: WaveForceConfig,
+) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+    """Airy kinematics including the **vertical** acceleration.
+
+    ``wave_kinematics`` returns only ``du_x/dt``: it was enough for a horizontal
+    drag/inertia load, but a floater is carried by the *vertical* fluid
+    acceleration, so the heave channel of :func:`compute_wave_force` had no
+    inertia term at all (its vertical component was drag-only -- see the defect
+    note there).  This is the additive, backward-compatible companion:
+
+        du_y/dt = -A w^2 decay(y) cos(k x - w t + phi)
+
+    which for deep water at ``y = 0`` is exactly ``-w^2 eta`` (the free-surface
+    value quoted in every Airy reference).
+    """
+    if not cfg.enabled or cfg.amplitude <= 0.0:
+        zeros = torch.zeros_like(x)
+        return zeros, zeros, zeros, zeros
+
+    A = cfg.amplitude
+    lam = cfg.wavelength
+    T = cfg.period
+    d = cfg.water_depth
+    phi = cfg.phase
+
+    k = 2.0 * math.pi / lam
+    omega = 2.0 * math.pi / T
+    deep = d > 0.5 * lam
+
+    if deep:
+        decay = torch.exp(k * torch.clamp(y, max=0.0))
+    else:
+        decay = torch.cosh(k * (y + d)) / math.cosh(k * d)
+
+    phase_arg = k * x - omega * t + phi
+
+    u_x = A * omega * decay * torch.cos(phase_arg)
+    u_y = A * omega * decay * torch.sin(phase_arg)
+    du_x_dt = A * omega ** 2 * decay * torch.sin(phase_arg)
+    du_y_dt = -A * omega ** 2 * decay * torch.cos(phase_arg)
+    return u_x, u_y, du_x_dt, du_y_dt
+
+
 # ---------------------------------------------------------------------------
 # Morison wave force
 # ---------------------------------------------------------------------------
@@ -315,7 +362,7 @@ def compute_wave_force(
     else:
         f_sub = submerged_fraction_tensor(y, radius, wet_cfg.water_level)
 
-    u_x, u_y, du_x_dt = wave_kinematics(x, y, t, wave_cfg)
+    u_x, u_y, du_x_dt, du_y_dt = wave_kinematics_full(x, y, t, wave_cfg)
 
     u_rel_x = u_x - velocities[:, 0]
     u_rel_y = u_y - velocities[:, 1]
@@ -328,6 +375,11 @@ def compute_wave_force(
     D = 2.0 * radius
 
     F_inertia_x = rho_w * C_M * A_cross * du_x_dt * thickness * f_sub
+    # Defect fix (2026-11-10): the vertical inertia term was missing, so a
+    # particle -- and therefore a floating floe -- received no heave excitation
+    # from the wave at all (vertical load was drag-only).  With it, the Morison
+    # inertia load is the usual rho C_M A du/dt on both axes.
+    F_inertia_y = rho_w * C_M * A_cross * du_y_dt * thickness * f_sub
 
     u_rel_mag = torch.sqrt(u_rel_x ** 2 + u_rel_y ** 2 + 1e-30)
     F_drag_x = 0.5 * rho_w * C_D * D * u_rel_mag * u_rel_x * thickness * f_sub
@@ -335,7 +387,7 @@ def compute_wave_force(
 
     force = torch.zeros((N, 2), device=device, dtype=dtype)
     force[:, 0] = F_inertia_x + F_drag_x
-    force[:, 1] = F_drag_y
+    force[:, 1] = F_inertia_y + F_drag_y
 
     return force
 
