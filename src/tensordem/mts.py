@@ -487,6 +487,29 @@ class MTSConfig:
     #: (cheaper, but the slip budget per step is over-estimated: measurable
     #: ``phi_J`` bias, see the jamming ablation in the campaign output).
     state_at_coarse: bool = False
+    #: Which rate class owns the box-wall contacts.  A wall spring is ``kn`` --
+    #: the *soft* class -- so the physically right assignment is the slow arm
+    #: (``"slow"``, one wall evaluation per coarse step).  ``"fast"`` reproduces
+    #: the pre-P82W5 behaviour (walls re-evaluated in every sub-step, ``n_sub``
+    #: times the wall cost for no accuracy) and exists only as the ablation.
+    wall_rate: str = "slow"
+    #: Include the box-wall contacts in the virial pressure.  Physically they
+    #: belong there (the walls are the loading boundary of the domain), and that
+    #: is the default.  The *shipped* 2-D engine
+    #: (:func:`tensordem.granular2d.stress.virial_tensor`) sums disk-disk
+    #: contacts only, so a servo driven by that engine controls a different
+    #: quantity -- ``pressure_includes_walls=False`` reproduces its convention,
+    #: which is required whenever a jamming density is compared with the
+    #: ``W4-P1`` ladder (otherwise the same state reads ~10 % higher here and the
+    #: servo stops at a denser packing).
+    pressure_includes_walls: bool = True
+    #: Fast-arm kernel.  ``"lean"`` is the fused sub-step kernel (static
+    #: per-coarse-step pre-computation, one pass over the stiff contacts);
+    #: ``"reference"`` is the original composition of
+    #: ``_pair_geometry``/``_pair_kinematics``/``_tangential_force`` and is kept
+    #: as the numerical reference of the regression test.  Both integrate the
+    #: same contact laws -- only the amount of repeated work differs.
+    fast_kernel: str = "lean"
 
     def __post_init__(self) -> None:
         for name in ("kn", "kt_ratio", "density", "thickness", "stiff_ratio"):
@@ -501,6 +524,10 @@ class MTSConfig:
             raise ValueError("stiff_ratio must be >= 1")
         if not (0.0 <= float(self.stiff_fraction) < 1.0):
             raise ValueError("stiff_fraction must lie in [0, 1)")
+        if str(self.wall_rate) not in ("slow", "fast"):
+            raise ValueError("wall_rate must be 'slow' or 'fast'")
+        if str(self.fast_kernel) not in ("lean", "reference"):
+            raise ValueError("fast_kernel must be 'lean' or 'reference'")
 
 
 class MTSDisks:
@@ -555,7 +582,7 @@ class MTSDisks:
 
         self.time = 0.0
         self.steps = 0
-        self.work = {"slow": 0, "fast": 0, "single": 0}
+        self.work = {"slow": 0, "fast": 0, "single": 0, "wall": 0}
         self.dt = 0.0
         self.n_sub = 1
         self.mode = "mts"
@@ -572,6 +599,21 @@ class MTSDisks:
         self._fast_idx = np.zeros(0, dtype=np.int64)
         self._wall_sets = None
         self._last_stress: np.ndarray | None = None
+        # fast-arm static cache (rebuilt once per coarse step, see _prepare_fast)
+        self._f_n = 0
+        self._f_idx = np.zeros(0, dtype=np.int64)
+        self._f_i = np.zeros(0, dtype=np.int64)
+        self._f_j = np.zeros(0, dtype=np.int64)
+        self._f_rs = np.zeros(0)
+        self._f_k = np.zeros(0)
+        self._f_c = np.zeros(0)
+        self._f_kt = np.zeros(0)
+        self._f_kr = np.zeros(0)
+        self._f_capr = np.zeros(0)
+        self._f_xicap = np.zeros(0)
+        self._f_rollcap = np.zeros(0)
+        self._f_ri = np.zeros(0)
+        self._f_rj = np.zeros(0)
         self._rebuild(force=True)
 
     # ---------------------------------------------------------- neighbour list
@@ -744,6 +786,18 @@ class MTSDisks:
             if self._slow_idx.size:
                 self._advance_state(self._slow_idx, dt)
         force, torque = self._pair_forces(self._slow_idx, friction=True)
+        if self.box is not None and not self.periodic:
+            # the wall selection is renewed once per coarse step -- it is a
+            # *slow* quantity (a disk needs a whole coarse step to reach a
+            # plane), and leaving it stale silently drops wall contacts.
+            self._wall_sets = self._wall_active_sets()
+        if cfg.wall_rate == "slow":
+            # a wall spring is ``cfg.kn``: the soft class, i.e. the slow arm.
+            # Its tangential state advances once per coarse step (``dt``), the
+            # normal force is held over the step like every other slow force.
+            fw, tw = self._wall_forces(dt)
+            force = force + fw
+            torque = torque + tw
         return force + self._external(), torque
 
     def _advance_state(self, idx: np.ndarray, dt: float) -> None:
@@ -818,6 +872,127 @@ class MTSDisks:
                  _cross(lever_j, -total))
         return force, torque
 
+    def _prepare_fast(self) -> None:
+        """Static per-coarse-step data of the fast arm.
+
+        Everything that depends on the *pair list* and not on the positions --
+        stiffness, effective mass, damping coefficient, tangential/rolling
+        moduli, lever radii -- is computed once per coarse step instead of once
+        per sub-step.  With ``n_sub`` sub-steps this removes ``n_sub - 1``
+        redundant evaluations of the same numbers, which is where the older
+        ``_pair_forces`` composition spent most of its time for small ``N``.
+        """
+        cfg = self.config
+        idx = self._fast_idx
+        self._f_n = int(idx.size)
+        if self._f_n == 0:
+            return
+        i, j, _, _, _ = self._pair_geometry(idx)
+        self._f_idx = idx
+        self._f_i = i
+        self._f_j = j
+        rs = self.radii[i] + self.radii[j]
+        self._f_rs = rs
+        k = self._pair_stiffness(i, j)
+        self._f_k = k
+        m_eff = (self.mass[i] * self.mass[j]) / (self.mass[i] + self.mass[j])
+        self._f_c = 2.0 * cfg.zeta * np.sqrt(k * m_eff)
+        kt = cfg.kt_ratio * k
+        self._f_kt = kt
+        r_eff = (self.radii[i] * self.radii[j]) / rs
+        self._f_kr = 0.25 * kt * r_eff ** 2
+        self._f_capr = cfg.mu_rolling * r_eff
+        # the cone caps are expressed as bounds on the *internal variable*, so
+        # the sub-step only needs one multiply: |xi| <= (mu/k_t) f_n and
+        # |roll| <= (mu_r r_eff / k_r) f_n
+        self._f_xicap = cfg.mu / kt
+        self._f_rollcap = cfg.mu_rolling * r_eff / np.maximum(self._f_kr, 1e-300)
+        self._f_ri = self.radii[i]
+        self._f_rj = self.radii[j]
+
+    def _fast_step(self, h: float):
+        """One sub-step of the fast arm: fused contact kernel.
+
+        Same contact laws and same return map as :meth:`_pair_forces`
+        (verified in ``tests/test_mts_speedup_gate.py``); the difference is that
+        the geometry/kinematics/friction passes are fused into one sweep over
+        the stiff contacts, using the static arrays of :meth:`_prepare_fast`.
+        """
+        cfg = self.config
+        n = len(self.pos)
+        force = np.zeros((n, 2))
+        torque = np.zeros(n)
+        self.work["fast"] += 1
+        if cfg.wall_rate == "fast":  # legacy ablation: walls on the fine step
+            fw, tw = self._wall_forces(h)
+            force = force + fw
+            torque = torque + tw
+        if self._f_n == 0:
+            return force, torque
+        i, j = self._f_i, self._f_j
+        ri, rj = self._f_ri, self._f_rj
+        pos, vel, om = self.pos, self.vel, self.omega
+        d0 = pos[j, 0] - pos[i, 0]
+        d1 = pos[j, 1] - pos[i, 1]
+        if self.periodic:
+            lx, ly = self.box
+            d0 -= lx * np.round(d0 / lx)
+            d1 -= ly * np.round(d1 / ly)
+        dist = np.sqrt(d0 * d0 + d1 * d1)
+        inv = 1.0 / np.maximum(dist, 1e-30)
+        n0 = -d0 * inv
+        n1 = -d1 * inv
+        ov = self._f_rs - dist
+        contact = ov > 0.0
+        omi, omj = om[i], om[j]
+        # tangential lever of a disk pair: perp(omega * lever) with
+        # lever_i = -r_i n, lever_j = +r_j n
+        vrx = (vel[i, 0] + omi * ri * n1) - (vel[j, 0] - omj * rj * n1)
+        vry = (vel[i, 1] - omi * ri * n0) - (vel[j, 1] + omj * rj * n0)
+        vn = vrx * n0 + vry * n1
+        fn = self._f_k * ov - self._f_c * vn
+        np.maximum(fn, 0.0, out=fn)
+        np.multiply(fn, contact, out=fn)          # no spring without overlap
+        fx = fn * n0
+        fy = fn * n1
+        mr = None
+        if cfg.mu > 0.0 and cfg.kt_ratio > 0.0:
+            idx = self._f_idx
+            xi0 = self._xi[idx, 0]
+            xi1 = self._xi[idx, 1]
+            x0 = xi0 + (vrx - vn * n0) * h
+            x1 = xi1 + (vry - vn * n1) * h
+            dot = x0 * n0 + x1 * n1
+            x0 -= dot * n0
+            x1 -= dot * n1
+            # cone return map: |xi| <= (mu/k_t) f_n  ==  |f_t| <= mu f_n
+            mag = np.sqrt(x0 * x0 + x1 * x1)
+            scale = np.minimum(1.0, self._f_xicap * fn / np.maximum(mag, 1e-30))
+            np.multiply(scale, contact, out=scale)
+            self._xi[idx, 0] = np.where(contact, x0 * scale, xi0)
+            self._xi[idx, 1] = np.where(contact, x1 * scale, xi1)
+            fx -= (self._f_kt * scale) * x0
+            fy -= (self._f_kt * scale) * x1
+            if cfg.mu_rolling > 0.0:
+                roll = self._roll[idx]
+                rl = roll + (omi - omj) * h
+                magr = np.abs(rl)
+                sr = np.minimum(1.0, self._f_rollcap * fn / np.maximum(magr, 1e-30))
+                np.multiply(sr, contact, out=sr)
+                self._roll[idx] = np.where(contact, rl * sr, roll)
+                mr = (self._f_kr * sr) * rl
+        # torque = lever x force (lever_i = -r_i n, lever_j = +r_j n)
+        cross = n0 * fy - n1 * fx
+        if mr is None:
+            torque += np.bincount(i, weights=-ri * cross, minlength=n)
+            torque += np.bincount(j, weights=-rj * cross, minlength=n)
+        else:
+            torque += np.bincount(i, weights=-ri * cross - mr, minlength=n)
+            torque += np.bincount(j, weights=-rj * cross + mr, minlength=n)
+        force[:, 0] += np.bincount(i, fx, n) - np.bincount(j, fx, n)
+        force[:, 1] += np.bincount(i, fy, n) - np.bincount(j, fy, n)
+        return force, torque
+
     def _fast_pass(self, h: float | None = None):
         """Active contacts at the sub-step.
 
@@ -833,8 +1008,11 @@ class MTSDisks:
             state_dt = None  # ablation: the coarse pass owns the state
         force, torque = self._pair_forces(self._fast_idx, friction=True,
                                           state_dt=state_dt)
-        fw, tw = self._wall_forces(state_dt)
-        return force + fw, torque + tw
+        if self.config.wall_rate == "fast":  # legacy ablation
+            fw, tw = self._wall_forces(state_dt)
+            force = force + fw
+            torque = torque + tw
+        return force, torque
 
     def _wall_active_sets(self):
         """Index sets of the disks near each box plane (renewed on the slow step)."""
@@ -853,6 +1031,7 @@ class MTSDisks:
     def _wall_forces(self, dt_state: float | None = None):
         """Wall normal + tangential forces on the cached plane selections."""
         cfg = self.config
+        self.work["wall"] += 1
         force = np.zeros((len(self.pos), 2))
         torque = np.zeros(len(self.pos))
         if self.box is None or self.periodic:
@@ -1042,6 +1221,11 @@ class MTSDisks:
                 # every sub-step.
                 f_slow, t_slow = self._slow_pass(dt)
                 h = dt / self.n_sub
+                lean = self.config.fast_kernel == "lean"
+                if lean:
+                    # pair list and internal variables are fixed over the coarse
+                    # step: hoist everything pair-static out of the sub-step loop
+                    self._prepare_fast()
                 # half kick with the slow force, then ``n_sub`` leapfrog
                 # drift-kick sub-steps whose drifts sum to exactly ``dt``
                 self.vel += 0.5 * dt * f_slow * inv_m
@@ -1049,7 +1233,10 @@ class MTSDisks:
                 for _ in range(self.n_sub):
                     self.pos += h * self.vel
                     self.theta += h * self.omega
-                    force, torque = self._fast_pass()
+                    if lean:
+                        force, torque = self._fast_step(h)
+                    else:
+                        force, torque = self._fast_pass(h)
                     self.vel += h * force * inv_m
                     self.omega += h * torque * inv_i
                 self.vel += 0.5 * dt * f_slow * inv_m
@@ -1102,16 +1289,22 @@ class MTSDisks:
         stress = np.zeros((2, 2))
         keep = overlap > 0.0
         if keep.any():
-            i, j, n_ij, overlap = i[keep], j[keep], n_ij[keep], overlap[keep]
+            sel = np.flatnonzero(keep)
+            i, j, n_ij = i[sel], j[sel], n_ij[sel]
+            overlap = overlap[sel]
             k_ij, _, _, _, v_rel, v_n, f_n = self._pair_kinematics(i, j, n_ij, overlap)
             total = f_n[:, None] * n_ij
-            if (cfg.mu > 0.0 and cfg.kt_ratio > 0.0
-                    and len(self._xi) == len(keep)):
-                f_t, _ = self._tangential_force(self._xi[keep], f_n, k_ij)
+            # the tangential force belongs to the virial.  The older length test
+            # (``len(self._xi) == len(keep)``) compared the *candidate* count with
+            # the *overlapping* count, so it was never true and the friction share
+            # of the pressure was silently dropped -- a servo controlling ``P``
+            # then chases a low reading and stops at a denser packing.
+            if cfg.mu > 0.0 and cfg.kt_ratio > 0.0 and len(self._xi) > 0:
+                f_t, _ = self._tangential_force(self._xi[sel], f_n, k_ij)
                 total = total + f_t
             sep = self._minimum_image(self.pos[j] - self.pos[i])
             stress += np.einsum("na,nb->ab", total, sep)
-        if self.box is not None and not self.periodic:
+        if cfg.pressure_includes_walls and self.box is not None and not self.periodic:
             lx, ly = self.box
             for axis, coord, sign in _PLANES(lx, ly):
                 ov = self.radii - np.abs(self.pos[:, axis] - coord)

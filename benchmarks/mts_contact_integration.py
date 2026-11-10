@@ -441,6 +441,9 @@ def _prepare_state() -> dict:
         "pos": system.pos.copy(), "vel": system.vel.copy(), "radii": radii.copy(),
         "box": (res["side"], res["side"]),
         "phi": res["phi"], "pressure": res["pressure"],
+        # the engine step the ladder above was actually run with: the protocol
+        # durations are quoted in *physical* time from it (P82W5-N07)
+        "engine_dt": float(system.dt),
         "digest": _digest(system.pos, system.vel, radii),
     }
 
@@ -576,11 +579,11 @@ def stage_jamming(*, run_anchor: bool = True, state: dict | None = None) -> dict
 # ---------------------------------------------------------------------------
 # Driver
 # ---------------------------------------------------------------------------
-def _shard_ladder(shards: int) -> dict:
+def _shard_ladder(shards: int, *, run_dir: str = "P82W2_N09") -> dict:
     """Stage D: evaluate the ladder in ``shards`` separate processes."""
     runs = []
     for shard in range(shards):
-        out_path = ROOT / "runs" / "P82W2_N09" / f"ladder_shard{shard}_of{shards}.json"
+        out_path = ROOT / "runs" / run_dir / f"ladder_shard{shard}_of{shards}.json"
         out_path.parent.mkdir(parents=True, exist_ok=True)
         cmd = [sys.executable, str(Path(__file__).resolve()), "--stage", "ladder",
                "--shard", str(shard), "--shards", str(shards),
