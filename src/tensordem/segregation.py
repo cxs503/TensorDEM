@@ -1,36 +1,17 @@
-"""Dual-dispersed particle shear/vibration segregation in TensorDEM.
+"""Binary-particle-bed segregation dynamics for TensorDEM.
 
-Physical background
--------------------
-When a granular bed containing two particle sizes is subjected to shear or
-vibration, the particles segregate: smaller particles percolate downward
-through voids created by larger particles, while larger particles rise
-(kinetic sieving + squeeze expulsion).  This module quantifies that process
-for the cargo-shift / ice-rubble context (P174-N08).
+Implements spontaneous Brazil-nut / reverse-Brazil-nut segregation under
+vertical vibration and gravity pouring, with:
 
-Segregation metrics
--------------------
-* Layered concentration profile Φ(z): volume fraction of large particles
-  in each vertical bin, normalised so that ∫Φ(z)dz = Φ_0 (initial fraction).
-* Segregation degree S = ⟨|Φ(z) − Φ_0|⟩ / Φ_0  (mean absolute deviation).
-* Direction sign: +1 if large particles rise (Φ increases with z),
-  −1 if large particles sink.
+* Binary spherical particles (d_large / d_small ∈ {1.5, 2, 3, 4})
+* Two driving modes: vertical vibration (Γ = Aω²/g) and gravity pouring
+* Segregation index S = (φ_top − φ_nominal) / φ_nominal
+* Brazil-nut rise velocity v_up
+* Mass-conservation audit (relative error ≤ 1e-9)
+* TCG / ΔGM propagation mapping for cargo-hold applications
 
-Scaling law
------------
-S ∝ (d_l/d_s − 1)^α · γ̇^β · (φ_j − φ)^γ
-with φ_j ≈ 0.64 (random close packing).  As φ → φ_j the bed jams and
-segregation is suppressed (S → 0).
-
-Kozeny-Carman permeability
----------------------------
-After segregation the layered structure has a depth-dependent permeability
-k(z) ∝ d_eff(z)² · (1 − φ_s)³ / φ_s² where d_eff is the local Sauter-mean
-diameter and φ_s is the local solid fraction.  The module computes a
-sensitivity table mapping segregation state → permeability contrast →
-excess pore-pressure development difference.
-
-All quantities SI (m, kg, s, Pa).
+All quantities SI.  The engine uses a spatial-hash neighbour search that
+supports polydisperse radii, with vectorised numpy contact laws.
 """
 from __future__ import annotations
 
@@ -40,830 +21,723 @@ from typing import Sequence
 
 import numpy as np
 from scipy.spatial import cKDTree
-from scipy.optimize import curve_fit
-
-# ---------------------------------------------------------------------------
-# Constants
-# ---------------------------------------------------------------------------
-GRAVITY = 9.81
-PHI_JAMMING = 0.64  # random close packing limit for spheres
-
-# ---------------------------------------------------------------------------
-# Data classes
-# ---------------------------------------------------------------------------
-
-@dataclass(frozen=True)
-class SegregationMaterial:
-    """Material parameters for a single particle species."""
-    radius: float
-    density: float = 2500.0
-    mu: float = 0.5
-    mu_rolling: float = 0.05
-    restitution: float = 0.3
-    kn: float = 1.0e5
-    kt_ratio: float = 0.5
-
-    @property
-    def diameter(self) -> float:
-        return 2.0 * self.radius
-
-    @property
-    def mass(self) -> float:
-        return self.density * 4.0 / 3.0 * math.pi * self.radius ** 3
-
-    @property
-    def inertia(self) -> float:
-        return 0.4 * self.mass * self.radius ** 2
-
-    @property
-    def kt(self) -> float:
-        return self.kt_ratio * self.kn
-
-
-@dataclass(frozen=True)
-class SegregationCase:
-    """Dual-dispersed segregation simulation case.
-
-    Parameters
-    ----------
-    d_ratio : size ratio d_l / d_s (≥ 1; =1 is monodisperse negative control)
-    phi_large : initial volume fraction of large particles (of solid volume)
-    phi_total : total solid volume fraction (must be < φ_jamming)
-    box_width, box_depth, box_height : periodic shear cell dimensions
-        (default: scaled to fit ~10 large particles across width)
-    shear_rate : imposed shear rate γ̇ (1/s); 0 for vibration-only
-    vibration_amplitude : vibration amplitude (m); 0 for shear-only
-    vibration_freq : vibration frequency (Hz)
-    n_bins : number of vertical bins for Φ(z) profile
-    max_time : simulation duration (s)
-    seed : random seed for reproducibility
-    """
-    d_ratio: float = 2.0
-    phi_large: float = 0.5
-    phi_total: float = 0.60
-    box_width: float | None = None   # None -> auto-scale
-    box_depth: float | None = None   # None -> auto-scale
-    box_height: float | None = None  # None -> auto-scale
-    shear_rate: float = 5.0
-    vibration_amplitude: float = 0.0
-    vibration_freq: float = 50.0
-    n_bins: int = 20
-    max_time: float = 2.0
-    seed: int = 7319
-    # Material (shared between species, only radius differs)
-    density: float = 2500.0
-    mu: float = 0.5
-    mu_rolling: float = 0.05
-    restitution: float = 0.3
-    kn: float = 1.0e5
-    kt_ratio: float = 0.5
-    # Numerical
-    dt: float | None = None
-
-    @property
-    def _box_width(self) -> float:
-        if self.box_width is not None:
-            return self.box_width
-        # Small box for fast tests: ~3 large particles across width
-        return 0.04
-
-    @property
-    def _box_depth(self) -> float:
-        if self.box_depth is not None:
-            return self.box_depth
-        return 0.02
-
-    @property
-    def _box_height(self) -> float:
-        if self.box_height is not None:
-            return self.box_height
-        return 0.05
-
-    def __post_init__(self) -> None:
-        if self.d_ratio < 1.0:
-            raise ValueError("d_ratio must be >= 1.0")
-        if not (0.0 < self.phi_large <= 1.0):
-            raise ValueError("phi_large must be in (0, 1]")
-        if not (0.0 < self.phi_total < PHI_JAMMING):
-            raise ValueError(f"phi_total must be in (0, {PHI_JAMMING})")
-        for name in ("max_time",):
-            v = getattr(self, name)
-            if not (math.isfinite(v) and v > 0):
-                raise ValueError(f"{name} must be finite and positive")
-        # Validate box dimensions if provided
-        for name in ("box_width", "box_depth", "box_height"):
-            v = getattr(self, name)
-            if v is not None and (not math.isfinite(v) or v <= 0):
-                raise ValueError(f"{name} must be finite and positive")
-        if self.shear_rate < 0:
-            raise ValueError("shear_rate must be nonnegative")
-        if self.vibration_amplitude < 0:
-            raise ValueError("vibration_amplitude must be nonnegative")
-        if self.vibration_freq < 0:
-            raise ValueError("vibration_freq must be nonnegative")
-        if self.n_bins < 2:
-            raise ValueError("n_bins must be >= 2")
-
-    @property
-    def radius_small(self) -> float:
-        """Small particle radius, chosen so the bed has the target φ_total.
-
-        Small enough that even d_ratio=3 fits in the default box.
-        """
-        return 0.002
-
-    @property
-    def radius_large(self) -> float:
-        return self.radius_small * self.d_ratio
-
-    @property
-    def timestep(self) -> float:
-        if self.dt is not None:
-            return self.dt
-        m = self.density * 4.0 / 3.0 * math.pi * self.radius_small ** 3
-        period = 2.0 * math.pi * math.sqrt(0.5 * m / self.kn)
-        return period / 20.0
 
 
 # ---------------------------------------------------------------------------
-# Packing generator
+# Polydisperse contact kernel
 # ---------------------------------------------------------------------------
 
-def generate_dual_packing(case: SegregationCase) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Generate initial dual-dispersed packing.
-
-    Returns
-    -------
-    positions : (N, 3) array
-    radii : (N,) array — r_small or r_large
-    species : (N,) bool array — True = large, False = small
-
-    For d_ratio == 1.0 (monodisperse negative control), all particles are
-    assigned to a single species so that Φ(z) ≡ 1.0 and S = 0 exactly.
-    """
-    rng = np.random.default_rng(case.seed)
-    r_s = case.radius_small
-    r_l = case.radius_large
-
-    # Monodisperse negative control: single species, all "large"
-    if abs(case.d_ratio - 1.0) < 1e-12:
-        r = r_l  # use the large radius (same as small)
-        box_vol = case._box_width * case._box_depth * case._box_height
-        vol = 4.0 / 3.0 * math.pi * r ** 3
-        V_solid = case.phi_total * box_vol
-        N_est = max(10, int(V_solid / vol))
-
-        # Use HCP packing for speed and determinism
-        spacing = 2.0 * r * 1.02
-        layer_dz = spacing * math.sqrt(2.0 / 3.0)
-        n_layers = max(1, int(math.floor((case._box_height - r) / layer_dz)) + 1)
-        row_pitch = spacing * math.sqrt(3.0) / 2.0
-        shift_x = 0.5 * spacing
-        shift_y = spacing / (2.0 * math.sqrt(3.0))
-        x_min, x_max = r + 1e-3, case._box_width - r - 1e-3
-        y_min, y_max = r + 1e-3, case._box_depth - r - 1e-3
-        pts: list[tuple[float, float, float]] = []
-        for layer in range(n_layers):
-            z = r + layer * layer_dz
-            odd = layer % 2 == 1
-            for ix in range(-20, 21):
-                for iy in range(-20, 21):
-                    x = ix * spacing + 0.5 * spacing * (iy % 2)
-                    y = iy * row_pitch
-                    if odd:
-                        x += shift_x
-                        y += shift_y
-                    if x_min <= x <= x_max and y_min <= y <= y_max:
-                        pts.append((x, y, z))
-        positions = np.array(pts, dtype=np.float64)
-        if len(positions) < 10:
-            raise ValueError("Packing produced too few particles")
-        # Trim to N_est
-        if len(positions) > N_est:
-            positions = positions[:N_est]
-        radii_arr = np.full(len(positions), r)
-        species_arr = np.ones(len(positions), dtype=bool)
-        return (positions, radii_arr, species_arr)
-
-    # Dual-dispersed packing: use HCP for large, fill gaps with small
-    phi_l_target = case.phi_large
-    phi_total = case.phi_total
-
-    box_vol = case._box_width * case._box_depth * case._box_height
-    vol_s = 4.0 / 3.0 * math.pi * r_s ** 3
-    vol_l = 4.0 / 3.0 * math.pi * r_l ** 3
-
-    phi_l_vol = phi_l_target
-    phi_s_vol = 1.0 - phi_l_vol
-
-    V_solid = phi_total * box_vol
-    V_l = phi_l_vol * V_solid
-    V_s = phi_s_vol * V_solid
-
-    N_l_est = max(1, int(V_l / vol_l))
-    N_s_est = max(1, int(V_s / vol_s))
-
-    # HCP packing for large particles
-    spacing = 2.0 * r_l * 1.02
-    layer_dz = spacing * math.sqrt(2.0 / 3.0)
-    n_layers = max(1, int(math.floor((case._box_height - r_l) / layer_dz)) + 1)
-    row_pitch = spacing * math.sqrt(3.0) / 2.0
-    shift_x = 0.5 * spacing
-    shift_y = spacing / (2.0 * math.sqrt(3.0))
-    x_min, x_max = r_l + 1e-3, case._box_width - r_l - 1e-3
-    y_min, y_max = r_l + 1e-3, case._box_depth - r_l - 1e-3
-    pts_l: list[tuple[float, float, float]] = []
-    for layer in range(n_layers):
-        z = r_l + layer * layer_dz
-        odd = layer % 2 == 1
-        for ix in range(-20, 21):
-            for iy in range(-20, 21):
-                x = ix * spacing + 0.5 * spacing * (iy % 2)
-                y = iy * row_pitch
-                if odd:
-                    x += shift_x
-                    y += shift_y
-                if x_min <= x <= x_max and y_min <= y <= y_max:
-                    pts_l.append((x, y, z))
-    positions_l = np.array(pts_l, dtype=np.float64)
-    if len(positions_l) > N_l_est:
-        positions_l = positions_l[:N_l_est]
-
-    # Random placement for small particles (avoid overlap with large)
-    positions_s: list[np.ndarray] = []
-    for _ in range(N_s_est):
-        for _attempt in range(50):
-            x = rng.uniform(r_s + 1e-4, case._box_width - r_s - 1e-4)
-            y = rng.uniform(r_s + 1e-4, case._box_depth - r_s - 1e-4)
-            z = rng.uniform(r_s + 1e-4, case._box_height - r_s - 1e-4)
-            pos = np.array([x, y, z])
-            # Check overlap with large
-            if len(positions_l) > 0:
-                dists_l = np.linalg.norm(positions_l - pos, axis=1)
-                if np.min(dists_l) < r_l + r_s - 1e-10:
-                    continue
-            # Check overlap with other small
-            if len(positions_s) > 0:
-                existing_s = np.array(positions_s)
-                dists_s = np.linalg.norm(existing_s - pos, axis=1)
-                if np.min(dists_s) < 2 * r_s - 1e-10:
-                    continue
-            positions_s.append(pos)
-            break
-
-    if len(positions_l) + len(positions_s) < 10:
-        raise ValueError("Packing produced too few particles")
-
-    if len(positions_l) == 0:
-        # Fallback: all small particles
-        positions = np.array(positions_s) if positions_s else np.zeros((0, 3))
-        radii_arr = np.full(len(positions), r_s)
-        species_arr = np.zeros(len(positions), dtype=bool)
-    elif len(positions_s) == 0:
-        positions = positions_l
-        radii_arr = np.full(len(positions_l), r_l)
-        species_arr = np.ones(len(positions_l), dtype=bool)
-    else:
-        positions = np.vstack([positions_l, np.array(positions_s)])
-        radii_arr = np.concatenate([np.full(len(positions_l), r_l), np.full(len(positions_s), r_s)])
-        species_arr = np.concatenate([np.ones(len(positions_l), dtype=bool), np.zeros(len(positions_s), dtype=bool)])
-
-    return (positions, radii_arr, species_arr)
-
-
-# ---------------------------------------------------------------------------
-# DEM kernel (numpy, lightweight for sharding)
-# ---------------------------------------------------------------------------
-
-def _damping_ratio(restitution: float) -> float:
+def _damping_from_restitution(restitution: float) -> float:
+    """zeta = |ln e| / sqrt(pi^2 + ln^2 e)."""
     e = max(min(restitution, 1.0 - 1e-12), 1e-6)
     ln_e = math.log(e)
     return abs(ln_e) / math.sqrt(math.pi ** 2 + ln_e ** 2)
 
 
-def _build_pairs(pos: np.ndarray, radii: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-    """All pairs within r_i + r_j via cKDTree."""
+@dataclass(frozen=True)
+class BinaryMaterial:
+    """Two-size spherical particle material (SI)."""
+    r_small: float = 0.005          # m
+    r_large: float = 0.010          # m
+    density: float = 2500.0         # kg/m³
+    mu: float = 0.5                 # Coulomb friction
+    mu_rolling: float = 0.05        # rolling resistance
+    restitution: float = 0.3        # coefficient of restitution
+    kn: float = 1.0e5               # normal stiffness (N/m)
+    kt_ratio: float = 0.5           # kt / kn
+    gravity: float = 9.81           # m/s²
+
+    @property
+    def diameter_ratio(self) -> float:
+        return self.r_large / self.r_small
+
+    def mass(self, r: float) -> float:
+        return self.density * 4.0 / 3.0 * math.pi * r ** 3
+
+    def inertia(self, r: float) -> float:
+        return 0.4 * self.mass(r) * r ** 2
+
+    def kt(self) -> float:
+        return self.kt_ratio * self.kn
+
+    def kr(self, r: float) -> float:
+        return self.kt() * r ** 2
+
+    def gamma_pair(self, r_i: float, r_j: float) -> float:
+        """Pair dashpot for two spheres of radii r_i, r_j."""
+        m_i = self.mass(r_i)
+        m_j = self.mass(r_j)
+        m_eff = m_i * m_j / (m_i + m_j)
+        zeta = _damping_from_restitution(self.restitution)
+        return 2.0 * zeta * math.sqrt(self.kn * m_eff)
+
+    def gamma_wall(self, r: float) -> float:
+        """Rigid-wall dashpot."""
+        zeta = _damping_from_restitution(self.restitution)
+        return 2.0 * zeta * math.sqrt(self.kn * self.mass(r))
+
+    def critical_dt(self) -> float:
+        """Stable timestep estimate (smallest particle, stiffest spring)."""
+        m = self.mass(self.r_small)
+        period = 2.0 * math.pi * math.sqrt(0.5 * m / self.kn)
+        return period / 25.0
+
+
+def build_pairs_poly(pos: np.ndarray, radii: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """All pairs within r_i + r_j via cKDTree with max-radius bound."""
     n = len(pos)
     if n < 2:
-        return np.zeros(0, dtype=np.int64), np.zeros(0, dtype=np.int64)
-    max_r = float(np.max(radii))
+        empty = np.zeros(0, dtype=np.int64)
+        return empty, empty
+    r_max = float(radii.max())
     tree = cKDTree(pos)
-    pairs = tree.query_pairs(2.0 * max_r, output_type="ndarray")
+    pairs = tree.query_pairs(2.0 * r_max, output_type="ndarray")
     if len(pairs) == 0:
-        return np.zeros(0, dtype=np.int64), np.zeros(0, dtype=np.int64)
+        empty = np.zeros(0, dtype=np.int64)
+        return empty, empty
     iu = np.minimum(pairs[:, 0], pairs[:, 1]).astype(np.int64)
     ju = np.maximum(pairs[:, 0], pairs[:, 1]).astype(np.int64)
-    return iu, ju
+    dist_cutoff = radii[iu] + radii[ju]
+    dvec = pos[ju] - pos[iu]
+    dist = np.linalg.norm(dvec, axis=1)
+    mask = dist < dist_cutoff
+    return iu[mask], ju[mask]
 
 
-def simulate_segregation(
-    case: SegregationCase,
-    *,
-    return_history: bool = False,
-) -> dict:
-    """Run a dual-dispersed segregation simulation.
+def contact_forces_poly(
+    pos: np.ndarray, vel: np.ndarray, omega: np.ndarray,
+    radii: np.ndarray, masses: np.ndarray, inertias: np.ndarray,
+    iu: np.ndarray, ju: np.ndarray,
+    mat: BinaryMaterial, dt: float,
+    state_tang: dict | None = None,
+    state_roll: dict | None = None,
+) -> tuple[np.ndarray, np.ndarray, dict, dict]:
+    """Vectorised polydisperse contact forces and torques."""
+    n = len(pos)
+    force = np.zeros((n, 3), dtype=np.float64)
+    torque = np.zeros((n, 3), dtype=np.float64)
+    m_pairs = len(iu)
+    if m_pairs == 0:
+        return force, torque, state_tang or {}, state_roll or {}
 
-    Returns a dict with:
-        phi_profile : Φ(z) array (n_bins,)
-        segregation_degree : S
-        direction_sign : +1 or -1
-        mass_conservation_error : |V_large_final − V_large_initial| / V_large_initial
-        final_positions : (N, 3)
-        final_radii : (N,)
-        final_species : (N,) bool
-        history : list of (time, tau, P) if return_history
-    """
-    positions, radii, species = generate_dual_packing(case)
-    n = len(positions)
-    dt = case.timestep
-    kn = case.kn
-    kt = case.kt_ratio * kn
-    mu = case.mu
-    mu_r = case.mu_rolling
-    restitution = case.restitution
-    zeta = _damping_ratio(restitution)
+    if state_tang is None:
+        state_tang = {}
+    if state_roll is None:
+        state_roll = {}
 
-    masses = case.density * 4.0 / 3.0 * math.pi * radii ** 3
-    inertias = 0.4 * masses * radii ** 2
+    kn = mat.kn
+    kt = mat.kt()
+    mu = mat.mu
+    mu_r = mat.mu_rolling
 
-    velocities = np.zeros_like(positions)
-    omega = np.zeros_like(positions)
+    r_i = radii[iu]
+    r_j = radii[ju]
+    m_i = masses[iu]
+    m_j = masses[ju]
 
-    box_w = case._box_width
-    box_d = case._box_depth
-    box_h = case._box_height
-    gamma_dot = case.shear_rate
-    vib_amp = case.vibration_amplitude
-    vib_freq = case.vibration_freq
+    dvec = pos[ju] - pos[iu]
+    dist = np.linalg.norm(dvec, axis=1)
+    overlap = (r_i + r_j) - dist
+    active = overlap > 0.0
+    if not active.any():
+        return force, torque, state_tang, state_roll
 
-    steps = int(math.ceil(case.max_time / dt))
-    history: list[tuple[float, float, float]] = []
-    sample_interval = max(1, steps // 200)
+    iu_a, ju_a = iu[active], ju[active]
+    dvec_a = dvec[active]
+    overlap_a = overlap[active]
+    r_i_a = r_i[active]
+    r_j_a = r_j[active]
+    dist_a = dist[active]
 
-    rebuild_interval = 50
-    iu, ju = _build_pairs(positions, radii)
-    tang_state: dict[int, np.ndarray] = {}
-    roll_state: dict[int, np.ndarray] = {}
+    nvec = dvec_a / np.maximum(dist_a, 1e-30)[:, None]
 
-    for step in range(steps):
-        t_now = step * dt
+    # Normal force
+    v_rel = vel[ju_a] - vel[iu_a]
+    v_n = (v_rel * nvec).sum(axis=1)
+    m_eff_a = (m_i[active] * m_j[active]) / (m_i[active] + m_j[active])
+    zeta = _damping_from_restitution(mat.restitution)
+    gamma_a = 2.0 * zeta * np.sqrt(kn * m_eff_a)
+    f_n = np.maximum(kn * overlap_a - gamma_a * v_n, 0.0)
 
-        # Periodic BC in x
-        positions[:, 0] = np.remainder(positions[:, 0], box_w)
+    # Tangential
+    v_t = v_rel - v_n[:, None] * nvec
+    if mu > 0.0:
+        surf_i = np.cross(omega[iu_a], nvec * r_i_a[:, None])
+        surf_j = np.cross(omega[ju_a], -nvec * r_i_a[:, None])
+        v_t_surf = v_t + (surf_j - surf_i)
+        keys = (iu_a * n + ju_a).tolist()
+        tang = np.array([state_tang.get(k, np.zeros(3)) for k in keys], dtype=np.float64)
+        tang = tang + v_t_surf * dt
+        tnorm = np.linalg.norm(tang, axis=1)
+        cap = mu * f_n / kt
+        scale = np.where(tnorm > cap, cap / np.maximum(tnorm, 1e-30), 1.0)
+        tang = tang * scale[:, None]
+        f_t = -kt * tang
+        for idx, key in enumerate(keys):
+            state_tang[key] = tang[idx]
+    else:
+        f_t = np.zeros_like(v_t)
+        keys = []
 
-        # Vibration: oscillating gravity
-        g_eff = GRAVITY + vib_amp * (2 * math.pi * vib_freq) ** 2 * math.sin(2 * math.pi * vib_freq * t_now)
+    f_total = f_n[:, None] * nvec + f_t
+    np.add.at(force, iu_a, -f_total)
+    np.add.at(force, ju_a, f_total)
 
-        if step % rebuild_interval == 0:
-            iu, ju = _build_pairs(positions, radii)
+    if mu > 0.0:
+        t_i = np.cross(-nvec * r_i_a[:, None], f_t)
+        np.add.at(torque, iu_a, t_i)
+        np.add.at(torque, ju_a, t_i)
 
-        force = np.zeros_like(positions)
-        torque = np.zeros_like(positions)
+    # Rolling resistance
+    if mu_r > 0.0:
+        spin = omega[ju_a] - omega[iu_a]
+        keys_r = (iu_a * n + ju_a).tolist()
+        r_eff_a = r_i_a * r_j_a / (r_i_a + r_j_a)
+        kr_a = kt * r_eff_a ** 2
+        roll = np.array([state_roll.get(k, np.zeros(3)) for k in keys_r], dtype=np.float64)
+        roll = roll + spin * dt
+        rnorm = np.linalg.norm(roll, axis=1)
+        cap_r = (mu_r * r_eff_a * f_n) / np.maximum(kr_a, 1e-30)
+        scale_r = np.where(rnorm > cap_r, cap_r / np.maximum(rnorm, 1e-30), 1.0)
+        roll = roll * scale_r[:, None]
+        for idx, key in enumerate(keys_r):
+            state_roll[key] = roll[idx]
+        torque_r = -kr_a[:, None] * roll
+        np.add.at(torque, iu_a, -torque_r)
+        np.add.at(torque, ju_a, torque_r)
 
-        m_pairs = len(iu)
-        if m_pairs > 0:
-            dvec = positions[ju] - positions[iu]
-            dist = np.linalg.norm(dvec, axis=1)
-            r_sum = radii[iu] + radii[ju]
-            overlap = r_sum - dist
-            active = overlap > 0.0
+    # Clean up inactive state
+    active_keys = set((iu_a * n + ju_a).tolist())
+    for key in list(state_tang.keys()):
+        if key not in active_keys:
+            del state_tang[key]
+    for key in list(state_roll.keys()):
+        if key not in active_keys:
+            del state_roll[key]
 
-            if active.any():
-                iu_a, ju_a = iu[active], ju[active]
-                dvec_a = dvec[active]
-                overlap_a = overlap[active]
-                nvec = dvec_a / np.maximum(np.linalg.norm(dvec_a, axis=1), 1e-30)[:, None]
+    return force, torque, state_tang, state_roll
 
-                v_rel = velocities[ju_a] - velocities[iu_a]
-                v_n = (v_rel * nvec).sum(axis=1)
 
-                m_i, m_j = masses[iu_a], masses[ju_a]
-                m_eff = m_i * m_j / (m_i + m_j)
-                gamma_pair = 2.0 * zeta * np.sqrt(kn * m_eff)
+# ---------------------------------------------------------------------------
+# Particle initialisation
+# ---------------------------------------------------------------------------
 
-                fn = np.maximum(kn * overlap_a - gamma_pair * v_n, 0.0)
+def init_binary_bed(
+    n_small: int, n_large: int,
+    r_small: float, r_large: float,
+    box_w: float, box_d: float, fill_h: float,
+    seed: int = 42,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Randomly place binary particles in a box, resolving overlaps."""
+    rng = np.random.default_rng(seed)
+    N = n_small + n_large
+    radii = np.empty(N, dtype=np.float64)
+    types = np.empty(N, dtype=np.int8)
+    radii[:n_small] = r_small
+    radii[n_small:] = r_large
+    types[:n_small] = 0
+    types[n_small:] = 1
 
-                v_t = v_rel - v_n[:, None] * nvec
-                if mu > 0:
-                    surf_i = np.cross(omega[iu_a], nvec * radii[iu_a, None])
-                    surf_j = np.cross(omega[ju_a], -nvec * radii[ju_a, None])
-                    v_t_surf = v_t + (surf_j - surf_i)
+    pos = np.empty((N, 3), dtype=np.float64)
+    for i in range(N):
+        r = radii[i]
+        pos[i, 0] = rng.uniform(r + 1e-4, box_w - r - 1e-4)
+        pos[i, 1] = rng.uniform(r + 1e-4, box_d - r - 1e-4)
+        pos[i, 2] = rng.uniform(r + 1e-4, fill_h - r - 1e-4)
 
-                    keys = (iu_a * n + ju_a).tolist()
-                    tang = np.array([tang_state.get(k, np.zeros(3)) for k in keys])
-                    tang = tang + v_t_surf * dt
-                    tnorm = np.linalg.norm(tang, axis=1)
-                    cap = mu * fn / kt
-                    scale = np.where(tnorm > cap, cap / np.maximum(tnorm, 1e-30), 1.0)
-                    tang = tang * scale[:, None]
-                    f_t = -kt * tang
-                    for k_idx, key in enumerate(keys):
-                        tang_state[key] = tang[k_idx]
-                else:
-                    f_t = np.zeros_like(v_t)
+    # Overlap relaxation
+    for _ in range(30):
+        tree = cKDTree(pos)
+        pairs = tree.query_pairs(2.0 * r_large, output_type="ndarray")
+        if len(pairs) == 0:
+            break
+        iu = pairs[:, 0]
+        ju = pairs[:, 1]
+        dvec = pos[ju] - pos[iu]
+        dist = np.linalg.norm(dvec, axis=1)
+        overlap = (radii[iu] + radii[ju]) - dist
+        active = overlap > 0.0
+        if not active.any():
+            break
+        iu_a, ju_a = iu[active], ju[active]
+        dvec_a = dvec[active]
+        dist_a = dist[active]
+        overlap_a = overlap[active]
+        nvec = dvec_a / np.maximum(dist_a, 1e-30)[:, None]
+        push = 0.5 * overlap_a[:, None] * nvec
+        np.add.at(pos, iu_a, -push)
+        np.add.at(pos, ju_a, push)
 
-                f_total = fn[:, None] * nvec + f_t
-                np.add.at(force, iu_a, -f_total)
-                np.add.at(force, ju_a, f_total)
+    for i in range(N):
+        r = radii[i]
+        pos[i, 0] = np.clip(pos[i, 0], r + 1e-4, box_w - r - 1e-4)
+        pos[i, 1] = np.clip(pos[i, 1], r + 1e-4, box_d - r - 1e-4)
+        pos[i, 2] = np.clip(pos[i, 2], r + 1e-4, fill_h - r - 1e-4)
 
-                if mu > 0:
-                    t_i = np.cross(-nvec * radii[iu_a, None], f_t)
-                    np.add.at(torque, iu_a, t_i)
-                    np.add.at(torque, ju_a, t_i)
+    return pos, radii, types
 
-                if mu_r > 0:
-                    spin = omega[ju_a] - omega[iu_a]
-                    keys = (iu_a * n + ju_a).tolist()
-                    kr = kt * radii[iu_a] * radii[ju_a]
-                    roll = np.array([roll_state.get(k, np.zeros(3)) for k in keys])
-                    roll = roll + spin * dt
-                    rnorm = np.linalg.norm(roll, axis=1)
-                    cap_r = mu_r * radii[iu_a] * fn / np.maximum(kr, 1e-30)
-                    scale_r = np.where(rnorm > cap_r, cap_r / np.maximum(rnorm, 1e-30), 1.0)
-                    roll = roll * scale_r[:, None]
-                    for k_idx, key in enumerate(keys):
-                        roll_state[key] = roll[k_idx]
-                    torque_r = -kr[:, None] * roll
-                    np.add.at(torque, iu_a, -torque_r)
-                    np.add.at(torque, ju_a, torque_r)
 
-        # Walls (y and z boundaries)
-        for axis, lo, hi in [(1, 0.0, box_d), (2, 0.0, box_h)]:
-            pen_lo = radii - positions[:, axis] + lo
-            pen_hi = positions[:, axis] + radii - hi
-            for pen, sign, wall_vx in [(pen_lo, 1.0, 0.0), (pen_hi, -1.0, 0.0)]:
-                hit = pen > 0.0
-                if hit.any():
-                    idx = np.nonzero(hit)[0]
-                    normal = np.zeros((len(idx), 3))
-                    normal[:, axis] = sign
-                    v_n = (velocities[idx] * normal).sum(axis=1)
-                    gamma_w = 2.0 * zeta * np.sqrt(kn * masses[idx])
-                    fn_w = np.maximum(kn * pen[idx] - gamma_w * v_n, 0.0)
-                    force[idx] += fn_w[:, None] * normal
-                    if mu > 0:
-                        v_t = velocities[idx].copy()
-                        v_t[:, axis] = 0.0
-                        v_t[:, 0] -= wall_vx
-                        ft_mag = mu * fn_w
-                        ft_dir = -v_t / np.maximum(np.linalg.norm(v_t, axis=1, keepdims=True), 1e-30)
-                        force[idx] += ft_mag[:, None] * ft_dir
+# ---------------------------------------------------------------------------
+# Wall forces (vectorised)
+# ---------------------------------------------------------------------------
 
-        # Top wall shear (moving lid)
-        if gamma_dot > 0:
-            top_pen = positions[:, 2] + radii - box_h
-            top_hit = top_pen > 0.0
-            if top_hit.any():
-                idx = np.nonzero(top_hit)[0]
-                normal = np.zeros((len(idx), 3))
-                normal[:, 2] = -1.0
-                v_n = velocities[idx, 2]
-                gamma_w = 2.0 * zeta * np.sqrt(kn * masses[idx])
-                fn_w = np.maximum(kn * top_pen[idx] - gamma_w * v_n, 0.0)
-                force[idx] += fn_w[:, None] * normal
-                v_rel_x = velocities[idx, 0] - gamma_dot * box_h
-                ft_mag = mu * fn_w
-                ft_x = -np.sign(v_rel_x) * ft_mag
-                force[idx, 0] += ft_x
+def wall_forces(
+    pos: np.ndarray, vel: np.ndarray, radii: np.ndarray, masses: np.ndarray,
+    box_w: float, box_d: float,
+    base_z: float, base_vel: float,
+    mat: BinaryMaterial, dt: float,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Forces from rigid box walls and vibrating base (vectorised)."""
+    n = len(pos)
+    force = np.zeros((n, 3), dtype=np.float64)
+    torque = np.zeros((n, 3), dtype=np.float64)
+    kn = mat.kn
+    mu = mat.mu
+    kt = mat.kt()
 
-        # Gravity
-        force[:, 2] -= masses * g_eff
+    # x walls
+    for wall_x, sign in [(0.0, 1.0), (box_w, -1.0)]:
+        overlap = radii - sign * (pos[:, 0] - wall_x)
+        active = overlap > 0
+        if active.any():
+            v_n = sign * vel[active, 0]
+            gamma = np.array([mat.gamma_wall(radii[i]) for i in np.where(active)[0]])
+            f_n = np.maximum(kn * overlap[active] - gamma * v_n, 0.0)
+            force[active, 0] += sign * f_n
+            if mu > 0:
+                v_t = vel[active, 1]
+                f_t = np.minimum(kt * np.abs(v_t) * dt, mu * f_n)
+                force[active, 1] -= np.sign(v_t) * f_t
 
-        # Semi-implicit Euler
-        velocities += force / masses[:, None] * dt
-        omega += torque / inertias[:, None] * dt
-        positions += velocities * dt
+    # y walls
+    for wall_y, sign in [(0.0, 1.0), (box_d, -1.0)]:
+        overlap = radii - sign * (pos[:, 1] - wall_y)
+        active = overlap > 0
+        if active.any():
+            v_n = sign * vel[active, 1]
+            gamma = np.array([mat.gamma_wall(radii[i]) for i in np.where(active)[0]])
+            f_n = np.maximum(kn * overlap[active] - gamma * v_n, 0.0)
+            force[active, 1] += sign * f_n
 
-        # Clamp to box
-        positions[:, 1] = np.clip(positions[:, 1], radii + 1e-6, box_d - radii - 1e-6)
-        positions[:, 2] = np.clip(positions[:, 2], radii + 1e-6, box_h - radii - 1e-6)
+    # base
+    overlap = radii - (pos[:, 2] - base_z)
+    active = overlap > 0
+    if active.any():
+        v_n = vel[active, 2] - base_vel
+        gamma = np.array([mat.gamma_wall(radii[i]) for i in np.where(active)[0]])
+        f_n = np.maximum(kn * overlap[active] - gamma * v_n, 0.0)
+        force[active, 2] += f_n
+        if mu > 0:
+            v_t = vel[active, :2]
+            v_t_norm = np.linalg.norm(v_t, axis=1)
+            f_t_mag = np.minimum(kt * v_t_norm * dt, mu * f_n)
+            active_idx = np.where(active)[0]
+            mask2 = v_t_norm > 1e-12
+            force[active_idx[mask2], :2] -= (f_t_mag[mask2] / v_t_norm[mask2])[:, None] * v_t[mask2]
 
-        # Sample
-        if step % sample_interval == 0 and step > steps // 10:
-            top_pen = positions[:, 2] + radii - box_h
-            top_hit = top_pen > 0.0
-            if top_hit.any():
-                idx = np.nonzero(top_hit)[0]
-                v_n = velocities[idx, 2]
-                gamma_w = 2.0 * zeta * np.sqrt(kn * masses[idx])
-                fn_w = np.maximum(kn * top_pen[idx] - gamma_w * v_n, 0.0)
-                P = float(fn_w.sum()) / (box_w * box_d) if box_w * box_d > 0 else 0.0
-                v_rel_x = velocities[idx, 0] - gamma_dot * box_h
-                ft_mag = mu * fn_w
-                tau = float(ft_mag.sum()) / (box_w * box_d) if box_w * box_d > 0 else 0.0
-            else:
-                P, tau = 0.0, 0.0
-            history.append((t_now, tau, P))
+    return force, torque
 
-    # Compute segregation metrics
-    phi_profile, S, direction, mass_err = compute_segregation_metrics(
-        positions, radii, species, case
+
+# ---------------------------------------------------------------------------
+# Time integrator (Velocity-Verlet)
+# ---------------------------------------------------------------------------
+
+def step_vv(
+    pos: np.ndarray, vel: np.ndarray, omega: np.ndarray,
+    radii: np.ndarray, masses: np.ndarray, inertias: np.ndarray,
+    types: np.ndarray,
+    mat: BinaryMaterial,
+    box_w: float, box_d: float,
+    base_z: float, base_vel: float,
+    dt: float,
+    state_tang: dict | None = None,
+    state_roll: dict | None = None,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, dict, dict]:
+    """One Velocity-Verlet step."""
+    n = len(pos)
+    g = mat.gravity
+
+    # Half-step velocity (gravity)
+    vel[:, 2] -= 0.5 * g * dt
+
+    # Full-step position
+    pos += vel * dt
+
+    # Compute forces
+    iu, ju = build_pairs_poly(pos, radii)
+    f_contact, t_contact, state_tang, state_roll = contact_forces_poly(
+        pos, vel, omega, radii, masses, inertias,
+        iu, ju, mat, dt, state_tang, state_roll,
+    )
+    f_wall, t_wall = wall_forces(
+        pos, vel, radii, masses, box_w, box_d,
+        base_z, base_vel, mat, dt,
     )
 
-    result = {
-        "phi_profile": phi_profile,
-        "segregation_degree": S,
-        "direction_sign": direction,
-        "mass_conservation_error": mass_err,
-        "final_positions": positions,
-        "final_radii": radii,
-        "final_species": species,
-        "n_particles": n,
-        "n_large": int(species.sum()),
-        "n_small": int((~species).sum()),
-    }
-    if return_history:
-        result["history"] = history
-    return result
+    # Total acceleration
+    acc = (f_contact + f_wall) / masses[:, None]
+
+    # Half-step velocity (complete)
+    vel += acc * dt
+    vel[:, 2] -= 0.5 * g * dt
+
+    # Angular update
+    ang_acc = t_contact / inertias[:, None]
+    omega += ang_acc * dt
+
+    # Clamp positions
+    for i in range(n):
+        r = radii[i]
+        pos[i, 0] = np.clip(pos[i, 0], r + 1e-6, box_w - r - 1e-6)
+        pos[i, 1] = np.clip(pos[i, 1], r + 1e-6, box_d - r - 1e-6)
+        pos[i, 2] = np.maximum(pos[i, 2], base_z + r + 1e-6)
+
+    return pos, vel, omega, state_tang, state_roll
 
 
 # ---------------------------------------------------------------------------
-# Segregation metrics
+# Vibration driver
 # ---------------------------------------------------------------------------
 
-def compute_segregation_metrics(
-    positions: np.ndarray,
-    radii: np.ndarray,
-    species: np.ndarray,
-    case: SegregationCase,
-) -> tuple[np.ndarray, float, int, float]:
-    """Compute Φ(z), S, direction sign, and mass conservation error.
+def vibration_base_z(t: float, amplitude: float, frequency: float) -> float:
+    """Base position: z = A sin(ωt)."""
+    omega = 2.0 * math.pi * frequency
+    return amplitude * math.sin(omega * t)
 
-    Mass conservation is verified by comparing the total volume of large
-    particles before and after (which must be identical since particles
-    are neither created nor destroyed).  The error is therefore exactly
-    zero to machine precision.
 
-    For the monodisperse negative control (all particles same species),
-    phi_0 is computed from the actual particle distribution so that
-    Φ(z) ≡ phi_0 and S = 0 exactly.
+def vibration_base_vel(t: float, amplitude: float, frequency: float) -> float:
+    """Base velocity: v = Aω cos(ωt)."""
+    omega = 2.0 * math.pi * frequency
+    return amplitude * omega * math.cos(omega * t)
 
-    Returns
-    -------
-    phi_profile : (n_bins,) volume fraction of large particles per bin
-    S : segregation degree
-    direction : +1 (large rise) or -1 (large sink)
-    mass_err : |V_large_final − V_large_initial| / V_large_initial
-    """
-    n_bins = case.n_bins
-    z_min = 0.0
-    z_max = case._box_height
-    bin_edges = np.linspace(z_min, z_max, n_bins + 1)
-    bin_centers = 0.5 * (bin_edges[:-1] + bin_edges[1:])
 
-    vol = 4.0 / 3.0 * math.pi * radii ** 3
+def compute_gamma(amplitude: float, frequency: float, g: float = 9.81) -> float:
+    """Dimensionless vibration intensity Γ = Aω²/g."""
+    omega = 2.0 * math.pi * frequency
+    return amplitude * omega ** 2 / g
 
-    # Compute phi_0 from actual particle distribution
-    vol_large_total = np.sum(vol[species])
-    vol_total = np.sum(vol)
-    phi_0 = vol_large_total / vol_total if vol_total > 0 else case.phi_large
 
-    phi_profile = np.zeros(n_bins)
+def amplitude_from_gamma(gamma: float, frequency: float, g: float = 9.81) -> float:
+    """Compute amplitude A from Γ and frequency."""
+    omega = 2.0 * math.pi * frequency
+    return gamma * g / omega ** 2
 
-    for b in range(n_bins):
-        lo, hi = bin_edges[b], bin_edges[b + 1]
-        mask = (positions[:, 2] >= lo) & (positions[:, 2] < hi)
-        if mask.sum() == 0:
-            phi_profile[b] = phi_0
+
+# ---------------------------------------------------------------------------
+# Segregation analysis
+# ---------------------------------------------------------------------------
+
+def compute_segregation_index(
+    pos: np.ndarray, types: np.ndarray, radii: np.ndarray,
+    density: float = 2500.0,
+    n_layers: int = 10,
+) -> dict:
+    """Compute segregation metrics from particle positions."""
+    n_small = int((types == 0).sum())
+    n_large = int((types == 1).sum())
+    N = n_small + n_large
+
+    if N == 0:
+        return {"S": 0.0, "v_up_est": 0.0, "layer_composition": [],
+                "z_com": 0.0, "total_mass": 0.0, "phi_nom_small": 0.5, "phi_top_small": 0.5}
+
+    r_small = radii[0] if n_small > 0 else 0.005
+    r_large = radii[n_small] if n_large > 0 else 0.010
+
+    vol_small = n_small * (4.0 / 3.0 * math.pi * r_small ** 3)
+    vol_large = n_large * (4.0 / 3.0 * math.pi * r_large ** 3)
+    vol_total = vol_small + vol_large
+    phi_nom_small = vol_small / vol_total if vol_total > 0 else 0.5
+
+    z_min = float(pos[:, 2].min())
+    z_max = float(pos[:, 2].max())
+    z_range = z_max - z_min
+
+    masses = np.where(types == 0,
+                      density * 4.0 / 3.0 * math.pi * r_small ** 3,
+                      density * 4.0 / 3.0 * math.pi * r_large ** 3)
+    z_com = float(np.sum(pos[:, 2] * masses) / np.sum(masses))
+
+    if z_range < 1e-12:
+        return {"S": 0.0, "v_up_est": 0.0, "layer_composition": [],
+                "z_com": z_com, "total_mass": float(np.sum(masses)),
+                "phi_nom_small": phi_nom_small, "phi_top_small": phi_nom_small}
+
+    layer_thickness = z_range / n_layers
+    layer_composition = []
+    top_small_vol = 0.0
+    top_total_vol = 0.0
+
+    for layer in range(n_layers):
+        z_lo = z_min + layer * layer_thickness
+        z_hi = z_lo + layer_thickness
+        mask = (pos[:, 2] >= z_lo) & (pos[:, 2] < z_hi)
+        n_in_layer = int(mask.sum())
+        if n_in_layer == 0:
+            layer_composition.append((layer, 0.0, 0.0))
             continue
-        vol_large = np.sum(vol[mask & species])
-        vol_bin = np.sum(vol[mask])
-        phi_profile[b] = vol_large / vol_bin if vol_bin > 0 else phi_0
+        n_s = int((types[mask] == 0).sum())
+        n_l = int((types[mask] == 1).sum())
+        vol_s = n_s * (4.0 / 3.0 * math.pi * r_small ** 3)
+        vol_l = n_l * (4.0 / 3.0 * math.pi * r_large ** 3)
+        vol_layer = vol_s + vol_l
+        phi_s = vol_s / vol_layer if vol_layer > 0 else 0.0
+        phi_l = vol_l / vol_layer if vol_layer > 0 else 0.0
+        layer_composition.append((layer, phi_s, phi_l))
 
-    # Segregation degree
-    S = float(np.mean(np.abs(phi_profile - phi_0))) / max(phi_0, 1e-30)
+        if layer == n_layers - 1:
+            top_small_vol = vol_s
+            top_total_vol = vol_l + vol_s
 
-    # Direction: linear fit of Φ vs z
-    if n_bins >= 3:
-        slope, _ = np.polyfit(bin_centers, phi_profile, 1)
-        direction = 1 if slope > 0 else -1
+    # Use top layers that actually contain particles (non-empty)
+    non_empty_layers = [(l, ps, pl) for l, ps, pl in layer_composition if ps + pl > 0.01]
+    if non_empty_layers:
+        # Use top 3 non-empty layers
+        top_non_empty = non_empty_layers[-3:] if len(non_empty_layers) >= 3 else non_empty_layers
+        top_phi_small_values = [ps for _, ps, _ in top_non_empty]
+        phi_top_small = float(np.mean(top_phi_small_values))
     else:
-        direction = 1
-
-    # Mass conservation: total large particle volume is conserved by construction
-    V_large_initial = vol_large_total
-    V_large_final = vol_large_total  # same array, unchanged
-    mass_err = abs(V_large_final - V_large_initial) / max(V_large_initial, 1e-30)
-
-    return phi_profile, S, direction, mass_err
-
-
-# ---------------------------------------------------------------------------
-# Kozeny-Carman permeability
-# ---------------------------------------------------------------------------
-
-def kozeny_carman_permeability(
-    positions: np.ndarray,
-    radii: np.ndarray,
-    species: np.ndarray,
-    case: SegregationCase,
-    *,
-    n_bins: int | None = None,
-) -> tuple[np.ndarray, np.ndarray]:
-    """Compute depth-dependent Kozeny-Carman permeability.
-
-    k(z) = (1/180) * d_eff(z)^2 * (1 - phi_s(z))^3 / phi_s(z)^2
-
-    Returns
-    -------
-    z_centers : bin centers
-    k_profile : permeability profile (m^2)
-    """
-    nb = n_bins or case.n_bins
-    z_min, z_max = 0.0, case._box_height
-    edges = np.linspace(z_min, z_max, nb + 1)
-    centers = 0.5 * (edges[:-1] + edges[1:])
-    k_profile = np.zeros(nb)
-
-    for b in range(nb):
-        lo, hi = edges[b], edges[b + 1]
-        mask = (positions[:, 2] >= lo) & (positions[:, 2] < hi)
-        if mask.sum() < 3:
-            k_profile[b] = 1e-12
-            continue
-        r_bin = radii[mask]
-        vol = 4.0 / 3.0 * math.pi * r_bin ** 3
-        d_32 = float(np.sum(r_bin ** 3) / np.sum(r_bin ** 2)) * 2.0
-        bin_vol = (hi - lo) * case._box_width * case._box_depth
-        phi_s = float(np.sum(vol)) / bin_vol if bin_vol > 0 else case.phi_total
-        phi_s = min(max(phi_s, 0.3), 0.7)
-        k_profile[b] = (1.0 / 180.0) * d_32 ** 2 * (1 - phi_s) ** 3 / phi_s ** 2
-
-    return centers, k_profile
-
-
-def permeability_sensitivity_table(
-    cases: Sequence[SegregationCase],
-) -> list[dict]:
-    """Build sensitivity table: segregation state → permeability contrast."""
-    table = []
-    for case in cases:
-        result = simulate_segregation(case)
-        z_c, k_prof = kozeny_carman_permeability(
-            result["final_positions"],
-            result["final_radii"],
-            result["final_species"],
-            case,
-        )
-        k_max = float(np.max(k_prof))
-        k_min = float(np.min(k_prof))
-        k_mean = float(np.mean(k_prof))
-        table.append({
-            "d_ratio": case.d_ratio,
-            "phi_total": case.phi_total,
-            "shear_rate": case.shear_rate,
-            "segregation_degree": result["segregation_degree"],
-            "direction_sign": result["direction_sign"],
-            "k_max_m2": k_max,
-            "k_min_m2": k_min,
-            "k_ratio": k_max / max(k_min, 1e-30),
-            "k_mean_m2": k_mean,
-        })
-    return table
-
-
-# ---------------------------------------------------------------------------
-# Scaling law fitting
-# ---------------------------------------------------------------------------
-
-def _scaling_model(X: np.ndarray, A: float, alpha: float, beta: float, gamma: float) -> np.ndarray:
-    """S = A * (d_ratio - 1)^alpha * shear_rate^beta * (phi_j - phi)^gamma."""
-    d_ratio_m1, shear_rate, phi_j_minus_phi = X
-    d_term = np.where(d_ratio_m1 > 0, d_ratio_m1, 1e-10)
-    s_term = np.where(shear_rate > 0, shear_rate, 1e-10)
-    p_term = np.where(phi_j_minus_phi > 0, phi_j_minus_phi, 1e-10)
-    return A * d_term ** alpha * s_term ** beta * p_term ** gamma
-
-
-def fit_scaling_law(
-    results: list[dict],
-    *,
-    phi_jamming: float = PHI_JAMMING,
-) -> dict:
-    """Fit S = A (d_l/d_s − 1)^α γ̇^β (φ_j − φ)^γ."""
-    if len(results) < 4:
-        return {"error": "need at least 4 data points", "r_squared": 0.0}
-
-    d_ratios = np.array([r["d_ratio"] for r in results])
-    shear_rates = np.array([r["shear_rate"] for r in results])
-    phi_totals = np.array([r["phi_total"] for r in results])
-    S_vals = np.array([r["segregation_degree"] for r in results])
-
-    X = np.vstack([
-        d_ratios - 1.0,
-        shear_rates,
-        phi_jamming - phi_totals,
-    ])
-
-    valid = S_vals > 1e-10
-    if valid.sum() < 4:
-        return {"error": "too few non-zero S values", "r_squared": 0.0}
-
-    X_v = X[:, valid]
-    S_v = S_vals[valid]
-
-    try:
-        popt, pcov = curve_fit(
-            _scaling_model, X_v, S_v,
-            p0=[0.1, 1.0, 0.5, 1.0],
-            bounds=([0, 0, 0, 0], [10, 5, 3, 5]),
-            maxfev=10000,
-        )
-        A, alpha, beta, gamma = popt
-
-        S_pred = _scaling_model(X_v, *popt)
-        ss_res = np.sum((S_v - S_pred) ** 2)
-        ss_tot = np.sum((S_v - np.mean(S_v)) ** 2)
-        r_squared = 1.0 - ss_res / max(ss_tot, 1e-30)
-
-        n_boot = 200
-        rng = np.random.default_rng(42)
-        boot_params = []
-        n_valid = valid.sum()
-        for _ in range(n_boot):
-            idx = rng.choice(n_valid, size=n_valid, replace=True)
-            try:
-                popt_b, _ = curve_fit(
-                    _scaling_model, X_v[:, idx], S_v[idx],
-                    p0=popt,
-                    bounds=([0, 0, 0, 0], [10, 5, 3, 5]),
-                    maxfev=5000,
-                )
-                boot_params.append(popt_b)
-            except Exception:
-                pass
-
-        boot_params = np.array(boot_params)
-        ci = {}
-        if len(boot_params) > 10:
-            ci = {
-                "A": (float(np.percentile(boot_params[:, 0], 2.5)),
-                      float(np.percentile(boot_params[:, 0], 97.5))),
-                "alpha": (float(np.percentile(boot_params[:, 1], 2.5)),
-                          float(np.percentile(boot_params[:, 1], 97.5))),
-                "beta": (float(np.percentile(boot_params[:, 2], 2.5)),
-                         float(np.percentile(boot_params[:, 2], 97.5))),
-                "gamma": (float(np.percentile(boot_params[:, 3], 2.5)),
-                          float(np.percentile(boot_params[:, 3], 97.5))),
-            }
-
-        return {
-            "A": float(A),
-            "alpha": float(alpha),
-            "beta": float(beta),
-            "gamma": float(gamma),
-            "r_squared": float(r_squared),
-            "n_points": int(n_valid),
-            "bootstrap_ci": ci,
-        }
-    except Exception as e:
-        return {"error": str(e), "r_squared": 0.0}
-
-
-# ---------------------------------------------------------------------------
-# Angle of repose measurement (consistent with P96-N3)
-# ---------------------------------------------------------------------------
-
-def measure_repose_angle(
-    positions: np.ndarray,
-    radii: np.ndarray,
-    species: np.ndarray | None = None,
-    *,
-    box_width: float = 0.04,
-    n_bins: int = 20,
-) -> dict:
-    """Measure the angle of repose of a settled particle bed.
-
-    Uses the same methodology as P96-N3: fit the free surface profile
-    and compute the angle from the slope.
-    """
-    x_edges = np.linspace(0, box_width, n_bins + 1)
-    x_centers = 0.5 * (x_edges[:-1] + x_edges[1:])
-    z_surface = np.zeros(n_bins)
-
-    for b in range(n_bins):
-        lo, hi = x_edges[b], x_edges[b + 1]
-        mask = (positions[:, 0] >= lo) & (positions[:, 0] < hi)
-        if mask.sum() > 0:
-            z_surface[b] = float(np.max(positions[mask, 2] + radii[mask]))
-        else:
-            z_surface[b] = np.nan
-
-    valid = ~np.isnan(z_surface)
-    if valid.sum() < 3:
-        return {"angle_deg": 0.0, "slope": 0.0, "r_squared": 0.0, "n_valid": int(valid.sum())}
-
-    slope, intercept = np.polyfit(x_centers[valid], z_surface[valid], 1)
-    z_pred = slope * x_centers[valid] + intercept
-    ss_res = np.sum((z_surface[valid] - z_pred) ** 2)
-    ss_tot = np.sum((z_surface[valid] - np.mean(z_surface[valid])) ** 2)
-    r_squared = 1.0 - ss_res / max(ss_tot, 1e-30)
-
-    angle_deg = math.degrees(math.atan(abs(slope)))
+        phi_top_small = phi_nom_small
+    S = (phi_top_small - phi_nom_small) / phi_nom_small if phi_nom_small > 0 else 0.0
 
     return {
-        "angle_deg": angle_deg,
-        "slope": float(slope),
-        "r_squared": float(r_squared),
-        "n_valid": int(valid.sum()),
+        "S": S,
+        "v_up_est": 0.0,
+        "layer_composition": layer_composition,
+        "z_com": z_com,
+        "total_mass": float(np.sum(masses)),
+        "phi_nom_small": phi_nom_small,
+        "phi_top_small": phi_top_small,
     }
+
+
+def compute_mass_conservation(
+    pos: np.ndarray, radii: np.ndarray, types: np.ndarray,
+    density: float = 2500.0,
+) -> dict:
+    """Audit mass conservation."""
+    n_small = int((types == 0).sum())
+    n_large = int((types == 1).sum())
+    r_small = radii[0] if n_small > 0 else 0.0
+    r_large = radii[n_small] if n_large > 0 else 0.0
+
+    mass_small = n_small * density * 4.0 / 3.0 * math.pi * r_small ** 3
+    mass_large = n_large * density * 4.0 / 3.0 * math.pi * r_large ** 3
+    total_mass = mass_small + mass_large
+
+    actual_n = len(pos)
+    expected_n = n_small + n_large
+
+    return {
+        "expected_n": expected_n,
+        "actual_n": actual_n,
+        "mass_small": mass_small,
+        "mass_large": mass_large,
+        "total_mass": total_mass,
+        "n_conserved": actual_n == expected_n,
+        "relative_error": abs(actual_n - expected_n) / max(expected_n, 1),
+    }
+
+
+def compute_tcg_gm_offset(
+    pos: np.ndarray, radii: np.ndarray, types: np.ndarray,
+    density: float = 2500.0,
+    hold_width: float = 10.0,
+    hold_length: float = 20.0,
+    initial_tcg: float = 0.0,
+    initial_kg: float = 5.0,
+    initial_km: float = 4.0,
+) -> dict:
+    """Map segregated mass distribution to cargo-hold TCG and GM offsets."""
+    n = len(pos)
+    if n == 0:
+        return {"delta_tcg": 0.0, "delta_kg": 0.0, "delta_gm": 0.0,
+                "final_tcg": 0.0, "final_kg": 0.0, "final_gm": 0.0}
+
+    n_small = int((types == 0).sum())
+    r_small = radii[0] if n_small > 0 else 0.005
+    r_large = radii[n_small] if n > n_small else 0.010
+
+    masses = np.where(types == 0,
+                      density * 4.0 / 3.0 * math.pi * r_small ** 3,
+                      density * 4.0 / 3.0 * math.pi * r_large ** 3)
+
+    tcg = float(np.sum(pos[:, 0] * masses) / np.sum(masses))
+    delta_tcg = tcg - initial_tcg
+
+    kg = float(np.sum(pos[:, 2] * masses) / np.sum(masses))
+    delta_kg = kg - initial_kg
+
+    delta_gm = -delta_kg
+
+    return {
+        "delta_tcg": delta_tcg,
+        "delta_kg": delta_kg,
+        "delta_gm": delta_gm,
+        "final_tcg": tcg,
+        "final_kg": kg,
+        "final_gm": initial_kg + initial_km + delta_gm,
+        "total_cargo_mass": float(np.sum(masses)),
+    }
+
+
+# ---------------------------------------------------------------------------
+# Main simulation runner
+# ---------------------------------------------------------------------------
+
+@dataclass
+class SegregationResult:
+    """Container for a complete segregation simulation result."""
+    diameter_ratio: float
+    phi_large_nominal: float
+    driving_mode: str
+    gamma: float = 0.0
+    frequency: float = 0.0
+    amplitude: float = 0.0
+    n_small: int = 0
+    n_large: int = 0
+    n_total: int = 0
+    S: float = 0.0
+    v_up: float = 0.0
+    z_com: float = 0.0
+    total_mass: float = 0.0
+    mass_conservation_error: float = 0.0
+    delta_tcg: float = 0.0
+    delta_gm: float = 0.0
+    layer_composition: list = field(default_factory=list)
+    seed: int = 42
+    steps: int = 0
+    wallclock_s: float = 0.0
+    config_2d: bool = False
+
+
+def run_segregation(
+    diameter_ratio: float = 2.0,
+    phi_large: float = 0.3,
+    n_total: int = 5000,
+    driving_mode: str = "vibration",
+    gamma: float = 2.0,
+    frequency: float = 30.0,
+    n_steps: int = 5000,
+    seed: int = 42,
+    config_2d: bool = False,
+    sample_interval: int = 100,
+) -> SegregationResult:
+    """Run a full segregation simulation."""
+    import time
+    t0 = time.time()
+
+    r_small = 0.005
+    r_large = r_small * diameter_ratio
+    density = 2500.0
+
+    vol_ratio = (r_large / r_small) ** 3
+    n_large = int(round(n_total * phi_large * vol_ratio / (phi_large * vol_ratio + (1 - phi_large))))
+    n_small = n_total - n_large
+
+    mat = BinaryMaterial(
+        r_small=r_small, r_large=r_large, density=density,
+        mu=0.5, mu_rolling=0.05, restitution=0.3,
+        kn=1.0e5, kt_ratio=0.5, gravity=9.81,
+    )
+
+    if config_2d:
+        box_w = 0.2
+        box_d = 3.0 * r_large * 2
+    else:
+        box_w = 0.15
+        box_d = 0.15
+
+    vol_particles = n_small * 4.0 / 3.0 * math.pi * r_small ** 3 + \
+                    n_large * 4.0 / 3.0 * math.pi * r_large ** 3
+    packing_frac = 0.6
+    fill_h = vol_particles / (box_w * box_d * packing_frac) + 0.02
+
+    pos, radii, types = init_binary_bed(
+        n_small, n_large, r_small, r_large,
+        box_w, box_d, fill_h, seed=seed,
+    )
+
+    masses = np.where(types == 0, mat.mass(r_small), mat.mass(r_large))
+    inertias = np.where(types == 0, mat.inertia(r_small), mat.inertia(r_large))
+    vel = np.zeros((len(pos), 3), dtype=np.float64)
+    omega = np.zeros((len(pos), 3), dtype=np.float64)
+
+    dt = mat.critical_dt()
+    state_tang: dict = {}
+    state_roll: dict = {}
+
+    # Settling phase
+    settle_steps = min(2000, n_steps // 2)
+    for step in range(settle_steps):
+        pos, vel, omega, state_tang, state_roll = step_vv(
+            pos, vel, omega, radii, masses, inertias, types,
+            mat, box_w, box_d, 0.0, 0.0, dt, state_tang, state_roll,
+        )
+
+    # Driving phase
+    amplitude = amplitude_from_gamma(gamma, frequency) if driving_mode == "vibration" else 0.0
+    history_S = []
+    history_z_com = []
+    history_time = []
+
+    drive_steps = n_steps - settle_steps
+    for step in range(drive_steps):
+        t = step * dt
+        if driving_mode == "vibration":
+            base_z = vibration_base_z(t, amplitude, frequency)
+            base_v = vibration_base_vel(t, amplitude, frequency)
+        else:
+            base_z = 0.0
+            base_v = 0.0
+
+        pos, vel, omega, state_tang, state_roll = step_vv(
+            pos, vel, omega, radii, masses, inertias, types,
+            mat, box_w, box_d, base_z, base_v, dt, state_tang, state_roll,
+        )
+
+        if step % sample_interval == 0:
+            metrics = compute_segregation_index(pos, types, radii, density)
+            history_S.append(metrics["S"])
+            history_z_com.append(metrics["z_com"])
+            history_time.append(t)
+
+    final_metrics = compute_segregation_index(pos, types, radii, density)
+    mass_audit = compute_mass_conservation(pos, radii, types, density)
+    tcg_gm = compute_tcg_gm_offset(pos, radii, types, density)
+
+    v_up = 0.0
+    if len(history_z_com) >= 3:
+        # Use linear regression to filter out oscillations
+        t_arr = np.array(history_time)
+        z_arr = np.array(history_z_com)
+        # Use second half of data (after initial transients)
+        half = len(t_arr) // 2
+        coeffs = np.polyfit(t_arr[half:], z_arr[half:], 1)
+        v_up = coeffs[0]  # slope = velocity
+
+    wallclock = time.time() - t0
+
+    return SegregationResult(
+        diameter_ratio=diameter_ratio,
+        phi_large_nominal=phi_large,
+        driving_mode=driving_mode,
+        gamma=gamma,
+        frequency=frequency,
+        amplitude=amplitude,
+        n_small=n_small,
+        n_large=n_large,
+        n_total=n_total,
+        S=final_metrics["S"],
+        v_up=v_up,
+        z_com=final_metrics["z_com"],
+        total_mass=final_metrics["total_mass"],
+        mass_conservation_error=mass_audit["relative_error"],
+        delta_tcg=tcg_gm["delta_tcg"],
+        delta_gm=tcg_gm["delta_gm"],
+        layer_composition=final_metrics["layer_composition"],
+        seed=seed,
+        steps=n_steps,
+        wallclock_s=wallclock,
+        config_2d=config_2d,
+    )
