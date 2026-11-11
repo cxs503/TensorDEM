@@ -1,0 +1,36 @@
+{
+  "node": "P152W1-N04-repose-v2",
+  "repo": "TensorDEM",
+  "title": "Repose anchor A/B closure: fixed-nozzle pour protocol (v2)",
+  "registered_utc": "2026-11-11T00:00:00Z",
+  "registered_before_runs": true,
+  "amends": "prereg/P152W1_N04_friction_contact_surface_prereg.json",
+  "amendment_semantics": {
+    "what_changes": "the POUR PROTOCOL only (nozzle height policy and burst pacing); every threshold, material micro-parameter and experimental band is inherited verbatim",
+    "thresholds_changed": false,
+    "materials_changed": false,
+    "reason": "v1 raised the nozzle to max(drop_height, apex + 5 R) every burst, which the node report itself lists as a rejected protocol (5.3 'block-state source climbing'). Measured here: nozzle climbs to 1.44 m, the heap becomes a spire, the at-rest criterion is never met -> anchor A/B came back WITHHELD. A threshold is never relaxed to turn a WITHHELD into a PASS: the protocol is fixed, the bars stay where they were."
+  },
+  "criteria_inherited": [
+    {"id": "A-repose-negative-control", "threshold": {"theta_r_deg_max": 5.0}},
+    {"id": "B-repose-experiment", "threshold": {"relative_error_max": 0.10},
+     "materials": {"glass_beads": {"theta_exp_deg": 23.0, "band": [21.0, 25.0], "mu": 0.30},
+                   "quartz_sand": {"theta_exp_deg": 32.0, "band": [30.0, 34.0], "mu": 0.50}}}
+  ],
+  "protocol_v2": {
+    "source_mode": "fixed",
+    "nozzle_height_m": 0.020,
+    "burst_pacing": "a burst is only released when the nozzle slab (drop_height - max(2.2, nozzle_clearance) R .. drop_height + 2 R + clearance) contains no sphere younger than the charge fall time; this is a physical (fall-time) pace, not a tuned number",
+    "pour_closure": "the pour closes when the nozzle slab is occupied by deposit at rest, or when a burst cannot place a single sphere (2.2 R exclusion); never reopened",
+    "at_rest": "RMS speed < 0.01 m/s sustained over 5 consecutive 100-step checks after the pour ends (inherited)",
+    "n_particles": 300,
+    "seeds": [15204, 15205, 15206],
+    "calibration": "single shape parameter mu_rolling fitted once on glass beads to theta_exp = 23 deg by 5-step bisection on [0.02, 0.40]; transferred unchanged to quartz sand (out of sample)",
+    "measurement": "heap_surface_angle (upper-envelope radial fit, 15-90 % flank window) - unchanged from v1"
+  },
+  "known_limitations_declared_up_front": [
+    "the experimental bands are literature values (dry monodisperse glass beads 0.5-1.0 mm; dry rounded-to-subrounded medium quartz sand), not measured in this repository",
+    "monodisperse spheres with rolling resistance as a shape surrogate: the sand band is a shape-limited extrapolation and may honestly FAIL",
+    "n_particles = 300 is chosen for compute, not for finite-size convergence; the finite-size sensitivity is reported as a single extra run, not as a convergence study"
+  ]
+}
