@@ -810,40 +810,56 @@ def _pile_metrics(system: DEMSystem3D) -> Dict[str, float]:
     return metrics
 
 
-def case3_repose(*, n_bodies: int = 18, friction: Sequence[float] = (0.2, 0.4, 0.6),
+def case3_repose(*, n_bodies: int = 45, friction: Sequence[float] = (0.2, 0.4, 0.6),
                  kn: float = 2.0e5, zeta: float = 0.2, dt: float = 1.0e-4,
-                 n_steps: int = 2600, box_half: float = 0.5, cell_half: float = 0.13,
-                 density: float = ICE_DENSITY, seed: int = 5) -> Dict[str, object]:
-    """Pour polyhedral rubble, settle it, measure the repose angle and force chains.
+                 n_steps: int = 6000, box_half: float = 0.5, cell_half: float = 0.13,
+                 density: float = ICE_DENSITY, seed: int = 5,
+                 n_xy: int = 3) -> Dict[str, object]:
+    """Pour polyhedral rubble from a compact column, let it collapse, measure the pile.
 
-    The particles are released as a compact cluster above the box centre (a
-    hopper), fall, and pile up.  The pile metrics are taken from the settled state
-    (after ``n_steps``), and the contact set of the final step is the force-chain
-    network.
+    The pile metrics are taken from the settled state (after ``n_steps``), and the
+    contact set of the final step is the force-chain network.
+
+    Protocol defects fixed here (all three were live on the branch before this node):
+
+    * the release grid stacked every body at the same ``(x, y)`` with a 4 cm vertical
+      step, i.e. bodies overlapped at ``t = 0``; the resulting impulse blew the pile
+      apart (``energy_residual`` ~1e3, zero contacts, ``nan`` angle);
+    * the box floor sat 0.6 m *below* the release plane, so a 0.26 s window ended
+      while the bodies were still in free flight (again zero contacts);
+    * ``_random_rotation`` / ``_pile_metrics`` / ``case3_repose`` were defined twice
+      in this module and the second, broken copy shadowed the first.
+
+    The bodies are now released on a ``n_xy x n_xy x ceil(n / n_xy**2)`` grid whose
+    spacing is ``2.05 x`` the largest bounding radius (bounding spheres disjoint at
+    ``t = 0``) and sit on a floor at ``z = 0``; the column collapses under gravity and
+    the settled free surface is fitted by :func:`_pile_metrics`.
     """
     rng = np.random.default_rng(seed)
     sites = rng.uniform(-cell_half, cell_half, (n_bodies + 40, 3))
     cells = [c for c in voronoi_tessellate(sites, cell_half) if c.volume > 1e-7][:n_bodies]
+    spacing = 2.05 * max(cell.bounding_radius for cell in cells)
+    n_layers = int(math.ceil(len(cells) / float(n_xy * n_xy)))
 
     results = []
     for mu in friction:
         bodies = []
-        # release grid spacing derived from the *actual* bounding radius of every
-        # cell: a spacing smaller than the radius makes the bodies overlap at t = 0
-        # and the resulting contact impulse is a numerical artefact, not a pour
-        spacing = 2.05 * max(cell.bounding_radius for cell in cells)
         for k, cell in enumerate(cells):
-            ix, iy, iz = k % 3, (k // 3) % 2, k // 6
+            ix, iy = k % n_xy, (k // n_xy) % n_xy
+            iz = k // (n_xy * n_xy)
             bodies.append(FloeBody(
                 cell, density,
-                position=[(ix - 1.0) * spacing, (iy - 0.5) * spacing,
-                          0.10 + spacing * iz],
+                position=[(ix - 0.5 * (n_xy - 1)) * spacing,
+                          (iy - 0.5 * (n_xy - 1)) * spacing,
+                          0.02 + spacing * (iz + 0.5)],
                 rotation=_random_rotation(rng), label=f"r{k}"))
         system = DEMSystem3D(bodies,
-                             law=ContactLaw(kn=kn, zeta=zeta, mu=mu, mu_rolling=0.02,
-                                            kt_ratio=0.25),
+                             law=ContactLaw(kn=kn, zeta=zeta, mu=mu,
+                                            mu_rolling=0.02, kt_ratio=0.25),
                              gravity=9.81, dt=dt)
-        system.add_box([0.0, 0.0, 0.0], [box_half, box_half, 0.6],
+        # floor at z = 0: the column is released just above it, so no part of the
+        # integration budget is spent in free flight
+        system.add_box([0.0, 0.0, 0.75], [box_half, box_half, 0.75],
                        bottom=True, sides=True, top=False)
         system.record_initial_energy()
         for _ in range(int(n_steps)):
@@ -853,6 +869,10 @@ def case3_repose(*, n_bodies: int = 18, friction: Sequence[float] = (0.2, 0.4, 0
         metrics["energy_residual"] = float(system.energy_residual())
         metrics["mass_residual"] = float(system.mass_residual())
         metrics["safety_clamps"] = int(system.safety_clamps)
+        metrics["valid"] = bool(
+            system.energy_residual() < 0.05
+            and metrics["n_contacts"] > 0
+            and math.isfinite(metrics["repose_angle_deg"]))
         results.append(metrics)
 
     angles = [r["repose_angle_deg"] for r in results]
@@ -860,115 +880,11 @@ def case3_repose(*, n_bodies: int = 18, friction: Sequence[float] = (0.2, 0.4, 0
     return {
         "setup": {"n_bodies": len(cells), "kn": kn, "zeta": zeta, "dt": dt,
                   "n_steps": n_steps, "box_half": box_half, "cell_half": cell_half,
-                  "friction_values": [float(f) for f in friction]},
+                  "friction_values": [float(f) for f in friction],
+                  "release": "column collapse, grid spacing 2.05 R_b, floor at z=0",
+                  "grid": [n_xy, n_xy, n_layers], "spacing": float(spacing)},
         "runs": results,
-        "repose_angle_monotone_in_friction": bool(monotone),
-        "repose_angle_over_atan_mu": [
-            r["repose_angle_deg"] / max(math.degrees(math.atan(r["friction"])), 1e-9)
-            for r in results],
-        "top20_load_share_mean": float(np.mean([r["top20_load_share"] for r in results])),
-        "force_tail_exponent_mean": float(np.mean([r["force_tail_exponent"] for r in results])),
-        "coordination_mean": float(np.mean([r["coordination_number"] for r in results])),
-    }
-
-
-def _random_rotation(rng: np.random.Generator) -> np.ndarray:
-    q = rng.normal(size=4)
-    q /= np.linalg.norm(q)
-    w, x, y, z = q
-    return np.array([
-        [1 - 2 * (y * y + z * z), 2 * (x * y - z * w), 2 * (x * z + y * w)],
-        [2 * (x * y + z * w), 1 - 2 * (x * x + z * z), 2 * (y * z - x * w)],
-        [2 * (x * z - y * w), 2 * (y * z + x * w), 1 - 2 * (x * x + y * y)],
-    ])
-
-
-def _pile_metrics(system: DEMSystem3D) -> Dict[str, float]:
-    """Repose angle from a free-surface fit and force-chain statistics."""
-    positions = np.array([b.position for b in system.bodies])
-    centre = np.array([positions[:, 0].mean(), positions[:, 1].mean()])
-    radius = np.linalg.norm(positions[:, :2] - centre, axis=1)
-    top = positions[:, 2] + np.array([b.shape.bounding_radius for b in system.bodies]) * 0.5
-
-    bins = np.linspace(0.0, max(float(radius.max()), 1e-6) * 0.95, 7)
-    heights, radii = [], []
-    for lo, hi in zip(bins[:-1], bins[1:]):
-        mask = (radius >= lo) & (radius < hi)
-        if np.count_nonzero(mask) >= 3:
-            heights.append(float(np.percentile(top[mask], 90)))
-            radii.append(0.5 * (lo + hi))
-    if len(heights) >= 3:
-        slope, _ = np.polyfit(np.asarray(radii), np.asarray(heights), 1)
-        angle = math.degrees(math.atan(max(-slope, 0.0)))
-    else:
-        angle = float("nan")
-
-    forces = np.asarray([system.law.kn * geom.depth for geom in system.last_pairs],
-                        dtype=np.float64)
-    metrics: Dict[str, float] = {
-        "repose_angle_deg": float(angle),
-        "n_contacts": int(forces.size),
-        "coordination_number": 2.0 * forces.size / max(len(system.bodies), 1),
-        "mean_contact_force": float(forces.mean()) if forces.size else 0.0,
-        "max_contact_force": float(forces.max()) if forces.size else 0.0,
-        "top20_load_share": float("nan"),
-        "force_tail_exponent": float("nan"),
-        "pile_height": float(top.max()),
-        "total_weight": float(sum(b.mass * system.gravity for b in system.bodies)),
-        "mean_particle_height": float(positions[:, 2].mean()),
-    }
-    if forces.size >= 10:
-        ordered = np.sort(forces)[::-1]
-        k = max(1, int(0.2 * ordered.size))
-        metrics["top20_load_share"] = float(ordered[:k].sum() / ordered.sum())
-        ratio = np.sort(ordered / ordered.mean())
-        tail = ratio[ratio > 1.0]
-        if tail.size >= 5:
-            # Radjai et al. (1996): P(F) decays exponentially above the mean force
-            survival = 1.0 - np.arange(tail.size) / tail.size
-            slope, _ = np.polyfit(tail, np.log(np.maximum(survival, 1e-6)), 1)
-            metrics["force_tail_exponent"] = float(-1.0 / slope) if slope < 0 else float("nan")
-    return metrics
-
-
-def case3_repose(*, n_bodies: int = 60, friction: Sequence[float] = (0.2, 0.4, 0.6),
-                 kn: float = 5.0e5, zeta: float = 0.2, dt: float = 2.0e-4,
-                 n_steps: int = 1200, box_half: float = 0.35, cell_half: float = 0.09,
-                 density: float = ICE_DENSITY, seed: int = 5) -> Dict[str, object]:
-    """Pour polyhedral rubble, settle it, measure the repose angle and force chains."""
-    rng = np.random.default_rng(seed)
-    sites = rng.uniform(-cell_half, cell_half, (n_bodies + 40, 3))
-    cells = [c for c in voronoi_tessellate(sites, cell_half) if c.volume > 1e-7][:n_bodies]
-
-    results = []
-    for mu in friction:
-        bodies = []
-        for k, cell in enumerate(cells):
-            jitter = 0.02 * np.array([rng.uniform(-1, 1), rng.uniform(-1, 1), 0.0])
-            height = 0.25 + 0.04 * (k % 12)
-            bodies.append(FloeBody(cell, density,
-                                   position=[jitter[0], jitter[1], height],
-                                   rotation=_random_rotation(rng), label=f"r{k}"))
-        system = DEMSystem3D(bodies,
-                             law=ContactLaw(kn=kn, zeta=zeta, mu=mu, mu_rolling=0.02),
-                             gravity=9.81, dt=dt)
-        system.add_box([0.0, 0.0, 0.0], [box_half, box_half, 1.0],
-                       bottom=True, sides=True, top=False)
-        for _ in range(int(n_steps)):
-            system.step()
-        metrics = _pile_metrics(system)
-        metrics["friction"] = float(mu)
-        metrics["energy_residual"] = system.energy_residual()
-        metrics["mass_residual"] = system.mass_residual()
-        results.append(metrics)
-
-    angles = [r["repose_angle_deg"] for r in results]
-    monotone = all(b >= a - 1e-9 for a, b in zip(angles[:-1], angles[1:]))
-    return {
-        "setup": {"n_bodies": len(cells), "kn": kn, "zeta": zeta, "dt": dt,
-                  "n_steps": n_steps, "box_half": box_half, "cell_half": cell_half,
-                  "friction_values": [float(f) for f in friction]},
-        "runs": results,
+        "all_runs_valid": bool(all(r["valid"] for r in results)),
         "repose_angle_monotone_in_friction": bool(monotone),
         "repose_angle_over_atan_mu": [
             r["repose_angle_deg"] / max(math.degrees(math.atan(r["friction"])), 1e-9)

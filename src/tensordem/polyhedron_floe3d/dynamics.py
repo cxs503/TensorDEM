@@ -324,7 +324,8 @@ class DEMSystem3D:
                  gravity: float = 9.81, water_level: Optional[float] = None,
                  water_density: float = 1025.0, dt: float = 2.0e-4,
                  integrator: str = "leapfrog", record: bool = True,
-                 constrain_to_plane: bool = False):
+                 constrain_to_plane: bool = False,
+                 linear_drag: float = 0.0, angular_drag: float = 0.0):
         self.bodies: List[FloeBody] = list(bodies)
         self.law = ContactLaw() if law is None else law
         self.gravity = float(gravity)
@@ -335,6 +336,12 @@ class DEMSystem3D:
         self.record = bool(record)
         #: freeze the vertical / tilt degrees of freedom (the 2-D limit model)
         self.constrain_to_plane = bool(constrain_to_plane)
+        #: hydrodynamic drag closures [N s / m] and [N m s / rad]; ``F = -c v`` is
+        #: the Stokes-like linear closure, used for the floating-equilibrium case.
+        #: A modelling choice, not a measured material constant: it sets how fast a
+        #: released floe relaxes to its hydrostatic draft, not where that draft is.
+        self.linear_drag = float(linear_drag)
+        self.angular_drag = float(angular_drag)
         self.walls: List[Wall] = []
         self.friction_state: Dict[Tuple[int, int], np.ndarray] = {}
         self.wall_friction_state: Dict[Tuple[int, int], np.ndarray] = {}
@@ -672,6 +679,18 @@ class DEMSystem3D:
         self.pe_spring = spring_total
         self.spring_pairs = np.asarray(spring_values, dtype=np.float64)
         self.spring_deltas = np.asarray(deltas, dtype=np.float64)
+
+        # ---- hydrodynamic drag (optional linear closure) -----------------
+        if self.linear_drag > 0.0 or self.angular_drag > 0.0:
+            for index, body in enumerate(bodies):
+                if self.linear_drag > 0.0:
+                    drag_force = -self.linear_drag * body.velocity
+                    forces[index] += drag_force
+                    self.dissipated += float(-drag_force @ body.velocity) * dt
+                if self.angular_drag > 0.0:
+                    drag_torque = -self.angular_drag * body.omega
+                    torques[index] += drag_torque
+                    self.dissipated += float(-drag_torque @ body.omega) * dt
 
         # ---- integration (leapfrog in velocity = kick-drift) -------------
         for body, force, torque in zip(bodies, forces, torques):
