@@ -28,6 +28,11 @@ hashed into the ledger and A/B-tested against the baseline law):
              over-prediction reported for the baseline law in
              ``docs/ice_resistance_scaling.md``.
 
+``submersion_model``  analytical correction for the two missing mechanisms of
+             the plan-view DEM: submersion (buoyant depression of the cleared
+             channel) and momentum flux (ice deflected sideways). This hybrid
+             model adds the physics-based correction to the DEM contact forces.
+
 Public surface
 --------------
 ``ledger``      graded parameter ledger + standard case + SHA-256 provenance
@@ -38,6 +43,7 @@ Public surface
 ``anchors``     Lindqvist / MT Uikku / broken-ice closed-form references
 ``validation``  criteria C1-C7, sweeps, verdicts, artifacts, figures
 ``report``      markdown report builder
+``submersion_model``  submersion + momentum correction for plan-view DEM
 
 All quantities are SI (m, Pa, kg/m^3, m/s, N); reported resistance is in kN.
 """
@@ -49,6 +55,10 @@ from .simulate import CaseResult, run_case
 from .anchors import (broken_ice_closed_form, lindqvist_reference,
                       mt_uikku_level_ice_cases)
 from .validation import evaluate_criteria, run_campaign
+from .submersion_model import (SubmersionCorrection, apply_correction,
+                               apply_full_correction,
+                               compute_submersion_resistance,
+                               compute_momentum_flux)
 
 __all__ = [
     "CASE_SPECS", "COEFFICIENT_LEDGER", "MATERIAL", "STANDARD_CASE",
@@ -57,4 +67,6 @@ __all__ = [
     "CaseResult", "run_case",
     "broken_ice_closed_form", "lindqvist_reference", "mt_uikku_level_ice_cases",
     "evaluate_criteria", "run_campaign",
+    "SubmersionCorrection", "apply_correction", "apply_full_correction",
+    "compute_submersion_resistance", "compute_momentum_flux",
 ]
