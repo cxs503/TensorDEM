@@ -1,0 +1,40 @@
+{
+  "schema": "tensordem.feature_ledger_link.v1",
+  "created": "2026-11-11",
+  "node": "p474w1-n08-dem-anisotropic",
+  "campaign": "columnar sea-ice anisotropic strength (TensorDEM)",
+  "feature_id": "H1-BROKEN-ICE-DEM",
+  "linkage": {
+    "feature": "H1-BROKEN-ICE-DEM",
+    "feature_scope": "DEM representation and strength of broken/bonded ice for ice-load and ice-resistance work",
+    "this_capability": "transversely isotropic (columnar S2) strength: fabric-ledgered c-axis ODF, TI yield surface, slip-system reference, isotropic degeneration control",
+    "relation": "adds the missing *anisotropy* dimension to the bonded-ice strength used by H1: the uniaxial strength of a bonded ice specimen is no longer a single scalar but a fabric-dependent surface",
+    "consumes": [
+      "src/tensordem/ice_material/compressive_strength.py (isotropic Timco & Frederking strength level)",
+      "src/tensordem/dem3d.py (per-bond tensile threshold, driven through bond_breaking_strain)",
+      "src/tensordem/dem3d_triaxial.py (uniaxial/biaxial protocol reused for the directional tests)"
+    ],
+    "provides": [
+      "column/transverse uniaxial strength ratio (3-5 band) as a fabric-derived quantity",
+      "45 deg strength from a quadratic TI surface, scored against a slip-system reference",
+      "uniform-fabric degeneration control (strength ratio -> 1)",
+      "FabricLedger (JSON) so any anisotropic parameter set is traceable to its ODF"
+    ]
+  },
+  "artifacts": {
+    "package": "src/tensordem/ice_anisotropy/",
+    "study_script": "scripts/run_ice_anisotropy_study.py",
+    "report_json": "artifacts/ice_anisotropy/study_report.json",
+    "fabric_ledger": "artifacts/ice_anisotropy/fabric_ledger.json",
+    "documentation": "docs/ICE_ANISOTROPIC_STRENGTH_COLUMNAR.md",
+    "tests": [
+      "tests/test_ice_anisotropy_fabric.py",
+      "tests/test_ice_anisotropy_slip_reference.py",
+      "tests/test_ice_anisotropy_yield_surface.py",
+      "tests/test_ice_anisotropy_virtual_test.py",
+      "tests/test_ice_anisotropy_verification.py"
+    ]
+  },
+  "ledger_note": "The canonical campaign feature ledger (feature_ledger) is maintained outside this repository; this record is the in-repo link entry so the capability can be found from the feature it extends. If the canonical ledger is updated, keep feature_id unchanged and re-point 'artifacts' only.",
+  "status": "verified in-repo (see artifacts/ice_anisotropy/study_report.json criteria a-f)"
+}
