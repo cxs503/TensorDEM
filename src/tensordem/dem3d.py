@@ -651,6 +651,11 @@ class IceDEM3D:
 
         self.time = 0.0
         self.step_count = 0
+        # Opt-in four-ledger energy audit hook (None -> trajectory unchanged).
+        # Set by tensordem.ice_structure_energy_audit_integration
+        # .attach_energy_audit; the adapter only reads state, so an audited run
+        # and an unaudited run are bit-for-bit identical.
+        self.energy_audit = None
         self.tool_start = torch.tensor(
             [0.0, 0.0, (config.nz - 1) * 2 * config.radius + config.radius
              + config.tool_radius + config.tool_gap],
@@ -1568,6 +1573,8 @@ class IceDEM3D:
         self.step_count += 1
         if not bool(torch.isfinite(self.positions).all() and torch.isfinite(self.velocities).all()):
             raise FloatingPointError("non-finite DEM3D state; reduce dt or contact stiffness")
+        if self.energy_audit is not None:
+            self.energy_audit.observe(self)
 
     @torch.no_grad()
     def diagnostics(self, external_forces: torch.Tensor | None = None) -> dict[str, float | int]:
