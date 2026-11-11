@@ -235,6 +235,7 @@ def simulate_column(case: Column3DCase, *, return_positions: bool = True,
                                    update_state=False,
                                    contact_mode=case.contact_mode)
         pred_wall = wall_contact_forces(pos, vel, omega, mat, dt, mu_wall=mu_wall,
+                                        mu_rolling_wall=mat.mu_rolling,
                                         state=wall_state, update_state=False,
                                         contact_mode=case.contact_mode)
         acc = (pred["force"] + pred_wall["force"]) / mass + gravity_vec
@@ -248,8 +249,9 @@ def simulate_column(case: Column3DCase, *, return_positions: bool = True,
                                   dt, update_state=True,
                                   contact_mode=case.contact_mode)
         cur_wall = wall_contact_forces(pos, v_half, w_half, mat, dt,
-                                       mu_wall=mu_wall, state=wall_state,
-                                       update_state=True,
+                                       mu_wall=mu_wall,
+                                       mu_rolling_wall=mat.mu_rolling,
+                                       state=wall_state, update_state=True,
                                        contact_mode=case.contact_mode)
         acc = (cur["force"] + cur_wall["force"]) / mass + gravity_vec
         alpha = (cur["torque"] + cur_wall["torque"]) / inertia
