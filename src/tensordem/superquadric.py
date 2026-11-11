@@ -362,15 +362,29 @@ def principal_curvatures_superquadric(
     a: float, b: float, c: float,
     n1: float, n2: float,
     eps_fd: float = 1e-7,
+    method: str = "analytic",
 ) -> Tuple[float, float]:
-    """Compute principal curvatures at a surface point via finite differences.
+    """Principal curvatures at a body-frame surface point.
 
-    Uses the shape operator (Weingarten map) computed from first and second
-    fundamental forms via central finite differences on the implicit function.
+    ``method="analytic"`` (default) evaluates the closed-form implicit
+    gradient/Hessian of :mod:`tensordem.superquadric_curvature` (exact to
+    round-off).  This replaces the parent node's four-point finite difference of
+    the *implicit function* with an absolute step ``eps_fd``, which suffers
+    catastrophic cancellation (``F`` differences ~1e-14 against ``eps_fd^2 =
+    1e-14``) and carries 15 %-97 % relative error -- that estimator is retained
+    under ``method="fd"`` as the fixed baseline / negative control.
 
     Returns:
-        (kappa_1, kappa_2): principal curvatures (1/m), sorted by magnitude.
+        ``(kappa_1, kappa_2)`` in 1/m, sorted by magnitude (legacy ordering).
     """
+    if method == "analytic":
+        from .superquadric_curvature import principal_curvatures_analytic
+        p = np.asarray(point_local, dtype=float).reshape(1, 3)
+        k1, k2 = principal_curvatures_analytic(p, a, b, c, n1, n2)
+        vals = sorted((float(k1[0]), float(k2[0])), key=abs)
+        return vals[0], vals[1]
+    if method != "fd":
+        raise ValueError(f"unknown curvature method {method!r}")
     p = point_local.copy()
     grad = superquadric_gradient(p.reshape(1, 3), a, b, c, n1, n2)
     if grad.ndim == 1:
@@ -390,7 +404,7 @@ def principal_curvatures_superquadric(
     t2 = np.cross(normal, t1)
     t2 /= np.linalg.norm(t2)
 
-    # Compute Hessian of F by finite differences
+    # Compute Hessian of F by four-point finite differences (legacy estimator)
     hessian = np.zeros((3, 3))
     for i in range(3):
         for j in range(3):
@@ -407,17 +421,13 @@ def principal_curvatures_superquadric(
                 f_mm = f_mm.item()
             hessian[i, j] = (f_pp - f_pm - f_mp + f_mm) / (4.0 * eps_fd ** 2)
 
-    # Shape operator: S = (I - n n^T) H (I - n n^T) / |∇F|
+    # Shape operator: S = (I - n n^T) H (I - n n^T) / |grad F|
     P = np.eye(3) - np.outer(normal, normal)
     shape_op = P @ hessian @ P / grad_norm
-
-    # Principal curvatures are eigenvalues of shape operator in tangent plane
-    # Project to 2x2 in (t1, t2) basis
     T = np.column_stack([t1, t2])
     S_2d = T.T @ shape_op @ T
     eigenvalues = np.linalg.eigvalsh(S_2d)
     kappa_1, kappa_2 = sorted(eigenvalues, key=abs)
-
     return float(kappa_1), float(kappa_2)
 
 
