@@ -470,14 +470,65 @@ JSON_CLAIM = re.compile(r"`?([\w./-]+\.json)`?\.([\w.]+)\s*=\s*(true|false|-?\d+
 def audit_json_claims(audit: Audit, text: str) -> None:
     """README 用 `file.json.key = value` 自陈的机器可读判据，必须与文件实际内容一致。"""
     for fname, key, claimed in JSON_CLAIM.findall(text):
-        hits = list((ROOT / "benchmarks").rglob(Path(fname).name)) or \
-               list((ROOT / "artifacts").rglob(Path(fname).name))
-        if not hits:
-            audit.add(kind="json-claim", claim=f"{fname}:{key}={claimed}",
-                      location=line_of(text, fname), status="MISMATCH",
-                      detail="引用的 json 文件在 benchmarks/ 与 artifacts/ 下均未找到")
-            continue
-        path = hits[0]
+        # 找到这个claim在文本中的位置
+        claim_pattern = f"{fname}.{key}"
+        claim_idx = text.find(claim_pattern)
+        if claim_idx < 0:
+            claim_idx = 0
+        
+        # 如果 fname 包含路径分隔符，优先使用完整路径
+        if "/" in fname:
+            path = ROOT / fname
+            if not path.exists():
+                audit.add(kind="json-claim", claim=f"{fname}:{key}={claimed}",
+                          location=line_of(text, fname), status="MISMATCH",
+                          detail=f"引用的 json 文件不存在: {fname}")
+                continue
+        else:
+            # 否则先向前搜索完整路径mention
+            # 查找最近的对这个文件的完整路径引用
+            context_start = max(0, claim_idx - 1000)
+            context = text[context_start:claim_idx]
+            
+            # 查找形如 benchmarks/.../fname 或 artifacts/.../fname 的路径
+            # 也处理 {file1.json,file2.json} 这种格式
+            path_pattern = re.compile(rf"(benchmarks/[\w./-]*/{re.escape(fname)}|artifacts/[\w./-]*/{re.escape(fname)})")
+            path_matches = list(path_pattern.finditer(context))
+            
+            if not path_matches:
+                # 尝试匹配目录路径（如 benchmarks/.../ 后面跟着 {xxx,fname}）
+                dir_pattern = re.compile(rf"(benchmarks/[\w./-]+/|artifacts/[\w./-]+/)")
+                dir_matches = list(dir_pattern.finditer(context))
+                if dir_matches:
+                    # 使用最近的目录
+                    dir_path = dir_matches[-1].group(1)
+                    full_path = dir_path + fname
+                    path = ROOT / full_path
+                    if path.exists():
+                        path_matches = [full_path]
+            
+            if path_matches:
+                # 使用最近的一个完整路径
+                if isinstance(path_matches[0], str):
+                    full_path = path_matches[0]
+                else:
+                    full_path = path_matches[-1].group(1)
+                path = ROOT / full_path
+                if not path.exists():
+                    audit.add(kind="json-claim", claim=f"{fname}:{key}={claimed}",
+                              location=line_of(text, fname), status="MISMATCH",
+                              detail=f"引用的 json 文件不存在: {full_path}")
+                    continue
+            else:
+                # 按文件名搜索
+                hits = list((ROOT / "benchmarks").rglob(Path(fname).name)) or \
+                       list((ROOT / "artifacts").rglob(Path(fname).name))
+                if not hits:
+                    audit.add(kind="json-claim", claim=f"{fname}:{key}={claimed}",
+                              location=line_of(text, fname), status="MISMATCH",
+                              detail="引用的 json 文件在 benchmarks/ 与 artifacts/ 下均未找到")
+                    continue
+                path = hits[0]
         try:
             node = json.loads(read_text(path))
         except Exception as exc:
