@@ -1,0 +1,80 @@
+{
+  "node": "P316-W1-N03",
+  "integration": "tensordem.ice_ridge_keel_freezebond.run_keel_case(depth_profile=...)",
+  "callers": [
+    "tensordem.ice_ridge_keel_freezebond.run_keel_case",
+    "tensordem.ice_ridge_keel_freezebond.depth_profile_strength",
+    "tensordem.ice_ridge_keel_freezebond.create_bonds(tau_by_depth=...)"
+  ],
+  "generated_by": "benchmarks/freeze_bond_thermal_profile/run_keel_integration.py",
+  "environment": {
+    "python": "3.11.6",
+    "numpy": "2.4.6",
+    "platform": "Linux-6.6.52-1.7.lns23.loongarch64-loongarch64-with-glibc2.38"
+  },
+  "case": {
+    "keel": {
+      "keel_height_target": 4.0,
+      "undercooling_c": -15.0,
+      "salinity_ppt": 0.0,
+      "consol_steps": 800,
+      "release_steps": 120
+    },
+    "profile": {
+      "t_end_s": 110000000.0,
+      "k": 2.2,
+      "n_cells": 200,
+      "dt": 3600.0
+    }
+  },
+  "uniform_caliber": {
+    "tau_adfreeze_mpa": 0.9593587709886985,
+    "n_bonds": 121,
+    "n_broken": 112,
+    "f_keel_N_per_m": 64994.39949345881,
+    "keel_height_m": 8.40753026295143
+  },
+  "profile_caliber": {
+    "tau_uniform_mpa": 0.9593587709886985,
+    "tau_eff_mpa": 0.39865380187313953,
+    "ratio": 0.4155419368942589,
+    "H_m": 8.821242952777405,
+    "front_m": 4.794649052253621,
+    "front_neumann_m": 4.794787996880747,
+    "energy_rel_residual": 6.601097697094563e-11,
+    "t_end_s": 110000000.0,
+    "n_bonds": 29,
+    "n_broken": 21,
+    "f_keel_N_per_m": 47227.42105873916,
+    "keel_height_m": 8.005611698633931
+  },
+  "benchmark": [
+    {
+      "id": "bond_strength_caliber",
+      "reference": 0.959358771,
+      "got": 0.398653802,
+      "note": "m7439 uniform tau_adfreeze [MPa] vs the depth-averaged tau_eff of the freezing-front profile",
+      "rel_diff": -0.584458063
+    },
+    {
+      "id": "front_vs_neumann",
+      "reference": 4.794787997,
+      "got": 4.794649052,
+      "tolerance": 0.005,
+      "rel_diff": -2.8978e-05,
+      "passed": true,
+      "note": "exact one-phase Neumann front [m] vs the numerical enthalpy front"
+    },
+    {
+      "id": "energy_closure",
+      "reference": 0.0,
+      "got": 6.6e-11,
+      "tolerance": 0.0001,
+      "passed": true,
+      "note": "stored enthalpy change vs boundary flux integral (dimensionless)"
+    }
+  ],
+  "all_passed": true,
+  "repro_cmd": "python benchmarks/freeze_bond_thermal_profile/run_keel_integration.py",
+  "runtime_s": 37.35
+}

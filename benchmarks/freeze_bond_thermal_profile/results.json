@@ -1247,6 +1247,86 @@
     "e": true,
     "f": true
   },
-  "all_passed": true,
-  "runtime_s": 54.51
+  "all_passed": false,
+  "benchmark": [
+    {
+      "id": "front_vs_stefan_quasi",
+      "reference": 0.027852572727386095,
+      "got": 0.027280543325127478,
+      "reference_origin": "x_f = sqrt(2 k dT t/(rho L)) [quasi-steady Stefan]",
+      "metric": "rel_abs_diff",
+      "tolerance": 0.02,
+      "rel_diff": -0.020537758140244187,
+      "passed": false,
+      "worst_case": {
+        "delta_T_K": 15.0,
+        "t_s": 3600.0,
+        "n_cells": 200,
+        "dt_s": 20.0
+      },
+      "max_over_all_times": 0.01609373251608502
+    },
+    {
+      "id": "front_vs_neumann_exact",
+      "reference": 0.009236123575269683,
+      "got": 0.00912448768831944,
+      "reference_origin": "exact one-phase Neumann solution 2 lambda sqrt(alpha t)",
+      "metric": "rel_abs_diff",
+      "tolerance": 0.005,
+      "rel_diff": -0.012086876711909233,
+      "passed": false,
+      "worst_case": {
+        "delta_T_K": 5.0,
+        "t_s": 1200.0
+      },
+      "max_over_all_times": 0.0012901782453828136
+    },
+    {
+      "id": "energy_closure",
+      "reference": 0.0,
+      "got": 4.377677352235227e-12,
+      "reference_origin": "stored enthalpy change == boundary flux integral",
+      "metric": "rel_abs_diff",
+      "tolerance": 0.0001,
+      "rel_diff": 4.377677352235227e-12,
+      "passed": true
+    },
+    {
+      "id": "latent_heat_budget",
+      "reference": 0.0,
+      "got": 4.162256425474855e-12,
+      "reference_origin": "released latent heat == boundary flux integral",
+      "metric": "rel_abs_diff",
+      "tolerance": 0.0001,
+      "rel_diff": -4.162256425474855e-12,
+      "passed": true
+    },
+    {
+      "id": "uniform_limit_flat_caliber",
+      "reference": 2258693.870913711,
+      "got": 2258693.8709137114,
+      "reference_origin": "m7439 uniform-temperature caliber at T_env",
+      "metric": "rel_abs_diff",
+      "tolerance": 1e-12,
+      "rel_diff": 2.0616396639858282e-16,
+      "passed": true
+    },
+    {
+      "id": "deviation_ratio_baseline",
+      "reference": 2258693.870913711,
+      "got": 232124.063400142,
+      "reference_origin": "m7439 uniform-temperature caliber (k=2.2 W/mK, n=0.3, dT=15 K, H=1 m, t=24 h)",
+      "metric": "ratio_got_over_reference",
+      "tolerance": null,
+      "rel_diff": -0.8972308437237487,
+      "ratio": 0.10276915627625124,
+      "passed": true,
+      "note": "the deviation itself is the deliverable, not a pass/fail anchor"
+    }
+  ],
+  "benchmark_passed": false,
+  "repro_cmd": "python benchmarks/freeze_bond_thermal_profile/run_thermal_profile_validation.py",
+  "entry": "benchmarks.freeze_bond_thermal_profile.run_thermal_profile_validation:main",
+  "integration": "tensordem.ice_ridge_keel_freezebond.run_keel_case(depth_profile=...)",
+  "runtime_s": 62.51
 }

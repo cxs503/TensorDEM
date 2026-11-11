@@ -470,7 +470,109 @@ def make_figures(a, b, c, d, e, f) -> list[dict]:
 # ---------------------------------------------------------------------------
 # main
 # ---------------------------------------------------------------------------
-def main() -> int:
+def build_benchmark(out: dict) -> list[dict]:
+    """Reference-versus-got table (the maturity gate's L4 benchmark object)."""
+    rows: list[dict] = []
+    a = out["a_anchor"]
+    # startup transients (t < 20 min) are listed in a_anchor but the acceptance
+    # anchor of the node is the converged regime; the table quotes the worst
+    # *converged* case and keeps the raw maximum in ``max_over_all_times``
+    conv = [r for r in a["rows"] if r["t_s"] >= 1200.0] or a["rows"]
+    worst_q = max(conv, key=lambda r: abs(r["rel_vs_quasi"]))
+    worst_n = max(conv, key=lambda r: abs(r["rel_vs_neumann"]))
+    rows.append(dict(id="front_vs_stefan_quasi",
+                     reference=worst_q["x_quasi_m"], got=worst_q["x_num_m"],
+                     reference_origin="x_f = sqrt(2 k dT t/(rho L)) [quasi-steady Stefan]",
+                     metric="rel_abs_diff", tolerance=ACCEPT["a_front_vs_stefan_max_rel"],
+                     rel_diff=worst_q["rel_vs_quasi"],
+                     passed=bool(out["a_anchor"]["passed"] and abs(worst_q["rel_vs_quasi"]) <= ACCEPT["a_front_vs_stefan_max_rel"]),
+                     worst_case=dict(delta_T_K=worst_q["delta_T_K"], t_s=worst_q["t_s"],
+                                     n_cells=worst_q["n_cells"], dt_s=worst_q["dt_s"]),
+                     max_over_all_times=float(a["max_rel_vs_quasi"])))
+    rows.append(dict(id="front_vs_neumann_exact",
+                     reference=worst_n["x_neumann_m"], got=worst_n["x_num_m"],
+                     reference_origin="exact one-phase Neumann solution 2 lambda sqrt(alpha t)",
+                     metric="rel_abs_diff", tolerance=ACCEPT["a_front_vs_neumann_max_rel"],
+                     rel_diff=worst_n["rel_vs_neumann"],
+                     passed=bool(out["a_anchor"]["passed"] and abs(worst_n["rel_vs_neumann"]) <= ACCEPT["a_front_vs_neumann_max_rel"]),
+                     worst_case=dict(delta_T_K=worst_n["delta_T_K"], t_s=worst_n["t_s"]),
+                     max_over_all_times=float(a["max_rel_vs_neumann"])))
+    b = out["b_energy"]
+    b_res = float(b["closure"]["max_rel"])
+    rows.append(dict(id="energy_closure", reference=0.0, got=abs(b_res),
+                     reference_origin="stored enthalpy change == boundary flux integral",
+                     metric="rel_abs_diff", tolerance=ACCEPT["b_energy_closure_max_rel"],
+                     rel_diff=b_res,
+                     passed=bool(abs(b_res) <= ACCEPT["b_energy_closure_max_rel"])))
+    b_lat = float(b["latent_limit"]["rel_residual"])
+    rows.append(dict(id="latent_heat_budget", reference=0.0, got=abs(b_lat),
+                     reference_origin="released latent heat == boundary flux integral",
+                     metric="rel_abs_diff", tolerance=ACCEPT["b_latent_budget_max_rel"],
+                     rel_diff=b_lat,
+                     passed=bool(abs(b_lat) <= ACCEPT["b_latent_budget_max_rel"])))
+    c = out["c_uniform_limit"]
+    c_rel = float(c["flat_profile"]["rel_diff"])
+    c_tau = float(c["flat_profile"]["tau_eff_Pa"])
+    rows.append(dict(id="uniform_limit_flat_caliber",
+                     reference=c_tau / (1.0 + c_rel) if (1.0 + c_rel) != 0 else float("nan"),
+                     got=c_tau,
+                     reference_origin="m7439 uniform-temperature caliber at T_env",
+                     metric="rel_abs_diff", tolerance=ACCEPT["c_flat_caliber_max_rel"],
+                     rel_diff=c_rel,
+                     passed=bool(abs(c_rel) <= ACCEPT["c_flat_caliber_max_rel"])))
+    d = out["d_deviation"]["baseline"]
+    row = dict(id="deviation_ratio_baseline",
+               reference=d["tau_eff_Pa"] / d["ratio"] if d.get("ratio") else float("nan"),
+               got=d["tau_eff_Pa"],
+               reference_origin=("m7439 uniform-temperature caliber "
+                                 "(k=2.2 W/mK, n=0.3, dT=15 K, H=1 m, t=24 h)"),
+               metric="ratio_got_over_reference", tolerance=None,
+               rel_diff=d["ratio"] - 1.0, ratio=d["ratio"], passed=True,
+               note="the deviation itself is the deliverable, not a pass/fail anchor")
+    rows.append(row)
+    return rows
+
+
+def record_run(out: dict, record_dir: Path, started: float) -> dict:
+    """Write the run manifest (environment, commands, sha256 of every artifact)."""
+    import hashlib
+
+    files = [OUT / "results.json", OUT / "front_kinetics.csv", OUT / "profiles.csv"]
+    files += sorted(FIG.glob("*.png"))
+    digests = {}
+    for p in files:
+        digests[str(p.relative_to(ROOT))] = hashlib.sha256(p.read_bytes()).hexdigest()
+    manifest = {
+        "node": "P316-W1-N03",
+        "mission": "m14586 (rework of m9979)",
+        "entry": "benchmarks.freeze_bond_thermal_profile.run_thermal_profile_validation:main",
+        "repro_cmd": "python benchmarks/freeze_bond_thermal_profile/run_thermal_profile_validation.py",
+        "commands": [
+            "python benchmarks/freeze_bond_thermal_profile/run_thermal_profile_validation.py",
+            "python benchmarks/freeze_bond_thermal_profile/run_keel_integration.py",
+            "python -m pytest tests/test_thermal_profile.py tests/test_thermal_profile_integration.py -q",
+        ],
+        "environment": out["environment"],
+        "started_epoch": started,
+        "finished_epoch": time.time(),
+        "runtime_s": out["runtime_s"],
+        "all_passed": out["all_passed"],
+        "benchmark": out["benchmark"],
+        "artifacts": digests,
+    }
+    record_dir.mkdir(parents=True, exist_ok=True)
+    (record_dir / "run_manifest.json").write_text(json.dumps(manifest, indent=2, default=float),
+                                                  encoding="utf-8")
+    return manifest
+
+
+def main(argv: "list[str] | None" = None) -> int:
+    import argparse
+
+    ap = argparse.ArgumentParser(description="P316-W1-N03 acceptance driver")
+    ap.add_argument("--record-dir", type=Path, default=None,
+                    help="write runs/<dir>/run_manifest.json (run artifacts)")
+    args = ap.parse_args(argv)
     t0 = time.time()
     out = {"node": "P316-W1-N03",
            "module": "src/tensordem/freeze_bond/thermal_profile.py",
@@ -507,6 +609,12 @@ def main() -> int:
         "e": out["e_brine"]["passed"], "f": out["f_negative_control"]["passed"],
     }
     out["all_passed"] = all(out["verdict"].values())
+    out["benchmark"] = build_benchmark(out)
+    out["benchmark_passed"] = all(r["passed"] for r in out["benchmark"])
+    out["all_passed"] = out["all_passed"] and out["benchmark_passed"]
+    out["repro_cmd"] = "python benchmarks/freeze_bond_thermal_profile/run_thermal_profile_validation.py"
+    out["entry"] = "benchmarks.freeze_bond_thermal_profile.run_thermal_profile_validation:main"
+    out["integration"] = "tensordem.ice_ridge_keel_freezebond.run_keel_case(depth_profile=...)"
     out["runtime_s"] = round(time.time() - t0, 2)
 
     # audit-trail CSVs
@@ -528,7 +636,10 @@ def main() -> int:
             w.writerow([f"{zi:.6e}", f"{Ti:.6f}", f"{Ti - 273.15:.6f}", f"{si:.6e}"])
 
     (OUT / "results.json").write_text(json.dumps(out, indent=2, default=float), encoding="utf-8")
+    if args.record_dir is not None:
+        record_run(out, args.record_dir, t0)
     print(json.dumps({"verdict": out["verdict"], "all_passed": out["all_passed"],
+                      "benchmark_passed": out["benchmark_passed"],
                       "ratio_baseline": out["d_deviation"]["baseline"]["ratio"],
                       "runtime_s": out["runtime_s"]}, indent=1))
     return 0 if out["all_passed"] else 1
