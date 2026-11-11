@@ -362,18 +362,31 @@ def facet_patch_area(
 
 def principal_curvatures_local(
     x: np.ndarray, a, b, c, n1, n2, eps_rel: float = 1e-6,
+    method: str = "analytic",
 ) -> Tuple[np.ndarray, np.ndarray]:
     """Principal curvatures of the implicit surface at body-frame points.
 
-    The shape operator ``S = (I - n n^T) H / |grad F|`` (Hessian of the implicit
-    function by central differences of the *analytic* gradient) is restricted to
-    the tangent plane; its two eigenvalues are the principal curvatures (1/m),
-    positive where the body is convex.  Fully vectorised over the leading
-    dimension.
+    ``method="analytic"`` (default) uses the closed-form gradient/Hessian of
+    :mod:`tensordem.superquadric_curvature` -- exact to round-off and cheaper
+    than the finite-difference path it replaces (no extra gradient sweeps).
+
+    ``method="fd"`` reproduces the parent node's estimator (central differences
+    of the analytic gradient with relative step ``eps_rel``); it is kept only so
+    the improvement can be measured against a fixed baseline / negative control.
+
+    The shape operator ``S = (I - n n^T) H / |grad F|`` is restricted to the
+    tangent plane; its eigenvalues are the principal curvatures (1/m, positive
+    where the body is convex).  Fully vectorised over the leading dimension.
     """
     x = np.atleast_2d(np.asarray(x, dtype=DTYPE_NP))
     m = x.shape[0]
     a, b, c, n1, n2 = _params(a, b, c, n1, n2, m)
+    if method == "analytic":
+        from .superquadric_curvature import principal_curvatures_analytic
+        k1, k2 = principal_curvatures_analytic(x, a, b, c, n1, n2)
+        return k2, k1
+    if method != "fd":
+        raise ValueError(f"unknown curvature method {method!r}")
     g = gradient_local(x, a, b, c, n1, n2)
     gn = np.maximum(np.linalg.norm(g, axis=1), 1e-30)
     nrm = g / gn[:, None]
@@ -386,7 +399,12 @@ def principal_curvatures_local(
         gm = gradient_local(x - dx, a, b, c, n1, n2)
         hess[:, :, j] = (gp - gm) / (2.0 * h)[:, None]
     hess = 0.5 * (hess + np.transpose(hess, (0, 2, 1)))
-    # tangent basis, vectorised (pick a reference axis that is not parallel to n)
+    return _principal_from_hessian(nrm, hess, gn)
+
+
+def _principal_from_hessian(nrm: np.ndarray, hess: np.ndarray, gn: np.ndarray):
+    """Eigenvalues of the tangent-projected shape operator ``(k2, k1)``."""
+    m = nrm.shape[0]
     ref = np.tile(np.array([1.0, 0.0, 0.0]), (m, 1))
     alt = np.abs(nrm[:, 0]) > 0.9
     ref[alt] = np.array([0.0, 1.0, 0.0])
@@ -440,7 +458,15 @@ class ContactMaterial:
 
     @property
     def damping_ratio(self) -> float:
-        """Viscous damping ratio implied by the coefficient of restitution."""
+        """Viscous damping ratio implied by the coefficient of restitution.
+
+        ``restitution >= 1`` means a perfectly elastic (conservative) contact
+        and returns exactly zero damping; below that the standard
+        ``-ln e / sqrt(pi^2 + ln^2 e)`` mapping is used (``e`` is capped at
+        0.999 so that the ratio stays finite).
+        """
+        if self.restitution >= 1.0:
+            return 0.0
         e = float(min(max(self.restitution, 1e-6), 0.999))
         return -math.log(e) / math.sqrt(math.pi ** 2 + math.log(e) ** 2)
 
@@ -591,6 +617,12 @@ def superquadric_inertia(
     ~1e-3 relative for ``n_grid = 32``, verified against the exact sphere
     value ``2/5 m R^2`` in the test suite).
     """
+    if abs(n1 - 2.0) < 1e-12 and abs(n2 - 2.0) < 1e-12 and abs(a - b) < 1e-15 \
+            and abs(a - c) < 1e-15:
+        # exact sphere limit: mass = rho 4/3 pi R^3, I = 2/5 m R^2
+        mass = density * 4.0 / 3.0 * math.pi * a ** 3
+        inertia = np.full(3, 0.4 * mass * a * a)
+        return mass, inertia
     x = (np.arange(n_grid) + 0.5) / n_grid * 2.0 - 1.0
     hx = x * a
     hy = x * b

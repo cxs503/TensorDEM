@@ -151,11 +151,18 @@ class SQBody:
 
     @property
     def bounding_radius(self) -> float:
+        """Radius of the bounding sphere (cached: it is queried per pair)."""
+        cached = self.__dict__.get("_bounding_radius_cache")
+        if cached is not None:
+            return cached
         if self.clump is not None:
             offs, radii = self.clump
-            return float(np.max(np.linalg.norm(offs, axis=1) + radii))
-        a, b, c = self.shape[0], self.shape[1], self.shape[2]
-        return float(math.sqrt(a * a + b * b + c * c))
+            val = float(np.max(np.linalg.norm(offs, axis=1) + radii))
+        else:
+            a, b, c = self.shape[0], self.shape[1], self.shape[2]
+            val = float(math.sqrt(a * a + b * b + c * c))
+        self.__dict__["_bounding_radius_cache"] = val
+        return val
 
 
 @dataclass
@@ -182,7 +189,10 @@ class SQSystemConfig:
     safety_factor: float = 0.05
     reference_overlap: float = 1e-3
     energy_every: int = 1
-    damping_global: float = 0.0   # 1/s background viscous damping (quasi-static runs)
+    damping_global: float = 0.0        # 1/s background viscous damping (quasi-static runs)
+    damping_rotational: float = 0.0    # 1/s background viscous spin damping (body frame)
+    integrator: str = "velocity_verlet"  # "velocity_verlet" (2nd order) | "euler" (legacy)
+    velocity_predictor: bool = True    # Verlet: evaluate dashpots at the predicted v1
 
 
 # ---------------------------------------------------------------------------
@@ -258,6 +268,15 @@ class SQSystem:
         self.last_contacts: List[Dict[str, object]] = []
         self._clump_cache: Optional[Tuple[np.ndarray, np.ndarray, np.ndarray]] = None
         self._step_count = 0
+        # pair-history ledger for the sphere fast path (sorted int64 keys +
+        # parallel tangential stretch), replaces the per-pair python dict
+        self._pair_keys = np.zeros(0, dtype=np.int64)
+        self._pair_hist = np.zeros((0, 3))
+        self._state_cache: Optional[Dict[str, np.ndarray]] = None
+        #: when False the force assembly skips building the per-contact records
+        #: (they are only needed for post-processing ledgers); this is what makes
+        #: the large-N column-collapse convergence runs affordable.
+        self.collect_contacts: bool = True
 
     # -- geometry -----------------------------------------------------------
     def _sq_indices(self) -> List[int]:
@@ -297,6 +316,76 @@ class SQSystem:
                                  np.concatenate(owners))
         return self._clump_cache
 
+    def _sync_state(self) -> Dict[str, np.ndarray]:
+        """Body state as stacked arrays (one python pass per force assembly).
+
+        The contact assembly needs positions/velocities/orientations of many
+        bodies; reading ``body.position`` per pair index inside the contact
+        kernels costs one python attribute access per pair and dominated the
+        step time at large N.  The arrays are refreshed at the start of every
+        :meth:`contact_forces` call, so direct mutation of the body objects
+        between steps stays visible.
+        """
+        bodies = self.bodies
+        cache = {
+            "pos": np.array([b.position for b in bodies], dtype=float),
+            "vel": np.array([b.velocity for b in bodies], dtype=float),
+            "omega": np.array([b.omega for b in bodies], dtype=float),
+            "rot": np.array([b.rotation for b in bodies], dtype=float),
+            "mass": np.array([b.mass for b in bodies], dtype=float),
+            "rad": np.array([b.bounding_radius for b in bodies], dtype=float),
+            # semi-axis a (the sphere radius in the fast-path limit)
+            "semi": np.array([b.shape[0] for b in bodies], dtype=float),
+        }
+        self._state_cache = cache
+        return cache
+
+    def _pair_history_get(self, keys: np.ndarray) -> np.ndarray:
+        """Tangential stretch of the requested sphere-pair keys (``(M,3)``)."""
+        keys = np.asarray(keys, dtype=np.int64)
+        out = np.zeros((len(keys), 3))
+        if len(self._pair_keys) == 0 or len(keys) == 0:
+            return out
+        ip = np.searchsorted(self._pair_keys, keys)
+        np.clip(ip, 0, len(self._pair_keys) - 1, out=ip)
+        found = self._pair_keys[ip] == keys
+        out[found] = self._pair_hist[ip[found]]
+        return out
+
+    def _pair_history_put(self, keys: np.ndarray, vals: np.ndarray) -> None:
+        """Merge new stretches into the sorted pair ledger."""
+        keys = np.asarray(keys, dtype=np.int64)
+        if len(keys) == 0:
+            return
+        if len(self._pair_keys) == 0:
+            order = np.argsort(keys)
+            self._pair_keys = keys[order]
+            self._pair_hist = np.asarray(vals, dtype=float)[order]
+            return
+        merged = np.union1d(self._pair_keys, keys)
+        hist = np.zeros((len(merged), 3))
+        hist[np.searchsorted(merged, self._pair_keys)] = self._pair_hist
+        hist[np.searchsorted(merged, keys)] = vals
+        self._pair_keys = merged
+        self._pair_hist = hist
+
+    def _candidate_pairs_arrays(self, pad: float):
+        """Candidate pairs as two index arrays (vectorised, no python loop)."""
+        idx = np.asarray(self._sq_indices(), dtype=np.int64)
+        if len(idx) < 2:
+            return np.zeros(0, dtype=np.int64), np.zeros(0, dtype=np.int64)
+        st = self._state_cache if self._state_cache is not None else self._sync_state()
+        pos = st["pos"][idx]
+        rad = st["rad"][idx]
+        tree = cKDTree(pos)
+        pairs = tree.query_pairs(float(np.max(rad)) * 2.0 + pad, output_type="ndarray")
+        if len(pairs) == 0:
+            return np.zeros(0, dtype=np.int64), np.zeros(0, dtype=np.int64)
+        p0, p1 = pairs[:, 0], pairs[:, 1]
+        d = np.linalg.norm(pos[p0] - pos[p1], axis=1)
+        keep = pairs[d <= rad[p0] + rad[p1] + pad]
+        return idx[keep[:, 0]], idx[keep[:, 1]]
+
     def _candidate_pairs(self, pad: float) -> List[Tuple[int, int]]:
         idx = self._sq_indices()
         if len(idx) < 2:
@@ -305,8 +394,15 @@ class SQSystem:
         rad = np.array([self.bodies[i].bounding_radius for i in idx])
         tree = cKDTree(pos)
         pairs = tree.query_pairs(float(np.max(rad)) * 2.0 + pad, output_type="ndarray")
-        return [(idx[int(p)], idx[int(q)]) for p, q in pairs
-                if np.linalg.norm(pos[p] - pos[q]) <= rad[p] + rad[q] + pad]
+        if len(pairs) == 0:
+            return []
+        # vectorised bounding-sphere filter (the per-pair python filter used to
+        # dominate the step cost for large N: ~10^4 np.linalg.norm calls/step)
+        p0 = pairs[:, 0]
+        p1 = pairs[:, 1]
+        d = np.linalg.norm(pos[p0] - pos[p1], axis=1)
+        keep = pairs[d <= rad[p0] + rad[p1] + pad]
+        return [(int(idx[a]), int(idx[b])) for a, b in keep]
 
     def _pair_geometry(self, i: int, j: int):
         bi, bj = self.bodies[i], self.bodies[j]
@@ -330,6 +426,7 @@ class SQSystem:
     # -- force assembly -----------------------------------------------------
     def contact_forces(self) -> Tuple[np.ndarray, np.ndarray, List[Dict[str, object]]]:
         self._clump_cache = None
+        self._sync_state()
         force = np.zeros((len(self.bodies), 3))
         torque = np.zeros((len(self.bodies), 3))
         force, torque, c1 = self._sq_sq_contacts(force, torque)
@@ -338,15 +435,141 @@ class SQSystem:
         self.last_contacts = c1 + c2 + c3
         return force, torque, self.last_contacts
 
+    @staticmethod
+    def _scatter_add(target: np.ndarray, idx: np.ndarray, vals: np.ndarray) -> None:
+        """``target[idx] += vals`` via ``bincount`` (fast path for ``np.add.at``).
+
+        ``np.add.at`` is unbuffered and costs ~1 us per element, which made the
+        contact assembly scale super-linearly with the pair count; per-component
+        ``bincount`` accumulation is ~20x faster at DEM pair counts and is an
+        exact replacement (duplicate indices still accumulate).
+        """
+        n = target.shape[0]
+        for d in range(target.shape[1]):
+            target[:, d] += np.bincount(idx, weights=vals[:, d], minlength=n)
+
+    def _spheres_only(self) -> bool:
+        """True when every non-clump body is an exact sphere (cached)."""
+        flag = getattr(self, "_spheres_only_cache", None)
+        if flag is None:
+            flag = True
+            for b in self.bodies:
+                if b.clump is not None:
+                    continue
+                sh = b.shape
+                if abs(sh[3] - 2.0) > 1e-12 or abs(sh[4] - 2.0) > 1e-12 \
+                        or abs(sh[0] - sh[1]) > 1e-15 or abs(sh[0] - sh[2]) > 1e-15:
+                    flag = False
+                    break
+            self._spheres_only_cache = flag
+        return flag
+
+    def _sq_sq_contacts_spheres(self, force, torque, idx_i, idx_j, contacts):
+        """Sphere-sphere contact in closed form (exact ``n1 = n2 = 2`` limit).
+
+        Identical force law to :meth:`_sq_sq_contacts` -- Hertz normal force with
+        the dashpot, Mindlin tangential spring, Coulomb rolling resistance -- but
+        the geometry is analytic::
+
+            n = (c_j - c_i)/|c_j - c_i|,   delta = r_i + r_j - |c_j - c_i|
+            p_i = c_i + r_i n,             p_j = c_j - r_j n
+            1/R_eff = 1/r_i + 1/r_j
+
+        which is what the implicit-surface projection converges to in the sphere
+        limit (asserted to 1e-10 in the tests) at a fraction of the cost: the
+        pair history lives in a sorted int64 ledger instead of a python dict, so
+        the per-pair python work is eliminated (this is what makes the large-N
+        column-collapse convergence study affordable).
+        """
+        mat = self.material
+        st = self._state_cache
+        pos_i = st["pos"][idx_i]
+        pos_j = st["pos"][idx_j]
+        rad_i = st["semi"][idx_i]
+        rad_j = st["semi"][idx_j]
+        d = pos_j - pos_i
+        dist = np.linalg.norm(d, axis=1)
+        normal = d / np.maximum(dist, 1e-300)[:, None]
+        delta = np.maximum(rad_i + rad_j - dist, 0.0)
+        pa = pos_i + rad_i[:, None] * normal
+        pb = pos_j - rad_j[:, None] * normal
+        r_eff = rad_i * rad_j / np.maximum(rad_i + rad_j, 1e-300)
+
+        vel_i = st["vel"][idx_i]
+        vel_j = st["vel"][idx_j]
+        v_rel = vel_j - vel_i
+        v_n = np.sum(v_rel * normal, axis=1)
+        m_i = st["mass"][idx_i]
+        m_j = st["mass"][idx_j]
+        f_n, k_n, branch = normal_force(
+            delta, r_eff, np.zeros_like(delta), v_n,
+            m_i * m_j / np.maximum(m_i + m_j, 1e-300), mat)
+
+        n_bodies = max(len(self.bodies), 1)
+        keys = np.minimum(idx_i, idx_j).astype(np.int64) * n_bodies \
+            + np.maximum(idx_i, idx_j).astype(np.int64)
+        idx_sorted = np.argsort(keys, kind="stable")
+        keys = keys[idx_sorted]
+        xi = self._pair_history_get(keys)
+        order = np.argsort(idx_sorted, kind="stable")
+        v_rel = v_rel[idx_sorted]
+        normal_s = normal[idx_sorted]
+        f_n_s, k_n_s = f_n[idx_sorted], k_n[idx_sorted]
+        v_t = v_rel - np.sum(v_rel * normal_s, axis=1)[:, None] * normal_s
+        f_t_s, xi_new, _ = mindlin_tangential_update(
+            f_n_s, 0.5 * np.maximum(k_n_s, 1e-12), np.full(len(idx_i), mat.mu), xi,
+            v_t=v_t, dt=self.dt, normal=normal_s)
+        if len(keys):
+            first = np.ones(len(keys), dtype=bool)
+            first[1:] = keys[1:] != keys[:-1]
+            self._pair_history_put(keys[first], xi_new[first])
+        # undo the key sort for the force scatter
+        f_t = np.empty_like(f_t_s)
+        f_t[idx_sorted] = f_t_s
+        f_vec = f_n[:, None] * normal + f_t
+
+        self._scatter_add(force, idx_i, -f_vec)
+        self._scatter_add(force, idx_j, f_vec)
+        torque_i = np.cross(pa - pos_i, -f_vec)
+        torque_j = np.cross(pb - pos_j, f_vec)
+        r_b = np.minimum(rad_i, rad_j)
+        m_roll = rolling_resistance_torque(
+            f_n, r_eff, st["omega"][idx_j] - st["omega"][idx_i],
+            np.full(len(idx_i), mat.mu_rolling), r_b)
+        self._scatter_add(torque, idx_i, torque_i - m_roll)
+        self._scatter_add(torque, idx_j, torque_j + m_roll)
+
+        ratio = delta / np.maximum(2.0 * r_b, 1e-30)
+        self.max_penetration_ratio = max(self.max_penetration_ratio, float(np.max(ratio)))
+        for k in range(len(idx_i) if self.collect_contacts else 0):
+            contacts.append({"kind": "sq-sq", "i": int(idx_i[k]), "j": int(idx_j[k]),
+                             "overlap": float(delta[k]), "fn": float(f_n[k]),
+                             "normal": normal[k].copy(), "branch": int(branch[k]),
+                             "point": pa[k].copy()})
+        return force, torque, contacts
+
     def _sq_sq_contacts(self, force, torque):
         mat = self.material
         contacts: List[Dict[str, object]] = []
-        pairs = self._candidate_pairs(0.25 * self.characteristic_length())
+        pad = 0.25 * self.characteristic_length()
+        if self._spheres_only():
+            idx_i, idx_j = self._candidate_pairs_arrays(pad)
+            if len(idx_i) == 0:
+                return force, torque, contacts
+            return self._sq_sq_contacts_spheres(force, torque, idx_i, idx_j, contacts)
+        pairs = self._candidate_pairs(pad)
         if not pairs:
             return force, torque, contacts
         idx_i = np.array([p[0] for p in pairs])
         idx_j = np.array([p[1] for p in pairs])
         m = len(pairs)
+        if False:
+            # exact sphere limit (n1 = n2 = 2, a = b = c): the implicit-surface
+            # projection and the curvature sweep are redundant, so the same
+            # physics is evaluated from the analytic sphere-sphere geometry.
+            # This is what makes the large-N column-collapse convergence study
+            # affordable; equality with the general path is unit-tested.
+            return self._sq_sq_contacts_spheres(force, torque, idx_i, idx_j, contacts)
         pos_i = np.array([self.bodies[i].position for i in idx_i])
         pos_j = np.array([self.bodies[i].position for i in idx_j])
         rot_i = np.array([self.bodies[i].rotation for i in idx_i])
@@ -410,7 +633,7 @@ class SQSystem:
         L = np.minimum(sh_i[:, 0], sh_j[:, 0])
         ratio = delta / np.maximum(2.0 * L, 1e-30)
         self.max_penetration_ratio = max(self.max_penetration_ratio, float(np.max(ratio)))
-        for k in range(m):
+        for k in range(m if self.collect_contacts else 0):
             contacts.append({"kind": "sq-sq", "i": int(idx_i[k]), "j": int(idx_j[k]),
                              "overlap": float(delta[k]), "fn": float(f_n[k]),
                              "normal": normal[k].copy(), "branch": int(branch[k]),
@@ -591,13 +814,64 @@ class SQSystem:
                     ratio = delta / np.maximum(2.0 * sph_r[sel], 1e-30)
                     self.max_penetration_ratio = max(self.max_penetration_ratio,
                                                      float(np.max(ratio)))
-                    for k in range(len(sel)):
+                    for k in range(len(sel) if self.collect_contacts else 0):
                         contacts.append({"kind": "wall", "i": int(bodies_idx[k]), "wall": wi,
                                          "overlap": float(delta[k]), "fn": float(f_n[k]),
                                          "normal": wall.normal.copy(),
                                          "branch": int(branch[k]),
                                          "fvec": f_vec[k].copy(),
                                          "point": p_world[k].copy()})
+
+            # ---- exact sphere limit: analytic plane-sphere geometry ----
+            if len(sq_idx) and self._spheres_only():
+                st = self._state_cache
+                semi = st["semi"][sq_idx]
+                gap_all = sq_pos @ wall.normal - wall.offset - semi
+                sel = np.nonzero(gap_all < 0.0)[0]
+                if len(sel):
+                    delta = -gap_all[sel]
+                    r_s = semi[sel]
+                    p_world = sq_pos[sel] - r_s[:, None] * wall.normal
+                    bodies_idx = np.asarray(sq_idx)[sel]
+                    r_vec = p_world - sq_pos[sel]
+                    bod_vel = st["vel"][bodies_idx]
+                    bod_omega = st["omega"][bodies_idx]
+                    bod_mass = st["mass"][bodies_idx]
+                    v_contact = bod_vel + np.cross(bod_omega, r_vec)
+                    v_n = (v_contact - wall.velocity) @ wall.normal
+                    f_n, k_n, branch = normal_force(
+                        delta, r_s, np.zeros(len(sel)), v_n, bod_mass, mat)
+                    keys = np.asarray(bodies_idx, dtype=np.int64) * 1000003 \
+                        + np.int64(1000000 + wi)
+                    xi = self._pair_history_get(keys)
+                    v_rel = v_contact - wall.velocity
+                    v_t = v_rel - np.sum(v_rel * wall.normal, axis=1)[:, None] * wall.normal
+                    f_t, xi_new, _ = mindlin_tangential_update(
+                        f_n, 0.5 * np.maximum(k_n, 1e-12), np.full(len(sel), mu), xi,
+                        v_t=v_t, dt=self.dt,
+                        normal=np.broadcast_to(wall.normal, v_t.shape))
+                    self._pair_history_put(keys, xi_new)
+                    f_vec = f_n[:, None] * wall.normal + f_t
+                    self._scatter_add(force, bodies_idx, f_vec)
+                    # NOTE (finding of P165-W2-N06): the parent superquadric
+                    # wall path applies NO rolling resistance at a wall contact
+                    # (unlike the sphere-sphere and clump-wall paths).  The fast
+                    # path reproduces that behaviour exactly so that switching
+                    # paths cannot change the physics; the inconsistency is
+                    # documented + tested rather than silently "fixed" here.
+                    self._scatter_add(torque, bodies_idx, np.cross(r_vec, f_vec))
+                    self.max_penetration_ratio = max(
+                        self.max_penetration_ratio,
+                        float(np.max(delta / np.maximum(2.0 * r_s, 1e-30))))
+                    for k in range(len(sel) if self.collect_contacts else 0):
+                        contacts.append({"kind": "wall", "i": int(bodies_idx[k]),
+                                         "wall": wi, "overlap": float(delta[k]),
+                                         "fn": float(f_n[k]),
+                                         "normal": wall.normal.copy(),
+                                         "branch": int(branch[k]),
+                                         "fvec": f_vec[k].copy(),
+                                         "point": p_world[k].copy()})
+                continue
 
             # ---- superquadric contacts (batched projection) ----
             if len(sq_idx):
@@ -658,7 +932,7 @@ class SQSystem:
                         ratio = delta / np.maximum(2.0 * extents, 1e-30)
                         self.max_penetration_ratio = max(self.max_penetration_ratio,
                                                          float(np.max(ratio)))
-                        for k in range(len(sel)):
+                        for k in range(len(sel) if self.collect_contacts else 0):
                             contacts.append({"kind": "wall", "i": int(bodies_idx[k]), "wall": wi,
                                              "overlap": float(delta[k]), "fn": float(f_n[k]),
                                              "normal": wall.normal.copy(),
@@ -692,9 +966,7 @@ class SQSystem:
             elastic = float(np.sum(np.where(branch == 1, 0.5 * fn * delta, 0.4 * fn * delta)))
         return kinetic + potential + elastic
 
-    def step(self) -> None:
-        force, torque, _ = self.contact_forces()
-        dt = self.dt
+    def _read_state(self):
         bodies = self.bodies
         moving = np.array([not b.fixed for b in bodies])
         mass = np.array([b.mass for b in bodies])[:, None]
@@ -703,24 +975,41 @@ class SQSystem:
         vel = np.array([b.velocity for b in bodies])
         pos = np.array([b.position for b in bodies])
         omega = np.array([b.omega for b in bodies])
+        return moving, mass, inertia, rot, vel, pos, omega
 
-        force_total = force
+    def _write_state(self, pos, vel, rot, omega) -> None:
+        for i, body in enumerate(self.bodies):
+            if body.fixed:
+                continue
+            body.position = pos[i]
+            body.velocity = vel[i]
+            body.rotation = rot[i]
+            body.omega = omega[i]
+
+    def _translate_accel(self, force, vel, mass):
+        """``a = F/m + g`` including the optional background viscous drag."""
+        f = force
         if self.config.damping_global > 0.0:
-            force_total = force - self.config.damping_global * mass * vel
-        vel = np.where(moving[:, None],
-                       vel + dt * (force_total / mass + self.config.gravity), vel)
-        pos = np.where(moving[:, None], pos + dt * vel, pos)
+            f = f - self.config.damping_global * mass * vel
+        return f / mass + self.config.gravity
+
+    def _angular_accel(self, torque, rot, omega, inertia):
+        """Body-frame angular acceleration ``(tau - omega x I omega)/I`` (+ spin damping)."""
         tau_body = np.einsum("mji,mj->mi", rot, torque)
         omega_body = np.einsum("mji,mj->mi", rot, omega)
         gyro = np.cross(omega_body, inertia * omega_body)
         alpha = (tau_body - gyro) / np.maximum(inertia, 1e-30)
-        omega_body = omega_body + dt * alpha
-        omega = np.einsum("mij,mj->mi", rot, omega_body)
+        if self.config.damping_rotational > 0.0:
+            alpha = alpha - self.config.damping_rotational * omega_body
+        return alpha
 
+    @staticmethod
+    def _rotate_batch(rot, omega, dt):
+        """Rodrigues rotation update ``R <- exp([omega dt]x) R`` (batched)."""
         axis = omega * dt
         theta = np.linalg.norm(axis, axis=1)
         safe = np.maximum(theta, 1e-15)
-        kx = np.zeros((len(bodies), 3, 3))
+        kx = np.zeros((len(rot), 3, 3))
         kx[:, 0, 1] = -axis[:, 2]
         kx[:, 0, 2] = axis[:, 1]
         kx[:, 1, 0] = axis[:, 2]
@@ -731,15 +1020,72 @@ class SQSystem:
         coeff_c = np.where(theta > 1e-15, (1.0 - np.cos(theta)) / safe ** 2, 0.5)[:, None, None]
         delta_rot = coeff_s * np.einsum("mij,mjk->mik", kx, rot) \
             + coeff_c * np.einsum("mij,mjk,mkl->mil", kx, kx, rot)
-        rot = _orthonormalise_batch(rot + delta_rot)
+        return _orthonormalise_batch(rot + delta_rot)
 
-        for i, body in enumerate(bodies):
-            if body.fixed:
-                continue
-            body.velocity = vel[i]
-            body.position = pos[i]
-            body.omega = omega[i]
-            body.rotation = rot[i]
+    def step(self) -> None:
+        """Advance one time step with the configured integrator.
+
+        ``velocity_verlet`` (default, 2nd order) assembles the contact forces
+        twice -- once at the current state and once at the drifted position,
+        which is the half-step position correction -- and is the scheme the
+        energy-drift / convergence criteria of campaign node P165-W2-N06 are
+        measured with.  ``euler`` reproduces the parent node's symplectic Euler
+        step and is kept as the negative control.
+        """
+        name = self.config.integrator
+        if name == "velocity_verlet":
+            self._step_velocity_verlet()
+        elif name in ("euler", "symplectic_euler"):
+            self._step_euler()
+        else:
+            raise ValueError(
+                f"unknown integrator {name!r}; use 'velocity_verlet' or 'euler'")
+
+    def _step_euler(self) -> None:
+        """Legacy semi-implicit Euler step (first order; negative control)."""
+        force, torque, _ = self.contact_forces()
+        dt = self.dt
+        moving, mass, inertia, rot, vel, pos, omega = self._read_state()
+        accel = self._translate_accel(force, vel, mass)
+        vel = np.where(moving[:, None], vel + dt * accel, vel)
+        pos = np.where(moving[:, None], pos + dt * vel, pos)
+        alpha = self._angular_accel(torque, rot, omega, inertia)
+        omega_body = np.einsum("mji,mj->mi", rot, omega) + dt * alpha
+        omega = np.einsum("mij,mj->mi", rot, omega_body)
+        rot = self._rotate_batch(rot, omega, dt)
+        self._write_state(pos, vel, rot, omega)
+        self.time += dt
+        self._step_count += 1
+        if self._step_count % self.config.energy_every == 0:
+            self.energy_log.append(self.energy())
+
+    def _step_velocity_verlet(self) -> None:
+        """Velocity-Verlet step with contact-force half-step position correction."""
+        dt = self.dt
+        moving, mass, inertia, rot, vel, pos, omega = self._read_state()
+
+        force0, torque0, _ = self.contact_forces()          # forces at (x0, v0)
+        a0 = self._translate_accel(force0, vel, mass)
+        alpha0 = self._angular_accel(torque0, rot, omega, inertia)
+
+        v_half = np.where(moving[:, None], vel + 0.5 * dt * a0, vel)
+        omega_half = omega + 0.5 * dt * np.einsum("mij,mj->mi", rot, alpha0)
+        pos1 = np.where(moving[:, None], pos + dt * v_half, pos)
+        rot1 = self._rotate_batch(rot, omega_half, dt)
+
+        # velocity used to evaluate the velocity-dependent (dashpot) forces at
+        # the drifted position: midpoint (KDK) or predicted end-of-step value
+        v_eval = v_half + 0.5 * dt * a0 if self.config.velocity_predictor else v_half
+        v_eval = np.where(moving[:, None], v_eval, vel)
+        self._write_state(pos1, v_eval, rot1, omega_half)
+        force1, torque1, _ = self.contact_forces()          # forces at (x1, v_eval)
+        a1 = self._translate_accel(force1, v_eval, mass)
+        alpha1 = self._angular_accel(torque1, rot1, omega_half, inertia)
+
+        vel1 = np.where(moving[:, None], v_half + 0.5 * dt * a1, vel)
+        omega_body1 = np.einsum("mji,mj->mi", rot1, omega_half) + 0.5 * dt * alpha1
+        omega1 = np.einsum("mij,mj->mi", rot1, omega_body1)
+        self._write_state(pos1, vel1, rot1, omega1)
         self.time += dt
         self._step_count += 1
         if self._step_count % self.config.energy_every == 0:
