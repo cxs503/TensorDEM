@@ -14,10 +14,17 @@ they share one state variable -- the particle size distribution:
   closes a mass-loss ledger per size section.
 * **Acceptance** (:mod:`.study`): every criterion of the node with its numbers
   and artifacts.
+* **Mesh metrology** (:mod:`.mesh_gci`, :mod:`.mesh_study`): discretisation-error
+  measurement for the sectional mesh -- log-log variable grids with a fixed
+  overall grading, analytic bin-integral moments, an exact-in-time
+  uniformisation propagator, Richardson/Roache GCI on the PSD moments, the fines
+  floor as an explicit criterion, and the grid share of an erosion rate
+  (campaign node ``p488w1-n09``).
 
 Quick start::
 
     python -m tensordem.erosion_pbm.study --out artifacts/p176w2_n08
+    python -m tensordem.erosion_pbm.mesh_study --out artifacts/p488w1_n09
 """
 from __future__ import annotations
 
@@ -36,6 +43,9 @@ from .erosion import (CARBON_STEEL, FINNIE_CRIT_ANGLE_DEG, FINNIE_PEAK_ANGLE_DEG
 from .dem import (ImpactDEMConfig, impact_ensemble_erosion, ledger_closure,
                   meanfield_selection, run_impact_dem)
 from .study import CASE, build_grid, dem_config, erosion_law, run_study, strength_model
+from .mesh_gci import (LogLogGrid, cascade_error, floor_threshold, mass_ledger,
+                       propagate, richardson_gci)
+from .mesh_study import run_study as run_mesh_study
 
 __all__ = [
     "GranularStrength", "breakage_probability", "impact_stress",
@@ -53,4 +63,6 @@ __all__ = [
     "meanfield_selection", "run_impact_dem",
     "CASE", "build_grid", "dem_config", "erosion_law", "run_study",
     "strength_model",
+    "LogLogGrid", "cascade_error", "floor_threshold", "mass_ledger",
+    "propagate", "richardson_gci", "run_mesh_study",
 ]
