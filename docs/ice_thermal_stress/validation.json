@@ -1,0 +1,786 @@
+{
+  "breakage_population": {
+    "T-10.0": {
+      "rows": [
+        {
+          "delta_t_k": 0.0,
+          "fraction_total": 0.005,
+          "increment": 0.0,
+          "sigma_thermal_pa": -0.0
+        },
+        {
+          "delta_t_k": 1.0,
+          "fraction_total": 0.115,
+          "increment": 0.11,
+          "sigma_thermal_pa": -818731.3432835821
+        },
+        {
+          "delta_t_k": 2.0,
+          "fraction_total": 0.235,
+          "increment": 0.23,
+          "sigma_thermal_pa": -1637462.6865671643
+        },
+        {
+          "delta_t_k": 5.0,
+          "fraction_total": 0.6,
+          "increment": 0.595,
+          "sigma_thermal_pa": -4093656.716417911
+        },
+        {
+          "delta_t_k": 10.0,
+          "fraction_total": 1.0,
+          "increment": 0.995,
+          "sigma_thermal_pa": -8187313.432835822
+        },
+        {
+          "delta_t_k": 20.0,
+          "fraction_total": 1.0,
+          "increment": 0.995,
+          "sigma_thermal_pa": -16374626.865671644
+        },
+        {
+          "delta_t_k": 30.0,
+          "fraction_total": 1.0,
+          "increment": 0.995,
+          "sigma_thermal_pa": -24561940.298507467
+        },
+        {
+          "delta_t_k": 40.0,
+          "fraction_total": 1.0,
+          "increment": 0.995,
+          "sigma_thermal_pa": -32749253.731343288
+        }
+      ],
+      "sigma_f_pa": 25000000.0
+    },
+    "T-20.0": {
+      "rows": [
+        {
+          "delta_t_k": 0.0,
+          "fraction_total": 0.005,
+          "increment": 0.0,
+          "sigma_thermal_pa": -0.0
+        },
+        {
+          "delta_t_k": 1.0,
+          "fraction_total": 0.065,
+          "increment": 0.06,
+          "sigma_thermal_pa": -977910.4477611944
+        },
+        {
+          "delta_t_k": 2.0,
+          "fraction_total": 0.13,
+          "increment": 0.125,
+          "sigma_thermal_pa": -1955820.8955223889
+        },
+        {
+          "delta_t_k": 5.0,
+          "fraction_total": 0.33,
+          "increment": 0.325,
+          "sigma_thermal_pa": -4889552.238805972
+        },
+        {
+          "delta_t_k": 10.0,
+          "fraction_total": 0.67,
+          "increment": 0.665,
+          "sigma_thermal_pa": -9779104.477611944
+        },
+        {
+          "delta_t_k": 20.0,
+          "fraction_total": 1.0,
+          "increment": 0.995,
+          "sigma_thermal_pa": -19558208.95522389
+        },
+        {
+          "delta_t_k": 30.0,
+          "fraction_total": 1.0,
+          "increment": 0.995,
+          "sigma_thermal_pa": -29337313.432835836
+        },
+        {
+          "delta_t_k": 40.0,
+          "fraction_total": 1.0,
+          "increment": 0.995,
+          "sigma_thermal_pa": -39116417.91044778
+        }
+      ],
+      "sigma_f_pa": 42044820.76268572
+    },
+    "T-5.0": {
+      "rows": [
+        {
+          "delta_t_k": 0.0,
+          "fraction_total": 0.005,
+          "increment": 0.0,
+          "sigma_thermal_pa": -0.0
+        },
+        {
+          "delta_t_k": 1.0,
+          "fraction_total": 0.215,
+          "increment": 0.21,
+          "sigma_thermal_pa": -743675.3731343284
+        },
+        {
+          "delta_t_k": 2.0,
+          "fraction_total": 0.44,
+          "increment": 0.435,
+          "sigma_thermal_pa": -1487350.7462686568
+        },
+        {
+          "delta_t_k": 5.0,
+          "fraction_total": 1.0,
+          "increment": 0.995,
+          "sigma_thermal_pa": -3718376.865671642
+        },
+        {
+          "delta_t_k": 10.0,
+          "fraction_total": 1.0,
+          "increment": 0.995,
+          "sigma_thermal_pa": -7436753.731343284
+        },
+        {
+          "delta_t_k": 20.0,
+          "fraction_total": 1.0,
+          "increment": 0.995,
+          "sigma_thermal_pa": -14873507.462686568
+        },
+        {
+          "delta_t_k": 30.0,
+          "fraction_total": 1.0,
+          "increment": 0.995,
+          "sigma_thermal_pa": -22310261.194029853
+        },
+        {
+          "delta_t_k": 40.0,
+          "fraction_total": 1.0,
+          "increment": 0.995,
+          "sigma_thermal_pa": -29747014.925373137
+        }
+      ],
+      "sigma_f_pa": 14865088.937534014
+    }
+  },
+  "conduction": {
+    "C1_semi_infinite": {
+      "cells": 4000,
+      "dt_s": 2e-05,
+      "flux_w_m2": 10000.0,
+      "max_abs_error_k": 3.030155764152665e-06,
+      "pass": true,
+      "peak_rise_k": 0.768495713350496,
+      "relative_error": 3.942970287943128e-06,
+      "t_end_s": 0.02,
+      "tolerance": 0.02
+    },
+    "C2_slab_source": {
+      "cells": 4000,
+      "max_abs_error_k": 2.2940269224662836e-06,
+      "pass": true,
+      "peak_rise_k": 0.0010703656470800738,
+      "q_vol_w_m3": 1000000.0,
+      "relative_error": 0.0021432180009927655,
+      "tolerance": 0.02
+    },
+    "C3_fv_vs_fem": {
+      "elements": 2000,
+      "mass": "lumped",
+      "max_abs_difference_k": 1.2417610026793646e-05,
+      "pass": true,
+      "relative_to_peak": 1.615833349629917e-05,
+      "tolerance": 0.02
+    }
+  },
+  "constants": {
+    "beta_band": [
+      0.8,
+      0.95
+    ],
+    "beta_taylor_quinney": 0.9,
+    "poisson": 0.33,
+    "temperature_band_c": [
+      -40.0,
+      0.0
+    ],
+    "tensile_ratio": 3.0
+  },
+  "convergence": {
+    "cells": [
+      250,
+      500,
+      1000,
+      2000
+    ],
+    "max_abs_error_k": [
+      0.0007778852841988787,
+      0.00019486877127715407,
+      4.869771118803934e-05,
+      1.2165350154275112e-05
+    ],
+    "mean_order_last_two": 2.000826579429667,
+    "observed_order": [
+      1.9970545048783859,
+      2.000577038050855,
+      2.001076120808478
+    ],
+    "pass": true,
+    "tolerance": 1.5
+  },
+  "criteria": {
+    "C10_lumped_vs_fvm": {
+      "adiabatic_estimate_k": 13.143221556815696,
+      "band": [
+        0.3,
+        1.05
+      ],
+      "conduction_solution_k": 12.858326283050738,
+      "pass": true,
+      "ratio": 0.9783237867113928
+    },
+    "C11_experimental_arm": {
+      "pass": null,
+      "reason": "no digitised thermal-shock / impact-calorimetry dataset exists in this repository and none may be fabricated offline; the arm is replaced by the falsifiable critical-temperature-jump prediction above, which a future test can confirm or refute",
+      "status": "WITHHELD"
+    },
+    "C12_layer_depth_band": {
+      "note": "the band is a *model* uncertainty, not a numerical error; it is quoted next to every thermal number in the report",
+      "pass": null,
+      "ratio_max_over_min": 19.69678872638525,
+      "status": "BAND"
+    },
+    "C13_midcontact_source": {
+      "analytic_rise_k": 6.571610778407847,
+      "flux_w_m2": 19431184.87763384,
+      "layer_depth_m": 0.0023146811232482682,
+      "numeric_rise_k": 6.429163141524862,
+      "pass": true,
+      "penetration_m": 4.2200982309653916e-05,
+      "penetration_over_layer": 0.01823187733541106,
+      "relative_error": 0.021676213288684312,
+      "time_s": 0.0014627342187069111,
+      "tolerance": 0.05,
+      "volumetric_source_w_m3": 8394756704.269234
+    },
+    "C1_semi_infinite": {
+      "cells": 4000,
+      "dt_s": 2e-05,
+      "flux_w_m2": 10000.0,
+      "max_abs_error_k": 3.030155764152665e-06,
+      "pass": true,
+      "peak_rise_k": 0.768495713350496,
+      "relative_error": 3.942970287943128e-06,
+      "t_end_s": 0.02,
+      "tolerance": 0.02
+    },
+    "C2_slab_source": {
+      "cells": 4000,
+      "max_abs_error_k": 2.2940269224662836e-06,
+      "pass": true,
+      "peak_rise_k": 0.0010703656470800738,
+      "q_vol_w_m3": 1000000.0,
+      "relative_error": 0.0021432180009927655,
+      "tolerance": 0.02
+    },
+    "C3_fv_vs_fem": {
+      "elements": 2000,
+      "mass": "lumped",
+      "max_abs_difference_k": 1.2417610026793646e-05,
+      "pass": true,
+      "relative_to_peak": 1.615833349629917e-05,
+      "tolerance": 0.02
+    },
+    "C4_convergence_order": {
+      "cells": [
+        250,
+        500,
+        1000,
+        2000
+      ],
+      "max_abs_error_k": [
+        0.0007778852841988787,
+        0.00019486877127715407,
+        4.869771118803934e-05,
+        1.2165350154275112e-05
+      ],
+      "mean_order_last_two": 2.000826579429667,
+      "observed_order": [
+        1.9970545048783859,
+        2.000577038050855,
+        2.001076120808478
+      ],
+      "pass": true,
+      "tolerance": 1.5
+    },
+    "C5_stress_field": {
+      "max_abs_difference_pa": 12.155882519795227,
+      "pass": true,
+      "relative_to_peak": 0.010279644308126902,
+      "tolerance": 0.03
+    },
+    "C5b_linear_gradient_anchor": {
+      "delta_t_k": 20.0,
+      "exact_peak_pa": 8187313.432835822,
+      "measured_peak_pa": 8187313.432835822,
+      "pass": true,
+      "relative_error": 0.0,
+      "tolerance": 0.03
+    },
+    "C6_equilibrium": {
+      "pass": true,
+      "residual": 0.0,
+      "tolerance": 1e-10
+    },
+    "C7_restrained_free_ratio": {
+      "measured": 2.0,
+      "pass": true,
+      "tolerance": 1e-12
+    },
+    "C8_energy_ledger": {
+      "dissipated_relative_error": 1.9046174831842455e-06,
+      "heat_to_enthalpy_relative_error": 4.177205270681706e-14,
+      "pass": true,
+      "tolerance": 0.01
+    },
+    "C9_restitution": {
+      "abs_error": 2.9569590404010526e-06,
+      "measured": 0.2999970430409596,
+      "pass": true,
+      "prescribed": 0.3,
+      "tolerance": 0.01
+    }
+  },
+  "critical_delta_t": {
+    "experimental_arm": {
+      "reason": "no digitised thermal-shock / impact-calorimetry dataset exists in this repository and none may be fabricated offline; the arm is replaced by the falsifiable critical-temperature-jump prediction above, which a future test can confirm or refute",
+      "status": "WITHHELD"
+    },
+    "rows": [
+      {
+        "delta_t_critical_free_k": 21.359301828291734,
+        "delta_t_critical_heating_from_zero_pa_k": 10.679650914145867,
+        "delta_t_critical_restrained_k": 10.679650914145867,
+        "sigma_f_pa": 7476743.906106104,
+        "temperature_c": -2.0
+      },
+      {
+        "delta_t_critical_free_k": 39.97735967747036,
+        "delta_t_critical_heating_from_zero_pa_k": 19.98867983873518,
+        "delta_t_critical_restrained_k": 19.98867983873518,
+        "sigma_f_pa": 14865088.937534014,
+        "temperature_c": -5.0
+      },
+      {
+        "delta_t_critical_free_k": 61.070093883875664,
+        "delta_t_critical_heating_from_zero_pa_k": 30.535046941937836,
+        "delta_t_critical_restrained_k": 30.535046941937832,
+        "sigma_f_pa": 25000000.0,
+        "temperature_c": -10.0
+      },
+      {
+        "delta_t_critical_free_k": 85.98910229242803,
+        "delta_t_critical_heating_from_zero_pa_k": 42.994551146214015,
+        "delta_t_critical_restrained_k": 42.994551146214015,
+        "sigma_f_pa": 42044820.76268572,
+        "temperature_c": -20.0
+      },
+      {
+        "delta_t_critical_free_k": 99.17979921811163,
+        "delta_t_critical_heating_from_zero_pa_k": 49.589899609055806,
+        "delta_t_critical_restrained_k": 49.58989960905581,
+        "sigma_f_pa": 56987676.42386944,
+        "temperature_c": -30.0
+      }
+    ]
+  },
+  "digest_sha256": "2dc83a946e83ad495fd85a418d7892087c285a654f9a5b84352a0f3fd03c644a",
+  "generated_utc": "2026-11-11T08:49:21Z",
+  "impact": {
+    "C10_lumped_vs_fvm": {
+      "adiabatic_estimate_k": 13.143221556815696,
+      "band": [
+        0.3,
+        1.05
+      ],
+      "conduction_solution_k": 12.858326283050738,
+      "pass": true,
+      "ratio": 0.9783237867113928
+    },
+    "C13_midcontact_source_solution": {
+      "analytic_rise_k": 6.571610778407847,
+      "flux_w_m2": 19431184.87763384,
+      "layer_depth_m": 0.0023146811232482682,
+      "numeric_rise_k": 6.429163141524862,
+      "pass": true,
+      "penetration_m": 4.2200982309653916e-05,
+      "penetration_over_layer": 0.01823187733541106,
+      "relative_error": 0.021676213288684312,
+      "time_s": 0.0014627342187069111,
+      "tolerance": 0.05,
+      "volumetric_source_w_m3": 8394756704.269234
+    },
+    "C8_energy": {
+      "dissipated_relative_error": 1.9046174831842455e-06,
+      "heat_to_enthalpy_relative_error": 4.177205270681706e-14,
+      "pass": true,
+      "tolerance": 0.01
+    },
+    "C9_restitution": {
+      "abs_error": 2.9569590404010526e-06,
+      "measured": 0.2999970430409596,
+      "pass": true,
+      "prescribed": 0.3,
+      "tolerance": 0.01
+    },
+    "breakage_bound": {
+      "fraction_mech": 0.0,
+      "fraction_total": 1.0,
+      "increment": 1.0,
+      "note": "uniform population over the whole strength budget; upper bound"
+    },
+    "breakage_coupled": {
+      "count_mech": 1009.0,
+      "count_total": 1024.0,
+      "fraction_mech": 0.9853515625,
+      "fraction_total": 1.0,
+      "increment": 0.0146484375,
+      "n": 1024.0
+    },
+    "breakage_plain": {
+      "count_mech": 1009.0,
+      "count_total": 1009.0,
+      "fraction_mech": 0.9853515625,
+      "fraction_total": 0.9853515625,
+      "increment": 0.0,
+      "n": 1024.0
+    },
+    "case": {
+      "beta": 0.9,
+      "bulk_temperature_c": -10.0,
+      "cells": 240,
+      "dt_s": 2e-06,
+      "duration_factor": 3.0,
+      "grid_depth_m": 0.05,
+      "impact_speed_m_s": 1.0,
+      "layer_fraction": 0.15,
+      "radius_m": 0.3,
+      "restitution": 0.3,
+      "thickness_m": 0.6
+    },
+    "contact_duration_s": 0.0029254684374138223,
+    "contact_radius_m": 0.01543120748832179,
+    "dissipated_energy_j": 47.25000792775807,
+    "energy_ledger": {
+      "block_enthalpy_j": 42.525007134980484,
+      "dissipated_energy_closed_form_j": 47.24991793473829,
+      "dissipated_energy_integrated_j": 47.25000792775807,
+      "dissipated_energy_relative_error": 1.9046174831842455e-06,
+      "effusivity_partition_lambda": 1.0,
+      "fourier_number_layer": 0.0006648027023469509,
+      "heat_to_enthalpy_relative_error": 4.177205270681706e-14,
+      "kinetic_energy_j": 51.92298674147065,
+      "peak_overlap_m": 0.000509201560081757,
+      "plastic_heat_ice_j": 42.52500713498226,
+      "restitution_measured": 0.2999970430409596,
+      "restitution_prescribed": 0.3,
+      "taylor_quinney_beta": 0.9
+    },
+    "layer_depth_m": 0.0023146811232482682,
+    "mass_kg": 103.8459734829413,
+    "melt_cap_delta_t_k": 10.0,
+    "melting_risk": true,
+    "peak_delta_t_adiabatic_k": 13.143221556815696,
+    "peak_delta_t_k": 12.858326283050738,
+    "peak_force_analytic_n": 167968.68528449204,
+    "peak_force_n": 174839.33477387877,
+    "plastic_heat_ice_j": 42.52500713498226,
+    "sigma_f_bulk_pa": 25000000.0,
+    "sigma_f_heated_pa": 470075.3866357992,
+    "sigma_mech_peak_pa": -233716541.49897134,
+    "sigma_thermal_free_pa": -5263757.37505036,
+    "sigma_thermal_melt_capped_pa": -8187313.432835822,
+    "sigma_thermal_patch_pa": -10527514.75010072,
+    "thermal_fraction_of_strength": 0.42110059000402883,
+    "thermal_to_mechanical_ratio": 0.04504394375588967,
+    "within_model_validity": false
+  },
+  "impact_cold": {
+    "C10_lumped_vs_fvm": {
+      "adiabatic_estimate_k": 14.091603092496273,
+      "band": [
+        0.3,
+        1.05
+      ],
+      "conduction_solution_k": 13.962146547259788,
+      "pass": true,
+      "ratio": 0.9908132137708718
+    },
+    "C13_midcontact_source_solution": {
+      "analytic_rise_k": 7.0458015462481365,
+      "flux_w_m2": 20313336.42922592,
+      "layer_depth_m": 0.0022900295843187365,
+      "numeric_rise_k": 6.981073273629389,
+      "pass": true,
+      "penetration_m": 4.30202648331621e-05,
+      "penetration_over_layer": 0.01878589915508024,
+      "relative_error": 0.009186786229199894,
+      "time_s": 0.0014316777385862077,
+      "tolerance": 0.05,
+      "volumetric_source_w_m3": 8870337994.025942
+    },
+    "C8_energy": {
+      "dissipated_relative_error": 1.9050978965138694e-06,
+      "heat_to_enthalpy_relative_error": 1.7350718889974808e-14,
+      "pass": true,
+      "tolerance": 0.01
+    },
+    "C9_restitution": {
+      "abs_error": 2.956960343247772e-06,
+      "measured": 0.29999704303965674,
+      "pass": true,
+      "prescribed": 0.3,
+      "tolerance": 0.01
+    },
+    "breakage_bound": {
+      "fraction_mech": 0.0,
+      "fraction_total": 0.917465660541951,
+      "increment": 0.917465660541951,
+      "note": "uniform population over the whole strength budget; upper bound"
+    },
+    "breakage_coupled": {
+      "count_mech": 993.0,
+      "count_total": 1023.0,
+      "fraction_mech": 0.9697265625,
+      "fraction_total": 0.9990234375,
+      "increment": 0.029296875,
+      "n": 1024.0
+    },
+    "breakage_plain": {
+      "count_mech": 993.0,
+      "count_total": 993.0,
+      "fraction_mech": 0.9697265625,
+      "fraction_total": 0.9697265625,
+      "increment": 0.0,
+      "n": 1024.0
+    },
+    "case": {
+      "beta": 0.9,
+      "bulk_temperature_c": -20.0,
+      "cells": 240,
+      "dt_s": 2e-06,
+      "duration_factor": 3.0,
+      "grid_depth_m": 0.05,
+      "impact_speed_m_s": 1.0,
+      "layer_fraction": 0.15,
+      "radius_m": 0.3,
+      "restitution": 0.3,
+      "thickness_m": 0.6
+    },
+    "contact_duration_s": 0.0028633554771724154,
+    "contact_radius_m": 0.015266863895458243,
+    "dissipated_energy_j": 47.32205109043865,
+    "energy_ledger": {
+      "block_enthalpy_j": 42.58984598139553,
+      "dissipated_energy_closed_form_j": 47.32196093747041,
+      "dissipated_energy_integrated_j": 47.32205109043865,
+      "dissipated_energy_relative_error": 1.9050978965138694e-06,
+      "effusivity_partition_lambda": 1.0,
+      "fourier_number_layer": 0.0007058200141296888,
+      "heat_to_enthalpy_relative_error": 1.7350718889974808e-14,
+      "kinetic_energy_j": 52.00215487634111,
+      "peak_overlap_m": 0.0004984131918129674,
+      "plastic_heat_ice_j": 42.58984598139479,
+      "restitution_measured": 0.29999704303965674,
+      "restitution_prescribed": 0.3,
+      "taylor_quinney_beta": 0.9
+    },
+    "layer_depth_m": 0.0022900295843187365,
+    "mass_kg": 104.00430975268222,
+    "melt_cap_delta_t_k": 20.0,
+    "melting_risk": false,
+    "peak_delta_t_adiabatic_k": 14.091603092496273,
+    "peak_delta_t_k": 13.962146547259788,
+    "peak_force_analytic_n": 171866.08748276267,
+    "peak_force_n": 178896.1819824837,
+    "plastic_heat_ice_j": 42.58984598139479,
+    "sigma_f_bulk_pa": 42044820.76268572,
+    "sigma_f_heated_pa": 17123870.491018567,
+    "sigma_mech_peak_pa": -244315787.4097337,
+    "sigma_thermal_free_pa": -6826864.490869118,
+    "sigma_thermal_melt_capped_pa": -19558208.95522389,
+    "sigma_thermal_patch_pa": -13653728.981738236,
+    "thermal_fraction_of_strength": 0.3247422330280394,
+    "thermal_to_mechanical_ratio": 0.05588557795014708,
+    "within_model_validity": true
+  },
+  "layer_sensitivity": {
+    "band_declared": 5.0,
+    "note": "the band is a *model* uncertainty, not a numerical error; it is quoted next to every thermal number in the report",
+    "ratio_max_over_min": 19.69678872638525,
+    "rows": [
+      {
+        "breakage_increment": 0.0146484375,
+        "deposition_volume_m3": 5.771910782848362e-07,
+        "layer_depth_m": 0.0007715603744160895,
+        "layer_fraction": 0.05,
+        "melting_risk": true,
+        "peak_delta_t_k": 38.1983291311667,
+        "sigma_thermal_pa": -31274169.3207485,
+        "thermal_fraction_of_strength": 1.25096677282994,
+        "thermal_to_mechanical_ratio": 0.13381239137019382
+      },
+      {
+        "breakage_increment": 0.0146484375,
+        "deposition_volume_m3": 1.1543821565696724e-06,
+        "layer_depth_m": 0.001543120748832179,
+        "layer_fraction": 0.1,
+        "melting_risk": true,
+        "peak_delta_t_k": 19.336996162793863,
+        "sigma_thermal_pa": -15831804.843433693,
+        "thermal_fraction_of_strength": 0.6332721937373478,
+        "thermal_to_mechanical_ratio": 0.06773934246114699
+      },
+      {
+        "breakage_increment": 0.0146484375,
+        "deposition_volume_m3": 1.7315732348545082e-06,
+        "layer_depth_m": 0.0023146811232482682,
+        "layer_fraction": 0.15,
+        "melting_risk": true,
+        "peak_delta_t_k": 12.982285970127004,
+        "sigma_thermal_pa": -10629004.431213684,
+        "thermal_fraction_of_strength": 0.4251601772485474,
+        "thermal_to_mechanical_ratio": 0.04547818636645565
+      },
+      {
+        "breakage_increment": 0.0146484375,
+        "deposition_volume_m3": 2.8859553914241806e-06,
+        "layer_depth_m": 0.0038578018720804475,
+        "layer_fraction": 0.25,
+        "melting_risk": false,
+        "peak_delta_t_k": 7.694235257144898,
+        "sigma_thermal_pa": -6299511.56762214,
+        "thermal_fraction_of_strength": 0.2519804627048856,
+        "thermal_to_mechanical_ratio": 0.026953640196878688
+      },
+      {
+        "breakage_increment": 0.009765625,
+        "deposition_volume_m3": 5.771910782848361e-06,
+        "layer_depth_m": 0.007715603744160895,
+        "layer_fraction": 0.5,
+        "melting_risk": false,
+        "peak_delta_t_k": 3.830743422182648,
+        "sigma_thermal_pa": -3136349.7078183456,
+        "thermal_fraction_of_strength": 0.12545398831273383,
+        "thermal_to_mechanical_ratio": 0.013419459691226647
+      },
+      {
+        "breakage_increment": 0.0048828125,
+        "deposition_volume_m3": 1.1543821565696722e-05,
+        "layer_depth_m": 0.01543120748832179,
+        "layer_fraction": 1.0,
+        "melting_risk": false,
+        "peak_delta_t_k": 1.9393176046000498,
+        "sigma_thermal_pa": -1587780.1074676975,
+        "thermal_fraction_of_strength": 0.0635112042987079,
+        "thermal_to_mechanical_ratio": 0.006793614595202649
+      }
+    ]
+  },
+  "property_anchors": {
+    "-10.0": {
+      "alpha_linear_per_k": 5.75e-05,
+      "cp_j_kg_k": 2035.0,
+      "k_w_m_k": 2.275,
+      "rho_kg_m3": 918.2,
+      "youngs_modulus_pa": 9540000000.0
+    },
+    "-20.0": {
+      "alpha_linear_per_k": 6.5e-05,
+      "cp_j_kg_k": 1960.0,
+      "k_w_m_k": 2.33,
+      "rho_kg_m3": 919.6,
+      "youngs_modulus_pa": 10080000000.0
+    },
+    "-30.0": {
+      "alpha_linear_per_k": 7.25e-05,
+      "cp_j_kg_k": 1885.0,
+      "k_w_m_k": 2.385,
+      "rho_kg_m3": 921.0,
+      "youngs_modulus_pa": 10620000000.0
+    },
+    "0.0": {
+      "alpha_linear_per_k": 5e-05,
+      "cp_j_kg_k": 2110.0,
+      "k_w_m_k": 2.22,
+      "rho_kg_m3": 916.8,
+      "youngs_modulus_pa": 9000000000.0
+    }
+  },
+  "provenance": {
+    "blok_partition": "effusivity split b_ice/(b_ice+b_wall) (Blok 1937)",
+    "conduction_reference_1": "Carslaw & Jaeger (1959) eq. 2-46, constant surface flux",
+    "conduction_reference_2": "sine-series solution of a uniformly heated slab (derived in the module docstring)",
+    "contact_law": "Hunt & Crossley (1975) nonlinear damping, RK4 integrated in-package",
+    "fem_reference": "in-package nodal linear FE (consistent mass, theta scheme)",
+    "properties": "tensordem.ice_thermal_stress.properties (fits inside the bands tabulated by Timco & Weeks 2010, Hobbs 1974)",
+    "restrained_free_ratio": "Boley & Weiner (1960) sec. 12.6",
+    "strength_law": "tensordem.ice_material.pure_ice_strength (Timco & Frederking 1984, n=0.75)",
+    "taylor_quinney": "beta = 0.90, band 0.80-0.95 (Taylor & Quinney 1934; ice/rock calorimetry literature)",
+    "tensile_ratio": "sigma_c/sigma_t = 3 (Schulson & Duval 2009, reported range 2-5)"
+  },
+  "stress": {
+    "C5_stress_field": {
+      "max_abs_difference_pa": 12.155882519795227,
+      "pass": true,
+      "relative_to_peak": 0.010279644308126902,
+      "tolerance": 0.03
+    },
+    "C5b_linear_gradient_anchor": {
+      "delta_t_k": 20.0,
+      "exact_peak_pa": 8187313.432835822,
+      "measured_peak_pa": 8187313.432835822,
+      "pass": true,
+      "relative_error": 0.0,
+      "tolerance": 0.03
+    },
+    "C6_equilibrium": {
+      "pass": true,
+      "residual": 0.0,
+      "tolerance": 1e-10
+    },
+    "C7_ratio": {
+      "measured": 2.0,
+      "pass": true,
+      "tolerance": 1e-12
+    },
+    "free_slab_pa": 656.9849373373536,
+    "peak_delta_t_k": 0.001604885272139374,
+    "peak_stress_pa": 1182.5197599672788,
+    "ratio_restrained_to_free": 2.0,
+    "restrained_uniform_pa": -1313.9698746747072
+  },
+  "tolerance": {
+    "C10_lumped_band": [
+      0.3,
+      1.05
+    ],
+    "C12_band_rel": 5.0,
+    "C13_surface_rise_rel": 0.05,
+    "C1_semi_infinite_rel": 0.02,
+    "C2_slab_source_rel": 0.02,
+    "C3_fv_vs_fem_k": 0.02,
+    "C4_min_order": 1.5,
+    "C5_stress_field_rel": 0.03,
+    "C6_equilibrium": 1e-10,
+    "C7_ratio": 1e-12,
+    "C8_energy_rel": 0.01,
+    "C9_restitution": 0.01
+  },
+  "verdict": {
+    "all_pass": true,
+    "n_criteria": 12,
+    "n_pass": 12,
+    "withheld": [
+      "C11_experimental_arm",
+      "C12_layer_depth_band"
+    ]
+  }
+}

@@ -29,6 +29,9 @@ Module map
                     with the static-admissibility invariant
 ``fracture``        thermal + mechanical superposition against ``sigma_f(T)``
                     on the compression and tension branches, breakage increment
+``dem_coupling``    the shared work->heat->field->stress->fracture conversion and
+                    the solver-facing ``DEMThermalCoupler`` (a real ``IceDEM3D``
+                    impact drives it through ``contact_impact.pair_impact(thermal=True)``)
 ``collision``       the coupled driver (Hunt-Crossley impact -> heat -> field ->
                     fracture) and the ``(v, T)`` significance sweeps
 ``validation``      the acceptance ladder C1..C12, with digest
@@ -58,6 +61,12 @@ from .collision import (
     layer_depth_sweep,
     significance_sweep,
     simulate_block_impact,
+)
+from .dem_coupling import (
+    DEMThermalCoupler,
+    ThermalState,
+    couple_impact_result,
+    thermal_response,
 )
 from .conduction import (
     SlabHeat1D,
@@ -133,6 +142,8 @@ __all__ = [
     "tensile_strength", "failure_margin", "thermal_margin_fraction",
     "thermal_breakage_increment", "breakage_increment_curve",
     "critical_heating_for_crushing",
+    # solver bridge
+    "DEMThermalCoupler", "ThermalState", "thermal_response", "couple_impact_result",
     # collision
     "BlockImpactCase", "BlockImpactResult", "simulate_block_impact",
     "significance_sweep", "layer_depth_sweep",

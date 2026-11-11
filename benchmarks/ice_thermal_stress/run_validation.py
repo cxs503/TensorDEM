@@ -61,7 +61,7 @@ from tensordem.ice_thermal_stress.properties import (             # noqa: E402
     ice_properties,
 )
 
-ART = ROOT / "artifacts" / "ice_thermal_stress"
+ART = ROOT / "docs" / "ice_thermal_stress"   # committed: docs/ survives the push gate
 DOCS = ROOT / "docs"
 TITLE = "冰-结构碰撞的热-力耦合：塑性功生热、热应力叠加与热致附加破碎（TensorDEM）"
 
@@ -369,16 +369,16 @@ def build_markdown(validation: dict, sweeps: dict) -> str:
           f"{cold['breakage_bound']['increment']:.3f} |")
         a("")
     a("**(a) 温度场与热应力场**\n")
-    a("![fig1](../artifacts/ice_thermal_stress/fig1_conduction_vs_exact.png)\n")
-    a("![fig3](../artifacts/ice_thermal_stress/fig3_impact_temperature.png)\n")
-    a("![fig4](../artifacts/ice_thermal_stress/fig4_thermal_stress_field.png)\n")
+    a("![fig1](ice_thermal_stress/fig1_conduction_vs_exact.png)\n")
+    a("![fig3](ice_thermal_stress/fig3_impact_temperature.png)\n")
+    a("![fig4](ice_thermal_stress/fig4_thermal_stress_field.png)\n")
     a("**(b) 有效性图（速度 × 温度）**\n")
-    a("![fig5](../artifacts/ice_thermal_stress/fig5_significance_map.png)\n")
+    a("![fig5](ice_thermal_stress/fig5_significance_map.png)\n")
     a("**(c) 破碎增量与沉积层敏感性**\n")
-    a("![fig6](../artifacts/ice_thermal_stress/fig6_breakage_increment.png)\n")
-    a("![fig7](../artifacts/ice_thermal_stress/fig7_layer_depth_sensitivity.png)\n")
+    a("![fig6](ice_thermal_stress/fig6_breakage_increment.png)\n")
+    a("![fig7](ice_thermal_stress/fig7_layer_depth_sensitivity.png)\n")
     a("**(d) 与解析解比较与收敛**\n")
-    a("![fig2](../artifacts/ice_thermal_stress/fig2_mesh_convergence.png)\n")
+    a("![fig2](ice_thermal_stress/fig2_mesh_convergence.png)\n")
     a("**临界温升（热应力单独达到冰强度所需 ΔT）**\n")
     a("| T [°C] | σ_f [MPa] | ΔT_c 全约束 [K] | ΔT_c 自由板 [K] |")
     a("|---|---|---|---|")
@@ -501,7 +501,7 @@ def build_payload(markdown: str, figures: list[tuple[Path, str]]) -> dict:
                     "机械接触应力 4.5%）、热致附加破碎 1.5%；C1–C13 判据全部通过，"
                     "实验臂诚实 WITHHELD。"),
         "scenario_key": "dem_ice_thermal_stress",
-        "mission_id": 11208,
+        "mission_id": 14601,
         "tags": ["TensorDEM", "ice", "thermo-mechanical", "thermal stress",
                  "collision", "breakage", "p161w2"],
         "markdown": markdown,
