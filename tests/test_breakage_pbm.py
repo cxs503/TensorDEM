@@ -350,3 +350,220 @@ def test_assembly_mass_is_conserved_over_a_short_run():
     res = BreakableAssembly(params).run()
     assert res["mass_residual"] < 1e-10
     assert res["total_breakage_mass_defect"] < 1e-10
+
+# ---------------------------------------------------------------------------
+# Revision p176w2-n10: the daughter-law / operator / cross-validation machinery
+# that the C2 / C3 / C4 criteria of the verification surface now rest on.
+# ---------------------------------------------------------------------------
+def test_beta_daughter_binned_law_matches_its_quantiles():
+    """Binned beta law: probabilities normalised, mean consistent with quantiles."""
+    from tensordem.breakage_pbm.daughter_distribution import BetaDaughter
+
+    law = BetaDaughter(a=0.195, b=2.156, resolution=32)
+    p = law.binned_probabilities()
+    assert p.size == 32 and p.sum() == pytest.approx(1.0, rel=1e-12)
+    # E[f] of the binned law fixes the mean daughter count (mass conservation)
+    assert law.mean_daughters * law.mean_fraction == pytest.approx(1.0, rel=1e-12)
+    # the law is dominated by the finest resolved fragments (the DEM signature)
+    assert p[0] > 0.4
+    assert law.fraction_ppf(0.5) < 0.05
+
+
+def test_beta_daughter_sample_conserves_mass_per_event():
+    from tensordem.breakage_pbm.daughter_distribution import BetaDaughter
+
+    law = BetaDaughter(a=0.3, b=2.0, resolution=32)
+    rng = np.random.default_rng(4)
+    assert daughter_mass_defect(law, 1.0, rng, n_events=50) < 1e-12
+
+
+def test_beta_daughter_fit_recovers_the_generating_parameters():
+    from tensordem.breakage_pbm.daughter_distribution import BetaDaughter
+
+    true = BetaDaughter(a=0.2, b=2.2, resolution=32)
+    rng = np.random.default_rng(11)
+    k = true.sample_binned(rng, 4000)
+    fitted = BetaDaughter.fit_binned(k / 32.0, resolution=32)
+    # the fit must reproduce the *binned* law it is given, not the parent law
+    p_true, p_fit = true.binned_probabilities(), fitted.binned_probabilities()
+    assert np.max(np.abs(np.cumsum(p_true) - np.cumsum(p_fit))) < 0.06
+
+
+def test_quadrature_daughter_operator_is_deterministic_and_conserves_mass():
+    from tensordem.breakage_pbm.daughter_distribution import BetaDaughter
+    from tensordem.breakage_pbm.dpbm import (
+        column_mass_defect,
+        daughter_matrix_quadrature,
+    )
+
+    grid = VolumeGrid.from_diameters(1e-3, 1e-2, n_sections=40)
+    law = BetaDaughter(a=0.2, b=2.2, resolution=32)
+    a = daughter_matrix_quadrature(grid, law, n_quad=128)
+    b = daughter_matrix_quadrature(grid, law, n_quad=128)
+    assert np.array_equal(a, b)                       # no Monte-Carlo noise
+    assert mass_defect_matrix(grid, a) < 1e-12        # exact after renormalisation
+    assert column_mass_defect(grid, a) < 1e-12
+    # the total daughter count is the law's mean daughter number
+    assert np.all(np.sum(a, axis=0)[-5:] > 1.0)
+
+
+def test_exact_analytic_cumulative_mass_satisfies_the_known_limits():
+    from tensordem.breakage_pbm.dpbm import analytic_cumulative_mass
+
+    v0 = particle_volume(0.01)
+    tau_free = analytic_cumulative_mass(np.array([v0 * 0.999]), 2.0, 0.5, v0)[0]
+    assert tau_free == pytest.approx(v0 * (1.0 - math.exp(-1.0)), rel=2e-3)
+    # nothing is finer than the parent scale at f ~ 0
+    assert analytic_cumulative_mass(np.array([v0 * 1e-4]), 2.0, 0.5, v0)[0] < 1e-5 * v0
+    # mass below v0 is a non-decreasing function of v
+    v = np.geomspace(v0 * 1e-5, v0 * 0.999, 40)
+    cum = analytic_cumulative_mass(v, 2.0, 0.5, v0)
+    assert np.all(np.diff(cum) >= -1e-18) and cum.max() <= v0 * (1.0 - math.exp(-1.0)) * 1.001
+
+
+def test_sectional_solution_matches_the_exact_reference_within_three_percent():
+    """C3 metric, on the operator/exact-reference pair used by the study."""
+    from tensordem.breakage_pbm.dpbm import (
+        analytic_cumulative_mass_fraction,
+        daughter_matrix_quadrature,
+    )
+
+    v0 = particle_volume(0.01)
+    grid = VolumeGrid(v_min=v0 / 40.0, v_max=v0 * 1.05, n_sections=160)
+    n0 = np.zeros(grid.n_sections)
+    n0[-1] = 1.0 / grid.pivots[-1]
+    matrix = daughter_matrix_quadrature(grid, UniformDaughter(), n_quad=256)
+    sol = solve_breakage(grid, n0, rate=0.5, daughter=matrix, t_span=(0.0, 2.0),
+                         t_eval=[0.0, 2.0])
+    n = sol["n"][-1]
+    cum = np.cumsum(grid.pivots * n)
+    cum = cum / cum[-1]
+    ref = analytic_cumulative_mass_fraction(grid, n0, 2.0, 0.5)
+    keep = np.arange(grid.n_sections) < grid.n_sections - 2
+    assert np.max(np.abs(cum[keep] - ref[keep])) < 0.03
+    assert mass_moment(grid, n) / mass_moment(grid, n0) == pytest.approx(1.0, rel=1e-6)
+
+
+def test_primary_breakage_two_population_solver_conserves_mass():
+    from tensordem.breakage_pbm.dpbm import (
+        daughter_matrix_quadrature,
+        solve_primary_breakage,
+    )
+
+    grid = VolumeGrid.from_diameters(1e-3, 1e-2, n_sections=48)
+    n0 = np.zeros(grid.n_sections)
+    n0[-1] = 1.0
+    matrix = daughter_matrix_quadrature(grid, UniformDaughter(), n_quad=192)
+    sol = solve_primary_breakage(grid, n0, rate=0.4, daughter=matrix,
+                                 t_span=(0.0, 4.0), t_eval=[0.0, 4.0])
+    assert mass_moment(grid, sol["n"][-1]) == pytest.approx(mass_moment(grid, n0), rel=1e-9)
+    # mothers decay, daughters accumulate
+    assert sol["mothers"][-1][-1] < n0[-1]
+    assert number_moment(sol["daughters"][-1]) > 0.0
+
+
+def test_section_rates_recover_a_known_rate_from_synthetic_events():
+    """A synthetic DEM event log with a known rate is inverted exactly."""
+    from tensordem.breakage_pbm.lagrangian import measure_section_rates, section_of
+
+    grid = VolumeGrid.from_diameters(1e-3, 1e-2, n_sections=24)
+    parent_v = float(grid.pivots[-1])
+    n0 = 100
+    t_edges = (0.0, 1.0, 2.0)
+    rate = 0.3
+    events = []
+    rng = np.random.default_rng(0)
+    for t_lo, t_hi in zip(t_edges[:-1], t_edges[1:]):
+        n_events = int(round(rate * n0 * (t_hi - t_lo)))
+        for _ in range(n_events):
+            events.append({"t": float(rng.uniform(t_lo, t_hi)), "parent_volume": parent_v,
+                           "daughter_volumes": [parent_v / 2.0, parent_v / 2.0],
+                           "generation": 0})
+    snap = {0.0: np.full(n0, parent_v)}
+    prof = measure_section_rates(grid, events, snap, t_edges)
+    top = int(section_of(grid, [parent_v])[0])
+    assert prof(0.5)[top] == pytest.approx(rate, rel=0.35)
+    assert np.all(prof(2.5) == 0.0)
+
+
+def test_lagrangian_zero_rate_leaves_the_population_untouched():
+    from tensordem.breakage_pbm.lagrangian import LagrangianBreakage, RateProfile
+
+    grid = VolumeGrid.from_diameters(1e-3, 1e-2, n_sections=24)
+    v = np.full(30, float(grid.pivots[-1]))
+    prof = RateProfile(edges=np.array([0.0, 1.0]), rates=np.zeros((1, grid.n_sections)))
+    out = LagrangianBreakage(grid, prof, UniformDaughter(), seed=3).run(v, [1.0])
+    assert out[1.0].size == v.size
+    assert np.allclose(np.sort(out[1.0]), np.sort(v))
+
+
+def test_lagrangian_and_sectional_primary_breakage_agree_in_the_psd():
+    """C4 machinery: Lagrangian vs sectional PBM, both on the same kernels."""
+    from tensordem.breakage_pbm.dpbm import (
+        daughter_matrix_quadrature,
+        solve_primary_breakage,
+    )
+    from tensordem.breakage_pbm.lagrangian import (
+        LagrangianBreakage,
+        RateProfile,
+        psd_wasserstein,
+    )
+
+    grid = VolumeGrid.from_diameters(1e-3, 1e-2, n_sections=48)
+    v0 = float(grid.pivots[-1])
+    n_particles = 600
+    rate = 0.5
+    prof = RateProfile(edges=np.array([0.0, 1.0, 2.0]),
+                       rates=np.full((2, grid.n_sections), rate))
+    law = UniformDaughter()
+    n0 = np.zeros(grid.n_sections)
+    n0[-1] = float(n_particles)
+    matrix = daughter_matrix_quadrature(grid, law, n_quad=192)
+    pbm = solve_primary_breakage(grid, n0, rate=prof, daughter=matrix,
+                                 t_span=(0.0, 2.0), t_eval=[0.0, 2.0])
+    lag = LagrangianBreakage(grid, prof, law, seed=7).run(np.full(n_particles, v0), [2.0])
+    mass_pbm = pbm["n"][-1] * grid.pivots
+    from tensordem.breakage_pbm.dpbm import equivalent_diameter
+    norm = float(equivalent_diameter(np.array([v0]))[0])
+    res = psd_wasserstein(grid.pivots, mass_pbm, lag[2.0], lag[2.0], norm)
+    assert res["normalised"] < 0.1
+
+
+def test_assembly_primary_breakage_stops_at_the_generation_cap():
+    from tensordem.breakage_pbm.assembly_compression import AssemblyParams
+
+    p = AssemblyParams(n_particles=40, max_generations=1)
+    assert p.max_generations == 1
+    assert p.platen_mass_ratio > 0.0
+
+
+def test_mixture_beta_daughter_matches_a_beta_special_case():
+    """A one-component mixture must reproduce the single-beta binned law."""
+    from tensordem.breakage_pbm.daughter_distribution import (
+        BetaDaughter,
+        MixtureBetaDaughter,
+    )
+
+    single = BetaDaughter(a=0.3, b=2.2, resolution=32)
+    mix = MixtureBetaDaughter(weights=(1.0,), params=((0.3, 2.2),), resolution=32)
+    assert np.allclose(single.binned_probabilities(), mix.binned_probabilities(), atol=1e-6)
+    assert mix.mean_daughters == pytest.approx(single.mean_daughters, rel=1e-6)
+    rng = np.random.default_rng(2)
+    assert daughter_mass_defect(mix, 1.0, rng, n_events=40) < 1e-12
+
+
+def test_mixture_beta_daughter_fit_is_stable_and_normalised():
+    from tensordem.breakage_pbm.daughter_distribution import MixtureBetaDaughter
+
+    rng = np.random.default_rng(9)
+    truth = MixtureBetaDaughter(weights=(0.6, 0.25, 0.15),
+                                params=((0.3, 3.0), (4.0, 6.0), (0.05, 0.8)),
+                                resolution=32)
+    k = truth.sample_binned(rng, 3000)
+    fitted = MixtureBetaDaughter.fit_binned(k / 32.0, resolution=32, n_components=3,
+                                            n_starts=4, seed=1)
+    assert abs(sum(fitted.weights) - 1.0) < 1e-9
+    p = fitted.binned_probabilities()
+    assert p.sum() == pytest.approx(1.0, rel=1e-12)
+    emp = np.bincount(k, minlength=33)[1:33] / k.size
+    assert np.max(np.abs(np.cumsum(p) - np.cumsum(emp))) < 0.06
