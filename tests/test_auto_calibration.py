@@ -1,4 +1,4 @@
-"""Tests for DEM auto-calibration framework (p284w3-n05).
+"""Tests for DEM auto-calibration framework (p284w3-n05 / p360w1-n03 maturation).
 
 Tests cover:
 1. Forward problem: repose angle, shear box, compression simulations
@@ -8,6 +8,8 @@ Tests cover:
 5. Complete calibration pipeline
 6. Material presets (glass beads, sand, gravel)
 7. Acceptance criteria validation
+8. Gelman-Rubin R-hat convergence diagnostic
+9. Posterior predictive checks
 """
 import math
 import pytest
@@ -30,6 +32,8 @@ from tensordem.auto_calibration import (
     log_posterior,
     metropolis_hastings,
     run_calibration,
+    gelman_rubin_rhat,
+    posterior_predictive_check,
     GLASS_BEADS_EXP,
     GLASS_BEADS_PARAMS,
     SAND_EXP,
@@ -64,8 +68,8 @@ class TestReposeSimulation:
         result_high = _simulate_repose(mat_high, SMALL_REPOSE)
 
         assert result_high["repose_angle_deg"] >= result_low["repose_angle_deg"], \
-            f"High-friction angle ({result_high['repose_angle_deg']:.1f}°) should >= " \
-            f"low-friction angle ({result_low['repose_angle_deg']:.1f}°)"
+            f"High-friction angle ({result_high['repose_angle_deg']:.1f}) should >= " \
+            f"low-friction angle ({result_low['repose_angle_deg']:.1f})"
 
     def test_repose_angle_increases_with_rolling_resistance(self):
         """Higher rolling resistance should produce steeper repose angles."""
@@ -79,12 +83,12 @@ class TestReposeSimulation:
             "Rolling resistance should increase or maintain repose angle"
 
     def test_repose_angle_reasonable_range(self):
-        """Repose angle should be in physically reasonable range (0-60°)."""
+        """Repose angle should be in physically reasonable range (0-60 deg)."""
         mat = CoreMaterial3D(mu=0.4, mu_rolling=0.05, restitution=0.3, kn=1e5)
         result = _simulate_repose(mat, SMALL_REPOSE)
 
         angle = result["repose_angle_deg"]
-        assert 0.0 <= angle <= 60.0, f"Repose angle {angle:.1f}° outside reasonable range"
+        assert 0.0 <= angle <= 60.0, f"Repose angle {angle:.1f} outside reasonable range"
         assert result["n_particles"] > 0
         assert result["ke_final_J"] >= 0.0
 
@@ -105,8 +109,8 @@ class TestShearBoxSimulation:
         result_high = _simulate_shear_box(mat_high, SMALL_SHEAR)
 
         assert result_high["phi_deg"] >= result_low["phi_deg"], \
-            f"High-friction phi ({result_high['phi_deg']:.1f}°) should >= " \
-            f"low-friction phi ({result_low['phi_deg']:.1f}°)"
+            f"High-friction phi ({result_high['phi_deg']:.1f}) should >= " \
+            f"low-friction phi ({result_low['phi_deg']:.1f})"
 
     def test_shear_box_produces_stress_history(self):
         """Shear box should produce non-empty stress history."""
@@ -183,7 +187,7 @@ class TestObjectiveFunction:
 
 
 # ============================================================================
-# Test 10-12: Bayesian Optimization
+# Test 10-13: Bayesian Optimization
 # ============================================================================
 
 class TestBayesianOptimization:
@@ -249,7 +253,7 @@ class TestBayesianOptimization:
 
 
 # ============================================================================
-# Test 13-14: MCMC Uncertainty Quantification
+# Test 14-15: MCMC Uncertainty Quantification
 # ============================================================================
 
 class TestMCMC:
@@ -295,7 +299,7 @@ class TestMCMC:
 
 
 # ============================================================================
-# Test 15-17: Complete calibration pipeline
+# Test 16-18: Complete calibration pipeline (FIXED: use small benchmarks)
 # ============================================================================
 
 class TestCalibrationPipeline:
@@ -319,6 +323,8 @@ class TestCalibrationPipeline:
             seed=42,
             radius=0.003,
             max_steps=80,
+            repose_bench=SMALL_REPOSE,
+            shear_bench=SMALL_SHEAR,
         )
 
         assert "best_params" in result
@@ -342,6 +348,7 @@ class TestCalibrationPipeline:
             seed=42,
             radius=0.003,
             max_steps=80,
+            repose_bench=SMALL_REPOSE,
         )
 
         for p in params:
@@ -375,14 +382,14 @@ class TestCalibrationPipeline:
 
 
 # ============================================================================
-# Test 18-21: Material presets
+# Test 19-22: Material presets
 # ============================================================================
 
 class TestMaterialPresets:
     """Test material-specific calibration presets."""
 
     def test_presets_exist(self):
-        """All three material presets should be defined."""
+        """All three material presets should exist."""
         assert "glass_beads" in MATERIAL_PRESETS
         assert "sand" in MATERIAL_PRESETS
         assert "gravel" in MATERIAL_PRESETS
@@ -423,7 +430,7 @@ class TestMaterialPresets:
 
 
 # ============================================================================
-# Test 22-23: Build material and parameter utilities
+# Test 23-25: Build material and parameter utilities
 # ============================================================================
 
 class TestUtilities:
@@ -456,14 +463,14 @@ class TestUtilities:
 
 
 # ============================================================================
-# Test 24: Acceptance criteria - repose angle error < 5°
+# Test 26: Acceptance criteria - repose angle error < 5 deg
 # ============================================================================
 
 class TestAcceptanceCriteria:
     """Test that acceptance criteria can be met."""
 
     def test_repose_angle_error_within_5_degrees(self):
-        """With proper calibration, repose angle error should be < 5°."""
+        """With proper calibration, repose angle error should be < 5 deg."""
         mat = CoreMaterial3D(mu=0.4, mu_rolling=0.05, restitution=0.3, kn=1e5)
         sim_result = _simulate_repose(mat, SMALL_REPOSE)
 
@@ -477,11 +484,11 @@ class TestAcceptanceCriteria:
 
         repose_component = result["components"].get("repose", 0.0)
         assert repose_component < 6.25, \
-            f"Repose component {repose_component:.4f} exceeds threshold for 5° error"
+            f"Repose component {repose_component:.4f} exceeds threshold for 5 deg error"
 
 
 # ============================================================================
-# Test 25: Log-posterior computation
+# Test 27-28: Log-posterior computation
 # ============================================================================
 
 class TestLogPosterior:
@@ -513,7 +520,7 @@ class TestLogPosterior:
 
 
 # ============================================================================
-# Test 26: UCB acquisition function
+# Test 29: UCB acquisition function
 # ============================================================================
 
 class TestUCB:
@@ -531,3 +538,86 @@ class TestUCB:
 
         assert len(ucb_values) == 3
         assert all(isinstance(v, (int, float, np.floating)) for v in ucb_values)
+
+
+# ============================================================================
+# Test 30-31: Gelman-Rubin R-hat convergence diagnostic
+# ============================================================================
+
+class TestGelmanRubin:
+    """Test Gelman-Rubin R-hat convergence diagnostic."""
+
+    def test_rhat_converged_chains_near_one(self):
+        """R-hat should be near 1.0 for identical (converged) chains."""
+        rng = np.random.default_rng(42)
+        # Two chains from same distribution
+        chain1 = [{"mu": rng.normal(0.5, 0.05)} for _ in range(100)]
+        chain2 = [{"mu": rng.normal(0.5, 0.05)} for _ in range(100)]
+
+        rhat = gelman_rubin_rhat([chain1, chain2], ["mu"])
+        assert 0.9 < rhat["mu"] < 1.1, \
+            f"R-hat for converged chains should be near 1.0, got {rhat['mu']:.3f}"
+
+    def test_rhat_divergent_chains_above_threshold(self):
+        """R-hat should be > 1.1 for chains with different means."""
+        rng = np.random.default_rng(42)
+        # Two chains from different distributions
+        chain1 = [{"mu": rng.normal(0.3, 0.02)} for _ in range(100)]
+        chain2 = [{"mu": rng.normal(0.7, 0.02)} for _ in range(100)]
+
+        rhat = gelman_rubin_rhat([chain1, chain2], ["mu"])
+        assert rhat["mu"] > 1.1, \
+            f"R-hat for divergent chains should be > 1.1, got {rhat['mu']:.3f}"
+
+    def test_rhat_single_chain_returns_nan(self):
+        """R-hat with single chain should return NaN (undefined)."""
+        chain1 = [{"mu": 0.5} for _ in range(50)]
+        rhat = gelman_rubin_rhat([chain1], ["mu"])
+        assert math.isnan(rhat["mu"]), "R-hat with 1 chain should be NaN"
+
+
+# ============================================================================
+# Test 32-33: Posterior predictive checks
+# ============================================================================
+
+class TestPosteriorPredictive:
+    """Test posterior predictive check functionality."""
+
+    def test_posterior_predictive_returns_coverage(self):
+        """Posterior predictive check should return coverage info."""
+        # Create a mock MCMC result
+        samples = [{"mu": 0.4 + 0.01 * i} for i in range(50)]
+        mcmc_result = {"samples": samples}
+
+        exp_data = ExperimentalData(repose_angle_deg=25.0, repose_angle_std=3.0)
+        params = [CalibrationParameter("mu", 0.1, 0.7, prior_mean=0.4, prior_std=0.15)]
+
+        pp = posterior_predictive_check(
+            mcmc_result, exp_data, params,
+            n_predictive=10, max_steps=80,
+            repose_bench=SMALL_REPOSE,
+            radius=0.003,
+        )
+
+        assert "repose_angle" in pp
+        assert "exp_value" in pp["repose_angle"]
+        assert "pred_low_95" in pp["repose_angle"]
+        assert "pred_high_95" in pp["repose_angle"]
+        assert "covered_95" in pp["repose_angle"]
+
+    def test_posterior_predictive_coverage_boolean(self):
+        """Coverage flag should be boolean."""
+        samples = [{"mu": 0.5} for _ in range(20)]
+        mcmc_result = {"samples": samples}
+
+        exp_data = ExperimentalData(repose_angle_deg=30.0, repose_angle_std=5.0)
+        params = [CalibrationParameter("mu", 0.1, 0.7, prior_mean=0.4, prior_std=0.15)]
+
+        pp = posterior_predictive_check(
+            mcmc_result, exp_data, params,
+            n_predictive=5, max_steps=80,
+            repose_bench=SMALL_REPOSE,
+            radius=0.003,
+        )
+
+        assert isinstance(pp["repose_angle"]["covered_95"], bool)
