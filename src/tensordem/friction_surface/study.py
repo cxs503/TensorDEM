@@ -452,12 +452,15 @@ def _save(out_dir: str, name: str, payload) -> str:
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--stage", default="all",
-                    choices=["laws", "packing", "repose", "shear", "report", "all"])
+                    choices=["laws", "packing", "repose", "benchmark", "shear",
+                             "report", "all"])
     ap.add_argument("--out", default="artifacts/P152W1-N04")
     ap.add_argument("--jobs", type=int, default=12)
     ap.add_argument("--packing-jobs", type=int, default=5)
     ap.add_argument("--repose-particles", type=int, default=300)
     ap.add_argument("--source-mode", default="fixed", choices=["fixed", "rising"])
+    ap.add_argument("--bench-max-time", type=float, default=None,
+                    help="simulated-time cap for --stage benchmark (tests only)")
     args = ap.parse_args(argv)
     out = args.out
     if args.stage in ("laws", "all"):
@@ -471,6 +474,16 @@ def main(argv=None) -> int:
                                                n_particles=args.repose_particles,
                                                source_mode=args.source_mode))
         print("repose: done")
+    if args.stage == "benchmark":
+        # Pre-registered repose benchmark (anchors A/B) with the ref-vs-got
+        # table; shares the DEM kernel with ``repose`` but keeps its own
+        # artifact so the adjudication is machine-checkable on its own.
+        from .benchmark import BenchmarkPlan, load_prereg, run_benchmark, write_payload
+        plan = BenchmarkPlan(particles=args.repose_particles, jobs=args.jobs,
+                             source_mode=args.source_mode, keep_positions=True,
+                             max_time=args.bench_max_time)
+        write_payload(run_benchmark(plan, load_prereg()), os.path.join(out, "repose_benchmark.json"))
+        print("benchmark: done")
     if args.stage in ("shear", "all"):
         _save(out, "shear.json", shear_anchor(jobs=args.jobs))
         print("shear: done")
