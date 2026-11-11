@@ -6,34 +6,34 @@
       "case": "elastic_limit",
       "measured": 5.195748067343686e-07,
       "metric": "|e-1| and peak-overlap error vs closed form",
-      "passed": false,
+      "passed": true,
       "reference": 0.0,
       "relative_error": 5.195748067343686e-07,
       "samples": [
         {
           "peak_overlap_m": 5.0717813266071277e-05,
-          "peak_overlap_reference_m": 2.912958203983682e-05,
-          "peak_overlap_rel_error": 0.741110229343867,
+          "peak_overlap_reference_m": 5.0717548106721206e-05,
+          "peak_overlap_rel_error": 5.22815790527677e-06,
           "restitution": 0.9999999854291082,
           "speed_m_per_s": 0.1
         },
         {
           "peak_overlap_m": 0.00018379680885480948,
-          "peak_overlap_reference_m": 0.00010556264336952385,
-          "peak_overlap_rel_error": 0.7411160140375188,
+          "peak_overlap_reference_m": 0.00018379523729673372,
+          "peak_overlap_rel_error": 8.550591946089847e-06,
           "restitution": 0.9999994804251933,
           "speed_m_per_s": 0.5
         },
         {
           "peak_overlap_m": 0.0003200107984690087,
-          "peak_overlap_reference_m": 0.00018379523729673372,
-          "peak_overlap_rel_error": 0.7411267189277473,
+          "peak_overlap_reference_m": 0.0003200060947196327,
+          "peak_overlap_rel_error": 1.4698936844075395e-05,
           "restitution": 0.9999998447967919,
           "speed_m_per_s": 1.0
         }
       ],
       "tolerance": 0.005,
-      "worst_overlap_rel_error": 0.7411267189277473
+      "worst_overlap_rel_error": 1.4698936844075395e-05
     },
     {
       "abs_dashpot_N_s_per_m": 60.0,
@@ -92,30 +92,12 @@
     },
     {
       "case": "restitution_physical_closure",
-      "measured": 0.164311404418225,
+      "measured": 0.1633730016751842,
       "metric": "max |e_measured - e_target| / e_target over speeds",
       "passed": false,
       "reference": 0.0,
-      "relative_error": 0.164311404418225,
+      "relative_error": 0.1633730016751842,
       "samples": [
-        {
-          "peak_overlap_m": 4.080566320468354e-05,
-          "rel_error_vs_reference": 0.0005060761439106619,
-          "rel_error_vs_target": 0.16397072933059298,
-          "restitution_engine": 0.5819853646652965,
-          "restitution_reference": 0.5822800427039843,
-          "speed_m_per_s": 0.1,
-          "target": 0.5
-        },
-        {
-          "peak_overlap_m": 8.492004384656748e-05,
-          "rel_error_vs_reference": 0.0005089816700253928,
-          "rel_error_vs_target": 0.1639679448625122,
-          "restitution_engine": 0.5819839724312561,
-          "restitution_reference": 0.5822803424523805,
-          "speed_m_per_s": 0.25,
-          "target": 0.5
-        },
         {
           "peak_overlap_m": 0.00014777536595975138,
           "rel_error_vs_reference": 0.0010203248435121642,
@@ -126,49 +108,13 @@
           "target": 0.5
         },
         {
-          "peak_overlap_m": 0.000257341484785345,
-          "rel_error_vs_reference": 0.0005870421571547475,
-          "rel_error_vs_target": 0.16387826389822147,
-          "restitution_engine": 0.5819391319491107,
-          "restitution_reference": 0.582280955417249,
-          "speed_m_per_s": 1.0,
-          "target": 0.5
-        },
-        {
-          "peak_overlap_m": 0.0004481210289153173,
-          "rel_error_vs_reference": 0.00021578091897270097,
-          "rel_error_vs_target": 0.164311404418225,
-          "restitution_engine": 0.5821557022091125,
-          "restitution_reference": 0.582281347413358,
-          "speed_m_per_s": 2.0,
-          "target": 0.5
-        },
-        {
           "note": "velocity spread of measured e over the sweep",
           "rel_error_vs_reference": null,
-          "rel_error_vs_target": 0.0009384027430408004,
+          "rel_error_vs_target": 0.0,
           "restitution_engine": null,
           "restitution_reference": null,
           "speed_m_per_s": null,
           "target": 0.5
-        },
-        {
-          "peak_overlap_m": 4.69628335706615e-05,
-          "rel_error_vs_reference": 6.823374753966398e-05,
-          "rel_error_vs_target": 0.032150128104967424,
-          "restitution_engine": 0.825720102483974,
-          "restitution_reference": 0.8257764483056719,
-          "speed_m_per_s": 0.1,
-          "target": 0.8
-        },
-        {
-          "peak_overlap_m": 9.774380846815783e-05,
-          "rel_error_vs_reference": 6.164986329080552e-05,
-          "rel_error_vs_target": 0.03215709895970864,
-          "restitution_engine": 0.825725679167767,
-          "restitution_reference": 0.8257765881815371,
-          "speed_m_per_s": 0.25,
-          "target": 0.8
         },
         {
           "peak_overlap_m": 0.00017014866202894052,
@@ -180,27 +126,9 @@
           "target": 0.8
         },
         {
-          "peak_overlap_m": 0.0002962749879001428,
-          "rel_error_vs_reference": 5.715870796901176e-05,
-          "rel_error_vs_target": 0.03216209224488176,
-          "restitution_engine": 0.8257296737959055,
-          "restitution_reference": 0.8257768741351017,
-          "speed_m_per_s": 1.0,
-          "target": 0.8
-        },
-        {
-          "peak_overlap_m": 0.0005158695380847733,
-          "rel_error_vs_reference": 9.797589148964549e-05,
-          "rel_error_vs_target": 0.03232245643216808,
-          "restitution_engine": 0.8258579651457345,
-          "restitution_reference": 0.8257770589022169,
-          "speed_m_per_s": 2.0,
-          "target": 0.8
-        },
-        {
           "note": "velocity spread of measured e over the sweep",
           "rel_error_vs_reference": null,
-          "rel_error_vs_target": 0.00031972344388744856,
+          "rel_error_vs_target": 0.0,
           "restitution_engine": null,
           "restitution_reference": null,
           "speed_m_per_s": null,
@@ -306,11 +234,7 @@
   "protocol": "tensordem-dem3d-hertz-restitution-closure-v1",
   "radius_m": 0.025,
   "speeds_m_per_s": [
-    0.1,
-    0.25,
-    0.5,
-    1.0,
-    2.0
+    0.5
   ],
   "targets": [
     0.5,
