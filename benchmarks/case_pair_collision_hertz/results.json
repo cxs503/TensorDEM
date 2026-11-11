@@ -1,0 +1,116 @@
+{
+  "case": "case_pair_collision_hertz",
+  "description": "Two-sphere Hertz impact: restitution coefficient benchmark",
+  "parameters": {
+    "radius_m": 0.025,
+    "density_kg_m3": 917.0,
+    "young_modulus_Pa": 1000000000.0,
+    "poisson_ratio": 0.3,
+    "primary_speed_m_per_s": 0.5,
+    "speeds_sweep_m_per_s": [
+      0.25,
+      0.5,
+      1.0
+    ],
+    "target_restitution": 0.8,
+    "dt_factor": 0.4
+  },
+  "dimensionless_groups": {
+    "Hertz_dimensionless_overlap": "delta/R ~ (rho v^2 / E)^(2/5)",
+    "damping_ratio_zeta": "zeta = |ln e| / sqrt(pi^2 + ln^2 e)"
+  },
+  "primary_elastic": {
+    "speed_m_per_s": 0.5,
+    "peak_overlap_m": 0.00018379546775489086,
+    "peak_overlap_ref_m": 0.00018379523729673372,
+    "peak_overlap_rel_error": 1.2538853592276769e-06,
+    "contact_time_s": 0.0005401208150929402,
+    "contact_time_ref_s": 0.0005544891763646121,
+    "contact_time_rel_error": 0.02591278943599019,
+    "restitution": 1.0000003923692513,
+    "steps": 1622,
+    "dt_s": 1.875419496850487e-06,
+    "wall_time_s": 8.082502339035273
+  },
+  "primary_damped": {
+    "speed_m_per_s": 0.5,
+    "restitution_engine": 0.8258531389534016,
+    "restitution_rk4": 0.8257759464408378,
+    "restitution_rel_error": 9.347876127474889e-05,
+    "peak_overlap_engine_m": 0.00017021427869398642,
+    "peak_overlap_rk4_m": 0.00017024687700803367,
+    "peak_overlap_rel_error": 0.00019147672262857438,
+    "contact_time_engine_s": 0.0005513733320740431,
+    "contact_time_rk4_s": 0.0005526700000001017,
+    "steps": 1628,
+    "dt_s": 1.875419496850487e-06,
+    "wall_time_s": 7.832795150578022
+  },
+  "velocity_sweep": [
+    {
+      "speed_m_per_s": 0.25,
+      "restitution_engine": 0.825828252798051,
+      "restitution_rk4": 0.8257759393710445,
+      "restitution_rel_error": 6.33506312212929e-05,
+      "steps": 3005,
+      "wall_time_s": 17.662196340039372
+    },
+    {
+      "speed_m_per_s": 0.5,
+      "restitution_engine": 0.8258531389534016,
+      "restitution_rk4": 0.8257759464408378,
+      "restitution_rel_error": 9.347876127474889e-05,
+      "steps": 1628,
+      "wall_time_s": 10.511498870328069
+    },
+    {
+      "speed_m_per_s": 1.0,
+      "restitution_engine": 0.8256880210088089,
+      "restitution_rk4": 0.8257759548828504,
+      "restitution_rel_error": 0.00010648635809935296,
+      "steps": 923,
+      "wall_time_s": 5.451685471460223
+    }
+  ],
+  "convergence_study": [
+    {
+      "dt_factor": 0.8,
+      "dt_s": 3.750838993700974e-06,
+      "steps": 811,
+      "peak_overlap_m": 0.00018379242930809808,
+      "peak_overlap_ref_m": 0.00018379523729673372,
+      "peak_overlap_rel_error": 1.527780957188031e-05,
+      "contact_time_s": 0.0005401208150929402,
+      "contact_time_ref_s": 0.0005544891763646121,
+      "contact_time_rel_error": 0.02591278943599019,
+      "restitution": 1.0000005158904002,
+      "wall_time_s": 4.9456017799675465
+    },
+    {
+      "dt_factor": 0.4,
+      "dt_s": 1.875419496850487e-06,
+      "steps": 1622,
+      "peak_overlap_m": 0.00018379546775489086,
+      "peak_overlap_ref_m": 0.00018379523729673372,
+      "peak_overlap_rel_error": 1.2538853592276769e-06,
+      "contact_time_s": 0.0005401208150929402,
+      "contact_time_ref_s": 0.0005544891763646121,
+      "contact_time_rel_error": 0.02591278943599019,
+      "restitution": 1.0000003923692513,
+      "wall_time_s": 9.54077616147697
+    },
+    {
+      "dt_factor": 0.2,
+      "dt_s": 9.377097484252435e-07,
+      "steps": 3243,
+      "peak_overlap_m": 0.00018379479157829004,
+      "peak_overlap_ref_m": 0.00018379523729673372,
+      "peak_overlap_rel_error": 2.4250815757568003e-06,
+      "contact_time_s": 0.0005401208150929402,
+      "contact_time_ref_s": 0.0005544891763646121,
+      "contact_time_rel_error": 0.02591278943599019,
+      "restitution": 0.9999999796148052,
+      "wall_time_s": 18.089244920760393
+    }
+  ]
+}
