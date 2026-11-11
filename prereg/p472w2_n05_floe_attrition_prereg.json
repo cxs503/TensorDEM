@@ -1,0 +1,101 @@
+{
+ "node": "p472w2-N05",
+ "title": "Floe attrition chain: Wadell roundness -> Archard corner wear -> mu_eff(R) -> multi-pass ice resistance decay",
+ "repository": "TensorDEM",
+ "registered_at_utc": "2026-11-11T07:00:00Z",
+ "registered_before_production_run": true,
+ "note": "Predictions below were fixed from the analytic structure of the model (see derivations in the 'derivation' fields) BEFORE the production verification run that produced artifacts/floe_attrition/criteria.json. The only quantity left free is the exponent beta of the roundness-decay fit; it is reported, not used as a criterion.",
+ "model": {
+  "shape_family_2d": "regular n-gon with corner fillets of radius r (single wear state variable)",
+  "shape_family_3d": "Minkowski sum cube(a-2r) (+) ball(r) (Steiner volume/surface)",
+  "wear_law": "Archard: dV = k * W * ds / H, W = p * A_patch(r) (pressure controlled)",
+  "effective_friction": "mu_eff(R,C) = mu_sph(C) + kappa_i * I(R) * Z(C)/Z_ref, kappa_i = 1, Z_ref = 4",
+  "resistance": "R(N) = R_crush + mu_eff(R(N),C) * F_n(b_N) + sigma_c * b_N * A_b"
+ },
+ "design_of_experiment": {
+  "roundness_levels": [0.80, 0.90, 0.99],
+  "concentrations": [0.30, 0.50, 0.70],
+  "replicates_per_cell": 8,
+  "replicate_disorder": "regular-polygon side count n in {3,4,5,6} restricted to the side counts whose sharp roundness is below the level; fillet radius solved to hit the target roundness",
+  "anova_model": "balanced two-way with interaction, alpha = 0.05"
+ },
+ "production_parameters": {
+  "edge_length_m": 0.6,
+  "initial_fillet_ratio_r0_over_a": 0.02,
+  "wear_coefficient_k": 0.005,
+  "hardness_Pa": 3.0e7,
+  "contact_pressure_Pa": 2.0e5,
+  "slip_per_transit_m": 2.5,
+  "n_transits": 400,
+  "pressure_sweep_Pa": [5.0e4, 1.0e5, 2.0e5, 4.0e5, 8.0e5],
+  "decay_scenario": {
+   "concentration": 0.70,
+   "contact_pressure_Pa": 8.0e5,
+   "n_transits": 400,
+   "slip_per_transit_m": 2.5,
+   "rest_time_per_transit_s": 300.0,
+   "freeze_bond_time_constant_s": 3.6e5,
+   "bond_strength_max_Pa": 2.0e4,
+   "bonded_area_m2_per_m": 0.15,
+   "hull_contact_length_m": 5.0,
+   "load_coupling_beta_c": 0.30
+  }
+ },
+ "predictions": [
+  {
+   "id": "C1",
+   "statement": "the closed-form Wadell roundness / sphericity equals an independent exact computation for analytic polygons and polyhedra",
+   "threshold": "worst relative error <= 1e-12",
+   "derivation": "2D: 4*pi*A/P^2 with A(r), P(r) exact for the filleted polygon, cross-checked by an exact Green's-theorem boundary integral (facet shoelace term + closed arc term). 3D: pi^(1/3)(6V)^(2/3)/A with exact Platonic (V,A) vs the ConvexHull descriptor; Steiner identity dV/dr = A at fixed inner cube."
+  },
+  {
+   "id": "C2",
+   "statement": "the geometry-inverted attrition reproduces the Archard-type closed form of the same law",
+   "threshold": "relative error <= 10 % at the production cadence",
+   "derivation": "V(r) = c2 r^2 and A_patch = chi r give r(s) = r0 + Omega s with Omega = k p chi / (2 c2 H); the only error is the explicit-patch discretisation, O(dr/r) per step."
+  },
+  {
+   "id": "C3.a",
+   "statement": "R(s) is a saturating decay that a two-parameter fit 1 - R = (1 - R0) exp(-(s/tau)^beta) reproduces",
+   "threshold": "R^2 >= 0.99 in every pressure case, fit window = up to 63.2 % (1/e) of the residual",
+   "derivation": "R(r) is smooth and monotone on [R0, 1]; the fit window is normalised by the same 1/e definition that defines tau."
+  },
+  {
+   "id": "C3.b",
+   "statement": "the relaxation sliding distance tau scales with the corner contact pressure as a power law with exponent -1",
+   "threshold": "|measured exponent - (-1)| / 1 <= 0.20",
+   "derivation": "every term of the attrition rate is linear in p (load W = p A_patch), so d r / d s is proportional to p and the sliding needed to reach a given roundness scales as 1/p exactly, independent of k, H and the shape family."
+  },
+  {
+   "id": "C4",
+   "statement": "mu_eff tends to the m9375 disk-shear-cell baseline as R -> 1",
+   "threshold": "bit-identical at R = 1 and <= 1 % for a near-circle polygon and for the chain run to full rounding",
+   "derivation": "I(R) = R_c/R_ins - 1 is exactly 0 for a circle, so the interlocking term vanishes identically and mu_eff returns mu_sph(C)."
+  },
+  {
+   "id": "C5",
+   "statement": "3x3 design matrix: roundness and concentration main effects plus their interaction are reported from a balanced ANOVA; the interaction is an output, not an assumption",
+   "threshold": "balanced design, 8 replicates per cell, ANOVA table with SS/df/MS/F/p and eta^2; if p(interaction) < 0.05 the mechanisms must be reported separately",
+   "derivation": "the interlocking term is multiplicative in shape and contact density, so a non-zero interaction is expected; the criterion prevents narrating the two mechanisms as one blended effect."
+  },
+  {
+   "id": "C6",
+   "statement": "the multi-pass resistance change decomposes into a rounding and a consolidation share that close to 100 %",
+   "threshold": "|closure residual| / |delta_total| <= 1e-9",
+   "derivation": "the two terms are the two halves of the total difference of R(N) = R_crush + mu*F_n(b) + sigma_c b A_b."
+  },
+  {
+   "id": "C7",
+   "statement": "the Archard ledger equals the geometric material loss and zero sliding is an exact fixed point",
+   "threshold": "relative conservation error <= 1e-6; zero-slip wear volume identically 0",
+   "derivation": "the state update inverts worn_volume(r) exactly at every step, so the ledger closes to brentq tolerance; k*W*0 = 0 exactly."
+  }
+ ],
+ "falsification_protocol": "A criterion that fails is reported as an honest FAIL with its measured number; no threshold is relaxed after the run. Parameters that cannot be identified from the data (principally kappa_i and the pair k/H) are flagged as limitations and a sensitivity sweep is reported instead of a tuned value.",
+ "known_limitations_declared_up_front": [
+  "kappa_i = 1 is a geometric O(1) coefficient, NOT calibrated against a DEM shear cell of rounded polygons at intermediate roundness (roadmap).",
+  "the DEM sphere baseline mu_sph(C) comes from a reduced shear window (1500 shear steps) of the m9375 shear cell; a full-length rerun is the refinement.",
+  "mu_eff is a stress ratio of a 2D disk field; the 3D rounded-cube family is verified geometrically but its friction closure inherits the 2D baseline.",
+  "the consolidation model (b(t) = 1 - exp(-t/t_c) with a load amplification beta_c) is a declared phenomenological stand-in, not a freeze-bond DEM."
+ ]
+}

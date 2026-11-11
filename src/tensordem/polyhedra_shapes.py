@@ -135,7 +135,7 @@ def make_icosahedron() -> PolyhedronSpec:
         for sz in (-1, 1):
             verts.append([0.0, sy, sz * phi])
     for sx in (-1, 1):
-        for sz in (-1, 1):
+        for sy in (-1, 1):
             verts.append([sx, sy * phi, 0.0])
     for sx in (-1, 1):
         for sy in (-1, 1):
