@@ -1,0 +1,165 @@
+{
+  "benchmark": "pid_mdof",
+  "mission_id": 14587,
+  "campaign_node": "p307w1-n010",
+  "repro_cmd": "python benchmarks/benchmark_pid_mdof.py",
+  "all_pass": true,
+  "benchmarks": [
+    {
+      "name": "den_hartog_equivalence",
+      "description": "N=1 MDOF solve vs Den Hartog closed form",
+      "ref": "Den Hartog closed form (analytic)",
+      "got": "MDOF solve (N=1, max rel dev)",
+      "ref_value": "analytic",
+      "got_value": 5.878024723996923e-15,
+      "tolerance": 1e-10,
+      "pass": "True"
+    },
+    {
+      "name": "den_hartog_optimum",
+      "description": "Den Hartog optimum reproduces classical sqrt(1+2/mu)",
+      "results": [
+        {
+          "mu": 0.01,
+          "ref_peak": 14.177446878757825,
+          "got_peak": 14.179744809056782,
+          "rel_err": 0.00016208350619176262,
+          "pass": true
+        },
+        {
+          "mu": 0.03,
+          "ref_peak": 8.225975119502044,
+          "got_peak": 8.230044953772017,
+          "rel_err": 0.0004947540213590863,
+          "pass": true
+        },
+        {
+          "mu": 0.05,
+          "ref_peak": 6.4031242374328485,
+          "got_peak": 6.408443159264162,
+          "rel_err": 0.0008306760315876535,
+          "pass": true
+        },
+        {
+          "mu": 0.1,
+          "ref_peak": 4.58257569495584,
+          "got_peak": 4.590220174341687,
+          "rel_err": 0.0016681621635321647,
+          "pass": true
+        },
+        {
+          "mu": 0.2,
+          "ref_peak": 3.3166247903554,
+          "got_peak": 3.327539403039758,
+          "rel_err": 0.003290879546006296,
+          "pass": true
+        }
+      ],
+      "pass": true
+    },
+    {
+      "name": "in32_d02_regression",
+      "description": "IN32-D02 surface regression lock at reference mass ratio",
+      "ref": 0.010484579415903784,
+      "got": 0.010484579415903784,
+      "rel_err": 0.0,
+      "tolerance": 1e-12,
+      "pass": true
+    },
+    {
+      "name": "modal_truncation_convergence",
+      "description": "IL convergence with modal truncation",
+      "results": [
+        {
+          "n_modes": 6,
+          "il_peak_db": 0.956898276488227
+        },
+        {
+          "n_modes": 8,
+          "il_peak_db": 0.9565375524234438
+        },
+        {
+          "n_modes": 12,
+          "il_peak_db": 0.9563507801348183
+        },
+        {
+          "n_modes": 16,
+          "il_peak_db": 0.9563507801348183
+        }
+      ],
+      "ref": "N=16: 0.9564 dB",
+      "got": "N=12: 0.9564 dB",
+      "rel_err": 0.0,
+      "tolerance": 0.01,
+      "pass": true
+    },
+    {
+      "name": "negative_control_zero_filling",
+      "description": "Zero filling gives zero IL",
+      "ref": 0.0,
+      "got_model_A": 0.0,
+      "got_model_B": 0.0,
+      "max_abs_il": 0.0,
+      "tolerance": 0.5,
+      "pass": true
+    },
+    {
+      "name": "detuning_robustness",
+      "description": "\u00b120% detuning IL > 50% of peak",
+      "peak_il_db": 1.8423408047408507,
+      "nu_opt": 0.834113712374582,
+      "results": [
+        {
+          "pct": -20,
+          "nu": 0.6672909698996656,
+          "il_db": 1.5629525637209745,
+          "ratio": 0.8483514883343335,
+          "pass": true
+        },
+        {
+          "pct": -10,
+          "nu": 0.7507023411371238,
+          "il_db": 1.764212240559512,
+          "ratio": 0.9575927732912974,
+          "pass": true
+        },
+        {
+          "pct": -5,
+          "nu": 0.7924080267558529,
+          "il_db": 1.8225452560043118,
+          "ratio": 0.9892552188576622,
+          "pass": true
+        },
+        {
+          "pct": 0,
+          "nu": 0.834113712374582,
+          "il_db": 1.8423408047408507,
+          "ratio": 1.0,
+          "pass": true
+        },
+        {
+          "pct": 5,
+          "nu": 0.8758193979933111,
+          "il_db": 1.8210238972530939,
+          "ratio": 0.9884294439807757,
+          "pass": true
+        },
+        {
+          "pct": 10,
+          "nu": 0.9175250836120402,
+          "il_db": 1.7613640672871704,
+          "ratio": 0.9560468197603262,
+          "pass": true
+        },
+        {
+          "pct": 20,
+          "nu": 1.0009364548494983,
+          "il_db": 1.5584906096864795,
+          "ratio": 0.8459295943921198,
+          "pass": true
+        }
+      ],
+      "pass": true
+    }
+  ]
+}
