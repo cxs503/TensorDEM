@@ -1,23 +1,41 @@
-"""Direct-shear cell for coarse-graining verification (numpy kernel).
+"""Direct-shear cell for macroscopic-friction measurement (numpy kernel).
 
-Drives a rectangular shear box with a moving top platen to measure the
-macroscopic shear response.  Uses the lightweight ``granular3d_core`` kernel
-so runs can be sharded across cluster nodes without a torch dependency.
+This module is the *measurement device* for the macroscopic (bulk) friction
+coefficient of a sphere assembly: a rough floor, frictionless side walls and a
+stress-servo top platen that is dragged sideways.  The measured pair
+``(sigma_n, tau)`` at several normal-stress levels gives the Mohr-Coulomb
+envelope ``tau = c + sigma_n tan(phi)`` and hence the macroscopic friction
+coefficient ``mu_macro = tau / sigma_n``.
 
 Protocol
 --------
-1. Fill box with HCP packing, settle under gravity.
-2. Apply normal load via top platen (constant stress or constant height).
-3. Shear: move top platen laterally at constant velocity.
-4. Record shear stress vs normal stress → Mohr-Coulomb fit → friction angle.
+1. HCP fill of the box, gravity settle (platen parked above the bed).
+2. **Consolidation under a stress servo**: the platen velocity is driven by the
+   force error ``N_target - N_measured`` so the normal stress is *held* at the
+   target.  A dead-load platen loses contact when the bed dilates under shear
+   (``sigma_n -> 0``, ``mu`` undefined); the servo cannot.
+3. Shear: the platen advances at ``shear_velocity`` while the servo keeps
+   ``sigma_n`` on target; ``tau`` and ``sigma_n`` are sampled.
+4. Steady-state means over the last part of the shear window, with a
+   block-average standard error, plus a floor-traction cross-check.
+
+Known defect fixed here (mission m13798, 2026-11-11)
+---------------------------------------------------
+The previous revision never executed: ``mass[:, None]`` indexed a Python float
+(``TypeError: 'float' object is not subscriptable`` at the first step).  It also
+fitted a Mohr-Coulomb *slope* inside a single run, where ``sigma_n`` is
+essentially constant -- an ill-posed regression that turns normal-stress
+noise into a "friction angle", and it used ``sum(|f_z|)`` as the applied normal
+stress.  The device now measures ``tau/sigma`` per level and only fits the
+envelope across *distinct* stress levels (:func:`measure_macro_friction`).
 
 All quantities are SI (m, kg, s, N, Pa).
 """
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
-from typing import Optional
+from dataclasses import dataclass, replace
+from typing import Optional, Sequence
 
 import numpy as np
 
@@ -42,22 +60,31 @@ class ShearCellCase:
     kn: float = 1.0e5
     kt_ratio: float = 0.5
     gravity: float = 9.81
+    species: str = "glass_bead"      # free-form label carried into the results
     # geometry
-    box_width: float = 0.1      # x direction (shear direction)
-    box_depth: float = 0.05     # y direction
-    fill_height: float = 0.1    # z direction
+    box_width: float = 0.08     # x direction (shear direction)
+    box_depth: float = 0.032    # y direction
+    fill_height: float = 0.05   # z direction
     packing_gap: float = 0.02
     jitter: float = 0.01
     # numerics
     dt: Optional[float] = None
     seed: int = 6107
     # protocol
-    settle_time: float = 0.5
-    normal_stress: float = 5000.0   # Pa, applied by top platen
-    shear_velocity: float = 0.01    # m/s, top platen lateral speed
-    shear_strain_target: float = 0.2  # total engineering shear strain
-    wall_mu: float = 0.0            # side wall friction
+    settle_time: float = 0.02
+    consol_time: float = 0.03
+    normal_stress: float = 800.0     # Pa, servo target
+    shear_velocity: float = 0.05     # m/s, platen lateral speed
+    shear_strain_target: float = 0.40
+    wall_mu: float = 0.0             # side walls -- frictionless by default
+    floor_mu: Optional[float] = None  # None -> mu (rough floor)
+    platen_mu: Optional[float] = None  # None -> mu (rough platen)
+    sample_every: int = 25
+    servo_relax_steps: float = 50.0   # platen moves out the error over ~50 steps
+    servo_v_max_frac: float = 0.02    # |v_z| <= frac * shear_velocity (fine control)
+    servo_v_approach_frac: float = 1.0  # detached-platen approach speed / shear_velocity
 
+    # ------------------------------------------------------------------ props
     @property
     def mass(self) -> float:
         return self.density * 4.0 / 3.0 * math.pi * self.radius ** 3
@@ -73,6 +100,10 @@ class ShearCellCase:
     @property
     def kr(self) -> float:
         return self.kt * self.radius ** 2
+
+    @property
+    def area(self) -> float:
+        return self.box_width * self.box_depth
 
     @property
     def zeta(self) -> float:
@@ -97,217 +128,400 @@ class ShearCellCase:
 
     @property
     def shear_time(self) -> float:
-        """Time to reach target shear strain."""
+        """Time to reach the target engineering shear strain."""
         return self.shear_strain_target * self.fill_height / self.shear_velocity
 
+    @property
+    def shear_rate(self) -> float:
+        """Engineering shear rate ``gamma_dot = v / H`` (1/s)."""
+        return self.shear_velocity / self.fill_height
 
-def _damping_ratio(restitution: float) -> float:
-    e = max(min(restitution, 1.0 - 1e-12), 1e-6)
-    ln_e = math.log(e)
-    return abs(ln_e) / math.sqrt(math.pi ** 2 + ln_e ** 2)
+    @property
+    def floor_mu_value(self) -> float:
+        return self.mu if self.floor_mu is None else self.floor_mu
+
+    @property
+    def platen_mu_value(self) -> float:
+        return self.mu if self.platen_mu is None else self.platen_mu
+
+
+# ---------------------------------------------------------------------------
+# plane-wall contact (numpy)
+# ---------------------------------------------------------------------------
+class _WallState:
+    """Per-particle tangential/rolling spring state for one wall."""
+
+    __slots__ = ("tang", "roll")
+
+    def __init__(self) -> None:
+        self.tang: dict[int, np.ndarray] = {}
+        self.roll: dict[int, np.ndarray] = {}
+
+
+def _plane_contact(case: ShearCellCase, pos: np.ndarray, vel: np.ndarray,
+                   omega: np.ndarray, state: _WallState, normal: np.ndarray,
+                   point: np.ndarray, surf_vel: np.ndarray, mu: float,
+                   mu_roll: float, dt: float) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Contact force/torque from one infinite plane wall.
+
+    ``normal`` points *into* the particle domain, so a particle is in contact
+    when ``(pos - point) . normal < radius``.  Returns
+    ``(force (n,3), torque (n,3), f_n (n,) >= 0)``.
+    """
+    n_part = len(pos)
+    force = np.zeros((n_part, 3), dtype=np.float64)
+    torque = np.zeros((n_part, 3), dtype=np.float64)
+    f_norm = np.zeros(n_part, dtype=np.float64)
+    r = case.radius
+    d = (pos - point) @ normal
+    active = d < r
+    if not active.any():
+        state.tang.clear()
+        state.roll.clear()
+        return force, torque, f_norm
+    idx = np.nonzero(active)[0]
+    pen = r - d[idx]
+    sv = surf_vel[idx] if surf_vel.ndim == 2 else np.broadcast_to(surf_vel, (n_part, 3))[idx]
+    v_rel = vel[idx] - sv
+    v_n = v_rel @ normal
+    f_n = np.maximum(case.kn * pen - case.gamma_wall * v_n, 0.0)
+    f_norm[idx] = f_n
+
+    f = f_n[:, None] * normal[None, :]
+    if mu > 0.0:
+        v_t = v_rel - v_n[:, None] * normal[None, :]
+        tang = np.array([state.tang.get(int(i), np.zeros(3)) for i in idx])
+        tang = tang + v_t * dt
+        tnorm = np.linalg.norm(tang, axis=1)
+        cap = mu * f_n / case.kt
+        scale = np.where(tnorm > cap, cap / np.maximum(tnorm, 1e-30), 1.0)
+        tang = tang * scale[:, None]
+        for k, i in enumerate(idx):
+            state.tang[int(i)] = tang[k]
+        for i in list(state.tang):
+            if not active[i]:
+                del state.tang[i]
+        f_t = -case.kt * tang
+        f = f + f_t
+        # contact point offset from the particle centre is opposite the normal
+        torque[idx] += np.cross(np.broadcast_to(-normal * r, f_t.shape), f_t)
+    else:
+        state.tang.clear()
+
+    if mu_roll > 0.0:
+        spin = omega[idx]
+        roll = np.array([state.roll.get(int(i), np.zeros(3)) for i in idx])
+        roll = roll + spin * dt
+        rnorm = np.linalg.norm(roll, axis=1)
+        cap_r = mu_roll * r * f_n / case.kr
+        scale_r = np.where(rnorm > cap_r, cap_r / np.maximum(rnorm, 1e-30), 1.0)
+        roll = roll * scale_r[:, None]
+        for k, i in enumerate(idx):
+            state.roll[int(i)] = roll[k]
+        torque[idx] += -case.kr * roll
+    else:
+        state.roll.clear()
+
+    force[idx] = f
+    return force, torque, f_norm
+
+
+# ---------------------------------------------------------------------------
+# device
+# ---------------------------------------------------------------------------
+def _steady(hist: Sequence[float], frac: float = 0.5, n_blocks: int = 10) -> dict:
+    """Mean + block standard error over the last ``frac`` of a history."""
+    arr = np.asarray(hist, dtype=np.float64)
+    if arr.size == 0:
+        return {"mean": float("nan"), "sem": float("nan"), "n": 0}
+    head = int(math.floor((1.0 - frac) * arr.size))
+    win = arr[head:]
+    if win.size < 2:
+        return {"mean": float(win.mean()) if win.size else float("nan"),
+                "sem": float("nan"), "n": int(win.size)}
+    blocks = np.array_split(win, min(n_blocks, win.size))
+    means = np.array([b.mean() for b in blocks])
+    sem = float(means.std(ddof=1) / math.sqrt(len(means))) if len(means) > 1 else float("nan")
+    return {"mean": float(win.mean()), "sem": sem, "n": int(win.size)}
 
 
 def simulate_shear_cell(case: ShearCellCase) -> dict:
-    """Run a direct-shear simulation and return macroscopic response.
+    """Run one direct-shear test at a single normal-stress level.
 
-    Returns
-    -------
-    dict with:
-        normal_stress_applied: Pa
-        shear_stress_history: list of Pa
-        normal_stress_history: list of Pa (measured)
-        shear_strain_history: list
-        friction_angle_deg: float (from Mohr-Coulomb fit)
-        r_squared: float (linear fit quality)
-        n_particles: int
-        total_steps: int
+    Returns the steady-state traction pair and the raw histories.
     """
     r = case.radius
     mass = case.mass
     inertia = case.inertia
-    kn = case.kn
-    kt = case.kt
-    kr = case.kr
-    mu = case.mu
-    mu_r = case.mu_rolling
-    g = case.gravity
     dt = case.timestep
-    zeta = _damping_ratio(case.restitution)
-    gamma = 2.0 * zeta * math.sqrt(kn * 0.5 * mass)
-    gamma_w = 2.0 * zeta * math.sqrt(kn * mass)
+    g = case.gravity
 
-    # Initial packing
-    pos = hcp_positions_in_box(
-        r, case.box_width, case.box_depth, case.fill_height,
-        packing_gap=case.packing_gap, jitter=case.jitter, seed=case.seed
-    )
+    pos = hcp_positions_in_box(r, case.box_width, case.box_depth, case.fill_height,
+                              packing_gap=case.packing_gap, jitter=case.jitter,
+                              seed=case.seed, margin=0.2 * r)
     n = len(pos)
     vel = np.zeros((n, 3), dtype=np.float64)
     omega = np.zeros((n, 3), dtype=np.float64)
-
     state = ContactState()
 
-    # Identify top and bottom particles for platen control
-    z_max = pos[:, 2].max()
-    z_min = pos[:, 2].min()
-    top_mask = pos[:, 2] > z_max - 2.5 * r
-    bottom_mask = pos[:, 2] < z_min + 2.5 * r
-    top_indices = np.where(top_mask)[0]
-    bottom_indices = np.where(bottom_mask)[0]
+    mat = Material3D(radius=r, density=case.density, mu=case.mu,
+                     mu_rolling=case.mu_rolling, restitution=case.restitution,
+                     kn=case.kn, kt_ratio=case.kt_ratio, gravity=g)
 
-    # Normal force from applied stress
-    area = case.box_width * case.box_depth
-    normal_force = case.normal_stress * area
-    # Distribute among top particles
-    n_top = len(top_indices)
-    force_per_top = normal_force / max(n_top, 1)
+    floor_state = _WallState()
+    side_state = _WallState()
+    platen_state = _WallState()
 
-    # Shear protocol
-    total_time = case.settle_time + case.shear_time
-    total_steps = int(math.ceil(total_time / dt))
-    settle_steps = int(math.ceil(case.settle_time / dt))
+    floor_n = np.array([0.0, 0.0, 1.0])
+    floor_p = np.array([0.0, 0.0, 0.0])
+    side_walls = [
+        (np.array([1.0, 0.0, 0.0]), np.array([0.0, 0.0, 0.0])),
+        (np.array([-1.0, 0.0, 0.0]), np.array([case.box_width, 0.0, 0.0])),
+        (np.array([0.0, 1.0, 0.0]), np.array([0.0, 0.0, 0.0])),
+        (np.array([0.0, -1.0, 0.0]), np.array([0.0, case.box_depth, 0.0])),
+    ]
+    platen_n = np.array([0.0, 0.0, -1.0])
+    area = case.area
+    n_target = case.normal_stress * area
 
-    shear_stress_history = []
-    normal_stress_history = []
-    shear_strain_history = []
-    top_displacement_x = 0.0
+    z_platen = float(pos[:, 2].max()) + 1.02 * r
+    vz_platen = 0.0
+    vx_platen = 0.0
 
-    # Platen positions
-    platen_z = z_max + r  # just above top particles
-    platen_x_offset = 0.0
-
-    for step in range(total_steps):
-        t_now = step * dt
-        is_shearing = t_now > case.settle_time
-
-        if is_shearing:
-            shear_t = t_now - case.settle_time
-            platen_x_offset = case.shear_velocity * shear_t
-            top_displacement_x = platen_x_offset
-
-        # Build pairs
+    def step(drive: bool, servo: bool) -> tuple[float, float, float]:
+        """One velocity-Verlet step. Returns (tau, sigma, tau_floor)."""
+        nonlocal pos, vel, omega, z_platen, vz_platen
         iu, ju = build_pairs(pos, r)
-
-        # Contact forces
-        force, torque = contact_forces(
-            pos, vel, omega, iu, ju, state,
-            Material3D(
-                radius=r, density=case.density, mu=mu, mu_rolling=mu_r,
-                restitution=case.restitution, kn=kn, kt_ratio=case.kt_ratio,
-                gravity=g
-            ),
-            dt
-        )
-
-        # Gravity
+        force, torque = contact_forces(pos, vel, omega, iu, ju, state, mat, dt)
         force[:, 2] -= mass * g
 
-        # Bottom wall: fixed
-        bottom_z = r
-        for i in bottom_indices:
-            if pos[i, 2] < bottom_z + r:
-                overlap = bottom_z + r - pos[i, 2]
-                if overlap > 0:
-                    f_n = kn * overlap - gamma_w * vel[i, 2]
-                    f_n = max(f_n, 0.0)
-                    force[i, 2] += f_n
-                    # Friction on bottom
-                    if mu > 0:
-                        v_t = vel[i, :2].copy()
-                        f_t = -kt * v_t * dt
-                        f_t_mag = np.linalg.norm(f_t)
-                        f_limit = mu * f_n
-                        if f_t_mag > f_limit:
-                            f_t = f_t * f_limit / f_t_mag
-                        force[i, :2] += f_t
+        f_f, t_f, fn_floor = _plane_contact(
+            case, pos, vel, omega, floor_state, floor_n, floor_p,
+            np.zeros(3), case.floor_mu_value, case.mu_rolling, dt)
+        force += f_f
+        torque += t_f
 
-        # Side walls
-        for dim in [0, 1]:
-            lo = r if dim == 0 else r
-            hi = case.box_width - r if dim == 0 else case.box_depth - r
-            for i in range(n):
-                if i in top_indices or i in bottom_indices:
-                    continue
-                if pos[i, dim] < lo + r:
-                    overlap = lo + r - pos[i, dim]
-                    if overlap > 0:
-                        f_n = kn * overlap - gamma_w * vel[i, dim]
-                        f_n = max(f_n, 0.0)
-                        force[i, dim] += f_n
-                elif pos[i, dim] > hi - r:
-                    overlap = pos[i, dim] - (hi - r)
-                    if overlap > 0:
-                        f_n = kn * overlap + gamma_w * vel[i, dim]
-                        f_n = max(f_n, 0.0)
-                        force[i, dim] -= f_n
+        for normal, point in side_walls:
+            f_s, t_s, _ = _plane_contact(
+                case, pos, vel, omega, side_state, normal, point,
+                np.zeros(3), case.wall_mu, 0.0, dt)
+            force += f_s
+            torque += t_s
 
-        # Top platen: apply normal force + shear displacement
-        for i in top_indices:
-            # Normal force downward
-            force[i, 2] -= force_per_top
-            # Shear: impose x velocity
-            if is_shearing:
-                vel[i, 0] = case.shear_velocity
-                # Also constrain z to maintain contact
-                vel[i, 2] = min(vel[i, 2], 0.0)
+        surf = np.array([vx_platen, 0.0, vz_platen])
+        f_p, t_p, fn_p = _plane_contact(
+            case, pos, vel, omega, platen_state, platen_n,
+            np.array([0.0, 0.0, z_platen]), surf,
+            case.platen_mu_value, case.mu_rolling, dt)
+        force += f_p
+        torque += t_p
 
-        # Integration (Velocity Verlet)
-        acc = force / mass[:, None]
+        # ---- servo on the platen normal stress ---------------------------
+        n_meas = float(fn_p.sum())
+        if servo:
+            # two-regime servo: approach while detached (the bed keeps compacting
+            # under gravity, so a slow position servo is simply left behind), then
+            # fine force control near the target
+            v_ctrl = case.servo_v_max_frac * case.shear_velocity
+            if n_meas < 0.2 * n_target:
+                vz_platen = -case.servo_v_approach_frac * case.shear_velocity
+            else:
+                # gain: at least 4 contacts' worth of stiffness, so the servo does
+                # not slam when the platen momentarily carries one contact
+                k_total = case.kn * max(int((fn_p > 0).sum()), 4)
+                dz = (n_meas - n_target) / (k_total * case.servo_relax_steps)
+                vz_platen = float(np.clip(dz / dt, -v_ctrl, v_ctrl))
+        else:
+            vz_platen = 0.0
+
+        # ---- integrate (symplectic Euler; forces already at t) -----------
+        acc = force / mass
         ang_acc = torque / inertia
-
-        pos = pos + vel * dt + 0.5 * acc * dt ** 2
         vel = vel + acc * dt
         omega = omega + ang_acc * dt
+        pos = pos + vel * dt
+        z_platen += vz_platen * dt
 
-        # Record during shearing
-        if is_shearing and step % 50 == 0:
-            shear_strain = top_displacement_x / case.fill_height
-            # Measure shear stress from total x-force on top particles
-            shear_force = sum(force[i, 0] for i in top_indices)
-            shear_stress = abs(shear_force) / area
-            # Measured normal stress from z-force balance
-            normal_force_measured = sum(abs(force[i, 2]) for i in top_indices) / max(n_top, 1)
-            normal_stress_measured = normal_force_measured * n_top / area
+        # ---- measured tractions ------------------------------------------
+        tau = -float(f_p[:, 0].sum()) / area      # platen traction on the sand
+        sigma = n_meas / area
+        tau_floor = -float(f_f[:, 0].sum()) / area
+        return tau, sigma, tau_floor
 
-            shear_stress_history.append(float(shear_stress))
-            normal_stress_history.append(float(normal_stress_measured))
-            shear_strain_history.append(float(shear_strain))
+    # ---- phase 1: gravity settle (platen parked) ------------------------
+    n_settle = max(int(round(case.settle_time / dt)), 50)
+    for _ in range(n_settle):
+        step(drive=False, servo=False)
+        z_platen = max(z_platen, float(pos[:, 2].max()) + 1.02 * r)
+    # park the platen just in contact: the servo only has to absorb the
+    # consolidation, not close a free gap (the previous version spent the whole
+    # consolidation window in free fall and measured sigma_n ~ 0)
+    z_platen = float(pos[:, 2].max()) + 0.995 * r
 
-    # Fit Mohr-Coulomb: τ = c + σ·tan(φ)
-    if len(shear_stress_history) > 10:
-        # Use steady-state portion (last 60%)
-        n_ss = int(0.6 * len(shear_stress_history))
-        ss_tau = np.array(shear_stress_history[-n_ss:])
-        ss_sigma = np.array(normal_stress_history[-n_ss:])
+    # ---- phase 2: consolidation under the stress servo ------------------
+    n_consol = max(int(round(case.consol_time / dt)), 200)
+    sigma_rel = float("inf")
+    settled = 0
+    for _ in range(n_consol):
+        tau, sigma, _ = step(drive=False, servo=True)
+        sigma_rel = abs(sigma / case.normal_stress - 1.0) if case.normal_stress > 0 else 0.0
+        settled = settled + 1 if sigma_rel < 0.02 else 0
+        if settled >= 100:
+            break
 
-        # Linear fit
-        A = np.vstack([ss_sigma, np.ones_like(ss_sigma)]).T
-        result = np.linalg.lstsq(A, ss_tau, rcond=None)
-        tan_phi = result[0][0]
-        cohesion = result[0][1]
-        friction_angle = math.degrees(math.atan(tan_phi))
+    # ---- phase 3: shear -------------------------------------------------
+    vx_platen = case.shear_velocity
+    n_shear = max(int(round(case.shear_time / dt)), 200)
+    tau_hist: list[float] = []
+    sig_hist: list[float] = []
+    floor_hist: list[float] = []
+    disp_hist: list[float] = []
+    bed_hist: list[float] = []
+    platen_hist: list[float] = []
+    disp = 0.0
+    for k in range(n_shear):
+        tau, sigma, tau_floor = step(drive=True, servo=True)
+        disp += case.shear_velocity * dt
+        if k % case.sample_every == 0:
+            tau_hist.append(tau)
+            sig_hist.append(sigma)
+            floor_hist.append(tau_floor)
+            disp_hist.append(disp / case.fill_height)
+            bed_hist.append(float(pos[:, 2].max()))
+            platen_hist.append(float(z_platen))
 
-        # R²
-        predicted = A @ result[0]
-        ss_res = np.sum((ss_tau - predicted) ** 2)
-        ss_tot = np.sum((ss_tau - np.mean(ss_tau)) ** 2)
-        r_squared = 1.0 - ss_res / ss_tot if ss_tot > 0 else 0.0
+    tau_s = _steady(tau_hist)
+    sig_s = _steady(sig_hist)
+    floor_s = _steady(floor_hist)
+    mu_macro = tau_s["mean"] / sig_s["mean"] if sig_s["mean"] > 0 else float("nan")
+    phi_deg = math.degrees(math.atan(mu_macro)) if mu_macro == mu_macro else float("nan")
+    # stationarity diagnostic: linear drift fit of tau over the steady window
+    win = np.asarray(tau_hist[int(math.floor(0.5 * len(tau_hist))):], dtype=float)
+    if win.size >= 3:
+        gam = np.arange(win.size, dtype=float)
+        coef = np.polyfit(gam, win, 1)
+        pred = np.polyval(coef, gam)
+        ss_res = float(((win - pred) ** 2).sum())
+        ss_tot = float(((win - win.mean()) ** 2).sum())
+        r2 = 1.0 - ss_res / ss_tot if ss_tot > 0 else 0.0
+        drift_rel = float(coef[0] * win.size / max(abs(win.mean()), 1e-30))
     else:
-        friction_angle = 0.0
-        r_squared = 0.0
-        cohesion = 0.0
-        tan_phi = 0.0
+        r2, drift_rel = float("nan"), float("nan")
+
+    # ---- validity gate ---------------------------------------------------
+    # A friction coefficient is only defined when the platen actually carries
+    # the target normal stress.  The gate is explicit so that a detached-platen
+    # run can never be silently averaged into a "friction angle".
+    valid = bool(sig_s["mean"] > 0.5 * case.normal_stress and tau_s["mean"] > 0.0)
+    invalid_reason = "" if valid else (
+        "platen lost contact or never loaded: measured sigma_n = %.4g Pa vs "
+        "target %.4g Pa (mu is undefined, not 0)" % (sig_s["mean"], case.normal_stress))
 
     return {
+        "valid": valid,
+        "invalid_reason": invalid_reason,
         "normal_stress_applied": case.normal_stress,
-        "shear_stress_history": shear_stress_history,
-        "normal_stress_history": normal_stress_history,
-        "shear_strain_history": shear_strain_history,
-        "friction_angle_deg": friction_angle,
-        "cohesion_pa": cohesion,
-        "tan_phi": tan_phi,
-        "r_squared": r_squared,
+        "normal_stress_measured": sig_s["mean"],
+        "normal_stress_sem": sig_s["sem"],
+        "normal_stress_rel_err": float(sig_s["mean"] / case.normal_stress - 1.0),
+        "shear_stress": tau_s["mean"],
+        "shear_stress_sem": tau_s["sem"],
+        "floor_shear_stress": floor_s["mean"],
+        "tau_platen_vs_floor_rel": float(abs(floor_s["mean"] / tau_s["mean"] - 1.0))
+        if tau_s["mean"] > 0 else float("nan"),
+        "mu_macro": mu_macro,
+        "friction_angle_deg": phi_deg,
+        "r_squared": r2,
+        "shear_stress_drift_rel": drift_rel,
+        "consolidation_sigma_rel_err": sigma_rel,
+        "shear_strain_history": disp_hist,
+        "shear_stress_history": tau_hist,
+        "normal_stress_history": sig_hist,
+        "floor_shear_history": floor_hist,
+        "bed_top_history": bed_hist,
+        "platen_z_history": platen_hist,
         "n_particles": n,
-        "total_steps": total_steps,
-        "top_displacement_x": top_displacement_x,
+        "total_steps": n_settle + n_consol + n_shear,
+        "timestep": dt,
+        "shear_rate": case.shear_rate,
+        "inertial_number": case.shear_rate * 2.0 * r
+        / math.sqrt(case.normal_stress / case.density),
     }
+
+
+def _fit_mohr_coulomb(sigmas: Sequence[float], taus: Sequence[float]) -> dict:
+    """Least-squares ``tau = c + sigma tan(phi)`` over *distinct* stress levels."""
+    s = np.asarray(sigmas, dtype=float)
+    t = np.asarray(taus, dtype=float)
+    if s.size < 2:
+        raise ValueError("Mohr-Coulomb needs >= 2 normal-stress levels; a single "
+                         "level only gives the point value mu = tau/sigma")
+    if np.ptp(s) <= 1e-12:
+        raise ValueError(f"normal-stress levels must be distinct, got {s.tolist()}")
+    A = np.vstack([s, np.ones_like(s)]).T
+    coef, *_ = np.linalg.lstsq(A, t, rcond=None)
+    tan_phi, cohesion = float(coef[0]), float(coef[1])
+    pred = A @ coef
+    ss_res = float(((t - pred) ** 2).sum())
+    ss_tot = float(((t - t.mean()) ** 2).sum())
+    r2 = 1.0 - ss_res / ss_tot if ss_tot > 0 else 0.0
+    mu_levels = t / s
+    return {
+        "tan_phi": tan_phi,
+        "friction_angle_deg": math.degrees(math.atan(tan_phi)),
+        "cohesion_pa": cohesion,
+        "r_squared": float(r2),
+        "mu_per_level": [float(x) for x in mu_levels],
+        "mu_level_spread_rel": float(np.std(mu_levels) / np.mean(mu_levels))
+        if np.mean(mu_levels) > 0 else float("nan"),
+        "cohesion_over_mean_tau": float(abs(cohesion / t.mean())) if t.mean() else float("nan"),
+    }
+
+
+def measure_macro_friction(case: ShearCellCase,
+                           normal_stresses: Sequence[float] = (400.0, 800.0, 1600.0, 3200.0),
+                           **overrides) -> dict:
+    """Run the shear cell at several normal stresses and fit the envelope.
+
+    Returns the per-level ``(sigma, tau, mu)`` table, the Mohr-Coulomb fit and
+    the stress-independence diagnostic.  ``overrides`` are applied to ``case``
+    (e.g. ``seed=6108``).
+    """
+    base = replace(case, **overrides) if overrides else case
+    levels = []
+    for sigma in normal_stresses:
+        res = simulate_shear_cell(replace(base, normal_stress=float(sigma)))
+        levels.append({
+            "sigma_target_pa": float(sigma),
+            "sigma_pa": res["normal_stress_measured"],
+            "sigma_rel_err": res["normal_stress_rel_err"],
+            "tau_pa": res["shear_stress"],
+            "tau_sem_pa": res["shear_stress_sem"],
+            "mu": res["mu_macro"],
+            "tau_floor_pa": res["floor_shear_stress"],
+            "tau_platen_vs_floor_rel": res["tau_platen_vs_floor_rel"],
+            "n_particles": res["n_particles"],
+            "total_steps": res["total_steps"],
+            "valid": res["valid"],
+        })
+    invalid = [l["sigma_target_pa"] for l in levels if not l["valid"]]
+    if invalid:
+        # never report an envelope assembled from levels where the platen was
+        # unloaded: that is how a NaN "friction angle" used to enter reports
+        return {"valid": False,
+                "invalid_levels_pa": invalid,
+                "reason": "platen did not hold sigma_n at levels %s; refusing to fit "
+                          "a Mohr-Coulomb envelope" % invalid,
+                "levels": levels}
+    fit = _fit_mohr_coulomb([l["sigma_pa"] for l in levels], [l["tau_pa"] for l in levels])
+    fit.update({
+        "levels": levels,
+        "case": {
+            "radius": base.radius, "density": base.density, "mu": base.mu,
+            "mu_rolling": base.mu_rolling, "kn": base.kn, "fill_height": base.fill_height,
+            "shear_velocity": base.shear_velocity, "shear_rate": base.shear_rate,
+            "shear_strain_target": base.shear_strain_target, "seed": base.seed,
+            "species": base.species,
+        },
+    })
+    return fit
