@@ -8,3 +8,7 @@ results/
 .scratch/
 artifacts/ridge_freeze_bond_age_quick/
 artifacts/tutorial_first_verified_run/
+
+# local evidence scratch used by tests when the system temp dir is unusable
+.pytest_tmp/
+tests/.pytest_evidence/
