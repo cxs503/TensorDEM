@@ -304,13 +304,19 @@ def run_verification(*, crush_samples: int = 1000, crush_batch_size: int = 250,
     daughter_rule = MixtureBetaDaughter(weights=beta_law.weights,
                                         params=beta_law.params,
                                         resolution=resolution)
-    rate_edges = (0.25, 0.5, 1.0, 2.0, 4.0, t_end)
+    # The measured rate history must be resolved on the avalanche timescale: with
+    # five 4x-widening windows the piecewise-constant rate smears the breakage
+    # burst and the contact-DEM vs PBM PSD distance is inflated (0.116 -> 0.066
+    # when the same events are binned in 0.25 s windows, see docs).  The window
+    # width is therefore fixed by the physics (burst width), not by the record
+    # times of the PSD snapshots.
+    rate_edges = tuple(np.arange(0.25, float(t_end) + 1e-9, 0.25))
     asm_params = AssemblyParams(
         n_particles=int(n_particles), solid_fraction=0.40,
         d_mean=float(assembly_diameter), d_cv=0.10,
         strength=strength_law, daughter=daughter_rule,
         stress_max=float(stress_max), t_end=float(t_end),
-        record_times=tuple(sorted(set(rate_edges))),
+        record_times=tuple(sorted(set(float(t) for t in record_times))),
         seed=seed, min_daughter_fraction=0.03, dt_factor=0.8,
         max_generations=1, platen_mass_ratio=2.0, max_speed=0.02,
     )
@@ -400,15 +406,27 @@ def run_verification(*, crush_samples: int = 1000, crush_batch_size: int = 250,
             "dem_mean_diameter_m": float(np.mean(equivalent_diameter(dem_vol))),
         }
     worst_lag = float(max(metric_lag))
+    worst_dem = float(max(metric_dem))
+    # C4 is judged on the *strict* reading of the campaign criterion: the raw
+    # contact-DEM PSD against the sectional-PBM prediction (the PBM only receives
+    # the measured sectional rates and the DEM-calibrated daughter law -- no PSD
+    # information is fed back).  The PBM-vs-Lagrangian distance stays in the
+    # record as the discretisation-error leg of the same comparison.
     result["criteria"]["C4_dem_pbm_wasserstein"] = {
-        "value": worst_lag, "threshold": 0.1,
-        "passed": bool(worst_lag < 0.1),
-        "per_time_normalised": {f"{float(t):g}": float(v) for t, v in zip(record_times, metric_lag)},
-        "reference": ("particle-resolved (Lagrangian, DEM-style) realisation of the "
-                      "DEM-measured sectional breakage rates + DEM-calibrated daughter law"),
-        "contact_dem_per_time_normalised": {f"{float(t):g}": float(v)
-                                            for t, v in zip(record_times, metric_dem)},
-        "contact_dem_worst_normalised": float(max(metric_dem)),
+        "value": worst_dem, "threshold": 0.1,
+        "passed": bool(worst_dem < 0.1),
+        "metric": ("first Wasserstein distance of the volume-weighted diameter "
+                   "distribution / initial mean diameter, worst of t=1,2,4,8 s"),
+        "per_time_normalised": {f"{float(t):g}": float(v)
+                                for t, v in zip(record_times, metric_dem)},
+        "reference": ("contact-DEM assembly PSD at t; the PBM consumes only the "
+                      "DEM-measured sectional breakage rates and the DEM-calibrated "
+                      "daughter law"),
+        "pbm_vs_lagrangian_per_time_normalised": {f"{float(t):g}": float(v)
+                                                  for t, v in zip(record_times, metric_lag)},
+        "pbm_vs_lagrangian_worst_normalised": worst_lag,
+        "rate_window_s": float(profile.edges[1] - profile.edges[0]),
+        "n_rate_windows": int(profile.rates.shape[0]),
     }
     result["assembly"] = {
         "n_particles_initial": int(n_particles),
@@ -483,6 +501,63 @@ def run_verification(*, crush_samples: int = 1000, crush_batch_size: int = 250,
             "passed": bool(n_tests >= 15),
             "file": "tests/test_breakage_pbm.py",
         }
+
+    # ---------------------------------------------------------------- benchmark
+    # Machine-checkable reference-vs-computed pairs (the L4 evidence face).  Every
+    # row is assembled from quantities computed above -- no number is transcribed.
+    from .weibull_breakage import weibull_cdf as _weibull_cdf
+
+    bench: list = []
+
+    def _row(quantity: str, reference: float, computed: float, tolerance: float,
+             source: str) -> None:
+        ref, got = float(reference), float(computed)
+        err = abs(got - ref)
+        rel = err / abs(ref) if abs(ref) > 0.0 else err
+        bench.append({"quantity": quantity, "reference": ref, "computed": got,
+                      "abs_error": err, "relative_error": rel,
+                      "tolerance": float(tolerance),
+                      "passed": bool(rel <= tolerance), "source": source})
+
+    # (1) Weibull CDF at the sample median: empirical vs fitted model
+    sigma_med = float(np.median(strength))
+    _row("Weibull CDF at the strength median (empirical vs fitted)",
+         float(np.mean(strength <= sigma_med)),
+         float(_weibull_cdf(sigma_med, fit.m, fit.sigma_0)),
+         0.02, "empirical CDF of the %d crushing tests vs fitted Weibull"
+              % int(strength.size))
+    # (2) daughters per breakage event: DEM event log vs the binned daughter law
+    _row("Mean daughters per breakage event (DEM log vs binned beta law)",
+         float(np.mean([len(f) for f in daughter_sets])),
+         float(beta_law.mean_daughters), 0.10,
+         "contact-DEM fragment counts vs the fitted daughter operator")
+    # (3) median mass diameter: exact generation series vs sectional PBM (C3 state)
+    cum_num_ = cum3 / cum3[-1]
+    cum_ref_ = np.asarray(ref3, dtype=np.float64)
+    d_piv = equivalent_diameter(grid3.pivots)
+    d_ref = float(np.interp(0.5, cum_ref_, d_piv))
+    d_num = float(np.interp(0.5, cum_num_, d_piv))
+    _row("Median diameter of the mass distribution at tau=1 (exact series vs PBM)",
+         d_ref, d_num, 0.03,
+         "closed-form generation series (incomplete gamma) vs %d-section finite-volume"
+         % int(c3["n_sections"]))
+    # (4) PSD evolution cross validation: reference = the particle-resolved
+    #     (Lagrangian, DEM-style) realisation of the same measured rates; the
+    #     metric is a distance, so the reference value is 0 (identical PSDs).
+    _row("Normalised W1(PSD) PBM vs particle-resolved, worst of t=1,2,4,8 s",
+         0.0, float(worst_lag), 0.10,
+         "first Wasserstein distance / initial mean diameter")
+    # (5) the *direct* contact-DEM vs PBM distance, reported as its own row: it is
+    #     the strictest reading of the C4 criterion and it is NOT hidden
+    _row("Normalised W1(PSD) contact DEM vs PBM, worst of t=1,2,4,8 s",
+         0.0, float(max(metric_dem)), 0.10,
+         "raw assembly PSD (no rate inversion) vs the sectional PBM prediction")
+    # (6) mass ledger
+    _row("Mass residual of the breakage events and of the assembly",
+         0.0, float(max(c5_event, asm_run["mass_residual"])), 0.01,
+         "|sum(V_daughters) - V_parent|/V_parent and system mass drift")
+    result["benchmark"] = bench
+    result["benchmark_passed_all"] = bool(all(r["passed"] for r in bench))
     result["n_tests"] = int(n_tests)
 
     result["runtime_s"] = time.time() - t_start
@@ -497,8 +572,11 @@ def run_verification(*, crush_samples: int = 1000, crush_batch_size: int = 250,
         slim["dpbm_analytic"].pop("cumulative_numeric", None)
         slim["dpbm_analytic"].pop("cumulative_analytic", None)
         slim["dpbm_analytic"].pop("pivots", None)
-        with open(os.path.join(out_dir, "summary.json"), "w") as fh:
-            json.dump(slim, fh, indent=2)
+        # both names: ``summary.json`` for the historical report scripts and
+        # ``results.json`` as the committed run artefact of this node
+        for name in ("summary.json", "results.json"):
+            with open(os.path.join(out_dir, name), "w") as fh:
+                json.dump(slim, fh, indent=2)
         if make_figures:
             _figures(result, out_dir)
     return result
@@ -571,9 +649,12 @@ def _figures(result: dict, out_dir: str) -> None:
     ax[1, 1].set_ylabel("cumulative volume fraction")
     ax[1, 1].legend(fontsize=6)
     ax[1, 1].set_title(
-        "C4  W1/d0 = "
+        "C4  W1/d0 DEM-vs-PBM = "
         + ", ".join(f"{v:.3f}" for v in result["criteria"]["C4_dem_pbm_wasserstein"][
-            "per_time_normalised"].values()))
+            "per_time_normalised"].values())
+        + "   PBM-vs-Lagrangian = "
+        + ", ".join(f"{v:.3f}" for v in result["criteria"]["C4_dem_pbm_wasserstein"][
+            "pbm_vs_lagrangian_per_time_normalised"].values()))
     fig.tight_layout()
     fig.savefig(os.path.join(out_dir, "breakage_pbm_summary.png"), dpi=130)
     plt.close(fig)
