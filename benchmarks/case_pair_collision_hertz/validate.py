@@ -58,6 +58,24 @@ def main():
     print(f"   DEM engine: {damped['restitution_engine']:.6f}")
     print(f"   RK4 ref:    {damped['restitution_rk4']:.6f}")
     print(f"   Error:      {err:.4%} [{status}] (threshold: {TOLERANCE:.0%})")
+    print("   (code-vs-code check: the RK4 reference integrates the SAME Tsuji law,")
+    print("    so this row only proves the engine implements that law faithfully.)")
+
+    # 3b. Restitution closure against the REQUESTED coefficient.
+    #     The anchor is "restitution coefficient"; the linear zeta(e) mapping is
+    #     not exact for the Hertzian delta^(1/4) dashpot, so the requested value
+    #     is not delivered. Reported honestly instead of being folded into 3.
+    closure = damped.get("closure_error_vs_target")
+    if closure is not None:
+        status = "PASS" if closure < TOLERANCE else "FAIL"
+        if status == "FAIL":
+            all_pass = False
+        print(f"\n3b. Restitution closure vs e_target={damped.get('restitution_target')}")
+        print(f"   DEM engine: {damped['restitution_engine']:.6f}")
+        print(f"   Requested:  {damped.get('restitution_target')}")
+        print(f"   Error:      {closure:.4%} [{status}] (threshold: {TOLERANCE:.0%})")
+        print("   Known model bias: zeta(e) from linear spring-dashpot theory applied")
+        print("   to a Hertzian dashpot; see docs/board-audit-m15296/AUDIT.md.")
 
     # 4. Velocity independence
     max_err = max(r["restitution_rel_error"] for r in sweep)

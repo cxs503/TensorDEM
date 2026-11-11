@@ -67,6 +67,13 @@ SPEEDS_SWEEP = [0.25, 0.5, 1.0]  # m/s, for restitution velocity-independence ch
 TARGET_E = 0.8          # target restitution coefficient
 DT_FACTOR = 0.4         # timestep as fraction of recommended_dt
 
+# Exact Hertz contact time coefficient: t_c = C * delta_max / v_rel with
+#   C = 2 * int_0^1 (1 - eta^(5/2))^(-1/2) d eta = (4/5) * B(2/5, 1/2) = 2.943275...
+# (B via lgamma; the old closed form raised the mass group to 1/5 instead of
+# 2/5 and was 2.50% high - corrected by the m15392 board audit.)
+HERTZ_CONTACT_TIME_COEFF = 0.8 * math.exp(
+    math.lgamma(0.4) + math.lgamma(0.5) - math.lgamma(0.9))
+
 
 # ---------------------------------------------------------------------------
 # Analytical reference functions (independent of solver)
@@ -93,11 +100,8 @@ def analytic_contact_time(speed: float, radius: float, density: float,
     Reference: Goldsmith, "Impact", 1960, Eq. 5.8, p.153.
     """
     v_rel = 2.0 * speed
-    mass = density * (4.0 / 3.0) * math.pi * radius ** 3
-    m_eff = mass / 2.0
-    e_star = hertz_reduced_modulus(young_modulus, poisson_ratio)
-    r_eff = hertz_effective_radius(radius)
-    return 2.94 * (m_eff ** 2 / (e_star ** 2 * r_eff * v_rel)) ** 0.2
+    delta_max = analytic_peak_overlap(speed, radius, density, young_modulus, poisson_ratio)
+    return HERTZ_CONTACT_TIME_COEFF * delta_max / v_rel
 
 
 def reference_rk4(speed: float, rest_target: float, dt: float = 1.0e-8,
@@ -283,11 +287,20 @@ def run_primary_damped() -> dict:
     ref = reference_rk4(speed, TARGET_E)
     err_e = abs(got["restitution"] - ref["restitution"]) / ref["restitution"]
     err_delta = abs(got["peak_overlap_m"] - ref["peak_overlap_m"]) / ref["peak_overlap_m"]
+    # Closure against the *requested* coefficient.  The linear zeta(e) mapping
+    # (dem3d.py:1351-1354) is not exact for a Hertzian (delta^(1/4)) dashpot, so
+    # the realised e overshoots e_target; that closure error is the anchor's own
+    # physical criterion and must be reported next to the code-vs-code check
+    # (m15392 board audit).
+    closure_err = abs(got["restitution"] - TARGET_E) / TARGET_E
     return {
         "speed_m_per_s": speed,
         "restitution_engine": got["restitution"],
         "restitution_rk4": ref["restitution"],
         "restitution_rel_error": err_e,
+        "restitution_target": TARGET_E,
+        "closure_error_vs_target": closure_err,
+        "closure_within_tolerance": bool(closure_err < 0.03),
         "peak_overlap_engine_m": got["peak_overlap_m"],
         "peak_overlap_rk4_m": ref["peak_overlap_m"],
         "peak_overlap_rel_error": err_delta,
@@ -311,6 +324,7 @@ def run_velocity_sweep() -> list[dict]:
             "restitution_engine": got["restitution"],
             "restitution_rk4": ref["restitution"],
             "restitution_rel_error": err_e,
+            "closure_error_vs_target": abs(got["restitution"] - TARGET_E) / TARGET_E,
             "steps": got["steps"],
             "wall_time_s": got["wall_time_s"],
         })
@@ -433,9 +447,12 @@ def main():
     print(f"Contact time error (elastic): {tc_err:.4%}")
     print(f"Restitution error (damped, vs RK4): {rest_err:.4%}")
     print(f"Max restitution error (velocity sweep): {max_sweep_err:.4%}")
+    closure = damped["closure_error_vs_target"]
+    print(f"Restitution closure vs e_target={TARGET_E}: {closure:.4%}")
     print(f"\nPass (<3%): peak_overlap={'PASS' if delta_err < 0.03 else 'FAIL'}, "
           f"contact_time={'PASS' if tc_err < 0.03 else 'FAIL'}, "
-          f"restitution={'PASS' if rest_err < 0.03 else 'FAIL'}")
+          f"restitution_vs_reference={'PASS' if rest_err < 0.03 else 'FAIL'}, "
+          f"restitution_closure={'PASS' if closure < 0.03 else 'FAIL'}")
 
     return results
 
