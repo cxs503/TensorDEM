@@ -291,6 +291,11 @@ class PairImpactResult:
     e_clamped: float
     contact_time_analytic: float
     contact_time_force_analytic: float
+    # -- the same measurements in the form the thermal chain consumes --------
+    pair_mass_kg: float = 0.0
+    peak_force: float = 0.0
+    dissipated_energy: float = 0.0
+    thermal_state: object = None      # ice_thermal_stress.dem_coupling.ThermalState
 
     @property
     def e_error_vs_clamped(self) -> float:
@@ -309,6 +314,20 @@ class PairImpactResult:
     def contact_time_force_error(self) -> float:
         """Error of the force-contact duration, i.e. the time the normal force acts."""
         return self.contact_time_force / self.contact_time_force_analytic - 1.0
+
+
+@dataclass(frozen=True)
+class _ImpactLedger:
+    """Minimal record the thermal bridge needs from a solver impact."""
+
+    impact_speed: float
+    rebound_speed: float
+    pair_mass_kg: float
+    peak_force: float
+    contact_time_force: float
+    dissipated_energy: float
+    peak_overlap: float
+    dt: float
 
 
 def _build_pair(k_n: float, c_n: float, radius: float, density: float, dt_scale: float) -> tuple[IceDEM3D, int, int]:
@@ -363,6 +382,10 @@ def pair_impact(
     density: float = 900.0,
     dt_scale: float = 1.0,
     damping: str = "unclamped_mapping",
+    thermal: bool = False,
+    bulk_temperature_c: float = -10.0,
+    thermal_cells: int = 120,
+    thermal_dt_s: float = 2.0e-6,
 ) -> PairImpactResult:
     """Run an equal-mass head-on impact and measure the realised restitution.
 
@@ -374,6 +397,12 @@ def pair_impact(
                review); ``"clamped_mapping"`` uses
                :func:`restitution_to_damping_clamped` (the corrected mapping).
     dt_scale : multiplier on the solver's ``recommended_dt``.
+    thermal  : if true, feed the work the solver actually dissipated into
+               :mod:`tensordem.ice_thermal_stress` and attach the resulting
+               ``ThermalState`` to the result (``thermal_state``).  This is the
+               production coupling path: the thermal package never re-derives
+               the impact energetics, it consumes the solver's ledger.
+    bulk_temperature_c : ice temperature used by the thermal chain.
 
     Returns
     -------
@@ -412,9 +441,15 @@ def pair_impact(
     dem.positions = saved
 
     momentum_before = float(dem.velocities[:, 2].sum())
+    # kinetic energy of the pair before/after: the two particles are free, so
+    # every joule missing afterwards went through the dashpot (the other lattice
+    # sites are fixed and carry no kinetic energy)
+    ke_before = 0.5 * m * float((dem.velocities[i] ** 2).sum()
+                                + (dem.velocities[j] ** 2).sum())
     contact_steps = 0
     force_steps = 0
     max_overlap = 0.0
+    peak_force = 0.0
     for _ in range(400_000):
         v_prev = float(dem.velocities[i, 2])
         dem.step()
@@ -427,6 +462,9 @@ def pair_impact(
         if overlap_now > 0.0:
             contact_steps += 1
             max_overlap = max(max_overlap, overlap_now)
+            # the documented force law, evaluated on the solver's own state
+            vn_now = float(dem.velocities[j, 2] - dem.velocities[i, 2])
+            peak_force = max(peak_force, max(0.0, k_n * overlap_now - c_n * vn_now))
         elif contact_steps:
             break
     else:  # pragma: no cover - guarded by the physics
@@ -434,6 +472,30 @@ def pair_impact(
 
     rebound = -float(dem.velocities[i, 2])
     analytic = impact_analytic(k_n, c_n, m_eff, v0)
+    ke_after = 0.5 * m * float((dem.velocities[i] ** 2).sum()
+                               + (dem.velocities[j] ** 2).sum())
+    # solver ledger: the pair is free-flying, so every joule lost from the
+    # kinetic energy went through the dashpot
+    dissipated = max(ke_before - ke_after, 0.0)
+    thermal_state = None
+    if thermal:
+        from .ice_thermal_stress.dem_coupling import couple_impact_result
+        from .ice_thermal_stress.properties import ice_properties
+
+        props = ice_properties(bulk_temperature_c)
+        # two equal ice spheres: R* = R/2 and E* = E / (2 (1 - nu^2))
+        thermal_state = couple_impact_result(
+            _ImpactLedger(impact_speed=v0, rebound_speed=rebound, pair_mass_kg=m,
+                          peak_force=peak_force, contact_time_force=force_steps * dem.dt,
+                          dissipated_energy=dissipated, peak_overlap=max_overlap,
+                          dt=dem.dt),
+            bulk_temperature_c=bulk_temperature_c,
+            effective_radius_m=0.5 * radius,
+            effective_modulus_pa=props.youngs_modulus_pa / (2.0 * (1.0 - props.poisson ** 2)),
+            peak_overlap_m=max_overlap,
+            cells=thermal_cells,
+            dt_s=thermal_dt_s,
+        )
     return PairImpactResult(
         e_measured=rebound / v0,
         impact_speed=v0,
@@ -451,4 +513,8 @@ def pair_impact(
         e_clamped=analytic.e_clamped,
         contact_time_analytic=analytic.contact_time_geometric,
         contact_time_force_analytic=analytic.contact_time_force,
+        pair_mass_kg=m,
+        peak_force=peak_force,
+        dissipated_energy=dissipated,
+        thermal_state=thermal_state,
     )

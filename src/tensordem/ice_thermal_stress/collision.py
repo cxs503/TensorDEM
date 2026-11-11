@@ -76,20 +76,15 @@ from typing import Any
 
 import numpy as np
 
-from .conduction import SlabHeat1D
-from .fracture import (
-    failure_margin,
-    strength_budget_bound,
-    thermal_breakage_increment,
-)
+from .dem_coupling import thermal_response
+from .fracture import failure_margin
 from .plastic_heat import (
     TAYLOR_QUINNEY_BETA,
     dissipated_energy,
     hertz_patch_radius,
     partition_to_ice,
 )
-from .properties import IceProperties, compressive_strength, ice_properties
-from .thermal_stress import restrained_gradient_stress, restrained_uniform_stress
+from .properties import IceProperties, ice_properties
 
 __all__ = [
     "BlockImpactCase",
@@ -397,73 +392,22 @@ def simulate_block_impact(case: BlockImpactCase) -> BlockImpactResult:
 
     peak_force_analytic = _peak_force_analytic(mass, float(case.impact_speed_m_s), k_h)
     contact_radius = hertz_patch_radius(max(peak_force, 1e-9), case.contact_radius_m, e_eff)
-    layer_depth = (contact_radius if case.layer_fraction is None
-                   else float(case.layer_fraction) * contact_radius)
-    deposition_volume = math.pi * contact_radius ** 2 * layer_depth
-    contact_area = math.pi * contact_radius ** 2
-    lam = partition_to_ice(props, None if case.wall_temperature_c is None
-                          else ice_properties(case.wall_temperature_c))
-    # two fractions act in series: the Taylor-Quinney share of the plastic work
-    # becomes heat, and the Blok effusivity split decides what stays in the ice
-    heat_ice = lam * float(case.beta) * work_damp
-
-    # -- conduction --------------------------------------------------
-    grid = SlabHeat1D(cells=case.cells, thickness_m=case.grid_depth_m,
-                      properties=props, theta=0.5, grading=50.0)
-    power_per_area = heat_ice / (contact_duration * contact_area)
-    q_vol = grid.source_profile(power_per_area, layer_depth)
-    n_steps = max(int(round(contact_duration / case.dt_s)), 8)
-    dt = contact_duration / n_steps
-    t_end = case.duration_factor * contact_duration
-    n_tot = max(int(round(t_end / dt)), n_steps)
-    time_hist = np.empty(n_tot)
-    surface_hist = np.empty(n_tot)
-    power_hist = np.zeros(n_tot)
-    for i in range(n_tot):
-        active = i < n_steps
-        grid.step(dt, q_vol=q_vol if active else None)
-        time_hist[i] = (i + 1) * dt
-        surface_hist[i] = grid.t[0] - grid.t_initial
-        power_hist[i] = power_per_area if active else 0.0
-
-    delta_t_profile = grid.t - grid.t_initial
-    peak_delta_t = float(np.max(delta_t_profile))
-    # lumped-capacity estimate: the heat already carries beta (see heat_ice)
-    peak_delta_t_adiabatic = heat_ice / (
-        props.volumetric_heat_capacity_j_m3_k * deposition_volume)
-    sigma_patch = float(restrained_uniform_stress(peak_delta_t, props))
-    sigma_free = 0.5 * sigma_patch
-    sigma_field = restrained_gradient_stress(delta_t_profile, props, dz=grid.dx)
-    sigma_mech_peak = -peak_force / contact_area
-
-    # -- fracture ----------------------------------------------------
-    sigma_f_bulk = float(compressive_strength(case.bulk_temperature_c)) * 1.0e6
-    heated_t = min(case.bulk_temperature_c + peak_delta_t, -0.05)
-    sigma_f_heated = float(compressive_strength(heated_t)) * 1.0e6
-
-    rng = np.random.default_rng(20261110)
-    n_contacts = 1024
-    frac_r = np.sqrt(rng.random(n_contacts))            # area-weighted radius
-    p_ratio = np.sqrt(np.clip(1.0 - frac_r ** 2, 0.0, 1.0))
-    sigma_pop = -np.minimum(abs(sigma_mech_peak) * p_ratio, sigma_f_bulk)
-    breakage_plain = thermal_breakage_increment(sigma_pop, 0.0, case.bulk_temperature_c)
-    breakage_coupled = thermal_breakage_increment(
-        sigma_pop, sigma_patch, case.bulk_temperature_c, delta_t_k=peak_delta_t)
-    bound = strength_budget_bound(sigma_patch, case.bulk_temperature_c,
-                                  delta_t_k=peak_delta_t)
-    breakage_bound = {
-        "increment": bound,
-        "fraction_mech": 0.0,
-        "fraction_total": bound,
-        "note": "uniform population over the whole strength budget; upper bound",
-    }
-
-    # the patch cannot exceed the melting point without latent heat, so the
-    # temperature rise is physically capped at |T_bulk|; the capped stress is the
-    # largest thermal stress this model can defend for the case
-    melt_cap = abs(float(case.bulk_temperature_c))
+    scatter = thermal_response(
+        dissipated_work_j=work_damp,
+        peak_force_n=peak_force,
+        effective_radius_m=case.contact_radius_m,
+        effective_modulus_pa=e_eff,
+        contact_duration_s=contact_duration,
+        bulk_temperature_c=case.bulk_temperature_c,
+        beta=case.beta,
+        layer_fraction=(1.0 if case.layer_fraction is None else float(case.layer_fraction)),
+        wall_temperature_c=case.wall_temperature_c,
+        cells=case.cells,
+        grid_depth_m=case.grid_depth_m,
+        dt_s=case.dt_s,
+        duration_factor=case.duration_factor,
+    )
     closed_form = dissipated_energy(mass, float(case.impact_speed_m_s), case.restitution)
-    stored_block = float(np.sum(grid.capacity * delta_t_profile)) * contact_area
     ledger = {
         "kinetic_energy_j": 0.5 * mass * case.impact_speed_m_s ** 2,
         "dissipated_energy_integrated_j": work_damp,
@@ -472,10 +416,7 @@ def simulate_block_impact(case: BlockImpactCase) -> BlockImpactResult:
             abs(work_damp - closed_form) / closed_form if closed_form > 0.0 else 0.0),
         "restitution_prescribed": float(case.restitution),
         "restitution_measured": e_meas,
-        "plastic_heat_ice_j": heat_ice,
-        "block_enthalpy_j": stored_block,
-        "heat_to_enthalpy_relative_error": (
-            abs(stored_block - heat_ice) / heat_ice if heat_ice > 0.0 else 0.0),
+        **scatter.energy_ledger,
         "peak_overlap_m": contact["peak_overlap_m"],
     }
 
@@ -488,37 +429,37 @@ def simulate_block_impact(case: BlockImpactCase) -> BlockImpactResult:
         peak_force_n=peak_force,
         peak_force_analytic_n=peak_force_analytic,
         peak_overlap_m=contact["peak_overlap_m"],
-        peak_contact_stress_pa=sigma_mech_peak,
+        peak_contact_stress_pa=scatter.sigma_mech_peak_pa,
         contact_radius_m=contact_radius,
         contact_duration_s=contact_duration,
-        layer_depth_m=layer_depth,
-        deposition_volume_m3=deposition_volume,
+        layer_depth_m=scatter.layer_depth_m,
+        deposition_volume_m3=scatter.deposition_volume_m3,
         dissipated_energy_j=work_damp,
         dissipated_energy_closed_form_j=closed_form,
-        plastic_heat_ice_j=heat_ice,
-        peak_delta_t_k=peak_delta_t,
-        peak_delta_t_adiabatic_k=peak_delta_t_adiabatic,
-        sigma_thermal_patch_pa=sigma_patch,
-        sigma_thermal_free_pa=sigma_free,
-        sigma_mech_peak_pa=sigma_mech_peak,
-        thermal_to_mechanical_ratio=abs(sigma_patch) / abs(sigma_mech_peak),
-        thermal_fraction_of_strength=abs(sigma_patch) / sigma_f_bulk,
-        sigma_f_bulk_pa=sigma_f_bulk,
-        sigma_f_heated_pa=sigma_f_heated,
-        breakage_plain=breakage_plain,
-        breakage_coupled=breakage_coupled,
-        breakage_bound=breakage_bound,
-        melting_risk=bool(case.bulk_temperature_c + peak_delta_t > -0.05),
-        melt_cap_delta_t_k=melt_cap,
-        sigma_thermal_melt_capped_pa=float(restrained_uniform_stress(melt_cap, props)),
+        plastic_heat_ice_j=scatter.heat_ice_j,
+        peak_delta_t_k=scatter.peak_delta_t_k,
+        peak_delta_t_adiabatic_k=scatter.peak_delta_t_adiabatic_k,
+        sigma_thermal_patch_pa=scatter.sigma_thermal_patch_pa,
+        sigma_thermal_free_pa=scatter.sigma_thermal_free_pa,
+        sigma_mech_peak_pa=scatter.sigma_mech_peak_pa,
+        thermal_to_mechanical_ratio=scatter.thermal_to_mechanical_ratio,
+        thermal_fraction_of_strength=scatter.thermal_fraction_of_strength,
+        sigma_f_bulk_pa=scatter.sigma_f_bulk_pa,
+        sigma_f_heated_pa=scatter.sigma_f_heated_pa,
+        breakage_plain=scatter.breakage_plain,
+        breakage_coupled=scatter.breakage_coupled,
+        breakage_bound=scatter.breakage_bound,
+        melting_risk=scatter.melting_risk,
+        melt_cap_delta_t_k=scatter.melt_cap_delta_t_k,
+        sigma_thermal_melt_capped_pa=scatter.sigma_thermal_melt_capped_pa,
         energy_ledger=ledger,
-        time_s=time_hist,
-        delta_t_profile_k=delta_t_profile,
-        sigma_thermal_profile_pa=sigma_field,
-        depth_m=grid.x,
-        cell_widths_m=grid.dx,
-        surface_history_k=surface_hist,
-        power_history_w_m2=power_hist,
+        time_s=scatter.time_s,
+        delta_t_profile_k=scatter.delta_t_profile_k,
+        sigma_thermal_profile_pa=scatter.sigma_thermal_profile_pa,
+        depth_m=scatter.depth_m,
+        cell_widths_m=scatter.cell_widths_m,
+        surface_history_k=scatter.surface_history_k,
+        power_history_w_m2=scatter.power_history_w_m2,
     )
 
 

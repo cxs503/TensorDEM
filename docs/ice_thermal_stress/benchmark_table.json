@@ -1,0 +1,187 @@
+{
+  "node": "p161w2-arb-n07-dem-ice-thermal-stress",
+  "mission_id": 14601,
+  "validation_digest_sha256": "2dc83a946e83ad495fd85a418d7892087c285a654f9a5b84352a0f3fd03c644a",
+  "rows": [
+    {
+      "quantity": "C1 max temperature error vs Carslaw & Jaeger constant-flux solution",
+      "reference": "analytic semi-infinite solid, q = 1e4 W/m^2",
+      "ref": 0.0,
+      "got": 3.030155764152665e-06,
+      "unit": "K",
+      "error_pct": 0.00039429702879431274,
+      "tolerance_pct": 2.0
+    },
+    {
+      "quantity": "C2 max temperature error vs heated-slab sine series",
+      "reference": "exact series solution, volumetric source 1e6 W/m^3",
+      "ref": 0.0,
+      "got": 2.2940269224662836e-06,
+      "unit": "K",
+      "error_pct": 0.21432180009927654,
+      "tolerance_pct": 2.0
+    },
+    {
+      "quantity": "C3 FV vs independent nodal FEM temperature",
+      "reference": "FE linear elements, lumped mass",
+      "ref": 0.0,
+      "got": 1.2417610026793646e-05,
+      "unit": "K",
+      "error_pct": 0.001615833349629917,
+      "tolerance_pct": 2.0
+    },
+    {
+      "quantity": "C4 observed spatial order of accuracy",
+      "reference": "2 (formal order of the theta/FV scheme)",
+      "ref": 2.0,
+      "got": 2.000826579429667,
+      "unit": "-",
+      "error_pct": 0.041328971483345356,
+      "tolerance_pct": 0.0
+    },
+    {
+      "quantity": "C5 thermal stress field vs analytic restrained gradient",
+      "reference": "sigma(z) = -E a_T (T - <T>)/(1-nu)",
+      "ref": 0.0,
+      "got": 12.155882519795227,
+      "unit": "Pa",
+      "error_pct": 1.02796443081269,
+      "tolerance_pct": 3.0
+    },
+    {
+      "quantity": "C5b linear-gradient peak stress vs closed form",
+      "reference": "E a_T dT/(2(1-nu)), dT = 20 K",
+      "ref": 8187313.432835822,
+      "got": 8187313.432835822,
+      "unit": "Pa",
+      "error_pct": 0.0,
+      "tolerance_pct": 3.0
+    },
+    {
+      "quantity": "C6 membrane resultant of the thermal field (static admissibility)",
+      "reference": "0 (self-equilibrated temperature field cannot build a net axial force)",
+      "ref": 0.0,
+      "got": 0.0,
+      "unit": "-",
+      "error_pct": 0.0,
+      "tolerance_pct": 0.0
+    },
+    {
+      "quantity": "C7 restrained/free stress ratio",
+      "reference": 2.0,
+      "got": 2.0,
+      "unit": "-",
+      "error_pct": 0.0,
+      "tolerance_pct": 0.0
+    },
+    {
+      "quantity": "C8 dissipated energy vs 0.5 m v0^2 (1-e^2)",
+      "reference": 51.92298674147065,
+      "got": 1.9046174831842455e-06,
+      "unit": "-",
+      "error_pct": 0.00019046174831842454,
+      "tolerance_pct": 1.0
+    },
+    {
+      "quantity": "C8 heat -> stored enthalpy closure",
+      "reference": 0.0,
+      "got": 4.177205270681706e-14,
+      "unit": "-",
+      "error_pct": 4.177205270681706e-12,
+      "tolerance_pct": 1.0
+    },
+    {
+      "quantity": "C9 coefficient of restitution, measured vs prescribed",
+      "reference": 0.3,
+      "got": 0.2999970430409596,
+      "unit": "-",
+      "error_pct": 0.00029569590404010526,
+      "tolerance_pct": 1.0
+    },
+    {
+      "quantity": "C10 lumped-capacity vs resolved conduction peak rise",
+      "reference": 13.143221556815696,
+      "got": 12.858326283050738,
+      "unit": "K",
+      "error_pct": 2.167621328860725,
+      "tolerance_pct": 10.0
+    },
+    {
+      "quantity": "C13 mid-contact source vs constant-flux semi-infinite rise",
+      "reference": 6.571610778407847,
+      "got": 6.429163141524862,
+      "unit": "K",
+      "error_pct": 2.167621328868431,
+      "tolerance_pct": 5.0
+    }
+  ],
+  "solver_bridge": {
+    "rows": [
+      {
+        "quantity": "DEM bridge: solver dissipated work vs m v0^2 (1-e^2)",
+        "reference": 0.0816105033382385,
+        "got": 0.0816105033382385,
+        "unit": "J",
+        "error_pct": 0.0,
+        "tolerance_pct": 1.0
+      },
+      {
+        "quantity": "DEM bridge: heat in ice vs beta*lambda*W",
+        "reference": 0.07344945300441465,
+        "got": 0.07344945300441465,
+        "unit": "J",
+        "error_pct": 0.0,
+        "tolerance_pct": 1.0
+      },
+      {
+        "quantity": "DEM bridge: stored enthalpy vs heat in ice",
+        "reference": 0.07344945300441465,
+        "got": 0.07344945300441473,
+        "unit": "J",
+        "error_pct": 1.1336602716684906e-13,
+        "tolerance_pct": 1.0
+      },
+      {
+        "quantity": "DEM bridge: peak temperature rise (no latent heat, patch geometry band)",
+        "reference": null,
+        "got": 0.10966311665114395,
+        "unit": "K",
+        "error_pct": null,
+        "tolerance_pct": null,
+        "note": "no experimental calorimetry exists offline; the two admissible patch radii differ by 4 orders of magnitude in dT, see patch_geometry_band"
+      }
+    ],
+    "summary": {
+      "case": {
+        "e_target": 0.5,
+        "v0_m_s": 0.5,
+        "radius_m": 0.05,
+        "k_n_n_m": 50000.0,
+        "bulk_temperature_c": -10.0
+      },
+      "measured": {
+        "restitution": 0.5543180788681638,
+        "peak_force_n": 89.9197777982047,
+        "peak_overlap_m": 0.0016159657052858822,
+        "contact_duration_s": 0.0059445433158358185,
+        "dissipated_energy_j": 0.0816105033382385,
+        "closed_form_energy_j": 0.0816105033382385,
+        "heat_ice_j": 0.07344945300441465,
+        "peak_delta_t_k_geometric_patch": 0.10966311665114395,
+        "peak_delta_t_k_hertz_material_patch": 105.31722769689553,
+        "melting_risk_geometric_patch": false,
+        "melting_risk_hertz_patch": true
+      },
+      "patch_geometry_band": {
+        "geometric_patch_radius_m": 0.008842337931997058,
+        "hertz_patch_radius_m": 0.0006803851934298528,
+        "dT_ratio_hertz_over_geometric": 960.3705504005198,
+        "note": "a linear spring contact law at grain scale gives a millimetre overlap; the patch radius from that overlap is ~100x the Hertz radius built from the material modulus, and dT scales as a^-3. The energy ledger is unaffected, so the bridge is verified energetically and NOT advertised as a grain-scale temperature predictor."
+      }
+    }
+  },
+  "all_rows_within_1pct": false,
+  "no_reference_rows": [
+    "DEM bridge: peak temperature rise (no latent heat, patch geometry band)"
+  ]
+}
