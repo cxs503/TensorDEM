@@ -265,7 +265,7 @@ def _verify_incline(prediction: str) -> Dict[str, Any]:
     cases = []
     if prediction == "sliding":
         for mu in (0.20, 0.30, 0.45, 0.60):
-            meas = find_critical_angle_sim(mu, 0.0, shape="cube")
+            meas = find_critical_angle_sim(mu, 0.0, shape="cube", rotation_locked=True)
             pred = math.degrees(math.atan(mu))
             err = abs(meas["critical_angle_deg"] - pred) / pred * 100.0
             cases.append({"mu": mu, "mu_r": 0.0, "predicted_deg": pred,
@@ -275,7 +275,7 @@ def _verify_incline(prediction: str) -> Dict[str, Any]:
                                       meas.get("sliding_upper_deg")]})
     else:
         for mu, mu_r in ((0.60, 0.05), (0.60, 0.10), (0.80, 0.15)):
-            meas = find_critical_angle_sim(mu, mu_r, shape="sphere")
+            meas = find_critical_angle_sim(mu, mu_r, shape="sphere", n_bisect=10, t_end=0.08)
             pred = math.degrees(math.atan(mu_r))
             err = abs(meas["critical_angle_deg"] - pred) / pred * 100.0
             cases.append({"mu": mu, "mu_r": mu_r, "predicted_deg": pred,
