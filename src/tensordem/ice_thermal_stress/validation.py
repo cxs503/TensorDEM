@@ -509,10 +509,29 @@ def acceptance_report(*, quick: bool = False) -> dict[str, Any]:
     }
 
 
+#: run-metadata, not results: excluded from the canonical digest so it is a
+#: stable fingerprint of the computed results.  Two runs that produce identical
+#: results yield identical digests regardless of wall-clock time (audit m14487
+#: finding F6: the digest previously folded ``generated_utc`` in and changed on
+#: every run, so it could only detect hand-edits, not certify reproducibility).
+_DIGEST_EXCLUDED = frozenset({"generated_utc", "digest_sha256"})
+
+
+def _digest_view(payload: dict[str, Any]) -> dict[str, Any]:
+    """The digest-relevant view of ``payload`` (run-metadata removed)."""
+    return {k: v for k, v in payload.items() if k not in _DIGEST_EXCLUDED}
+
+
 def canonical_digest(payload: dict[str, Any]) -> str:
-    """SHA-256 of the canonical JSON serialisation (numbers as produced)."""
-    blob = json.dumps(payload, sort_keys=True, separators=(",", ":"),
-                      default=_json_default)
+    """SHA-256 of the canonical JSON serialisation of the *results*.
+
+    Run-metadata (``generated_utc``) is excluded so the digest is a
+    reproducible fingerprint of the results, not of the moment they were
+    produced.  ``digest_sha256`` itself is excluded so the function is safe to
+    call on an already-digested artifact.
+    """
+    blob = json.dumps(_digest_view(payload), sort_keys=True,
+                      separators=(",", ":"), default=_json_default)
     return hashlib.sha256(blob.encode("utf-8")).hexdigest()
 
 
