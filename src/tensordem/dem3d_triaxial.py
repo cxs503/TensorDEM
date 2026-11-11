@@ -37,6 +37,7 @@ import torch
 
 from .dem3d import DEM3DConfig, IceDEM3D
 from .dem3d_energy import EnergyAuditedIceDEM3D
+from .dem3d_energy_quadrature import relative_error
 
 
 def servo_velocity(error: float, gain: float, v_max: float) -> float:
@@ -390,6 +391,32 @@ class TriaxialRunner:
                 "closure_residual_relative_exact": float(resid_exact / scale_exact),
                 "pass_exact": abs(resid_exact / scale_exact) <= 1e-9,
                 "quadrature": "left-endpoint (legacy) vs exact potential increment",
+                # Closed-form cross-check of the quadrature defect: the exact
+                # arm must exceed the legacy arm by sum(1/2 k n dz^2), which
+                # dem3d_energy_quadrature predicts step by step.
+                "legacy_deficit_predicted_J": float(
+                    self.sim.cumulative_platen_deficit_predicted_J),
+                "legacy_deficit_measured_J": float(
+                    self.sim.cumulative_platen_work_exact_J
+                    - self.sim.cumulative_platen_work_J),
+                "legacy_deficit_relative_error": float(relative_error(
+                    self.sim.cumulative_platen_work_exact_J
+                    - self.sim.cumulative_platen_work_J,
+                    self.sim.cumulative_platen_deficit_predicted_J)),
+                "legacy_deficit_gate": "legacy_deficit_relative_error <= 0.05",
+                # The closed form 1/2 k n dz^2 covers the *spring* part of the
+                # platen force only.  A non-zero platen dashpot adds a work term
+                # to the legacy arm that the penalty potential does not contain,
+                # so the comparison is declared inapplicable (None) rather than
+                # reported as a spurious failure.
+                "legacy_deficit_scope": "spring-only; applies when platen_damping == 0",
+                "legacy_deficit_applicable": bool(self.cfg.platen_damping == 0.0),
+                "pass_legacy_deficit": (
+                    bool(relative_error(
+                        self.sim.cumulative_platen_work_exact_J
+                        - self.sim.cumulative_platen_work_J,
+                        self.sim.cumulative_platen_deficit_predicted_J) <= 0.05)
+                    if self.cfg.platen_damping == 0.0 else None),
             },
             "config": asdict(self.cfg),
             "area_x_m2": self.area_x,

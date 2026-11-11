@@ -12,6 +12,7 @@ import torch
 
 from .dem3d import DEM3DConfig, IceDEM3D
 from . import hertz_mindlin
+from .dem3d_energy_quadrature import platen_defect_components
 
 
 class EnergyAuditedIceDEM3D(IceDEM3D):
@@ -44,6 +45,11 @@ class EnergyAuditedIceDEM3D(IceDEM3D):
         self.cumulative_tool_work_exact_J = 0.0
         self.cumulative_external_work_exact_J = 0.0
         self.energy_balance_residual_exact_J = 0.0
+        # Closed-form left-endpoint quadrature defect 1/2 k n dz^2 accumulated
+        # per step (see ``dem3d_energy_quadrature``).  Diagnostics only: it
+        # predicts ``cumulative_platen_work_exact_J - cumulative_platen_work_J``
+        # for the spring part of the platen force.
+        self.cumulative_platen_deficit_predicted_J = 0.0
         # ``cumulative_bond_dissipation_J`` is created by the base solver (it
         # stays 0.0 on the legacy linear bond); the ledger only reads it.
         self.reference_mechanical_energy_J = self._mechanical_energy()
@@ -245,6 +251,13 @@ class EnergyAuditedIceDEM3D(IceDEM3D):
             self.positions, top_z1, bottom_z1, lateral1, tool1)
         self.cumulative_platen_work_exact_J += platen_u1 - platen_u0
         self.cumulative_tool_work_exact_J += tool_u1 - tool_u0
+        lat_k = (cfg.lateral_platen_stiffness if cfg.lateral_platen_stiffness is not None
+                 else cfg.platen_stiffness)
+        self.cumulative_platen_deficit_predicted_J += platen_defect_components(
+            self.positions, radius=cfg.radius, stiffness=cfg.platen_stiffness,
+            top_z0=top_z0, top_z1=top_z1, bottom_z0=bottom_z0, bottom_z1=bottom_z1,
+            lateral_pos0=lateral0, lateral_pos1=lateral1,
+            lateral_stiffness=lat_k)["total"]
 
         self.velocities += self.dt * force / self.config.mass
         self.velocities[self.fixed] = 0
@@ -391,6 +404,9 @@ class EnergyAuditedIceDEM3D(IceDEM3D):
             "tool_work_exact_cumulative_J": self.cumulative_tool_work_exact_J,
             "external_work_exact_cumulative_J": self.cumulative_external_work_exact_J,
             "energy_balance_residual_exact_J": self.energy_balance_residual_exact_J,
+            "platen_deficit_predicted_cumulative_J": self.cumulative_platen_deficit_predicted_J,
+            "platen_deficit_measured_cumulative_J": (
+                self.cumulative_platen_work_exact_J - self.cumulative_platen_work_J),
         })
         return row
 
@@ -412,6 +428,8 @@ class EnergyAuditedIceDEM3D(IceDEM3D):
             "cumulative_tool_work_exact_J": self.cumulative_tool_work_exact_J,
             "cumulative_external_work_exact_J": self.cumulative_external_work_exact_J,
             "energy_balance_residual_exact_J": self.energy_balance_residual_exact_J,
+            "cumulative_platen_deficit_predicted_J":
+                self.cumulative_platen_deficit_predicted_J,
         }
         return state
 
@@ -432,6 +450,7 @@ class EnergyAuditedIceDEM3D(IceDEM3D):
             self.cumulative_friction_work_J = 0.0
             self.cumulative_rolling_work_J = 0.0
             self.energy_balance_residual_J = 0.0
+            self.cumulative_platen_deficit_predicted_J = 0.0
             return
         keys = (
             "reference_mechanical_energy_J", "cumulative_tool_work_J",
@@ -442,6 +461,7 @@ class EnergyAuditedIceDEM3D(IceDEM3D):
             "energy_balance_residual_J", "cumulative_platen_work_exact_J",
             "cumulative_tool_work_exact_J", "cumulative_external_work_exact_J",
             "energy_balance_residual_exact_J",
+            "cumulative_platen_deficit_predicted_J",
         )
         staged = {key: float(audit.get(key, 0.0)) for key in keys}
         if not all(torch.isfinite(torch.tensor(value)) for value in staged.values()):
