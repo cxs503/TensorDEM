@@ -88,6 +88,7 @@ References
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Optional, Sequence
 
 import numpy as np
@@ -115,6 +116,8 @@ __all__ = [
     "run_biot_sweep",
     "uniform_limit_study",
     "run_brine_sweep",
+    "BASELINE",
+    "main",
 ]
 
 T_REF_K = 273.15
@@ -789,3 +792,75 @@ def run_brine_sweep(brine_levels: Sequence[float] = (0.0, 0.02, 0.04, 0.06, 0.08
     tau = np.array([r["tau_eff_Pa"] for r in rows], dtype=float)
     return dict(rows=rows, tau_eff_Pa=tau.tolist(),
                 monotone_decreasing=bool(np.all(np.diff(tau) < 0.0)))
+
+# ---------------------------------------------------------------------------
+# Command-line entry point
+# ---------------------------------------------------------------------------
+def _build_cli() -> "argparse.ArgumentParser":
+    """Argument parser for ``python -m tensordem.freeze_bond.thermal_profile``."""
+    import argparse
+
+    p = argparse.ArgumentParser(
+        prog="tensordem-thermal-profile",
+        description=("Freezing-front depth profile and freeze-bond strength evolution "
+                     "(P316-W1-N03): one case, tau_eff vs the m7439 uniform caliber, "
+                     "anchored on the Stefan/Neumann solutions."))
+    p.add_argument("--k", type=float, default=BASELINE["k"], help="ice conductivity [W/(m K)]")
+    p.add_argument("--delta-T", type=float, default=BASELINE["delta_T_K"],
+                   help="surface undercooling [K]")
+    p.add_argument("--H", type=float, default=BASELINE["H_m"], help="keel draft [m]")
+    p.add_argument("--t-hours", type=float, default=BASELINE["t_s"] / 3600.0,
+                   help="freezing time [h]")
+    p.add_argument("--salinity", type=float, default=0.0, help="bulk salinity [ppt]")
+    p.add_argument("--exponent-n", type=float, default=BASELINE["exponent_n"],
+                   help="strength temperature exponent n")
+    p.add_argument("--h-conv", type=float, default=1.0e9,
+                   help="surface heat-transfer coefficient [W/(m^2 K)] (1e9 ~ Dirichlet)")
+    p.add_argument("--n-cells", type=int, default=400, help="finite-volume cells")
+    p.add_argument("--dt", type=float, default=60.0, help="time step [s]")
+    p.add_argument("--biot-sweep", action="store_true",
+                   help="also report the Biot sweep of tau_eff/tau_uniform")
+    p.add_argument("--out", type=Path, default=None, help="write the JSON summary here")
+    return p
+
+
+def main(argv: "Sequence[str] | None" = None) -> int:
+    """Entry point: solve one freezing case and print the JSON summary.
+
+    Exit code 0 when the Stefan anchor of this case is within the predeclared
+    2 % band, 1 otherwise (the CLI is a *check*, not a printer).
+    """
+    import json
+    import sys
+
+    args = _build_cli().parse_args(argv)
+    case = run_case(k=args.k, exponent_n=args.exponent_n, delta_T_K=args.delta_T,
+                    H=args.H, t_end=args.t_hours * 3600.0, salinity_ppt=args.salinity,
+                    h_conv=args.h_conv, n_cells=args.n_cells, dt=args.dt)
+    summary = {
+        "entry": "tensordem.freeze_bond.thermal_profile:main",
+        "case": {k: v for k, v in case["parameters"].items() if v is not None},
+        "front_m": case["front_m"],
+        "energy": case["energy"],
+        "strength": case["strength"],
+    }
+    if args.biot_sweep:
+        summary["biot_sweep"] = run_biot_sweep(h_conv=args.h_conv, H=args.H,
+                                              exponent_n=args.exponent_n,
+                                              delta_T_K=args.delta_T,
+                                              t_end=args.t_hours * 3600.0)
+    payload = json.dumps(summary, indent=2, default=float)
+    if args.out is not None:
+        args.out.parent.mkdir(parents=True, exist_ok=True)
+        args.out.write_text(payload + "\n", encoding="utf-8")
+    print(payload)
+    # the predeclared anchor of the node is the *exact* Neumann front (0.5 %);
+    # the quasi-steady Stefan law is reported, not used as the pass criterion
+    anchor_ok = abs(case["front_m"]["rel_err_vs_neumann"]) <= 0.005
+    return 0 if anchor_ok else 1
+
+
+if __name__ == "__main__":  # pragma: no cover - exercised through main()
+    import sys as _sys
+
+    _sys.exit(main())

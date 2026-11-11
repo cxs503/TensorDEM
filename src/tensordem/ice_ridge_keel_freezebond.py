@@ -59,7 +59,7 @@ from dataclasses import dataclass, field
 import json
 import math
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 import numpy as np
 
@@ -338,8 +338,19 @@ def _pairs(pile: RubblePile) -> np.ndarray:
 def create_bonds(pile: RubblePile, undercooling_c: float,
                  contact_time_s: float = 1000.0, roughness_m: float = 20e-6,
                  salinity_ppt: float = 0.0,
-                 gap_tolerance: float = 5.0e-3) -> BondSet:
-    """Create freeze bonds at every contact closer than ``gap_tolerance``."""
+                 gap_tolerance: float = 5.0e-3,
+                 tau_by_depth: "Callable[[np.ndarray], np.ndarray] | None" = None,
+                 ) -> BondSet:
+    """Create freeze bonds at every contact closer than ``gap_tolerance``.
+
+    ``tau_by_depth`` (P316-W1-N03 integration) is an optional callable
+    ``z_mid [m] -> tau [MPa]`` evaluated at the mid-height of every candidate
+    contact by :func:`depth_profile_strength`.  When it is given the m7439
+    uniform ``tau_adfreeze`` is replaced by the depth profile of the freezing
+    front, and contacts whose local temperature is at (or above) the liquidus
+    (``tau == 0``) are left un-cemented instead of receiving a dead bond.
+    With ``tau_by_depth=None`` the behaviour is bit-identical to before.
+    """
     pairs = _pairs(pile)
     empty = np.zeros(0)
     if pairs.shape[0] == 0:
@@ -357,14 +368,108 @@ def create_bonds(pile: RubblePile, undercooling_c: float,
              / (pile.radius[pairs[:, 0]] + pile.radius[pairs[:, 1]]))
     delta = np.maximum(overlap, 1.0e-3)
     area = math.pi * r_eff * delta
-    tau = tau_adfreeze(undercooling_c, contact_time_s, roughness_m, salinity_ppt)
-    f_break = tau * 1.0e6 * area
+    if tau_by_depth is None:
+        tau = tau_adfreeze(undercooling_c, contact_time_s, roughness_m, salinity_ppt)
+        tau_vec = np.full(pairs.shape[0], tau, dtype=float)
+    else:
+        # depth below the cold keel top surface (the thermal solver's z axis
+        # runs from the cold surface downward, the DEM z axis runs upward)
+        z_top = float(pile.box[2, 0]) + float(pile.keel_height())
+        z_mid = 0.5 * (pile.pos[pairs[:, 0], 2] + pile.pos[pairs[:, 1], 2])
+        tau_vec = np.asarray(tau_by_depth(z_top - z_mid), dtype=float)
+        if tau_vec.shape != (pairs.shape[0],):
+            raise ValueError("tau_by_depth must return one value per contact")
+        # un-cemented contacts (local T >= liquidus) carry no bond at all
+        keep_tau = tau_vec > 0.0
+        if not np.all(keep_tau):
+            pairs, overlap, area, r_eff = (pairs[keep_tau], overlap[keep_tau],
+                                           area[keep_tau], r_eff[keep_tau])
+            tau_vec = tau_vec[keep_tau]
+        if pairs.shape[0] == 0:
+            return BondSet(empty.astype(np.int64), empty.astype(np.int64), empty,
+                           empty, empty, np.zeros(0, dtype=bool), empty)
+    f_break = tau_vec * 1.0e6 * area
     # bond ductility: a freeze bond fails after ~1 mm of opening, so its
     # stiffness is f_break / delta_fail (not the much stiffer contact law)
     k_bond = f_break / 1.0e-3
     return BondSet(i=pairs[:, 0].astype(np.int64), j=pairs[:, 1].astype(np.int64),
                    gap0=overlap.astype(float), area=area, f_break=f_break,
                    broken=np.zeros(pairs.shape[0], dtype=bool), k_bond=k_bond)
+
+
+# ---------------------------------------------------------------------------
+# Depth-resolved bond strength (P316-W1-N03 integration point)
+# ---------------------------------------------------------------------------
+def depth_profile_strength(pile: RubblePile, *, undercooling_k: float = 15.0,
+                           t_end_s: float = 86_400.0, k: float = 2.2,
+                           salinity_ppt: float = 0.0, exponent_n: float = 0.3,
+                           h_conv: float = 1.0e9, n_cells: int = 200,
+                           dt: float = 60.0, contact_time_s: float = 1000.0,
+                           roughness_m: float = 20e-6,
+                           H_m: float | None = None) -> dict[str, Any]:
+    """Freeze-bond strength as a *depth profile* instead of one number.
+
+    This is the integration point of the freezing-front solver
+    (``tensordem.freeze_bond.thermal_profile``, P316-W1-N03) into the keel DEM:
+    the m7439 caliber takes the whole keel draft ``H`` at the ambient
+    undercooling, whereas the enthalpy-method profile gives ``T(z)`` at the
+    freezing time ``t_end_s`` (``z`` measured from the cold keel top surface).
+    The strength law is normalised so that the *surface* bond strength equals
+    the m7439 uniform value: the ratio ``tau_eff/tau_uniform`` therefore
+    isolates the bias of the uniform-temperature assumption.
+
+    Returns ``tau_of_depth`` -- the callable consumed by :func:`create_bonds`
+    -- together with the two calibers and the front diagnostics.
+    """
+    from .freeze_bond import thermal_profile as tp
+
+    # ``H_m`` is the thickness of the layer the bond strength is averaged over
+    # (the m7439 "keel thickness", baseline 1 m); the default -- the geometric
+    # keel height of the pile -- is the conservative choice, and any layer
+    # thickness may be injected (see the DEM integration demo).
+    H = max(float(H_m) if H_m is not None else float(pile.keel_height()), 1.0e-9)
+    thermal = tp.IceThermal(k=float(k), salinity_ppt=float(salinity_ppt))
+    T_env = thermal.liquidus_K - float(undercooling_k)
+    # normalise the profile law so sigma_b(z=0) == tau_adfreeze (m7439 caliber)
+    unit_law = tp.BondStrengthLaw(sigma_0=1.0, exponent_n=float(exponent_n))
+    surface_unit = float(unit_law(np.asarray([T_env]), thermal)[0])
+    tau_uniform_mpa = tau_adfreeze(undercooling_k, contact_time_s, roughness_m,
+                                   salinity_ppt)
+    sigma_0 = tau_uniform_mpa * 1.0e6 / max(surface_unit, 1.0e-30)
+    law = tp.BondStrengthLaw(sigma_0=sigma_0, exponent_n=float(exponent_n))
+    case = tp.run_case(k=float(k), exponent_n=float(exponent_n),
+                       delta_T_K=float(undercooling_k), H=H, t_end=float(t_end_s),
+                       salinity_ppt=float(salinity_ppt), h_conv=float(h_conv),
+                       n_cells=int(n_cells), dt=float(dt), sigma_0=sigma_0)
+    z = np.asarray(case["z"], dtype=float)
+    T = np.asarray(case["T_profile"], dtype=float)
+    inside = z <= H
+    tau_profile_mpa = np.maximum(law(T[inside], thermal), 0.0) * 1.0e-6
+    z_in = z[inside]
+    tau_eff_mpa = float(tp.effective_strength(z_in, T[inside], H, law, thermal)) * 1.0e-6
+
+    def tau_of_depth(z_query) -> np.ndarray:
+        """tau [MPa] at depth ``z`` below the cold keel top surface."""
+        zq = np.clip(np.asarray(z_query, dtype=float), 0.0, H)
+        return np.interp(zq, z_in, tau_profile_mpa, left=tau_profile_mpa[0],
+                         right=0.0)
+
+    return {
+        "tau_of_depth": tau_of_depth,
+        "tau_uniform_mpa": float(tau_uniform_mpa),
+        "tau_eff_mpa": tau_eff_mpa,
+        "ratio": (tau_eff_mpa / tau_uniform_mpa) if tau_uniform_mpa > 0 else float("nan"),
+        "H_m": H,
+        "front_m": float(case["front_m"]["numerical"]),
+        "front_neumann_m": float(case["front_m"]["neumann"]),
+        "energy_rel_residual": float(case["energy"]["rel_residual"]),
+        "t_end_s": float(t_end_s),
+        "undercooling_k": float(undercooling_k),
+        "k_W_mK": float(k),
+        "salinity_ppt": float(salinity_ppt),
+        "z_grid_m": z_in.tolist(),
+        "tau_profile_mpa": tau_profile_mpa.tolist(),
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -696,7 +801,8 @@ def run_keel_case(keel_height_target: float = 4.0, undercooling_c: float = -10.0
                   with_bonds: bool = True,
                   consolidation_accel: float = 300.0,
                   exponent: float = 1.2,
-                  in_service_accel: float = 5.0) -> dict[str, Any]:
+                  in_service_accel: float = 5.0,
+                  depth_profile: dict[str, Any] | None = None) -> dict[str, Any]:
     """Keel formation -> freeze bonding -> buoyant release -> measurements.
 
     Stage 1 (loose deposition): ballistic deposition of Rosin-Rammler blocks,
@@ -705,6 +811,13 @@ def run_keel_case(keel_height_target: float = 4.0, undercooling_c: float = -10.0
     closes quasi-statically and compacts the fabric to n ~ 0.40.
     Stage 3 (freeze bonding): contacts are cemented with
     ``F_break = tau_adfreeze * A_contact``.
+    ``depth_profile`` (P316-W1-N03): when given, the freeze bonds are cemented
+    with the *depth-resolved* strength of the freezing front instead of the
+    m7439 uniform-temperature value -- the keyword arguments are forwarded to
+    :func:`depth_profile_strength` (e.g. ``{"undercooling_k": 15.0,
+    "t_end_s": 86400.0, "k": 2.2, "salinity_ppt": 5.0}``).  The effective
+    strength of the profile becomes the bond caliber used downstream and
+    ``tau_eff/tau_uniform`` is reported under ``bond_strength_profile``.
     Stage 4 (release): the boundary reopens and the net body force becomes
     buoyant (ice is 10 % lighter than water).  An *uncemented* pile cannot hold
     the consolidated fabric -- its blocks are buoyant and disperse, so its
@@ -752,11 +865,27 @@ def run_keel_case(keel_height_target: float = 4.0, undercooling_c: float = -10.0
 
     # --- stage 3: freeze bonds from the adfreeze parameterisation ---------
     tau = tau_adfreeze(undercooling_c, contact_time_s, salinity_ppt=salinity_ppt)
+    tau_by_depth: Callable[[np.ndarray], np.ndarray] | None = None
+    bond_profile_meta: dict[str, Any] | None = None
+    if depth_profile is not None:
+        prof = depth_profile_strength(
+            pile, undercooling_k=abs(float(undercooling_c)),
+            contact_time_s=contact_time_s,
+            salinity_ppt=salinity_ppt,
+            **{k: v for k, v in depth_profile.items()
+               if k not in {"undercooling_k", "contact_time_s", "roughness_m",
+                            "salinity_ppt"}})
+        tau_by_depth = prof["tau_of_depth"]
+        tau = float(prof["tau_eff_mpa"])
+        bond_profile_meta = {k: prof[k] for k in
+                             ("tau_uniform_mpa", "tau_eff_mpa", "ratio", "H_m",
+                              "front_m", "front_neumann_m", "energy_rel_residual",
+                              "t_end_s", "undercooling_k", "k_W_mK", "salinity_ppt")}
     bonds = None
     bonded_area_at_bonding = 0.0
     if with_bonds and tau > 0.0:
         bonds = create_bonds(pile, undercooling_c, contact_time_s,
-                             salinity_ppt=salinity_ppt)
+                             salinity_ppt=salinity_ppt, tau_by_depth=tau_by_depth)
         pile.vel[:] = 0.0
         # the freeze-bond area available on the swept face is a property of the
         # bonded fabric at loading time; bond rupture during shearing is
@@ -825,6 +954,7 @@ def run_keel_case(keel_height_target: float = 4.0, undercooling_c: float = -10.0
         "bounds_volume_m3": poro["bounding_volume"],
         "undercooling_c": undercooling_c,
         "tau_adfreeze_mpa": tau,
+        "bond_strength_profile": bond_profile_meta,
         "bonds": bonds_meta,
         "mu_mob": fric["mu_mob"],
         "tan_phi": fric["tan_phi"],
