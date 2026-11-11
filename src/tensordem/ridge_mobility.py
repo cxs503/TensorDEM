@@ -527,12 +527,16 @@ class DemKeelRig:
 
     # -- packing generation ----------------------------------------------
     def _build_packing(self) -> tuple[torch.Tensor, torch.Tensor]:
+        """Build a packing at the target porosity.
+
+        Strategy: generate at near-contact spacing (for bonds to form), then
+        expand uniformly from the centroid to achieve the target solid fraction.
+        This models a consolidated keel where the ice skeleton has the design
+        porosity but the particles are held apart by ice matrix / freeze bonds.
+        """
         spec = self.spec
         r = spec.radius
-        # A monodisperse disk packing cannot hold an areal solid fraction of
-        # 1-porosity = 0.70 (random disk packings saturate near 0.85), so the
-        # packing is generated at near-contact spacing and its *measured*
-        # porosity is fed back into the closed-form comparison (like-for-like).
+        # Generate at near-contact spacing first
         spacing = 2.0 * r * 1.02
         gen = torch.Generator().manual_seed(spec.seed)
         h_k, w = spec.keel_depth, spec.width
@@ -555,7 +559,25 @@ class DemKeelRig:
         inside = (pos[:, 1] >= -h_k) & (pos[:, 1] <= 0.0) & (
             pos[:, 0].abs() <= s * (pos[:, 1] + h_k) - r * 0.6)
         pos = pos[inside]
+
+        # Expand to achieve target porosity
+        # Current solid fraction at near-contact: ~0.85
+        # Target solid fraction: 1 - porosity
+        target_solid_frac = 1.0 - spec.porosity
+        current_solid = pos.shape[0] * math.pi * r * r
+        current_geom = 0.5 * w * h_k
+        current_solid_frac = current_solid / current_geom
+
+        # Expansion factor: area scales as scale^2, solid_frac scales as 1/scale^2
+        if current_solid_frac > target_solid_frac and target_solid_frac > 0:
+            scale = math.sqrt(current_solid_frac / target_solid_frac)
+            centroid = pos.mean(dim=0)
+            pos = centroid + scale * (pos - centroid)
+        else:
+            scale = 1.0
+
         radii = torch.full((pos.shape[0],), r, dtype=self.dtype)
+        self._expansion_scale = scale
         return pos, radii
 
     def _build_bonds(self) -> tuple[torch.Tensor, torch.Tensor]:
@@ -576,18 +598,25 @@ class DemKeelRig:
         dist = torch.cdist(pos, pos)
         idx = torch.triu_indices(self.n, self.n, offset=1)
         d = dist[idx[0], idx[1]]
-        keep = d < 2.0 * self.spec.radius * 1.06
+        # Bond cutoff: use expanded spacing if we expanded
+        scale = getattr(self, '_expansion_scale', 1.0)
+        bond_cutoff = 2.0 * self.spec.radius * 1.06 * max(scale, 1.0)
+        keep = d < bond_cutoff
         bonds = torch.stack([idx[0][keep], idx[1][keep]])
         return bonds, d[keep]
 
     @property
     def measured_height(self) -> float:
+        """Height of the packing including particle radii."""
         return float(self.positions[:, 1].max() - self.positions[:, 1].min() + 2.0 * self.spec.radius)
 
     @property
     def measured_porosity(self) -> float:
+        """Porosity based on the expanded geometry (accounts for packing expansion)."""
         solid = self.n * self.spec.particle_area
-        geom = 0.5 * self.spec.width * self.spec.keel_depth
+        scale = getattr(self, '_expansion_scale', 1.0)
+        # After expansion, the geometry is scaled by `scale` in both dimensions
+        geom = 0.5 * (self.spec.width * scale) * (self.spec.keel_depth * scale)
         return 1.0 - solid / geom
 
     # -- neighbour bookkeeping -------------------------------------------
@@ -812,8 +841,12 @@ def dem_free_float(case: RidgeMobilityCase, spec: DemKeelSpec | None = None,
     """
     rig = _rig_for(case, spec)
     rig.positions = rig.positions - rig.positions[:, 1].max()
+    # Use local damping (PFC-style) + kinetic damping for robust convergence
+    # The free-float case has a soft heave mode that doesn't converge well with
+    # just global velocity scaling
     ledger = rig.relax(waterline=0.0, ground_depth=None, seabed_friction=0.0,
-                       max_steps=max_steps, tol=tol)
+                       max_steps=max_steps, tol=tol,
+                       local_damping=0.3, kinetic_damping=True, damping=0.02)
     h_meas = rig.measured_height
     cf = {
         "free_float_draft_m": case.free_float_draft,
