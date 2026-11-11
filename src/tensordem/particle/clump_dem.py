@@ -500,10 +500,39 @@ class ClumpDEM:
 
     def velocity_spread(self) -> dict:
         speed = np.linalg.norm(self.vel, axis=1)
+        om = np.linalg.norm(self.omega, axis=1)
         return {
             "max_speed": float(speed.max()),
             "mean_speed": float(speed.mean()),
-            "max_omega": float(np.linalg.norm(self.omega, axis=1).max()),
+            "max_omega": float(om.max()),
+            "mean_omega": float(om.mean()),
+            "median_omega": float(np.median(om)),
+        }
+
+    def rolling_torque_saturation(self, eps_w: Optional[float] = None) -> dict:
+        """How close the rolling-resistance torque is to its Coulomb limit.
+
+        The contact law applies ``tau = -mu_roll * r * |Fn| * w_rel / (|w_rel| + eps_w)``
+        (``clump_dem.step``), so the delivered torque is the Coulomb limit scaled by
+        ``s = |w| / (|w| + eps_w)``.  ``s -> 1`` is genuine Coulomb rolling
+        resistance; ``s << 1`` means the branch is acting as a *viscous* torque of
+        coefficient ``mu_roll r |Fn| / eps_w`` instead.  Reported per body (the
+        wall branch uses the body spin directly; the pair branch uses ``w_rel``,
+        for which the body spin is an upper bound).
+        """
+        eps = float(self.params.eps_w if eps_w is None else float(eps_w))
+        if eps <= 0.0:
+            raise ValueError("eps_w must be positive")
+        w = np.linalg.norm(self.omega, axis=1)
+        s = w / (w + eps)
+        return {
+            "eps_w": eps,
+            "mean": float(s.mean()),
+            "median": float(np.median(s)),
+            "p10": float(np.percentile(s, 10)),
+            "p90": float(np.percentile(s, 90)),
+            "max": float(s.max()),
+            "mean_omega": float(w.mean()),
         }
 
 
@@ -573,8 +602,15 @@ def heap_case(
     dt: float = 5e-5,
     seed: int = 0,
     wall_mu: Optional[float] = None,
+    spacing: Optional[Sequence[float]] = None,
 ) -> Tuple[ClumpDEM, List[BoxObstacle]]:
-    """Quasi-2D lifted-box heap: returns the simulation and the two lift walls."""
+    """Quasi-2D lifted-box heap: returns the simulation and the two lift walls.
+
+    ``spacing`` is forwarded to :func:`lattice_packing`.  Exposing it lets a
+    caller *match* the fill between particle shapes (the default spacing is
+    derived from the particle extents, so a longer clump is packed with fewer
+    particles in the same box -- a shape/particle-count confound).
+    """
     params = params or ContactParams()
     rng = np.random.default_rng(seed)
     p0 = particle_factory()
@@ -606,6 +642,7 @@ def heap_case(
         p0,
         (-box_half_x, -slab_half_y, 0.0),
         (box_half_x, slab_half_y, fill_height),
+        spacing=spacing,
         jitter=2e-5,
         rng=rng,
     )
@@ -732,9 +769,22 @@ def lifted_box_repose(
     lift_speed: float = 0.30,
     gravity: Sequence[float] = (0.0, 0.0, -9.81),
     wall_mu: Optional[float] = None,
+    min_tail_steps: Optional[int] = None,
+    max_tail_steps: Optional[int] = None,
+    quiescence_mean_speed: Optional[float] = None,
+    probe_every: int = 100,
     **case_kw,
 ) -> dict:
-    """Run the lifted-box repose protocol and return the measurement."""
+    """Run the lifted-box repose protocol and return the measurement.
+
+    Quiescence gate (optional, off by default so round-1 numbers reproduce
+    bit-for-bit): with ``quiescence_mean_speed`` set, the tail is integrated in
+    chunks of ``probe_every`` steps until the *mean body speed* drops to the
+    tolerance, starting from ``min_tail_steps`` and giving up at
+    ``max_tail_steps``.  Without the gate a fixed ``tail_steps`` is used and the
+    tail may still be flowing, which is exactly what the reported
+    ``tail_spread`` / ``quiesced`` fields let a caller detect.
+    """
     sim, walls = heap_case(
         particle_factory,
         lift_speed=lift_speed,
@@ -752,7 +802,26 @@ def lifted_box_repose(
     sim.run(lift_steps)
     for w in walls:
         w.velocity[:] = (0.0, 0.0, 0.0)
-    sim.run(tail_steps)
+    flow_spread = sim.velocity_spread()
+    flow_saturation = sim.rolling_torque_saturation()
+    if quiescence_mean_speed is None:
+        sim.run(tail_steps)
+        tail_used = int(tail_steps)
+        quiesced: Optional[bool] = None
+    else:
+        lo = int(min_tail_steps if min_tail_steps is not None else 0)
+        hi = int(max_tail_steps if max_tail_steps is not None else max(tail_steps, 1))
+        hi = max(hi, lo)
+        sim.run(lo)
+        tail_used = lo
+        quiesced = False
+        while tail_used < hi:
+            chunk = min(max(1, probe_every), hi - tail_used)
+            sim.run(chunk)
+            tail_used += chunk
+            if sim.velocity_spread()["mean_speed"] <= quiescence_mean_speed:
+                quiesced = True
+                break
     meas = measure_repose_angle(sim.pos)
     tail_spread = sim.velocity_spread()
     return {
@@ -760,10 +829,18 @@ def lifted_box_repose(
         "positions": sim.pos.copy(),
         "n_particles": sim.n_bodies,
         "n_members": sim.n_members,
+        "solid_volume": float(sum(p.volume for p in sim.particles)),
+        "mass": float(sim.mass.sum()),
         "time": sim.time,
         "steps": sim.step_count,
         "settle_spread": settle_spread,
         "tail_spread": tail_spread,
+        "flow_spread": flow_spread,
+        "flow_rolling_saturation": flow_saturation,
+        "tail_steps_used": tail_used,
+        "quiesced": quiesced,
+        "quiescence_mean_speed": quiescence_mean_speed,
+        "rolling_saturation": sim.rolling_torque_saturation(),
         "energy": sim.close_energy(),
         "sim": sim,
     }
@@ -812,6 +889,7 @@ def piston_case(
         p0,
         (-box_half_x, -slab_half_y, 0.0),
         (box_half_x, slab_half_y, fill_height),
+        spacing=spacing,
         jitter=2e-5,
         rng=rng,
     )
