@@ -473,7 +473,7 @@ def _percolation_reference(poly: ConvexPolyhedron, n_cells: int, spacing: np.nda
 # ---------------------------------------------------------------------------
 def _channel_system(field: BrashIceField, *, kn: float, zeta: float, mu: float,
                     dt: float, hull_offset: float, speed: float, width: float,
-                    length: float, plane: bool):
+                    length: float, plane: bool, outlet_margin: float = 1.0):
     law = ContactLaw(kn=kn, zeta=zeta, mu=mu, mu_rolling=0.005, kt_ratio=0.25)
     system = DEMSystem3D(field.bodies, law=law, gravity=0.0 if plane else 9.81,
                          water_level=None if plane else 0.0,
@@ -486,7 +486,7 @@ def _channel_system(field: BrashIceField, *, kn: float, zeta: float, mu: float,
     # the outlet is one channel length beyond the floe field so that the cleared
     # brash ice can be pushed forward instead of being jammed against a wall (a
     # jam would produce metre-deep interpenetration and a meaningless force record)
-    system.add_wall([-1.0, 0.0, 0.0], -(length + 1.0), label="end")   # x <= length+1
+    system.add_wall([-1.0, 0.0, 0.0], -(length + outlet_margin), label="end")
     # the floating field starts at its own hydrostatic equilibrium, so the ledger
     # reference must include that PE (otherwise the residual carries a constant
     # offset equal to -E(0) and says nothing about the scheme)
@@ -500,6 +500,8 @@ def run_channel(field: BrashIceField, *, kn: float = 5.0e4, zeta: float = 0.1,
                 hull_start: Optional[float] = None, corridor: float = 1.0,
                 plane: bool = False, record_every: int = 10,
                 fixed_window: Optional[Tuple[float, float]] = None,
+                slab_thickness: Optional[float] = None,
+                outlet_margin: float = 1.0,
                 ) -> Dict[str, np.ndarray]:
     """Clear a 3-D brash-ice channel and record resistance and porosity.
 
@@ -513,11 +515,13 @@ def run_channel(field: BrashIceField, *, kn: float = 5.0e4, zeta: float = 0.1,
         hull_start = leading - 1.0e-2
     system, hull = _channel_system(field, kn=kn, zeta=zeta, mu=mu, dt=dt,
                                    hull_offset=hull_start, speed=speed, width=width,
-                                   length=length, plane=plane)
+                                   length=length, plane=plane,
+                                   outlet_margin=outlet_margin)
     times: List[float] = []
     resistance: List[float] = []
     porosity: List[float] = []
     porosity_fixed: List[float] = []
+    lane_solid: List[float] = []
     kinetic: List[float] = []
     contacts: List[int] = []
     dissipated: List[float] = []
@@ -538,9 +542,14 @@ def run_channel(field: BrashIceField, *, kn: float = 5.0e4, zeta: float = 0.1,
             # already cleared must stay empty; a window that follows the stem
             # measures the ice being pushed, not the lane that was cleared)
             if fixed_window is not None:
+                # centroid-count proxy (kept for continuity with the earlier runs)
                 porosity_fixed.append(system.porosity(
                     [fixed_window[0], -0.5 * width, field.water_level - 0.15],
                     [fixed_window[1], 0.5 * width, field.water_level + 0.05]))
+                # exact clipped solid volume inside the same swath (tetrahedra cut
+                # by the two slab faces -- not a centroid step function)
+                lane_solid.append(system.solid_volume_slab(
+                    0, fixed_window[0], fixed_window[1]))
             kinetic.append(system.total_kinetic)
             contacts.append(system.n_pair_contacts)
             dissipated.append(system.dissipated)
@@ -559,6 +568,9 @@ def run_channel(field: BrashIceField, *, kn: float = 5.0e4, zeta: float = 0.1,
         "dissipated": np.asarray(dissipated),
         "spring": np.asarray(spring),
         "porosity_fixed": np.asarray(porosity_fixed, dtype=float),
+        "lane_solid_volume": np.asarray(lane_solid, dtype=float),
+        "slab_thickness": np.asarray([slab_thickness if slab_thickness is not None
+                                      else float("nan")]),
         "work_external": np.asarray([system.work_external]),
     }
 
