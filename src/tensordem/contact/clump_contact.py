@@ -75,6 +75,8 @@ class ContactParams:
     mu_roll: float = 0.3          # rolling resistance coefficient [-]
     merge_angle_deg: float = 30.0 # junction merge normal tolerance
     eps_w: float = 1.0            # rolling-torque regularisation [rad/s] (stability-bounded viscous branch)
+    rolling_model: str = "viscous"  # "viscous" (legacy) | "coulomb" (static-capable, see rolling_static)
+    rolling_lever: str = "member"   # "member" (legacy) | "com" (shape aware: |x_contact - x_com|)
 
     @property
     def kt(self) -> float:
@@ -89,6 +91,8 @@ class ContactParams:
             mu_roll=self.mu_roll,
             merge_angle_deg=self.merge_angle_deg,
             eps_w=self.eps_w,
+            rolling_model=self.rolling_model,
+            rolling_lever=self.rolling_lever,
         )
         d.update(kw)
         return ContactParams(**d)
