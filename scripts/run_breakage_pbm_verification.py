@@ -30,7 +30,7 @@ def main() -> int:
     ap.add_argument("--n-particles", type=int, default=2000)
     ap.add_argument("--diameter", type=float, default=0.01)
     ap.add_argument("--t-end", type=float, default=8.0)
-    ap.add_argument("--stress-max", type=float, default=2.0e7)
+    ap.add_argument("--stress-max", type=float, default=4.5e7)
     ap.add_argument("--seed", type=int, default=20261110)
     ap.add_argument("--out", default="artifacts/breakage_pbm")
     ap.add_argument("--no-figures", action="store_true")

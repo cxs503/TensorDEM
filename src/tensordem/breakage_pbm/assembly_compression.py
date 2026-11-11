@@ -76,10 +76,12 @@ class AssemblyParams:
     record_times: tuple = (1.0, 2.0, 4.0, 8.0)
     dt_factor: float = 0.25
     max_breaks_per_step: int = 5
+    max_generations: int = 1      # 1 = primary breakage only (see docs)
     min_fragment_age: int = 60      # steps a new fragment must be loaded before breaking
     min_daughter_fraction: float = 0.08  # DEM resolution floor on daughter volume
     max_overlap_fraction: float = 0.2   # overlap cap (fragment-insertion stabiliser)
     max_speed: float = 5.0              # velocity clamp (fragment-insertion stabiliser)
+    platen_mass_ratio: float = 0.1      # platen mass / bed mass (load-control inertia)
     seed: int = 0
 
     @property
@@ -186,7 +188,8 @@ class BreakableAssembly:
         self.pos[:, 2] = np.clip(self.pos[:, 2], self.r, L - self.r)
         self.platen_z = float(np.max(self.pos[:, 2] + self.r))
         self.age = np.zeros(self.pos.shape[0], dtype=np.int64)
-        self.platen_mass = 0.1 * float(np.sum(self.mass))
+        self.generation = np.zeros(self.pos.shape[0], dtype=np.int64)
+        self.platen_mass = float(p.platen_mass_ratio) * float(np.sum(self.mass))
         self.platen_vel = 0.0
         self.phi0 = float(np.sum(self.volume)) / L ** 3
 
@@ -333,13 +336,14 @@ class BreakableAssembly:
     # --------------------------------------------------------------- damage
     def _break(self, sigma_p: np.ndarray) -> None:
         p = self.p
-        over = (sigma_p > self.strength) & (self.age >= int(p.min_fragment_age))
+        over = ((sigma_p > self.strength) & (self.age >= int(p.min_fragment_age))
+                & (self.generation < int(p.max_generations)))
         if not np.any(over):
             return
         idx = np.flatnonzero(over)[: int(p.max_breaks_per_step)]
         if self.first_break_time is None:
             self.first_break_time = self.t
-        new_pos, new_vel, new_d, new_strength = [], [], [], []
+        new_pos, new_vel, new_d, new_gen = [], [], [], []
         for k in idx:
             v0 = float(self.volume[k])
             daughters = np.asarray(p.daughter.sample(v0, self.rng), dtype=np.float64)
@@ -365,13 +369,14 @@ class BreakableAssembly:
                 new_pos.append(best)
                 new_vel.append(self.vel[k])
                 new_d.append(2.0 * rd)
-            new_strength.append(None)
+            new_gen.extend([int(self.generation[k]) + 1] * len(radii_d))
             self.events.append({
                 "t": self.t,
                 "parent_volume": v0,
                 "parent_diameter": float(self.d[k]),
                 "daughter_volumes": [float(v) for v in daughters],
                 "daughter_fractions": [float(v / v0) for v in daughters],
+                "generation": int(self.generation[k]),
                 "sigma_p": float(sigma_p[k]),
                 "strength": float(self.strength[k]),
             })
@@ -388,6 +393,8 @@ class BreakableAssembly:
             [self.strength[keep],
              p.strength.sample_strength(new_volume, self.rng)])
         self.age = np.concatenate([self.age[keep], np.zeros(len(new_d), dtype=np.int64)])
+        self.generation = np.concatenate([self.generation[keep],
+                                          np.asarray(new_gen, dtype=np.int64)])
         self.broken_total += int(idx.size)
 
     # ------------------------------------------------------------------ run
@@ -419,6 +426,7 @@ class BreakableAssembly:
                 if np.any(good):
                     kappa = float(np.mean(sa[good] / sm[good]))
         return {
+            "generation_histogram": np.bincount(self.generation).tolist(),
             "psd": self.psd,
             "record_times": record,
             "events": events,
