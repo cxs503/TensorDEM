@@ -92,16 +92,32 @@ def body_tetrahedra(shape: ConvexPolyhedron) -> np.ndarray:
     return np.concatenate([apex_coords, shape.vertices[tets]], axis=1)
 
 
-def submerged_tet_moments(points: np.ndarray, water_level: float
+def submerged_tet_moments(points: np.ndarray, water_level: float,
+                          axis: int = 2
                           ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Submerged volume, first moment and centroid of a batch of tetrahedra.
+    """Volume, first moment and centroid of the part of each tetrahedron below a plane.
 
     ``points`` is ``(n, 4, 3)`` world-frame tetrahedra (vertex 0 is the fan apex),
-    ``water_level`` the plane ``z = water_level``; the region ``z <= water_level``
-    is submerged.  Returns ``(volume, moment, centroid)`` with ``moment`` the
-    first moment :math:`\\int x\\,dV`.
+    ``water_level`` the plane ``x_axis = water_level``; the region
+    ``x_axis <= water_level`` is kept.  ``axis = 2`` (default) is the waterline
+    clipping used for buoyancy; ``axis = 0`` / ``1`` clip against a vertical
+    plane, which is what the exact slab (channel-lane) volume uses.
+    Returns ``(volume, moment, centroid)`` with ``moment`` the first moment
+    :math:`\\int x\\,dV` in the *original* coordinate frame.
     """
     points = np.asarray(points, dtype=np.float64)
+    if axis != 2:
+        # clip along another axis by permuting that axis into the z slot, run the
+        # (vectorised) z clipper, then permute the moments back
+        perm = [0, 1, 2]
+        perm[axis], perm[2] = perm[2], perm[axis]
+        volume, moment, centroid = submerged_tet_moments(points[..., perm],
+                                                         water_level, axis=2)
+        moment_out = np.zeros_like(moment)
+        centroid_out = np.zeros_like(centroid)
+        moment_out[..., perm] = moment
+        centroid_out[..., perm] = centroid
+        return volume, moment_out, centroid_out
     n = points.shape[0]
     if n == 0:
         return np.zeros(0), np.zeros((0, 3)), np.zeros((0, 3))
@@ -467,6 +483,27 @@ class DEMSystem3D:
             if np.all(b.position >= lo) and np.all(b.position <= hi):
                 solid += b.shape.volume
         return 1.0 - solid / volume
+
+    def solid_volume_slab(self, axis: int, lo: float, hi: float) -> float:
+        """Exact solid volume of the floes inside the slab ``lo <= x_axis <= hi``.
+
+        Unlike :meth:`porosity` -- which counts a body in full as soon as its
+        *centroid* falls inside the probe box -- this clips every tetrahedron of
+        every floe against the two slab faces, so a floe half-way across a face
+        contributes exactly half.  The comparison is what makes the channel
+        concentration curve a measurement rather than a step function.
+
+        Implemented as ``V(x <= hi) - V(x <= lo)`` with the same plane clipper
+        used for the waterline (:func:`submerged_tet_moments`), so the two
+        quantities cannot drift apart numerically.
+        """
+        total = 0.0
+        for body in self.bodies:
+            tets = body.world_tets()
+            above = float(np.sum(submerged_tet_moments(tets, hi, axis=int(axis))[0]))
+            below = float(np.sum(submerged_tet_moments(tets, lo, axis=int(axis))[0]))
+            total += max(above - below, 0.0)
+        return total
 
     # -- force assembly ----------------------------------------------------
     def _broad_phase(self, reaches: np.ndarray) -> List[Tuple[int, int]]:

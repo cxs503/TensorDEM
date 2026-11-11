@@ -236,17 +236,30 @@ def repose_case(*, n_bodies: int = 45,
 def channel_clearing_case(*, n_floes: int = 24, median_thickness: float = 0.12,
                           speed: float = 0.4, mu: float = 0.35,
                           kn: float = 5.0e4, dt: float = 5.0e-4,
-                          n_steps: int = 900, width: float = 1.0,
+                          n_steps: int = 6000, width: float = 1.0,
                           length: float = 2.4, corridor: float = 1.0,
                           seed: int = 0, ice_density: float = 900.0,
-                          water_density: float = SEA_WATER_DENSITY) -> Dict[str, Any]:
+                          water_density: float = SEA_WATER_DENSITY,
+                          outlet_margin: float = 3.0) -> Dict[str, Any]:
     """Advance a hull through a brash-ice field and record the corridor concentration.
 
-    The reported observable is the **ice concentration** (solid fraction) in the
-    corridor of length ``corridor`` immediately ahead of the stem, sampled every
-    step: it starts at the field concentration and drops as the hull pushes the
-    floes out of the corridor.  ``concentration_half_time_s`` is the first time the
-    concentration falls to the midpoint between its initial and final value.
+    The reported observable is the **ice concentration** (solid fraction) of the
+    *fixed* swath of length ``corridor`` that the hull sweeps through, sampled every
+    step.  The lane is the physical question ("is the channel it passed through
+    clear?"); a window that follows the stem only measures the ice being pushed.
+
+    The concentration is the **exact clipped solid volume** of the floes inside the
+    swath (:meth:`~tensordem.polyhedron_floe3d.dynamics.DEMSystem3D.solid_volume_slab`)
+    divided by ``corridor * width * median_thickness`` -- the layer volume the swath
+    would hold if it were full.  The earlier centroid-count proxy is kept in the
+    series for continuity but is not used for the verdict: it can only change in
+    steps, as a floe's centroid crosses a face.
+
+    The run is only ``passed`` when the sweep is **complete** (``hull_advance >=
+    corridor``), the lane concentration has dropped by more than 50 %, and the mass
+    / energy ledgers stay closed.  A short run therefore reports an honest
+    ``passed = False`` with ``sweep_complete = False`` instead of a partial drop
+    being read as clearing.
 
     ``mu`` (ice-ice / ice-hull sliding friction, one value for both) is **declared**
     and not calibrated: it is the value used by the shipped channel study.
@@ -260,17 +273,27 @@ def channel_clearing_case(*, n_floes: int = 24, median_thickness: float = 0.12,
     x0 = min(float(b.world_vertices()[:, 0].min()) for b in field.bodies)
     record = run_channel(field, kn=kn, mu=mu, dt=dt, speed=speed, n_steps=n_steps,
                          width=width, length=length, corridor=corridor, record_every=1,
-                         fixed_window=(x0, x0 + corridor))
+                         fixed_window=(x0, x0 + corridor),
+                         slab_thickness=median_thickness, outlet_margin=outlet_margin)
     times = np.asarray(record["time"], dtype=float)
     porosity = np.asarray(record["porosity"], dtype=float)
     concentration = 1.0 - porosity
-    # the lane metric: solid fraction of the *fixed* swath the hull sweeps through
-    conc_lane = 1.0 - np.asarray(record["porosity_fixed"], dtype=float)
+    # the lane metric: exact clipped solid fraction of the *fixed* swath
+    slab_volume = corridor * width * median_thickness
+    lane_solid = np.asarray(record["lane_solid_volume"], dtype=float)
+    conc_lane = lane_solid / slab_volume if slab_volume > 0 else lane_solid
+    conc_lane_proxy = 1.0 - np.asarray(record["porosity_fixed"], dtype=float)
     c0 = float(concentration[0])
     c1 = float(concentration[-1])
     half = 0.5 * (c0 + c1)
     below = np.flatnonzero(concentration <= half)
     half_time = float(times[below[0]]) if below.size else float("nan")
+    # lane half-time: first time the swept swath is half as full as it started
+    l0 = float(conc_lane[0]) if conc_lane.size else float("nan")
+    lane_half = 0.5 * l0
+    lane_below = np.flatnonzero(conc_lane <= lane_half)
+    lane_half_time = float(times[lane_below[0]]) if lane_below.size else float("nan")
+    advance = float(record["hull_advance"][0])
     resistance = np.asarray(record["resistance"], dtype=float)
     steady = resistance[len(resistance) // 3:] if resistance.size >= 3 else resistance
     return {
@@ -279,23 +302,40 @@ def channel_clearing_case(*, n_floes: int = 24, median_thickness: float = 0.12,
             "n_floes": int(len(field.bodies)), "median_thickness_m": median_thickness,
             "hull_speed_m_s": speed, "mu": mu, "kn": kn, "dt_s": dt,
             "n_steps": n_steps, "width_m": width, "length_m": length,
-            "corridor_m": corridor, "seed": seed,
+            "corridor_m": corridor, "outlet_margin_m": outlet_margin, "seed": seed,
+            "lane_metric": "exact clipped solid volume / (corridor*width*median_thickness)",
             "ice_density": ice_density, "water_density": water_density,
             "initial_field_porosity": float(field.porosity()),
             "friction_note": "mu = ice-ice = ice-hull sliding friction, declared "
                              "value of the shipped channel study (not calibrated here)",
+        },
+        "ref": {
+            "lane_concentration_target": 0.0,
+            "lane_drop_threshold_fraction": 0.5,
+            "mass_residual_tolerance": 1e-12,
+            "energy_residual_tolerance": 0.05,
+            "sweep_requirement": "hull_advance >= corridor",
+            "source": "acceptance criteria of anchor H1-BROKEN-ICE-DEM (a swept lane must "
+                      "end empty within the declared ledger tolerances); no experimental "
+                      "resistance benchmark is claimed",
         },
         "series": {
             "time_s": times.tolist(),
             "porosity": porosity.tolist(),
             "concentration": concentration.tolist(),
             "lane_concentration": conc_lane.tolist(),
+            "lane_concentration_centroid_proxy": conc_lane_proxy.tolist(),
+            "lane_solid_volume_m3": lane_solid.tolist(),
             "resistance_N": resistance.tolist(),
-            "hull_advance_m": float(record["hull_advance"][0]),
+            "hull_advance_m": advance,
         },
         "summary": {
-            "lane_concentration_initial": float(conc_lane[0]) if conc_lane.size else float("nan"),
+            "lane_concentration_initial": l0,
             "lane_concentration_final": float(conc_lane[-1]) if conc_lane.size else float("nan"),
+            "lane_concentration_ratio": (float(conc_lane[-1]) / l0) if l0 else float("nan"),
+            "lane_concentration_half_time_s": lane_half_time,
+            "sweep_complete": bool(advance >= corridor),
+            "hull_advance_m": advance,
             "concentration_initial": c0,
             "concentration_final": c1,
             "concentration_half_time_s": half_time,
@@ -306,7 +346,15 @@ def channel_clearing_case(*, n_floes: int = 24, median_thickness: float = 0.12,
             "safety_clamps": int(record["clamps"][0]),
         },
         "runtime_s": time.time() - t0,
+        "criteria": {
+            "sweep_complete": bool(advance >= corridor),
+            "lane_halved": bool(conc_lane.size > 1
+                                and float(conc_lane[-1]) < float(conc_lane[0]) * 0.5),
+            "mass_conserved": bool(float(record["mass_residual"][0]) < 1e-12),
+            "energy_closed": bool(float(record["energy_residual"][0]) < 0.05),
+        },
         "passed": bool(conc_lane.size > 1
+                       and advance >= corridor
                        and float(conc_lane[-1]) < float(conc_lane[0]) * 0.5
                        and float(record["mass_residual"][0]) < 1e-12
                        and float(record["energy_residual"][0]) < 0.05),
