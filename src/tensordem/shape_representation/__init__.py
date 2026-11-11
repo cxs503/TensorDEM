@@ -106,3 +106,59 @@ __all__ = [
     "repose_angle_from_pile",
     "run_pile",
 ]
+
+
+# ---------------------------------------------------------------------------
+# Pre-existing module ``src/tensordem/shape_representation.py`` (P27W2-N07 /
+# P40-N10 surface-deviation & superellipse geometry).  The package directory
+# shadowed that module, so its public names became unimportable (audit_report.md
+# F3).  Moved in-package as :mod:`.surface_deviation` and re-exported (m14938).
+# ---------------------------------------------------------------------------
+from .surface_deviation import (
+    EllipticHertzResult,
+    PileConfig2D,
+    PileResult,
+    Superquadric,
+    SurfaceDeviation,
+    _Pile,
+    _QUAD_PTS,
+    _displacement_scaled,
+    _ellipse_ray_length,
+    _fit_quadratic,
+    _implicit_sq,
+    _lagrange3,
+    _max_inscribed_radius,
+    _radial_hit,
+    _superellipse_support,
+    clump_surface_deviation,
+    complete_elliptic_KE,
+    elliptic_hertz,
+    elliptic_hertz_quadrature,
+    ellipticity_closure,
+    equivalent_radius_hertz,
+    fit_inscribed_clump,
+    repose_angle_from_pile,
+    run_pile,
+    sample_superquadric_surface,
+    sq_signed_distance_estimate,
+    superellipse_curve_radius,
+    union_balls_signed_distance,
+)
+
+__all__ += [
+    "SurfaceDeviation",
+    "_QUAD_PTS",
+    "_displacement_scaled",
+    "_ellipse_ray_length",
+    "_fit_quadratic",
+    "_implicit_sq",
+    "_lagrange3",
+    "_max_inscribed_radius",
+    "_radial_hit",
+    "_superellipse_support",
+    "ellipticity_closure",
+    "sample_superquadric_surface",
+    "sq_signed_distance_estimate",
+    "superellipse_curve_radius",
+    "union_balls_signed_distance",
+]

@@ -46,3 +46,59 @@ __all__ = [
     "relative_deviation",
     "slice_anchor_from_case",
 ]
+# ---------------------------------------------------------------------------
+# m5754 / IN34-W3-N08 rolling-friction proxy & contact-pressure statistics.
+#
+# Formerly the top-level module ``src/tensordem/ice_structure_contact.py``.  A
+# regular package directory shadows a same-named module, so after the m9819
+# package landed that module became unreachable and every one of its 16 public
+# contract symbols (plus 5 helpers the m5754 test imports) raised ImportError:
+# ``tests/test_ice_structure_contact.py`` could not be collected at all.
+#
+# Fix (m14938, same class as m14449's freeze_bond repair): move the legacy
+# module inside the package as :mod:`.rolling_proxy` and re-export its contract
+# here, so the historical import path keeps working and the 29 m5754 tests run.
+# ---------------------------------------------------------------------------
+from .rolling_proxy import (
+    ContactPressureField,
+    IdentifiabilityResult,
+    MonotonicScanResult,
+    PolyhedronContactResult,
+    RollingBiasResult,
+    SpatialCorrelationResult,
+    compute_contact_pressure_field,
+    identifiability_analysis,
+    ks_test_seeds,
+    monotonic_scan,
+    peak_factor,
+    polyhedron_contact_force,
+    polyhedron_hertz_degeneracy,
+    rolling_bias_quantification,
+    run_full_verification,
+    spatial_correlation,
+    # helpers used directly by tests/test_ice_structure_contact.py
+    _estimate_angularity,
+    _generate_contact_network,
+    _is_sphere_vertices,
+    _polyhedron_vertices_angular,
+    _polyhedron_vertices_sphere,
+)
+
+__all__ += [
+    "ContactPressureField",
+    "IdentifiabilityResult",
+    "MonotonicScanResult",
+    "PolyhedronContactResult",
+    "RollingBiasResult",
+    "SpatialCorrelationResult",
+    "compute_contact_pressure_field",
+    "identifiability_analysis",
+    "ks_test_seeds",
+    "monotonic_scan",
+    "peak_factor",
+    "polyhedron_contact_force",
+    "polyhedron_hertz_degeneracy",
+    "rolling_bias_quantification",
+    "run_full_verification",
+    "spatial_correlation",
+]
