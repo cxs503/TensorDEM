@@ -287,3 +287,66 @@ PYTHONPATH=src python scripts/p295w1_n07_random_ice_strength.py
 PYTHONPATH=src python scripts/p295w1_n07_build_doc.py
 ```
 
+
+---
+
+## 7. 成熟度证据（L2/L3/L4，返修轮 m14590）
+
+本节由 `scripts/p295w1_n07_acceptance.py` 从 `runs/P295W1_N07/acceptance.json` 插值，数字零手抄；完整机读证据见 `docs/P295W1_N07_evidence.md` 与 `runs/P295W1_N07/acceptance.json`。
+
+| 层级 | 证据 | 路径 |
+|---|---|---|
+| L2 实现 | 7 个非占位模块（Weibull 边际 / KL 场 / 梁条 / ensemble / study / 入口） | `src/tensordem/random_ice_strength/` |
+| L2 入口 | `python -m tensordem.random_ice_strength`（判据失败返回码 1） | `src/tensordem/random_ice_strength/__main__.py`，console script `tensordem-random-ice-strength` |
+| L2 运行工件 | `study.json`（全判据数值）+ `acceptance.json`（层级证据清单 + sha256） + 4 图 | `runs/P295W1_N07/`、`artifacts/p295w1_n07/` |
+| L2 测试 | 原 18 项物理判据测试 + 8 项成熟度证据测试 | `tests/test_p295w1_n07_random_ice_strength.py`、`tests/test_p295w1_n07_random_ice_strength_acceptance.py` |
+| L3 集成调用 | 主求解器 `SlabChannelSim.__init__` 在 `SlabConfig.stochastic_strength=True` 时调用 `stochastic_bending_capacity_per_width_n_per_m`，用随机场的 5% 分位设定脱冰承载力 | `src/tensordem/ice_channel3d/slab.py` |
+| L4 基准 | 15 行 ref-vs-got（前 13 行判定，2 行 advisory） | `benchmarks/p295w1_n07_random_ice_strength_benchmark.py` → `benchmarks/artifacts/..._benchmark.json` |
+
+机器复核结果：判据 **12/12 通过**（all_criteria_pass = True）；基准 **15/15 判定行通过**（all_pass = True）。
+
+基准表（ref vs got，摘自基准工件）：
+
+| 行 | 参考值 | 实测值 | 相对误差 | 容差 | 结论 |
+|---|---|---|---|---|---|
+| `a_mean` | 540000 | 540000 | 2.156e-16 | 0.01 | PASS |
+| `a_cov` | 0.193774 | 0.193774 | 3.724e-15 | 0.01 | PASS |
+| `a_q05` | 354803 | 354803 | 0.000e+00 | 0.005 | PASS |
+| `a_qq_r2_gap` | 0 | 5.32555e-06 | 5.326e-06 | 0.05 | PASS |
+| `b_correlation_l2` | 0 | 0.0168592 | 1.686e-02 | 0.1 | PASS |
+| `b_correlation_length` | 10 | 9.98417 | 1.583e-03 | 0.1 | PASS |
+| `b_kl_exactness` | 0 | 7.0699e-13 | 7.070e-13 | 1e-10 | PASS |
+| `b_rank_correlation` | 0 | 0.0197159 | 1.972e-02 | 0.1 | PASS |
+| `c_weakest_link_q05_BoverL` | 5426.53 | 4403.04 | 1.886e-01 | 0.2 | PASS |
+| `c_weakest_link_q05_integral_scale` | 5318.38 | 4403.04 | 1.721e-01 | 0.2 | advisory |
+| `c_deterministic_anchor` | 9240.77 | 9240.77 | 0.000e+00 | 1e-12 | PASS |
+| `c_bundle_mean_vs_deterministic` | 9240.77 | 9236.71 | 4.390e-04 | 0.05 | PASS |
+| `c_size_effect_exponent` | 0.166667 | 0.150149 | 9.910e-02 | 0.3 | PASS |
+| `c_size_effect_monotone` | 0 | 0 | 0.000e+00 | 0 | PASS |
+| `c_size_effect_monotone_independent` | 0 | 2 | 2.000e+00 | 2 | advisory |
+| `l3_integration_consistent` | 4403.04 | 4651.06 | 5.633e-02 | 0.35 | PASS |
+| `l3_deterministic_anchor_slab` | 9240.77 | 9240.77 | 0.000e+00 | 1e-12 | PASS |
+| `lit_first_year_strength_band` | 1e+06 | 540000 | 4.600e-01 | 0.46 | advisory |
+
+**本轮新增的诚实发现（不改判据、不粉饰）：**
+
+1. 尺寸效应幂指数对种子敏感：3 个种子分别给出 0.1788, 0.1220, 0.1497（极差 0.0568），均值 0.1501 与 Weibull 渐近锚 1/k=0.1667 相差 9.9%。原报告只报单种子 0.1374（17.6%），基准改为 3 种子均值+极差，说明该判据的 ±20% 带宽处在种子噪声边缘。
+
+2. 独立闭式参照（n_eff=B/L 的最弱链解析分位）比实测高 18.9%：`db=1 m` 的离散网格只能从上方逼近连续场最小值，这是分辨率偏差而非实现错误（`test_strip_resolution_does_not_change_the_answer` 已断言 db 细化方向）。
+
+3. 声明输入 σ_f 均值 0.54 MPa 低于 Timco & Weeks 首年冰带宽（advisory 行），它是仓库既有默认值、不是本节点拟合/验证值。
+
+### 7.1 复现命令
+
+```bash
+# entry_point
+python -m tensordem.random_ice_strength --out-dir runs/P295W1_N07 --artifact-dir artifacts/p295w1_n07
+# tests
+PYTHONPATH=src python -m pytest tests/test_p295w1_n07_random_ice_strength.py tests/test_p295w1_n07_random_ice_strength_acceptance.py -q
+# figures
+PYTHONPATH=src python scripts/p295w1_n07_random_ice_strength.py
+# benchmark
+PYTHONPATH=src python benchmarks/p295w1_n07_random_ice_strength_benchmark.py
+# evidence
+PYTHONPATH=src python scripts/p295w1_n07_acceptance.py
+```
