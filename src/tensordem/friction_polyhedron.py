@@ -57,6 +57,7 @@ from .convex_contact import (
 
 __all__ = [
     "FrictionPolyhedronConfig",
+    "wall_penetration",
     "ContactState",
     "compute_contact_force",
     "compute_wall_contact_force",
@@ -223,13 +224,19 @@ def compute_contact_force(
     # Rolling component (perpendicular to normal)
     omega_roll = omega_rel - np.dot(omega_rel, normal) * normal
 
-    # EPSD update: M_r^{n+1} = M_r^n - k_r * omega_roll * dt
-    state.rolling_moment -= config.k_r * omega_roll * dt
-    # Plastic clamp
-    m_r_mag = np.linalg.norm(state.rolling_moment)
     m_r_limit = config.mu_r * r_eff * f_n_mag
-    if m_r_limit > 0 and m_r_mag > m_r_limit:
-        state.rolling_moment *= (m_r_limit / m_r_mag)
+    if m_r_limit <= 0.0 or config.k_r <= 0.0:
+        # Zero rolling resistance must mean *zero* moment; an un-clamped EPSD
+        # spring integrates k_r * omega * dt forever and acts as a negative
+        # damping source instead of a passive element.
+        state.rolling_moment[:] = 0.0
+    else:
+        # EPSD update: M_r^{n+1} = M_r^n - k_r * omega_roll * dt
+        state.rolling_moment -= config.k_r * omega_roll * dt
+        # Plastic clamp
+        m_r_mag = np.linalg.norm(state.rolling_moment)
+        if m_r_mag > m_r_limit:
+            state.rolling_moment *= (m_r_limit / m_r_mag)
 
     # Rolling torque acts on b; -torque on a
     torque_r = state.rolling_moment
@@ -265,6 +272,39 @@ def compute_contact_force(
 # ---------------------------------------------------------------------------
 # Wall contact (simplified: direct plane distance, no GJK)
 # ---------------------------------------------------------------------------
+def wall_penetration(shape: ConvexShape, n: np.ndarray) -> Tuple[float, np.ndarray]:
+    """Exact deepest point of a convex particle along ``-n`` w.r.t. a plane.
+
+    Returns ``(depth, point)`` where ``depth = min_{x in shape} n . x`` and
+    ``point`` is the (area-averaged over tied vertices) contact point.
+
+    Face-flat polyhedra report the *face* centroid rather than a single vertex,
+    so the contact lever arm is the true one instead of a corner offset; this
+    is what makes a cube resting on a plane carry the gravity load with its
+    full face rather than tipping about one corner.
+    """
+    n = np.asarray(n, dtype=np.float64)
+    if isinstance(shape, Sphere):
+        c = np.asarray(shape.center, dtype=np.float64)
+        return float(np.dot(c, n) - shape.radius), c - shape.radius * n
+    if isinstance(shape, Polytope):
+        verts = np.asarray(shape.vertices, dtype=np.float64)
+    elif isinstance(shape, Box):
+        verts = np.asarray(shape.vertices(), dtype=np.float64)
+    else:
+        verts = None
+    if verts is not None:
+        dots = verts @ n
+        d_min = float(dots.min())
+        scale = max(1.0, float(np.abs(verts).max()))
+        tol = 1e-9 * scale
+        tied = verts[dots <= d_min + tol]
+        return d_min, tied.mean(axis=0)
+    # Generic convex shape: use the support function (e.g. Cone, Clump)
+    point = np.asarray(shape.support(-n), dtype=np.float64)
+    return float(np.dot(point, n)), point
+
+
 def compute_wall_contact_force(
     shape: ConvexShape,
     v: np.ndarray,
@@ -296,13 +336,20 @@ def compute_wall_contact_force(
     Returns:
         (result_dict, is_contacting)
     """
-    n = wall_normal
+    n = np.asarray(wall_normal, dtype=np.float64)
+    n_norm = float(np.linalg.norm(n))
+    if n_norm == 0.0:
+        raise ValueError("wall_normal must be non-zero")
+    n = n / n_norm
     center = shape.centroid()
     r_bound = shape.bounding_radius()
 
-    # Distance from particle center to wall
-    dist = np.dot(center, n) - wall_offset
-    overlap = r_bound - dist
+    # Exact signed distance of the particle *surface* to the wall plane along
+    # -n (support-function evaluation).  Using the bounding radius here would
+    # make a face-flat polyhedron "penetrate" by r_bound - inradius and load
+    # the contact with a spacer force unrelated to the true overlap.
+    depth, contact_pt = wall_penetration(shape, n)
+    overlap = wall_offset - depth
 
     if overlap <= 0:
         state.reset()
@@ -311,12 +358,9 @@ def compute_wall_contact_force(
             'force': np.zeros(3), 'torque': np.zeros(3),
             'normal': n, 'overlap': 0.0,
             'f_n': 0.0, 'f_t': 0.0, 'm_r': 0.0,
-            'contact_point': center - r_bound * n,
+            'contact_point': contact_pt,
             'energy_elastic': 0.0, 'energy_dissipated': 0.0,
         }, False
-
-    # Contact point
-    contact_pt = center - (dist) * n
 
     # Relative velocity at contact (wall is stationary)
     r = contact_pt - center
@@ -342,18 +386,30 @@ def compute_wall_contact_force(
         f_t_vec = f_t_vec * (f_t_limit / f_t_mag)
         state.delta_t = -f_t_vec / config.k_t
 
-    # Rolling resistance
+    # Rolling resistance (EPSD, Ai et al. 2011)
     omega_roll = omega - np.dot(omega, n) * n
-    state.rolling_moment -= config.k_r * omega_roll * dt
-    m_r_mag = np.linalg.norm(state.rolling_moment)
     m_r_limit = config.mu_r * r_bound * f_n_mag
-    if m_r_limit > 0 and m_r_mag > m_r_limit:
-        state.rolling_moment *= (m_r_limit / m_r_mag)
-    torque_r = state.rolling_moment
+    if m_r_limit <= 0.0 or config.k_r <= 0.0:
+        # No rolling resistance: the spring must stay identically zero.  Left
+        # un-clamped it integrates k_r * omega * dt without bound and injects
+        # angular momentum (negative damping) -- it is not a zero-resistance
+        # limit but a spurious energy source.
+        state.rolling_moment[:] = 0.0
+        torque_r = state.rolling_moment
+    else:
+        state.rolling_moment -= config.k_r * omega_roll * dt
+        m_r_mag = np.linalg.norm(state.rolling_moment)
+        if m_r_mag > m_r_limit:
+            state.rolling_moment *= (m_r_limit / m_r_mag)
+        torque_r = state.rolling_moment
 
     # Assemble forces (normal pushes particle away from wall, i.e., in direction of n)
     force = f_n_vec + f_t_vec
-    torque = np.cross(r, force) - torque_r
+    # EPSD convention (Ai et al. 2011): state.rolling_moment *is* the resisting
+    # moment applied to the particle, so it adds with a + sign.  Subtracting it
+    # turned the damper into an anti-damper: the moment grew with omega and the
+    # particle gained angular energy without bound (measured 2026-11-11).
+    torque = np.cross(r, force) + torque_r
 
     # Energy
     energy_elastic = 0.5 * config.k_n * overlap**2 + 0.5 * config.k_t * np.dot(state.delta_t, state.delta_t)
