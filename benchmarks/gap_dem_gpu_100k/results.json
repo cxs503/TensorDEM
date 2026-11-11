@@ -1,0 +1,60 @@
+{
+  "benchmark": "GAP-DEM-GPU-100K",
+  "protocol": "tensordem-dem3d-gpu-throughput-v1",
+  "acceptance_threshold_s": 2.0,
+  "description": "Wall-clock time per step for 100K-particle DEM simulation",
+  "hardware": {
+    "cpu": {
+      "device": "cpu",
+      "cuda_available": false,
+      "cpu_threads": 128,
+      "cpu_interop_threads": 128
+    }
+  },
+  "results": [
+    {
+      "n_particles": 10648,
+      "grid": "22x22x22",
+      "device": "cpu",
+      "warmup_steps": 1,
+      "measure_steps": 1,
+      "wall_time_s": 0.4121,
+      "time_per_step_s": 0.412053,
+      "throughput_particles_steps_per_s": 25841.3,
+      "n_pairs": 125748,
+      "broken_bonds": 0,
+      "scale_label": "10k",
+      "status": "ok"
+    },
+    {
+      "n_particles": 50653,
+      "grid": "37x37x37",
+      "device": "cpu",
+      "warmup_steps": 1,
+      "measure_steps": 1,
+      "wall_time_s": 1.9176,
+      "time_per_step_s": 1.917629,
+      "throughput_particles_steps_per_s": 26414.4,
+      "n_pairs": 622188,
+      "broken_bonds": 0,
+      "scale_label": "50k",
+      "status": "ok"
+    },
+    {
+      "n_particles": 103823,
+      "grid": "47x47x47",
+      "device": "cpu",
+      "warmup_steps": 1,
+      "measure_steps": 1,
+      "wall_time_s": 3.9736,
+      "time_per_step_s": 3.973551,
+      "throughput_particles_steps_per_s": 26128.5,
+      "n_pairs": 1290898,
+      "broken_bonds": 0,
+      "scale_label": "100k",
+      "status": "ok",
+      "acceptance": false,
+      "acceptance_label": "FAIL"
+    }
+  ]
+}
