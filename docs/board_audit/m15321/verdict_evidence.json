@@ -1,0 +1,89 @@
+{
+  "level": 2,
+  "reviewed": {
+    "repo": "TensorDEM",
+    "branch": "agent/m15265",
+    "commit": "284e1efc",
+    "worktree": "/root/tp-agent/work/m15265",
+    "merged_to_ecosystem_main": false,
+    "ecosystem_main_head": "ad75394d (/root/tensor-ecosystem/TensorDEM; benchmarks/silo_janssen_wall_pressure.py absent)"
+  },
+  "impl_files": [
+    "docs/board_audit/m15321/refs/benchmarks/silo_janssen_wall_pressure.py",
+    "docs/board_audit/m15321/refs/src/tensordem/silo_flow/janssen.py"
+  ],
+  "entry": [
+    "docs/board_audit/m15321/refs/benchmarks/silo_janssen_wall_pressure.py",
+    "docs/board_audit/m15321/refs/src/tensordem/silo_flow/janssen.py"
+  ],
+  "entry_detail": "benchmarks/silo_janssen_wall_pressure.py:513 main() argparse --list / --case NAME --out FILE / --analyze DIR；:90 build_case -> :222 run_one -> :111 analyse_case -> :266 analyse_dir -> :335 write_report / :447 figures；src/tensordem/silo_flow/janssen.py:103 run_janssen() 真 DEM 内核（Cundall-Strack）",
+  "run_artifacts": [
+    "docs/board_audit/m15321/refs/runs/m15265/sim/coarse.json",
+    "docs/board_audit/m15321/refs/runs/m15265/comparison.json",
+    "docs/board_audit/m15321/refs/runs/m15265/comparison.md",
+    "docs/board_audit/m15321/refs/runs/m15265/CASE_SILO_JANSSEN_report.md",
+    "docs/board_audit/m15321/refs/runs/m15265/log_coarse.log",
+    "docs/board_audit/m15321/refs/runs/m15265/figures/fig2_error_bars.png"
+  ],
+  "run_artifact_detail": "coarse.json sha256=f43115f1b30df6683779cce755258cfba4c09e9f70e531bb80bb80eaea22e58f, n_particles=31142, steps=4552, wall_clock_s=413.73；log_coarse.log 行 'wall=414s'；smoke/base.json 是 quick 模式(R=0.03,H=0.10,4560 颗粒) 冒烟件，不充当锚点",
+  "tests": [
+    "tests/test_silo_janssen_benchmark.py::test_janssen_reference_identity",
+    "tests/test_silo_janssen_benchmark.py::test_reduction_is_exact_on_janssen_bed",
+    "tests/test_silo_janssen_benchmark.py::test_reduction_flags_biased_bed",
+    "tests/test_silo_janssen_benchmark.py::test_profile_floor_protects_shallow_slabs",
+    "tests/test_silo_janssen_benchmark.py::test_case_matrix_is_self_consistent",
+    "auditor rerun 2026-11-11: pytest tests/test_silo_janssen_benchmark.py -q -> 5 passed in 10.07s",
+    "auditor rerun 2026-11-11: pytest tests -q -k 'silo or janssen' -> 31 passed, 3 skipped, 9355 deselected in 85.31s (janssen.py 量纲修无回归)"
+  ],
+  "integration_callers": [],
+  "integration_note": "本交付(benchmark harness)仓内零调用方：grep -rn 'silo_janssen_wall_pressure' 仅命中自身与 tests；src/tensordem/verification/granular/bulk_flow/campaign.py:38 引用的是既有 run_janssen(早于本单)，不计本交付集成；分支未并入生态仓 main",
+  "benchmark": {
+    "anchor_slug": "CASE-SILO-JANSSEN",
+    "registered_rows_in_tensor_benchmark_cases": 0,
+    "referee_present": false,
+    "tolerance_used": 0.15,
+    "tolerance_source": "任务书/m15265 goal + prereg/m15265_silo_janssen.md TOL=0.15（裁判表 0 行，容差非机器可裁）",
+    "ref_source": "Janssen 1895 ZVDI 39:1045-1049 (transl. Sperl 2006 Granular Matter 8:59-65, doi:10.1007/s10035-005-0224-z) 闭式；1895 原实测表 WITHHELD(paywall)",
+    "case_run": "coarse (R/d=13.3, mu_w=0.40, N=31142)",
+    "ref": {"P_inf_Pa": 1097.4704406826652, "z0_m": 0.06969079605878332},
+    "got": {"P_inf_Pa": 53436481.42126215, "z0_m": 3034.900358482779, "r2": 0.32070499346083714, "base_pressure_Pa": 3790.009383360689},
+    "rel_err": {"p_inf": 48689.58832055903, "z0": 43547.0799490779, "identity": 0.11808806214865095, "base_pressure": 2.4534045226795995, "worst_slab": 13.231815495191096},
+    "within_tolerance": false,
+    "verdict": "FAIL by ~4.9e4x on P_inf/z0 (tolerance 15%); identity 11.8% passes only under the post-hoc corrected rho_b*g definition (frozen prereg wrote rho_b*g*R -> 1298%)",
+    "anchor_case_base": "NOT_RUN (仅 smoke quick 件；auditor cluster cj1061 递交时 272 在前、审计关闭时仍 queued)"
+  },
+  "repro_cmd": "cd /root/tp-agent/work/m15265 && PYTHONPATH=src python3 benchmarks/silo_janssen_wall_pressure.py --analyze runs/m15265 && python3 -m pytest tests/test_silo_janssen_benchmark.py -q（审计实跑：analyze 重放 rows 逐值一致、5 passed in 10.07s）；全例重跑=sh runs/m15265/repro.sh（7 例 DEM，从未整体执行，3 个 log 为 0 B）",
+  "external_anchor": "none: Janssen 1895 原始实测表 WITHHELD（Sperl 2006 paywall），仅闭式解析，无外部实验值锚定",
+  "findings": {
+    "F1_blocking": "tensor_benchmark_cases 无 CASE-SILO-JANSSEN 行（0 行，全表 14 行均 pending）-> 基准不可机器复核",
+    "F2_high": "slab 对比漏乘 K：analyse_case 用 sigma_v 参考对 sigma_w 实测，rel_err_mean=1.629 系统性虚高（应为 ~0.13 量级）",
+    "F3_high": "测试夹具把 wall_profile.sigma_w 设成 sigma_v，把 F2 的错误约定固化 -> 拟合退化(r2=0.32)与 F2 均无法被测试捕获",
+    "F4_medium": "repro.sh 从未端到端执行（log_base/log_muw060/probe 均 0 B）；锚点 base NOT_RUN（cj1061 queued）",
+    "F5_medium": "预注册 M3 定义(|P_inf/z0-rho_b g R|)与代码(改为 rho_b g)不一致且未 amend；同一算例 M3 由 1298% 变 11.8%",
+    "F6_low": "coarse.json 内 identity_error=12.976(旧口径) 与 comparison.json self_consistent.identity_rel_err=0.118(重算) 并存于同一工件链",
+    "F7_low": "分支 agent/m15265 未并入生态仓 main，L3 不成立"
+  },
+  "report_check": {
+    "platform_report_id": 14377,
+    "mission_id": 15265,
+    "six_sections_present": true,
+    "explicit_tolerance_question": "<15% 逐量作答（✗/✓）已在 §7；模板要求的字面『是否<3%』未出现（本算例容差 15%，非模板 3%）",
+    "honest_fail": true,
+    "figures": ["fig2_error_bars.png"],
+    "defects": ["§5 敏感性为无数字的空承诺(仅 coarse 单点)", "§4 表头 z0[mm]/err% 与单元格 m/比值 不符"]
+  },
+  "auditor_checks": [
+    "tensor_benchmark_cases/anchor 查询 (0 rows)",
+    "--list 正常输出 7 例",
+    "--analyze 副本重放：rows 与提交 comparison.json 逐值一致，报告 §4 diff 空",
+    "pytest tests/test_silo_janssen_benchmark.py -q -> 5 passed 10.07s",
+    "pytest -k 'silo or janssen' -> 31 passed / 3 skipped 85.31s",
+    "sha256 全部工件；生态仓 main 检出核对；仓内 grep 调用方；平台报告 14377 读取"
+  ],
+  "not_run": [
+    "锚点 base + 另 5 例 DEM 重跑（集群 cj1061 审计关闭时 queued）",
+    "repro.sh 端到端 7 例",
+    "Janssen 1895 原始实测表核对（WITHHELD/paywall）"
+  ],
+  "disposition": "approve with notes：L2 confirmed（真代码+真工件+归约可重放）；benchmark 判为未通过，不得读作『筒仓壁压已验证』"
+}
