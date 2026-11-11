@@ -86,3 +86,32 @@ def test_write_and_verify_roundtrip():
         pytest.skip("could not write the evidence file (filesystem full)")
     assert V.verify_evidence(path)["match"] is True
     shutil.rmtree(work, ignore_errors=True)
+
+
+def test_digest_is_reproducible_across_wall_clock(report):
+    """F6 (audit m14487): the digest must not depend on ``generated_utc``.
+
+    Two runs that produce identical results must yield identical digests,
+    regardless of the wall-clock time at which they were produced.  Before the
+    fix the digest folded ``generated_utc`` in and changed on every run.
+    """
+    a = dict(report)
+    b = dict(report)
+    a["generated_utc"] = "2026-01-01T00:00:00Z"
+    b["generated_utc"] = "2031-12-31T23:59:59Z"
+    assert V.canonical_digest(a) == V.canonical_digest(b)
+
+    # ...but a change to any *result* number must still be caught.
+    c = dict(report)
+    c["generated_utc"] = a["generated_utc"]
+    c["impact"] = dict(report["impact"])
+    c["impact"]["peak_delta_t_k"] = report["impact"]["peak_delta_t_k"] + 1.0
+    assert V.canonical_digest(a) != V.canonical_digest(c)
+
+
+def test_digest_excludes_run_metadata_keys():
+    """The excluded set is exactly the run-metadata, and is honoured."""
+    base = {"x": 1.0, "generated_utc": "t0", "digest_sha256": "d0"}
+    assert V.canonical_digest(base) == V.canonical_digest({"x": 1.0})
+    # a result change is still detected
+    assert V.canonical_digest({"x": 2.0}) != V.canonical_digest(base)
