@@ -2,7 +2,7 @@
 
 **节点** `p176w2-n11-dem-erosion` · **仓** TensorDEM · **模块** `tensordem.erosion_dem` · **判据** C1=PASS · C2=PASS · C3=PASS · C4=PASS · C5=PASS · C6=PASS · C7=PASS → **all_pass = True**
 
-> 生成时间 2026-11-10T22:25:06Z，单核墙钟 82.11 s。本文档由 `tensordem.erosion_dem.report` 从 `artifacts/p176w2-n11/results.json` 程序化注入（零手抄），判据数字与产物路径全部来自该 JSON。
+> 生成时间 2026-11-11T08:55:27Z，单核墙钟 75.85 s。本文档由 `tensordem.erosion_dem.report` 从 `artifacts/p176w2-n11/results.json` 程序化注入（零手抄），判据数字与产物路径全部来自该 JSON。
 
 **证据分级**：单冲击坑体积、质量损失账本、角度函数、速度指数、DNV 对拍=**REAL**（真实公式+真实轨迹积分）；Oka 绝对速率常数=**WITHHELD**（离线无法核对原文单位约定，改用单常数锚 + 形状对拍，锚的出处写在 `CASE_ANCHOR_PROVENANCE`）；DNV 铝材系数对=**WITHHELD**（`ASSUMED` 表值，仅 n 进入形状对拍）。
 
@@ -206,5 +206,5 @@ DNV 系数对：DNV-RP-O501 ductile pair for aluminium alloys as tabulated (ASSU
 - 复现：`python benchmarks/erosion_dem_verification.py`（约 82 s 单核，产出 `artifacts/p176w2-n11/{results.json,fig1..fig4.png}`）。
 - 回归护栏：`tests/test_erosion_dem.py`（45 例，12.6 s），每个用例名带判据标签，并含两个**检查器负控**：`test_c5_monotonicity_checker_detects_violation`（单调性检查器必须能报出违反）与 `test_c7_static_audit_detects_a_coupling`（依赖审计必须在真的耦合时报警）。
 - 适用边界：塑性（延性）冲蚀、稀释颗粒流、单次撞击坑深 ≤ 磨粒半径、速度 15–50 m/s、角度 2–90°、靶材硬度 0.5–2 GPa。适用范围之外（脆性靶、浓相、穿甲、腐蚀-冲蚀协同）本面不覆盖。
-- 出处与时效：节点 `p176w2-n11-dem-erosion`，仓 TensorDEM，分支 `agent/m11327`；生成时间 2026-11-10T22:25:06Z；复核人=平台独立席位（待评）。
+- 出处与时效：节点 `p176w2-n11-dem-erosion`，仓 TensorDEM，分支 `agent/m11327`；生成时间 2026-11-11T08:55:27Z；复核人=平台独立席位（待评）。
 
