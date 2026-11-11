@@ -1,0 +1,30 @@
+{
+  "anchor_id": "ice-ridge-rubbling-dem",
+  "domain": "TensorDEM",
+  "mission": "p318w3-n08",
+  "description": "Breakable buoyant floe DEM: emergent sail/keel geometry, isostasy and volume conservation",
+  "references": [
+    {
+      "name": "isostasy_ratio",
+      "definition": "H_sail / H_keel predicted from the measured solid fraction phi: rho_w/(phi rho_i) - 1",
+      "source": "hydrostatic equilibrium of a porous rubble pile (Archimedes)",
+      "kind": "analytic"
+    },
+    {
+      "name": "keel_over_sail_ratio",
+      "ref": 4.4,
+      "tolerance": 1.5,
+      "source": "Timco & Burden (1997) review of ice-ridge geometry: keel depth ~ 4.4 x sail height"
+    },
+    {
+      "name": "porosity_law_r2",
+      "ref": 0.9,
+      "source": "mission acceptance criterion (b): n = n0 exp(-eps/eps_c) fit quality"
+    }
+  ],
+  "artifacts": [
+    "runs/p318w3_n08/ridge_rubbling_run.json",
+    "runs/p318w3_n08/volume_audit.json"
+  ],
+  "repro_cmd": "python scripts/run_ice_ridge_rubbling.py --out runs/p318w3_n08"
+}
