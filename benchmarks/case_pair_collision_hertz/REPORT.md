@@ -123,3 +123,26 @@ cd /root/tp-agent/work/m15296
 PYTHONPATH=src python benchmarks/case_pair_collision_hertz/run.py
 PYTHONPATH=src python benchmarks/case_pair_collision_hertz/validate.py
 ```
+
+---
+
+## ⑦ 结榜交差审计更正（m15392 board-audit）
+
+本节由结榜审计追加，①②③④⑤⑥ 原文保持不变以便追溯。三处更正：
+
+1. **§4.1「接触时间误差 2.59%」不成立**：`analytic_contact_time` 原式
+   `2.94*(m_eff^2/(E*^2 R* v_rel))^0.2` 把质量组指数写成 1/5（应为 2/5），量纲不自洽，
+   参考值偏高 2.50%。求积精确式 `t_c = 0.8·B(2/5,1/2)·δ_max/v_rel = 5.40960e-4 s`，
+   引擎 `5.40121e-4 s` → **真实误差 0.155%**（且该误差在 dt 因子 0.8/0.4/0.2 下恒定，
+   本就不是离散化误差）。代码已按求积闭式修正。
+2. **§4.2 的「恢复系数 PASS」只是代码自洽性**：它比较引擎与**同一 Tsuji 律**的 RK4 参考（0.009%），
+   证明实现忠实，但**不是**锚点判据。对**请求值**的闭合：e_target=0.8 → **3.23%**（超出 3%），
+   e_target=0.5 → **16.46%**（超出 15% 红线，平台精度标准不可接受）。
+   成因=线性弹簧-阻尼器 ζ(e) 映射被套用到 Hertz（γ∝δ^{1/4}）阻尼，系统性欠阻尼约 15%。
+   现已在 `results.json` / `validate.py` 显式列出该指标并判 **FAIL**（validate overall = SOME FAILURES）。
+3. **工件与裁判**：自述的 `fig1/2/3_*.png` 与 `runs/case_pair_collision_hertz/` 未并入 main
+   （仅存在于分支提交 f2a1de8c）；`tensor_benchmark_cases` 无 `CASE-PAIR-COLLISION` 行（count=0），
+   平台机器裁定缺裁判。
+
+独立重导脚本、机读证据与图纸见 `docs/board-audit-m15296/AUDIT.md` 与
+`artifacts/board-audit-m15296/`。判级结论：**L3**（非 L4）。

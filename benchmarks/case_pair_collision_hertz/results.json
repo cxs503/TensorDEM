@@ -25,18 +25,21 @@
     "peak_overlap_ref_m": 0.00018379523729673372,
     "peak_overlap_rel_error": 1.2538853592276769e-06,
     "contact_time_s": 0.0005401208150929402,
-    "contact_time_ref_s": 0.0005544891763646121,
-    "contact_time_rel_error": 0.02591278943599019,
+    "contact_time_ref_s": 0.0005409599609325469,
+    "contact_time_rel_error": 0.001551216171636933,
     "restitution": 1.0000003923692513,
     "steps": 1622,
     "dt_s": 1.875419496850487e-06,
-    "wall_time_s": 8.082502339035273
+    "wall_time_s": 6.549548650160432
   },
   "primary_damped": {
     "speed_m_per_s": 0.5,
     "restitution_engine": 0.8258531389534016,
     "restitution_rk4": 0.8257759464408378,
     "restitution_rel_error": 9.347876127474889e-05,
+    "restitution_target": 0.8,
+    "closure_error_vs_target": 0.03231642369175197,
+    "closure_within_tolerance": false,
     "peak_overlap_engine_m": 0.00017021427869398642,
     "peak_overlap_rk4_m": 0.00017024687700803367,
     "peak_overlap_rel_error": 0.00019147672262857438,
@@ -44,7 +47,7 @@
     "contact_time_rk4_s": 0.0005526700000001017,
     "steps": 1628,
     "dt_s": 1.875419496850487e-06,
-    "wall_time_s": 7.832795150578022
+    "wall_time_s": 6.478861941024661
   },
   "velocity_sweep": [
     {
@@ -52,24 +55,27 @@
       "restitution_engine": 0.825828252798051,
       "restitution_rk4": 0.8257759393710445,
       "restitution_rel_error": 6.33506312212929e-05,
+      "closure_error_vs_target": 0.03228531599756376,
       "steps": 3005,
-      "wall_time_s": 17.662196340039372
+      "wall_time_s": 10.708344580605626
     },
     {
       "speed_m_per_s": 0.5,
       "restitution_engine": 0.8258531389534016,
       "restitution_rk4": 0.8257759464408378,
       "restitution_rel_error": 9.347876127474889e-05,
+      "closure_error_vs_target": 0.03231642369175197,
       "steps": 1628,
-      "wall_time_s": 10.511498870328069
+      "wall_time_s": 6.257455490529537
     },
     {
       "speed_m_per_s": 1.0,
       "restitution_engine": 0.8256880210088089,
       "restitution_rk4": 0.8257759548828504,
       "restitution_rel_error": 0.00010648635809935296,
+      "closure_error_vs_target": 0.03211002626101106,
       "steps": 923,
-      "wall_time_s": 5.451685471460223
+      "wall_time_s": 3.259443448856473
     }
   ],
   "convergence_study": [
@@ -81,10 +87,10 @@
       "peak_overlap_ref_m": 0.00018379523729673372,
       "peak_overlap_rel_error": 1.527780957188031e-05,
       "contact_time_s": 0.0005401208150929402,
-      "contact_time_ref_s": 0.0005544891763646121,
-      "contact_time_rel_error": 0.02591278943599019,
+      "contact_time_ref_s": 0.0005409599609325469,
+      "contact_time_rel_error": 0.001551216171636933,
       "restitution": 1.0000005158904002,
-      "wall_time_s": 4.9456017799675465
+      "wall_time_s": 3.314121600240469
     },
     {
       "dt_factor": 0.4,
@@ -94,10 +100,10 @@
       "peak_overlap_ref_m": 0.00018379523729673372,
       "peak_overlap_rel_error": 1.2538853592276769e-06,
       "contact_time_s": 0.0005401208150929402,
-      "contact_time_ref_s": 0.0005544891763646121,
-      "contact_time_rel_error": 0.02591278943599019,
+      "contact_time_ref_s": 0.0005409599609325469,
+      "contact_time_rel_error": 0.001551216171636933,
       "restitution": 1.0000003923692513,
-      "wall_time_s": 9.54077616147697
+      "wall_time_s": 6.443430420011282
     },
     {
       "dt_factor": 0.2,
@@ -107,10 +113,10 @@
       "peak_overlap_ref_m": 0.00018379523729673372,
       "peak_overlap_rel_error": 2.4250815757568003e-06,
       "contact_time_s": 0.0005401208150929402,
-      "contact_time_ref_s": 0.0005544891763646121,
-      "contact_time_rel_error": 0.02591278943599019,
+      "contact_time_ref_s": 0.0005409599609325469,
+      "contact_time_rel_error": 0.001551216171636933,
       "restitution": 0.9999999796148052,
-      "wall_time_s": 18.089244920760393
+      "wall_time_s": 17.14718034118414
     }
   ]
 }
