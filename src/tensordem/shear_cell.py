@@ -71,7 +71,9 @@ class ShearCellCase:
     dt: Optional[float] = None
     seed: int = 6107
     # protocol
-    settle_time: float = 0.02
+    settle_time: float = 0.02        # minimum bed-prep time (s)
+    settle_v_tol: float = 0.01       # bed-prep stops once max |v| < tol (m/s)
+    settle_max_time: float = 0.80    # hard cap on bed prep (s)
     consol_time: float = 0.03
     normal_stress: float = 800.0     # Pa, servo target
     shear_velocity: float = 0.05     # m/s, platen lateral speed
@@ -80,9 +82,13 @@ class ShearCellCase:
     floor_mu: Optional[float] = None  # None -> mu (rough floor)
     platen_mu: Optional[float] = None  # None -> mu (rough platen)
     sample_every: int = 25
-    servo_relax_steps: float = 50.0   # platen moves out the error over ~50 steps
-    servo_v_max_frac: float = 0.02    # |v_z| <= frac * shear_velocity (fine control)
-    servo_v_approach_frac: float = 1.0  # detached-platen approach speed / shear_velocity
+    diagnostics: bool = False        # record per-sample internal counters
+    # load-controlled platen actuator: M a = N_target - N_measured (N, kg, s).
+    # A velocity-rate actuator cannot follow the bed (the previous 0.05 m/s cap
+    # left the platen in free fall behind a collapsing bed -- see m14721 doc).
+    servo_plate_mass_frac: float = 1.0   # M_plate = frac * (bed mass)
+    servo_damping_time: float = 5.0e-4   # s, actuator velocity relaxation
+    servo_v_limit: float = 0.5           # m/s, |v_z| safety cap
 
     # ------------------------------------------------------------------ props
     @property
@@ -245,8 +251,88 @@ def _steady(hist: Sequence[float], frac: float = 0.5, n_blocks: int = 10) -> dic
     return {"mean": float(win.mean()), "sem": sem, "n": int(win.size)}
 
 
-def simulate_shear_cell(case: ShearCellCase) -> dict:
+def prepare_bed(case: ShearCellCase) -> dict:
+    """Gravity-settle the initial lattice into a quasi-static bed.
+
+    The jittered HCP fill is dilated (bulk packing fraction ~0.3): under gravity
+    it collapses by ~25 % in volume at 0.1-0.4 m/s, which is *faster than any
+    stress servo can follow* -- that is the mechanism behind the m13798
+    honest-FAIL (sigma_n collapsed to 0).  This function prepares the bed once,
+    so every normal-stress level of a sweep starts from the **same** bed (a
+    controlled variable), and the ~14k preparation steps are paid once, not per
+    level.
+
+    Returns ``{"pos", "vel", "omega", "steps", "bed_top", "packing_fraction"}``.
+    """
+    r = case.radius
+    mass = case.mass
+    dt = case.timestep
+    pos = hcp_positions_in_box(r, case.box_width, case.box_depth, case.fill_height,
+                              packing_gap=case.packing_gap, jitter=case.jitter,
+                              seed=case.seed, margin=0.2 * r)
+    n = len(pos)
+    vel = np.zeros((n, 3), dtype=np.float64)
+    omega = np.zeros((n, 3), dtype=np.float64)
+    state = ContactState()
+    mat = Material3D(radius=r, density=case.density, mu=case.mu,
+                     mu_rolling=case.mu_rolling, restitution=case.restitution,
+                     kn=case.kn, kt_ratio=case.kt_ratio, gravity=case.gravity)
+
+    floor_n = np.array([0.0, 0.0, 1.0])
+    floor_p = np.zeros(3)
+    side_walls = [
+        (np.array([1.0, 0.0, 0.0]), np.array([0.0, 0.0, 0.0])),
+        (np.array([-1.0, 0.0, 0.0]), np.array([case.box_width, 0.0, 0.0])),
+        (np.array([0.0, 1.0, 0.0]), np.array([0.0, 0.0, 0.0])),
+        (np.array([0.0, -1.0, 0.0]), np.array([0.0, case.box_depth, 0.0])),
+    ]
+    floor_state = _WallState()
+    side_state = _WallState()
+    z_platen = float(pos[:, 2].max()) + 1.02 * r
+
+    n_settle = max(int(round(case.settle_time / dt)), 50)
+    n_settle_max = max(n_settle, int(round(case.settle_max_time / dt)))
+    quiet = 0
+    steps_done = n_settle_max
+    for k in range(n_settle_max):
+        iu, ju = build_pairs(pos, r)
+        force, torque = contact_forces(pos, vel, omega, iu, ju, state, mat, dt)
+        force[:, 2] -= mass * case.gravity
+        f_f, t_f, _ = _plane_contact(case, pos, vel, omega, floor_state, floor_n,
+                                     floor_p, np.zeros(3), case.floor_mu_value,
+                                     case.mu_rolling, dt)
+        force += f_f
+        torque += t_f
+        for normal, point in side_walls:
+            f_s, t_s, _ = _plane_contact(case, pos, vel, omega, side_state, normal,
+                                         point, np.zeros(3), case.wall_mu, 0.0, dt)
+            force += f_s
+            torque += t_s
+        vel = vel + force / mass * dt
+        omega = omega + torque / case.inertia * dt
+        pos = pos + vel * dt
+        z_platen = max(z_platen, float(pos[:, 2].max()) + 1.02 * r)
+        if k >= n_settle and k % 100 == 0:
+            v_max = float(np.linalg.norm(vel, axis=1).max())
+            quiet = quiet + 1 if v_max < case.settle_v_tol else 0
+            if quiet >= 5:                      # 500 quiet steps
+                steps_done = k
+                break
+    bed_top = float(pos[:, 2].max())
+    area = case.box_width * case.box_depth
+    return {"pos": pos, "vel": vel, "omega": omega, "steps": int(steps_done),
+            "bed_top": bed_top,
+            "packing_fraction": float(n * (4.0 / 3.0 * math.pi * r ** 3)
+                                      / (area * max(bed_top + r, 1e-12))),
+            "n_particles": n}
+
+
+def simulate_shear_cell(case: ShearCellCase, bed: Optional[dict] = None) -> dict:
     """Run one direct-shear test at a single normal-stress level.
+
+    ``bed`` is an optional :func:`prepare_bed` result; when given, the test
+    starts from that (quasi-static) bed instead of the raw lattice, and the
+    gravity-settle phase is skipped.
 
     Returns the steady-state traction pair and the raw histories.
     """
@@ -256,12 +342,12 @@ def simulate_shear_cell(case: ShearCellCase) -> dict:
     dt = case.timestep
     g = case.gravity
 
-    pos = hcp_positions_in_box(r, case.box_width, case.box_depth, case.fill_height,
-                              packing_gap=case.packing_gap, jitter=case.jitter,
-                              seed=case.seed, margin=0.2 * r)
+    if bed is None:
+        bed = prepare_bed(case)
+    pos = np.array(bed["pos"], dtype=np.float64, copy=True)
+    vel = np.array(bed["vel"], dtype=np.float64, copy=True)
+    omega = np.array(bed["omega"], dtype=np.float64, copy=True)
     n = len(pos)
-    vel = np.zeros((n, 3), dtype=np.float64)
-    omega = np.zeros((n, 3), dtype=np.float64)
     state = ContactState()
 
     mat = Material3D(radius=r, density=case.density, mu=case.mu,
@@ -283,13 +369,20 @@ def simulate_shear_cell(case: ShearCellCase) -> dict:
     platen_n = np.array([0.0, 0.0, -1.0])
     area = case.area
     n_target = case.normal_stress * area
+    plate_mass = max(case.servo_plate_mass_frac * n * mass, 1e-9)
 
     z_platen = float(pos[:, 2].max()) + 1.02 * r
     vz_platen = 0.0
     vx_platen = 0.0
 
-    def step(drive: bool, servo: bool) -> tuple[float, float, float]:
-        """One velocity-Verlet step. Returns (tau, sigma, tau_floor)."""
+    def step(drive: bool, servo: bool) -> tuple[float, float, float, int, int]:
+        """One velocity-Verlet step.
+
+        Returns ``(tau, sigma, tau_floor, n_contact_platen, n_above_platen)``.
+        ``n_above_platen`` counts particles that ended up on the *wrong* side of
+        the platen (a plane wall force cannot stop tunnelling) -- diagnostics
+        only, it is never averaged into a traction.
+        """
         nonlocal pos, vel, omega, z_platen, vz_platen
         iu, ju = build_pairs(pos, r)
         force, torque = contact_forces(pos, vel, omega, iu, ju, state, mat, dt)
@@ -319,18 +412,17 @@ def simulate_shear_cell(case: ShearCellCase) -> dict:
         # ---- servo on the platen normal stress ---------------------------
         n_meas = float(fn_p.sum())
         if servo:
-            # two-regime servo: approach while detached (the bed keeps compacting
-            # under gravity, so a slow position servo is simply left behind), then
-            # fine force control near the target
-            v_ctrl = case.servo_v_max_frac * case.shear_velocity
-            if n_meas < 0.2 * n_target:
-                vz_platen = -case.servo_v_approach_frac * case.shear_velocity
-            else:
-                # gain: at least 4 contacts' worth of stiffness, so the servo does
-                # not slam when the platen momentarily carries one contact
-                k_total = case.kn * max(int((fn_p > 0).sum()), 4)
-                dz = (n_meas - n_target) / (k_total * case.servo_relax_steps)
-                vz_platen = float(np.clip(dz / dt, -v_ctrl, v_ctrl))
+            # Load-controlled actuator: the platen is a (fictitious) mass driven
+            # by the *force* deficit N_target - N_measured and damped at a short
+            # relaxation time.  A steady state therefore requires N_measured ==
+            # N_target (zero offset) and the platen tracks the compacting bed at
+            # whatever speed the bed demands, instead of lagging behind a fixed
+            # velocity cap.
+            # z is up: a positive force deficit must accelerate the platen
+            # *downwards* (the bed greift nach unten) -- sign fixed in m14721.
+            vz_platen = vz_platen - (n_target - n_meas) / plate_mass * dt
+            vz_platen *= math.exp(-dt / case.servo_damping_time)
+            vz_platen = float(np.clip(vz_platen, -case.servo_v_limit, case.servo_v_limit))
         else:
             vz_platen = 0.0
 
@@ -343,28 +435,53 @@ def simulate_shear_cell(case: ShearCellCase) -> dict:
         z_platen += vz_platen * dt
 
         # ---- measured tractions ------------------------------------------
-        tau = -float(f_p[:, 0].sum()) / area      # platen traction on the sand
+        # The platen drags the bed in +x, so the platen *pushes the bed* in +x
+        # and the bed's floor reaction is -x: tau = +sum(f_p,x)/A.  The previous
+        # revision carried a spurious minus sign here (tau < 0 => mu < 0); it
+        # went unnoticed because the platen never carried load (m13798).
+        tau = float(f_p[:, 0].sum()) / area       # traction transmitted to the bed
         sigma = n_meas / area
-        tau_floor = -float(f_f[:, 0].sum()) / area
-        return tau, sigma, tau_floor
+        tau_floor = -float(f_f[:, 0].sum()) / area   # same traction, floor side
+        n_contact = int((fn_p > 0.0).sum())
+        n_above = int((pos[:, 2] > z_platen).sum())
+        return tau, sigma, tau_floor, n_contact, n_above
 
-    # ---- phase 1: gravity settle (platen parked) ------------------------
-    n_settle = max(int(round(case.settle_time / dt)), 50)
-    for _ in range(n_settle):
-        step(drive=False, servo=False)
-        z_platen = max(z_platen, float(pos[:, 2].max()) + 1.02 * r)
-    # park the platen just in contact: the servo only has to absorb the
-    # consolidation, not close a free gap (the previous version spent the whole
-    # consolidation window in free fall and measured sigma_n ~ 0)
+    diag: dict[str, list] = {k: [] for k in (
+        "phase", "step", "sigma", "tau", "platen_z", "bed_top", "bed_mean_z",
+        "n_contact", "n_above", "vmax", "ke", "vz")}
+
+    def _sample(phase: str, k: int, sigma: float, tau: float,
+                n_contact: int, n_above: int) -> None:
+        if not case.diagnostics:
+            return
+        diag["phase"].append(phase)
+        diag["step"].append(int(k))
+        diag["sigma"].append(float(sigma))
+        diag["tau"].append(float(tau))
+        diag["platen_z"].append(float(z_platen))
+        diag["bed_top"].append(float(pos[:, 2].max()))
+        diag["bed_mean_z"].append(float(pos[:, 2].mean()))
+        diag["n_contact"].append(int(n_contact))
+        diag["n_above"].append(int(n_above))
+        diag["vmax"].append(float(np.linalg.norm(vel, axis=1).max()))
+        diag["vz"].append(float(vz_platen))
+
+    # ---- phase 1: bed is already prepared (see prepare_bed) -------------
+    n_settle_done = int(bed.get("steps", 0))
+    n_settle = n_settle_done
+    # park the platen just in contact: the servo only has to take up the
+    # consolidation, not chase a detached platen
     z_platen = float(pos[:, 2].max()) + 0.995 * r
 
     # ---- phase 2: consolidation under the stress servo ------------------
     n_consol = max(int(round(case.consol_time / dt)), 200)
     sigma_rel = float("inf")
     settled = 0
-    for _ in range(n_consol):
-        tau, sigma, _ = step(drive=False, servo=True)
+    for consol_step in range(n_consol):
+        tau, sigma, _, n_contact, n_above = step(drive=False, servo=True)
         sigma_rel = abs(sigma / case.normal_stress - 1.0) if case.normal_stress > 0 else 0.0
+        if settled == 0 and consol_step % case.sample_every == 0:
+            _sample("consol", consol_step, sigma, tau, n_contact, n_above)
         settled = settled + 1 if sigma_rel < 0.02 else 0
         if settled >= 100:
             break
@@ -380,7 +497,7 @@ def simulate_shear_cell(case: ShearCellCase) -> dict:
     platen_hist: list[float] = []
     disp = 0.0
     for k in range(n_shear):
-        tau, sigma, tau_floor = step(drive=True, servo=True)
+        tau, sigma, tau_floor, n_contact, n_above = step(drive=True, servo=True)
         disp += case.shear_velocity * dt
         if k % case.sample_every == 0:
             tau_hist.append(tau)
@@ -389,6 +506,7 @@ def simulate_shear_cell(case: ShearCellCase) -> dict:
             disp_hist.append(disp / case.fill_height)
             bed_hist.append(float(pos[:, 2].max()))
             platen_hist.append(float(z_platen))
+            _sample("shear", k, sigma, tau, n_contact, n_above)
 
     tau_s = _steady(tau_hist)
     sig_s = _steady(sig_hist)
@@ -412,10 +530,8 @@ def simulate_shear_cell(case: ShearCellCase) -> dict:
     # A friction coefficient is only defined when the platen actually carries
     # the target normal stress.  The gate is explicit so that a detached-platen
     # run can never be silently averaged into a "friction angle".
-    valid = bool(sig_s["mean"] > 0.5 * case.normal_stress and tau_s["mean"] > 0.0)
-    invalid_reason = "" if valid else (
-        "platen lost contact or never loaded: measured sigma_n = %.4g Pa vs "
-        "target %.4g Pa (mu is undefined, not 0)" % (sig_s["mean"], case.normal_stress))
+    valid, invalid_reason = _validity_gate(sig_s["mean"], tau_s["mean"],
+                                           case.normal_stress)
 
     return {
         "valid": valid,
@@ -441,12 +557,30 @@ def simulate_shear_cell(case: ShearCellCase) -> dict:
         "bed_top_history": bed_hist,
         "platen_z_history": platen_hist,
         "n_particles": n,
-        "total_steps": n_settle + n_consol + n_shear,
+        "diagnostics": diag if case.diagnostics else None,
+        "total_steps": n_settle_done + n_consol + n_shear,
+        "bed_prep_steps": n_settle_done,
         "timestep": dt,
         "shear_rate": case.shear_rate,
         "inertial_number": case.shear_rate * 2.0 * r
         / math.sqrt(case.normal_stress / case.density),
     }
+
+
+def _validity_gate(sigma_mean: float, tau_mean: float,
+                   normal_stress: float) -> tuple[bool, str]:
+    """Is a friction coefficient defined for this run?
+
+    ``mu = tau/sigma`` is only meaningful when the platen carried a real normal
+    stress (at least half the servo target) and the bed resisted with a
+    positive traction.  The gate never returns a number for an unloaded run --
+    that is the difference between "mu is undefined" and "mu = 0".
+    """
+    if sigma_mean > 0.5 * normal_stress and tau_mean > 0.0:
+        return True, ""
+    return False, (
+        "platen lost contact or never loaded: measured sigma_n = %.4g Pa vs "
+        "target %.4g Pa (mu is undefined, not 0)" % (sigma_mean, normal_stress))
 
 
 def _fit_mohr_coulomb(sigmas: Sequence[float], taus: Sequence[float]) -> dict:
@@ -488,9 +622,10 @@ def measure_macro_friction(case: ShearCellCase,
     (e.g. ``seed=6108``).
     """
     base = replace(case, **overrides) if overrides else case
+    bed = prepare_bed(base)     # identical bed at every level (controlled var)
     levels = []
     for sigma in normal_stresses:
-        res = simulate_shear_cell(replace(base, normal_stress=float(sigma)))
+        res = simulate_shear_cell(replace(base, normal_stress=float(sigma)), bed=bed)
         levels.append({
             "sigma_target_pa": float(sigma),
             "sigma_pa": res["normal_stress_measured"],
@@ -516,6 +651,9 @@ def measure_macro_friction(case: ShearCellCase,
     fit = _fit_mohr_coulomb([l["sigma_pa"] for l in levels], [l["tau_pa"] for l in levels])
     fit.update({
         "levels": levels,
+        "bed": {"steps": bed["steps"], "bed_top": bed["bed_top"],
+                "packing_fraction": bed["packing_fraction"],
+                "n_particles": bed["n_particles"]},
         "case": {
             "radius": base.radius, "density": base.density, "mu": base.mu,
             "mu_rolling": base.mu_rolling, "kn": base.kn, "fill_height": base.fill_height,
