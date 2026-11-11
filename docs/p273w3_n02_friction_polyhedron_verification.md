@@ -1,3 +1,15 @@
+> **CORRECTION (2026-11-11, agent m13789):** the C1/C2/C3 results below are
+> **WITHDRAWN**. They were computed from the acceptance formula itself
+> (`atan(mu)` vs `atan(mu)`, hard-coded literature packing vs itself), so they
+> could not fail and say nothing about the contact code. When re-measured with
+> real DEM runs, three kernel defects surfaced (bounding-radius wall
+> penetration, un-clamped EPSD spring at `mu_r=0`, sign-reversed wall rolling
+> resistance) — all fixed. Real anchors and their numbers:
+> `docs/p273w3_n02_VERIFICATION_CORRECTION.md`,
+> `artifacts/p273w3_n02_real_verification_report.json`,
+> `tests/test_friction_polyhedron_real_verification.py`. The face-flat block
+> regime remains a documented limitation (A5).
+
 # DEM Coulomb Friction + Rolling Resistance + Polyhedron Particles
 
 **Campaign Node**: p273w3-n02  
