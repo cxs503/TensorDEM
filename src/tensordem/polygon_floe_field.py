@@ -107,6 +107,8 @@ class PolygonFloeField:
     cells_summary: Dict[str, object] = dc_field(default_factory=dict)
     timings: Dict[str, float] = dc_field(default_factory=dict)
     density: float = 917.0
+    #: diagnostics of the IN26-N01 compaction solver (None = buffered, contact-free field)
+    compaction: Optional[Dict[str, object]] = None
 
     # -- basic accessors ---------------------------------------------------
     @property
@@ -305,7 +307,8 @@ class PolygonFloeField:
             coverage=self.coverage * f * f, seed=self.seed, fsd=self.fsd,
             fsd_description=dict(self.fsd_description),
             cells_summary=dict(self.cells_summary), timings=dict(self.timings),
-            density=self.density)
+            density=self.density,
+            compaction=(dict(self.compaction) if self.compaction is not None else None))
 
     def as_disc_equivalent(self) -> Dict[str, np.ndarray]:
         """Equal-area disk field (backward compatibility with the wave-1 API)."""
@@ -313,7 +316,13 @@ class PolygonFloeField:
                 "thickness": self.thickness.copy(), "box": np.asarray(self.box)}
 
     def summary(self) -> Dict[str, object]:
-        return {"fsd": dict(self.fsd_description), "metrics": self.metrics()}
+        out: Dict[str, object] = {"fsd": dict(self.fsd_description),
+                                  "metrics": self.metrics()}
+        if self.compaction is not None:
+            out["compaction"] = {k: v for k, v in self.compaction.items()
+                                 if k not in ("energy_history", "coordination_history",
+                                              "overlap_history")}
+        return out
 
 
 # ---------------------------------------------------------------------------
