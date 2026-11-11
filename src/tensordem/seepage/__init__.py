@@ -55,6 +55,16 @@ from .chain import (
     mass_conservation_audit,
     run_seepage_chain,
 )
+from .dem_column import ColumnDEMConfig, SeepageColumn
+from .dem_measure import (
+    PIPING_GRADIENT_RAMP,
+    measured_critical_gradient,
+    measured_effective_stress_profile,
+    measured_fluid_ledger,
+    measured_mass_conservation,
+    run_measured_links,
+)
+from .dem_chain import run_dem_seepage_chain
 
 __all__ = [
     "SaturatedColumn",
@@ -80,4 +90,13 @@ __all__ = [
     "SeepagePrototype",
     "mass_conservation_audit",
     "run_seepage_chain",
+    "ColumnDEMConfig",
+    "SeepageColumn",
+    "PIPING_GRADIENT_RAMP",
+    "measured_effective_stress_profile",
+    "measured_critical_gradient",
+    "measured_mass_conservation",
+    "measured_fluid_ledger",
+    "run_measured_links",
+    "run_dem_seepage_chain",
 ]
