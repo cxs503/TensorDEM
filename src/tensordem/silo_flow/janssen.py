@@ -9,7 +9,7 @@ surface,
 
 where ``R`` is the silo radius, ``mu_w`` the wall friction coefficient and ``K``
 the ratio of horizontal to vertical stress.  The two parameters are not
-independent: ``P_inf / z0 = rho_b g R``, so the *shape* of the profile tests the
+independent: ``P_inf / z0 = rho_b g`` (a specific weight), so the *shape* of the profile tests the
 momentum balance without any assumption about ``K`` -- that identity is the
 parameter-free acceptance used here.
 
@@ -22,7 +22,7 @@ Two independent measurements are made on a settled, plugged bed:
   no stress-tensor assumption.
 
 Stage acceptance: the fitted saturation amplitude agrees with Janssen's
-``P_inf`` within 10 %, and the ``A / z0 = rho_b g R`` identity holds within 10 %.
+``P_inf`` within 10 %, and the ``P_inf / z0 = rho_b g`` identity holds within 10 %.
 """
 from __future__ import annotations
 
@@ -138,7 +138,9 @@ def run_janssen(case: JanssenCase, *, dt: float | None = None) -> dict:
         sel = vert["sigma_v"] > 1e-6
         if np.any(sel):
             k_meas = float(np.mean(wall["sigma_w"][sel] / vert["sigma_v"][sel]))
-    rho_g_r = rho_b * material.gravity * geometry.cylinder_radius
+    # specific weight [N/m^3]: P_inf/z0 = rho_b g is the parameter-free
+    # Janssen identity (a *stress per metre*, not a pressure)
+    rho_g = rho_b * material.gravity
     result = {
         "case": {
             "silo_radius": case.silo_radius,
@@ -155,9 +157,11 @@ def run_janssen(case: JanssenCase, *, dt: float | None = None) -> dict:
         "n_particles": flow.n,
         "free_surface": free,
         "rho_bulk": rho_b,
-        "rho_g_R": rho_g_r,
+        "rho_g": rho_g,
+        "rho_g_R": rho_g,  # legacy key name, value = rho_b g (was rho_b g R)
         "base_pressure_pa": p_base,
-        "base_pressure_janssen_pa": (rho_g_r / (2.0 * case.wall_mu * k_meas)
+        "base_pressure_janssen_pa": (rho_g * geometry.cylinder_radius
+                                     / (2.0 * case.wall_mu * k_meas)
                                      if k_meas else None),
         "k_measured": k_meas,
         "wall_profile": {
@@ -176,14 +180,14 @@ def run_janssen(case: JanssenCase, *, dt: float | None = None) -> dict:
         "energy": flow.balance(),
         "wall_clock_s": time.time() - t_wall,
     }
-    # parameter-free Janssen identity  P_inf / z0 = rho_b g R
+    # parameter-free Janssen identity  P_inf / z0 = rho_b g  (specific weight)
     if wall_fit.get("ok"):
         ratio = wall_fit["p_inf_over_z0"]
         result["identity_ratio"] = ratio
-        result["identity_error"] = abs(ratio - rho_g_r) / rho_g_r
+        result["identity_error"] = abs(ratio - rho_g) / rho_g
     # saturation amplitude vs Janssen with the measured stress ratio
     if wall_fit.get("ok") and k_meas:
-        p_inf_th = rho_g_r / (2.0 * case.wall_mu * k_meas)
+        p_inf_th = rho_g * geometry.cylinder_radius / (2.0 * case.wall_mu * k_meas)
         z0_th = case.silo_radius / (2.0 * case.wall_mu * k_meas)
         result["janssen_theory"] = {"p_inf": p_inf_th, "z0": z0_th, "k": k_meas}
         result["p_inf_rel_error"] = abs(wall_fit["p_inf"] - p_inf_th) / p_inf_th
