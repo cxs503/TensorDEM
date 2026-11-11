@@ -143,19 +143,27 @@ def _geometric_route_reference() -> dict:
 # ---------------------------------------------------------------------------
 
 def _repose_job(args):
-    mu, mu_r, seed, n_particles = args
-    case = ReposeCase(mu=mu, mu_rolling=mu_r, seed=seed, n_particles=n_particles)
+    mu, mu_r, seed, n_particles = args[:4]
+    source_mode = args[4] if len(args) > 4 else "fixed"
+    keep = args[5] if len(args) > 5 else None
+    case = ReposeCase(mu=mu, mu_rolling=mu_r, seed=seed, n_particles=n_particles,
+                      source_mode=source_mode)
     res = simulate_repose(case)
-    res.pop("final_positions", None)
+    positions = res.pop("final_positions", None)
     return {"mu": mu, "mu_rolling": mu_r, "seed": seed,
             "theta_r_deg": res["theta_r_deg"], "reached_rest": res["reached_rest"],
             "n_particles": res["n_particles"], "t_end": res["t_end"],
-            "measurement": res["measurement"], "protocol": res["protocol"]}
+            "measurement": res["measurement"], "protocol": res["protocol"],
+            "source_mode": res["source_mode"], "nozzle_z_max": res["nozzle_z_max"],
+            "apex_height_m": res["apex_height_m"], "pour_closed": res["pour_closed"],
+            "bursts_released": res["bursts_released"],
+            "bursts_skipped": res["bursts_skipped"], "clear_steps": res["clear_steps"],
+            "positions": positions if keep else None}
 
 
 def repose_sweep(mu_r: float, mu_list, seeds=(15204,), n_particles=900,
-                 pool: Pool | None = None) -> list:
-    jobs = [(mu, mu_r, seed, n_particles) for mu in mu_list for seed in seeds]
+                 pool: Pool | None = None, source_mode: str = "fixed") -> list:
+    jobs = [(mu, mu_r, seed, n_particles, source_mode) for mu in mu_list for seed in seeds]
     if pool is None:
         return [_repose_job(j) for j in jobs]
     return pool.map(_repose_job, jobs)
@@ -167,11 +175,19 @@ def _theta(res_list, mu):
     return float(np.mean(vals)) if vals else float("nan")
 
 
-def repose_anchor(jobs: int = 12, n_particles: int = 900) -> dict:
+def repose_anchor(jobs: int = 12, n_particles: int = 900,
+                  source_mode: str = "fixed", seeds=(15204, 15205, 15206)) -> dict:
+    """Anchor A/B: negative control + glass-bead calibration + out-of-sample sand.
+
+    ``source_mode`` selects the pour protocol: ``"fixed"`` is the v2 protocol
+    (fixed nozzle, bursts self-paced by the charge fall time, the pour closes
+    when the deposit fills the nozzle); ``"rising"`` is the v1 protocol and is
+    kept only so the defect test can reproduce it.
+    """
     with Pool(jobs) as pool:
         # 1) negative control: no friction at all -> no stable slope
-        control = pool.map(_repose_job, [(0.0, 0.0, 15204, n_particles),
-                                         (0.0, 0.0, 15205, n_particles)])
+        control = pool.map(_repose_job, [(0.0, 0.0, 15204, n_particles, source_mode),
+                                         (0.0, 0.0, 15205, n_particles, source_mode)])
         # 2) bisection of the single shape parameter mu_r on the glass beads
         mu_g = MATERIALS["glass_beads"]["mu"]
         target = MATERIALS["glass_beads"]["theta_exp_deg"]
@@ -179,7 +195,8 @@ def repose_anchor(jobs: int = 12, n_particles: int = 900) -> dict:
         history = []
         for _ in range(5):
             mid = 0.5 * (lo + hi)
-            theta = _theta(repose_sweep(mid, [mu_g], pool=pool, n_particles=n_particles), mu_g)
+            theta = _theta(repose_sweep(mid, [mu_g], pool=pool, n_particles=n_particles,
+                                        source_mode=source_mode), mu_g)
             history.append({"mu_rolling": mid, "theta_r_deg": theta})
             if theta < target:
                 lo = mid
@@ -189,12 +206,20 @@ def repose_anchor(jobs: int = 12, n_particles: int = 900) -> dict:
         # 3) final runs: 3 seeds per material at the calibrated mu_r
         final_jobs = []
         for name, mat in MATERIALS.items():
-            for seed in (15204, 15205, 15206):
-                final_jobs.append((mat["mu"], mu_r_star, seed, n_particles))
+            for seed in seeds:
+                final_jobs.append((mat["mu"], mu_r_star, seed, n_particles, source_mode))
         finals = pool.map(_repose_job, final_jobs)
-        # 4) theta(mu) surface at the calibrated mu_r (for the figure)
-        surface = pool.map(_repose_job, [(mu, mu_r_star, 15204, n_particles)
-                                         for mu in (0.1, 0.2, 0.4, 0.6)])
+        # 4) theta(mu) surface at the calibrated mu_r (for the figure); the
+        # material runs above are points of the same surface and are re-used.
+        extra = [mu for mu in (0.1, 0.2, 0.4, 0.6)
+                 if not any(abs(m["mu"] - mu) < 1e-9 for m in MATERIALS.values())]
+        surface = pool.map(_repose_job,
+                           [(mu, mu_r_star, 15204, n_particles, source_mode)
+                            for mu in extra])
+        # one run per material with its positions kept, for the figure
+        keep = pool.map(_repose_job,
+                        [(mat["mu"], mu_r_star, seeds[0], n_particles, source_mode, True)
+                         for mat in MATERIALS.values()])
     materials = {}
     for name, mat in MATERIALS.items():
         vals = [r["theta_r_deg"] for r in finals
@@ -228,7 +253,26 @@ def repose_anchor(jobs: int = 12, n_particles: int = 900) -> dict:
         },
         "materials": materials,
         "theta_mu_surface": [{"mu": r["mu"], "theta_r_deg": r["theta_r_deg"]}
-                             for r in surface],
+                             for r in list(surface)],
+        "theta_mu_surface_all": [{"mu": r["mu"], "theta_r_deg": r["theta_r_deg"]}
+                                 for r in list(finals) + list(surface)],
+        "protocol": {
+            "source_mode": source_mode,
+            "n_particles": n_particles,
+            "seeds": list(seeds),
+            "pour": "fixed-height nozzle; bursts self-paced by the charge fall time; "
+                    "the pour closes when the deposit fills the nozzle",
+            "reached_rest": [r["reached_rest"] for r in finals],
+            "pour_closed": [r["pour_closed"] for r in finals],
+            "bursts_released": [r["bursts_released"] for r in finals],
+            "bursts_skipped": [r["bursts_skipped"] for r in finals],
+            "nozzle_z_max": [r["nozzle_z_max"] for r in finals],
+            "clear_steps": [r["clear_steps"] for r in finals],
+        },
+        "figure_positions": {
+            str(m["mu"]): (None if r["positions"] is None else r["positions"].tolist())
+            for m, r in zip(MATERIALS.values(), keep)
+        },
         "reference_micro_parameters": "literature interparticle friction, not fitted",
     }
 
@@ -412,6 +456,8 @@ def main(argv=None) -> int:
     ap.add_argument("--out", default="artifacts/P152W1-N04")
     ap.add_argument("--jobs", type=int, default=12)
     ap.add_argument("--packing-jobs", type=int, default=5)
+    ap.add_argument("--repose-particles", type=int, default=300)
+    ap.add_argument("--source-mode", default="fixed", choices=["fixed", "rising"])
     args = ap.parse_args(argv)
     out = args.out
     if args.stage in ("laws", "all"):
@@ -421,7 +467,9 @@ def main(argv=None) -> int:
         _save(out, "packing.json", packing_anchor(jobs=args.packing_jobs))
         print("packing: done")
     if args.stage in ("repose", "all"):
-        _save(out, "repose.json", repose_anchor(jobs=args.jobs))
+        _save(out, "repose.json", repose_anchor(jobs=args.jobs,
+                                               n_particles=args.repose_particles,
+                                               source_mode=args.source_mode))
         print("repose: done")
     if args.stage in ("shear", "all"):
         _save(out, "shear.json", shear_anchor(jobs=args.jobs))
