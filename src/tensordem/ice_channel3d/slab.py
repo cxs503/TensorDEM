@@ -47,6 +47,65 @@ def bending_capacity_per_width_n_per_m(flexural_strength: float,
     return BENDING_EFFICIENCY * flexural_strength * thickness ** 2 / char_length
 
 
+def stochastic_bending_capacity_per_width_n_per_m(
+        flexural_strength_pa: float, thickness_m: float, elastic_modulus_pa: float, *,
+        width_m: float, correlation_length_m: float = 10.0,
+        weibull_modulus: float = 6.0, poisson_ratio: float = POISSON_ICE,
+        ice_density_kg_m3: float = ICE_DENSITY, n_real: int = 50,
+        db_m: float = 1.0, quantile: float = 0.05,
+        failure_model: str = "weakest_link",
+        seed: int = 20260124) -> Dict[str, float]:
+    """Per-unit-width bending capacity of a *random* strength field [N/m].
+
+    Thin wrapper that lets the channel slab solver consume
+    :mod:`tensordem.random_ice_strength` without importing it at module scope
+    (the strength package itself imports this module for the deterministic
+    bending anchor ``0.25 sigma_f h**2 / L_c``, so the import is local).
+
+    The strength along the contact line is a Weibull field with a Gaussian
+    correlation kernel of length ``correlation_length_m``; the sheet fails at
+    its weakest strip (``weakest_link``) so the returned quantile is the
+    wide-structure capacity.  ``n_real`` independent realisations give the
+    ensemble; ``quantile`` selects the design value (5 % by default).
+    """
+    if width_m <= 0.0 or db_m <= 0.0:
+        raise ValueError("width_m and db_m must be positive")
+    if not (0.0 < quantile < 1.0):
+        raise ValueError("quantile must be in (0, 1)")
+    from ..random_ice_strength.beam import IceSheetStrengthModel
+    from ..random_ice_strength.distributions import WeibullMarginal
+    from ..random_ice_strength.ensemble import breaking_force_ensemble
+    from ..random_ice_strength.field import gaussian_field_1d
+
+    marginal = WeibullMarginal.from_mean_modulus(flexural_strength_pa, weibull_modulus)
+    sheet = IceSheetStrengthModel(
+        marginal=marginal,
+        thickness_m=thickness_m,
+        elastic_modulus_pa=elastic_modulus_pa,
+        poisson_ratio=poisson_ratio,
+        ice_density_kg_m3=ice_density_kg_m3,
+    )
+    n_strip = max(2, int(round(width_m / db_m)))
+    grid = np.arange(n_strip, dtype=float) * db_m
+    kl = gaussian_field_1d(grid, correlation_length_m)
+    ens = breaking_force_ensemble(sheet, marginal, kl, n_real, db_m=db_m,
+                                  failure_model=failure_model, seed=seed)
+    per_width = np.asarray(ens["per_width"], dtype=float)
+    deterministic = float(sheet.deterministic_per_width_n_per_m())
+    q = float(np.quantile(per_width, quantile))
+    return {
+        "per_width_mean": float(per_width.mean()),
+        "per_width_std": float(per_width.std(ddof=1)),
+        "per_width_cov": float(per_width.std(ddof=1) / per_width.mean()),
+        "per_width_quantile": q,
+        "quantile": float(quantile),
+        "per_width_deterministic": deterministic,
+        "quantile_over_deterministic": q / deterministic,
+        "n_real": int(n_real),
+        "width_m": float(ens["width_m"]),
+    }
+
+
 def layer_moment_shares(n_layers: int, thickness: float) -> np.ndarray:
     """Share of the full-slab bending capacity carried by each layer.
 
@@ -279,6 +338,15 @@ class SlabConfig:
     subduction_delay_frames: int = 10
     seed: int = 0
     steady_window_fraction: float = 0.4
+    #: drive the per-unit-width detach capacity from the random strength-field
+    #: ensemble (:func:`stochastic_bending_capacity_per_width_n_per_m`) instead
+    #: of the deterministic mean-strength value
+    stochastic_strength: bool = False
+    strength_field_length_m: float = 10.0
+    strength_field_modulus: float = 6.0
+    strength_field_quantile: float = 0.05
+    strength_field_realisations: int = 50
+    strength_field_db_m: float = 1.0
 
     def __post_init__(self) -> None:
         if self.n_layers < 1:
@@ -293,6 +361,15 @@ class SlabConfig:
             raise ValueError("relax_omega must be in (0, 1]")
         if not 0.0 <= self.friction_mu < 1.0:
             raise ValueError("friction_mu must be in [0, 1)")
+        if self.stochastic_strength:
+            for name in ("strength_field_length_m", "strength_field_modulus",
+                         "strength_field_db_m"):
+                if not math.isfinite(getattr(self, name)) or getattr(self, name) <= 0:
+                    raise ValueError(f"{name} must be finite and positive")
+            if not 0.0 < self.strength_field_quantile < 1.0:
+                raise ValueError("strength_field_quantile must be in (0, 1)")
+            if self.strength_field_realisations < 2:
+                raise ValueError("strength_field_realisations must be >= 2")
 
     def as_dict(self) -> Dict[str, object]:
         return {k: getattr(self, k) for k in self.__dataclass_fields__}
@@ -375,7 +452,24 @@ class SlabChannelSim:
         #: resolved: a single horizontal slice has no subduction route by
         #: construction (that is what "2-D" means for this model)
         self.subduction_enabled = bool(config.subduction and self.n_layers >= 2)
+        #: ensemble of the random-strength bending capacity (``None`` when the
+        #: deterministic mean-strength anchor is used)
+        self.strength_ensemble: Optional[Dict[str, float]] = None
         self.bend_per_width = ice.bending_per_width_n_per_m
+        if config.stochastic_strength:
+            self.strength_ensemble = stochastic_bending_capacity_per_width_n_per_m(
+                ice.flexural_strength_pa, ice.thickness_m, ice.elastic_modulus_pa,
+                width_m=max(self.channel_width_m, 2.0 * config.strength_field_db_m),
+                correlation_length_m=config.strength_field_length_m,
+                weibull_modulus=config.strength_field_modulus,
+                poisson_ratio=ice.poisson_ratio,
+                ice_density_kg_m3=ice.ice_density,
+                n_real=config.strength_field_realisations,
+                db_m=config.strength_field_db_m,
+                quantile=config.strength_field_quantile,
+                seed=config.seed,
+            )
+            self.bend_per_width = float(self.strength_ensemble["per_width_quantile"])
         self._build_field()
         self.mass_ledger = MassLedger(ice_density=ice.ice_density,
                                       initial_mass_kg=self._field_mass())
