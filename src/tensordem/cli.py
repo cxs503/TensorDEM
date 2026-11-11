@@ -1,8 +1,9 @@
-"""Run the reproducible 2-D DEM demo and export its trajectory/history."""
+"""CLI entry points for TensorDEM: 2-D ice-breaking DEM and verification tools."""
 
 import argparse
 import csv
 import json
+import sys
 from dataclasses import asdict
 from pathlib import Path
 
@@ -38,34 +39,10 @@ def read_hull_profile(path: Path) -> torch.Tensor:
     return profile
 
 
-def main(argv: list[str] | None = None) -> None:
-    parser = argparse.ArgumentParser(description="PyTorch 二维 DEM 破冰模拟")
-    parser.add_argument("--nx", type=int, default=21, help="冰层列数")
-    parser.add_argument("--ny", type=int, default=5, help="冰层行数")
-    parser.add_argument("--steps", type=int, default=2000, help="积分步数")
-    parser.add_argument("--dt", type=float, default=None, help="时间步长 (s)，默认自动")
-    parser.add_argument(
-        "--speed", type=float, default=1.0,
-        help="圆形压头向下速度；船体模式下作为时间步长速度下限 (m/s)",
-    )
-    parser.add_argument("--hull-profile", type=Path, default=None,
-                        help="船体局部折线 CSV，要求 x,y 两列，单位 m")
-    parser.add_argument("--hull-start-x", type=float, default=0.0,
-                        help="船体局部坐标原点初始全局 x (m)")
-    parser.add_argument("--hull-start-y", type=float, default=0.0,
-                        help="船体局部坐标原点初始全局 y (m)")
-    parser.add_argument("--hull-velocity-x", type=float, default=0.0,
-                        help="船体规定平移速度 x 分量 (m/s)")
-    parser.add_argument("--hull-velocity-y", type=float, default=0.0,
-                        help="船体规定平移速度 y 分量 (m/s)")
-    parser.add_argument("--breaking-strain", type=float, default=0.015)
-    parser.add_argument("--shear-breaking-strain", type=float, default=0.03)
-    parser.add_argument("--device", default="cpu", help="cpu 或 cuda")
-    parser.add_argument("--output", type=Path, default=Path("results"))
-    parser.add_argument("--save-every", type=int, default=20, help="轨迹采样间隔")
-    args = parser.parse_args(argv)
+def _cmd_dem_2d(args: argparse.Namespace) -> None:
+    """Run the reproducible 2-D DEM ice-breaking simulation."""
     if args.steps < 1 or args.save_every < 1:
-        parser.error("--steps and --save-every must be positive")
+        sys.exit("--steps and --save-every must be positive")
     try:
         hull_profile = read_hull_profile(args.hull_profile) if args.hull_profile else None
         hull_speed = (args.hull_velocity_x**2 + args.hull_velocity_y**2) ** 0.5
@@ -84,7 +61,7 @@ def main(argv: list[str] | None = None) -> None:
                 hull_velocity=(args.hull_velocity_x, args.hull_velocity_y),
             )
     except (ValueError, RuntimeError, TypeError) as exc:
-        parser.error(str(exc))
+        sys.exit(str(exc))
     if simulation.device.type == "cpu":
         torch.set_num_threads(1)
     args.output.mkdir(parents=True, exist_ok=True)
@@ -131,3 +108,92 @@ def main(argv: list[str] | None = None) -> None:
         f"断键={simulation.broken_bonds}/{int(simulation.bonded.sum().item())}; "
         f"结果目录: {args.output}"
     )
+
+
+def _cmd_verify_friction_polyhedron(args: argparse.Namespace) -> None:
+    """Run friction+polyhedron DEM verification and export machine-checkable report."""
+    from .friction_polyhedron_real_verification import run_full_verification
+
+    args.output.mkdir(parents=True, exist_ok=True)
+    report = run_full_verification(include_packing=args.packing)
+
+    # Write full JSON report
+    report_path = args.output / "friction_polyhedron_verification.json"
+    with report_path.open("w", encoding="utf-8") as f:
+        json.dump(report, f, indent=2, default=str)
+
+    # Write summary for quick inspection
+    summary_path = args.output / "friction_polyhedron_summary.txt"
+    with summary_path.open("w", encoding="utf-8") as f:
+        f.write("Friction + Polyhedron DEM Verification Report\n")
+        f.write("=" * 50 + "\n")
+        f.write(f"Campaign node: {report['campaign_node']}\n")
+        f.write(f"Corrected on: {report['corrected_on']}\n")
+        f.write(f"Overall: {report['overall']}\n\n")
+        for criterion, status in report['summary'].items():
+            f.write(f"  {criterion}: {status}\n")
+        f.write("\nKnown limitations:\n")
+        for key, val in report.get('known_limitations', {}).items():
+            f.write(f"  {key}: {val}\n")
+
+    # Print summary to stdout
+    print(f"Verification complete: overall={report['overall']}")
+    for criterion, status in report['summary'].items():
+        print(f"  {criterion}: {status}")
+    print(f"Report: {report_path}")
+    print(f"Summary: {summary_path}")
+
+
+def main(argv: list[str] | None = None) -> None:
+    parser = argparse.ArgumentParser(
+        description="TensorDEM: Discrete Element Method solver and verification tools",
+    )
+    subparsers = parser.add_subparsers(dest="command", help="Available commands")
+
+    # --- dem-2d subcommand ---
+    dem_parser = subparsers.add_parser("dem-2d", help="2-D ice-breaking DEM simulation")
+    dem_parser.add_argument("--nx", type=int, default=21, help="冰层列数")
+    dem_parser.add_argument("--ny", type=int, default=5, help="冰层行数")
+    dem_parser.add_argument("--steps", type=int, default=2000, help="积分步数")
+    dem_parser.add_argument("--dt", type=float, default=None, help="时间步长 (s)，默认自动")
+    dem_parser.add_argument(
+        "--speed", type=float, default=1.0,
+        help="圆形压头向下速度；船体模式下作为时间步长速度下限 (m/s)",
+    )
+    dem_parser.add_argument("--hull-profile", type=Path, default=None,
+                            help="船体局部折线 CSV，要求 x,y 两列，单位 m")
+    dem_parser.add_argument("--hull-start-x", type=float, default=0.0,
+                            help="船体局部坐标原点初始全局 x (m)")
+    dem_parser.add_argument("--hull-start-y", type=float, default=0.0,
+                            help="船体局部坐标原点初始全局 y (m)")
+    dem_parser.add_argument("--hull-velocity-x", type=float, default=0.0,
+                            help="船体规定平移速度 x 分量 (m/s)")
+    dem_parser.add_argument("--hull-velocity-y", type=float, default=0.0,
+                            help="船体规定平移速度 y 分量 (m/s)")
+    dem_parser.add_argument("--breaking-strain", type=float, default=0.015)
+    dem_parser.add_argument("--shear-breaking-strain", type=float, default=0.03)
+    dem_parser.add_argument("--device", default="cpu", help="cpu 或 cuda")
+    dem_parser.add_argument("--output", type=Path, default=Path("results"))
+    dem_parser.add_argument("--save-every", type=int, default=20, help="轨迹采样间隔")
+    dem_parser.set_defaults(func=_cmd_dem_2d)
+
+    # --- verify-friction-polyhedron subcommand ---
+    verify_parser = subparsers.add_parser(
+        "verify-friction-polyhedron",
+        help="Run friction+polyhedron DEM verification (A1-A4 anchors)",
+    )
+    verify_parser.add_argument(
+        "--packing", action="store_true",
+        help="Include A4 packing-fraction measurement (slow, needs many particles)",
+    )
+    verify_parser.add_argument(
+        "--output", type=Path, default=Path("runs/friction_polyhedron"),
+        help="Output directory for verification report",
+    )
+    verify_parser.set_defaults(func=_cmd_verify_friction_polyhedron)
+
+    args = parser.parse_args(argv)
+    if not hasattr(args, "func"):
+        parser.print_help()
+        sys.exit(1)
+    args.func(args)
