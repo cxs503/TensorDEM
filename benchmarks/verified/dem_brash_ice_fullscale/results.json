@@ -1,0 +1,605 @@
+{
+  "campaign_node": "p472w2-N04",
+  "capability": "ice.resistance.dem_straight_ahead",
+  "status_upgrade": "WITHHELD \u2192 REAL",
+  "dataset": {
+    "n_points": 12,
+    "ships": [
+      "MT_Uikku",
+      "ODEN"
+    ],
+    "H_range_m": [
+      0.5,
+      2.0
+    ],
+    "C_range": [
+      0.4,
+      0.8
+    ],
+    "V_range_m_s": [
+      2.0,
+      5.0
+    ]
+  },
+  "three_way_comparison": [
+    {
+      "id": "UIK-01",
+      "ship": "MT_Uikku",
+      "H_m": 0.8,
+      "C_ice": 0.6,
+      "V_m_s": 3.0,
+      "R_DEM_kN": 369.9,
+      "R_Lindqvist_kN": 394.6,
+      "R_measured_kN": 385,
+      "err_DEM_vs_Lindqvist": -0.0626,
+      "err_DEM_vs_measured": -0.0391,
+      "err_Lindqvist_vs_measured": 0.025
+    },
+    {
+      "id": "UIK-02",
+      "ship": "MT_Uikku",
+      "H_m": 1.0,
+      "C_ice": 0.5,
+      "V_m_s": 3.5,
+      "R_DEM_kN": 485.6,
+      "R_Lindqvist_kN": 629.2,
+      "R_measured_kN": 510,
+      "err_DEM_vs_Lindqvist": -0.2282,
+      "err_DEM_vs_measured": -0.0478,
+      "err_Lindqvist_vs_measured": 0.2337
+    },
+    {
+      "id": "UIK-03",
+      "ship": "MT_Uikku",
+      "H_m": 1.2,
+      "C_ice": 0.7,
+      "V_m_s": 2.5,
+      "R_DEM_kN": 533.7,
+      "R_Lindqvist_kN": 778.2,
+      "R_measured_kN": 580,
+      "err_DEM_vs_Lindqvist": -0.3142,
+      "err_DEM_vs_measured": -0.0798,
+      "err_Lindqvist_vs_measured": 0.3418
+    },
+    {
+      "id": "UIK-04",
+      "ship": "MT_Uikku",
+      "H_m": 1.5,
+      "C_ice": 0.6,
+      "V_m_s": 4.0,
+      "R_DEM_kN": 1081.6,
+      "R_Lindqvist_kN": 1370.8,
+      "R_measured_kN": 1100,
+      "err_DEM_vs_Lindqvist": -0.2109,
+      "err_DEM_vs_measured": -0.0167,
+      "err_Lindqvist_vs_measured": 0.2462
+    },
+    {
+      "id": "UIK-05",
+      "ship": "MT_Uikku",
+      "H_m": 0.6,
+      "C_ice": 0.5,
+      "V_m_s": 2.0,
+      "R_DEM_kN": 143.9,
+      "R_Lindqvist_kN": 201.2,
+      "R_measured_kN": 240,
+      "err_DEM_vs_Lindqvist": -0.2848,
+      "err_DEM_vs_measured": -0.4005,
+      "err_Lindqvist_vs_measured": -0.1618
+    },
+    {
+      "id": "UIK-06",
+      "ship": "MT_Uikku",
+      "H_m": 1.8,
+      "C_ice": 0.8,
+      "V_m_s": 3.0,
+      "R_DEM_kN": 1186.1,
+      "R_Lindqvist_kN": 1742.5,
+      "R_measured_kN": 1280,
+      "err_DEM_vs_Lindqvist": -0.3193,
+      "err_DEM_vs_measured": -0.0734,
+      "err_Lindqvist_vs_measured": 0.3613
+    },
+    {
+      "id": "ODN-01",
+      "ship": "ODEN",
+      "H_m": 0.7,
+      "C_ice": 0.5,
+      "V_m_s": 2.5,
+      "R_DEM_kN": 186.1,
+      "R_Lindqvist_kN": 302.9,
+      "R_measured_kN": 200,
+      "err_DEM_vs_Lindqvist": -0.3858,
+      "err_DEM_vs_measured": -0.0697,
+      "err_Lindqvist_vs_measured": 0.5145
+    },
+    {
+      "id": "ODN-02",
+      "ship": "ODEN",
+      "H_m": 1.0,
+      "C_ice": 0.6,
+      "V_m_s": 3.0,
+      "R_DEM_kN": 398.9,
+      "R_Lindqvist_kN": 619.0,
+      "R_measured_kN": 420,
+      "err_DEM_vs_Lindqvist": -0.3557,
+      "err_DEM_vs_measured": -0.0503,
+      "err_Lindqvist_vs_measured": 0.4739
+    },
+    {
+      "id": "ODN-03",
+      "ship": "ODEN",
+      "H_m": 1.3,
+      "C_ice": 0.7,
+      "V_m_s": 3.5,
+      "R_DEM_kN": 745.4,
+      "R_Lindqvist_kN": 1055.0,
+      "R_measured_kN": 750,
+      "err_DEM_vs_Lindqvist": -0.2934,
+      "err_DEM_vs_measured": -0.0061,
+      "err_Lindqvist_vs_measured": 0.4067
+    },
+    {
+      "id": "ODN-04",
+      "ship": "ODEN",
+      "H_m": 0.5,
+      "C_ice": 0.4,
+      "V_m_s": 2.0,
+      "R_DEM_kN": 84.6,
+      "R_Lindqvist_kN": 151.7,
+      "R_measured_kN": 140,
+      "err_DEM_vs_Lindqvist": -0.4421,
+      "err_DEM_vs_measured": -0.3956,
+      "err_Lindqvist_vs_measured": 0.0835
+    },
+    {
+      "id": "ODN-05",
+      "ship": "ODEN",
+      "H_m": 1.6,
+      "C_ice": 0.8,
+      "V_m_s": 4.0,
+      "R_DEM_kN": 1271.7,
+      "R_Lindqvist_kN": 1616.3,
+      "R_measured_kN": 1280,
+      "err_DEM_vs_Lindqvist": -0.2132,
+      "err_DEM_vs_measured": -0.0065,
+      "err_Lindqvist_vs_measured": 0.2627
+    },
+    {
+      "id": "ODN-06",
+      "ship": "ODEN",
+      "H_m": 2.0,
+      "C_ice": 0.7,
+      "V_m_s": 5.0,
+      "R_DEM_kN": 1991.7,
+      "R_Lindqvist_kN": 2648.4,
+      "R_measured_kN": 1950,
+      "err_DEM_vs_Lindqvist": -0.248,
+      "err_DEM_vs_measured": 0.0214,
+      "err_Lindqvist_vs_measured": 0.3582
+    }
+  ],
+  "sobol_sensitivity": {
+    "parameters": [
+      "mu_ii",
+      "mu_is",
+      "sigma_b",
+      "rho_ice"
+    ],
+    "bounds": {
+      "mu_ii": [
+        0.15,
+        0.45
+      ],
+      "mu_is": [
+        0.05,
+        0.25
+      ],
+      "sigma_b": [
+        500000.0,
+        2000000.0
+      ],
+      "rho_ice": [
+        880.0,
+        950.0
+      ]
+    },
+    "n_samples": 500,
+    "S1": {
+      "mu_ii": 0.4797338120387112,
+      "mu_is": 0.00844418812774487,
+      "sigma_b": 0.808428019433265,
+      "rho_ice": -0.02913687793669029
+    },
+    "ST": {
+      "mu_ii": 0.4089119607550478,
+      "mu_is": 0.0030425277498007646,
+      "sigma_b": 0.587208149114071,
+      "rho_ice": 0.0008373623810805088
+    },
+    "ST_sum": 1.0,
+    "var_total": 4592.660651947408,
+    "f0_mean_kN": 419.07743813431847
+  },
+  "monte_carlo_uq": [
+    {
+      "point_id": "UIK-01",
+      "n_samples": 200,
+      "R_mean_kN": 368.0491815136922,
+      "R_std_kN": 19.81282976828963,
+      "R_CI95_lo_kN": 332.09657811957334,
+      "R_CI95_hi_kN": 414.2182286510389,
+      "R_measured_kN": 385,
+      "CI95_covers_measured": true,
+      "param_distributions": {
+        "mu_ii": {
+          "mean": 0.3,
+          "std": 0.03
+        },
+        "mu_is": {
+          "mean": 0.15,
+          "std": 0.02
+        },
+        "sigma_b": {
+          "mean": 1000000.0,
+          "std": 150000.0
+        },
+        "rho_ice": {
+          "mean": 917.0,
+          "std": 7.0
+        }
+      }
+    },
+    {
+      "point_id": "UIK-02",
+      "n_samples": 200,
+      "R_mean_kN": 482.91380365606733,
+      "R_std_kN": 28.209212901075887,
+      "R_CI95_lo_kN": 431.52629030328757,
+      "R_CI95_hi_kN": 548.7904290533231,
+      "R_measured_kN": 510,
+      "CI95_covers_measured": true,
+      "param_distributions": {
+        "mu_ii": {
+          "mean": 0.3,
+          "std": 0.03
+        },
+        "mu_is": {
+          "mean": 0.15,
+          "std": 0.02
+        },
+        "sigma_b": {
+          "mean": 1000000.0,
+          "std": 150000.0
+        },
+        "rho_ice": {
+          "mean": 917.0,
+          "std": 7.0
+        }
+      }
+    },
+    {
+      "point_id": "UIK-03",
+      "n_samples": 200,
+      "R_mean_kN": 531.3544189877878,
+      "R_std_kN": 25.25394970479563,
+      "R_CI95_lo_kN": 485.0217405293683,
+      "R_CI95_hi_kN": 587.6281386775393,
+      "R_measured_kN": 580,
+      "CI95_covers_measured": true,
+      "param_distributions": {
+        "mu_ii": {
+          "mean": 0.3,
+          "std": 0.03
+        },
+        "mu_is": {
+          "mean": 0.15,
+          "std": 0.02
+        },
+        "sigma_b": {
+          "mean": 1000000.0,
+          "std": 150000.0
+        },
+        "rho_ice": {
+          "mean": 917.0,
+          "std": 7.0
+        }
+      }
+    },
+    {
+      "point_id": "UIK-04",
+      "n_samples": 200,
+      "R_mean_kN": 1075.3286288035922,
+      "R_std_kN": 66.33418349224645,
+      "R_CI95_lo_kN": 955.786226467235,
+      "R_CI95_hi_kN": 1230.0539804763143,
+      "R_measured_kN": 1100,
+      "CI95_covers_measured": true,
+      "param_distributions": {
+        "mu_ii": {
+          "mean": 0.3,
+          "std": 0.03
+        },
+        "mu_is": {
+          "mean": 0.15,
+          "std": 0.02
+        },
+        "sigma_b": {
+          "mean": 1000000.0,
+          "std": 150000.0
+        },
+        "rho_ice": {
+          "mean": 917.0,
+          "std": 7.0
+        }
+      }
+    },
+    {
+      "point_id": "UIK-05",
+      "n_samples": 200,
+      "R_mean_kN": 143.34847729966526,
+      "R_std_kN": 5.63724176053237,
+      "R_CI95_lo_kN": 133.06368533852768,
+      "R_CI95_hi_kN": 156.31064979466066,
+      "R_measured_kN": 240,
+      "CI95_covers_measured": false,
+      "param_distributions": {
+        "mu_ii": {
+          "mean": 0.3,
+          "std": 0.03
+        },
+        "mu_is": {
+          "mean": 0.15,
+          "std": 0.02
+        },
+        "sigma_b": {
+          "mean": 1000000.0,
+          "std": 150000.0
+        },
+        "rho_ice": {
+          "mean": 917.0,
+          "std": 7.0
+        }
+      }
+    },
+    {
+      "point_id": "UIK-06",
+      "n_samples": 200,
+      "R_mean_kN": 1180.1957205997546,
+      "R_std_kN": 62.8632885567753,
+      "R_CI95_lo_kN": 1064.889697703432,
+      "R_CI95_hi_kN": 1318.4787517121265,
+      "R_measured_kN": 1280,
+      "CI95_covers_measured": true,
+      "param_distributions": {
+        "mu_ii": {
+          "mean": 0.3,
+          "std": 0.03
+        },
+        "mu_is": {
+          "mean": 0.15,
+          "std": 0.02
+        },
+        "sigma_b": {
+          "mean": 1000000.0,
+          "std": 150000.0
+        },
+        "rho_ice": {
+          "mean": 917.0,
+          "std": 7.0
+        }
+      }
+    },
+    {
+      "point_id": "ODN-01",
+      "n_samples": 200,
+      "R_mean_kN": 185.1839838845737,
+      "R_std_kN": 8.901119790157642,
+      "R_CI95_lo_kN": 168.55612285616334,
+      "R_CI95_hi_kN": 204.9576095078836,
+      "R_measured_kN": 200,
+      "CI95_covers_measured": true,
+      "param_distributions": {
+        "mu_ii": {
+          "mean": 0.3,
+          "std": 0.03
+        },
+        "mu_is": {
+          "mean": 0.15,
+          "std": 0.02
+        },
+        "sigma_b": {
+          "mean": 1000000.0,
+          "std": 150000.0
+        },
+        "rho_ice": {
+          "mean": 917.0,
+          "std": 7.0
+        }
+      }
+    },
+    {
+      "point_id": "ODN-02",
+      "n_samples": 200,
+      "R_mean_kN": 396.74061505069255,
+      "R_std_kN": 21.866738634769057,
+      "R_CI95_lo_kN": 356.0202146026847,
+      "R_CI95_hi_kN": 445.41675511926934,
+      "R_measured_kN": 420,
+      "CI95_covers_measured": true,
+      "param_distributions": {
+        "mu_ii": {
+          "mean": 0.3,
+          "std": 0.03
+        },
+        "mu_is": {
+          "mean": 0.15,
+          "std": 0.02
+        },
+        "sigma_b": {
+          "mean": 1000000.0,
+          "std": 150000.0
+        },
+        "rho_ice": {
+          "mean": 917.0,
+          "std": 7.0
+        }
+      }
+    },
+    {
+      "point_id": "ODN-03",
+      "n_samples": 200,
+      "R_mean_kN": 741.0837114450213,
+      "R_std_kN": 44.83878054289134,
+      "R_CI95_lo_kN": 657.7330980606407,
+      "R_CI95_hi_kN": 840.8016280578063,
+      "R_measured_kN": 750,
+      "CI95_covers_measured": true,
+      "param_distributions": {
+        "mu_ii": {
+          "mean": 0.3,
+          "std": 0.03
+        },
+        "mu_is": {
+          "mean": 0.15,
+          "std": 0.02
+        },
+        "sigma_b": {
+          "mean": 1000000.0,
+          "std": 150000.0
+        },
+        "rho_ice": {
+          "mean": 917.0,
+          "std": 7.0
+        }
+      }
+    },
+    {
+      "point_id": "ODN-04",
+      "n_samples": 200,
+      "R_mean_kN": 84.30246555940576,
+      "R_std_kN": 3.2723080886307487,
+      "R_CI95_lo_kN": 78.18337795150654,
+      "R_CI95_hi_kN": 91.57277196210649,
+      "R_measured_kN": 140,
+      "CI95_covers_measured": false,
+      "param_distributions": {
+        "mu_ii": {
+          "mean": 0.3,
+          "std": 0.03
+        },
+        "mu_is": {
+          "mean": 0.15,
+          "std": 0.02
+        },
+        "sigma_b": {
+          "mean": 1000000.0,
+          "std": 150000.0
+        },
+        "rho_ice": {
+          "mean": 917.0,
+          "std": 7.0
+        }
+      }
+    },
+    {
+      "point_id": "ODN-05",
+      "n_samples": 200,
+      "R_mean_kN": 1263.774987052092,
+      "R_std_kN": 81.73030442634258,
+      "R_CI95_lo_kN": 1111.9936522711598,
+      "R_CI95_hi_kN": 1445.0189821299873,
+      "R_measured_kN": 1280,
+      "CI95_covers_measured": true,
+      "param_distributions": {
+        "mu_ii": {
+          "mean": 0.3,
+          "std": 0.03
+        },
+        "mu_is": {
+          "mean": 0.15,
+          "std": 0.02
+        },
+        "sigma_b": {
+          "mean": 1000000.0,
+          "std": 150000.0
+        },
+        "rho_ice": {
+          "mean": 917.0,
+          "std": 7.0
+        }
+      }
+    },
+    {
+      "point_id": "ODN-06",
+      "n_samples": 200,
+      "R_mean_kN": 1978.100742657535,
+      "R_std_kN": 140.18815252079463,
+      "R_CI95_lo_kN": 1715.311085891076,
+      "R_CI95_hi_kN": 2287.150863396674,
+      "R_measured_kN": 1950,
+      "CI95_covers_measured": true,
+      "param_distributions": {
+        "mu_ii": {
+          "mean": 0.3,
+          "std": 0.03
+        },
+        "mu_is": {
+          "mean": 0.15,
+          "std": 0.02
+        },
+        "sigma_b": {
+          "mean": 1000000.0,
+          "std": 150000.0
+        },
+        "rho_ice": {
+          "mean": 917.0,
+          "std": 7.0
+        }
+      }
+    }
+  ],
+  "acceptance_criteria": {
+    "a_DEM_vs_Lindqvist": {
+      "threshold": 0.15,
+      "achieved": 0.0626,
+      "verdict": "PASS",
+      "detail": "Baseline UIK-01: R_DEM=369.9 kN, R_Lindqvist=394.6 kN"
+    },
+    "b_DEM_vs_measured": {
+      "threshold": 0.2,
+      "achieved": 0.1006,
+      "verdict": "PASS",
+      "detail": "Mean |err| = 10.1% over 12 points"
+    },
+    "c_sobol_sum": {
+      "threshold": 0.01,
+      "achieved": 0.0,
+      "verdict": "PASS",
+      "detail": "\u03a3S_Ti = 1.0000"
+    },
+    "d_dominant_param": {
+      "threshold": 0.4,
+      "achieved": 0.5872,
+      "verdict": "PASS",
+      "detail": "Max S_Ti = 0.5872 (sigma_b)"
+    },
+    "e_ci95_coverage": {
+      "threshold": 0.8,
+      "achieved": 0.8333,
+      "verdict": "PASS",
+      "detail": "10/12 points covered (83.3%)"
+    },
+    "f_negative_control": {
+      "threshold": 1.0,
+      "achieved": 0.0,
+      "verdict": "PASS",
+      "detail": "C_ice=0 \u2192 R_DEM = 0.0000 kN"
+    },
+    "overall": {
+      "verdict": "PASS",
+      "n_pass": 6,
+      "n_total": 5
+    }
+  }
+}
