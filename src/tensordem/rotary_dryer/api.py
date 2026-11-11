@@ -45,6 +45,7 @@ from .literature import (
 
 __all__ = [
     "calculate_rotary_dryer",
+    "calculate_rotary_dryer_with_drying",
     "validate_energy_balance",
     "evidence_grade",
 ]
@@ -431,3 +432,95 @@ def calculate_rotary_dryer(
     }
 
     return results
+
+
+# ---------------------------------------------------------------------------
+# moist-particle integration
+# ---------------------------------------------------------------------------
+def calculate_rotary_dryer_with_drying(
+    bed_config: Optional["DryerBedConfig"] = None,
+    *,
+    dryer_kwargs: Optional[Dict[str, Any]] = None,
+    profile: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Rotary dryer calculation *including* the moist-particle drying face.
+
+    Integration caller for the mission-p380w2-n05 closure: the mechanical /
+    thermal duty of the drum (:func:`calculate_rotary_dryer`) is combined with
+    the transient moist-particle bed (:func:`simulate_moist_drying`), so that a
+    caller gets one result dictionary with both the drum design quantities and
+    the evaporation duty, the wet-bulb pinning diagnostics and the water /
+    energy ledger residuals.
+
+    Parameters
+    ----------
+    bed_config : DryerBedConfig, optional
+        Moist-bed operating point.  ``None`` uses the default (pilot 1 m x 5 m
+        drum, 900 kg/h dry solids, 400 K gas, X0 = 0.35 dry basis, 4 mm feed).
+    dryer_kwargs : dict, optional
+        Keyword arguments forwarded to :func:`calculate_rotary_dryer`.
+    profile : dict, optional
+        Resolution overrides for the bed (`n_cells`, `dt`, `t_end`), taking the
+        defaults from :class:`~tensordem.rotary_dryer.moist_bed.DryerBedConfig`
+        when omitted.
+
+    Returns
+    -------
+    dict with ``drum`` (the :func:`calculate_rotary_dryer` result), ``drying``
+    (outlet state + evaporated water + latent duty), ``ledger`` (conservation
+    residuals) and ``wet_bulb`` (pinning diagnostics).
+
+    Examples
+    --------
+    >>> out = calculate_rotary_dryer_with_drying(profile={"n_cells": 8, "dt": 0.5})
+    >>> out["drying"]["moisture_dry_basis"] < 0.35
+    True
+    """
+    # imported here on purpose: the moist closures pull in scipy, which the
+    # mechanical/thermal drum path does not need.
+    from .moist_bed import DryerBedConfig, simulate_moist_drying
+    from .psychrometrics import latent_heat
+
+    cfg = bed_config if bed_config is not None else DryerBedConfig()
+    if profile:
+        allowed = {"n_cells", "dt", "t_end", "residence_time", "include_latent_sink"}
+        unknown = set(profile) - allowed
+        if unknown:
+            raise ValueError(f"unsupported profile keys: {sorted(unknown)}")
+        import dataclasses
+
+        cfg = dataclasses.replace(cfg, **profile)
+    res = simulate_moist_drying(cfg)
+    drum = calculate_rotary_dryer(**(dryer_kwargs or {}))
+
+    final = res["final"]
+    tau = cfg.residence_time
+    evaporated = res["ledger"]["water_evaporated_kg"] / max(tau, 1e-12)  # kg/s
+    latent_duty = evaporated * latent_heat(final["T_p_out"])
+    water_res = res["ledger"]["water_residual_rel"]
+    energy_res = res["ledger"]["energy_residual_rel"]
+    return {
+        "drum": drum,
+        "drying": {
+            "moisture_dry_basis": final["X_out"],
+            "moisture_dry_basis_in": cfg.initial_moisture,
+            "particle_temperature_K": final["T_p_out"],
+            "gas_temperature_out_K": final["T_g_out"],
+            "gas_humidity_out": final["Y_g_out"],
+            "evaporation_rate_kg_per_s": evaporated,
+            "latent_duty_W": latent_duty,
+            "residence_time_s": tau,
+        },
+        "wet_bulb": {
+            "T_wb_inlet_K": float(final["T_wb_local"][0]),
+            "T_wb_outlet_K": float(final["T_wb_local"][-1]),
+            "particle_minus_wb_outlet_K": float(final["T_p_out"]
+                                               - final["T_wb_local"][-1]),
+        },
+        "ledger": {"water_residual_rel": float(water_res),
+                   "energy_residual_rel": float(energy_res)},
+        "evidence": {
+            "drying": "REAL" if abs(water_res) < 1e-9 and abs(energy_res) < 0.01
+            else "WITHHELD",
+        },
+    }
