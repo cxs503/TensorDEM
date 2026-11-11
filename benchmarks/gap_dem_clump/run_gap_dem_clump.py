@@ -253,25 +253,6 @@ def leg_c3_rolling_sweep(protocol: dict, mu_rolls=(0.0, 0.6)) -> dict:
 # ---------------------------------------------------------------------------
 # main
 # ---------------------------------------------------------------------------
-def main() -> int:
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--out", default=str(ROOT / "artifacts" / "GAP-DEM-CLUMP"))
-    ap.add_argument("--fast", action="store_true", help="short protocol (smoke only)")
-    ap.add_argument("--skip-repose", action="store_true")
-    args = ap.parse_args()
-
-    protocol = dict(PROTOCOL)
-    if args.fast:
-        protocol.update(settle_steps=200, lift_steps=400, tail_steps=300)
-    out = Path(args.out)
-    out.mkdir(parents=True, exist_ok=True)
-
-    t0 = time.time()
-    c1 = leg_c1_analytic_anchors()
-    c2 = leg_c2_inertia_scan()
-    c3 = {"skipped": True, "pass": False} if args.skip_repose else leg_c3_repose_scan(protocol)
-    sweep = {} if args.skip_repose else leg_c3_rolling_sweep(protocol)
-
 def derive_failure_reason(c1: dict, c2: dict, c3: dict) -> dict:
     """Round-1 honest-FAIL bookkeeping (owner two-round protocol).
 
@@ -336,6 +317,27 @@ def derive_failure_reason(c1: dict, c2: dict, c3: dict) -> dict:
                               "(rotating drum / inclined-plane critical angle)",
         }
     return out
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--out", default=str(ROOT / "artifacts" / "GAP-DEM-CLUMP"))
+    ap.add_argument("--fast", action="store_true", help="short protocol (smoke only)")
+    ap.add_argument("--skip-repose", action="store_true")
+    args = ap.parse_args()
+
+    protocol = dict(PROTOCOL)
+    if args.fast:
+        protocol.update(settle_steps=200, lift_steps=400, tail_steps=300)
+    out = Path(args.out)
+    out.mkdir(parents=True, exist_ok=True)
+
+    t0 = time.time()
+    c1 = leg_c1_analytic_anchors()
+    c2 = leg_c2_inertia_scan()
+    c3 = {"skipped": True, "pass": False} if args.skip_repose else leg_c3_repose_scan(protocol)
+    sweep = {} if args.skip_repose else leg_c3_rolling_sweep(protocol)
+
 
 
     failures = derive_failure_reason(c1, c2, c3)
