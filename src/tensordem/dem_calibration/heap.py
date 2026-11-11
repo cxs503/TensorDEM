@@ -524,6 +524,7 @@ def hash_positions(pos: np.ndarray) -> str:
 # ---------------------------------------------------------------------------
 
 def run_heap(case: HeapCase, *, max_steps: int | None = None,
+             ke_stop: float | None = None, settle_check_every: int = 25,
              return_positions: bool = False) -> dict:
     """Run one lifting-cylinder repose test and measure the macro responses.
 
@@ -534,6 +535,16 @@ def run_heap(case: HeapCase, *, max_steps: int | None = None,
     ``r2``               quality of the flank fit [-]
     ``ke_ratio``         residual kinetic energy / released potential energy
     ``digest``           SHA-256 of the final positions (reproducibility witness)
+
+    Adaptive termination
+    --------------------
+    The prescribed ``hold + lift + settle`` window of :class:`HeapCase` is a
+    *time budget*, not a proof that the heap came to rest.  Passing
+    ``ke_stop`` (e.g. ``0.02``) stops the run as soon as the residual kinetic
+    energy first falls below ``ke_stop`` times the potential energy released so
+    far, i.e. it terminates on the *filled* measurement criterion "heap at
+    rest" instead of on an arbitrary clock.  The default ``None`` reproduces
+    the historical fixed-window behaviour bit for bit.
     """
     mat = case.material
     pos = build_cone(case) if case.shape == "cone" else build_pile(case)
@@ -563,6 +574,13 @@ def run_heap(case: HeapCase, *, max_steps: int | None = None,
     speed_max = 0.0
     wall_contacts = 0
     mode = case.contact_mode
+    # The rest criterion may only be applied once the prescribed driving phase
+    # is over: a cone has no lift (only the pre-settle hold), a column has the
+    # lift, and pluviation is grown elsewhere (run_pluviation).
+    settle_start = (case.hold_time if cone_mode
+                    else case.hold_time + case.lift_time)
+    settled = False
+    steps_used = int(n_steps)
 
     def _bottom_height(t: float) -> float:
         if cone_mode:
@@ -630,6 +648,17 @@ def run_heap(case: HeapCase, *, max_steps: int | None = None,
         if n:
             speed_max = max(speed_max, float(np.sqrt((vel * vel).sum(axis=1)).max()))
 
+        if ke_stop is not None and (step + 1) % settle_check_every == 0:
+            t_now = (step + 1) * dt
+            if t_now >= settle_start:
+                ke_now = float(0.5 * mass * np.sum(vel * vel)
+                               + 0.5 * inertia * np.sum(omega * omega))
+                pe_now = float(mass * case.gravity * np.sum(pos[:, 2]))
+                if ke_now <= float(ke_stop) * max(pe0 - pe_now, 1e-30):
+                    settled = True
+                    steps_used = step + 1
+                    break
+
     ke = float(0.5 * mass * np.sum(vel * vel) + 0.5 * inertia * np.sum(omega * omega))
     pe = float(mass * case.gravity * np.sum(pos[:, 2]))
     released = max(pe0 - pe, 1e-30)
@@ -648,7 +677,10 @@ def run_heap(case: HeapCase, *, max_steps: int | None = None,
         "n_particles": n,
         "dt": dt,
         "n_steps": int(n_steps),
-        "time_end": n_steps * dt,
+        "steps_used": int(steps_used),
+        "time_end": steps_used * dt,
+        "settled": bool(settled),
+        "ke_stop": None if ke_stop is None else float(ke_stop),
         "theta_r_deg": estimate["theta_r_deg"],
         "phi_solid": phi_solid,
         "r2": estimate["r2"],
