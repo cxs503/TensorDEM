@@ -1,18 +1,32 @@
-"""Angle-of-repose anchor: column collapse, free-surface measurement, adjudication.
+"""Angle-of-repose anchor: pouring deposition, free-surface measurement, adjudication.
 
-Protocol
---------
-1. Start from a hexagonal-close-packed column of monodisperse spheres standing on
-   a frictional floor (no lateral wall, no side confinement — this is the
-   "column collapse" / sand-pile test, the DEM stand-in for a pouring
-   repose experiment).
-2. Release it; the column collapses and deposits into an axisymmetric heap.
-3. Wait until the heap is at rest (kinetic-energy criterion, not a hard-coded
-   time), then measure the free-surface slope by fitting the *upper envelope* of
-   the particle cloud in radial bins.
+Protocol (v2, ``source_mode="fixed"``)
+-------------------------------------
+1. Monodisperse spheres are released in small bursts from a *nozzle of fixed
+   height* above a frictional floor (no lateral wall, no side confinement).
+2. A burst is only released when the nozzle region (a disk of radius
+   ``source_radius`` and a slab of height ``nozzle_clearance`` radii below
+   ``drop_height``) is clear of the burst still draining out of it; when that
+   region is occupied by *deposit at rest* the pour closes and is never resumed —
+   a laboratory pour cannot grow above its own nozzle.  The pour is therefore
+   self-paced by the fall time of one charge (no clock is imposed on it), which
+   keeps the burst rate slow enough that in-flight spheres never overlap.
+3. Wait until the heap is at rest (RMS-speed criterion, not a hard-coded time),
+   then measure the free-surface slope by fitting the *upper envelope* of the
+   particle cloud in radial bins.
 
-Why a column collapse and not a lifting cylinder
-------------------------------------------------
+Why the source height is fixed (v1 defect, measured)
+---------------------------------------------------
+v1 raised the nozzle to ``max(drop_height, apex + 5 R)`` at every burst.  That is
+the protocol rejected in the node report §5.3 ("块状点源动态抬高" -> the source
+climbs with the heap): the pour never stops, the "heap" grows into a spire whose
+height is set by the pour schedule instead of by friction, and the at-rest
+criterion is never met — which is exactly why anchor A/B came back WITHHELD.
+``source_mode="rising"`` still reproduces that pathology on purpose (it is used
+by ``tests/test_friction_surface_repose_v2.py`` to pin the defect).
+
+Why a pouring test and not a lifting cylinder
+---------------------------------------------
 The repository already has a lifting-cylinder calibration surface
 (:mod:`tensordem.repose_calibration`, mu -> theta_r forward map).  That module
 is a *calibration* tool for this solver.  The present module answers a different
@@ -39,7 +53,8 @@ import numpy as np
 from .kernel import ContactModel, PairState, PlaneWall, apply_walls, build_pairs, \
     integrate, kinetic_energy, pair_forces
 
-__all__ = ["ReposeCase", "build_column", "simulate_repose", "heap_surface_angle"]
+__all__ = ["ReposeCase", "build_column", "simulate_repose", "heap_surface_angle",
+           "nozzle_clear_time"]
 
 
 @dataclass(frozen=True)
@@ -66,6 +81,12 @@ class ReposeCase:
     spawn_every: int = 40
     source_radius: float = 4.0e-3
     release_speed: float = 0.05
+    #: "fixed" = nozzle stays at ``drop_height`` and the pour closes once the
+    #: heap surface comes within ``nozzle_clearance`` radii of it (v2 protocol);
+    #: "rising" = legacy v1 behaviour (nozzle follows the apex, heap -> spire).
+    source_mode: str = "fixed"
+    #: nozzle clearance in radii at which the pour is closed (``fixed`` mode)
+    nozzle_clearance: float = 2.0
     velocity_rest_threshold: float = 0.01   # m/s, rms speed at rest
     source_extent: float = 0.10
     drop_height: float = 0.020
@@ -74,7 +95,7 @@ class ReposeCase:
     jitter: float = 0.02                  # positional jitter, in radii
     dt: float | None = None
     seed: int = 15204
-    max_time: float = 2.0                 # safety cap on simulated seconds
+    max_time: float = 30.0                # safety cap on simulated seconds
     ke_fraction_stop: float = 2.0e-4      # KE / (N m g R) at rest
 
     @property
@@ -86,6 +107,21 @@ class ReposeCase:
             ct_ratio=self.ct_ratio, cap_total=self.cap_total,
             gravity=self.gravity,
         )
+
+
+def nozzle_clear_time(case: ReposeCase) -> float:
+    """Free-fall time of one charge through the nozzle region (s).
+
+    A sphere released at ``drop_height`` (up to 2 R above it) must fall
+    ``2 R + nozzle_clearance R`` to leave the slab in which a next burst would
+    overlap it.  Solved with the release speed as the initial velocity; the
+    bursts of the v2 protocol are paced by this time, which is why in-flight
+    spheres never overlap (the v1 fountain mechanism).
+    """
+    model = case.model
+    s_fall = (2.0 + max(case.nozzle_clearance, 2.2)) * model.radius
+    v0 = max(case.release_speed, 0.0)
+    return (-v0 + math.sqrt(v0 * v0 + 2.0 * model.gravity * s_fall)) / model.gravity
 
 
 def build_column(case: ReposeCase) -> np.ndarray:
@@ -202,41 +238,91 @@ def simulate_repose(case: ReposeCase, *, verbose: bool = False) -> dict:
                       mu_rolling=(case.mu_rolling_wall
                                   if case.mu_rolling_wall is not None
                                   else case.mu_rolling))
+    if case.source_mode not in ("fixed", "rising"):
+        raise ValueError(f"source_mode must be 'fixed' or 'rising', got {case.source_mode!r}")
     ps = PairState()
     active = 0
     cx = cy = 0.5 * case.source_extent
     v_rest = case.velocity_rest_threshold
     spawn_events = int(math.ceil(n_max / case.spawn_batch))
-    steps_spawn = spawn_events * case.spawn_every
+    # v2: the bursts are paced by the charge fall time, so the pour needs
+    # ``spawn_events`` clear-times, not ``spawn_events`` spawn intervals.
+    clear_steps_guess = max(int(round(nozzle_clear_time(case) / dt)), case.spawn_every)
+    steps_spawn = spawn_events * clear_steps_guess
     steps_total = steps_spawn + int(case.settle_time / dt)
+    steps_total = min(steps_total, max(int(case.max_time / dt), case.spawn_every + 1))
     ke_quiet = 0
     t_rest = None
+    # ---- v2 pour bookkeeping -------------------------------------------------
+    # The nozzle stays at ``drop_height``: ``nozzle_z_max`` is recorded so a test
+    # can prove it never climbs with the heap (the v1 defect).
+    nozzle_z_max = 0.0
+    last_spawn_step = -1
+    pour_closed = False
+    bursts_released = 0
+    bursts_skipped = 0
+    spawn_step = np.full(n_max, -1, dtype=np.int64)
+    clear_steps = max(int(round(nozzle_clear_time(case) / dt)), case.spawn_every)
+    clear_r = max(case.nozzle_clearance, 2.2) * model.radius
+    zone_hi = case.drop_height + 2.0 * model.radius + clear_r
     for step in range(steps_total):
-        if step % case.spawn_every == 0 and active < n_max:
+        if step % case.spawn_every == 0 and active < n_max and not pour_closed:
             # overlap-safe release: a spawned sphere that would intersect an
             # already-present one is refused (an overlapped spawn injects a huge
             # force and throws particles metres away - measured in the first try)
-            k = 0
             z_now = case.drop_height
-            if active > 0:
-                z_now = max(case.drop_height, float(pos[:active, 2].max()) + 5.0 * model.radius)
-            for _ in range(case.spawn_batch):
-                for _attempt in range(200):
-                    ang = rng.random() * 2.0 * math.pi
-                    rad = case.source_radius * math.sqrt(rng.random())
-                    cand = np.array([cx + rad * math.cos(ang),
-                                     cy + rad * math.sin(ang),
-                                     z_now + rng.random() * 2.0 * model.radius])
-                    if active > 0:
-                        near = np.linalg.norm(pos[:active] - cand, axis=1)
-                        if near.min() < 2.2 * model.radius:
-                            continue
-                    pos[active] = cand
-                    vel[active] = (0.0, 0.0, -case.release_speed)
-                    omega[active] = 0.0
-                    active += 1
-                    k += 1
-                    break
+            if case.source_mode == "rising" and active > 0:
+                # legacy v1: the nozzle is dragged up with the heap apex
+                z_now = max(case.drop_height,
+                            float(pos[:active, 2].max()) + 5.0 * model.radius)
+            nozzle_z_max = max(nozzle_z_max, z_now)
+            release = True
+            if case.source_mode == "fixed" and active > 0:
+                in_zone = np.where((pos[:active, 2] > z_now - clear_r)
+                                   & (pos[:active, 2] < zone_hi))[0]
+                if in_zone.size:
+                    rho = np.hypot(pos[in_zone, 0] - cx, pos[in_zone, 1] - cy)
+                    in_zone = in_zone[rho < case.source_radius + clear_r]
+                if in_zone.size:
+                    draining = (step - spawn_step[in_zone]) < clear_steps
+                    if draining.any():
+                        # the previous charge is still in the nozzle: wait for it
+                        release = False
+                        bursts_skipped += 1
+                    else:
+                        # deposit at rest filling the nozzle: the pour is over
+                        pour_closed = True
+                        release = False
+            if release:
+                accepted = 0
+                for _ in range(case.spawn_batch):
+                    # a batch may overflow the array when earlier spawns of the
+                    # same burst are refused (v1 IndexError)
+                    if active >= n_max:
+                        break
+                    for _attempt in range(200):
+                        ang = rng.random() * 2.0 * math.pi
+                        rad = case.source_radius * math.sqrt(rng.random())
+                        cand = np.array([cx + rad * math.cos(ang),
+                                         cy + rad * math.sin(ang),
+                                         z_now + rng.random() * 2.0 * model.radius])
+                        if active > 0:
+                            near = np.linalg.norm(pos[:active] - cand, axis=1)
+                            if near.min() < 2.2 * model.radius:
+                                continue
+                        pos[active] = cand
+                        vel[active] = (0.0, 0.0, -case.release_speed)
+                        omega[active] = 0.0
+                        spawn_step[active] = step
+                        active += 1
+                        last_spawn_step = step
+                        accepted += 1
+                        break
+                if accepted:
+                    bursts_released += 1
+                elif case.source_mode == "fixed" and active > 0:
+                    # nothing could be placed: the nozzle is buried in the deposit
+                    pour_closed = True
         p_act = pos[:active]
         v_act = vel[:active]
         o_act = omega[:active]
@@ -249,7 +335,7 @@ def simulate_repose(case: ReposeCase, *, verbose: bool = False) -> dict:
         pos[:active] = p_act
         vel[:active] = v_act
         omega[:active] = o_act
-        if step > steps_spawn and step % 100 == 0:
+        if step > last_spawn_step + case.spawn_every and step % 100 == 0:
             v_rms = float(np.sqrt(np.mean(np.sum(v_act ** 2, axis=1)))) if active else 0.0
             if v_rms < v_rest:
                 ke_quiet += 1
@@ -274,6 +360,16 @@ def simulate_repose(case: ReposeCase, *, verbose: bool = False) -> dict:
         "t_end": steps_total * dt,
         "t_at_rest": t_rest,
         "reached_rest": t_rest is not None,
-        "protocol": "deposition from a source disk (pouring)",
+        "protocol": ("deposition from a fixed-height nozzle (pouring, v2)"
+                     if case.source_mode == "fixed"
+                     else "deposition from a rising source (pouring, v1 legacy)"),
+        "source_mode": case.source_mode,
+        "pour_closed": bool(pour_closed),
+        "nozzle_z_max": float(nozzle_z_max),
+        "pour_end_step": int(last_spawn_step),
+        "bursts_released": int(bursts_released),
+        "bursts_skipped": int(bursts_skipped),
+        "clear_steps": int(clear_steps),
+        "apex_height_m": float(pos[:active, 2].max()) if active else 0.0,
         "final_positions": final,
     }
