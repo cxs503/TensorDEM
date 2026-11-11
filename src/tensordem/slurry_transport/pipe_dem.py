@@ -126,12 +126,18 @@ class PipeSectionDEMCFD:
     n_z_bins : bins of the reported concentration profile.
     eps_floor : lower clamp of the voidage entering the RZ hindrance.
     seed : RNG seed.
+    erosion : optional :class:`tensordem.erosion_dem.recorder.ImpactErosionRecorder`.
+        When supplied, every rising-edge wall contact is booked as an impact
+        (approach speed and angle from the solver state) and the recorder
+        accumulates the wall loss.  ``None`` (default) leaves the solver
+        bit-for-bit unchanged -- the coupling is an observer, never a force.
     """
 
     def __init__(self, D=0.10, W=0.02, d=0.004, Ss=2.65, cv=0.10,
                  rho_f=RHO_W, mu=MU_W, n_particles=None, k_n=300.0, zeta=0.7,
                  mu_c=0.4, c_t=0.30, n_z_fluid=None, n_z_bins=40,
-                 eps_floor=0.40, mu_t_floor=1e-3, eps_D=1e-3, seed=0):
+                 eps_floor=0.40, mu_t_floor=1e-3, eps_D=1e-3, seed=0,
+                 erosion=None):
         self.D = float(D)
         self.H = 0.5 * self.D
         self.Lx = 5.0 * self.D
@@ -156,6 +162,9 @@ class PipeSectionDEMCFD:
         self.eps_D = float(eps_D)
         self.seed = int(seed)
         self.rng = np.random.default_rng(self.seed)
+        # optional erosion observer (see tensordem.erosion_dem.recorder)
+        self.erosion_recorder = erosion
+        self._wall_contact = None
 
         self.vol_domain = self.Lx * self.W * self.H
         self.Vp = sphere_volume(self.d)
@@ -232,6 +241,11 @@ class PipeSectionDEMCFD:
         if start_at_fluid_velocity:
             self.vel[:, 0] = float(self.u_f.mean())
         self.fluct = np.zeros((nn, 3))
+        # contact-edge state of the erosion observer, sized to the real lattice
+        self._wall_contact = (
+            np.zeros((2, nn), dtype=bool)
+            if self.erosion_recorder is not None else None
+        )
         self.t = 0.0
         self._sample = None
 
@@ -443,10 +457,37 @@ class PipeSectionDEMCFD:
         np.add.at(F, j, -f_on_i)
         return F, int(i.size)
 
+    def _scan_wall_impacts(self, pen, wall_index, normal_sign):
+        """Book rising-edge wall contacts on the erosion recorder (observer).
+
+        A particle that *enters* the wall contact (penetration crossing zero)
+        with a positive approach speed is one impact; the impact kinematics are
+        read from the solver state (normal speed ``-sign*vz``, tangential speed
+        ``hypot(vx, vy)``), so the erosion law sees the same (v, alpha) the
+        contact model sees.  Resting/sliding contact is not re-billed: the
+        rising edge is booked once.
+        """
+        if self.erosion_recorder is None:
+            return
+        now = pen > 0.0
+        rising = now & ~self._wall_contact[wall_index]
+        self._wall_contact[wall_index] = now
+        if not np.any(rising):
+            return
+        v_n = -normal_sign * self.vel[rising, 2]
+        v_t = np.hypot(self.vel[rising, 0], self.vel[rising, 1])
+        for vn, vt in zip(v_n, v_t):
+            if vn <= 0.0:
+                continue
+            speed = math.hypot(vn, vt)
+            alpha = math.degrees(math.atan2(vn, vt)) if speed > 0.0 else 90.0
+            self.erosion_recorder.record(speed, alpha, self.d, self.rho_s)
+
     def _wall_forces(self):
         """Contact forces against the two z walls (x and y are periodic)."""
         F = np.zeros_like(self.pos)
         pen = self.r - self.pos[:, 2]                 # bottom wall, normal +z
+        self._scan_wall_impacts(pen, 0, +1.0)
         act = pen > 0.0
         if np.any(act):
             Fn = np.maximum(self.k_n * pen[act] + self.c_n * self.vel[act, 2], 0.0)
@@ -458,6 +499,7 @@ class PipeSectionDEMCFD:
             safe = np.where(vt_mag > 1e-14, vt_mag, 1.0)
             F[act, :2] -= (ft / safe)[:, None] * vt[:, :2]
         pen = self.pos[:, 2] - (self.H - self.r)      # top wall, normal -z
+        self._scan_wall_impacts(pen, 1, -1.0)
         act = pen > 0.0
         if np.any(act):
             Fn = np.maximum(self.k_n * pen[act] - self.c_n * self.vel[act, 2], 0.0)
