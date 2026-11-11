@@ -83,12 +83,28 @@ class ShearCellCase:
     platen_mu: Optional[float] = None  # None -> mu (rough platen)
     sample_every: int = 25
     diagnostics: bool = False        # record per-sample internal counters
+    # m14840: an opt-in steadiness criterion.  ``tau`` in a short shear window
+    # is still growing (measured relative drift over the averaged window up to
+    # +0.8 at gamma = 0.30), so a mean tau is a window average, not a steady
+    # state.  Set ``stationarity_tol`` (e.g. 0.15) to make the validity gate
+    # reject a run whose tau drifted by more than that fraction of its mean.
+    stationarity_tol: Optional[float] = None
     # load-controlled platen actuator: M a = N_target - N_measured (N, kg, s).
     # A velocity-rate actuator cannot follow the bed (the previous 0.05 m/s cap
     # left the platen in free fall behind a collapsing bed -- see m14721 doc).
     servo_plate_mass_frac: float = 1.0   # M_plate = frac * (bed mass)
     servo_damping_time: float = 5.0e-4   # s, actuator velocity relaxation
     servo_v_limit: float = 0.5           # m/s, |v_z| safety cap
+    # m14840: the m14721 actuator damps the platen velocity against the *lab
+    # frame*, so its discrete steady state is
+    # ``N_measured = N_target - M_plate*v_z*(1-exp(-dt/tau))/dt``: it holds the
+    # target load only for a platen at rest and leaks a load offset
+    # proportional to the creep velocity it must follow (measured: +3.1..+4.6 %
+    # of N_target).  ``servo_mode="bedref"`` damps against the velocity of the
+    # bed the platen is riding on instead -- at steady creep the dashpot then
+    # carries no force, so the equilibrium moves to N_measured == N_target.
+    # ``"drag"`` reproduces the m14721 law bit-for-bit (regression reference).
+    servo_mode: str = "bedref"           # "bedref" (zero offset) | "drag" (m14721)
 
     # ------------------------------------------------------------------ props
     @property
@@ -411,6 +427,10 @@ def simulate_shear_cell(case: ShearCellCase, bed: Optional[dict] = None) -> dict
 
         # ---- servo on the platen normal stress ---------------------------
         n_meas = float(fn_p.sum())
+        loaded = fn_p > 0.0
+        # Creep velocity of the bed the platen sits on: the mean normal velocity
+        # of the particles that actually carry the platen (0 when it is free).
+        v_bed = float(vel[loaded, 2].mean()) if loaded.any() else 0.0
         if servo:
             # Load-controlled actuator: the platen is a (fictitious) mass driven
             # by the *force* deficit N_target - N_measured and damped at a short
@@ -420,8 +440,13 @@ def simulate_shear_cell(case: ShearCellCase, bed: Optional[dict] = None) -> dict
             # velocity cap.
             # z is up: a positive force deficit must accelerate the platen
             # *downwards* (the bed greift nach unten) -- sign fixed in m14721.
-            vz_platen = vz_platen - (n_target - n_meas) / plate_mass * dt
-            vz_platen *= math.exp(-dt / case.servo_damping_time)
+            deficit = n_target - n_meas
+            vz_platen = vz_platen - deficit / plate_mass * dt
+            # Dashpot reference: "drag" damps against the lab frame (m14721),
+            # "bedref" against the bed creep velocity (m14840).  The two are the
+            # same expression with ref = 0, so "drag" stays bit-identical.
+            ref = v_bed if case.servo_mode == "bedref" else 0.0
+            vz_platen -= (vz_platen - ref) * (1.0 - math.exp(-dt / case.servo_damping_time))
             vz_platen = float(np.clip(vz_platen, -case.servo_v_limit, case.servo_v_limit))
         else:
             vz_platen = 0.0
@@ -510,6 +535,15 @@ def simulate_shear_cell(case: ShearCellCase, bed: Optional[dict] = None) -> dict
 
     tau_s = _steady(tau_hist)
     sig_s = _steady(sig_hist)
+    # m14840: the *actual* shear rate is v divided by the height of the bed the
+    # platen sits on, which after compaction is ~1.7x smaller than the nominal
+    # ``fill_height`` the case advertises.  Reporting the nominal value
+    # under-states gamma_dot (and hence the inertial number) by that ratio.
+    bed_s = _steady(bed_hist)
+    bed_height = float(bed_s["mean"])
+    shear_rate_actual = (case.shear_velocity / bed_height) if bed_height > 0 else float("nan")
+    inertial = (shear_rate_actual * 2.0 * r / math.sqrt(sig_s["mean"] / case.density)
+                if sig_s["mean"] > 0 and bed_height > 0 else float("nan"))
     floor_s = _steady(floor_hist)
     mu_macro = tau_s["mean"] / sig_s["mean"] if sig_s["mean"] > 0 else float("nan")
     phi_deg = math.degrees(math.atan(mu_macro)) if mu_macro == mu_macro else float("nan")
@@ -531,7 +565,9 @@ def simulate_shear_cell(case: ShearCellCase, bed: Optional[dict] = None) -> dict
     # the target normal stress.  The gate is explicit so that a detached-platen
     # run can never be silently averaged into a "friction angle".
     valid, invalid_reason = _validity_gate(sig_s["mean"], tau_s["mean"],
-                                           case.normal_stress)
+                                           case.normal_stress,
+                                           drift_rel=drift_rel,
+                                           stationarity_tol=case.stationarity_tol)
 
     return {
         "valid": valid,
@@ -547,6 +583,12 @@ def simulate_shear_cell(case: ShearCellCase, bed: Optional[dict] = None) -> dict
         if tau_s["mean"] > 0 else float("nan"),
         "mu_macro": mu_macro,
         "friction_angle_deg": phi_deg,
+        # m14840 rate bookkeeping (measured bed height, not the nominal fill one)
+        "bed_height_mean": bed_height,
+        "bed_height_sem": bed_s["sem"],
+        "shear_rate_nominal": case.shear_rate,
+        "shear_rate_actual": shear_rate_actual,
+        "inertial_number": inertial,
         "r_squared": r2,
         "shear_stress_drift_rel": drift_rel,
         "consolidation_sigma_rel_err": sigma_rel,
@@ -568,19 +610,36 @@ def simulate_shear_cell(case: ShearCellCase, bed: Optional[dict] = None) -> dict
 
 
 def _validity_gate(sigma_mean: float, tau_mean: float,
-                   normal_stress: float) -> tuple[bool, str]:
+                   normal_stress: float,
+                   drift_rel: float = float("nan"),
+                   stationarity_tol: Optional[float] = None) -> tuple[bool, str]:
     """Is a friction coefficient defined for this run?
 
     ``mu = tau/sigma`` is only meaningful when the platen carried a real normal
     stress (at least half the servo target) and the bed resisted with a
     positive traction.  The gate never returns a number for an unloaded run --
     that is the difference between "mu is undefined" and "mu = 0".
+
+    m14840 adds an optional *steadiness* leg: when ``stationarity_tol`` is set,
+    a run whose shear traction drifts by more than that fraction of its mean
+    across the averaged window is rejected as well, so a window average is not
+    silently reported as a friction coefficient.
     """
-    if sigma_mean > 0.5 * normal_stress and tau_mean > 0.0:
-        return True, ""
-    return False, (
-        "platen lost contact or never loaded: measured sigma_n = %.4g Pa vs "
-        "target %.4g Pa (mu is undefined, not 0)" % (sigma_mean, normal_stress))
+    if not (sigma_mean > 0.5 * normal_stress):
+        return False, (
+            "platen lost contact or never loaded: measured sigma_n = %.4g Pa vs "
+            "target %.4g Pa (mu is undefined, not 0)" % (sigma_mean, normal_stress))
+    if not tau_mean > 0.0:
+        return False, (
+            "no positive traction on the platen: tau = %.4g Pa (mu is undefined, "
+            "not 0)" % tau_mean)
+    if stationarity_tol is not None and drift_rel == drift_rel:
+        if abs(drift_rel) > stationarity_tol:
+            return False, (
+                "shear traction not steady over the averaged window: relative "
+                "drift %.3f > tolerance %.3f (window mean is not a steady-state "
+                "mu; shear further before averaging)" % (drift_rel, stationarity_tol))
+    return True, ""
 
 
 def _fit_mohr_coulomb(sigmas: Sequence[float], taus: Sequence[float]) -> dict:
