@@ -166,7 +166,7 @@ def run_dem(config: CouplingConfig) -> dict:
     }
 
 
-def run_fem(force_history, time_history, config):
+def run_fem(force_history, time_history, config, *, ringdown_steps: int = 0):
     beam_cfg = BeamConfig(
         length=config.beam_length,
         width=config.beam_width,
@@ -212,6 +212,15 @@ def run_fem(force_history, time_history, config):
         dt_i = time_history[i] - time_history[i - 1]
         impulse_fem += 0.5 * (force_history[i] + force_history[i - 1]) * dt_i
 
+    # Optional free ring-down with zero load: lets an external anchor measure the
+    # beam's own fundamental period from the time response (see
+    # examples/dem_fem_oneway/independent_gates.py).
+    ring_down = []
+    for _ in range(max(0, int(ringdown_steps))):
+        zero = torch.zeros(beam.n_dof, dtype=beam.dtype, device=beam.device)
+        beam.apply_load(zero, dt)
+        ring_down.append(beam.center_deflection())
+
     peak_deflection = max(abs(d[center_node]) for d in deflection_history)
     peak_deflection_time = time_history[
         max(range(len(deflection_history)),
@@ -227,6 +236,9 @@ def run_fem(force_history, time_history, config):
         "e_final": energy_history[-1],
         "work_done_J": work_done,
         "dt": dt,
+        "ring_down_deflection": ring_down,
+        "e_final_strain": energy_history[-1]["strain"],
+        "e_final_kinetic": energy_history[-1]["kinetic"],
     }
 
 
