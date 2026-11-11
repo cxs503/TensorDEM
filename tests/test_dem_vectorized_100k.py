@@ -1,4 +1,11 @@
-"""Comprehensive test suite for DEM 100k gate.
+"""Test suite for the DEM 100k gate (campaign node p447w2-n03).
+
+NOTE (audit, m14951): despite this file name, every test here exercises
+``tensordem.dem3d.IceDEM3D`` -- nothing in this module imports
+``tensordem.dem_vectorized``.  The vectorised engine's own physics verification lives in
+``tests/test_dem_vectorized_verification.py``; the GPU-100K report credits this file to
+that engine, which is a naming/attribution defect documented in
+``docs/DEM_VECTORIZED_VERIFICATION.md`` §5.
 
 Tests acceptance criteria from campaign node p447w2-n03:
 (a) Bitwise reproducibility
