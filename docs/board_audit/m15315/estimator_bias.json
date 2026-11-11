@@ -1,0 +1,367 @@
+{
+ "particles": 1152,
+ "max_abs_bias_full_pipeline": 16.0,
+ "max_abs_bias_no_affine": 16.5,
+ "rows": [
+  {
+   "theta_true": 45.0,
+   "width": 1.0,
+   "eps": 0.0,
+   "full_pipeline_deg": 30.0,
+   "full_bias_deg": -15.0,
+   "full_eta2": 0.86,
+   "no_affine_removal_deg": 30.0,
+   "no_affine_bias_deg": -15.0
+  },
+  {
+   "theta_true": 45.0,
+   "width": 1.0,
+   "eps": 0.01,
+   "full_pipeline_deg": 30.0,
+   "full_bias_deg": -15.0,
+   "full_eta2": 0.86,
+   "no_affine_removal_deg": 29.5,
+   "no_affine_bias_deg": -15.5
+  },
+  {
+   "theta_true": 45.0,
+   "width": 2.0,
+   "eps": 0.0,
+   "full_pipeline_deg": 30.0,
+   "full_bias_deg": -15.0,
+   "full_eta2": 0.92,
+   "no_affine_removal_deg": 30.0,
+   "no_affine_bias_deg": -15.0
+  },
+  {
+   "theta_true": 45.0,
+   "width": 2.0,
+   "eps": 0.01,
+   "full_pipeline_deg": 30.0,
+   "full_bias_deg": -15.0,
+   "full_eta2": 0.92,
+   "no_affine_removal_deg": 30.0,
+   "no_affine_bias_deg": -15.0
+  },
+  {
+   "theta_true": 45.0,
+   "width": 4.0,
+   "eps": 0.0,
+   "full_pipeline_deg": 30.0,
+   "full_bias_deg": -15.0,
+   "full_eta2": 0.958,
+   "no_affine_removal_deg": 30.0,
+   "no_affine_bias_deg": -15.0
+  },
+  {
+   "theta_true": 45.0,
+   "width": 4.0,
+   "eps": 0.01,
+   "full_pipeline_deg": 30.0,
+   "full_bias_deg": -15.0,
+   "full_eta2": 0.958,
+   "no_affine_removal_deg": 30.0,
+   "no_affine_bias_deg": -15.0
+  },
+  {
+   "theta_true": 50.0,
+   "width": 1.0,
+   "eps": 0.0,
+   "full_pipeline_deg": 34.0,
+   "full_bias_deg": -16.0,
+   "full_eta2": 0.825,
+   "no_affine_removal_deg": 34.5,
+   "no_affine_bias_deg": -15.5
+  },
+  {
+   "theta_true": 50.0,
+   "width": 1.0,
+   "eps": 0.01,
+   "full_pipeline_deg": 34.0,
+   "full_bias_deg": -16.0,
+   "full_eta2": 0.825,
+   "no_affine_removal_deg": 34.5,
+   "no_affine_bias_deg": -15.5
+  },
+  {
+   "theta_true": 50.0,
+   "width": 2.0,
+   "eps": 0.0,
+   "full_pipeline_deg": 34.0,
+   "full_bias_deg": -16.0,
+   "full_eta2": 0.909,
+   "no_affine_removal_deg": 34.5,
+   "no_affine_bias_deg": -15.5
+  },
+  {
+   "theta_true": 50.0,
+   "width": 2.0,
+   "eps": 0.01,
+   "full_pipeline_deg": 34.0,
+   "full_bias_deg": -16.0,
+   "full_eta2": 0.909,
+   "no_affine_removal_deg": 34.5,
+   "no_affine_bias_deg": -15.5
+  },
+  {
+   "theta_true": 50.0,
+   "width": 4.0,
+   "eps": 0.0,
+   "full_pipeline_deg": 34.0,
+   "full_bias_deg": -16.0,
+   "full_eta2": 0.954,
+   "no_affine_removal_deg": 34.5,
+   "no_affine_bias_deg": -15.5
+  },
+  {
+   "theta_true": 50.0,
+   "width": 4.0,
+   "eps": 0.01,
+   "full_pipeline_deg": 34.0,
+   "full_bias_deg": -16.0,
+   "full_eta2": 0.954,
+   "no_affine_removal_deg": 34.5,
+   "no_affine_bias_deg": -15.5
+  },
+  {
+   "theta_true": 55.0,
+   "width": 1.0,
+   "eps": 0.0,
+   "full_pipeline_deg": 39.0,
+   "full_bias_deg": -16.0,
+   "full_eta2": 0.839,
+   "no_affine_removal_deg": 39.5,
+   "no_affine_bias_deg": -15.5
+  },
+  {
+   "theta_true": 55.0,
+   "width": 1.0,
+   "eps": 0.01,
+   "full_pipeline_deg": 39.0,
+   "full_bias_deg": -16.0,
+   "full_eta2": 0.839,
+   "no_affine_removal_deg": 39.5,
+   "no_affine_bias_deg": -15.5
+  },
+  {
+   "theta_true": 55.0,
+   "width": 2.0,
+   "eps": 0.0,
+   "full_pipeline_deg": 39.0,
+   "full_bias_deg": -16.0,
+   "full_eta2": 0.904,
+   "no_affine_removal_deg": 39.0,
+   "no_affine_bias_deg": -16.0
+  },
+  {
+   "theta_true": 55.0,
+   "width": 2.0,
+   "eps": 0.01,
+   "full_pipeline_deg": 39.0,
+   "full_bias_deg": -16.0,
+   "full_eta2": 0.904,
+   "no_affine_removal_deg": 39.0,
+   "no_affine_bias_deg": -16.0
+  },
+  {
+   "theta_true": 55.0,
+   "width": 4.0,
+   "eps": 0.0,
+   "full_pipeline_deg": 40.0,
+   "full_bias_deg": -15.0,
+   "full_eta2": 0.953,
+   "no_affine_removal_deg": 40.0,
+   "no_affine_bias_deg": -15.0
+  },
+  {
+   "theta_true": 55.0,
+   "width": 4.0,
+   "eps": 0.01,
+   "full_pipeline_deg": 40.0,
+   "full_bias_deg": -15.0,
+   "full_eta2": 0.953,
+   "no_affine_removal_deg": 39.0,
+   "no_affine_bias_deg": -16.0
+  },
+  {
+   "theta_true": 60.0,
+   "width": 1.0,
+   "eps": 0.0,
+   "full_pipeline_deg": 45.0,
+   "full_bias_deg": -15.0,
+   "full_eta2": 0.756,
+   "no_affine_removal_deg": 44.5,
+   "no_affine_bias_deg": -15.5
+  },
+  {
+   "theta_true": 60.0,
+   "width": 1.0,
+   "eps": 0.01,
+   "full_pipeline_deg": 45.0,
+   "full_bias_deg": -15.0,
+   "full_eta2": 0.756,
+   "no_affine_removal_deg": 45.0,
+   "no_affine_bias_deg": -15.0
+  },
+  {
+   "theta_true": 60.0,
+   "width": 2.0,
+   "eps": 0.0,
+   "full_pipeline_deg": 44.0,
+   "full_bias_deg": -16.0,
+   "full_eta2": 0.847,
+   "no_affine_removal_deg": 44.0,
+   "no_affine_bias_deg": -16.0
+  },
+  {
+   "theta_true": 60.0,
+   "width": 2.0,
+   "eps": 0.01,
+   "full_pipeline_deg": 44.0,
+   "full_bias_deg": -16.0,
+   "full_eta2": 0.847,
+   "no_affine_removal_deg": 43.5,
+   "no_affine_bias_deg": -16.5
+  },
+  {
+   "theta_true": 60.0,
+   "width": 4.0,
+   "eps": 0.0,
+   "full_pipeline_deg": 45.0,
+   "full_bias_deg": -15.0,
+   "full_eta2": 0.953,
+   "no_affine_removal_deg": 45.0,
+   "no_affine_bias_deg": -15.0
+  },
+  {
+   "theta_true": 60.0,
+   "width": 4.0,
+   "eps": 0.01,
+   "full_pipeline_deg": 45.0,
+   "full_bias_deg": -15.0,
+   "full_eta2": 0.953,
+   "no_affine_removal_deg": 45.0,
+   "no_affine_bias_deg": -15.0
+  },
+  {
+   "theta_true": 65.0,
+   "width": 1.0,
+   "eps": 0.0,
+   "full_pipeline_deg": 51.0,
+   "full_bias_deg": -14.0,
+   "full_eta2": 0.822,
+   "no_affine_removal_deg": 51.0,
+   "no_affine_bias_deg": -14.0
+  },
+  {
+   "theta_true": 65.0,
+   "width": 1.0,
+   "eps": 0.01,
+   "full_pipeline_deg": 51.0,
+   "full_bias_deg": -14.0,
+   "full_eta2": 0.822,
+   "no_affine_removal_deg": 51.0,
+   "no_affine_bias_deg": -14.0
+  },
+  {
+   "theta_true": 65.0,
+   "width": 2.0,
+   "eps": 0.0,
+   "full_pipeline_deg": 51.0,
+   "full_bias_deg": -14.0,
+   "full_eta2": 0.908,
+   "no_affine_removal_deg": 51.0,
+   "no_affine_bias_deg": -14.0
+  },
+  {
+   "theta_true": 65.0,
+   "width": 2.0,
+   "eps": 0.01,
+   "full_pipeline_deg": 51.0,
+   "full_bias_deg": -14.0,
+   "full_eta2": 0.908,
+   "no_affine_removal_deg": 51.0,
+   "no_affine_bias_deg": -14.0
+  },
+  {
+   "theta_true": 65.0,
+   "width": 4.0,
+   "eps": 0.0,
+   "full_pipeline_deg": 51.0,
+   "full_bias_deg": -14.0,
+   "full_eta2": 0.954,
+   "no_affine_removal_deg": 50.5,
+   "no_affine_bias_deg": -14.5
+  },
+  {
+   "theta_true": 65.0,
+   "width": 4.0,
+   "eps": 0.01,
+   "full_pipeline_deg": 51.0,
+   "full_bias_deg": -14.0,
+   "full_eta2": 0.954,
+   "no_affine_removal_deg": 51.0,
+   "no_affine_bias_deg": -14.0
+  },
+  {
+   "theta_true": 70.0,
+   "width": 1.0,
+   "eps": 0.0,
+   "full_pipeline_deg": 58.0,
+   "full_bias_deg": -12.0,
+   "full_eta2": 0.805,
+   "no_affine_removal_deg": 57.5,
+   "no_affine_bias_deg": -12.5
+  },
+  {
+   "theta_true": 70.0,
+   "width": 1.0,
+   "eps": 0.01,
+   "full_pipeline_deg": 58.0,
+   "full_bias_deg": -12.0,
+   "full_eta2": 0.805,
+   "no_affine_removal_deg": 57.5,
+   "no_affine_bias_deg": -12.5
+  },
+  {
+   "theta_true": 70.0,
+   "width": 2.0,
+   "eps": 0.0,
+   "full_pipeline_deg": 57.0,
+   "full_bias_deg": -13.0,
+   "full_eta2": 0.901,
+   "no_affine_removal_deg": 57.5,
+   "no_affine_bias_deg": -12.5
+  },
+  {
+   "theta_true": 70.0,
+   "width": 2.0,
+   "eps": 0.01,
+   "full_pipeline_deg": 57.0,
+   "full_bias_deg": -13.0,
+   "full_eta2": 0.901,
+   "no_affine_removal_deg": 57.0,
+   "no_affine_bias_deg": -13.0
+  },
+  {
+   "theta_true": 70.0,
+   "width": 4.0,
+   "eps": 0.0,
+   "full_pipeline_deg": 57.0,
+   "full_bias_deg": -13.0,
+   "full_eta2": 0.956,
+   "no_affine_removal_deg": 57.5,
+   "no_affine_bias_deg": -12.5
+  },
+  {
+   "theta_true": 70.0,
+   "width": 4.0,
+   "eps": 0.01,
+   "full_pipeline_deg": 57.0,
+   "full_bias_deg": -13.0,
+   "full_eta2": 0.956,
+   "no_affine_removal_deg": 57.5,
+   "no_affine_bias_deg": -12.5
+  }
+ ]
+}
