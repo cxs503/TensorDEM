@@ -487,6 +487,10 @@ def _channel_system(field: BrashIceField, *, kn: float, zeta: float, mu: float,
     # brash ice can be pushed forward instead of being jammed against a wall (a
     # jam would produce metre-deep interpenetration and a meaningless force record)
     system.add_wall([-1.0, 0.0, 0.0], -(length + 1.0), label="end")   # x <= length+1
+    # the floating field starts at its own hydrostatic equilibrium, so the ledger
+    # reference must include that PE (otherwise the residual carries a constant
+    # offset equal to -E(0) and says nothing about the scheme)
+    system.record_initial_energy()
     return system, hull
 
 
@@ -494,7 +498,9 @@ def run_channel(field: BrashIceField, *, kn: float = 5.0e4, zeta: float = 0.1,
                 mu: float = 0.35, dt: float = 1.0e-4, speed: float = 0.25,
                 n_steps: int = 1500, width: float = 1.2, length: float = 4.0,
                 hull_start: Optional[float] = None, corridor: float = 1.0,
-                plane: bool = False, record_every: int = 10) -> Dict[str, np.ndarray]:
+                plane: bool = False, record_every: int = 10,
+                fixed_window: Optional[Tuple[float, float]] = None,
+                ) -> Dict[str, np.ndarray]:
     """Clear a 3-D brash-ice channel and record resistance and porosity.
 
     The hull plane starts one centimetre behind the leading floe edge (computed
@@ -511,6 +517,7 @@ def run_channel(field: BrashIceField, *, kn: float = 5.0e4, zeta: float = 0.1,
     times: List[float] = []
     resistance: List[float] = []
     porosity: List[float] = []
+    porosity_fixed: List[float] = []
     kinetic: List[float] = []
     contacts: List[int] = []
     dissipated: List[float] = []
@@ -527,6 +534,13 @@ def run_channel(field: BrashIceField, *, kn: float = 5.0e4, zeta: float = 0.1,
             porosity.append(system.porosity(
                 [front, -0.5 * width, field.water_level - 0.15],
                 [front + corridor, 0.5 * width, field.water_level + 0.05]))
+            # concentration in the *fixed* swath the hull is about to sweep (a lane
+            # already cleared must stay empty; a window that follows the stem
+            # measures the ice being pushed, not the lane that was cleared)
+            if fixed_window is not None:
+                porosity_fixed.append(system.porosity(
+                    [fixed_window[0], -0.5 * width, field.water_level - 0.15],
+                    [fixed_window[1], 0.5 * width, field.water_level + 0.05]))
             kinetic.append(system.total_kinetic)
             contacts.append(system.n_pair_contacts)
             dissipated.append(system.dissipated)
@@ -544,6 +558,8 @@ def run_channel(field: BrashIceField, *, kn: float = 5.0e4, zeta: float = 0.1,
         "clamps": np.asarray([system.safety_clamps]),
         "dissipated": np.asarray(dissipated),
         "spring": np.asarray(spring),
+        "porosity_fixed": np.asarray(porosity_fixed, dtype=float),
+        "work_external": np.asarray([system.work_external]),
     }
 
 
@@ -814,7 +830,9 @@ def case3_repose(*, n_bodies: int = 45, friction: Sequence[float] = (0.2, 0.4, 0
                  kn: float = 2.0e5, zeta: float = 0.2, dt: float = 1.0e-4,
                  n_steps: int = 6000, box_half: float = 0.5, cell_half: float = 0.13,
                  density: float = ICE_DENSITY, seed: int = 5,
-                 n_xy: int = 3) -> Dict[str, object]:
+                 n_xy: int = 3, settle_tol: Optional[float] = 0.01,
+                 settle_window: int = 400, monitor_every: int = 100,
+                 ) -> Dict[str, object]:
     """Pour polyhedral rubble from a compact column, let it collapse, measure the pile.
 
     The pile metrics are taken from the settled state (after ``n_steps``), and the
@@ -834,6 +852,13 @@ def case3_repose(*, n_bodies: int = 45, friction: Sequence[float] = (0.2, 0.4, 0
     spacing is ``2.05 x`` the largest bounding radius (bounding spheres disjoint at
     ``t = 0``) and sit on a floor at ``z = 0``; the column collapses under gravity and
     the settled free surface is fitted by :func:`_pile_metrics`.
+
+    ``n_steps`` is an upper bound, not the measurement window: a pile is only a pile
+    once it is at rest, so the loop stops early when every body has been slower than
+    ``settle_tol`` (translation, plus ``radius * |omega|`` for rotation) for
+    ``settle_window`` consecutive monitored steps.  ``settled`` records whether that
+    happened; a run that exhausts ``n_steps`` still moving is reported as a
+    non-settled run (``valid = False``) rather than as an angle.
     """
     rng = np.random.default_rng(seed)
     sites = rng.uniform(-cell_half, cell_half, (n_bodies + 40, 3))
@@ -862,15 +887,34 @@ def case3_repose(*, n_bodies: int = 45, friction: Sequence[float] = (0.2, 0.4, 0
         system.add_box([0.0, 0.0, 0.75], [box_half, box_half, 0.75],
                        bottom=True, sides=True, top=False)
         system.record_initial_energy()
-        for _ in range(int(n_steps)):
+        quiet = 0
+        step = 0
+        settled = False
+        for step in range(1, int(n_steps) + 1):
             system.step()
+            if settle_tol is None or step % max(1, int(monitor_every)) != 0:
+                continue
+            motion = max(float(np.linalg.norm(b.velocity))
+                         + float(np.linalg.norm(b.omega)) * b.shape.bounding_radius
+                         for b in system.bodies)
+            if motion < float(settle_tol):
+                quiet += int(monitor_every)
+                if quiet >= int(settle_window):
+                    settled = True
+                    break
+            else:
+                quiet = 0
         metrics = _pile_metrics(system)
         metrics["friction"] = float(mu)
         metrics["energy_residual"] = float(system.energy_residual())
         metrics["mass_residual"] = float(system.mass_residual())
         metrics["safety_clamps"] = int(system.safety_clamps)
+        metrics["steps"] = int(step)
+        metrics["sim_time_s"] = float(system.time)
+        metrics["settled"] = bool(settled)
         metrics["valid"] = bool(
-            system.energy_residual() < 0.05
+            settled
+            and system.energy_residual() < 0.05
             and metrics["n_contacts"] > 0
             and math.isfinite(metrics["repose_angle_deg"]))
         results.append(metrics)
@@ -880,6 +924,8 @@ def case3_repose(*, n_bodies: int = 45, friction: Sequence[float] = (0.2, 0.4, 0
     return {
         "setup": {"n_bodies": len(cells), "kn": kn, "zeta": zeta, "dt": dt,
                   "n_steps": n_steps, "box_half": box_half, "cell_half": cell_half,
+                  "settle_tol": settle_tol, "settle_window": settle_window,
+                  "monitor_every": monitor_every,
                   "friction_values": [float(f) for f in friction],
                   "release": "column collapse, grid spacing 2.05 R_b, floor at z=0",
                   "grid": [n_xy, n_xy, n_layers], "spacing": float(spacing)},
