@@ -1,0 +1,233 @@
+{
+  "audit_mission": 14980,
+  "audited_mission": 14680,
+  "repo": "TensorDEM",
+  "scope": "m14680 GAP-DEM-AUTOCALIB",
+  "audit_commit_of_target": "fa79baa5 (m14680: GAP-DEM-AUTOCALIB round1 ...)",
+  "tests": {
+    "cmd": "PYTHONPATH=src python -m pytest tests/test_dem_repose_settle_termination.py -q",
+    "returncode": 0,
+    "summary": "5 passed, 1 warning in 10.99s",
+    "wall_seconds": 18.3,
+    "test_names": [
+      "tests/test_dem_repose_settle_termination.py::test_default_window_is_unchanged_and_reproducible",
+      "tests/test_dem_repose_settle_termination.py::test_loose_tolerance_settles_and_stops_inside_budget",
+      "tests/test_dem_repose_settle_termination.py::test_criterion_never_met_reports_not_settled",
+      "tests/test_dem_repose_settle_termination.py::test_tolerance_is_monotone",
+      "tests/test_dem_repose_settle_termination.py::test_check_interval_does_not_change_the_physics"
+    ],
+    "collected": 5
+  },
+  "repro": {
+    "cmd": "PYTHONPATH=src python scripts/m14680_autocalib_diagnosis.py",
+    "executed": true,
+    "returncode": 0,
+    "wall_seconds": 90.0,
+    "stderr_tail": [],
+    "artifact": "artifacts/gap_dem_autocalib/diagnosis.json",
+    "artifact_exists": true,
+    "artifact_sha256": "b50d21703907bb530befba04c48ce457214296f8d0f42172a7a0e7894d948281",
+    "artifact_bytes": 4443
+  },
+  "repro_equality": {
+    "committed_found": true,
+    "committed_path": "/root/tp-agent/work/m14680/artifacts/gap_dem_autocalib/diagnosis.json",
+    "figure_equality": {
+      "local": "artifacts/gap_dem_autocalib/fig1_repose_diagnosis.png",
+      "committed": "/root/tp-agent/work/m14680/artifacts/gap_dem_autocalib/fig1_repose_diagnosis.png",
+      "local_exists": true,
+      "committed_exists": true,
+      "local_sha256": "58a716bf63f4bcd7521f157239a3a56a86f2694b881152396df4e8649a81ee1f",
+      "committed_sha256": "58a716bf63f4bcd7521f157239a3a56a86f2694b881152396df4e8649a81ee1f",
+      "byte_identical": true
+    },
+    "committed_sha256": "299ab09c4e7a0f975de627dcce5f7a8fe54e855bd95719b12ad50d49b3344d2d",
+    "committed_bytes": 4442,
+    "top_level_fields_differing": [
+      "p1_friction_response",
+      "wall_seconds"
+    ],
+    "leaf_fields_differing": [
+      "p1_friction_response[0].wall_seconds",
+      "p1_friction_response[1].wall_seconds",
+      "p1_friction_response[2].wall_seconds",
+      "p1_friction_response[3].wall_seconds",
+      "p1_friction_response[4].wall_seconds",
+      "wall_seconds"
+    ],
+    "only_wall_clock_differs": true,
+    "physical_payload_identical": true,
+    "digests_identical": true,
+    "identical_strings": false
+  },
+  "benchmark": {
+    "reference": {
+      "source": "dry-sand angle of repose band (shipped material spec; Beakawi Al-Hashemi & Baghabra Al-Amoudi 2018)",
+      "band_deg": [
+        30.0,
+        37.0
+      ]
+    },
+    "got": {
+      "mu_sweep": [
+        0.2,
+        0.35,
+        0.52,
+        0.7,
+        0.85
+      ],
+      "theta_r_deg": [
+        13.825248648419151,
+        9.921045756851894,
+        18.451349427574048,
+        15.882473788024418,
+        14.888935639419334
+      ]
+    },
+    "best_simulated_deg": 18.451349427574048,
+    "error_pct": {
+      "vs_band_low": 38.5,
+      "vs_band_high": 50.1
+    },
+    "criterion_mission": "calibrated angle error < 10 %",
+    "criterion_platform": "< 15 % (>15 % unacceptable), stretch < 3 %",
+    "meets_10pct": false,
+    "meets_15pct": false,
+    "recomputed": {
+      "spearman_mu_theta": 0.5,
+      "artifact_spearman": 0.5,
+      "n_non_increasing_intervals": 3,
+      "n_intervals": 4,
+      "artifact_n_inversions": 3,
+      "replica_spread_deg": 5.005,
+      "signal_span_deg": 8.53,
+      "snr": 1.704,
+      "artifact_snr": 1.704,
+      "settled_band_deg": 9.921045756851894,
+      "literature_reachable": false
+    }
+  },
+  "doc_vs_artifact": [
+    {
+      "claim": "P1 table θ_r row (doc §3)",
+      "doc": [
+        13.83,
+        9.92,
+        18.45,
+        15.88,
+        14.89
+      ],
+      "artifact": [
+        13.83,
+        9.92,
+        18.45,
+        15.88,
+        14.89
+      ],
+      "match_within_0.01deg": true
+    },
+    {
+      "claim": "P1 table ke_ratio row (doc §3)",
+      "doc": [
+        0.295,
+        0.25,
+        0.294,
+        0.326,
+        0.329
+      ],
+      "artifact": [
+        0.295,
+        0.25,
+        0.294,
+        0.326,
+        0.329
+      ],
+      "match_within_0.001": true
+    },
+    {
+      "claim": "P2 replica θ_r (doc §3)",
+      "doc": [
+        18.45,
+        17.27,
+        13.45
+      ],
+      "artifact": [
+        18.45,
+        17.27,
+        13.45
+      ],
+      "match_within_0.01deg": true
+    },
+    {
+      "claim": "P2 replica spread (doc §3)",
+      "doc": 5.0,
+      "artifact": 5.0,
+      "match_within_0.01deg": true
+    },
+    {
+      "claim": "P2 signal-to-noise (doc §3)",
+      "doc": 1.7,
+      "artifact": 1.7,
+      "match_within_0.01": true
+    }
+  ],
+  "untraced_claim": {
+    "claim_found": true,
+    "claimed_deg": 50.9,
+    "present_in_artifact": false,
+    "live_reproduction_deg": 51.0,
+    "reproduced_within_0.5deg": true,
+    "note": "value is corroborated by an independent run but is NOT written into diagnosis.json -> it is a hand-entered number (zero-hand-copy discipline violated at bookkeeping level, physics unaffected)"
+  },
+  "level": {
+    "evidence": {
+      "impl_files": [
+        "src/tensordem/dem_calibration/heap.py"
+      ],
+      "entry": "src/tensordem/dem_calibration/__init__.py:12 (run_heap export); scripts/m14680_autocalib_diagnosis.py:47 (entry that exercises ke_stop)",
+      "run_artifacts": [
+        "artifacts/gap_dem_autocalib/diagnosis.json",
+        "artifacts/gap_dem_autocalib/fig1_repose_diagnosis.png"
+      ],
+      "tests": [
+        "tests/test_dem_repose_settle_termination.py::tests/test_dem_repose_settle_termination.py::test_default_window_is_unchanged_and_reproducible",
+        "tests/test_dem_repose_settle_termination.py::tests/test_dem_repose_settle_termination.py::test_loose_tolerance_settles_and_stops_inside_budget",
+        "tests/test_dem_repose_settle_termination.py::tests/test_dem_repose_settle_termination.py::test_criterion_never_met_reports_not_settled",
+        "tests/test_dem_repose_settle_termination.py::tests/test_dem_repose_settle_termination.py::test_tolerance_is_monotone",
+        "tests/test_dem_repose_settle_termination.py::tests/test_dem_repose_settle_termination.py::test_check_interval_does_not_change_the_physics"
+      ],
+      "integration_callers": [
+        "src/tensordem/dem_calibration/pipeline.py:117 (_default_forward -> run_heap, production calibration path)",
+        "scripts/calibrate_dem_materials.py:27 (CLI entry)"
+      ],
+      "benchmark": {
+        "ref": "repose band [30.0, 37.0] deg (literature)",
+        "got": "best 18.45 deg",
+        "error": "38.5-50.1 %",
+        "outcome": "FAIL (>15 % unacceptable)"
+      },
+      "repro_cmd": "PYTHONPATH=src python scripts/m14680_autocalib_diagnosis.py",
+      "external_anchor": "dry-sand repose band 30-37 deg (shipped material spec; Beakawi Al-Hashemi & Baghabra Al-Amoudi 2018) — cited, not re-measured; no elastic-modulus anchor exists at all"
+    },
+    "granted": {
+      "L1": true,
+      "L2": true,
+      "L3": false,
+      "L4": false,
+      "L5": false
+    },
+    "reasons": {
+      "L2": "ke_stop adaptive rest termination implemented in the shipped forward model, 5 invariant tests pass, diagnosis artifact reproduces bit-identically (physical payload identical)",
+      "L3_refused": "the ke_stop criterion is opt-in and is not passed by any production caller: pipeline.py:117 calls run_heap(case) without it and run_pluviation (the protocol actually used by the calibration loop) has no rest criterion at all; only mission scripts enable it",
+      "L4_refused": "only benchmark available is the literature repose band and the forward model misses it by 38.5-50.1 % (SNR 1.70, 3 inversions in 4 intervals) — a failing benchmark cannot validate the capability (honest FAIL)",
+      "L5_refused": "no calibrated parameters, no external experimental dataset re-run, round-2 plan still open (docs/GAP-DEM-AUTOCALIB_round2_gate1.md)"
+    },
+    "level": 2
+  },
+  "figure": "artifacts/m14980_audit/fig1_audit_gap_autocalib.png",
+  "verdict": {
+    "level": 2,
+    "kind": "honest FAIL — negative/diagnostic result, capability = rest criterion",
+    "gap_state": "OPEN (round 2 continues in docs/GAP-DEM-AUTOCALIB_round2_gate1.md)"
+  }
+}
