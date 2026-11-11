@@ -145,3 +145,35 @@ __all__ = [
     "consensus",
     "validate",
 ]
+# Mission p360w1-n04: ensemble estimation
+from .ensemble import (
+    ACFfitResult,
+    SingleRecordEstimate,
+    EnsembleEstimate,
+    BootstrapResult,
+    ConvergenceResult,
+    fit_acf_exponential,
+    fit_acf_gaussian,
+    acf_fit_model,
+    estimate_single_record,
+    ensemble_estimate,
+    bootstrap_ensemble,
+    convergence_study,
+    generate_records,
+)
+
+__all__.extend([
+    "ACFfitResult",
+    "SingleRecordEstimate",
+    "EnsembleEstimate",
+    "BootstrapResult",
+    "ConvergenceResult",
+    "fit_acf_exponential",
+    "fit_acf_gaussian",
+    "acf_fit_model",
+    "estimate_single_record",
+    "ensemble_estimate",
+    "bootstrap_ensemble",
+    "convergence_study",
+    "generate_records",
+])
