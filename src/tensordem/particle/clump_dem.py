@@ -60,6 +60,7 @@ from ..contact.clump_contact import (
     merge_junction_candidates,
     sphere_box_contacts,
 )
+from ..contact import rolling_static
 from .clump import ClumpParticle, quat_integrate, quat_to_matrix
 
 __all__ = [
@@ -115,6 +116,10 @@ class ClumpDEM:
         self.inv_mass = 1.0 / self.mass
         self.inertia_body = np.stack([p.inertia for p in self.particles])
         self.inv_inertia_body = np.linalg.inv(self.inertia_body)
+        #: Mean principal moment of inertia per body (trace/3).  Used only to
+        #: size the *static* rolling branch (the angular impulse that arrests the
+        #: relative spin in one step); for a sphere it is exactly 2/5 m r^2.
+        self.mean_inertia = np.trace(self.inertia_body, axis1=1, axis2=2) / 3.0
 
         self.pos = (
             np.zeros((n, 3))
@@ -305,8 +310,15 @@ class ClumpDEM:
             np.add.at(torque, b_j, np.cross(xc_p - self.pos[b_j], f_on_j))
             w_rel = self.omega[b_i] - self.omega[b_j]
             w_mag = np.linalg.norm(w_rel, axis=1)
-            tau_roll = (
-                (-p.mu_roll * r_eff_p * res_p.fn / (w_mag + p.eps_w))[:, None] * w_rel
+            lever_p = rolling_static.rolling_lever_arm(
+                xc_p, self.pos[b_i], r_eff_p,
+                getattr(p, "rolling_lever", "member"),
+            )
+            limit_p = rolling_static.rolling_limit(p.mu_roll, lever_p, res_p.fn)
+            inert_p = 1.0 / (1.0 / self.mean_inertia[b_i] + 1.0 / self.mean_inertia[b_j])
+            tau_roll = rolling_static.rolling_torque(
+                w_rel, limit_p, inert_p, dt,
+                model=getattr(p, "rolling_model", "viscous"), eps_w=p.eps_w,
             )
             np.add.at(torque, b_i, tau_roll)
             np.add.at(torque, b_j, -tau_roll)
@@ -363,8 +375,14 @@ class ClumpDEM:
                 np.add.at(torque, b_ids, np.cross(xc - self.pos[b_ids], f_on_sphere))
                 w_rel = self.omega[b_ids]
                 w_mag = np.linalg.norm(w_rel, axis=1)
-                tau_roll = (
-                    (-mu_roll * r_i * res_w.fn / (w_mag + p.eps_w))[:, None] * w_rel
+                lever_w = rolling_static.rolling_lever_arm(
+                    xc, self.pos[b_ids], r_i,
+                    getattr(local, "rolling_lever", "member"),
+                )
+                limit_w = rolling_static.rolling_limit(mu_roll, lever_w, res_w.fn)
+                tau_roll = rolling_static.rolling_torque(
+                    w_rel, limit_w, self.mean_inertia[b_ids], dt,
+                    model=getattr(local, "rolling_model", "viscous"), eps_w=p.eps_w,
                 )
                 np.add.at(torque, b_ids, tau_roll)
                 ext_work += float(np.sum(f_on_sphere * obs.velocity) * dt)
@@ -524,9 +542,21 @@ class ClumpDEM:
         if eps <= 0.0:
             raise ValueError("eps_w must be positive")
         w = np.linalg.norm(self.omega, axis=1)
-        s = w / (w + eps)
+        model = getattr(self.params, "rolling_model", "viscous")
+        if model == "coulomb":
+            # static branch: saturation = min(1, I|w|/dt / (mu_roll R |Fn|)) per
+            # body, evaluated with the body's own spin and the largest lever arm
+            # available to it (contact-level values live in ``last_contacts``).
+            from ..contact.rolling_static import stopping_speed
+            lever = np.array([p.bounding_radius for p in self.particles], dtype=float)
+            limit = self.params.mu_roll * lever * self.mass * 9.81
+            sat = stopping_speed(limit, self.mean_inertia, self.dt) / np.maximum(w, 1e-30)
+            s = np.minimum(1.0, sat)
+        else:
+            s = w / (w + eps)
         return {
             "eps_w": eps,
+            "model": model,
             "mean": float(s.mean()),
             "median": float(np.median(s)),
             "p10": float(np.percentile(s, 10)),
