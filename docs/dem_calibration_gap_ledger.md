@@ -245,3 +245,25 @@ PYTHONPATH=src python scripts/m5052_clump_rolling_calibration.py --figures-only
 
 
 
+
+## selfstart write-back (m13798, 2026-11-11) — shear-cell macro friction
+
+* **New ledger row (was missing):** *direct-shear macroscopic friction device* — before this
+  milestone `src/tensordem/shear_cell.py` was **registered but dead code** (`mass[:, None]` on a
+  float → `TypeError` at the first integration step). Now **runnable + gated, physics still open**.
+  Evidence: `src/tensordem/shear_cell.py`, `tests/test_shear_cell_friction.py` (7 tests),
+  `docs/GAP_DEM_FRICTION_SHEAR_CELL.md`, `artifacts/shear_cell_friction/shear_cell_diagnosis.json`.
+* **Structural fix of an ill-posed measurement:** the old code fitted a Mohr-Coulomb *slope*
+  inside a single run where `sigma_n` is constant and used `sum(|f_z|)` as the applied normal
+  stress. The envelope is now fitted only across **distinct** stress levels; a single level (or a
+  repeated one) raises `ValueError`, so a "friction angle" can no longer be manufactured from
+  normal-stress noise. The fitter is analytically exact on synthetic lines (tan φ to <1e-12,
+  cohesion to <1e-6 Pa).
+* **Honest FAIL carried forward:** the stress-servo platen reaches the target once
+  (2.09 N vs 2.048 N target) and then loses the bed: bed top drops 0.04674 → 0.03848 m while the
+  platen drops only 0.05184 → 0.04764 m, so the steady-window `sigma_n` is 0 Pa and `mu` is
+  undefined. The new validity gate reports `valid=False` with the reason instead of returning a
+  NaN/0 friction angle. `GAP-DEM-FRICTION` ("摩擦系数 vs 实验 <10%") therefore stays **open**.
+* **Audit pointer:** `scripts/run_coarse_graining_campaign.py` consumed this module's
+  `friction_angle_deg`/`r_squared`; that path could never have executed before this milestone, so
+  any shear-box numbers attributed to it lack evidence and should be traced.
