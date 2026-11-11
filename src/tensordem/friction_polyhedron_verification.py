@@ -1,3 +1,14 @@
+"""DEPRECATED FOR VERIFICATION USE -- see the correction record.
+
+The C1/C2/C3 helpers in this module (``simulate_angle_of_repose``,
+``find_critical_angle``, ``simulate_packing``) return the *closed-form answer*
+and then compare it with that same answer, so they reported 0.0 % error on
+every input.  They are kept for import compatibility only and must not be cited
+as evidence.  Real, falsifiable measurements live in
+:mod:`tensordem.friction_polyhedron_real_verification`; the audit, the three
+kernel defects it exposed and the withdrawn claims are documented in
+``docs/p273w3_n02_VERIFICATION_CORRECTION.md``.
+
 """Verification experiments for Coulomb friction + rolling resistance + polyhedron DEM.
 
 This module implements the verification anchors for the p273w3-n02 campaign node.
