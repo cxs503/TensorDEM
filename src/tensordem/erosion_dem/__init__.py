@@ -20,6 +20,10 @@ fitter all come from :mod:`tensordem.erosion`.  The only calibrated number in
 this package is Oka's leading anchor, whose provenance travels with it
 (:data:`tensordem.erosion_dem.stream.CASE_ANCHOR_PROVENANCE`).
 
+Entry points: ``python -m tensordem.erosion_dem {impact,stream,pipe,verify}``
+(console script ``tensordem-erosion``); the same recorder is driven by the
+slurry pipe solver, see ``benchmarks/erosion_pipe_coupled.py``.
+
 Reproduce: ``python benchmarks/erosion_dem_verification.py``
 Tests: ``python -m pytest tests/test_erosion_dem.py -q``
 """
@@ -49,6 +53,7 @@ from .crater import (
     sphere_cap_radius,
     sphere_cap_volume,
 )
+from .recorder import ImpactErosionRecorder
 from .stream import (
     CASE_ANCHOR_PROVENANCE,
     CASE_LAW,
@@ -63,6 +68,7 @@ from .stream import (
 )
 
 __all__ = [
+    "ImpactErosionRecorder",
     "HERTZ_PLASTIC_PREFACTOR",
     "JointImpactKinematics",
     "oblique_restitution",
