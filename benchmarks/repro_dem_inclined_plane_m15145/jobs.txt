@@ -1,0 +1,13 @@
+--theta 20 --height 20 --lx 12 --lz 6 --t-end 36 --kn 5e3 --out runs/chute/theta20_H20.json
+--theta 22 --height 20 --lx 12 --lz 6 --t-end 36 --kn 5e3 --out runs/chute/theta22_H20.json
+--theta 24 --height 20 --lx 12 --lz 6 --t-end 36 --kn 5e3 --out runs/chute/theta24_H20.json
+--theta 22 --height 12 --lx 12 --lz 6 --t-end 36 --kn 5e3 --out runs/chute/theta22_H12.json
+--theta 22 --height 28 --lx 12 --lz 6 --t-end 36 --kn 5e3 --out runs/chute/theta22_H28.json
+--theta 19 --height 6 --lx 10 --lz 6 --t-end 26 --kn 5e3 --out runs/chute/stop_theta19_H6.json
+--theta 19 --height 10 --lx 10 --lz 6 --t-end 26 --kn 5e3 --out runs/chute/stop_theta19_H10.json
+--theta 20 --height 6 --lx 10 --lz 6 --t-end 26 --kn 5e3 --out runs/chute/stop_theta20_H6.json
+--theta 20 --height 10 --lx 10 --lz 6 --t-end 26 --kn 5e3 --out runs/chute/stop_theta20_H10.json
+--theta 21 --height 6 --lx 10 --lz 6 --t-end 26 --kn 5e3 --out runs/chute/stop_theta21_H6.json
+--theta 21 --height 10 --lx 10 --lz 6 --t-end 26 --kn 5e3 --out runs/chute/stop_theta21_H10.json
+--theta 22 --height 6 --lx 10 --lz 6 --t-end 26 --kn 5e3 --out runs/chute/stop_theta22_H6.json
+--theta 22 --height 10 --lx 10 --lz 6 --t-end 26 --kn 5e3 --out runs/chute/stop_theta22_H10.json

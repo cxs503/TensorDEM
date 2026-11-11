@@ -182,8 +182,35 @@ class ContactState:
         self.roll: dict[tuple[int, int], np.ndarray] = {}
 
 
-def build_pairs(pos: np.ndarray, radius: float) -> tuple[np.ndarray, np.ndarray]:
+def minimum_image(dvec: np.ndarray, box) -> np.ndarray:
+    """Wrap pair separations into the minimum image of a (partially) periodic box.
+
+    ``box`` is ``(Lx, Ly, Lz)``; an entry that is ``None``, ``inf`` or ``<= 0``
+    means that axis is non-periodic (open) and is left untouched.  This is the
+    convention used by :func:`build_pairs` / :func:`contact_forces` when
+    ``box`` is given (e.g. chute flow: periodic down-slope + spanwise, open
+    free surface).
+    """
+    dvec = np.asarray(dvec, dtype=np.float64)
+    if box is None:
+        return dvec
+    out = dvec
+    for axis in range(min(3, out.shape[1])):
+        length = box[axis] if axis < len(box) else None
+        if length is None or not np.isfinite(length) or length <= 0.0:
+            continue
+        out[:, axis] -= length * np.round(out[:, axis] / length)
+    return out
+
+
+def build_pairs(pos: np.ndarray, radius: float,
+                box=None) -> tuple[np.ndarray, np.ndarray]:
     """All pairs within 2r (candidate contacts), via a cKDTree.
+
+    ``box`` (optional) = ``(Lx, Ly, Lz)`` periodic box lengths; ``None``/``inf``
+    entries are treated as open (non-periodic) axes.  With a periodic box the
+    neighbour search itself uses the minimum image, so contacts that straddle a
+    periodic boundary are found (see :func:`minimum_image`).
 
     Returns (iu, ju) integer arrays with iu < ju.
     """
@@ -191,7 +218,13 @@ def build_pairs(pos: np.ndarray, radius: float) -> tuple[np.ndarray, np.ndarray]
     if n < 2:
         empty = np.zeros(0, dtype=np.int64)
         return empty, empty
-    tree = cKDTree(pos)
+    if box is None:
+        tree = cKDTree(pos)
+    else:
+        boxsize = np.asarray(
+            [float(b) if (b is not None and np.isfinite(b) and b > 0.0) else np.inf
+             for b in box], dtype=np.float64)
+        tree = cKDTree(pos, boxsize=boxsize)
     pairs = tree.query_pairs(2.0 * radius, output_type="ndarray")
     iu = np.minimum(pairs[:, 0], pairs[:, 1]).astype(np.int64)
     ju = np.maximum(pairs[:, 0], pairs[:, 1]).astype(np.int64)
@@ -201,8 +234,8 @@ def build_pairs(pos: np.ndarray, radius: float) -> tuple[np.ndarray, np.ndarray]
 def contact_forces(pos: np.ndarray, vel: np.ndarray, omega: np.ndarray,
                    iu: np.ndarray, ju: np.ndarray, state: ContactState,
                    mat: Material3D, dt: float,
-                   state_keys: np.ndarray | None = None
-                   ) -> tuple[np.ndarray, np.ndarray]:
+                   state_keys: np.ndarray | None = None,
+                   box=None) -> tuple[np.ndarray, np.ndarray]:
     """Vectorised particle-particle contact forces and torques.
 
     ``iu``/``ju`` index into ``pos``/``vel``/``omega``.  ``state_keys`` is an
@@ -210,6 +243,10 @@ def contact_forces(pos: np.ndarray, vel: np.ndarray, omega: np.ndarray,
     tangential/rolling state, so the state survives when the active particle
     set changes (e.g. discharged particles dropped from the silo).  Default:
     ``iu * len(pos) + ju``.
+
+    ``box`` (optional) selects periodic minimum-image separations for the
+    pair vector (see :func:`minimum_image`); with ``box`` the pair list must
+    also have been built with the same ``box`` (:func:`build_pairs`).
 
     Updates ``state.tang`` / ``state.roll`` in place.  Returns
     ``(force (n,3), torque (n,3))``.
@@ -229,6 +266,8 @@ def contact_forces(pos: np.ndarray, vel: np.ndarray, omega: np.ndarray,
     gamma = mat.gamma_pair
 
     dvec = pos[ju] - pos[iu]
+    if box is not None:
+        dvec = minimum_image(dvec, box)
     dist = np.linalg.norm(dvec, axis=1)
     overlap = 2.0 * r - dist
     active = overlap > 0.0
@@ -251,7 +290,13 @@ def contact_forces(pos: np.ndarray, vel: np.ndarray, omega: np.ndarray,
         surf_j = np.cross(omega[ju_a], -nvec * r)
         v_t_surf = (v_rel - v_n[:, None] * nvec) + (surf_j - surf_i)
         keys = state_keys[active]
-        tang = np.array([state.tang.get(k, np.zeros(3)) for k in keys], dtype=np.float64)
+        # avoid allocating a zeros(3) per lookup: fetch, then fill the misses
+        cur = [state.tang.get(k) for k in keys]
+        if any(c is None for c in cur):
+            tang = np.array([np.zeros(3) if c is None else c for c in cur],
+                            dtype=np.float64)
+        else:
+            tang = np.array(cur, dtype=np.float64)
         tang = tang + v_t_surf * dt
         tnorm = np.linalg.norm(tang, axis=1)
         cap = mu * f_n / kt
@@ -278,7 +323,12 @@ def contact_forces(pos: np.ndarray, vel: np.ndarray, omega: np.ndarray,
     if mat.mu_rolling > 0.0:
         spin = omega[ju_a] - omega[iu_a]
         keys = state_keys[active]
-        roll = np.array([state.roll.get(k, np.zeros(3)) for k in keys], dtype=np.float64)
+        cur = [state.roll.get(k) for k in keys]
+        if any(c is None for c in cur):
+            roll = np.array([np.zeros(3) if c is None else c for c in cur],
+                            dtype=np.float64)
+        else:
+            roll = np.array(cur, dtype=np.float64)
         roll = roll + spin * dt
         rnorm = np.linalg.norm(roll, axis=1)
         cap_r = (mu_r * r * f_n) / kr
