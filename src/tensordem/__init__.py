@@ -154,3 +154,7 @@ if _TORCH_AVAILABLE:
 else:
     # torch not available: only coupling_kernel (numpy-first) is accessible
     __all__ = []
+
+# ice load on vertical structures (campaign p227w2-N04)
+from . import ice_rubble_pileup_vertical  # noqa: E402,F401
+from . import ice_structure_load  # noqa: E402,F401
