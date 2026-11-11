@@ -23,10 +23,14 @@ M3. Broken ice channel clearing rate
     - Verification: R_ice vs Lindqvist empirical formula (≤30%)
     - Negative control: C_i=0 → R_ice=0
 
-M4. MT Uikku full-scale experiment comparison
-    - 10 test cases: speed 3-10 kn, thickness 0.6-1.2m, concentration 60-90%
-    - Output: F_ice(t) time history
-    - Verification: F_peak ≤25%, F_mean ≤20%, correlation rho ≥ 0.7
+M4. MT Uikku full-scale experiment comparison (provenance-corrected 2026-11-11)
+    - 10 level-ice cases read from
+      ``benchmarks/dem3d/ship_ice_validation/mt_uikku_level_ice.csv``
+      (drift speed 0.2/0.5/1.0 m/s, thickness 0.63-1.04 m)
+    - Output: F_ice(t) time history of the M3 broken-ice field
+    - Diagnostic band: F_peak ≤25%, F_mean ≤20 %; across-case Pearson r
+    - Time-history correlation declared WITHHELD (no measured time series)
+    - Overall verdict WITHHELD: broken-ice field vs level-ice measurement
     - Negative control: h_i=0 → F_ice=0
 
 All quantities SI (m, kg, s, Pa, N). Energy ledger closes to ≤5%.
@@ -51,8 +55,13 @@ from .channel_clearing import (
 )
 from .mt_uikku_validation import (
     MT_UIKKU_CASES,
+    MT_UIKKU_CSV,
+    MTUikkuCase,
+    load_mt_uikku_cases,
+    negative_control_zero_thickness,
     run_mt_uikku_case,
     run_all_mt_uikku_cases,
+    score_cases,
     verify_mt_uikku,
 )
 
@@ -74,7 +83,12 @@ __all__ = [
     "verify_channel_clearing",
     # M4: MT Uikku validation
     "MT_UIKKU_CASES",
+    "MT_UIKKU_CSV",
+    "MTUikkuCase",
+    "load_mt_uikku_cases",
+    "negative_control_zero_thickness",
     "run_mt_uikku_case",
     "run_all_mt_uikku_cases",
+    "score_cases",
     "verify_mt_uikku",
 ]

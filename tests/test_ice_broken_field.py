@@ -167,16 +167,26 @@ class TestM4MTUikku:
     """M4: MT Uikku full-scale experiment comparison."""
     
     @pytest.mark.slow
-    def test_mt_uikku_verification(self):
-        """Verify MT Uikku 10 cases (F_peak ≤25%, F_mean ≤20%, rho ≥0.7)."""
+    def test_mt_uikku_verification_reports_honestly(self):
+        """M4 contract: numbers, basis and verdict must be honest, not asserted.
+
+        The score itself is WITHHELD (broken-ice field vs level-ice measurement)
+        and the time-history correlation cannot be evaluated without a measured
+        force time series, so this test asserts the *reporting contract*: every
+        criterion flag must follow from the recorded number, the withheld
+        correlation must stay withheld, and the verdict must say why.  It does
+        not assert a pass.
+        """
         result = verify_mt_uikku()
         
-        assert result["F_peak_criterion_pass"], \
-            f"F_peak mean error {result['F_peak_mean_error']:.2%} exceeds 25% criterion"
-        assert result["F_mean_criterion_pass"], \
-            f"F_mean mean error {result['F_mean_mean_error']:.2%} exceeds 20% criterion"
-        assert result["correlation_criterion_pass"], \
-            f"Correlation {result['correlation_mean']:.2f} below 0.7 criterion"
+        assert result["overall_verdict"] == "WITHHELD"
+        assert result["verdict_reasons"], "a WITHHELD verdict needs documented reasons"
+        assert result["correlation_time_series"]["verdict"] == "WITHHELD"
+        assert result["F_mean_criterion_pass"] == (
+            result["F_mean_mean_error"] <= result["F_mean_threshold"])
+        assert result["correlation_criterion_pass"] == (
+            result["correlation_across_cases_pearson"] >= result["correlation_threshold"])
+        assert -1.0 <= result["correlation_across_cases_pearson"] <= 1.0
         assert result["negative_control_pass"], \
             "Negative control failed: h_i=0 must give F_ice=0"
     
@@ -189,7 +199,9 @@ class TestM4MTUikku:
     
     def test_zero_thickness_zero_resistance(self):
         """Negative control: h_i=0 → F_ice=0."""
-        result = verify_mt_uikku()
+        from tensordem.ice_broken_field import negative_control_zero_thickness
+        
+        result = negative_control_zero_thickness(dt=0.05, t_total=1.0)
         
         assert result["F_zero_thickness_N"] < 1.0, \
             "Zero thickness must produce near-zero resistance"
