@@ -19,6 +19,7 @@ import numpy as np
 import pytest
 
 from tensordem.shape_representation import (
+    legendre_relation,
     PileConfig2D,
     Superquadric,
     _Pile,
@@ -40,9 +41,16 @@ def test_complete_elliptic_integrals():
     assert K0 == pytest.approx(math.pi / 2, rel=1e-12)
     assert E0 == pytest.approx(math.pi / 2, rel=1e-12)
     K, E = complete_elliptic_KE(0.9)
-    # reference values (Abramowitz & Stegun table 17.1)
+    # reference values (Abramowitz & Stegun table 17.1, modulus k = 0.9)
     assert K == pytest.approx(2.2805491384227703, rel=1e-10)
-    assert E == pytest.approx(2.0953194538471797, rel=1e-9)
+    # corrected 2026-11: the pre-gate module pinned E = 2.0953194538471797, which is
+    # K * (1 - sum_{n>=1} 2^{n-1} c_n^2) -- the AGM series with its leading n = 0 term
+    # c_0^2/2 = k^2/2 dropped.  The tabulated value is 1.1716970527816143; two
+    # independent invariants pin it: E(k) <= pi/2 and the Legendre relation below.
+    assert E == pytest.approx(1.1716970527816143, rel=1e-10)
+    assert E <= math.pi / 2
+    for k in (0.3, 0.7, 0.9, 0.99):
+        assert legendre_relation(k) == pytest.approx(math.pi / 2, rel=1e-13)
 
 
 def test_circular_limit_matches_analytic_hertz():
