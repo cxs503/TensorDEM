@@ -82,6 +82,10 @@ __all__ = [
 ]
 
 SCHEMA = "tensordem.failure_faces/1"
+#: The static reader also validates the wave-2 artefact: schema 2 is a
+#: strict superset (a dynamics block is added, nothing is removed), so the
+#: area / mass / rim / polygon consistency checks of schema 1 still apply.
+SCHEMAS = (SCHEMA, "tensordem.failure_faces/2")
 _CODE_VERSION = "tensordem.fem_dem_fracture 1.0 (campaign p302w1-n03)"
 
 
@@ -517,8 +521,8 @@ def read_failure_faces(path_or_payload) -> FailureFaces:
         with open(path_or_payload, "r", encoding="utf-8") as handle:
             payload = json.load(handle)
     schema = payload.get("schema")
-    if schema != SCHEMA:
-        raise ValueError(f"unexpected schema {schema!r}, expected {SCHEMA!r}")
+    if schema not in SCHEMAS:
+        raise ValueError(f"unexpected schema {schema!r}, expected one of {SCHEMAS!r}")
 
     meta = payload["meta"]
     floes = [
