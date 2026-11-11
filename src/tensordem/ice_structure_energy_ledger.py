@@ -71,6 +71,7 @@ __all__ = [
     "bond_dissipation_reference",
     "viscous_dissipation_reference",
     "run_energy_audit_case",
+    "FourLedgerObserver",
     "LEDGER_KEYS",
 ]
 
@@ -796,3 +797,166 @@ def run_energy_audit_case(
     )
     sim.run_until(duration)
     return sim
+
+# ---------------------------------------------------------------------------
+# solver-driven four-ledger observer (integration surface)
+# ---------------------------------------------------------------------------
+class FourLedgerObserver:
+    """Accumulate the four ledgers from an *external* solver's state stream.
+
+    The audit above owns its own integrator, which is what makes criteria
+    (a)-(h) checkable against independent references.  A production run does
+    not: the energy audit has to ride on the DEM main loop of whatever solver is
+    being certified.  This class is that integration surface -- it is fed the
+    host solver's live state once per step and returns the four-ledger row:
+
+    ``E_k = E_k_trans + E_k_rot``  (from the host's velocities / spin)
+    ``E_s = E_s_contact + E_s_bond``  (host spring potentials)
+    ``E_f``  cumulative fracture energy released by broken bonds
+    ``E_v``  cumulative viscous dissipation (normal + tangential dashpots)
+    ``E_ext`` cumulative work injected by *moving* boundaries (0 for a
+              structure impact in the structure frame)
+
+    Closure is asserted on ``E_total = E_k + E_s + E_f + E_v - E_ext`` with
+    ``residual_relative = |E_total - E_total(0)| / |E_total(0)|``.
+
+    Two integrity rules are enforced rather than silently absorbed, because a
+    dissipative ledger that can go backwards is a bookkeeping bug, not physics:
+
+    * ``E_f`` and ``E_v`` must be non-decreasing;
+    * an ``E_v`` that is passed as a *rate* is integrated with the trapezoidal
+      rule over the host ``dt`` (second-order, so criterion (d) does not depend
+      on the host's own quadrature).
+
+    Channels the host does not accumulate are *not* invented: they are passed
+    through ``out_of_ledger`` and stay inside the residual, so the residual keeps
+    reporting unaccounted physics.
+
+    Everything is SI / float64.
+    """
+
+    def __init__(self, *, reference_total: float | None = None) -> None:
+        self.rows: list[dict[str, float]] = []
+        self.out_of_ledger_totals: dict[str, float] = {}
+        self._reference_total = reference_total
+        self._reference_fixed = reference_total is not None
+        self._E_v = 0.0
+        self._rate_prev: float | None = None
+        self._time_prev: float | None = None
+        self._E_f_prev = 0.0
+
+    # -- one host step ------------------------------------------------------
+    def observe(
+        self,
+        *,
+        time: float,
+        kinetic_trans: float = 0.0,
+        kinetic_rot: float = 0.0,
+        strain_contact: float = 0.0,
+        strain_bond: float = 0.0,
+        fracture_energy: float = 0.0,
+        viscous_dissipation: float | None = None,
+        viscous_rate: float | None = None,
+        external_work: float = 0.0,
+        dt: float | None = None,
+        out_of_ledger: dict[str, float] | None = None,
+    ) -> dict[str, float]:
+        """Record one host step and return the four-ledger row."""
+        if viscous_dissipation is not None and viscous_rate is not None:
+            raise ValueError("pass either viscous_dissipation (cumulative) "
+                             "or viscous_rate (+dt), not both")
+        if viscous_rate is not None:
+            if dt is None or dt <= 0.0:
+                raise ValueError("viscous_rate needs a positive host dt")
+            if self._rate_prev is None:
+                increment = viscous_rate * dt          # left endpoint
+            else:
+                increment = 0.5 * (self._rate_prev + viscous_rate) * dt
+            self._E_v += max(float(increment), 0.0)
+            self._rate_prev = float(viscous_rate)
+        elif viscous_dissipation is not None:
+            value = float(viscous_dissipation)
+            if value < self._E_v - 1e-15 * max(1.0, abs(value)):
+                raise ValueError(
+                    f"viscous dissipation went backwards at t={time}: "
+                    f"{value} < {self._E_v}")
+            self._E_v = value
+
+        E_f = float(fracture_energy)
+        if E_f < self._E_f_prev - 1e-15 * max(1.0, abs(E_f)):
+            raise ValueError(
+                f"fracture energy went backwards at t={time}: "
+                f"{E_f} < {self._E_f_prev}")
+        self._E_f_prev = E_f
+
+        for name, value in (out_of_ledger or {}).items():
+            self.out_of_ledger_totals[name] = float(value)
+
+        E_k = float(kinetic_trans) + float(kinetic_rot)
+        E_s = float(strain_contact) + float(strain_bond)
+        E_ext = float(external_work)
+        E_total = E_k + E_s + E_f + self._E_v - E_ext
+
+        if not self._reference_fixed:
+            self._reference_total = E_total
+            self._reference_fixed = True
+        ref = float(self._reference_total or 0.0)
+        if ref == 0.0:
+            # negative control: an all-zero state must stay exactly zero
+            residual = 0.0 if E_total == 0.0 else math.inf
+        else:
+            residual = abs(E_total - ref) / abs(ref)
+
+        row = {
+            "t": float(time),
+            "dt": float(dt) if dt is not None else math.nan,
+            "E_k": E_k,
+            "E_k_trans": float(kinetic_trans),
+            "E_k_rot": float(kinetic_rot),
+            "E_s": E_s,
+            "E_s_contact": float(strain_contact),
+            "E_s_bond": float(strain_bond),
+            "E_f": E_f,
+            "E_v": self._E_v,
+            "E_ext": E_ext,
+            "E_total": E_total,
+            "E_total_0": ref,
+            "residual_relative": residual,
+        }
+        if out_of_ledger:
+            for name, value in out_of_ledger.items():
+                row[f"out_of_ledger_{name}"] = float(value)
+        self.rows.append(row)
+        self._time_prev = float(time)
+        return row
+
+    # -- verdict ------------------------------------------------------------
+    def residual_max(self) -> float:
+        return max((r["residual_relative"] for r in self.rows), default=0.0)
+
+    def residual_monotone(self, *, rel_tol: float = 1.0e-3) -> bool:
+        """True when refining the host step never *increases* the residual.
+
+        Only meaningful across separate observers (one per dt); kept here so a
+        dt-sensitivity claim is a method call and not a hand comparison.
+        """
+        residuals = [r["residual_relative"] for r in self.rows]
+        return all(b <= a * (1.0 + rel_tol) for a, b in zip(residuals, residuals[1:]))
+
+    def summary(self) -> dict[str, Any]:
+        last = self.rows[-1] if self.rows else {}
+        return {
+            "n_steps": len(self.rows),
+            "E_total_0": float(self._reference_total or 0.0),
+            "E_k": last.get("E_k", 0.0),
+            "E_s": last.get("E_s", 0.0),
+            "E_f": last.get("E_f", 0.0),
+            "E_v": last.get("E_v", 0.0),
+            "E_ext": last.get("E_ext", 0.0),
+            "E_total": last.get("E_total", 0.0),
+            "residual_relative_max": self.residual_max(),
+            "residual_relative_final": last.get("residual_relative", 0.0),
+            "out_of_ledger_totals": dict(self.out_of_ledger_totals),
+            "closed_within_1pct": self.residual_max() < 1.0e-2,
+            "closed_within_2pct": self.residual_max() < 2.0e-2,
+        }
