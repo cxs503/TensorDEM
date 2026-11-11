@@ -29,10 +29,16 @@ Physics implemented
 
        h (T_g - T*) = h_m h_fg(T*) [rho_v,sat(T*) - rho_v,g]
 
-   ("psychrometric closed form with Lewis factor").  When the diffusivity is
-   overridden to D_AB = alpha (Le = 1), this root coincides with the classical
-   chart wet bulb of :func:`tensordem.rotary_dryer.psychrometrics.wet_bulb_temperature`
-   to <0.05 K -- the analogy hook is what makes the degeneration testable.
+   ("psychrometric closed form with Lewis factor").  With D_AB = alpha (Le = 1)
+   the root approaches the classical chart wet bulb of
+   :func:`tensordem.rotary_dryer.psychrometrics.wet_bulb_temperature`; the
+   residual offset is *not* zero but is fully explained by the film-property
+   convention -- the closure ratio is h/h_m = rho_f cp_f evaluated at the film
+   temperature while the chart equation uses the gas-state humid heat capacity.
+   At 400 K / Y = 0.010 kg/kg that is rho_f cp_f = 1001.3 vs cp_H = 1024.6
+   (-2.3 %), i.e. 1.6 K on the wet bulb (measured, see
+   ``moist_drying_case.criterion_a_pinning``).  Exact coincidence requires
+   evaluating the ratio with gas-state properties.
 
 5. **Thin-layer kinetics**: Lewis (single exponential) and Page models
 
@@ -366,8 +372,15 @@ def wet_bulb_from_closures(
 
     Solved by bisection on [max(248 K, T_g - 150 K), T_g]; the residual is positive far
     below T_g (large sensible heat supply, negligible rho_v,sat) and negative
-    at T_g, so the bracket is guaranteed.  With ``d_ab_override = alpha`` the
-    root equals the classical psychrometric wet bulb (Lewis factor = 1).
+    at T_g, so the bracket is guaranteed.
+
+    With ``d_ab_override = alpha`` the Lewis number of the pair is 1 and the
+    root approaches the classical psychrometric (Carrier) wet bulb, but it does
+    not coincide exactly: the closure ratio is h/h_m = rho_f cp_f at the film
+    temperature, whereas the chart equation carries the gas-state humid heat
+    capacity.  The offset is O(rho_f cp_f / cp_H - 1); measured 1.6 K at
+    400 K / Y = 0.010 kg/kg (see ``criterion_a_pinning`` of
+    :mod:`tensordem.rotary_dryer.moist_drying_case`).
     """
     lo = max(248.0, T_g - 150.0)
     hi = T_g
