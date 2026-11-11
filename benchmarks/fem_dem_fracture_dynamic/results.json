@@ -1,0 +1,225 @@
+{
+  "all_within_tolerance": true,
+  "campaign": "p302w2-n03-fem-dem-fracture-handoff",
+  "case": {
+    "characteristic_length_m": 8.686667723654786,
+    "length_x": 10.0,
+    "length_y": 10.0,
+    "nx": 40,
+    "ny": 40,
+    "thickness": 0.5
+  },
+  "criteria": {
+    "D1_velocity_field_nonzero": true,
+    "D1b_loading_path_linearity": true,
+    "D2_linear_momentum": true,
+    "D3_angular_momentum": true,
+    "D4_kinetic_energy_split": true,
+    "D5_rigid_fraction_bounds": true,
+    "D6_mass_conservation_after_transfer": true,
+    "D7_dem_intake": true,
+    "D8_quasi_static_validity": true
+  },
+  "ledger": {
+    "angular_bodies_kg_m2_s": [
+      -69.49874527390114,
+      -18.045382685866524
+    ],
+    "angular_field_kg_m2_s": [
+      -69.49874527390102,
+      -18.045382685866517
+    ],
+    "angular_residual_kg_m2_s": [
+      -1.1368683772161603e-13,
+      -7.105427357601002e-15
+    ],
+    "ke_deform_j": 5.280709480068234e-06,
+    "ke_field_j": 0.6316799270731134,
+    "ke_rigid_j": 0.6316746463636332,
+    "ke_sum_residual_j": -1.1102230246251565e-16,
+    "mass_bodies_kg": 45850.0,
+    "mass_field_kg": 45850.0,
+    "mass_residual_kg": 0.0,
+    "max_floe_rigid_fraction": 0.9999999899512059,
+    "min_floe_rigid_fraction": 0.9999906143690193,
+    "momentum_bodies_kg_m_s": 239.38419180554277,
+    "momentum_field_kg_m_s": 239.3841918055428,
+    "momentum_residual_kg_m_s": -2.842170943040401e-14,
+    "n_bodies": 7,
+    "reference_point_xy_m": [
+      5.0,
+      5.0
+    ],
+    "rigid_fraction_plate": 0.999991640213257
+  },
+  "n_failing": 0,
+  "n_floes": 7,
+  "n_rows": 17,
+  "pressure_rate_pa_s": 1000.0,
+  "quasi_static": {
+    "critical_rate_pa_s": 52032.52774764504,
+    "elastic_energy_j": 17102.000921844716,
+    "ke_over_elastic": 3.6936024618397503e-05,
+    "ke_scaling_exponent": 2.0,
+    "kinetic_energy_j": 0.6316799270731133,
+    "pressure_rate_pa_s": 1000.0,
+    "quasi_static": true,
+    "ratio_target": 0.1
+  },
+  "repro_cmd": "python benchmarks/fem_dem_fracture_dynamic/benchmark.py --pressure-rate 1000",
+  "rows": [
+    {
+      "benchmark": "strip cylindrical bending (beam limit)",
+      "got": 0.0001569152108726376,
+      "quantity": "w_max",
+      "reference": 0.00015625,
+      "rel_error": 0.0042573495848805334,
+      "source": "closed form (Navier series / beam limit / Hetenyi)",
+      "tolerance": 0.03
+    },
+    {
+      "benchmark": "strip cylindrical bending (beam limit)",
+      "got": 3129.895728308349,
+      "quantity": "M_max",
+      "reference": 3125.0,
+      "rel_error": 0.001566633058671723,
+      "source": "closed form (Navier series / beam limit / Hetenyi)",
+      "tolerance": 0.03
+    },
+    {
+      "benchmark": "SSSS square plate (Navier series)",
+      "got": 0.0007095721221323806,
+      "quantity": "w_max",
+      "reference": 0.0007097742348208563,
+      "rel_error": 0.0002847563049772841,
+      "source": "closed form (Navier series / beam limit / Hetenyi)",
+      "tolerance": 0.03
+    },
+    {
+      "benchmark": "SSSS square plate (Navier series)",
+      "got": 4779.189891891933,
+      "quantity": "M_x(centre)",
+      "reference": 4788.507948684198,
+      "rel_error": 0.0019459207110275318,
+      "source": "closed form (Navier series / beam limit / Hetenyi)",
+      "tolerance": 0.03
+    },
+    {
+      "benchmark": "clamped square plate",
+      "got": 0.00022135375907015093,
+      "quantity": "w_max",
+      "reference": 0.0002201472,
+      "rel_error": 0.0054806923283644785,
+      "source": "closed form (Navier series / beam limit / Hetenyi)",
+      "tolerance": 0.03
+    },
+    {
+      "benchmark": "Winkler plate, local load (Hetenyi)",
+      "got": 0.016398116910242334,
+      "quantity": "w_max",
+      "reference": 0.016480070037234985,
+      "rel_error": 0.004972862785624529,
+      "source": "closed form (Navier series / beam limit / Hetenyi)",
+      "tolerance": 0.03
+    },
+    {
+      "benchmark": "rigid projection, exactly rigid field",
+      "got": 1.0000000000000002,
+      "quantity": "KE_rigid / KE_total",
+      "reference": 1.0,
+      "rel_error": 2.220446049250313e-16,
+      "source": "analytic: a rigid field is reproduced by the rigid fit",
+      "tolerance": 1e-12
+    },
+    {
+      "benchmark": "rigid projection, exactly rigid field",
+      "got": 3.2526065174565133e-19,
+      "quantity": "max |v - v_rigid| [m/s]",
+      "reference": 0.0,
+      "rel_error": 3.2526065174565133e-19,
+      "source": "analytic: residual is identically zero",
+      "tolerance": 1e-12
+    },
+    {
+      "benchmark": "rigid projection, exactly rigid field",
+      "got": 0.00019999999999999952,
+      "quantity": "omega_x recovery [rad/s]",
+      "reference": 0.0002,
+      "rel_error": 2.439454888092385e-15,
+      "source": "analytic",
+      "tolerance": 1e-10
+    },
+    {
+      "benchmark": "rigid projection, isotropic bending field",
+      "got": 0.7185929648241206,
+      "quantity": "KE_rigid / KE_total",
+      "reference": 0.7185929648241206,
+      "rel_error": 0.0,
+      "source": "analytic: symmetry kills the tilt, so the rigid fit is the mean and the fraction is mean(u)^2/mean(u^2)",
+      "tolerance": 1e-12
+    },
+    {
+      "benchmark": "rigid projection, isotropic bending field",
+      "got": 4.0941900219732345e-20,
+      "quantity": "max |tilt rate| [rad/s]",
+      "reference": 0.0,
+      "rel_error": 4.0941900219732345e-20,
+      "source": "analytic: the first moments of (x^2+y^2) vanish on a symmetric square",
+      "tolerance": 1e-12
+    },
+    {
+      "benchmark": "momentum transfer",
+      "got": 2.842170943040401e-14,
+      "quantity": "residual [kg m/s]",
+      "reference": 0.0,
+      "rel_error": 2.842170943040401e-14,
+      "source": "exact identity of the mass-weighted fit",
+      "tolerance": 2.393841918055428e-10
+    },
+    {
+      "benchmark": "angular momentum transfer",
+      "got": 1.1368683772161603e-13,
+      "quantity": "max residual [kg m^2/s]",
+      "reference": 0.0,
+      "rel_error": 1.1368683772161603e-13,
+      "source": "exact identity (fit in principal axes)",
+      "tolerance": 6.949874527390102e-11
+    },
+    {
+      "benchmark": "kinetic energy split",
+      "got": 1.1102230246251565e-16,
+      "quantity": "KE_rigid + KE_deform - KE_field [J]",
+      "reference": 0.0,
+      "rel_error": 1.1102230246251565e-16,
+      "source": "exact identity (cross terms vanish)",
+      "tolerance": 1e-12
+    },
+    {
+      "benchmark": "floe heave (DEM-side integration)",
+      "got": 1.3419081874758112,
+      "quantity": "period [s]",
+      "reference": 1.3419219843355874,
+      "rel_error": 1.0281417203857867e-05,
+      "source": "omega = sqrt(rho_w g / (rho_i t)), no added mass",
+      "tolerance": 0.001
+    },
+    {
+      "benchmark": "loading path linearity",
+      "got": 0.0,
+      "quantity": "relative finite-difference residual",
+      "reference": 0.0,
+      "rel_error": 0.0,
+      "source": "K w = q b_hat is linear in q",
+      "tolerance": 1e-09
+    },
+    {
+      "benchmark": "quasi-static validity",
+      "got": 3.6936024618397503e-05,
+      "quantity": "KE/U at the run rate",
+      "reference": 0.1,
+      "rel_error": 0.0,
+      "source": "reporting row: the run is quasi-static while KE/U <= 0.1 (critical rate 5.2e+04 Pa/s)",
+      "tolerance": 1000000000.0
+    }
+  ]
+}
