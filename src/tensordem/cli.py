@@ -144,6 +144,24 @@ def _cmd_verify_friction_polyhedron(args: argparse.Namespace) -> None:
     print(f"Summary: {summary_path}")
 
 
+def _cmd_h1_broken_ice(args: argparse.Namespace) -> None:
+    """Run the H1-BROKEN-ICE-DEM cases (buoyancy / repose / channel)."""
+    from .polyhedron_floe3d.h1_cases import validate
+
+    cases = [c for c in args.cases.split(",") if c]
+    kwargs = {}
+    if args.quick:
+        kwargs = {}
+    else:
+        kwargs = {"repose": {"n_steps": args.repose_steps, "n_bodies": args.repose_bodies},
+                  "channel": {"n_steps": args.channel_steps}}
+    result = validate(cases=cases, quick=args.quick, **kwargs)
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_text(json.dumps(result, indent=1, default=float))
+    print("cases:", result["passed"])
+    print("report:", args.output)
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(
         description="TensorDEM: Discrete Element Method solver and verification tools",
@@ -191,6 +209,22 @@ def main(argv: list[str] | None = None) -> None:
         help="Output directory for verification report",
     )
     verify_parser.set_defaults(func=_cmd_verify_friction_polyhedron)
+
+    # --- h1-broken-ice subcommand (in-repo caller of the H1 case builders) ---
+    h1_parser = subparsers.add_parser(
+        "h1-broken-ice",
+        help="Broken-ice DEM cases: floating equilibrium, rubble repose, channel clearing",
+    )
+    h1_parser.add_argument("--cases", default="buoyancy,repose,channel",
+                           help="comma separated subset of buoyancy,repose,channel")
+    h1_parser.add_argument("--quick", action="store_true",
+                           help="reduced case sizes (how the pytest gate runs it)")
+    h1_parser.add_argument("--repose-steps", type=int, default=6000)
+    h1_parser.add_argument("--repose-bodies", type=int, default=45)
+    h1_parser.add_argument("--channel-steps", type=int, default=900)
+    h1_parser.add_argument("--output", type=Path,
+                           default=Path("artifacts/h1_broken_ice_dem/cli_report.json"))
+    h1_parser.set_defaults(func=_cmd_h1_broken_ice)
 
     args = parser.parse_args(argv)
     if not hasattr(args, "func"):

@@ -1,13 +1,14 @@
-"""H1-BROKEN-ICE-DEM round-2 driver: three acceptance cases, raw JSON + figures.
-
-Usage::
+"""H1-BROKEN-ICE-DEM runner: build the three cases, write ``results.json``.
 
     PYTHONPATH=src python benchmarks/h1_broken_ice_dem/run_validation.py --quick
     PYTHONPATH=src python benchmarks/h1_broken_ice_dem/run_validation.py \
-        --repose-bodies 27 --repose-steps 3000
+        --cases buoyancy,channel --out results.json
+    # one friction per shard, so the three rubble runs can go to three cluster jobs
+    PYTHONPATH=src python benchmarks/h1_broken_ice_dem/run_validation.py \
+        --cases repose --repose-shard 2 --repose-bodies 45 --repose-steps 30000 \
+        --repose-dt 2e-4 --out repose_shard_2.json
 
-Every number in the markdown report is read from the JSON written here; nothing is
-transcribed by hand.  The figures are generated from the same JSON.
+Every number in the JSON is produced by the run; nothing is copied by hand.
 """
 from __future__ import annotations
 
@@ -24,6 +25,9 @@ from tensordem.polyhedron_floe3d.h1_cases import validate  # noqa: E402
 
 OUT_DIR = os.path.join(ROOT, "artifacts", "h1_broken_ice_dem")
 
+#: friction sweep declared in ``docs/H1_BROKEN_ICE_DEM_ROUND2.md`` section 4
+FRICTION_GRID = (0.2, 0.4, 0.6)
+
 
 def main() -> int:
     ap = argparse.ArgumentParser()
@@ -31,30 +35,46 @@ def main() -> int:
     ap.add_argument("--cases", default="buoyancy,repose,channel")
     ap.add_argument("--repose-bodies", type=int, default=None)
     ap.add_argument("--repose-steps", type=int, default=None)
+    ap.add_argument("--repose-dt", type=float, default=None)
+    ap.add_argument("--repose-settle-tol", type=float, default=None)
+    ap.add_argument("--repose-shard", type=int, default=None,
+                    help="1-based index into FRICTION_GRID %s; runs that mu only"
+                         % (FRICTION_GRID,))
     ap.add_argument("--channel-floes", type=int, default=None)
     ap.add_argument("--channel-steps", type=int, default=None)
+    ap.add_argument("--out", default="results.json")
     args = ap.parse_args()
 
     kwargs = {}
-    if args.repose_bodies or args.repose_steps:
-        rk = {}
-        if args.repose_bodies:
-            rk["n_bodies"] = args.repose_bodies
-        if args.repose_steps:
-            rk["n_steps"] = args.repose_steps
+    rk = {}
+    if args.repose_bodies:
+        rk["n_bodies"] = args.repose_bodies
+    if args.repose_steps:
+        rk["n_steps"] = args.repose_steps
+    if args.repose_dt:
+        rk["dt"] = args.repose_dt
+    if args.repose_settle_tol is not None:
+        rk["settle_tol"] = args.repose_settle_tol
+    if args.repose_shard is not None:
+        if not 1 <= args.repose_shard <= len(FRICTION_GRID):
+            raise SystemExit("--repose-shard out of range: %s" % (FRICTION_GRID,))
+        rk["friction"] = (FRICTION_GRID[args.repose_shard - 1],)
+        rk["shard_of"] = list(FRICTION_GRID)
+        rk["shard_index"] = args.repose_shard
+    if rk:
         kwargs["repose"] = rk
-    if args.channel_floes or args.channel_steps:
-        ck = {}
-        if args.channel_floes:
-            ck["n_floes"] = args.channel_floes
-        if args.channel_steps:
-            ck["n_steps"] = args.channel_steps
+    ck = {}
+    if args.channel_floes:
+        ck["n_floes"] = args.channel_floes
+    if args.channel_steps:
+        ck["n_steps"] = args.channel_steps
+    if ck:
         kwargs["channel"] = ck
 
     result = validate(cases=[c for c in args.cases.split(",") if c], quick=args.quick,
                       **kwargs)
     os.makedirs(OUT_DIR, exist_ok=True)
-    path = os.path.join(OUT_DIR, "results.json")
+    path = os.path.join(OUT_DIR, args.out)
     with open(path, "w") as fh:
         json.dump(result, fh, indent=1, default=float)
     print(json.dumps({"passed": result["passed"], "runtime_s": result["runtime_s"],

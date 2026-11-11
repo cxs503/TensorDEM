@@ -354,6 +354,10 @@ class DEMSystem3D:
         self.pe_spring = 0.0
         self.dissipated = 0.0
         self.work_external = 0.0
+        #: buoyancy force per body for the current step; the work it does is booked
+        #: in :meth:`step` with the *midpoint* velocity of the kick (see the
+        #: ledger note in :meth:`energy_residual`), never as a power.
+        self._buoyancy_force = np.zeros((0, 3))
         self.spring_pairs = np.zeros(0)      # 0.5 * kn * delta^2 per contact
         self.spring_deltas = np.zeros(0)     # delta per contact
         self.history: List[Dict[str, object]] = []
@@ -491,14 +495,16 @@ class DEMSystem3D:
         total = np.bincount(index, weights=volume, minlength=n_bodies)
         moments = np.stack([np.bincount(index, weights=moment[:, k], minlength=n_bodies)
                             for k in range(3)], axis=1)
-        for body, vol, mom in zip(self.bodies, total, moments):
+        buoyancy = np.zeros((len(self.bodies), 3))
+        for index, (body, vol, mom) in enumerate(zip(self.bodies, total, moments)):
             if vol <= 0.0:
                 continue
             centre = mom / vol
             force = np.array([0.0, 0.0, self.water_density * self.gravity * vol])
             body.external_force += force
             body.external_torque += _cross3(centre - body.position, force)
-            self.work_external += float(force @ body.velocity)
+            buoyancy[index] = force
+        self._buoyancy_force = buoyancy
 
     def _apply_pair(self, i: int, j: int, geom: PairContact,
                     bodies: List[FloeBody]) -> Tuple[np.ndarray, np.ndarray, float, float]:
@@ -515,7 +521,11 @@ class DEMSystem3D:
         v_n = float(v_rel @ normal)
         m_eff = body_a.mass * body_b.mass / (body_a.mass + body_b.mass)
         law = self.law
-        f_n = law.kn * depth + law.normal_damping(m_eff) * v_n
+        # ``normal`` points from body a to body b, so ``v_n < 0`` is an approach and
+        # the dashpot must *add* to the repulsion: f_n = k_n delta - c_n v_n.  The
+        # opposite sign is negative damping: it feeds energy in on every separating
+        # step and makes a confined constant-speed drive (the channel case) heat up.
+        f_n = law.kn * depth - law.normal_damping(m_eff) * v_n
         if f_n < 0.0:
             f_n = 0.0
         v_t = v_rel - v_n * normal
@@ -596,8 +606,8 @@ class DEMSystem3D:
         self.dissipated += (law.normal_damping(body.mass) * v_n * v_n * self.dt
                             if f_n > 0.0 else 0.0) \
             + mag * float(np.linalg.norm(v_t)) * self.dt
-        # work done *by* the moving wall on the body
-        self.work_external += float(force @ wall.velocity)
+        # work done *by* the moving wall on the body over this step [J]
+        self.work_external += float(force @ wall.velocity) * self.dt
         return force, torque, spring, depth
 
     # -- one step ----------------------------------------------------------
@@ -681,18 +691,25 @@ class DEMSystem3D:
         self.spring_deltas = np.asarray(deltas, dtype=np.float64)
 
         # ---- hydrodynamic drag (optional linear closure) -----------------
+        drag_forces = [np.zeros(3) for _ in bodies]
+        drag_torques = [np.zeros(3) for _ in bodies]
         if self.linear_drag > 0.0 or self.angular_drag > 0.0:
             for index, body in enumerate(bodies):
                 if self.linear_drag > 0.0:
                     drag_force = -self.linear_drag * body.velocity
                     forces[index] += drag_force
-                    self.dissipated += float(-drag_force @ body.velocity) * dt
+                    drag_forces[index] = drag_force
                 if self.angular_drag > 0.0:
                     drag_torque = -self.angular_drag * body.omega
                     torques[index] += drag_torque
-                    self.dissipated += float(-drag_torque @ body.omega) * dt
+                    drag_torques[index] = drag_torque
 
         # ---- integration (leapfrog in velocity = kick-drift) -------------
+        # velocities before the kick, so the hydrodynamic ledger below can use the
+        # midpoint velocity: dE = F . (v_n + v_{n+1})/2 dt is the exact kinetic
+        # energy increment of a kick, F . v_n dt is not.
+        v_before = [body.velocity.copy() for body in bodies]
+        w_before = [body.omega.copy() for body in bodies]
         for body, force, torque in zip(bodies, forces, torques):
             inv_inertia = body.inverse_inertia_world()
             inertia = body.inertia_world()
@@ -714,6 +731,20 @@ class DEMSystem3D:
             body.rotate(_expm_skew(body.omega, dt))
             if self.constrain_to_plane:
                 _project_to_plane(body)
+        # ---- hydrostatic / hydrodynamic energy ledger --------------------
+        # Book work (J) and dissipation (J) over the step just integrated, with the
+        # midpoint velocity of the kick.  Both closures are centred on the body, so
+        # a single midpoint velocity is exact for them.
+        if len(self._buoyancy_force) != len(bodies):
+            self._buoyancy_force = np.zeros((len(bodies), 3))
+        for index, body in enumerate(bodies):
+            v_mid = 0.5 * (v_before[index] + body.velocity)
+            w_mid = 0.5 * (w_before[index] + body.omega)
+            self.work_external += float(self._buoyancy_force[index] @ v_mid) * dt
+            if self.linear_drag > 0.0:
+                self.dissipated += float(-drag_forces[index] @ v_mid) * dt
+            if self.angular_drag > 0.0:
+                self.dissipated += float(-drag_torques[index] @ w_mid) * dt
         self.time += dt
 
         if self.record:

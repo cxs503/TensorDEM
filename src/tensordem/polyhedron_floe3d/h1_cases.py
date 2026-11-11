@@ -188,17 +188,32 @@ def repose_case(*, n_bodies: int = 45,
                 kn: float = 2.0e5, zeta: float = 0.2, dt: float = 1.0e-4,
                 n_steps: int = 6000, box_half: float = 0.5,
                 cell_half: float = 0.13, density: float = SEA_ICE_DENSITY,
-                seed: int = 5, band: Sequence[float] = REPOSE_BAND_DEG) -> Dict[str, Any]:
-    """Rubble heap of polyhedral ice cells: repose angle per friction coefficient."""
+                seed: int = 5, band: Sequence[float] = REPOSE_BAND_DEG,
+                settle_tol: Optional[float] = 0.01,
+                settle_window: int = 400,
+                shard_of: Optional[Sequence[float]] = None,
+                shard_index: Optional[int] = None) -> Dict[str, Any]:
+    """Rubble heap of polyhedral ice cells: repose angle per friction coefficient.
+
+    ``n_steps`` is an upper bound: the run stops as soon as the heap is at rest
+    (see :func:`~tensordem.polyhedron_floe3d.study.case3_repose`).  A case is only
+    ``passed`` when every friction run settled *and* its angle lies inside the
+    literature band; an unsettled run reports ``settled = False`` instead of an
+    angle, which is how the round-1 failure is kept visible.
+    """
     t0 = time.time()
     raw = case3_repose(n_bodies=n_bodies, friction=friction, kn=kn, zeta=zeta, dt=dt,
                        n_steps=n_steps, box_half=box_half, cell_half=cell_half,
-                       density=density, seed=seed)
+                       density=density, seed=seed, settle_tol=settle_tol,
+                       settle_window=settle_window)
     angles = [float(r["repose_angle_deg"]) for r in raw["runs"]]
     inside = [bool(band[0] <= a <= band[1]) for a in angles]
+    settled = [bool(r.get("settled", False)) for r in raw["runs"]]
     return {
         "case": "repose",
         "setup": raw["setup"],
+        "shard": {"of": list(shard_of) if shard_of else list(friction),
+                  "index": shard_index},
         "ref": {
             "band_deg": [float(band[0]), float(band[1])],
             "source": "ice-rubble angle of repose literature band; provenance in "
@@ -206,6 +221,7 @@ def repose_case(*, n_bodies: int = 45,
         },
         "runs": raw["runs"],
         "angles_deg": angles,
+        "settled": settled,
         "inside_literature_band": inside,
         "all_runs_valid": raw["all_runs_valid"],
         "repose_angle_monotone_in_friction": raw["repose_angle_monotone_in_friction"],
@@ -239,11 +255,17 @@ def channel_clearing_case(*, n_floes: int = 24, median_thickness: float = 0.12,
     field = build_brash_ice_field(n_floes, box=(0.02, -0.5 * width, length, 0.5 * width),
                                   median_thickness=median_thickness, seed=seed,
                                   ice_density=ice_density, water_density=water_density)
+    # the fixed swath starts at the ice-field leading edge and is one corridor long;
+    # the hull starts ~1 cm behind it, so the window is "cleared" as the hull sweeps
+    x0 = min(float(b.world_vertices()[:, 0].min()) for b in field.bodies)
     record = run_channel(field, kn=kn, mu=mu, dt=dt, speed=speed, n_steps=n_steps,
-                         width=width, length=length, corridor=corridor, record_every=1)
+                         width=width, length=length, corridor=corridor, record_every=1,
+                         fixed_window=(x0, x0 + corridor))
     times = np.asarray(record["time"], dtype=float)
     porosity = np.asarray(record["porosity"], dtype=float)
     concentration = 1.0 - porosity
+    # the lane metric: solid fraction of the *fixed* swath the hull sweeps through
+    conc_lane = 1.0 - np.asarray(record["porosity_fixed"], dtype=float)
     c0 = float(concentration[0])
     c1 = float(concentration[-1])
     half = 0.5 * (c0 + c1)
@@ -267,10 +289,13 @@ def channel_clearing_case(*, n_floes: int = 24, median_thickness: float = 0.12,
             "time_s": times.tolist(),
             "porosity": porosity.tolist(),
             "concentration": concentration.tolist(),
+            "lane_concentration": conc_lane.tolist(),
             "resistance_N": resistance.tolist(),
             "hull_advance_m": float(record["hull_advance"][0]),
         },
         "summary": {
+            "lane_concentration_initial": float(conc_lane[0]) if conc_lane.size else float("nan"),
+            "lane_concentration_final": float(conc_lane[-1]) if conc_lane.size else float("nan"),
             "concentration_initial": c0,
             "concentration_final": c1,
             "concentration_half_time_s": half_time,
@@ -281,8 +306,10 @@ def channel_clearing_case(*, n_floes: int = 24, median_thickness: float = 0.12,
             "safety_clamps": int(record["clamps"][0]),
         },
         "runtime_s": time.time() - t0,
-        "passed": bool(np.isfinite(half_time) and c1 < c0
-                       and float(record["mass_residual"][0]) < 1e-12),
+        "passed": bool(conc_lane.size > 1
+                       and float(conc_lane[-1]) < float(conc_lane[0]) * 0.5
+                       and float(record["mass_residual"][0]) < 1e-12
+                       and float(record["energy_residual"][0]) < 0.05),
     }
 
 
