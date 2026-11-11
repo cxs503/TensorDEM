@@ -144,13 +144,16 @@ def pair_contact_forces(pos: np.ndarray, vel: np.ndarray, omega: np.ndarray,
                         iu: np.ndarray, ju: np.ndarray,
                         state: PairSpringState, mat: Material3D, dt: float,
                         *, update_state: bool = True,
-                        contact_mode: str = "one_sided") -> dict:
+                        contact_mode: str = "one_sided",
+                        box: tuple[float, float] | None = None) -> dict:
     """Particle-particle contact forces, torques and dissipation channels.
 
     ``iu < ju`` index the candidate pairs (``|x_j - x_i| < 2 r``).  With
     ``update_state=False`` the tangential/rolling springs are neither advanced
     nor stored -- used for the predictor half-kick of the velocity-Verlet
-    integrator.
+    integrator.  ``box=(Lx, Ly)`` applies the minimum-image convention in the
+    two periodic directions (chute flow); default ``None`` is the unwrapped
+    (open) geometry and reproduces the previous results bit for bit.
     """
     n = pos.shape[0]
     res = _empty_pair_result(n)
@@ -164,6 +167,10 @@ def pair_contact_forces(pos: np.ndarray, vel: np.ndarray, omega: np.ndarray,
     mu, mu_r, gamma = mat.mu, mat.mu_rolling, mat.gamma_pair
 
     dvec = pos[ju] - pos[iu]
+    if box is not None:
+        # minimum image in the two periodic directions
+        dvec[:, 0] -= box[0] * np.round(dvec[:, 0] / box[0])
+        dvec[:, 1] -= box[1] * np.round(dvec[:, 1] / box[1])
     dist = np.sqrt(np.einsum("ij,ij->i", dvec, dvec))
     overlap = 2.0 * r - dist
     act = overlap > 0.0
