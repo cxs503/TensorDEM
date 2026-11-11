@@ -179,6 +179,29 @@ __all__ = [
     "spearman_rho",
     "transition_temperature_analytic",
     "transition_temperature_numeric",
+    # Timco & Johnston (2003) exponential law (IN13-W3-N06), re-exported from
+    # .timco_johnston (see collision policy at the bottom of this file).
+    "FreezeBondParams",
+    "FreezeBondState",
+    "FailureMode",
+    "PullOffResult",
+    "ShearResult",
+    "FailureModePhaseDiagram",
+    "ParameterSweepResult",
+    "VerificationReport",
+    "bond_growth_kinetics",
+    "effective_bond_strength",
+    "classify_failure_mode",
+    "pull_off_test",
+    "shear_test",
+    "failure_mode_phase_diagram",
+    "parameter_sweep",
+    "run_full_verification",
+    "T_MELTING_FRESHWATER",
+    "T_MELTING_SEA_ICE",
+    "TAU_GROWTH_DEFAULT",
+    "SIGMA_T_ICE",
+    "E_ICE",
 ]
 
 # Failure-mode transition + laboratory anchor validation (node P46W3-N07)
@@ -205,4 +228,48 @@ from .mode_transition import (  # noqa: E402
     traction_separation,
     transition_temperature,
     validate_against_anchor,
+)
+
+# ---------------------------------------------------------------------------
+# Timco & Johnston (2003) exponential freeze-bond law (IN13-W3-N06)
+#
+# The original top-level module ``tensordem/freeze_bond.py`` was shadowed by
+# this package (added later), which silently broke the verification contract
+# ``tests/test_freeze_bond.py`` at collection time (21 of its 24 imports
+# unresolved; see tools/import_contract_scan.py).  The module was moved here
+# as the ``timco_johnston`` submodule and its public API is re-exported below
+# so the contract keeps resolving.
+#
+# Name-collision policy (declared, not accidental):
+#   * ``freeze_bond_strength`` -> the Timco-Johnston exponential law
+#     ``sigma_0 * exp(-beta * dT)`` in SI (Pa).  The Sastri-Metzger law of the
+#     same name stays at ``tensordem.freeze_bond.strength.freeze_bond_strength``
+#     (MPa-based, different signature).
+#   * ``SIGMA_0_DEFAULT`` / ``BETA_DEFAULT`` keep the Sastri-Metzger values
+#     from ``.strength`` (MPa / dimensionless); the Timco defaults (SI Pa)
+#     live in ``tensordem.freeze_bond.timco_johnston``.
+# ---------------------------------------------------------------------------
+from .timco_johnston import (  # noqa: E402
+    E_ICE,
+    FailureMode,
+    FailureModePhaseDiagram,
+    FreezeBondParams,
+    FreezeBondState,
+    ParameterSweepResult,
+    PullOffResult,
+    ShearResult,
+    T_MELTING_FRESHWATER,
+    T_MELTING_SEA_ICE,
+    TAU_GROWTH_DEFAULT,
+    SIGMA_T_ICE,
+    VerificationReport,
+    bond_growth_kinetics,
+    classify_failure_mode,
+    effective_bond_strength,
+    failure_mode_phase_diagram,
+    freeze_bond_strength,  # Timco-Johnston law (overrides .strength at top level)
+    parameter_sweep,
+    pull_off_test,
+    run_full_verification,
+    shear_test,
 )
