@@ -17,6 +17,6 @@ in three anchors plus the two declared contact laws:
 ``study`` runs the anchors and adjudicates them against the pre-registered
 thresholds in ``prereg/P152W1_N04_friction_contact_surface_prereg.json``.
 """
-from . import laws, kernel, packing, repose, shear  # noqa: F401
+from . import benchmark, laws, kernel, packing, repose, shear  # noqa: F401
 
-__all__ = ["laws", "kernel", "packing", "repose", "shear"]
+__all__ = ["benchmark", "laws", "kernel", "packing", "repose", "shear"]
