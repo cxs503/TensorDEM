@@ -48,6 +48,7 @@ from .literature import (
 )
 from .api import (
     calculate_rotary_dryer,
+    calculate_rotary_dryer_with_drying,
 )
 from . import psychrometrics
 from .moist_transfer import (
@@ -62,6 +63,10 @@ from .moist_transfer import (
     fit_thin_layer,
     page_model,
     lewis_model,
+)
+from .moist_drying_case import (
+    MAIN_CASE,
+    run_acceptance_suite,
 )
 from .moist_bed import (
     DryerBedConfig,
@@ -91,6 +96,7 @@ __all__ = [
     "descoin_correlation",
     "nusselt_literature",
     "calculate_rotary_dryer",
+    "calculate_rotary_dryer_with_drying",
     # moist drying
     "psychrometrics",
     "nusselt_ranz_marshall",
@@ -109,4 +115,6 @@ __all__ = [
     "simulate_dry_heating",
     "solve_steady_profile",
     "bed_ledger",
+    "MAIN_CASE",
+    "run_acceptance_suite",
 ]
