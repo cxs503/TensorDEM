@@ -1,0 +1,62 @@
+{
+ "stored_angle": 44.25,
+ "library_on_real_field": 51.0,
+ "corrected_real_field": 60.0,
+ "calibration": [
+  {
+   "theta_true": 50.0,
+   "library": 40.0,
+   "library_bias": -10.0,
+   "fixed_bw1.5": 50.0,
+   "fixed_bw1.5_bias": 0.0,
+   "fixed_bw2.0": 50.0,
+   "fixed_bw2.0_bias": 0.0,
+   "fixed_bw3.0": 49.5,
+   "fixed_bw3.0_bias": -0.5
+  },
+  {
+   "theta_true": 55.0,
+   "library": 45.0,
+   "library_bias": -10.0,
+   "fixed_bw1.5": 55.0,
+   "fixed_bw1.5_bias": 0.0,
+   "fixed_bw2.0": 55.5,
+   "fixed_bw2.0_bias": 0.5,
+   "fixed_bw3.0": 54.0,
+   "fixed_bw3.0_bias": -1.0
+  },
+  {
+   "theta_true": 60.0,
+   "library": 51.0,
+   "library_bias": -9.0,
+   "fixed_bw1.5": 60.0,
+   "fixed_bw1.5_bias": 0.0,
+   "fixed_bw2.0": 60.5,
+   "fixed_bw2.0_bias": 0.5,
+   "fixed_bw3.0": 60.0,
+   "fixed_bw3.0_bias": 0.0
+  },
+  {
+   "theta_true": 65.0,
+   "library": 57.0,
+   "library_bias": -8.0,
+   "fixed_bw1.5": 65.0,
+   "fixed_bw1.5_bias": 0.0,
+   "fixed_bw2.0": 65.5,
+   "fixed_bw2.0_bias": 0.5,
+   "fixed_bw3.0": 63.5,
+   "fixed_bw3.0_bias": -1.5
+  },
+  {
+   "theta_true": 70.0,
+   "library": 63.0,
+   "library_bias": -7.0,
+   "fixed_bw1.5": 70.0,
+   "fixed_bw1.5_bias": 0.0,
+   "fixed_bw2.0": 70.5,
+   "fixed_bw2.0_bias": 0.5,
+   "fixed_bw3.0": 70.0,
+   "fixed_bw3.0_bias": 0.0
+  }
+ ]
+}

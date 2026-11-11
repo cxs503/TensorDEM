@@ -1,0 +1,413 @@
+{
+ "audited_repo": "/root/tp-agent/work/m15279",
+ "theta_ref_deg": 60.0,
+ "tolerance": 0.15,
+ "probes": {
+  "P1_operator_recovery": [
+   {
+    "window": "16x32",
+    "aspect": 1.727,
+    "theta_true": 45.0,
+    "library_deg": 30.0,
+    "library_bias_deg": -15.0,
+    "isotropic_deg": 45.0,
+    "isotropic_bias_deg": 0.0,
+    "library_error_if_judged": 0.3333
+   },
+   {
+    "window": "16x32",
+    "aspect": 1.727,
+    "theta_true": 55.0,
+    "library_deg": 39.0,
+    "library_bias_deg": -16.0,
+    "isotropic_deg": 55.0,
+    "isotropic_bias_deg": 0.0,
+    "library_error_if_judged": 0.2909
+   },
+   {
+    "window": "16x32",
+    "aspect": 1.727,
+    "theta_true": 60.0,
+    "library_deg": 45.0,
+    "library_bias_deg": -15.0,
+    "isotropic_deg": 60.0,
+    "isotropic_bias_deg": 0.0,
+    "library_error_if_judged": 0.25
+   },
+   {
+    "window": "16x32",
+    "aspect": 1.727,
+    "theta_true": 65.0,
+    "library_deg": 51.0,
+    "library_bias_deg": -14.0,
+    "isotropic_deg": 65.0,
+    "isotropic_bias_deg": 0.0,
+    "library_error_if_judged": 0.2154
+   },
+   {
+    "window": "16x32",
+    "aspect": 1.727,
+    "theta_true": 70.0,
+    "library_deg": 58.0,
+    "library_bias_deg": -12.0,
+    "isotropic_deg": 70.0,
+    "isotropic_bias_deg": 0.0,
+    "library_error_if_judged": 0.1714
+   },
+   {
+    "window": "24x48",
+    "aspect": 1.73,
+    "theta_true": 45.0,
+    "library_deg": 30.0,
+    "library_bias_deg": -15.0,
+    "isotropic_deg": 45.0,
+    "isotropic_bias_deg": 0.0,
+    "library_error_if_judged": 0.3333
+   },
+   {
+    "window": "24x48",
+    "aspect": 1.73,
+    "theta_true": 55.0,
+    "library_deg": 39.5,
+    "library_bias_deg": -15.5,
+    "isotropic_deg": 55.0,
+    "isotropic_bias_deg": 0.0,
+    "library_error_if_judged": 0.2818
+   },
+   {
+    "window": "24x48",
+    "aspect": 1.73,
+    "theta_true": 60.0,
+    "library_deg": 44.5,
+    "library_bias_deg": -15.5,
+    "isotropic_deg": 59.5,
+    "isotropic_bias_deg": -0.5,
+    "library_error_if_judged": 0.2583
+   },
+   {
+    "window": "24x48",
+    "aspect": 1.73,
+    "theta_true": 65.0,
+    "library_deg": 51.0,
+    "library_bias_deg": -14.0,
+    "isotropic_deg": 65.0,
+    "isotropic_bias_deg": 0.0,
+    "library_error_if_judged": 0.2154
+   },
+   {
+    "window": "24x48",
+    "aspect": 1.73,
+    "theta_true": 70.0,
+    "library_deg": 58.0,
+    "library_bias_deg": -12.0,
+    "isotropic_deg": 70.0,
+    "isotropic_bias_deg": 0.0,
+    "library_error_if_judged": 0.1714
+   },
+   {
+    "window": "48x48",
+    "aspect": 0.857,
+    "theta_true": 45.0,
+    "library_deg": 49.5,
+    "library_bias_deg": 4.5,
+    "isotropic_deg": 45.0,
+    "isotropic_bias_deg": 0.0,
+    "library_error_if_judged": 0.1
+   },
+   {
+    "window": "48x48",
+    "aspect": 0.857,
+    "theta_true": 55.0,
+    "library_deg": 59.0,
+    "library_bias_deg": 4.0,
+    "isotropic_deg": 55.0,
+    "isotropic_bias_deg": 0.0,
+    "library_error_if_judged": 0.0727
+   },
+   {
+    "window": "48x48",
+    "aspect": 0.857,
+    "theta_true": 60.0,
+    "library_deg": 64.0,
+    "library_bias_deg": 4.0,
+    "isotropic_deg": 60.0,
+    "isotropic_bias_deg": 0.0,
+    "library_error_if_judged": 0.0667
+   },
+   {
+    "window": "48x48",
+    "aspect": 0.857,
+    "theta_true": 65.0,
+    "library_deg": 68.5,
+    "library_bias_deg": 3.5,
+    "isotropic_deg": 65.0,
+    "isotropic_bias_deg": 0.0,
+    "library_error_if_judged": 0.0538
+   },
+   {
+    "window": "48x48",
+    "aspect": 0.857,
+    "theta_true": 70.0,
+    "library_deg": 72.5,
+    "library_bias_deg": 2.5,
+    "isotropic_deg": 70.0,
+    "isotropic_bias_deg": 0.0,
+    "library_error_if_judged": 0.0357
+   },
+   {
+    "window": "48x24",
+    "aspect": 0.421,
+    "theta_true": 45.0,
+    "library_deg": 67.0,
+    "library_bias_deg": 22.0,
+    "isotropic_deg": 45.5,
+    "isotropic_bias_deg": 0.5,
+    "library_error_if_judged": 0.4889
+   },
+   {
+    "window": "48x24",
+    "aspect": 0.421,
+    "theta_true": 55.0,
+    "library_deg": 73.5,
+    "library_bias_deg": 18.5,
+    "isotropic_deg": 55.0,
+    "isotropic_bias_deg": 0.0,
+    "library_error_if_judged": 0.3364
+   },
+   {
+    "window": "48x24",
+    "aspect": 0.421,
+    "theta_true": 60.0,
+    "library_deg": 75.5,
+    "library_bias_deg": 15.5,
+    "isotropic_deg": 61.0,
+    "isotropic_bias_deg": 1.0,
+    "library_error_if_judged": 0.2583
+   },
+   {
+    "window": "48x24",
+    "aspect": 0.421,
+    "theta_true": 65.0,
+    "library_deg": 78.0,
+    "library_bias_deg": 13.0,
+    "isotropic_deg": 64.0,
+    "isotropic_bias_deg": -1.0,
+    "library_error_if_judged": 0.2
+   },
+   {
+    "window": "48x24",
+    "aspect": 0.421,
+    "theta_true": 70.0,
+    "library_deg": 81.0,
+    "library_bias_deg": 11.0,
+    "isotropic_deg": 69.0,
+    "isotropic_bias_deg": -1.0,
+    "library_error_if_judged": 0.1571
+   }
+  ],
+  "P2_root_cause": [
+   {
+    "window": "16x32",
+    "aspect": 1.727,
+    "theta_true": 45.0,
+    "arctan_tan_over_aspect_predicted_deg": 30.07,
+    "library_deg": 30.0,
+    "residual_deg": -0.07
+   },
+   {
+    "window": "16x32",
+    "aspect": 1.727,
+    "theta_true": 55.0,
+    "arctan_tan_over_aspect_predicted_deg": 39.59,
+    "library_deg": 39.0,
+    "residual_deg": -0.59
+   },
+   {
+    "window": "16x32",
+    "aspect": 1.727,
+    "theta_true": 60.0,
+    "arctan_tan_over_aspect_predicted_deg": 45.08,
+    "library_deg": 45.0,
+    "residual_deg": -0.08
+   },
+   {
+    "window": "16x32",
+    "aspect": 1.727,
+    "theta_true": 65.0,
+    "arctan_tan_over_aspect_predicted_deg": 51.16,
+    "library_deg": 51.0,
+    "residual_deg": -0.16
+   },
+   {
+    "window": "16x32",
+    "aspect": 1.727,
+    "theta_true": 70.0,
+    "arctan_tan_over_aspect_predicted_deg": 57.85,
+    "library_deg": 58.0,
+    "residual_deg": 0.15
+   },
+   {
+    "window": "24x48",
+    "aspect": 1.73,
+    "theta_true": 45.0,
+    "arctan_tan_over_aspect_predicted_deg": 30.03,
+    "library_deg": 30.0,
+    "residual_deg": -0.03
+   },
+   {
+    "window": "24x48",
+    "aspect": 1.73,
+    "theta_true": 55.0,
+    "arctan_tan_over_aspect_predicted_deg": 39.54,
+    "library_deg": 39.5,
+    "residual_deg": -0.04
+   },
+   {
+    "window": "24x48",
+    "aspect": 1.73,
+    "theta_true": 60.0,
+    "arctan_tan_over_aspect_predicted_deg": 45.03,
+    "library_deg": 44.5,
+    "residual_deg": -0.53
+   },
+   {
+    "window": "24x48",
+    "aspect": 1.73,
+    "theta_true": 65.0,
+    "arctan_tan_over_aspect_predicted_deg": 51.11,
+    "library_deg": 51.0,
+    "residual_deg": -0.11
+   },
+   {
+    "window": "24x48",
+    "aspect": 1.73,
+    "theta_true": 70.0,
+    "arctan_tan_over_aspect_predicted_deg": 57.8,
+    "library_deg": 58.0,
+    "residual_deg": 0.2
+   },
+   {
+    "window": "48x48",
+    "aspect": 0.857,
+    "theta_true": 45.0,
+    "arctan_tan_over_aspect_predicted_deg": 49.4,
+    "library_deg": 49.5,
+    "residual_deg": 0.1
+   },
+   {
+    "window": "48x48",
+    "aspect": 0.857,
+    "theta_true": 55.0,
+    "arctan_tan_over_aspect_predicted_deg": 59.03,
+    "library_deg": 59.0,
+    "residual_deg": -0.03
+   },
+   {
+    "window": "48x48",
+    "aspect": 0.857,
+    "theta_true": 60.0,
+    "arctan_tan_over_aspect_predicted_deg": 63.67,
+    "library_deg": 64.0,
+    "residual_deg": 0.33
+   },
+   {
+    "window": "48x48",
+    "aspect": 0.857,
+    "theta_true": 65.0,
+    "arctan_tan_over_aspect_predicted_deg": 68.22,
+    "library_deg": 68.5,
+    "residual_deg": 0.28
+   },
+   {
+    "window": "48x48",
+    "aspect": 0.857,
+    "theta_true": 70.0,
+    "arctan_tan_over_aspect_predicted_deg": 72.68,
+    "library_deg": 72.5,
+    "residual_deg": -0.18
+   },
+   {
+    "window": "48x24",
+    "aspect": 0.421,
+    "theta_true": 45.0,
+    "arctan_tan_over_aspect_predicted_deg": 67.17,
+    "library_deg": 67.0,
+    "residual_deg": -0.17
+   },
+   {
+    "window": "48x24",
+    "aspect": 0.421,
+    "theta_true": 55.0,
+    "arctan_tan_over_aspect_predicted_deg": 73.58,
+    "library_deg": 73.5,
+    "residual_deg": -0.08
+   },
+   {
+    "window": "48x24",
+    "aspect": 0.421,
+    "theta_true": 60.0,
+    "arctan_tan_over_aspect_predicted_deg": 76.34,
+    "library_deg": 75.5,
+    "residual_deg": -0.84
+   },
+   {
+    "window": "48x24",
+    "aspect": 0.421,
+    "theta_true": 65.0,
+    "arctan_tan_over_aspect_predicted_deg": 78.89,
+    "library_deg": 78.0,
+    "residual_deg": -0.89
+   },
+   {
+    "window": "48x24",
+    "aspect": 0.421,
+    "theta_true": 70.0,
+    "arctan_tan_over_aspect_predicted_deg": 81.29,
+    "library_deg": 81.0,
+    "residual_deg": -0.29
+   }
+  ],
+  "P3_real_field": {
+   "npz": "/root/tp-agent/work/m15279/artifacts/biaxial_shear_band/final_field.npz",
+   "particles": 893,
+   "window_aspect": 1.404,
+   "stored_angle_deg_m15279": 44.25,
+   "library_radon_deg": 51.0,
+   "isotropic_radon_deg": 60.0,
+   "isotropic_eta2": 0.569,
+   "isotropic_z": 10.61,
+   "relative_error_vs_anchor": 0.0,
+   "within_tolerance": true,
+   "calibration_on_same_window": [
+    {
+     "theta_true": 50.0,
+     "library_deg": 40.0,
+     "isotropic_deg": 50.0
+    },
+    {
+     "theta_true": 55.0,
+     "library_deg": 45.0,
+     "isotropic_deg": 55.0
+    },
+    {
+     "theta_true": 60.0,
+     "library_deg": 51.0,
+     "isotropic_deg": 60.0
+    },
+    {
+     "theta_true": 65.0,
+     "library_deg": 57.0,
+     "isotropic_deg": 65.0
+    },
+    {
+     "theta_true": 70.0,
+     "library_deg": 63.0,
+     "isotropic_deg": 70.0
+    }
+   ]
+  }
+ },
+ "P1_max_abs_bias_library": 22.0,
+ "P1_max_abs_bias_isotropic": 1.0,
+ "P2_max_abs_residual_deg": 0.89
+}
