@@ -35,3 +35,6 @@ from .resolution import (  # noqa: F401  (legacy public API)
 )
 
 __all__ = ["build_config", "compare_histories", "simulate_case"]
+# CLI entry point defined in .resolution (legacy top-level sensitivity.py); re-exported
+# so the historical import path keeps working (m14938 shadow-debt cleanup).
+from .resolution import main  # noqa: F401
