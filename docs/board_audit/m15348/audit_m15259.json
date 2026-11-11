@@ -1,0 +1,147 @@
+{
+  "C2_artifact_inventory": {
+    "benchmarks/beverloo_hopper_m15259.py": {
+      "in_mission_commit": true,
+      "in_main_HEAD": true
+    },
+    "benchmarks/m15259_final_report.py": {
+      "in_mission_commit": true,
+      "in_main_HEAD": true
+    },
+    "benchmarks/m15259_report.py": {
+      "in_mission_commit": true,
+      "in_main_HEAD": true
+    },
+    "docs/figures/m15259_beverloo_comparison.png": {
+      "in_mission_commit": true,
+      "in_main_HEAD": true
+    },
+    "docs/figures/m15259_window_series.png": {
+      "in_mission_commit": true,
+      "in_main_HEAD": true
+    },
+    "prereg/m15259_beverloo.md": {
+      "in_mission_commit": true,
+      "in_main_HEAD": true
+    },
+    "runs/beverloo_m15259/local_med.json": {
+      "in_mission_commit": true,
+      "in_main_HEAD": false
+    },
+    "runs/beverloo_m15259/report_m15259.json": {
+      "in_mission_commit": true,
+      "in_main_HEAD": false
+    }
+  },
+  "C3_arithmetic_replay": {
+    "artifact": "runs/beverloo_m15259/local_med.json (mission commit cda15103)",
+    "filed_w_bev": 1.4490165457739104,
+    "recomputed_w_bev": 1.4490165457739104,
+    "w_bev_abs_diff": 0.0,
+    "filed_w_meas": 4.0927272827566155,
+    "recomputed_w_meas_mean_of_windows": 4.0927272827566155,
+    "filed_rel_err": 1.8244862315017365,
+    "recomputed_rel_err": 1.8244862315017365,
+    "recovered_C": 1.6382020142710068,
+    "recovered_C_vs_literature": 2.824486231501736,
+    "verdict": "FAIL"
+  },
+  "C4_prereg_criteria": {
+    "source": "prereg/m15259_beverloo.md §Predeclared Thresholds",
+    "criteria": {
+      "abs_rel_err_lt_15pct": {
+        "declared": "< 15 %",
+        "measured": 1.8244862315017365,
+        "passed": false
+      },
+      "window_cv_2_to_6_lt_20pct": {
+        "declared": "< 20 % (CV of windows 2-6)",
+        "measured": 0.20752252690624248,
+        "passed": false
+      },
+      "mass_ledger_residual_lt_1e-10": {
+        "declared": "< 1e-10",
+        "measured": 1.747403899362428e-16,
+        "passed": true
+      }
+    },
+    "energy_ledger_residual": 3.1353314615988412,
+    "note": "energy ledger residual 3.14 is O(1): the config does not conserve mechanical energy to the level the solver reports elsewhere"
+  },
+  "C5_provenance": {
+    "headline_filed": {
+      "W_meas": 1.829,
+      "W_bev": 1.8356,
+      "rel_err": -0.004
+    },
+    "grep_hits": [
+      {
+        "number": "1.8290",
+        "files": [
+          "./benchmarks/m15259_final_report.py",
+          "./benchmarks/verified/lbm_dem_drag_calibration/parts/pair_r8_d6.json",
+          "./benchmarks/verified/lbm_dem_drag_calibration/result.json",
+          "./docs/artifacts/ridge_winkler_subgrade/subgrade_modulus_verification.json",
+          "./docs/beverloo_discharge_measurement_audit.md",
+          "./docs/board_audit/m15293/refs/artifacts/case_triaxial_cd/conv_rate_0p25.json",
+          "./docs/board_audit/m15293/refs/artifacts/case_triaxial_cd/ladder_s100000.json",
+          "./docs/board_audit/m15293/refs/artifacts/case_triaxial_cd/ladder_s50000.json"
+        ]
+      },
+      {
+        "number": "1.8356",
+        "files": [
+          "./benchmarks/m15259_final_report.py",
+          "./benchmarks/verified/lbm_dem_drag_calibration/parts/settling_d6.json",
+          "./benchmarks/verified/lbm_dem_drag_calibration/result.json",
+          "./docs/beverloo_discharge_measurement_audit.md",
+          "./docs/board_audit/m15293/refs/artifacts/case_triaxial_cd/conv_rate_0p25.json",
+          "./docs/board_audit/m15293/refs/artifacts/case_triaxial_cd/conv_size_n96.json",
+          "./docs/board_audit/m15293/refs/artifacts/case_triaxial_cd/ladder_s100000.json",
+          "./docs/board_audit/m15293/refs/artifacts/case_triaxial_cd/ladder_s200000.json"
+        ]
+      }
+    ],
+    "hardcoded_literal_in_mission_script": true,
+    "mission_script_comment": "Uses m6457 case C results (from audit) as primary benchmark,",
+    "upstream_source": "docs/beverloo_discharge_measurement_audit.md:82 (row C_lowmu_D5, m6457 campaign, pre-existing in main)",
+    "upstream_disclaimer": "same doc §4: 'that match must not be read as a validated C = 0.58 ... C = 0.955 (+65 %) ... stays WITHHELD as a physical claim'",
+    "any_m15259_artifact_containing_headline": false
+  },
+  "C6_repro_consistency": {
+    "repro_cmd": "PYTHONPATH=src python benchmarks/beverloo_hopper_m15259.py --seed 42",
+    "merged_script_case": {
+      "orifice_diameter_m": 0.075,
+      "particle_diameter_m": 0.015,
+      "silo_radius_m": 0.12,
+      "fill_height_m": 0.2,
+      "half_angle_deg": 30.0,
+      "wall_mu": 0.0,
+      "source_lines": "benchmarks/beverloo_hopper_m15259.py:100-135"
+    },
+    "artifact_case": {
+      "orifice_diameter_m": 0.08,
+      "particle_diameter_m": 0.016,
+      "source": "runs/beverloo_m15259/local_med.json"
+    },
+    "geometry_match": false,
+    "conclusion": "repro_cmd regenerates a *different* case than the only committed run artifact and than the filed numbers; it can neither reproduce nor falsify the filed headline",
+    "merged_script_contains_1p8290": false
+  },
+  "C1_anchor_registry": {
+    "query": "SELECT case_name,metric,tolerance FROM tensor_benchmark_cases WHERE anchor_slug='CASE-HOPPER-BEVERLOO'",
+    "rows_returned": 0,
+    "table_size": 15,
+    "consequence": "no machine-owned criterion exists for this anchor; the mission goal text (<15 %) + prereg are the only criteria"
+  },
+  "C7_figure_provenance": {
+    "docs/figures/m15259_beverloo_comparison.png": "generated by benchmarks/m15259_final_report.py from the hard-coded M6457_CASE_C dict (1.8290/1.8356), i.e. a plot of transcribed numbers",
+    "docs/figures/m15259_window_series.png": "generated by benchmarks/m15259_final_report.py from LOCAL_MED dict; the generator is NOT in main HEAD (filtered at push)"
+  },
+  "_harness": {
+    "python": "3.11.6",
+    "machine": "loongarch64",
+    "repo_head": "4fa7961029e171d620352cda78c73de42e6854d2",
+    "branch": "agent/m15348"
+  }
+}
