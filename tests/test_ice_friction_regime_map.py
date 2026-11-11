@@ -160,19 +160,19 @@ class TestRegimeClassification:
         assert a1 <= a2 <= a3
 
     def test_regime_label_dry(self):
-        """Lambda < 0.3 should be dry regime."""
-        assert regime_label(0.1, -10.0) == REGIME_DRY
-        assert regime_label(0.29, -10.0) == REGIME_DRY
+        """Lambda < threshold should be dry regime."""
+        assert regime_label(0.1, -10.0, 1.0) == REGIME_DRY
+        assert regime_label(0.19, -10.0, 1.0) == REGIME_DRY
 
     def test_regime_label_mixed(self):
-        """0.3 <= Lambda < 3 should be mixed regime."""
-        assert regime_label(0.5, -10.0) == REGIME_MIXED
-        assert regime_label(2.9, -10.0) == REGIME_MIXED
+        """threshold_dry <= Lambda < threshold_full should be mixed regime."""
+        assert regime_label(0.5, -10.0, 1.0) == REGIME_MIXED
+        assert regime_label(1.0, -10.0, 1.0) == REGIME_MIXED
 
     def test_regime_label_full(self):
-        """Lambda >= 3 should be full lubrication."""
-        assert regime_label(3.0, -10.0) == REGIME_FULL
-        assert regime_label(10.0, -10.0) == REGIME_FULL
+        """Lambda >= threshold_full should be full lubrication."""
+        assert regime_label(1.5, -10.0, 1.0) == REGIME_FULL
+        assert regime_label(10.0, -10.0, 1.0) == REGIME_FULL
 
     def test_makkonen_accuracy_above_40pct(self):
         """Makkonen regime accuracy should be above 40%."""
@@ -211,11 +211,11 @@ class TestResponseSurface:
         assert np.all(result.mu_grid >= 0.002)
         assert np.all(result.mu_grid <= 0.50)
 
-    def test_response_surface_r_squared_above_0_75(self):
-        """R² should be above 0.75 (target 0.85, honest reporting)."""
+    def test_response_surface_r_squared_above_0_85(self):
+        """R² should be above 0.85."""
         result = sweep_4d()
         fit = fit_response_surface(result)
-        assert fit["r_squared"] > 0.75, f"R²={fit['r_squared']:.3f} too low"
+        assert fit["r_squared"] > 0.85, f"R²={fit['r_squared']:.3f} too low"
 
     def test_evaluate_surface_positive(self):
         """Surface evaluation should return positive values."""
