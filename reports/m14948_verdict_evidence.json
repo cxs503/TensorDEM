@@ -1,0 +1,50 @@
+{
+  "audit_mission": 15029,
+  "audited_mission": 14948,
+  "repo": "TensorDEM",
+  "scope": "m14948 H1-BROKEN-ICE-DEM",
+  "audit_commit_of_target": "4321ede2 (m14948: H1-BROKEN-ICE-DEM round 2, PR #1257)",
+  "verdict": {
+    "level": 2,
+    "verdict_by": "board-audit",
+    "disposition": "request changes (reopened)",
+    "gate_state": "pending"
+  },
+  "evidence_trio": {
+    "run_artifacts": {
+      "claimed": "artifacts/h1_broken_ice_dem/{results.json,fig1_buoyancy.png,fig2_repose.png,fig3_channel.png}",
+      "found_in_worktree": false,
+      "note": "artifacts/h1_broken_ice_dem/ absent (only artifacts/pr166); run_validation.py produces results.json on-demand (rc=0) but committed artifacts not in tree"
+    },
+    "benchmark": {
+      "C1_buoyancy": {"ref": "Archimedes rho_i/rho_w=0.894634", "got": "0.894555", "rel_err": "0.0088%", "pass": true},
+      "C2_repose": {"ref": "literature band 25-40deg", "got": "0-16.27deg (not settled, contacts 0-1)", "pass": false, "fail_stage": "C2_repose_not_settled"},
+      "C3_channel": {"ref": "concentration time series", "got": "t50=0.4485s, c0=0.5931->c1=0.4880, mass_residual=0", "pass": true, "level": "demo"}
+    },
+    "repro_cmd": {
+      "cmd": "PYTHONPATH=src python benchmarks/h1_broken_ice_dem/run_validation.py --quick",
+      "executed": true,
+      "returncode": 0,
+      "artifact": "artifacts/h1_broken_ice_dem/results.json",
+      "note": "full repose run (3000 steps) still fails - not settled"
+    },
+    "tests": {
+      "cmd": "python -m pytest tests/test_h1_broken_ice_dem.py -q",
+      "result": "6 collected, 1 FAILED (test_linear_drag_removes_energy: energy_residual 212.08 vs <1.0 asserted), 5 passed, 26.38s"
+    }
+  },
+  "level_decision": {
+    "L2_granted": "real independent function implementation: h1_cases.py(316 loc) + dynamics.py(linear_drag) + study.py(case3_repose fix), input->compute->output, run_validation.py executable",
+    "L4_refused": "core acceptance criterion C2 (rubble repose vs literature band 25-40deg) is an honest FAIL (not settled, 0-16.27deg); test suite RED (1/6 failing: energy_residual 212.08 vs <1.0); run_artifacts (results.json + 3 figures) not committed -> complete benchmark validation not confirmable",
+    "L3_not_full": "code in polyhedron_floe3d (main DEM solver path) but core capability (repose) does not validate; only C1/C3 sub-cases pass"
+  },
+  "findings": [
+    "P1: C2 (rubble repose vs literature band) is an honest FAIL but mission marked 'succeeded' - overstated claim (gate machine-reviews)",
+    "P2: test_linear_drag_removes_energy asserts energy_residual<1.0 but got 212.08 - test asserts an invariant the implementation does not satisfy (red test)",
+    "P3: run_artifacts (results.json + 3 figures) not committed to worktree - committed benchmark evidence incomplete"
+  ],
+  "remediation": "n_steps>=12000 (1.2s) or dt=2e-4 with kn<=5e4, 3 mu shards to cluster; fix energy_residual assertion; commit artifacts/h1_broken_ice_dem/",
+  "audit_report": "docs/AUDIT_M14948_H1_BROKEN_ICE_DEM.md",
+  "audit_script": "scripts/audit_m14948_verdict.py",
+  "platform_report": "14145"
+}
