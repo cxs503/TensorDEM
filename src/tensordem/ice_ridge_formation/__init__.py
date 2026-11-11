@@ -69,6 +69,20 @@ from .compression import (
     CompressionConfig,
     drive_compression,
 )
+from .rubbling import (
+    RidgeDEMConfig,
+    RubbleFloe,
+    RubbleWorld,
+    fit_porosity_law,
+    generate_floe_field,
+    polygon_area,
+    polygon_moments,
+    ridge_porosity,
+    run_aspect_sweep,
+    run_rubbling_ridge,
+    sail_keel_geometry,
+    split_convex_polygon,
+)
 from .failure import (
     BendingFailureModel,
     BendingFailureConfig,
@@ -92,6 +106,19 @@ __all__ = [
     "CompressionDriver",
     "CompressionConfig",
     "drive_compression",
+    # Breakable buoyant floe DEM (ridge rubbling)
+    "RidgeDEMConfig",
+    "RubbleFloe",
+    "RubbleWorld",
+    "run_rubbling_ridge",
+    "run_aspect_sweep",
+    "ridge_porosity",
+    "sail_keel_geometry",
+    "fit_porosity_law",
+    "generate_floe_field",
+    "polygon_area",
+    "polygon_moments",
+    "split_convex_polygon",
     # Failure
     "BendingFailureModel",
     "BendingFailureConfig",
