@@ -33,6 +33,17 @@ class EnergyAuditedIceDEM3D(IceDEM3D):
         # Platen (top/bottom + lateral) actuator work and dashpot dissipation.
         self.cumulative_platen_work_J = 0.0
         self.cumulative_platen_damping_J = 0.0
+        # Exact-quadrature ledger arms.  ``*_exact_J`` accumulate the work of a
+        # kinematic boundary as the *potential increment at fixed particle
+        # positions*, which is the exact discrete work of the penalty spring;
+        # the historical ``*_work_J`` arms evaluate the power at the start of
+        # the step (left-endpoint quadrature) and are kept for
+        # backward-compatible reporting.  See
+        # ``docs/dem3d_energy_quadrature_closure.md``.
+        self.cumulative_platen_work_exact_J = 0.0
+        self.cumulative_tool_work_exact_J = 0.0
+        self.cumulative_external_work_exact_J = 0.0
+        self.energy_balance_residual_exact_J = 0.0
         # ``cumulative_bond_dissipation_J`` is created by the base solver (it
         # stays 0.0 on the legacy linear bond); the ledger only reads it.
         self.reference_mechanical_energy_J = self._mechanical_energy()
@@ -60,9 +71,7 @@ class EnergyAuditedIceDEM3D(IceDEM3D):
             eligible = ~self._alive_bond_for_pairs(pairs)
             particle_contact = (0.5 * cfg.contact_stiffness * overlap.square() * eligible).sum()
 
-        tool_distance = torch.linalg.vector_norm(self.positions - self.tool_position, dim=1)
-        tool_overlap = (cfg.radius + cfg.tool_radius - tool_distance).clamp_min(0)
-        tool_contact = (0.5 * cfg.contact_stiffness * tool_overlap.square()).sum()
+        tool_contact = self._tool_contact_potential(self.positions, self.tool_position)
         # Tangential (Cundall-Strack / Hertz-Mindlin) spring energy of active, unbonded contacts.
         # The friction force is a spring force: during stick its work is recoverable,
         # so the stored energy belongs in the mechanical balance.
@@ -89,17 +98,74 @@ class EnergyAuditedIceDEM3D(IceDEM3D):
         # Platen (top/bottom + lateral) penalty-spring energy belongs in the
         # mechanical balance: the actuator work is partitioned between the
         # particle system and these boundary springs.
-        platen = 0.0
-        if cfg.top_platen_enabled:
-            top_z = self.top_platen_start_z + self.time * cfg.top_platen_velocity
-            top_overlap = (self.positions[:, 2] + cfg.radius - top_z).clamp_min(0.0)
-            platen += 0.5 * cfg.platen_stiffness * (top_overlap ** 2).sum().item()
-        if cfg.bottom_platen_enabled:
-            bottom_z = self.bottom_platen_start_z + self.time * cfg.bottom_platen_velocity
-            bottom_overlap = (bottom_z + cfg.radius - self.positions[:, 2]).clamp_min(0.0)
-            platen += 0.5 * cfg.platen_stiffness * (bottom_overlap ** 2).sum().item()
-        platen += self.lateral_platen_energy()
+        platen = self._platen_potential(
+            self.positions,
+            top_z=(self.top_platen_start_z + self.time * cfg.top_platen_velocity
+                   if cfg.top_platen_enabled else None),
+            bottom_z=(self.bottom_platen_start_z + self.time * cfg.bottom_platen_velocity
+                      if cfg.bottom_platen_enabled else None),
+            lateral_pos=self.lateral_platen_pos,
+        )
         return float(kinetic + bond + particle_contact + tool_contact + tangential + platen)
+
+    @torch.no_grad()
+    def _platen_potential(self, positions, top_z: float | None = None,
+                          bottom_z: float | None = None,
+                          lateral_pos=None) -> float:
+        """Stored elastic energy (J) of the penalty platens.
+
+        Evaluated at *fixed particle positions* so the same expression serves
+        both ``_mechanical_energy`` (state energy) and the exact per-step
+        actuator work ``-(U(after) - U(before))``.  ``None`` boundary arguments
+        mean the corresponding platen is absent from the configuration.
+        """
+        cfg = self.config
+        total = 0.0
+        if top_z is not None:
+            overlap = (positions[:, 2] + cfg.radius - top_z).clamp_min(0.0)
+            total += 0.5 * cfg.platen_stiffness * float(overlap.square().sum())
+        if bottom_z is not None:
+            overlap = (bottom_z + cfg.radius - positions[:, 2]).clamp_min(0.0)
+            total += 0.5 * cfg.platen_stiffness * float(overlap.square().sum())
+        if lateral_pos is not None and cfg.lateral_platens:
+            k = (cfg.lateral_platen_stiffness if cfg.lateral_platen_stiffness is not None
+                 else cfg.platen_stiffness)
+            px, py = positions[:, 0], positions[:, 1]
+            total_lateral = 0.0
+            for idx in range(4):
+                if idx == 0:
+                    overlap = (lateral_pos[0] - px + cfg.radius).clamp_min(0.0)
+                elif idx == 1:
+                    overlap = (px + cfg.radius - lateral_pos[1]).clamp_min(0.0)
+                elif idx == 2:
+                    overlap = (lateral_pos[2] - py + cfg.radius).clamp_min(0.0)
+                else:
+                    overlap = (py + cfg.radius - lateral_pos[3]).clamp_min(0.0)
+                total_lateral += float(overlap.square().sum())
+            total += 0.5 * k * total_lateral
+        return total
+
+    @torch.no_grad()
+    def _tool_contact_potential(self, positions, tool_pos) -> float:
+        """Stored elastic energy (J) of the spherical tool contact.
+
+        Uses the same linear penalty expression as ``_mechanical_energy``; on the
+        ``contact_model="hertz"`` branch this is the ledger's linearised
+        convention, not the Hertz potential ``4/5 k delta^(5/2)`` (documented
+        limitation, unchanged by this fix).
+        """
+        cfg = self.config
+        distance = torch.linalg.vector_norm(positions - tool_pos, dim=1)
+        overlap = (cfg.radius + cfg.tool_radius - distance).clamp_min(0.0)
+        return 0.5 * cfg.contact_stiffness * float(overlap.square().sum())
+
+    @torch.no_grad()
+    def _boundary_potentials_at(self, positions, top_z, bottom_z, lateral_pos,
+                                tool_pos) -> tuple[float, float]:
+        """(platen, tool) stored energies at an explicit boundary configuration."""
+        return (self._platen_potential(positions, top_z=top_z, bottom_z=bottom_z,
+                                       lateral_pos=lateral_pos),
+                self._tool_contact_potential(positions, tool_pos))
 
     @torch.no_grad()
     def _dissipation_rates(self) -> tuple[float, float, float]:
@@ -154,6 +220,32 @@ class EnergyAuditedIceDEM3D(IceDEM3D):
         self.cumulative_platen_work_J += self._platen_work() * self.dt
         self.cumulative_platen_damping_J += self._platen_damping_power() * self.dt
 
+        # Exact discrete work of the kinematic boundaries over this step.  The
+        # particles have not moved yet, so the boundary potential can be
+        # evaluated at the same particle positions before and after the
+        # boundary advance; its increment is the exact work of the penalty
+        # spring (quadratic in the boundary position, so no quadrature error
+        # and no dependence on the contact-activation history).
+        cfg = self.config
+        top_z0 = (self.top_platen_start_z + self.time * cfg.top_platen_velocity
+                  if cfg.top_platen_enabled else None)
+        top_z1 = (None if top_z0 is None else top_z0 + self.dt * cfg.top_platen_velocity)
+        bottom_z0 = (self.bottom_platen_start_z + self.time * cfg.bottom_platen_velocity
+                     if cfg.bottom_platen_enabled else None)
+        bottom_z1 = (None if bottom_z0 is None
+                     else bottom_z0 + self.dt * cfg.bottom_platen_velocity)
+        lateral0 = self.lateral_platen_pos if cfg.lateral_platens else None
+        lateral1 = (None if lateral0 is None
+                    else lateral0 + self.dt * self.lateral_platen_velocity)
+        tool0 = self.tool_position
+        tool1 = self.tool_start + (self.time + self.dt) * self.tool_velocity
+        platen_u0, tool_u0 = self._boundary_potentials_at(
+            self.positions, top_z0, bottom_z0, lateral0, tool0)
+        platen_u1, tool_u1 = self._boundary_potentials_at(
+            self.positions, top_z1, bottom_z1, lateral1, tool1)
+        self.cumulative_platen_work_exact_J += platen_u1 - platen_u0
+        self.cumulative_tool_work_exact_J += tool_u1 - tool_u0
+
         self.velocities += self.dt * force / self.config.mass
         self.velocities[self.fixed] = 0
         self.positions += self.dt * self.velocities
@@ -166,6 +258,11 @@ class EnergyAuditedIceDEM3D(IceDEM3D):
         # confining pressure can never be reached.
         if self.config.lateral_platens:
             self.lateral_platen_pos += self.lateral_platen_velocity * self.dt
+        if loads is not None:
+            # Exact discrete work of a constant external load: F . dx with
+            # dx = dt * v_new.  The historical arm above used v_old.
+            self.cumulative_external_work_exact_J += float(
+                (loads * self.velocities).sum()) * self.dt
         self.time += self.dt
         self.step_count += 1
         if not bool(torch.isfinite(self.positions).all() and torch.isfinite(self.velocities).all()):
@@ -181,8 +278,18 @@ class EnergyAuditedIceDEM3D(IceDEM3D):
                       + self.cumulative_bond_dissipation_J)
         input_work = (self.cumulative_tool_work_J + self.cumulative_external_work_J
                       + self.cumulative_platen_work_J)
+        # ``dissipated`` is shared by both arms: the dissipative channels are
+        # still integrated with left-endpoint rates (see the doc for the
+        # measured size of that term).
+        input_work_exact = (self.cumulative_tool_work_exact_J
+                            + self.cumulative_external_work_exact_J
+                            + self.cumulative_platen_work_exact_J)
         self.energy_balance_residual_J = (
             energy_after - self.reference_mechanical_energy_J - input_work
+            + dissipated + self.cumulative_fracture_release_J
+        )
+        self.energy_balance_residual_exact_J = (
+            energy_after - self.reference_mechanical_energy_J - input_work_exact
             + dissipated + self.cumulative_fracture_release_J
         )
 
@@ -246,8 +353,18 @@ class EnergyAuditedIceDEM3D(IceDEM3D):
                       + self.cumulative_bond_dissipation_J)
         input_work = (self.cumulative_tool_work_J + self.cumulative_external_work_J
                       + self.cumulative_platen_work_J)
+        # ``dissipated`` is shared by both arms: the dissipative channels are
+        # still integrated with left-endpoint rates (see the doc for the
+        # measured size of that term).
+        input_work_exact = (self.cumulative_tool_work_exact_J
+                            + self.cumulative_external_work_exact_J
+                            + self.cumulative_platen_work_exact_J)
         self.energy_balance_residual_J = (
             self._mechanical_energy() - self.reference_mechanical_energy_J - input_work
+            + dissipated + self.cumulative_fracture_release_J
+        )
+        self.energy_balance_residual_exact_J = (
+            self._mechanical_energy() - self.reference_mechanical_energy_J - input_work_exact
             + dissipated + self.cumulative_fracture_release_J
         )
         row.update({
@@ -270,6 +387,10 @@ class EnergyAuditedIceDEM3D(IceDEM3D):
             "platen_work_cumulative_J": self.cumulative_platen_work_J,
             "platen_damping_cumulative_J": self.cumulative_platen_damping_J,
             "bond_dissipation_cumulative_J": self.cumulative_bond_dissipation_J,
+            "platen_work_exact_cumulative_J": self.cumulative_platen_work_exact_J,
+            "tool_work_exact_cumulative_J": self.cumulative_tool_work_exact_J,
+            "external_work_exact_cumulative_J": self.cumulative_external_work_exact_J,
+            "energy_balance_residual_exact_J": self.energy_balance_residual_exact_J,
         })
         return row
 
@@ -287,6 +408,10 @@ class EnergyAuditedIceDEM3D(IceDEM3D):
             "cumulative_rolling_work_J": self.cumulative_rolling_work_J,
             "cumulative_bond_dissipation_J": self.cumulative_bond_dissipation_J,
             "energy_balance_residual_J": self.energy_balance_residual_J,
+            "cumulative_platen_work_exact_J": self.cumulative_platen_work_exact_J,
+            "cumulative_tool_work_exact_J": self.cumulative_tool_work_exact_J,
+            "cumulative_external_work_exact_J": self.cumulative_external_work_exact_J,
+            "energy_balance_residual_exact_J": self.energy_balance_residual_exact_J,
         }
         return state
 
@@ -314,7 +439,9 @@ class EnergyAuditedIceDEM3D(IceDEM3D):
             "cumulative_particle_damping_J", "cumulative_tool_damping_J",
             "cumulative_fracture_release_J", "cumulative_friction_work_J",
             "cumulative_rolling_work_J", "cumulative_bond_dissipation_J",
-            "energy_balance_residual_J",
+            "energy_balance_residual_J", "cumulative_platen_work_exact_J",
+            "cumulative_tool_work_exact_J", "cumulative_external_work_exact_J",
+            "energy_balance_residual_exact_J",
         )
         staged = {key: float(audit.get(key, 0.0)) for key in keys}
         if not all(torch.isfinite(torch.tensor(value)) for value in staged.values()):
