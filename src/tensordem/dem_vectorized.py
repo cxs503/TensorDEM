@@ -3,24 +3,46 @@
 GPU-ready DEM engine using counting–prefix-sum–scatter cell-list pattern.
 On loong64 (no CUDA), runs on CPU via PyTorch vectorized ops.
 
-Contact models:
-- Normal: linear spring-dashpot OR Hertz
-- Tangential: simplified Coulomb friction
-- Rolling resistance: T_r = mu_r * R_eff * |F_n|
+Contact models actually implemented (verified by
+``tests/test_dem_vectorized_verification.py`` and ``docs/DEM_VECTORIZED_VERIFICATION.md``):
+
+- Normal: linear spring-dashpot OR Hertz, both with a no-tension clamp
+  ``F_n = max(k*delta - gamma*v_n, 0)``.
+- Tangential: velocity-regularised Coulomb **cap**,
+  ``|F_t| = min(k*dt*|v_t|, mu*F_n)``.  There is no tangential spring and no
+  tangential history, therefore **no static friction** and no tangential elastic
+  energy storage -- this is *not* a Cundall--Strack contact.
+- Rolling resistance: **NOT SUPPORTED** (no rotational degree of freedom).
+  A non-zero ``rolling_resistance_coefficient`` raises instead of being ignored.
+- ``restitution_coefficient`` is the **realised** restitution.  The no-tension clamp
+  makes the textbook linear dashpot over-rebound (configured 0.30 is realised as
+  0.40, i.e. +33 %), so the damping ratio is inverted through
+  :func:`realized_restitution_input` unless ``restitution_calibration=False``.
+  The clamp imposes an intrinsic floor, ``e >= ~0.15`` (see that function).
 """
 from __future__ import annotations
 
 import math
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from functools import lru_cache
 from typing import Any
 
 import torch
 
 
+_SUPPORTED_CONTACT_MODELS = ("linear", "hertz")
+_SUPPORTED_DAMPING_MODELS = ("restitution", "absolute")
+
+
 @dataclass
 class VecDEMConfig:
-    """Configuration for the vectorized DEM engine."""
+    """Configuration for the vectorized DEM engine.
+
+    Validation is explicit: silently-ignored parameters are rejected (see
+    ``__post_init__``) because a configuration that looks active but is not
+    produces results that look physical but are not.
+    """
     n_particles: int = 1000
     radius: float = 0.01
     density: float = 1000.0
@@ -38,6 +60,57 @@ class VecDEMConfig:
     domain_size: tuple[float, float, float] = (0.1, 0.1, 0.1)
     seed: int = 42
     device: str = "cpu"
+    #: invert the damping ratio so that ``restitution_coefficient`` is the realised
+    #: coefficient of restitution (see :func:`realized_restitution_input`).
+    #: ``False`` reproduces the uncorrected textbook mapping (legacy behaviour).
+    restitution_calibration: bool = True
+    _damping_restitution_input: float = field(default=None, init=False, repr=False)
+
+    def __post_init__(self) -> None:
+        if self.contact_model not in _SUPPORTED_CONTACT_MODELS:
+            raise ValueError(
+                f"contact_model {self.contact_model!r} is not supported; "
+                f"choose one of {_SUPPORTED_CONTACT_MODELS}")
+        if self.contact_damping_model not in _SUPPORTED_DAMPING_MODELS:
+            raise ValueError(
+                f"contact_damping_model {self.contact_damping_model!r} is not supported; "
+                f"choose one of {_SUPPORTED_DAMPING_MODELS}")
+        if self.rolling_resistance_coefficient != 0.0:
+            raise ValueError(
+                "rolling_resistance_coefficient is NOT SUPPORTED by this engine: it has no "
+                "rotational degree of freedom, so a rolling resistance torque cannot be "
+                "applied.  Set it to 0.0 (previously it was accepted and silently ignored, "
+                "which silently removed the parameter from the simulation).")
+        if self.contact_damping_model == "restitution" and self.contact_damping > 0.0:
+            raise ValueError(
+                "contact_damping is only used by contact_damping_model='absolute'; with "
+                "'restitution' the damping is derived from restitution_coefficient and "
+                f"contact_damping={self.contact_damping} would be silently ignored.  Set "
+                "contact_damping_model='absolute' to use it, or contact_damping=0.0.")
+        if not (0.0 < self.restitution_coefficient <= 1.0):
+            raise ValueError(
+                f"restitution_coefficient must be in (0, 1], got {self.restitution_coefficient}")
+        if self.friction_coefficient < 0.0:
+            raise ValueError(
+                f"friction_coefficient must be >= 0, got {self.friction_coefficient}")
+        if self.contact_damping_model == "restitution" and \
+                self.restitution_calibration and self.restitution_coefficient < 1.0:
+            self._damping_restitution_input = realized_restitution_input(
+                self.restitution_coefficient, self.contact_model)
+        else:
+            self._damping_restitution_input = self.restitution_coefficient
+
+    @property
+    def damping_restitution_input(self) -> float:
+        """Restitution value the dashpot formula consumes (calibrated, or raw input).
+
+        For ``restitution_calibration=True`` this is the inverse of
+        :func:`realized_restitution_input`, i.e. the dashpot is detuned so that the
+        collision actually rebounds with ``restitution_coefficient``.
+        """
+        if self._damping_restitution_input is None:  # pragma: no cover - safety net
+            return self.restitution_coefficient
+        return self._damping_restitution_input
 
     @property
     def mass(self) -> float:
@@ -232,8 +305,8 @@ def compute_contact_forces(
     m_eff = mass / 2.0
     if config.contact_damping_model == "absolute":
         gamma_n = config.contact_damping
-    elif config.restitution_coefficient < 1.0:
-        ln_e = math.log(config.restitution_coefficient)
+    elif config.damping_restitution_input < 1.0:
+        ln_e = math.log(config.damping_restitution_input)
         zeta = -ln_e / math.sqrt(math.pi ** 2 + ln_e ** 2)
         gamma_n = 2.0 * zeta * torch.sqrt(k_local * m_eff)
     else:
@@ -384,3 +457,97 @@ class ReferenceDEM:
 
     def total_momentum(self) -> torch.Tensor:
         return self.config.mass * self.velocities.sum(dim=0)
+
+# ---------------------------------------------------------------------------
+# Realised restitution: measurement and inversion
+# ---------------------------------------------------------------------------
+_RESTITUTION_GRID = (0.001, 0.01, 0.02, 0.05, 0.10, 0.20, 0.30, 0.40, 0.50,
+                     0.60, 0.70, 0.80, 0.90, 0.95, 0.99, 1.0)
+
+#: Canonical collision used to measure the realised restitution.  The map is
+#: velocity- and stiffness-independent for the linear model to <1e-3 and varies by
+#: <1.5 % over v in [0.05, 1] m/s for Hertz, so one canonical curve per contact model
+#: is sufficient (the residuals are asserted in the verification tests).
+_CANONICAL = dict(radius=0.01, density=1000.0, contact_stiffness=1e5,
+                  young_modulus=1e9, poisson_ratio=0.3)
+
+
+def _measure_restitution(e_input: float, contact_model: str = "linear",
+                         v_impact: float = 1.0, dt_refine: float = 10.0) -> float:
+    """Realised restitution of a head-on two-particle collision, measured with the kernel.
+
+    The pair starts exactly touching (zero overlap, so no spurious spring energy) and
+    approaching with ``+-v_impact``; the collision is integrated with the same
+    ``compute_contact_forces`` used by the engine, and the restitution is the ratio of
+    the separating to the approaching relative normal velocity.
+    """
+    radius = _CANONICAL["radius"]
+    cfg = VecDEMConfig(n_particles=2, radius=radius, density=_CANONICAL["density"],
+                       contact_model=contact_model,
+                       contact_stiffness=_CANONICAL["contact_stiffness"],
+                       young_modulus=_CANONICAL["young_modulus"],
+                       poisson_ratio=_CANONICAL["poisson_ratio"],
+                       restitution_coefficient=e_input, friction_coefficient=0.0,
+                       gravity=0.0, restitution_calibration=False)
+    mass = cfg.mass
+    dt = cfg.effective_dt() / dt_refine
+    pos = torch.tensor([[-radius, 0.0, 0.0], [radius, 0.0, 0.0]], dtype=torch.float64)
+    vel = torch.tensor([[v_impact, 0.0, 0.0], [-v_impact, 0.0, 0.0]], dtype=torch.float64)
+    pairs = torch.tensor([[0, 1]])
+    t = 0.0
+    while t < 10.0:
+        f = compute_contact_forces(pos, vel, pairs, radius, cfg)
+        vel = vel + 0.5 * f / mass * dt
+        pos = pos + vel * dt
+        f = compute_contact_forces(pos, vel, pairs, radius, cfg)
+        vel = vel + 0.5 * f / mass * dt
+        t += dt
+        if (float(pos[1, 0] - pos[0, 0]) > 2.0 * radius
+                and float(vel[1, 0]) > 0.0 and float(vel[0, 0]) < 0.0):
+            break
+    return abs(float(vel[1, 0] - vel[0, 0]) / (2.0 * v_impact))
+
+
+@lru_cache(maxsize=None)
+def restitution_response_curve(contact_model: str = "linear") -> tuple:
+    """Cached monotone map ``configured e -> realised e`` on ``_RESTITUTION_GRID``."""
+    if contact_model not in _SUPPORTED_CONTACT_MODELS:
+        raise ValueError(f"contact_model {contact_model!r} is not supported")
+    return tuple((e, _measure_restitution(e, contact_model)) for e in _RESTITUTION_GRID)
+
+
+def realized_restitution_input(e_target: float, contact_model: str = "linear") -> float:
+    """Return the ``restitution_coefficient`` that *realises* ``e_target``.
+
+    Root cause of the bias: the no-tension clamp ``max(k*delta - gamma*v_n, 0)`` truncates
+    the dashpot during rebound, so the textbook mapping
+    ``zeta = -ln(e)/sqrt(pi^2 + ln(e)^2)`` over-rebounds.  Configured 0.30 is realised as
+    0.40 (+33 %), 0.50 as 0.55 (+10 %) -- well outside any 15 % accuracy budget for the
+    low-e end.  This function inverts the measured map so the *realised* coefficient is
+    the requested one.
+
+    The clamp also imposes an intrinsic **floor**: as the damping input tends to 0 the
+    realised restitution saturates (~0.154 linear, ~0.176 Hertz).  Targets below the
+    floor are returned clamped to the floor input; the realised restitution will then be
+    above the request (the model cannot dissipate more energy, not a numerical issue).
+    """
+    if not (0.0 < e_target <= 1.0):
+        raise ValueError(f"e_target must be in (0, 1], got {e_target}")
+    if e_target == 1.0:
+        return 1.0
+    curve = restitution_response_curve(contact_model)
+    realised = [r for _, r in curve]
+    if e_target <= realised[0]:
+        return curve[0][0]
+    for (e0, r0), (e1, r1) in zip(curve, curve[1:]):
+        if r0 <= e_target <= r1:
+            if r1 == r0:  # pragma: no cover - degenerate grid
+                return e1
+            w = (e_target - r0) / (r1 - r0)
+            return e0 + w * (e1 - e0)
+    return curve[-1][0]
+
+
+def realised_restitution_floor(contact_model: str = "linear") -> float:
+    """Smallest realisable coefficient of restitution (clamp-imposed floor)."""
+    return restitution_response_curve(contact_model)[0][1]
