@@ -366,6 +366,14 @@ class TriaxialRunner:
         frac = float(self.sim.cumulative_fracture_release_J)
         resid = e_t - e0 - w_in + diss + frac
         scale = max(abs(e0) + abs(w_in) + frac, 1e-30)
+        # Exact-quadrature arm: the boundary work is the potential increment of
+        # the penalty springs at fixed particle positions instead of
+        # ``reaction * v * dt`` (see docs/dem3d_energy_quadrature_closure.md).
+        w_in_exact = (float(self.sim.cumulative_tool_work_exact_J)
+                      + float(self.sim.cumulative_external_work_exact_J)
+                      + float(self.sim.cumulative_platen_work_exact_J))
+        resid_exact = e_t - e0 - w_in_exact + diss + frac
+        scale_exact = max(abs(e0) + abs(w_in_exact) + frac, 1e-30)
         return {
             "energy_ledger": {
                 "e_mech_0_J": e0,
@@ -377,6 +385,11 @@ class TriaxialRunner:
                 "closure_residual_relative": float(resid / scale),
                 "gate": "closure_residual_relative <= 1e-9",
                 "pass": abs(resid / scale) <= 1e-9,
+                "input_work_exact_J": w_in_exact,
+                "closure_residual_exact_J": float(resid_exact),
+                "closure_residual_relative_exact": float(resid_exact / scale_exact),
+                "pass_exact": abs(resid_exact / scale_exact) <= 1e-9,
+                "quadrature": "left-endpoint (legacy) vs exact potential increment",
             },
             "config": asdict(self.cfg),
             "area_x_m2": self.area_x,

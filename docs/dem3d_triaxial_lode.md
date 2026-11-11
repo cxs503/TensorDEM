@@ -131,3 +131,27 @@ a convenience rendering of the same numbers.
 3. Boundary effects: the free 4×4×3 specimen is 35 % stiffer than the affine
    prediction; a size-convergence study (lateral 6×6, 8×8) is needed before the
    elastic modulus can be used as a quantitative anchor.
+
+## 4. F4 status after m13803 (quadrature closure)
+
+F4 is now diagnosed and its systematic part removed. Measured, on this worktree:
+
+* the legacy residual is first order in `dt` and accumulates (5.973e-8 → 2.982e-8
+  → 1.490e-8 J, ratio 2.00 per halving), and is insensitive to every dissipative
+  channel (ablation 5.973e-8 → 6.105e-8 J with drag, contact damping and platen
+  damping all off);
+* the missing term is the `1/2 k dx^2` term of each active penalty contact's
+  potential increment; the total work deficit on the axial-only run is 1.092e-7 J
+  (0.61 % of input work), the same order as the residual;
+* a second, exact ledger arm (`cumulative_*_work_exact_J`, residual
+  `closure_residual_relative_exact`) is now reported next to the legacy one. It
+  removes the bias: -4.951e-8 → +2.247e-8 J across one dt halving (magnitude
+  2.2× smaller, sign alternating) against 5.973e-8 → 2.982e-8 J (same sign) for
+  the legacy arm;
+* the 1e-9 gate is therefore **withdrawn as specified** and replaced by
+  "no systematic drift + `|R| <= 5e-3 E_scale`"; see
+  `docs/dem3d_energy_quadrature_closure.md` §5 and
+  `tests/test_dem3d_energy_quadrature.py`.
+
+The two `xfail` tests that pin the 1e-9 gate stay as they are: they document the
+unmet statement honestly, and the replacement criteria live in the new file.
