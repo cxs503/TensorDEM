@@ -1,6 +1,6 @@
 # 冰-结构碰撞的热-力耦合：塑性功生热、热应力叠加与热致附加破碎（TensorDEM）
 
-> 节点 `p161w2-arb-n07-dem-ice-thermal-stress`（第 2 次执行）。全部数字由 `benchmarks/ice_thermal_stress/run_validation.py` 程序化生成，证据文件 `artifacts/ice_thermal_stress/validation.json`（digest `a1197a8c979cc3fa…`）。本文档由同一脚本写出，不含手抄数字。
+> 节点 `p161w2-arb-n07-dem-ice-thermal-stress`（第 2 次执行）。全部数字由 `benchmarks/ice_thermal_stress/run_validation.py` 程序化生成，证据文件 `artifacts/ice_thermal_stress/validation.json`（digest `2dc83a946e83ad49…`）。本文档由同一脚本写出，不含手抄数字。
 
 ## 1. 案例介绍
 
@@ -64,25 +64,25 @@
 
 **(a) 温度场与热应力场**
 
-![fig1](../artifacts/ice_thermal_stress/fig1_conduction_vs_exact.png)
+![fig1](ice_thermal_stress/fig1_conduction_vs_exact.png)
 
-![fig3](../artifacts/ice_thermal_stress/fig3_impact_temperature.png)
+![fig3](ice_thermal_stress/fig3_impact_temperature.png)
 
-![fig4](../artifacts/ice_thermal_stress/fig4_thermal_stress_field.png)
+![fig4](ice_thermal_stress/fig4_thermal_stress_field.png)
 
 **(b) 有效性图（速度 × 温度）**
 
-![fig5](../artifacts/ice_thermal_stress/fig5_significance_map.png)
+![fig5](ice_thermal_stress/fig5_significance_map.png)
 
 **(c) 破碎增量与沉积层敏感性**
 
-![fig6](../artifacts/ice_thermal_stress/fig6_breakage_increment.png)
+![fig6](ice_thermal_stress/fig6_breakage_increment.png)
 
-![fig7](../artifacts/ice_thermal_stress/fig7_layer_depth_sensitivity.png)
+![fig7](ice_thermal_stress/fig7_layer_depth_sensitivity.png)
 
 **(d) 与解析解比较与收敛**
 
-![fig2](../artifacts/ice_thermal_stress/fig2_mesh_convergence.png)
+![fig2](ice_thermal_stress/fig2_mesh_convergence.png)
 
 **临界温升（热应力单独达到冰强度所需 ΔT）**
 
@@ -126,15 +126,74 @@
 
 ## 6. 审计链
 
-- 证据文件：`artifacts/ice_thermal_stress/validation.json`，digest（canonical JSON SHA-256）= `a1197a8c979cc3fab5ad8f1039c2ff6796e4d3fd5884b9a9a55c76ff18ae30f4`；`validation.verify_evidence` 可重算校验，测试 `test_ice_thermal_stress_evidence.py` 已覆盖“手改即失效”。
+- 证据文件：`artifacts/ice_thermal_stress/validation.json`，digest（canonical JSON SHA-256）= `2dc83a946e83ad495fd85a418d7892087c285a654f9a5b84352a0f3fd03c644a`；`validation.verify_evidence` 可重算校验，测试 `test_ice_thermal_stress_evidence.py` 已覆盖“手改即失效”。
 - 扫描结果：`artifacts/ice_thermal_stress/sweeps.json`（(v,T) 全表 + 层厚带）。
 - 图：`artifacts/ice_thermal_stress/fig1..fig7*.png`（脚本生成，无手工编辑）。
 - 代码：`src/tensordem/ice_thermal_stress/`（7 模块）、`tests/test_ice_thermal_stress_{properties,conduction,coupling,evidence}.py`（45 用例）。
 - 复现：`python benchmarks/ice_thermal_stress/run_validation.py`（约 2 分钟，全部数字重算）。
-- 评审状态：待独立席位按 S×E 复判；本文最后验证日期 2026-11-10T22:37:03Z。
+- 评审状态：待独立席位按 S×E 复判；本文最后验证日期 2026-11-11T08:49:21Z。
 
 ## 7. 结论
 
 在 v=1 m/s、T=-10 °C 的冰-刚性结构碰撞中，塑性功导致的斑块温升为 12.9 K，热应力 -10.5 MPa，占冰强度预算的 42%，但只占瞬时机械接触应力的 4.5%；在破碎律封顶后的接触斑上，热项带来 1.5% 的**额外**破碎比例。结论：热-力耦合在“强度预算”意义上是二阶但不可忽略的项，在“破碎总量”意义上是一阶小量；其量级对未解析的沉积层厚度敏感，并在 v ≳ 2 m/s 处进入相变区（本模型适用域外）。
 
 在有效域内的设计点（T=-20 °C，同一速度）上，斑块温升 14.0 K、热应力 -13.7 MPa 占强度 32%，附加破碎增量 2.9%（强度预算上界 92%）；该点不越过熔点，是本模型可以负责的引用值。
+
+---
+
+## 7. 求解器集成（L3）：真 IceDEM3D 冲击驱动同一套热链路
+
+`tensordem.ice_thermal_stress.dem_coupling` 是从「求解器实际耗散功」到「热态」的唯一转换实现；
+解析前端（`collision.simulate_block_impact`）与真 DEM 前端（`contact_impact.pair_impact(thermal=True)`）
+共用它，两条前端不可能漂移（`tests/test_ice_thermal_stress_integration.py` 钉住此点）。
+
+DEM 前端案例（R=0.05 m、k_n=5e4 N/m、v0=0.5 m/s、T=-10 °C、e_target=0.5）：
+
+| 量 | 数值 |
+|---|---|
+| 实测恢复系数 e | 0.5543 |
+| 峰值接触力 | 89.92 N |
+| 峰值重叠 | 1.616 mm |
+| 求解器耗散功 W | 0.081611 J |
+| 闭式 m v0^2 (1-e^2) | 0.081611 J |
+| 入冰热量 beta*lambda*W | 0.073449 J |
+| 能量-焓闭合误差 | 1.13e-13 % |
+| 斑块温升（几何斑块 / Hertz-材料斑块） | 0.11 K / 105 K |
+
+**诚实申报（未解问题）**：线弹性接触律在颗粒尺度给出毫米级重叠，由该重叠反推的斑块半径比
+「材料模量 + Hertz」路线大约 0 倍小，
+温升（∝a^-3）因此相差约 960 倍。
+能量账本不受影响（误差 <1e-9），所以本桥以**能量守恒**为验收面，**不**宣称预测颗粒尺度绝对温升；
+该敏感性由 `test_patch_geometry_is_the_dominant_uncertainty_of_the_bridge` 与 `MATURITY_EVIDENCE.json` 的 `withheld` 段显式记录。
+
+## 8. 达标证据（L2/L3/L4）与复现
+
+| 达标键 | 内容 |
+|---|---|
+| impl_files | 9 模块（properties / plastic_heat / conduction / thermal_stress / fracture / dem_coupling / collision / validation / __main__） |
+| entry | `python -m tensordem.ice_thermal_stress --case reference` 与 `--case dem`；`benchmarks/ice_thermal_stress/run_validation.py` |
+| run_artifacts | `docs/ice_thermal_stress/`（validation.json, sweeps.json, benchmark_table.json, fig1..fig7.png，随仓库提交） |
+| integration_callers | `src/tensordem/contact_impact.py::pair_impact(thermal=True)` -> `dem_coupling` |
+| benchmark | `docs/ice_thermal_stress/benchmark_table.json`：13 行判据 + 4 行求解器桥，最大误差 2.168% |
+| repro_cmd | `PYTHONPATH=src python benchmarks/ice_thermal_stress/run_validation.py && PYTHONPATH=src python scripts/ice_thermal_stress_maturity.py && PYTHONPATH=src python -m pytest tests/test_ice_thermal_stress_*.py -q` |
+
+**误差判定（逐项，显式回答是否 <3%）**：
+
+| 量 | 参考 | 实测 | 误差 |
+|---|---|---|---|
+| C1 max temperature error vs Carslaw & Jaeger constant-flux solution | 0 K | 3.03016e-06 K | 0.000394% |
+| C2 max temperature error vs heated-slab sine series | 0 K | 2.29403e-06 K | 0.214% |
+| C3 FV vs independent nodal FEM temperature | 0 K | 1.24176e-05 K | 0.00162% |
+| C4 observed spatial order of accuracy | 2 - | 2.00083 - | 0.0413% |
+| C5 thermal stress field vs analytic restrained gradient | 0 Pa | 12.1559 Pa | 1.03% |
+| C5b linear-gradient peak stress vs closed form | 8.18731e+06 Pa | 8.18731e+06 Pa | 0% |
+| C6 membrane resultant of the thermal field (static admissibility) | 0 - | 0 - | 0% |
+| C7 restrained/free stress ratio | — - | 2 - | 0% |
+| C8 dissipated energy vs 0.5 m v0^2 (1-e^2) | — - | 1.90462e-06 - | 0.00019% |
+| C8 heat -> stored enthalpy closure | — - | 4.17721e-14 - | 4.18e-12% |
+| C9 coefficient of restitution, measured vs prescribed | — - | 0.299997 - | 0.000296% |
+| C10 lumped-capacity vs resolved conduction peak rise | — K | 12.8583 K | 2.17% |
+| C13 mid-contact source vs constant-flux semi-infinite rise | — K | 6.42916 K | 2.17% |
+
+最大误差 2.168%，**全部 <3%**（C13 = 2.17% 为最大项，容差 5%）。
+求解器桥能量三项误差 <1e-9%。C11 实验臂仍为 WITHHELD（仓内无数字化冲击量热数据，不得离线编造）。

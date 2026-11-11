@@ -1,0 +1,62 @@
+{
+  "node": "p161w2-arb-n07-dem-ice-thermal-stress",
+  "mission_id": 14601,
+  "repo": "TensorDEM",
+  "claimed_level": 4,
+  "impl_files": [
+    "src/tensordem/ice_thermal_stress/properties.py",
+    "src/tensordem/ice_thermal_stress/plastic_heat.py",
+    "src/tensordem/ice_thermal_stress/conduction.py",
+    "src/tensordem/ice_thermal_stress/thermal_stress.py",
+    "src/tensordem/ice_thermal_stress/fracture.py",
+    "src/tensordem/ice_thermal_stress/dem_coupling.py",
+    "src/tensordem/ice_thermal_stress/collision.py",
+    "src/tensordem/ice_thermal_stress/validation.py",
+    "src/tensordem/ice_thermal_stress/__main__.py"
+  ],
+  "entry": [
+    "src/tensordem/ice_thermal_stress/__main__.py",
+    "benchmarks/ice_thermal_stress/run_validation.py"
+  ],
+  "run_artifacts": [
+    "docs/ice_thermal_stress/validation.json",
+    "docs/ice_thermal_stress/sweeps.json",
+    "docs/ice_thermal_stress/benchmark_table.json",
+    "docs/ice_thermal_stress/fig1_conduction_vs_exact.png",
+    "docs/ice_thermal_stress/fig3_impact_temperature.png",
+    "docs/ice_thermal_stress/fig4_thermal_stress_field.png",
+    "docs/ice_thermal_stress/fig5_significance_map.png",
+    "docs/ice_thermal_stress/fig6_breakage_increment.png"
+  ],
+  "integration_callers": [
+    "tensordem.ice_thermal_stress.dem_coupling",
+    "src/tensordem/contact_impact.py:pair_impact(thermal=True)"
+  ],
+  "benchmark": {
+    "table": "docs/ice_thermal_stress/benchmark_table.json",
+    "reference_case": {
+      "impact_speed_m_s": 1.0,
+      "bulk_temperature_c": -10.0,
+      "peak_delta_t_k": 12.858326283050738,
+      "sigma_thermal_patch_pa": -10527514.75010072,
+      "thermal_fraction_of_strength": 0.42110059000402883,
+      "breakage_increment": 0.0146484375
+    },
+    "largest_error_pct_C1_C13": 2.167621328868431,
+    "solver_bridge_energy_error_pct": 0.0
+  },
+  "repro_cmd": "PYTHONPATH=src python benchmarks/ice_thermal_stress/run_validation.py && PYTHONPATH=src python scripts/ice_thermal_stress_maturity.py && PYTHONPATH=src python -m pytest tests/test_ice_thermal_stress_*.py -q",
+  "tests": [
+    "tests/test_ice_thermal_stress_properties.py",
+    "tests/test_ice_thermal_stress_conduction.py",
+    "tests/test_ice_thermal_stress_coupling.py",
+    "tests/test_ice_thermal_stress_evidence.py",
+    "tests/test_ice_thermal_stress_integration.py",
+    "tests/test_contact_impact.py"
+  ],
+  "withheld": {
+    "C11_experimental_arm": "no digitised thermal-shock / impact-calorimetry dataset exists in the repository and none may be fabricated offline; replaced by the falsifiable critical temperature jump dT_c = sigma_f (1-nu)/(E a_T)",
+    "grain_scale_temperature_prediction": "the DEM bridge transports energy correctly (work -> heat -> enthalpy, closure to 1e-14) but the absolute temperature rise depends on the contact patch radius, which differs by ~100x between the geometric and the Hertz-material routes for a linear contact law; dT is therefore reported as a band, not a prediction"
+  },
+  "report": "docs/ICE_THERMAL_STRESS_COUPLING.md"
+}
