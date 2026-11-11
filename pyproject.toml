@@ -30,6 +30,7 @@ all = [
 [project.scripts]
 tensordem = "tensordem.cli:main"
 tensordem-3d = "tensordem.dem3d_cli:main"
+tensordem-energy-audit = "tensordem.ice_structure_energy_audit_cli:main"
 
 [build-system]
 requires = ["setuptools>=82.0.1"]
