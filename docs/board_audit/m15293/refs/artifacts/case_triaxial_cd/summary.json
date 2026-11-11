@@ -1,0 +1,338 @@
+{
+ "n_points": 9,
+ "points": [
+  {
+   "tag": "conv_rate_0p25",
+   "sigma3_Pa": 100000.0,
+   "mu": 0.5,
+   "mu_rolling": 0.25,
+   "phi_peak_deg": 32.654796535077104,
+   "phi_critical_deg": 29.05053198981736,
+   "q_peak_Pa": 233911.9657837244,
+   "drained_pass": true,
+   "drained_drift": 0.04913185995425563,
+   "reference": {
+    "band_deg": [
+     30.0,
+     40.0
+    ],
+    "band_midpoint_deg": 35.0,
+    "reference_used_deg": 35.0,
+    "inside_band": true,
+    "relative_error": -0.06700581328351132,
+    "pass_10pct": true
+   },
+   "wall_time_s": 498.9,
+   "path": "/root/tp-agent/work/m15235/artifacts/case_triaxial_cd/conv_rate_0p25.json"
+  },
+  {
+   "tag": "conv_size_n96",
+   "sigma3_Pa": 100000.0,
+   "mu": 0.5,
+   "mu_rolling": 0.25,
+   "phi_peak_deg": 35.331949112552024,
+   "phi_critical_deg": 31.139779178528087,
+   "q_peak_Pa": 281496.41371117637,
+   "drained_pass": false,
+   "drained_drift": 0.10649855111579848,
+   "reference": {
+    "band_deg": [
+     30.0,
+     40.0
+    ],
+    "band_midpoint_deg": 35.0,
+    "reference_used_deg": 35.0,
+    "inside_band": true,
+    "relative_error": 0.009484260358629268,
+    "pass_10pct": true
+   },
+   "wall_time_s": 230.7,
+   "path": "/root/tp-agent/work/m15235/artifacts/case_triaxial_cd/conv_size_n96.json"
+  },
+  {
+   "tag": "ladder_s100000",
+   "sigma3_Pa": 100000.0,
+   "mu": 0.5,
+   "mu_rolling": 0.25,
+   "phi_peak_deg": 33.421814405748066,
+   "phi_critical_deg": 28.787552160621825,
+   "q_peak_Pa": 249597.78811608843,
+   "drained_pass": true,
+   "drained_drift": 0.06167571841109806,
+   "reference": {
+    "band_deg": [
+     30.0,
+     40.0
+    ],
+    "band_midpoint_deg": 35.0,
+    "reference_used_deg": 35.0,
+    "inside_band": true,
+    "relative_error": -0.04509101697862669,
+    "pass_10pct": true
+   },
+   "wall_time_s": 376.8,
+   "path": "/root/tp-agent/work/m15235/artifacts/case_triaxial_cd/ladder_s100000.json"
+  },
+  {
+   "tag": "ladder_s200000",
+   "sigma3_Pa": 200000.0,
+   "mu": 0.5,
+   "mu_rolling": 0.25,
+   "phi_peak_deg": 32.60498216450042,
+   "phi_critical_deg": 27.400475596686448,
+   "q_peak_Pa": 479074.4225157658,
+   "drained_pass": true,
+   "drained_drift": 0.05077327284272731,
+   "reference": {
+    "band_deg": [
+     30.0,
+     40.0
+    ],
+    "band_midpoint_deg": 35.0,
+    "reference_used_deg": 35.0,
+    "inside_band": true,
+    "relative_error": -0.06842908101427371,
+    "pass_10pct": true
+   },
+   "wall_time_s": 400.5,
+   "path": "/root/tp-agent/work/m15235/artifacts/case_triaxial_cd/ladder_s200000.json"
+  },
+  {
+   "tag": "ladder_s50000",
+   "sigma3_Pa": 50000.0,
+   "mu": 0.5,
+   "mu_rolling": 0.25,
+   "phi_peak_deg": 34.3224292045649,
+   "phi_critical_deg": 29.083343332665297,
+   "q_peak_Pa": 130565.54766251883,
+   "drained_pass": true,
+   "drained_drift": 0.07163243876771565,
+   "reference": {
+    "band_deg": [
+     30.0,
+     40.0
+    ],
+    "band_midpoint_deg": 35.0,
+    "reference_used_deg": 35.0,
+    "inside_band": true,
+    "relative_error": -0.01935916558386006,
+    "pass_10pct": true
+   },
+   "wall_time_s": 360.1,
+   "path": "/root/tp-agent/work/m15235/artifacts/case_triaxial_cd/ladder_s50000.json"
+  },
+  {
+   "tag": "sens_mu_0p30",
+   "sigma3_Pa": 100000.0,
+   "mu": 0.3,
+   "mu_rolling": 0.25,
+   "phi_peak_deg": 31.356737608785767,
+   "phi_critical_deg": 25.06471392757028,
+   "q_peak_Pa": 222623.07539453474,
+   "drained_pass": true,
+   "drained_drift": 0.056639599754416556,
+   "reference": {
+    "band_deg": [
+     30.0,
+     40.0
+    ],
+    "band_midpoint_deg": 35.0,
+    "reference_used_deg": 35.0,
+    "inside_band": true,
+    "relative_error": -0.10409321117754951,
+    "pass_10pct": false
+   },
+   "wall_time_s": 367.2,
+   "path": "/root/tp-agent/work/m15235/artifacts/case_triaxial_cd/sens_mu_0p30.json"
+  },
+  {
+   "tag": "sens_mu_0p70",
+   "sigma3_Pa": 100000.0,
+   "mu": 0.7,
+   "mu_rolling": 0.25,
+   "phi_peak_deg": 35.94661606408318,
+   "phi_critical_deg": 32.480597496662114,
+   "q_peak_Pa": 293998.99618786614,
+   "drained_pass": true,
+   "drained_drift": 0.051237906480646196,
+   "reference": {
+    "band_deg": [
+     30.0,
+     40.0
+    ],
+    "band_midpoint_deg": 35.0,
+    "reference_used_deg": 35.0,
+    "inside_band": true,
+    "relative_error": 0.027046173259519433,
+    "pass_10pct": true
+   },
+   "wall_time_s": 269.6,
+   "path": "/root/tp-agent/work/m15235/artifacts/case_triaxial_cd/sens_mu_0p70.json"
+  },
+  {
+   "tag": "sens_mur_0p10",
+   "sigma3_Pa": 100000.0,
+   "mu": 0.5,
+   "mu_rolling": 0.1,
+   "phi_peak_deg": 28.457150403302748,
+   "phi_critical_deg": 22.030872776170334,
+   "q_peak_Pa": 183334.8566343224,
+   "drained_pass": true,
+   "drained_drift": 0.04730073295168957,
+   "reference": {
+    "band_deg": [
+     30.0,
+     40.0
+    ],
+    "band_midpoint_deg": 35.0,
+    "reference_used_deg": 30.0,
+    "inside_band": false,
+    "relative_error": -0.0514283198899084,
+    "pass_10pct": false
+   },
+   "wall_time_s": 269.1,
+   "path": "/root/tp-agent/work/m15235/artifacts/case_triaxial_cd/sens_mur_0p10.json"
+  },
+  {
+   "tag": "sens_mur_0p40",
+   "sigma3_Pa": 100000.0,
+   "mu": 0.5,
+   "mu_rolling": 0.4,
+   "phi_peak_deg": 35.92274970753044,
+   "phi_critical_deg": 29.048089463967987,
+   "q_peak_Pa": 285096.22521082865,
+   "drained_pass": true,
+   "drained_drift": 0.06997199207554455,
+   "reference": {
+    "band_deg": [
+     30.0,
+     40.0
+    ],
+    "band_midpoint_deg": 35.0,
+    "reference_used_deg": 35.0,
+    "inside_band": true,
+    "relative_error": 0.02636427735801265,
+    "pass_10pct": true
+   },
+   "wall_time_s": 387.2,
+   "path": "/root/tp-agent/work/m15235/artifacts/case_triaxial_cd/sens_mur_0p40.json"
+  }
+ ],
+ "headline": {
+  "tag": "ladder_s100000",
+  "sigma3_Pa": 100000.0,
+  "phi_peak_deg": 33.421814405748066,
+  "phi_critical_deg": 28.787552160621825,
+  "reference": {
+   "band_deg": [
+    30.0,
+    40.0
+   ],
+   "band_midpoint_deg": 35.0,
+   "reference_used_deg": 35.0,
+   "inside_band": true,
+   "relative_error": -0.04509101697862669,
+   "pass_10pct": true
+  }
+ },
+ "ladder_fit": {
+  "fit": "sigma1 = a*sigma3 + b (peak, drained)",
+  "slope_a": 3.250966172533452,
+  "intercept_b_Pa": 18338.43384440948,
+  "sin_phi_from_slope": 0.5295187214326718,
+  "phi_from_slope_deg": 31.97294254019661,
+  "r_squared": 0.9999446382425873,
+  "max_relative_deviation": 0.007961835993729367,
+  "peak_strain_axial": [
+   0.10509400476831834,
+   0.07116735467275648,
+   0.08937189862762557
+  ],
+  "levels": [
+   {
+    "sigma3_Pa": 50497.742447420314,
+    "sigma1_Pa": 181063.29010993915,
+    "phi_peak_deg": 34.3224292045649,
+    "phi_critical_deg": 29.083343332665297,
+    "drained_drift": 0.07163243876771565,
+    "in_band": true,
+    "pass": true
+   },
+   {
+    "sigma3_Pa": 101779.21338729946,
+    "sigma1_Pa": 351377.0015033879,
+    "phi_peak_deg": 33.421814405748066,
+    "phi_critical_deg": 28.787552160621825,
+    "drained_drift": 0.06167571841109806,
+    "in_band": true,
+    "pass": true
+   },
+   {
+    "sigma3_Pa": 205001.82808232,
+    "sigma1_Pa": 684076.2505980858,
+    "phi_peak_deg": 32.60498216450042,
+    "phi_critical_deg": 27.400475596686448,
+    "drained_drift": 0.05077327284272731,
+    "in_band": true,
+    "pass": true
+   }
+  ],
+  "phi_spread_deg": 1.717447040064478,
+  "phi_spread_relative": 0.051344104355677225
+ },
+ "mu_sensitivity": [
+  {
+   "value": 0.3,
+   "phi_peak_deg": 31.356737608785767,
+   "phi_critical_deg": 25.06471392757028,
+   "tan_phi_peak": 0.6093666800823739,
+   "tag": "sens_mu_0p30"
+  },
+  {
+   "value": 0.7,
+   "phi_peak_deg": 35.94661606408318,
+   "phi_critical_deg": 32.480597496662114,
+   "tan_phi_peak": 0.7251199407833032,
+   "tag": "sens_mu_0p70"
+  }
+ ],
+ "mu_rolling_sensitivity": [
+  {
+   "value": 0.1,
+   "phi_peak_deg": 28.457150403302748,
+   "phi_critical_deg": 22.030872776170334,
+   "tan_phi_peak": 0.5419877542302827,
+   "tag": "sens_mur_0p10"
+  },
+  {
+   "value": 0.4,
+   "phi_peak_deg": 35.92274970753044,
+   "phi_critical_deg": 29.048089463967987,
+   "tan_phi_peak": 0.7244845664520524,
+   "tag": "sens_mur_0p40"
+  }
+ ],
+ "strain_rate_convergence": [
+  {
+   "strain_rate_per_s": 0.25,
+   "phi_peak_deg": 32.654796535077104,
+   "phi_critical_deg": 29.05053198981736,
+   "inertial_number": 0.00040697051490249265,
+   "tag": "conv_rate_0p25"
+  },
+  {
+   "strain_rate_per_s": 0.5,
+   "phi_peak_deg": 35.331949112552024,
+   "phi_critical_deg": 31.139779178528087,
+   "inertial_number": 0.0008139410298049853,
+   "tag": "conv_size_n96"
+  }
+ ],
+ "reference_band_deg": [
+  30.0,
+  40.0
+ ],
+ "tolerance_relative": 0.1,
+ "all_drained_pass": false,
+ "all_reference_pass": true
+}

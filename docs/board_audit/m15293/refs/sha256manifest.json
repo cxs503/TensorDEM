@@ -1,0 +1,79 @@
+{
+ "branch": "agent/m15235",
+ "commit": "b952a85b35fb8eb03eed5fb15bbf9053f9c2ea38",
+ "files": {
+  "artifacts/case_triaxial_cd/conv_rate_0p25.json": {
+   "bytes": 462923,
+   "sha256": "7a29931c8e260b6241dce5d5440bbb00c797ac226059d74db6b59c257773f09a"
+  },
+  "artifacts/case_triaxial_cd/conv_size_n96.json": {
+   "bytes": 290942,
+   "sha256": "4f2f8d2161e841eff5416690a08e5887f5fb4aa5adb1cf20c13043317add56d7"
+  },
+  "artifacts/case_triaxial_cd/fig_case_triaxial_cd.png": {
+   "bytes": 224175,
+   "sha256": "ac647240ae26792f5de225f9d75a9dd8c156b4fbc5049994f27fa6c1bcdd9880"
+  },
+  "artifacts/case_triaxial_cd/ladder_s100000.json": {
+   "bytes": 290901,
+   "sha256": "2e18d4fbf120de6125c6834233a6f1540774ce1560cdf5f40af6c36988fbb72c"
+  },
+  "artifacts/case_triaxial_cd/ladder_s200000.json": {
+   "bytes": 290469,
+   "sha256": "5d8fff5b67fd9b22077fb7906138be92001e1cf7903d2b11fda51f372520ac33"
+  },
+  "artifacts/case_triaxial_cd/ladder_s50000.json": {
+   "bytes": 290410,
+   "sha256": "288ff2b2cc46152386fa436d0b751b1a5ddfab925052168563515f5810b5f6db"
+  },
+  "artifacts/case_triaxial_cd/sens_mu_0p30.json": {
+   "bytes": 290971,
+   "sha256": "0278ecc054f0569e993ad85ccf9210a6fa0e80d74571f62d6af60cef1909f3c0"
+  },
+  "artifacts/case_triaxial_cd/sens_mu_0p70.json": {
+   "bytes": 291031,
+   "sha256": "c87787511df24309446e099c03f093cb76cd26a5d3a6912b6684fe2b3039590d"
+  },
+  "artifacts/case_triaxial_cd/sens_mur_0p10.json": {
+   "bytes": 291350,
+   "sha256": "91d3f0adedab470c1fc6bb094bb53ee2adab8b6c478a59707e75c23c5e50ddbc"
+  },
+  "artifacts/case_triaxial_cd/sens_mur_0p40.json": {
+   "bytes": 290723,
+   "sha256": "56f829bdb57c0dfedf53e59269e09f9d2c80a250fc6b51714afe8e8be7d46a8b"
+  },
+  "artifacts/case_triaxial_cd/summary.json": {
+   "bytes": 8508,
+   "sha256": "6e28c78b3a313a0e00e8402e4ab94842c6b006aee7984c14013dcde2150b6a79"
+  },
+  "benchmarks/case_triaxial_cd/report.py": {
+   "bytes": 17510,
+   "sha256": "0188b39121081269002506ecce78fd2b65892e3ab04fee6084b8b2065bcd5634"
+  },
+  "benchmarks/case_triaxial_cd/run_all.sh": {
+   "bytes": 1867,
+   "sha256": "f8ca904e35cd3bd53093fc913cd324f31759047998a47e4d426149d9c03d983d"
+  },
+  "benchmarks/case_triaxial_cd/run_case.py": {
+   "bytes": 10580,
+   "sha256": "0712bf92c3a0abdbd9355ee5362bf6c667bf337f8771af562032efc64bcd1e3d"
+  },
+  "docs/CASE_TRIAXIAL_CD_M15235.md": {
+   "bytes": 7129,
+   "sha256": "04a51c31421a76d16f4bca6ef484123a8c7f7db392183c2756bda7ece067d51b"
+  },
+  "scripts/_diag_tcd.py": {
+   "bytes": 3009,
+   "sha256": "19d628634175dd494bd38b922f2af1bb825c3ea2d08048f3d9f1a7d916864821"
+  },
+  "src/tensordem/triaxial_cd.py": {
+   "bytes": 20241,
+   "sha256": "b4a356e02a17876e2e805f1c0e6d9be57c4bac7216bdb19a107520636fa18c0c"
+  },
+  "tests/test_triaxial_cd_protocol.py": {
+   "bytes": 2478,
+   "sha256": "9df8042a63dac664b82e9f779dd5c8622993ee2760fb6cb54c238fb8ed5f5338"
+  }
+ },
+ "source_worktree": "/root/tp-agent/work/m15235"
+}
