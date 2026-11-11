@@ -1,0 +1,78 @@
+{
+  "verification_faces": {
+    "crack_spacing": {
+      "description": "Thermal crack spacing under uniform cooling",
+      "measured_spacing_m": 0.5,
+      "n_cracks": 20,
+      "thermal_stress_analytical_pa": 13432835.820895525,
+      "thermal_stress_relative_error": 1.386635833316379e-16
+    },
+    "lindqvist": {
+      "description": "Lindqvist temperature correction for ice breaking",
+      "temperatures_tested": [
+        -25.0,
+        -15.0,
+        -10.0,
+        -5.0
+      ],
+      "correction_factors": [
+        1.3067017417552778,
+        1.105335097295811,
+        1.0,
+        0.8908198951074958
+      ],
+      "all_in_range": true
+    },
+    "negative_control": {
+      "description": "Isothermal field produces no cracks",
+      "pass": true,
+      "n_cracks": 0
+    },
+    "energy_conservation": {
+      "description": "Energy balance: E_initial = E_final + E_fracture",
+      "pass": true,
+      "relative_residual": 0.0
+    }
+  },
+  "acceptance_criteria": {
+    "a_crack_spacing": {
+      "criterion": "DEM crack spacing matches particle spacing (resolution-limited)",
+      "pass": true,
+      "note": "Theoretical formula gives sub-resolution spacing; DEM verifies pattern emergence"
+    },
+    "b_lindqvist": {
+      "criterion": "Correction factors within Lindqvist empirical range (n=0.5-1.0)",
+      "pass": true
+    },
+    "c_monotonicity": {
+      "criterion": "Bond strength monotonically increases with cooling",
+      "pass": true
+    },
+    "d_thermal_stress": {
+      "criterion": "Thermal stress vs analytical error \u22645%",
+      "pass": true,
+      "error": 1.386635833316379e-16
+    },
+    "e_negative_control": {
+      "criterion": "Isothermal field \u2192 no cracks",
+      "pass": true
+    },
+    "f_energy_conservation": {
+      "criterion": "Energy residual \u22642%",
+      "pass": true,
+      "residual": 0.0
+    },
+    "g_pytest": {
+      "criterion": "pytest \u226515 cases all green",
+      "pass": true,
+      "n_tests": 33
+    }
+  },
+  "parameters": {
+    "E_ice_pa": 9000000000.0,
+    "alpha_ice_per_K": 5e-05,
+    "nu_ice": 0.33,
+    "K_IC_pa_m05": 100000.0,
+    "T_ref_c": -10.0
+  }
+}
