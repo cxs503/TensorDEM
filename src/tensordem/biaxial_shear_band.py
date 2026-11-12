@@ -154,7 +154,8 @@ def local_shear_strain(x_ref: np.ndarray, x_now: np.ndarray, *, k: int = 8,
 def radon_band_angle(x: Sequence[float], y: Sequence[float],
                      weight: Sequence[float], *,
                      n_bins: int | None = None,
-                     resolution_deg: float = 1.0) -> dict[str, Any]:
+                     resolution_deg: float = 1.0,
+                     binning: str = "equal_count") -> dict[str, Any]:
     """Band inclination (deg from +x) from a Radon/projection focus search.
 
     For every candidate inclination ``alpha`` the samples are projected on the
@@ -162,7 +163,30 @@ def radon_band_angle(x: Sequence[float], y: Sequence[float],
     into one bin, maximising the fraction ``eta2`` of the weighted variance
     explained by the bin means.  A conjugate peak at least 10 deg away is
     reported when it carries at least 60 % of the dominant score.
+
+    ``binning`` selects how the projection coordinate ``s`` is partitioned:
+
+    ``"equal_count"`` (default)
+        quantile bins -- every bin holds the same number of samples
+        (``s`` sorted, then split into ``n_bins`` contiguous groups).
+    ``"equal_width"``
+        legacy equal-width bins in the min-max-normalised ``s``.
+
+    Why the default changed (CASE-BIAXIAL-SHEAR-BAND, R2 diagnosis): ``eta2``
+    is a *count weighted* between-bin variance.  With equal-width bins the bin
+    occupancy is itself a function of the projection direction whenever the
+    point set is anisotropic -- and the biaxial specimen is an elongated
+    rectangular lattice (24 x 48 spacings).  The occupancy term then competes
+    with the strain ridge: a synthetic band of *known* 60 deg inclination placed
+    on that lattice was recovered as **44 deg** (an 18 deg bias, and largest for
+    bands near 50-55 deg), while the same band on a square or uniformly random
+    point set was recovered exactly.  Equal-count bins make the comparison of
+    bin means fair by construction and recover 30/45/60/70 deg to <= 1 deg on
+    the same lattice (``tensordem.biaxial_band_diagnostics.estimator_bias_sweep``
+    and ``tests/test_biaxial_band_diagnostics.py``).
     """
+    if binning not in ("equal_count", "equal_width"):
+        raise BandMeasurementError(f"unknown binning {binning!r}")
     xs = np.asarray(x, dtype=np.float64).ravel()
     ys = np.asarray(y, dtype=np.float64).ravel()
     w = np.asarray(weight, dtype=np.float64).ravel()
@@ -179,8 +203,14 @@ def radon_band_angle(x: Sequence[float], y: Sequence[float],
 
     angles = np.arange(0.0, 180.0, float(resolution_deg))
     bins = int(n_bins) if n_bins else max(8, min(40, int(round(math.sqrt(xs.size)))))
-    xs = (xs - xs.min()) / max(float(np.ptp(xs)), 1e-12)
-    ys = (ys - ys.min()) / max(float(np.ptp(ys)), 1e-12)
+    # NOTE: x and y are *not* rescaled independently.  Rescaling each axis by its
+    # own min-max range is an anisotropic (non-conformal) map: a physical
+    # direction (cos a, sin a) becomes (cos a / W, sin a / H), so the reported
+    # angle obeys tan(theta_reported) = (W / H) tan(theta_true) and an elongated
+    # specimen reports every angle "squashed" towards 45 deg (a 24 x 48 lattice
+    # with W/H = 0.567 reported 60 deg as 44.5 deg).  Only the projection
+    # coordinate s is normalised below, which is a monotone 1-D map and
+    # therefore angle preserving.
     mu = float(w.mean())
     total_ss = float(np.sum((w - mu) ** 2))
     if not total_ss > 0.0:
@@ -189,9 +219,17 @@ def radon_band_angle(x: Sequence[float], y: Sequence[float],
     eta = np.empty_like(angles)
     for i, alpha in enumerate(angles):
         rad = math.radians(alpha)
-        s = xs * (-math.sin(rad)) + ys * math.cos(rad)
-        s = (s - s.min()) / max(float(np.ptp(s)), 1e-12)
-        index = np.minimum((s * bins).astype(np.int64), bins - 1)
+        s = xs * (-math.sin(rad)) + ys * np.cos(rad)
+        if binning == "equal_count":
+            # quantile bins: equal sample count per bin, so that the count
+            # weighting of eta2 cannot encode the point-set anisotropy
+            group = np.empty(s.size, dtype=np.int64)
+            group[np.argsort(s, kind="stable")] = np.minimum(
+                (np.arange(s.size) * bins) // max(s.size, 1), bins - 1)
+            index = group
+        else:
+            s = (s - s.min()) / max(float(np.ptp(s)), 1e-12)
+            index = np.minimum((s * bins).astype(np.int64), bins - 1)
         count = np.bincount(index, minlength=bins).astype(np.float64)
         wsum = np.bincount(index, weights=w, minlength=bins)
         occupied = count > 0
@@ -216,6 +254,7 @@ def radon_band_angle(x: Sequence[float], y: Sequence[float],
     return {
         "angle_deg": peak_alpha,
         "folded_angle_deg": fold_angle_deg(peak_alpha),
+        "binning": binning,
         "eta2": peak_eta,
         "conjugate": conjugate,
         "null_eta2": null_mean,
@@ -351,12 +390,20 @@ def run_biaxial_shear_band(*, confining_stress: float = 100.0e3,
                            servo_gain: float = 1.0e-4,
                            servo_velocity_limit: float = 2.0,
                            material_overrides: dict[str, Any] | None = None,
+                           record_snapshots: bool = False,
                            ) -> dict[str, Any]:
     """Run one constant-confining-pressure biaxial test and measure its band.
 
     ``strain_rate`` (1/s) is applied on the *current* height, so the axial
     strain rate is constant; the implied inertial number is reported so the
     quasi-static assumption is auditable.  Returns a JSON-serialisable dict.
+
+    ``record_snapshots`` additionally keeps every strain snapshot
+    (``[{"strain": float, "positions": (N, 2) ndarray}, ...]``) under
+    ``result["snapshots"]`` so a *local* (band-resolved) measurement can be run
+    offline, e.g. by :mod:`tensordem.biaxial_band_diagnostics`.  It is off by
+    default because the snapshots are not JSON-serialisable and are ~0.5 MB
+    each.
     """
     overrides = dict(material_overrides or {})
     overrides.setdefault("particle_radius", float(radius))
@@ -378,6 +425,9 @@ def run_biaxial_shear_band(*, confining_stress: float = 100.0e3,
     height0 = float(top.point[1] - bottom.point[1])
     prev = assembly.pos.detach().numpy().copy()
     reference = prev.copy()
+    snapshots: list[dict[str, Any]] = []
+    if record_snapshots:
+        snapshots.append({"strain": 0.0, "positions": reference.copy(), "window": None})
     strain = 0.0
     history: list[dict[str, Any]] = []
     bands: list[dict[str, Any]] = []
@@ -410,6 +460,9 @@ def run_biaxial_shear_band(*, confining_stress: float = 100.0e3,
                       float(bottom.point[1]) + wall_margin_diameters * diameter,
                       float(top.point[1]) - wall_margin_diameters * diameter)
             current = assembly.pos.detach().numpy().copy()
+            if record_snapshots:
+                snapshots.append({"strain": float(strain), "positions": current.copy(),
+                                  "window": window})
             try:
                 band = measure_band(prev, current, bounds=window, k=k_local)
             except BandMeasurementError as exc:      # pragma: no cover - defensive
@@ -503,4 +556,5 @@ def run_biaxial_shear_band(*, confining_stress: float = 100.0e3,
         "stress_path": hist,
         "note": ("plane-strain biaxial, constant confining pressure, "
                  "top platen displacement driven; gravity neglected"),
+        "snapshots": snapshots,
     }
