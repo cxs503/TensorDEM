@@ -31,7 +31,9 @@ from typing import Iterable, Sequence
 import numpy as np
 
 from .clump import Clump
-from .clump_rolling import resistance_moment
+from .clump_rolling import (inertial_moment_about, resistance_moment,
+                            rolling_component, viscous_damping_gain,
+                            viscous_stability_dt)
 
 __all__ = [
     "ClumpBody",
@@ -60,6 +62,16 @@ class ContactConfig:
     the normal one), ``restitution`` [-] sets the normal damping ratio through
     :func:`restitution_to_damping_ratio`, ``friction`` [-] is the Coulomb limit.
 
+    ``rolling_stability_guard`` (default ``True``) refuses the ``"viscous"``
+    branch when it is run outside the stability window of the explicit rate law
+    (``dt < 4 I omega_ref / (mu_r |F_n| r)``, see
+    :func:`tensordem.clump_rolling.viscous_stability_dt`) instead of letting the
+    run overflow silently.  ``rolling_viscous_implicit`` (default ``False``)
+    makes that branch unconditionally stable by applying the gain-limited
+    (implicit-damping) coefficient of
+    :func:`tensordem.clump_rolling.viscous_damping_gain`; it keeps the declared
+    law only in the resolved limit and inflates the steady rolling rate by
+    ``1 + lambda dt/2``, which is why it is opt-in and not the default.
     ``rolling_friction`` (``mu_r``) and ``drilling_friction`` (``mu_t``) enable
     the per-member rolling / torsion resistance of
     :mod:`tensordem.clump_rolling`; both are zero by default, so a clump with the
@@ -77,6 +89,8 @@ class ContactConfig:
     rolling_model: str = "epsd"
     rolling_stiffness_factor: float = 2.25
     rolling_omega_ref: float = 1.0e-3
+    rolling_viscous_implicit: bool = False
+    rolling_stability_guard: bool = True
 
     def __post_init__(self) -> None:
         for name in ("normal_stiffness", "restitution", "friction",
@@ -102,6 +116,9 @@ class ContactConfig:
             raise ValueError("rolling_omega_ref must be positive")
         if self.rolling_model not in ("cdt", "viscous", "epsd"):
             raise ValueError("rolling_model must be 'cdt', 'viscous' or 'epsd'")
+        for name in ("rolling_viscous_implicit", "rolling_stability_guard"):
+            if not isinstance(getattr(self, name), bool):
+                raise ValueError(f"{name} must be a bool")
 
     @property
     def k_t(self) -> float:
@@ -200,16 +217,22 @@ class ClumpContact:
         self._rolling_moment = None
         self._rolling_moment_work = 0.0
         self._rolling_power_max = -math.inf
+        self._rolling_pending_power = None
+        self._rolling_pending_roll = None
 
     # -- rolling / drilling resistance -----------------------------------
     def _init_resistance(self) -> None:
         self._rolling_moment = None          # (N, 3) epsd spring state, world frame
         self._rolling_moment_work = 0.0      # dissipated moment work [J]
         self._rolling_power_max = -math.inf  # max of M . omega (must stay <= 0)
+        self._rolling_pending_power = None   # (N,) power at the first evaluation
+        self._rolling_pending_roll = None    # (N, 3) rolling rate at the first evaluation
 
     def _ensure_resistance_state(self, count: int) -> None:
         if self._rolling_moment is None or len(self._rolling_moment) != count:
             self._rolling_moment = np.zeros((count, 3))
+            self._rolling_pending_power = np.zeros(count)
+            self._rolling_pending_roll = np.zeros((count, 3))
 
     def _resistance(self, cfg: "ContactConfig", normal: np.ndarray, body: "ClumpBody",
                     normal_force: float, radius: float, index: int, dt: float,
@@ -219,18 +242,77 @@ class ClumpContact:
             return np.zeros(3)
         self._ensure_resistance_state(len(body.clump))
         omega_world = body.angular_velocity_world()
+        viscous = cfg.rolling_model == "viscous" and cfg.rolling_friction > 0.0
+        inertia = None
+        gain = None
+        if viscous:
+            inverse_inertia = body.inverse_inertia_world()
+            omega_roll, _ = rolling_component(omega_world, normal)
+            if float(np.linalg.norm(omega_roll)) > 0.0:
+                inertia = inertial_moment_about(inverse_inertia, omega_roll)
+            else:
+                # no spin: the axis is undefined, fall back to the isotropic
+                # (harmonic-mean) inertia so the bookkeeping stays well posed
+                inertia = 3.0 / float(np.trace(inverse_inertia))
+            limit = cfg.rolling_friction * max(float(normal_force), 0.0) * radius
+            gamma = limit / max(float(cfg.rolling_omega_ref), 1.0e-12)
+            gain = viscous_damping_gain(gamma, dt,
+                                        inertia if cfg.rolling_viscous_implicit else None)
+            if (cfg.rolling_stability_guard and not cfg.rolling_viscous_implicit
+                    and gamma > 0.0 and inertia is not None):
+                lambda_dt = gamma * dt / inertia
+                if lambda_dt > 4.0:
+                    limits = viscous_stability_dt(inertia, normal_force, radius,
+                                                  cfg.rolling_friction,
+                                                  cfg.rolling_omega_ref)
+                    raise ValueError(
+                        "viscous rolling law is outside its stability window: "
+                        f"lambda*dt = dt*M_lim/(I*omega_ref) = {lambda_dt:.4g} > 4 "
+                        f"(divergence bound 4, monotone bound 2). "
+                        f"dt <= {limits['dt_divergence']:.3e} s keeps it bounded, "
+                        f"dt <= {limits['dt_monotone']:.3e} s keeps the decay monotone; "
+                        f"either lower dt, raise rolling_omega_ref (>= "
+                        f"{cfg.rolling_omega_ref * lambda_dt / 4.0:.3e} rad/s), or set "
+                        "ContactConfig(rolling_viscous_implicit=True) for the "
+                        "gain-limited gain (steady rolling rate then inflated by "
+                        "1 + lambda*dt/2) -- see "
+                        "docs/clump_rolling_viscous_stability.md")
         moment, state = resistance_moment(
             normal, omega_world, normal_force, radius,
             mu_r=cfg.rolling_friction, mu_t=cfg.drilling_friction,
             model=cfg.rolling_model, moment_state=self._rolling_moment[index], dt=dt,
             normal_stiffness=cfg.normal_stiffness,
             stiffness_factor=cfg.rolling_stiffness_factor,
-            omega_ref=cfg.rolling_omega_ref)
+            omega_ref=cfg.rolling_omega_ref,
+            inertia=inertia if cfg.rolling_viscous_implicit else None)
+        power = float(moment @ omega_world)
+        roll_rate, _ = rolling_component(omega_world, normal)
         if commit:
             self._rolling_moment[index] = state
-            power = float(moment @ omega_world)
-            self._rolling_moment_work += -power * dt
-            self._rolling_power_max = max(self._rolling_power_max, power)
+            factor = None
+            if gain is not None and inertia is not None:
+                factor = (1.0 - 0.5 * gain * dt / inertia) ** 2
+            if factor is not None and 0.0 <= factor <= 1.0:
+                # Exact work of the rate law: one step removes
+                # 0.5 I |omega_roll|^2 (1 - F^2), F being the one-step decay
+                # factor.  A rectangle/trapezoid rule on ``M . omega`` cannot
+                # resolve a decay that completes inside one step (it
+                # over-reports by 28 % at lambda dt = 0.9, measured).
+                pending = self._rolling_pending_roll[index]
+                self._rolling_moment_work += (0.5 * inertia * float(pending @ pending)
+                                              * (1.0 - factor * factor))
+            else:
+                # Legacy quadrature: trapezoidal power over the step's two force
+                # evaluations (the legacy rectangle rule used the commit power
+                # only and under-reported the dissipation by up to 2x when the
+                # moment law is stiffer than the step).
+                self._rolling_moment_work += -0.5 * (
+                    self._rolling_pending_power[index] + power) * dt
+            self._rolling_power_max = max(self._rolling_power_max, power,
+                                          float(self._rolling_pending_power[index]))
+        else:
+            self._rolling_pending_power[index] = power
+            self._rolling_pending_roll[index] = roll_rate
         return moment
 
     def rolling_moment_state(self) -> np.ndarray:
