@@ -576,7 +576,7 @@ def run() -> dict:
         },
         {
             "id": "DEFECT-D3",
-            "status": "open",
+            "status": "repaired (m16448)",
             "severity": "medium",
             "where": "propeller_ice.hydro.solve_open_water",
             "what": "at the matched 3 m geometry and J <= 0.2 every strip sits on the induction "
@@ -589,6 +589,11 @@ def run() -> dict:
                          "strips_at_cap_per_J": [r["pkg_strips_at_induction_cap"]
                                                  for r in crossval[0]["table"]],
                          "worst_K_T_divergence": g6["measured"], "min_strips_at_cap": cap_min},
+            "repair": "m16448 replaced the blind induction cap with an independent "
+                      "momentum residual plus a validity flag derived from the Glauert/Buhl "
+                      "actuator-disk closure re-derived in this module's own CT convention "
+                      "(docs/open_water_high_induction_d3_repair.md). The grid below is the "
+                      "pre-repair record.",
             "impact": "absolute open-water coefficients of BOTH implementations are WITHHELD "
                       "(no experimental chart in the repository); the package coefficients are "
                       "cap-limited below J ~ 0.3, the legacy ones are loss/polar-limited.",
