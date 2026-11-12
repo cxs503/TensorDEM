@@ -1,0 +1,44 @@
+{
+ "source_worktree": "/root/tp-agent/work/m15329",
+ "branch": "agent/m15329",
+ "commit": "7902f19161c1863ecc2722b1854fcda6e42b8ef1",
+ "subject": "m15329: CASE-ROTATING-DRUM 回转滚筒混合/休止算例（Froude 数文献对照，释放角 5/5 点 <20%）",
+ "files": {
+  "benchmarks/rotating_drum_mixing_resting.py": {
+   "copy": "docs/board_audit/m15454/refs/benchmarks__rotating_drum_mixing_resting.py",
+   "sha256": "b5890381b0cbf1a0423b5aef1e5f78740bba3fcb2994f03b4dbb9ac0fe61d51c",
+   "bytes": 11912,
+   "in_audited_head": false
+  },
+  "benchmarks/rotating_drum_figures.py": {
+   "copy": "docs/board_audit/m15454/refs/benchmarks__rotating_drum_figures.py",
+   "sha256": "e815234808ee97200ad23b4d3ab08900e0d5d21cf4c2e137414ce612f00cacea",
+   "bytes": 4825,
+   "in_audited_head": false
+  },
+  "docs/CASE_ROTATING_DRUM_MIXING_RESTING.md": {
+   "copy": "docs/board_audit/m15454/refs/docs__CASE_ROTATING_DRUM_MIXING_RESTING.md",
+   "sha256": "467b42de3d8886612aa10992ab2d2f623d87dca1c21a853688a648db09f20921",
+   "bytes": 8084,
+   "in_audited_head": false
+  },
+  "runs/m15329/cases/merged.json": {
+   "copy": "docs/board_audit/m15454/refs/runs__m15329__cases__merged.json",
+   "sha256": "0975902304598b6320178678b79aad363db5a9a8263a7e1cd733c22eb5ebacd6",
+   "bytes": 14375,
+   "in_audited_head": false
+  },
+  "runs/m15329/main/merged.json": {
+   "copy": "docs/board_audit/m15454/refs/runs__m15329__main__merged.json",
+   "sha256": "0be5a3149c4651905f89565f91df601baa604fb9289d65f7203fe5a7564a57c1",
+   "bytes": 163627,
+   "in_audited_head": false
+  },
+  "runs/m15329/combined.json": {
+   "copy": "docs/board_audit/m15454/refs/runs__m15329__combined.json",
+   "sha256": "7334c0ebf438be6af2a08aedd542caf2f6ec59b60a0795c3a911b6d91c6da835",
+   "bytes": 177815,
+   "in_audited_head": false
+  }
+ }
+}
