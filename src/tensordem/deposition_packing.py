@@ -775,3 +775,71 @@ def run_deposition(spec: DepositionSpec,
         placement=out["placement"],
         rebuilds=out["rebuilds"],
     )
+
+# ---------------------------------------------------------------------------
+# reading a soft-sphere number in the hard-sphere limit
+# ---------------------------------------------------------------------------
+def stiffness_limit(points: list[tuple[float, float]],
+                    default_order: float = 1.0,
+                    order_bounds: tuple[float, float] = (0.2, 4.0)
+                    ) -> dict[str, Any]:
+    """Extrapolate a soft-sphere measurement to ``k_n -> inf`` (hard spheres).
+
+    A soft-sphere packing is compressible: the spheres overlap by
+    ``delta ~ F/k_n``, so any measured volume fraction carries a ``1/k_n``
+    systematic whose size the analyst must *report* rather than assume small.
+    With at least three stiffness levels the observed order of that systematic
+    is measurable and the ``k_n -> inf`` limit can be estimated (Richardson):
+
+    ``value(k_n) = value_inf + A k_n^{-p}``, with ``p`` from the ratio of two
+    consecutive refinements ``Delta_1/Delta_2 = r^p`` (``r`` the stiffness
+    ratio).  Two points fall back to ``default_order``.
+
+    Parameters
+    ----------
+    points : list of ``(k_n, value)``; ``len >= 2``, distinct ``k_n > 0``.
+
+    Returns
+    -------
+    dict with the sorted arrays, the consecutive deltas, the observed order
+    ``p`` (``None`` when the deltas are not monotone-decaying, i.e. no clean
+    order exists), the extrapolated ``limit`` and ``delta_from_last`` -- the
+    distance between the stiffest measured value and the limit, which is the
+    error bar the extrapolation removes.
+
+    The function is pure: it does not know about DEM, only about the confluence
+    of a measurable order with a geometric parameter refinement.
+    """
+    pts = sorted((float(k), float(v)) for k, v in points)
+    if len(pts) < 2:
+        raise ValueError("need at least two stiffness levels")
+    kn = np.array([p[0] for p in pts])
+    val = np.array([p[1] for p in pts])
+    if np.any(kn <= 0.0):
+        raise ValueError("k_n must be positive")
+    if np.any(np.diff(kn) <= 0.0):
+        raise ValueError("k_n levels must be distinct")
+    deltas = np.diff(val)
+    ratios = kn[1:] / kn[:-1]
+
+    order: float | None = None
+    if len(deltas) >= 2 and deltas[-2] != 0.0 and deltas[-1] != 0.0 \
+            and np.sign(deltas[-2]) == np.sign(deltas[-1]):
+        order = float(math.log(abs(deltas[-2]) / abs(deltas[-1]))
+                      / math.log(ratios[-1]))
+        if not (order_bounds[0] < order < order_bounds[1]):
+            order = None
+    p_used = default_order if order is None else order
+    ratio = float(ratios[-1])
+    limit = float(val[-1] + deltas[-1] / (ratio ** p_used - 1.0))
+    return {
+        "kn": kn.tolist(),
+        "value": val.tolist(),
+        "delta": deltas.tolist(),
+        "ratio": ratios.tolist(),
+        "order": order,
+        "order_used": float(p_used),
+        "limit": limit,
+        "delta_from_last": float(abs(limit - val[-1])),
+        "n_levels": int(len(pts)),
+    }

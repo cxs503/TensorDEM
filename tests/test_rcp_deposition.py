@@ -195,3 +195,61 @@ def test_friction_lowers_the_packing_fraction():
                               sample_every=5.0)
         return run_deposition(spec).metrics["phi_bulk"]
     assert phi(0.3) <= phi(0.0) + 0.005
+
+
+# ---------------------------------------------------------------------------
+# reading the soft-sphere number in the hard-sphere limit
+# ---------------------------------------------------------------------------
+from tensordem.deposition_packing import stiffness_limit  # noqa: E402
+
+
+def test_stiffness_limit_recovers_an_exact_power_law():
+    """phi = 0.634 + 3/k_n^2 over three levels -> the limit is exact."""
+    limit_true, amp, power = 0.634, 3.0, 2.0
+    pts = [(kn, limit_true + amp / kn ** power) for kn in (4000.0, 16000.0, 64000.0)]
+    out = stiffness_limit(pts)
+    assert out["order"] is not None
+    assert abs(out["order"] - power) < 1e-6  # float cancellation in the deltas
+    assert abs(out["limit"] - limit_true) < 1e-9
+    # the residual of the stiffest measurement is what the extrapolation removes
+    assert out["delta_from_last"] == pytest.approx(amp / 64000.0 ** power, rel=1e-6)
+
+
+def test_stiffness_limit_two_levels_uses_the_default_order():
+    out = stiffness_limit([(4000.0, 0.638), (16000.0, 0.635)])
+    assert out["order"] is None and out["order_used"] == 1.0
+    # value_inf = v + Delta/(r^p - 1) with Delta = -0.003 and r = 4
+    assert out["limit"] == pytest.approx(0.635 + (-0.003) / 3.0)
+
+
+def test_stiffness_limit_non_monotone_deltas_are_flagged_not_hidden():
+    """Deltas that change sign have no order; the flag must say so."""
+    out = stiffness_limit([(4000.0, 0.640), (16000.0, 0.634), (64000.0, 0.641)])
+    assert out["order"] is None
+    assert out["order_used"] == 1.0
+
+
+@pytest.mark.parametrize("pts", [[(4000.0, 0.64)],
+                                 [(4000.0, 0.64), (4000.0, 0.63)],
+                                 [(0.0, 0.64), (4000.0, 0.63)]])
+def test_stiffness_limit_rejects_degenerate_input(pts):
+    with pytest.raises(ValueError):
+        stiffness_limit(pts)
+
+
+def test_deposition_plan_is_consistent_with_the_shard_runner():
+    """The cluster shard indexes the plan file; a stale bound would drop cases."""
+    import json
+    import os
+    plan_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                             "benchmarks", "case_rcp_deposition", "plan.json")
+    cases = json.load(open(plan_path))["cases"]
+    assert len(cases) >= 12
+    for c in cases:
+        assert {"n", "mu", "seed", "kn", "role"} <= set(c)
+    # production tier must carry the largest N and both friction tiers
+    n_max = max(c["n"] for c in cases)
+    tiers = {c["mu"] for c in cases if c["n"] == n_max and c["kn"] == 4000 and "dt_frac" not in c}
+    assert {0.0, 0.1} <= tiers
+    stiff_kn = {c["kn"] for c in cases if c["kn"] > 4000}
+    assert len(stiff_kn) >= 2
