@@ -68,6 +68,10 @@ __all__ = [
     "classify_kinematic",
     "simulate_point",
     "FR_BANDS",
+    "MELLMANN_BANDS",
+    "MEASURED_REGIME_THRESHOLDS",
+    "classify_froude_literature",
+    "classify_measured",
     "REGIMES",
 ]
 
@@ -303,3 +307,67 @@ def simulate_point(
         except ValueError as exc:
             result["surface"] = {"error": str(exc)}
     return result
+
+# ---------------------------------------------------------------------------
+# Literature Froude bands and a purely measured (kinematic) classifier
+# ---------------------------------------------------------------------------
+#: Form-of-motion bands of the classical rotary-drum diagram as a function of
+#: ``Fr = omega^2 R / g`` (Mellmann 2001, "The transverse motion of solids in
+#: rotating cylinders - forms of motion and transition behavior", Powder
+#: Technology 118:251-270).  Only the two endpoints are exact: ``Fr -> 0`` is
+#: pure sliding and ``Fr = 1`` is the centrifuging onset (the normal force at
+#: the top of the shell vanishes).  The intermediate boundaries are the
+#: literature's order-of-magnitude transitions; this table is used for
+#: QUALITATIVE labels only.  Quantitative anchors of the rotating-drum case are
+#: ``detachment_angle_deg`` and ``Fr = 1``.
+MELLMANN_BANDS = (
+    (0.0, 1.0e-4, "sliding"),
+    (1.0e-4, 1.0e-3, "surging"),
+    (1.0e-3, 1.0e-2, "rolling"),
+    (1.0e-2, 1.0e-1, "cascading"),
+    (1.0e-1, 1.0, "cataracting"),
+    (1.0, math.inf, "centrifuging"),
+)
+
+#: thresholds of the measured classifier (frozen before the m15649 runs; see
+#: ``prereg/CASE_ROTATING_DRUM_R2.json``).  They act on observables that do not
+#: contain Fr, so the resulting label is an independent measurement.
+MEASURED_REGIME_THRESHOLDS = {
+    "pinned_r_p05_over_R": 0.75,      # load pinned as an annulus -> centrifuging
+    "ballistic_upper_fraction": 0.05,  # free flight above the centre -> cataracting
+    "wall_slip_ratio": 0.35,           # bed lags the shell -> slipping
+    "cascading_wall_ratio": 0.70,      # partial wall coupling -> cascading
+}
+
+
+def classify_froude_literature(fr: float) -> str:
+    """Qualitative regime label from the literature Froude diagram."""
+    if fr < 0.0 or not math.isfinite(fr):
+        raise ValueError("Fr must be finite and non-negative")
+    for lo, hi, name in MELLMANN_BANDS:
+        if lo <= fr < hi:
+            return name
+    return "centrifuging"
+
+
+def classify_measured(obs: dict, thresholds: dict | None = None) -> str:
+    """Regime label from measured drum kinematics alone (no Fr input).
+
+    ``obs`` must provide ``r_p05_over_R``, ``upper_flight_fraction`` and
+    ``wall_velocity_ratio`` as produced by
+    :func:`tensordem.drum_segregation.kernel2d.simulate`.  Rules are applied in
+    the frozen order of ``prereg/CASE_ROTATING_DRUM_R2.json``.
+    """
+    th = thresholds or MEASURED_REGIME_THRESHOLDS
+    r_p05 = float(obs.get("r_p05_over_R", float("nan")))
+    upper = float(obs.get("upper_flight_fraction", float("nan")))
+    wall = float(obs.get("wall_velocity_ratio", float("nan")))
+    if math.isfinite(r_p05) and r_p05 >= th["pinned_r_p05_over_R"]:
+        return "centrifuging"
+    if math.isfinite(upper) and upper >= th["ballistic_upper_fraction"]:
+        return "cataracting"
+    if math.isfinite(wall) and wall < th["wall_slip_ratio"]:
+        return "slipping"
+    if math.isfinite(wall) and wall < th["cascading_wall_ratio"]:
+        return "cascading"
+    return "rolling"
