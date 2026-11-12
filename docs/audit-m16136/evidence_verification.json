@@ -1,0 +1,352 @@
+{
+ "audit_mission": 16194,
+ "audited_mission": 16136,
+ "repo": "TensorDEM",
+ "scope": "m16136 CASE-DEM-SHEAR-CAMPBELL-ELASTIC-LIMIT",
+ "audited_worktree": "/root/tp-agent/work/m16136",
+ "audited_commit": "00e704d9",
+ "run_artifacts": {
+  "dir": "artifacts/case_dem_shear_campbell_elastic_limit/",
+  "files": {
+   "fig_tau_star_kappa.png": {
+    "bytes": 37800,
+    "sha256": "e8c80604959efa7e54fce5ac9032285692006ec0bdcf88f8fc334d98c88ec578",
+    "git_tracked_in_audited_commit": true
+   },
+   "point_kn1e2.json": {
+    "bytes": 1230,
+    "sha256": "8c6188f20360604ac8a7a6c2a85accdd36ab55a6fd0db5ccf830b2d1482aa463",
+    "git_tracked_in_audited_commit": true
+   },
+   "point_kn1e3.json": {
+    "bytes": 1243,
+    "sha256": "3a077f5fe0f8654a1a1334c87b3d0d3af3d31bb95964e13b3756c03e752e47b9",
+    "git_tracked_in_audited_commit": true
+   },
+   "point_kn1e4.json": {
+    "bytes": 1237,
+    "sha256": "821c2210b290e2f544ffe5b8876f9210e7986b65d364ea545345b7160a6d6492",
+    "git_tracked_in_audited_commit": true
+   },
+   "point_kn1e5.json": {
+    "bytes": 1252,
+    "sha256": "c589675f411fa05b957c89e14b958eaad4fa88b0c4541bc082b86938cd109e5c",
+    "git_tracked_in_audited_commit": true
+   },
+   "point_kn1e6.json": {
+    "bytes": 1255,
+    "sha256": "ccaf809149944e117680f726963cb2ff141a5ccfd315cd15c4b345da2df9523e",
+    "git_tracked_in_audited_commit": true
+   },
+   "reference_evidence.json": {
+    "bytes": 3595,
+    "sha256": "b7110a323c1c1a47839f778f935b7c642c158f7d6d68fc65c384fe95523ddae5",
+    "git_tracked_in_audited_commit": true
+   },
+   "scaling.json": {
+    "bytes": 7156,
+    "sha256": "06f8b6922927a25e9d962abb6a44356bed711da51c8e0a308cf09ad40c1e77f2",
+    "git_tracked_in_audited_commit": true
+   },
+   "sweep_kn.json": {
+    "bytes": 7113,
+    "sha256": "e36c2dbed19d19a640c25dbf2b35180ff9b3c02a7ca1463b85b6b6236ad0412e",
+    "git_tracked_in_audited_commit": true
+   }
+  },
+  "all_committed": true,
+  "n_files": 9,
+  "commit_file_list": [
+   "artifacts/case_dem_shear_campbell_elastic_limit/fig_tau_star_kappa.png",
+   "artifacts/case_dem_shear_campbell_elastic_limit/point_kn1e2.json",
+   "artifacts/case_dem_shear_campbell_elastic_limit/point_kn1e3.json",
+   "artifacts/case_dem_shear_campbell_elastic_limit/point_kn1e4.json",
+   "artifacts/case_dem_shear_campbell_elastic_limit/point_kn1e5.json",
+   "artifacts/case_dem_shear_campbell_elastic_limit/point_kn1e6.json",
+   "artifacts/case_dem_shear_campbell_elastic_limit/reference_evidence.json",
+   "artifacts/case_dem_shear_campbell_elastic_limit/scaling.json",
+   "artifacts/case_dem_shear_campbell_elastic_limit/sweep_kn.json",
+   "benchmarks/case_dem_shear_campbell_elastic_limit/run_case.py",
+   "docs/CASE_DEM_SHEAR_CAMPBELL_ELASTIC_LIMIT.md",
+   "src/tensordem/elastic_limit_shear.py",
+   "tests/test_elastic_limit_shear.py"
+  ]
+ },
+ "tests": {
+  "file": "tests/test_elastic_limit_shear.py",
+  "cmd": "/usr/bin/python3 -m pytest -q tests/test_elastic_limit_shear.py",
+  "returncode": 0,
+  "result": "6 passed, 1 warning in 5.36s",
+  "tests": {
+   "23": "test_dimensionless_groups_match_campbell_definition (kappa/tau* group algebra)",
+   "32": "test_case_rejects_impossible_parameters (input validation)",
+   "41": "test_starting_configuration_is_overlap_free (start-state invariant, <=0.05 d)",
+   "53": "test_couette_point_is_deterministic_and_reports_finite_numbers (determinism)",
+   "66": "test_current_integrator_is_rejected_by_the_physics_gates (INVERTED pin: the open defect must persist)",
+   "77": "test_scaling_fit_reports_slopes_and_refuses_short_ladders"
+  },
+  "note": "green here means the contract (incl. the honest-FAIL pin) holds, NOT that the physics validates"
+ },
+ "repro": {
+  "cmd": "python benchmarks/case_dem_shear_campbell_elastic_limit/run_case.py --tag kn1e4 --kn 1e4 --n 100 --strain 1.5 --average-from 0.4",
+  "executed_here": true,
+  "all_five_rungs_bit_identical": true,
+  "repro_dir": "runs/audit_m16136/repro",
+  "points": {
+   "kn1e2": {
+    "kappa": 231.48148148148135,
+    "tau": 1.3114915770545115,
+    "pressure": 25.928428157681548,
+    "tau_star": 3.643032158484753,
+    "coordination": 1.1171428571428572,
+    "inertial_number": 0.11783197460853481,
+    "gate": {
+     "energy_balance_rel": 162.60768124909956,
+     "max_overlap_over_d": 0.9514968321294167,
+     "steady_drift": "nan",
+     "energy_gate": false,
+     "overlap_gate": false,
+     "steady_gate": false
+    },
+    "gate_pass": false,
+    "bit_identical_to_committed": true,
+    "diffs": {},
+    "wall_clock_s": 0.23915553092956543
+   },
+   "kn1e3": {
+    "kappa": 2314.814814814814,
+    "tau": -4.054711773315037,
+    "pressure": 185.04223261070976,
+    "tau_star": 11.263088259208434,
+    "coordination": 0.4689473684210526,
+    "inertial_number": 0.04410784304707345,
+    "gate": {
+     "energy_balance_rel": 901.0678849845442,
+     "max_overlap_over_d": 0.9502135815507013,
+     "steady_drift": 0.24524925153435492,
+     "energy_gate": false,
+     "overlap_gate": false,
+     "steady_gate": true
+    },
+    "gate_pass": false,
+    "bit_identical_to_committed": true,
+    "diffs": {},
+    "wall_clock_s": 0.7557337284088135
+   },
+   "kn1e4": {
+    "kappa": 23148.148148148135,
+    "tau": 0.44883762750037687,
+    "pressure": 565.0378870762142,
+    "tau_star": 1.2467711875010465,
+    "coordination": 0.0915,
+    "inertial_number": 0.02524134342738101,
+    "gate": {
+     "energy_balance_rel": 37652.345443050675,
+     "max_overlap_over_d": 0.6751506685545114,
+     "steady_drift": 0.2040669791577905,
+     "energy_gate": false,
+     "overlap_gate": false,
+     "steady_gate": true
+    },
+    "gate_pass": false,
+    "bit_identical_to_committed": true,
+    "diffs": {},
+    "wall_clock_s": 2.3228940963745117
+   },
+   "kn1e5": {
+    "kappa": 231481.48148148137,
+    "tau": -6.7727619716364735,
+    "pressure": 2934.2525509929997,
+    "tau_star": 18.8132276989902,
+    "coordination": 0.03663157894736842,
+    "inertial_number": 0.011076498804769451,
+    "gate": {
+     "energy_balance_rel": 26315.548830060645,
+     "max_overlap_over_d": 0.45870352014328614,
+     "steady_drift": 0.37791074963357557,
+     "energy_gate": false,
+     "overlap_gate": true,
+     "steady_gate": false
+    },
+    "gate_pass": false,
+    "bit_identical_to_committed": true,
+    "diffs": {},
+    "wall_clock_s": 8.185468673706055
+   },
+   "kn1e6": {
+    "kappa": 2314814.8148148134,
+    "tau": -132.00745172525578,
+    "pressure": 20240.279608981105,
+    "tau_star": 366.68736590348817,
+    "coordination": 0.02250830564784053,
+    "inertial_number": 0.0042173825475867455,
+    "gate": {
+     "energy_balance_rel": 21149.580420059698,
+     "max_overlap_over_d": 0.38855779256170325,
+     "steady_drift": 0.0646678720783314,
+     "energy_gate": false,
+     "overlap_gate": true,
+     "steady_gate": true
+    },
+    "gate_pass": false,
+    "bit_identical_to_committed": true,
+    "diffs": {},
+    "wall_clock_s": 22.11802315711975
+   }
+  }
+ },
+ "aggregate": {
+  "returncode": 0,
+  "n_points": 5,
+  "n_gated": 0,
+  "scaling_payload": {
+   "error": "fewer than 3 points passed the physics gates; no scaling fit is legitimate",
+   "gated_tags": [],
+   "failed_tags": [
+    "kn1e2",
+    "kn1e3",
+    "kn1e4",
+    "kn1e5",
+    "kn1e6"
+   ]
+  },
+  "same_refusal_as_committed": true,
+  "figure_regenerated": true
+ },
+ "benchmark_referee": {
+  "table": "tensor_benchmark_cases",
+  "rows_for_anchor": [
+   {
+    "case_name": "R1_bagnold_exponent_inertial_limit",
+    "metric": "n = d ln tau / d ln gdot in the inertial limit (tau ~ rho d^2 gdot^2)",
+    "tolerance": "15 % rel.",
+    "status": "pending"
+   },
+   {
+    "case_name": "R2_regime_boundary_kappa_c",
+    "metric": "kappa_c for the elastic-inertial -> inertial transition",
+    "tolerance": "factor 3 (order of magnitude)",
+    "status": "pending"
+   },
+   {
+    "case_name": "R3_elastic_quasistatic_exponent",
+    "metric": "n for tau* ~ kappa (elastic-quasi-static limit)",
+    "tolerance": "absolute 0.3",
+    "status": "pending"
+   },
+   {
+    "case_name": "R4_bagnold_coefficient_plateau",
+    "metric": "tau* plateau coefficient (WITHHELD: JFM 2002 pp.261-291 CLOSED, no OA copy)",
+    "tolerance": "WITHHELD",
+    "status": "pending"
+   }
+  ],
+  "note": "no referee row existed for this anchor before the audit (first collection run returned 0 rows) -> the four R1-R4 rows are registered by land_verdict.py as status=pending (no pass claim)",
+  "registration_state": [
+   {
+    "case_name": "R1_bagnold_exponent_inertial_limit",
+    "status": "pending",
+    "created_within_last_hour": "true"
+   },
+   {
+    "case_name": "R2_regime_boundary_kappa_c",
+    "status": "pending",
+    "created_within_last_hour": "true"
+   },
+   {
+    "case_name": "R3_elastic_quasistatic_exponent",
+    "status": "pending",
+    "created_within_last_hour": "true"
+   },
+   {
+    "case_name": "R4_bagnold_coefficient_plateau",
+    "status": "pending",
+    "created_within_last_hour": "true"
+   }
+  ]
+ },
+ "declared_criteria": [
+  {
+   "id": "R1",
+   "quantity": "Bagnold exponent n in the inertial limit",
+   "reference": 2.0,
+   "tolerance": "15 % rel.",
+   "got": "not measurable (n_gated = 0; tau* non-monotonic, tau sign flips)",
+   "pass": false
+  },
+  {
+   "id": "R2",
+   "quantity": "regime boundary kappa_c (elastic-inertial -> inertial)",
+   "reference": 10000.0,
+   "tolerance": "order of magnitude (factor 3)",
+   "got": "not measurable (requires >=3 gated points)",
+   "pass": false
+  },
+  {
+   "id": "R3",
+   "quantity": "elastic-quasi-static exponent n (tau* ~ kappa)",
+   "reference": 0.0,
+   "tolerance": "absolute 0.3",
+   "got": "not measurable",
+   "pass": false
+  },
+  {
+   "id": "R4",
+   "quantity": "Bagnold coefficient tau* plateau",
+   "reference": "WITHHELD (Campbell 2002 pp. 261-291 CLOSED)",
+   "tolerance": "-",
+   "got": "WITHHELD - declared, not guessed",
+   "pass": null
+  }
+ ],
+ "mission_status": [
+  {
+   "id": "16136",
+   "repo": "TensorDEM",
+   "status": "succeeded"
+  }
+ ],
+ "report": {
+  "rows": [
+   {
+    "id": "15268",
+    "title": "CASE-DEM-SHEAR-CAMPBELL-ELASTIC-LIMIT \u7b2c1\u8f6e\uff1a\u5f39\u9650\u533a\u526a\u5207\u5e94\u529b\u6807\u5ea6\uff08honest FAIL\uff09",
+    "markdown_chars": 3998,
+    "six_sections_mask": "truetruetruetruetruetrue"
+   }
+  ],
+  "figures": [
+   {
+    "n": 1,
+    "name": "fig_tau_star_kappa.png",
+    "caption": "tau* vs kappa\uff08\u53cc\u5bf9\u6570\uff09\uff1a\u84dd=\u901a\u8fc7\u95e8\u9650\uff0c\u7ea2\u53c9=\u88ab\u95e8\u9650\u62d2\u7edd\uff1b\u672c\u8f6e\u5168\u90e8\u88ab\u62d2\u2014\u2014\u65e0\u53ef\u91c7\u4fe1\u6570\u636e\u70b9\u3002",
+    "png_base64_chars": 0
+   }
+  ],
+  "figures_embedded": false,
+  "figure_deviation": "figure payload retains only name+caption in the stored report: png_base64 is absent from report 15268 AND from every other recent report (15300-15305 all expose only name,caption), so the image is dropped by the platform report store, not by the audited mission. The PNG itself is committed in the audited tree and regenerated by run_case.py --aggregate. -> F4 reclassified: platform-side, not an m16136 defect"
+ },
+ "integration_callers": {
+  "grep": "grep -rn elastic_limit_shear --include=*.py src/ tests/ examples/ benchmarks/",
+  "importers_outside_module_test_benchmark": [],
+  "exported_in_package_init": false,
+  "verdict": "no integration caller (standalone case module)"
+ },
+ "level_decision": {
+  "level": 2,
+  "L2": "real function implementation: 620 loc module (DEM loop, linear spring-dashpot + Coulomb tangential, wall momentum-flux stress, three physics gates, kappa/tau* groups, ladder fitter), 130 loc driver, input->compute->output, deterministic and bit-reproducible",
+  "L3_refused": "no integration caller, not exported by src/tensordem/__init__.py; the module re-derives its own contact law instead of reusing tensordem.shear_cell (documented in the case doc section 6.4)",
+  "L4_refused": "0 of 3 numeric criteria measurable + 1 legitimately WITHHELD: all five rungs rejected by the module's own gates (energy imbalance 1.6e2-3.8e4 x, max overlap 0.39-0.95 d, Z collapse 1.12->0.02); no reference comparison exists, the fit is explicitly refused",
+  "L5_refused": "no scientific result delivered (honest-FAIL round 1)"
+ },
+ "honest_fail": {
+  "declared": true,
+  "where": "docs/CASE_DEM_SHEAR_CAMPBELL_ELASTIC_LIMIT.md sections 5-7 and report 15268 section 6 ('no quantity enters the 15 % criterion, let alone 3 %')",
+  "mission_status": "succeeded (deliverable + honest FAIL disclosed)"
+ },
+ "numeric_hygiene": {
+  "kn1e2_steady_drift_is_nan": true,
+  "cause": "_relative_drift returns NaN when fewer than 8 |tau| samples fall in the averaging window (shortest rung, kn=1e2, 251 steps); NaN <= tol is False so the gate still rejects the point (fails conservatively), but the JSON carries NaN and the diagnostic is uninformative",
+  "note": "evidence JSON sanitizes non-finite floats to strings so it stays strict JSON"
+ }
+}
