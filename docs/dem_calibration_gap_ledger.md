@@ -376,3 +376,36 @@ PYTHONPATH=src python scripts/m5052_clump_rolling_calibration.py --figures-only
   this repair is cap-limited (provisional, not to be quoted); `milling.py` does not
   yet act on `model_valid` (next node); the `"high_loading"` mode can fail to
   converge at the closure vertex and then reports `converged = False`.
+
+## stress-instrument write-back (3-D Virial / Love-Weber surface, `granular3d.stress`)
+
+* **New row (was missing from the ledger entirely):** *3-D stress measurement
+  surface* — m605 state **not listed**; now **closed at the instrument level**,
+  still open at the *per-case* level (each 3-D case must adopt it).
+* **Gap as it stood:** the 2-D engine had a documented stress surface
+  (`src/tensordem/granular2d/stress.py`: per-contact tensors, plane flux, wall
+  stress, discrete balance identity); 3-D had only the isotropic pressure inside
+  `granular3d.jamming.SpherePacking` plus two private `l (x) f` sums
+  (`elastic_limit_shear`, `bpm_calibration_feasibility`).  A sign or pairing
+  error in a private sum is indistinguishable from a physics disagreement, which
+  is exactly how `CASE-DEM-SHEAR-CAMPBELL-ELASTIC-LIMIT` and
+  `CASE-DEM-PLANE-SHEAR-MUIDI` were failing.
+* **Evidence (this repo):** `src/tensordem/granular3d/stress.py` (per-contact
+  outer products, volume average, plane traction/profile, wall traction, moment
+  identity, region force balance, kinetic term kept separate);
+  `tests/test_granular3d_stress.py` (16 cases);
+  `scripts/verify_granular3d_stress.py`; `docs/granular3d_stress_verification.md`;
+  `artifacts/granular3d_stress/{verification.json,fig_profile.png,fig_mutation.png}`.
+* **Quantified:** against exact statics, compressed-pair `sigma_zz` exact to 0
+  (ulp), column profile max rel. error `6.0e-16`, floor traction `0.0`,
+  wall-to-flux step `1.4e-16`, `-tr(sigma)/3` vs the independent
+  `SpherePacking.pressure()` path `<= 5.9e-16` over phi = 0.62…0.68, moment
+  identity `2.3e-15`, rotation invariance `4.0e-15`.
+* **Non-vacuity:** five classic implementation bugs are injected one at a time
+  (force sign, branch reversed, wall normal sign, all-contacts instead of
+  plane-crossing, plane flux replaced by the cell average); each moves the gated
+  quantity by `0.83 … 3.0` relative, i.e. all are detectable.
+* **Open part:** the module is not yet wired into the 3-D cases that consume a
+  stress ordinate (Campbell elastic limit, mu(I) plane shear, biaxial band);
+  until they call it, their stress numbers remain private sums.  Non-central
+  couples (rolling/drilling) stay outside the symmetric-stress contract.
