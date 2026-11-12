@@ -438,6 +438,12 @@ class ServoShearCase:
     pressure_control_tol: float = 0.05
     pressure_recover_window: int = 200
     max_recover_steps: int = 20000
+    # bulk rheometry (round 6): the wall traction mu = tau_wall/p_wall is a
+    # boundary quantity; this slab Virial estimate gives the interior stress so
+    # the two can be compared on the same point.
+    bulk_stress: bool = True
+    bulk_y_margin: float = 0.2
+    bulk_bins: int = 6
 
     @property
     def mass(self) -> float:
@@ -559,6 +565,111 @@ def _wall_spring(dxi: np.ndarray, v_t: np.ndarray, dt: float, kt: float,
     return f_t
 
 
+def bulk_virial_stress(pos, vel, pairs, *, z_lo, z_hi,
+                       y_lo, y_hi, box_width, n, mass):
+    """Love-Weber stress of the slab ``z in [z_lo, z_hi]`` (tension positive).
+
+    The wall traction the device reports is ``tau_wall / p_wall`` on the top
+    platen; a slab-rheometry reading needs the *bulk* stress, which is not the
+    same quantity when the boundary layer carries a different stress than the
+    interior.  This estimator is the standard discrete Love-Weber sum
+
+        sigma_ij = (1/V) [ sum_{c in slab} f_i^c r_j^c + sum_{p in slab} m v'_i v'_j ]
+
+    with ``f^c`` the force exerted on the *first* endpoint of the pair and
+    ``r^c = x_j - x_i`` the branch vector taken from the ghost-triplicated
+    positions (so the periodic x images are correct), ``v'`` the velocity
+    fluctuation about the slab mean.  Compressive states give negative normal
+    stresses, so the pressure is ``p = -trace(sigma)/3`` and the shear stress
+    magnitude is ``|sigma_xz|``.
+
+    A contact is counted once, and only when *both* endpoints lie in the slab
+    (``y`` inside ``[y_lo, y_hi]``); wall contacts are not part of the pair list
+    so the estimator is a pure particle-particle virial.
+    """
+    import numpy as _np
+
+    n = int(n)
+    sel = ((pos[:, 2] >= z_lo) & (pos[:, 2] <= z_hi)
+           & (pos[:, 1] >= y_lo) & (pos[:, 1] <= y_hi))
+    n_sel = int(_np.count_nonzero(sel))
+    sigma = _np.zeros((3, 3))
+    volume = box_width * (y_hi - y_lo) * (z_hi - z_lo)
+    n_contacts = 0
+    if n_sel < 2 or volume <= 0.0:
+        return {"sigma": sigma, "pressure": float("nan"),
+                "shear_xz": float("nan"), "mu": float("nan"),
+                "volume": float(volume), "n_particles": n_sel,
+                "n_contacts": 0, "kinetic_pressure": float("nan"),
+                "contact_pressure": float("nan"), "sigma_zz": float("nan"),
+                "sigma_yy": float("nan"), "sigma_xx": float("nan")}
+    inside = sel[_np.mod(pairs["iu"], n)] & sel[_np.mod(pairs["ju"], n)]
+    if _np.any(inside):
+        rvec = pairs["branch"][inside]
+        fvec = pairs["force_on_i"][inside]
+        sigma += _np.einsum("ni,nj->ij", fvec, rvec) / volume
+        n_contacts = int(_np.count_nonzero(inside))
+    contact_sigma = sigma.copy()
+    v = vel[sel] - vel[sel].mean(axis=0, keepdims=True)
+    sigma -= mass * (v.T @ v) / volume   # kinetic stress: -rho <v'v'>
+    kinetic_sigma = sigma - contact_sigma
+    pressure = -float(_np.trace(sigma)) / 3.0
+    kinetic_pressure = -float(_np.trace(kinetic_sigma)) / 3.0
+    shear_xz = float(sigma[0, 2])
+    return {"sigma": sigma, "pressure": pressure, "shear_xz": shear_xz,
+            "mu": abs(shear_xz) / pressure if pressure > 0 else float("nan"),
+            "volume": float(volume), "n_particles": n_sel,
+            "n_contacts": n_contacts, "kinetic_pressure": kinetic_pressure,
+            "contact_pressure": pressure - kinetic_pressure,
+            "sigma_zz": float(sigma[2, 2]), "sigma_yy": float(sigma[1, 1]),
+            "sigma_xx": float(sigma[0, 0])}
+
+
+def shear_rate_profile(pos, vel, *, z_lo, z_hi, y_lo, y_hi, n_bins=6):
+    """Least-squares slope ``d<v_x>/dz`` of the slab velocity profile.
+
+    The imposed ``gamma_dot`` is the *platen* rate; localisation or wall slip
+    makes the strain rate actually seen by the bulk different, and ``I`` must
+    use the measured rate if the mu(I) abscissa is to mean anything.
+    """
+    import numpy as _np
+
+    sel = ((pos[:, 2] >= z_lo) & (pos[:, 2] <= z_hi)
+           & (pos[:, 1] >= y_lo) & (pos[:, 1] <= y_hi))
+    n_sel = int(_np.count_nonzero(sel))
+    if n_sel < 4 * n_bins:
+        return {"shear_rate": float("nan"), "n_bins": 0, "r2": float("nan"),
+                "profile": [], "slip_top": float("nan")}
+    z = pos[sel, 2]
+    vx = vel[sel, 0]
+    edges = _np.linspace(z_lo, z_hi, n_bins + 1)
+    centers, means, counts = [], [], []
+    for k in range(n_bins):
+        m = (z >= edges[k]) & (z <= edges[k + 1] if k == n_bins - 1
+                               else z < edges[k + 1])
+        c = int(_np.count_nonzero(m))
+        if c == 0:
+            continue
+        centers.append(0.5 * (edges[k] + edges[k + 1]))
+        means.append(float(vx[m].mean()))
+        counts.append(c)
+    if len(centers) < 2:
+        return {"shear_rate": float("nan"), "n_bins": len(centers),
+                "r2": float("nan"), "profile": [], "slip_top": float("nan")}
+    centers_a = _np.asarray(centers)
+    means_a = _np.asarray(means)
+    w = _np.asarray(counts, dtype=float)
+    slope, intercept = _np.polyfit(centers_a, means_a, 1, w=_np.sqrt(w))
+    pred = slope * centers_a + intercept
+    ss_res = float(_np.sum(w * (means_a - pred) ** 2))
+    ss_tot = float(_np.sum(w * (means_a - _np.average(means_a, weights=w)) ** 2))
+    r2 = 1.0 - ss_res / ss_tot if ss_tot > 0 else float("nan")
+    return {"shear_rate": float(slope), "n_bins": len(centers), "r2": r2,
+            "profile": [[float(c), float(m), int(k)] for c, m, k
+                        in zip(centers, means, counts)],
+            "intercept": float(intercept)}
+
+
 def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -> dict:
     """Constant-stress direct shear of a confined sphere packing.
 
@@ -635,8 +746,9 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
         flat_omega = np.tile(omega, (3, 1))
         iu, ju = _periodic_pair_list(flat_pos, n, r)
         state_keys = (iu % n) * n + (ju % n)
-        f_flat, t_flat = contact_forces(flat_pos, flat_vel, flat_omega, iu, ju,
-                                        state, mat, dt, state_keys=state_keys)
+        f_flat, t_flat, pairs = contact_forces(
+            flat_pos, flat_vel, flat_omega, iu, ju, state, mat, dt,
+            state_keys=state_keys, return_pairs=True)
         force = f_flat[:n] + f_flat[n:2 * n] + f_flat[2 * n:]
         torque = t_flat[:n] + t_flat[n:2 * n] + t_flat[2 * n:]
         n_contacts = len(iu)
@@ -683,7 +795,8 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
 
         if g != 0.0:
             force[:, 2] -= mass * g
-        return force, torque, fn_sum, ftx_sum, n_contacts
+        contacts = pairs
+        return force, torque, fn_sum, ftx_sum, n_contacts, contacts
 
     # ---- phase 1: constant-stress servo, no shear -------------------------
     fn_window: list[float] = []
@@ -691,7 +804,7 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
     settle_steps = case.settle_steps
     max_settle = max(6 * case.settle_steps, 12000)
     for step in range(max_settle):
-        force, torque, fn_sum, _, n_contacts = _step_forces(0.0, plate_vz)
+        force, torque, fn_sum, _, n_contacts, _ = _step_forces(0.0, plate_vz)
         fn_avg += (fn_sum - fn_avg) * 0.01
         if step % case.servo_stride == 0:
             n_c = max(1, int(np.count_nonzero(pos[:, 2] + r > plate_z)))
@@ -744,7 +857,7 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
         step += 1
         if step % case.servo_stride == 0:
             plate_vx = gamma_dot * plate_z
-        force, torque, fn_sum, ftx_sum, n_contacts = _step_forces(plate_vx, plate_vz)
+        force, torque, fn_sum, ftx_sum, n_contacts, contacts = _step_forces(plate_vx, plate_vz)
         fn_avg += (fn_sum - fn_avg) * 0.01
         if step % case.servo_stride == 0:
             n_c = max(1, int(np.count_nonzero(pos[:, 2] + r > plate_z)))
@@ -772,7 +885,7 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
             n_bulk = int(np.count_nonzero(bulk))
             v_bulk = W * 0.6 * D * max(plate_z - 2.0 * margin, 1e-12)
             phi = 1.0 - n_bulk * volume_particle / v_bulk if v_bulk > 0 else float("nan")
-            series.append({
+            sample = {
                 "step": step,
                 "strain": strain,
                 "plate_z": plate_z,
@@ -781,7 +894,38 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
                 "mu": tau_now / p_now if p_now > 0 else float("nan"),
                 "coordination": 2.0 * n_contacts / n,
                 "solid_fraction": phi,
-            })
+            }
+            if case.bulk_stress:
+                z_lo = max(margin, 0.0)
+                z_hi = plate_z - margin
+                y_lo = case.bulk_y_margin * D
+                y_hi = (1.0 - case.bulk_y_margin) * D
+                if z_hi > z_lo:
+                    vir = bulk_virial_stress(
+                        pos, vel, contacts,
+                        z_lo=z_lo, z_hi=z_hi, y_lo=y_lo, y_hi=y_hi,
+                        box_width=W, n=n, mass=mass)
+                    prof = shear_rate_profile(
+                        pos, vel, z_lo=z_lo, z_hi=z_hi, y_lo=y_lo, y_hi=y_hi,
+                        n_bins=case.bulk_bins)
+                    p_b = vir["pressure"]
+                    sample.update({
+                        "bulk_pressure_pa": p_b,
+                        "bulk_shear_pa": abs(vir["shear_xz"]),
+                        "bulk_mu": vir["mu"],
+                        "bulk_sigma_zz": vir["sigma_zz"],
+                        "bulk_kinetic_pressure_pa": vir["kinetic_pressure"],
+                        "bulk_n_particles": vir["n_particles"],
+                        "bulk_n_contacts": vir["n_contacts"],
+                        "shear_rate_measured": prof["shear_rate"],
+                        "profile_r2": prof["r2"],
+                        "bulk_inertial_number": (
+                            abs(prof["shear_rate"]) * d
+                            / math.sqrt(p_b / rho)
+                            if p_b and p_b > 0 and math.isfinite(
+                                prof["shear_rate"]) else float("nan")),
+                    })
+            series.append(sample)
 
         # constant-stress validity gate: once the requested strain budget is
         # spent, keep shearing until the servo holds the applied pressure
@@ -799,9 +943,14 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
     if not series:
         raise MuIRheologyError("no samples collected in the shear phase")
 
-    arr = {key: np.array([s[key] for s in series], dtype=float)
-           for key in ("normal_stress_pa", "shear_stress_pa", "mu",
-                       "coordination", "solid_fraction")}
+    keys = ["normal_stress_pa", "shear_stress_pa", "mu",
+            "coordination", "solid_fraction"]
+    if case.bulk_stress and "bulk_mu" in series[0]:
+        keys += ["bulk_pressure_pa", "bulk_shear_pa", "bulk_mu",
+                 "bulk_kinetic_pressure_pa", "bulk_sigma_zz",
+                 "shear_rate_measured", "profile_r2", "bulk_inertial_number"]
+    arr = {key: np.array([s.get(key, float("nan")) for s in series], dtype=float)
+           for key in keys}
     n_tail = max(1, int(0.6 * len(series)))
     mean = {key: float(np.nanmean(value[-n_tail:])) for key, value in arr.items()}
     # steady-state bed bookkeeping: the platen keeps moving during shear, so the
@@ -828,6 +977,7 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
 
     result = {
         "device": "servo_shear_cell",
+        "bulk_stress_enabled": bool(case.bulk_stress),
         "n_particles": int(n),
         "radius": r,
         "particle_diameter": d,
@@ -870,6 +1020,29 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
                             abs(p_final / case.normal_stress - 1.0)
                             <= case.pressure_control_tol),
         "wall_clock_s": wall_clock,
+        "bulk_mu": (mean["bulk_mu"] if "bulk_mu" in mean else None),
+        "bulk_mu_final": (float(np.nanmean(arr["bulk_mu"][-n_final:]))
+                          if "bulk_mu" in arr else None),
+        "bulk_pressure_pa": (mean["bulk_pressure_pa"]
+                            if "bulk_pressure_pa" in mean else None),
+        "bulk_shear_pa": (mean["bulk_shear_pa"]
+                          if "bulk_shear_pa" in mean else None),
+        "bulk_pressure_final_pa": (
+            float(np.nanmean(arr["bulk_pressure_pa"][-n_final:]))
+            if "bulk_pressure_pa" in arr else None),
+        "bulk_kinetic_pressure_pa": (
+            mean["bulk_kinetic_pressure_pa"]
+            if "bulk_kinetic_pressure_pa" in mean else None),
+        "bulk_sigma_zz_final": (float(np.nanmean(arr["bulk_sigma_zz"][-n_final:]))
+                                if "bulk_sigma_zz" in arr else None),
+        "shear_rate_measured": (mean["shear_rate_measured"]
+                                if "shear_rate_measured" in mean else None),
+        "profile_r2": (mean["profile_r2"] if "profile_r2" in mean else None),
+        "inertial_number_bulk": (mean["bulk_inertial_number"]
+                                 if "bulk_inertial_number" in mean else None),
+        "inertial_number_bulk_final": (
+            float(np.nanmean(arr["bulk_inertial_number"][-n_final:]))
+            if "bulk_inertial_number" in arr else None),
         "box_volume": W * D * plate_height,
         "settle_pressure_pa": p_settle,
         "max_velocity": float(np.abs(vel).max()),
@@ -880,6 +1053,19 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
     if regime is not None:
         result["kappa"] = regime["kappa"]
         result["elastic_limit"] = regime
+    if case.bulk_stress and result.get("bulk_mu") is not None:
+        mu_b, mu_w = result["bulk_mu"], result["mu_effective"]
+        p_b = result["bulk_pressure_pa"]
+        result["bulk_vs_wall_mu_ratio"] = (mu_b / mu_w
+                                           if mu_w else float("nan"))
+        result["bulk_pressure_balance_error"] = (
+            p_b / case.normal_stress - 1.0 if case.normal_stress else float("nan"))
+        result["bulk_pressure_vs_wall"] = (p_b / result["normal_stress_measured_pa"]
+                                           if result["normal_stress_measured_pa"]
+                                           else float("nan"))
+        result["shear_rate_ratio"] = (
+            result["shear_rate_measured"] / gamma_dot
+            if gamma_dot else float("nan"))
     if return_series:
         result["series"] = series
     return result
