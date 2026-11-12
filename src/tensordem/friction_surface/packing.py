@@ -18,12 +18,22 @@ cross-route difference.
 Physics / numerics
 ------------------
 * Periodic cubic cell, minimum-image distances, monodisperse spheres.
-* Overdamped (Stokes-like) relaxation ``v <- (F - k v)/gamma``: the inertia-free
-  limit, so a finite inflation rate cannot inject kinetic energy into the jammed
-  state.  This is the standard L-S prescription (expensive EDMD is replaced by
-  an overdamped quench, which is documented as a deviation).
+* Relaxation: a **capped steepest-descent quench** (Jacobi under-relaxation of the
+  overlap-derived displacements, ``under_relax``), *not* the overdamped Langevin
+  dynamics of the original Lubachevsky-Stillinger prescription.  Because the quench
+  is inertia-free, a finite inflation rate cannot pump kinetic energy into the
+  jammed state; in exchange the measured jamming point acquires a dependence on
+  the relaxation budget (``relax_steps``) and on the inflation rate
+  (``rho_growth``).  Both dependencies are *measured*, not assumed away:
+  ``benchmarks/rcp_ls_extrapolation/`` scans them and extrapolates to the
+  ``rate -> 0`` limit.  (An earlier revision of this docstring described the
+  dynamics of the original L-S paper; the implementation has always been the
+  quench, so the text was corrected rather than the code.)
 * Contact: normal repulsion only (frictionless inflation) — the RCP value is a
-  frictionless property; a frictional variant is offered for contrast.
+  frictionless property.  A frictional variant is **not implemented**: a quench
+  without a time history cannot carry a Cundall-Strack tangential displacement, so
+  ``mu != 0`` is rejected instead of being silently ignored (it used to be echoed
+  into the result dict while doing nothing).
 * Frictionless contacts are *not* the same as the DEM kernel's tangential law;
   the normal force uses the same :func:`tensordem.friction_surface.laws.normal_force`.
 """
@@ -56,6 +66,30 @@ class PackingCase:
     mu: float = 0.0                   # tangential/rolling friction (0 -> frictionless)
     seed: int = 20261110
     cell: float = 1.0
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.n_particles, (int, np.integer)) or self.n_particles < 2:
+            raise ValueError("n_particles must be an integer >= 2")
+        if not (self.rho_growth > 0.0):
+            raise ValueError("rho_growth must be positive (it is the per-step radius growth)")
+        if not (self.relax_steps >= 1):
+            raise ValueError("relax_steps must be >= 1")
+        if not (self.overlap_stop > 0.0):
+            raise ValueError("overlap_stop must be positive")
+        if not (self.cell > 0.0):
+            raise ValueError("cell must be positive")
+        if self.mu != 0.0:
+            raise NotImplementedError(
+                "frictional inflation is not implemented: the capped-descent quench has no "
+                "tangential displacement history, so a Coulomb cone cannot be evaluated. "
+                "Use a time-stepping engine (tensordem.dem3d / SphereGas) for mu > 0 instead "
+                "of relying on the (previously silent) `mu` argument."
+            )
+
+    @property
+    def rate_per_step(self) -> float:
+        """``d ln(phi) / d step`` injected by this inflation rate (phi ~ r^3)."""
+        return 3.0 * math.log1p(self.rho_growth)
 
     @property
     def volume(self) -> float:
@@ -157,9 +191,17 @@ def random_close_packing(case: PackingCase, *, return_positions: bool = False) -
         "inflation_steps": steps_used,
         "overlap_stop": case.overlap_stop,
         "mu": case.mu,
+        "relax_steps": case.relax_steps,
+        "rho_growth": case.rho_growth,
+        "rate_per_step": case.rate_per_step,
+        "phi_start": solid_fraction(
+            (3.0 * case.phi_start * cell ** 3 / (4.0 * math.pi * n)) ** (1.0 / 3.0), n, cell),
+        "phi_max_reached": (history[-1][0] if history else None),
+        "jammed_by_criterion": jam_phi is not None,
         "history": history,
-        "protocol": ("Lubachevsky-Stillinger inflation + capped steepest-descent quench, "
-                     "periodic cell, frictionless normal contacts"),
+        "protocol": ("Lubachevsky-Stillinger-style inflation + capped steepest-descent "
+                     "quench, periodic cell, frictionless normal contacts, "
+                     "jamming = mean overlap/diameter crossing overlap_stop"),
     }
     if return_positions:
         out["positions"] = pos
