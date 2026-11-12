@@ -1,0 +1,311 @@
+{
+ "audited_mission": 15381,
+ "audit_mission": 15418,
+ "repo": "TensorDEM",
+ "anchor": "CASE-HOPPER-BEVERLOO",
+ "C1_provenance": {
+  "mission_worktree": "/root/tp-agent/work/m15381",
+  "head": "cb6189a4b2f14f819209f0107869f16fe0e53d1a",
+  "branch": "agent/m15381",
+  "git_status_head": [
+   "?? docs/figures/m15381_beverloo_comparison.png",
+   "?? docs/figures/m15381_window_series.png",
+   "?? runs/beverloo_m15381/",
+   "?? scripts/run_beverloo_benchmark.py",
+   "?? tests/test_beverloo_m15381_artifacts.py"
+  ],
+  "files": {
+   "scripts/run_beverloo_benchmark.py": {
+    "exists_on_disk": true,
+    "bytes": 18337,
+    "sha256": "6cb94c8507b95964d6ba5e991711b56b4c4f9487a92918c9e5d423650075cc16",
+    "ref_copy": "docs/board_audit/m15418/refs/run_beverloo_benchmark.py",
+    "commits_touching_file": 0,
+    "in_any_commit": false
+   },
+   "tests/test_beverloo_m15381_artifacts.py": {
+    "exists_on_disk": true,
+    "bytes": 3648,
+    "sha256": "ca837ea3f96547675ef68d453504632e0ee7415bda798c896c146438740be5a1",
+    "ref_copy": "docs/board_audit/m15418/refs/test_beverloo_m15381_artifacts.py",
+    "commits_touching_file": 0,
+    "in_any_commit": false
+   },
+   "runs/beverloo_m15381/beverloo_medium_benchmark_seed42.json": {
+    "exists_on_disk": true,
+    "bytes": 1948,
+    "sha256": "65b10a992dc7cd10bea166cfe0640c4f73479e449f5c3fa77267a34d03cc9de6",
+    "ref_copy": "docs/board_audit/m15418/refs/beverloo_medium_benchmark_seed42.json",
+    "commits_touching_file": 0,
+    "in_any_commit": false
+   },
+   "runs/beverloo_m15381/beverloo_quick_validation_seed42.json": {
+    "exists_on_disk": true,
+    "bytes": 1918,
+    "sha256": "0ac4c8639e36ad747b31925c5e5e111e0b11012a5cb622479189a62aa6278ca9",
+    "ref_copy": "docs/board_audit/m15418/refs/beverloo_quick_validation_seed42.json",
+    "commits_touching_file": 0,
+    "in_any_commit": false
+   },
+   "runs/beverloo_m15381/report_m15381.json": {
+    "exists_on_disk": true,
+    "bytes": 157146,
+    "sha256": "b295db1fda4b52a995fc2068a5f9d7e33cbecc8bcd10db41beef5385871b5817",
+    "ref_copy": "docs/board_audit/m15418/refs/report_m15381.json",
+    "commits_touching_file": 0,
+    "in_any_commit": false
+   },
+   "docs/figures/m15381_beverloo_comparison.png": {
+    "exists_on_disk": true,
+    "bytes": 55750,
+    "sha256": "11889364cbefc0a8347fd1e252f4d7518a7421f87573d14f0f6adf3a25aa3171",
+    "ref_copy": "docs/board_audit/m15418/refs/m15381_beverloo_comparison.png",
+    "commits_touching_file": 0,
+    "in_any_commit": false
+   },
+   "docs/figures/m15381_window_series.png": {
+    "exists_on_disk": true,
+    "bytes": 58786,
+    "sha256": "b1d6c4ab61442b67075782d315b3534f78f288c954489079a8d4e65e308b3ef0",
+    "ref_copy": "docs/board_audit/m15418/refs/m15381_window_series.png",
+    "commits_touching_file": 0,
+    "in_any_commit": false
+   }
+  },
+  "verdict": "all deliverable bytes exist on disk but were NEVER committed: 0 commits touch them, so no branch/PR can carry them and the platform push step has nothing to push"
+ },
+ "C2_referee": {
+  "query": "tensor_benchmark_cases WHERE anchor_slug='CASE-HOPPER-BEVERLOO'",
+  "rows": [],
+  "n_rows": 0,
+  "table_rows_total": 16,
+  "fallback_criterion": "no machine-owned criterion registered -> the only criteria are the mission goal text (<15%) and the artifact's own threshold_pct=15.0",
+  "tolerance_used": 0.15
+ },
+ "C3_arithmetic_replay": [
+  {
+   "case_label": "quick_validation",
+   "geometry": {
+    "D_m": 0.06,
+    "d_m": 0.02,
+    "D_over_d": 3.0,
+    "beverloo_valid_D_over_d_ge": 4.0,
+    "geometry_valid": false
+   },
+   "packing": {
+    "phi_measured": 0.49382716049382724,
+    "phi_used_by_prediction": 0.64,
+    "rho_b_measured_kg_m3": 1234.5679012345681,
+    "rho_b_used_by_prediction_kg_m3": 1600.0,
+    "density_inflation_factor": 1.2959999999999998
+   },
+   "filed": {
+    "W_bev_kg_s": 0.5324237570592218,
+    "W_meas_kg_s": 0.7330382858376187,
+    "rel_err": 0.37679484831117765,
+    "rel_err_pct": 37.67948483111777,
+    "recovered_C": 1.0349091515785458,
+    "passed_flag": false
+   },
+   "replay_as_filed_density": {
+    "rho_b": 1600.0,
+    "W_bev_kg_s": 0.5324237570592218,
+    "rel_err": 0.37679484831117765,
+    "rel_err_pct": 37.67948483111777,
+    "recovered_C": 0.798541012020483,
+    "abs_rel_err_lt_15pct": false,
+    "matches_filed": true
+   },
+   "replay_consistent_density": {
+    "rho_b": 1234.5679012345681,
+    "W_bev_kg_s": 0.41082080020001693,
+    "rel_err": 0.7843261234112859,
+    "rel_err_pct": 78.43261234112859,
+    "recovered_C": 1.0349091515785458,
+    "abs_rel_err_lt_15pct": false,
+    "recovered_C_vs_0.58": 1.784326123411286,
+    "within_literature_C_band": false
+   },
+   "windows": {
+    "series_kg_s": [
+     0.0,
+     0.7853981633974483,
+     2.0943951023931957,
+     0.7853981633974491,
+     0.0
+    ],
+    "mean_all_kg_s": 0.7330382858376187,
+    "mean_excl_startup_kg_s": 0.9162978572970233,
+    "mean_tail3_kg_s": 0.9599310885968816,
+    "cv_all": 1.0449099170234137,
+    "cv_excl_startup": 0.8206518066482896,
+    "startup_window_share_of_mean": 0.0,
+    "rel_err_pct_excl_startup_consistent_density": 123.04076542641076,
+    "rel_err_pct_excl_startup_filed_density": 72.0993560388972
+   },
+   "ledger": {
+    "mass_residual_kg": 5.551115123125783e-17,
+    "mass_ok": true,
+    "steadiness_r2": 0.8989361702127661,
+    "n_initial": 80,
+    "n_discharged": 16,
+    "wall_clock_s": 4.0730063915252686
+   }
+  },
+  {
+   "case_label": "medium_benchmark",
+   "geometry": {
+    "D_m": 0.08,
+    "d_m": 0.016,
+    "D_over_d": 5.0,
+    "beverloo_valid_D_over_d_ge": 4.0,
+    "geometry_valid": true
+   },
+   "packing": {
+    "phi_measured": 0.40746666666666664,
+    "phi_used_by_prediction": 0.64,
+    "rho_b_measured_kg_m3": 1018.6666666666666,
+    "rho_b_used_by_prediction_kg_m3": 1600.0,
+    "density_inflation_factor": 1.5706806282722514
+   },
+   "filed": {
+    "W_bev_kg_s": 2.314401427277773,
+    "W_meas_kg_s": 1.9704069123315122,
+    "rel_err": -0.14863217369809142,
+    "rel_err_pct": -14.863217369809142,
+    "recovered_C": 0.7755916323378644,
+    "passed_flag": true
+   },
+   "replay_as_filed_density": {
+    "rho_b": 1600.0,
+    "W_bev_kg_s": 2.314401427277773,
+    "rel_err": -0.14863217369809142,
+    "rel_err_pct": -14.863217369809142,
+    "recovered_C": 0.49379333925510693,
+    "abs_rel_err_lt_15pct": true,
+    "matches_filed": true
+   },
+   "replay_consistent_density": {
+    "rho_b": 1018.6666666666666,
+    "W_bev_kg_s": 1.4735022420335153,
+    "rel_err": 0.3372269523066627,
+    "rel_err_pct": 33.722695230666275,
+    "recovered_C": 0.7755916323378644,
+    "abs_rel_err_lt_15pct": false,
+    "recovered_C_vs_0.58": 1.3372269523066629,
+    "within_literature_C_band": false
+   },
+   "windows": {
+    "series_kg_s": [
+     0.1340412865531645,
+     3.4850734503822776,
+     2.211681228127215,
+     2.1446605848506177,
+     1.8765780117442856
+    ],
+    "mean_all_kg_s": 1.9704069123315122,
+    "mean_excl_startup_kg_s": 2.429498318776099,
+    "mean_tail3_kg_s": 2.0776399415740396,
+    "cv_all": 0.5448975345442407,
+    "cv_excl_startup": 0.2561026845189982,
+    "startup_window_share_of_mean": 0.06802721088435394,
+    "rel_err_pct_excl_startup_consistent_density": 64.87917354121265,
+    "rel_err_pct_excl_startup_filed_density": 4.973073821238716
+   },
+   "ledger": {
+    "mass_residual_kg": 4.440892098500626e-16,
+    "mass_ok": true,
+    "steadiness_r2": 0.9843549848470642,
+    "n_initial": 382,
+    "n_discharged": 280,
+    "wall_clock_s": 42.51010990142822
+   }
+  }
+ ],
+ "C5_test_quality": {
+  "test_file": "tests/test_beverloo_m15381_artifacts.py",
+  "n_assert_statements": 33,
+  "n_assert_on_stored_artifact_fields": 4,
+  "n_assert_that_recompute_the_correlation": 0,
+  "replay_asserts": [
+   "assert comp[\"threshold_pct\"] == 15.0",
+   "assert comp[\"passed\"] is True, (",
+   "assert abs(comp[\"relative_error\"]) < 0.15",
+   "assert 0.1 < comp[\"recovered_C\"] < 2.0, ("
+  ],
+  "rubber_stamp_tolerance": [
+   "assert 0.1 < comp[\"recovered_C\"] < 2.0, ("
+  ],
+  "pytest_replay": {
+   "cmd": "python -m pytest -q tests/test_beverloo_discharge_measurement.py tests/test_beverloo_m15381_artifacts.py (cwd=m15381 worktree)",
+   "rc": 0,
+   "tail": [
+    "",
+    "-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html",
+    "20 passed, 1 warning in 22.57s"
+   ]
+  },
+  "verdict": "tests replay the artifact's own passed=True flag and bound recovered C only to 0.1..2.0; none recomputes W_bev from the case block, so the suite passes independently of the physics"
+ },
+ "C6_claims": {
+  "report_row": "14466|Beverloo Flat-Bottom Silo Discharge Benchmark (m15381)|3478|2026-11-11 23:12:29.491942+00",
+  "report_internal_consistency": {
+   "parsed": {
+    "W_ref_kg_s": 0.532424,
+    "W_got_kg_s": 0.733038,
+    "rel_err_pct": 37.68,
+    "recovered_C_quoted": 1.0349
+   },
+   "ratio_W_got_over_W_ref": 1.3767936832299068,
+   "recovered_C_over_0.58": 1.784310344827586,
+   "self_inconsistent": true,
+   "note": "the two columns of the same report table sit on different density bases: rel_err implies W_got/W_ref = 1.377 (C = 0.799) while the quoted recovered C is 1.0349 = x1.78 of 0.58"
+  },
+  "report_headings": [
+   "## 1. Problem & Reference",
+   "## 2. Method & Implementation",
+   "## 3. Parameters",
+   "## 4. Results: Reference vs Computed",
+   "## 5. Convergence & Sensitivity",
+   "### 5.1 Packing disorder",
+   "### 5.2 Friction sensitivity",
+   "### 5.3 D/d ratio",
+   "## 6. Failure Modes & Artifacts"
+  ],
+  "report_headline_quick_case": "report §4 table quotes the *quick* case (D/d=3) W_ref=0.532424, W_meas=0.733038, +37.68% FAIL -- a different case from the medium run that the mission finish calls '-14.86% PASS'",
+  "cluster_job_cj1100": "1100|queued|PYTHONPATH=src python scripts/run_beverloo_benchmark.py --case full --seed 1 2>&1 | tee ru|2026-11-11 23:09:46.008032+00",
+  "cluster_job_note": "cj1100 ('--case full --seed 1') is still queued: the full-case / sensitivity claims have no execution behind them",
+  "mission_checks_claim": "pytest tests/test_beverloo_discharge_measurement.py tests/test_beverloo_m15381_artifacts.py: 20 passed; benchmark --case medium: rel_err=-14.86% PASS; report submitted to API id=14466; full case cj1100 queued on cluster",
+  "repro": {
+   "requested": true,
+   "status": "run",
+   "runner": "main HEAD src/tensordem/beverloo_discharge.py (independent of the mission's worktree copy) with the artifact's recorded case block",
+   "filed_flow_rate_kg_s": 1.9704069123315122,
+   "reproduced_flow_rate_kg_s": 1.9704069123315122,
+   "abs_diff_kg_s": 0.0,
+   "rel_diff": 0.0,
+   "reproduced_windows": [
+    0.1340412865531645,
+    3.4850734503822776,
+    2.211681228127215,
+    2.1446605848506177,
+    1.8765780117442856
+   ],
+   "filed_windows": [
+    0.1340412865531645,
+    3.4850734503822776,
+    2.211681228127215,
+    2.1446605848506177,
+    1.8765780117442856
+   ],
+   "reproduced_mass_residual_kg": 4.440892098500626e-16,
+   "n_discharged": 280,
+   "filed_n_discharged": 280,
+   "wall_clock_s": 31.069581031799316,
+   "identical": true
+  }
+ },
+ "level": 2,
+ "anchor_conclusion": "FAIL",
+ "anchor_reason": "medium case: as filed rel_err = -14.86% (passes only because the reference inflates ρ_b by x1.57); on the consistent density basis rel_err = +33.72% and recovered C = 0.776 (+34% over the 0.58 literature value, outside the 0.55-0.60 band) -> anchor FAIL; quick case FAIL on both bases (+37.7% / +78.4%) and its geometry (D/d=3.0) is outside the Beverloo regime (D/d>=4)"
+}
