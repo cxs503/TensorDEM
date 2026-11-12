@@ -1,0 +1,48 @@
+{
+ "P1_P2_angle_scaling": [
+  {
+   "theta_deg": 10.0,
+   "mu_r": 0.0,
+   "I_over_mR2": 0.4,
+   "a_quad": 1.2167775880956497,
+   "a_vslope": 1.2167776872745861,
+   "a_ref": 1.216777587794705,
+   "err_quad": 2.473293621075825e-10,
+   "quad_vs_vslope": 8.150950296235693e-08,
+   "a_over_g_sin": 0.7142857726834517
+  },
+  {
+   "theta_deg": 15.0,
+   "mu_r": 0.0,
+   "I_over_mR2": 0.4,
+   "a_quad": 1.8135820236312374,
+   "a_vslope": 1.8135821714554026,
+   "a_ref": 1.8135820231826634,
+   "err_quad": 2.473414827927847e-10,
+   "quad_vs_vslope": 8.150950066846729e-08,
+   "a_over_g_sin": 0.7142857726834587
+  },
+  {
+   "theta_deg": 25.0,
+   "mu_r": 0.0,
+   "I_over_mR2": 0.4,
+   "a_quad": 2.961346534786964,
+   "a_vslope": 2.961346776164781,
+   "a_ref": 2.9613465340544733,
+   "err_quad": 2.4735048879485036e-10,
+   "quad_vs_vslope": 8.150948040481837e-08,
+   "a_over_g_sin": 0.7142857726834507
+  }
+ ],
+ "P3_mu_r_branch": {
+  "a_mu_r0": 1.8135821714554026,
+  "a_mu_r0.1": 1.1367406179466155,
+  "a_ref_mu_r0.1": 1.1367439977615375,
+  "rel_err": 2.973241933618105e-06,
+  "measured_shift_vs_mu_r0": -0.37320699561444226,
+  "predicted_shift": -0.3732050807568878
+ },
+ "inertia_factor_target": 0.4,
+ "all_angle_scaling_within_1pct": true,
+ "all_quad_within_1pct": true
+}
