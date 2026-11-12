@@ -373,37 +373,58 @@ def mesh_contact_forces(
 
     # Narrow phase: closest point on triangle
     forces = torch.zeros_like(p)
+    all_faces = torch.arange(F, device=device)
+
+    def _nearest_on(face_idx: torch.Tensor, centre: torch.Tensor):
+        """Closest point over ``face_idx``: (A, B, C, dist, closest_point)."""
+        f = faces[face_idx]
+        A_ = verts[f[:, 0]]
+        B_ = verts[f[:, 1]]
+        C_ = verts[f[:, 2]]
+        c_ = _closest_point_triangle_batch(centre.unsqueeze(0).expand_as(A_), A_, B_, C_)
+        d_ = torch.linalg.vector_norm(centre.unsqueeze(0) - c_, dim=-1)
+        return A_, B_, C_, d_, c_
+
     for i in range(N):
         r_i = float(radii[i].item())
         contact_r = r_i + float(hull_radius)
         cands = candidates[i]
-        if not cands:
+        if not cands and not closed_surface:
             continue
-        cand_faces = faces[cands]  # (C, 3)
-        A = verts[cand_faces[:, 0]]
-        B = verts[cand_faces[:, 1]]
-        C = verts[cand_faces[:, 2]]
-        pi = p[i].unsqueeze(0).expand_as(A)
-        closest = _closest_point_triangle_batch(pi, A, B, C)
-        delta = p[i] - closest  # (C, 3)
-        dist_sq = (delta * delta).sum(dim=-1)
-        dist = torch.sqrt(dist_sq)
-        # Find closest triangle
-        min_idx = int(dist.argmin().item())
-        d_min = float(dist[min_idx].item())
+        if cands:
+            A, B, C, dist, closest = _nearest_on(
+                torch.as_tensor(cands, dtype=torch.int64, device=device), p[i])
+            min_idx = int(dist.argmin().item())
+            d_min = float(dist[min_idx].item())
+            delta_i = p[i] - closest[min_idx]
+        else:
+            A = B = C = closest = None
+            min_idx = 0
+            d_min = float("inf")
+            delta_i = torch.zeros(3, dtype=dtype, device=device)
         overlap = contact_r - d_min
-        if overlap <= 0:
-            continue
-        # Contact normal (from closest point to sphere centre)
-        delta_i = delta[min_idx]
         inside = False
         if closed_surface:
             inside = bool(ray_parity_inside(p[i:i + 1], verts, faces)[0].item())
+            if inside and (not math.isfinite(d_min) or overlap <= 0.0):
+                # A closed hull puts no bound on the proximity of a centre that
+                # has crossed the surface: the broad phase only reaches
+                # ``2 * (radius + hull_radius)``, so a deeper (or fully escaped)
+                # centre has to fall back to a nearest-triangle search over the
+                # whole mesh.  Without this the "restoring force at any
+                # penetration depth" contract is silently violated (m16872).
+                A, B, C, dist, closest = _nearest_on(all_faces, p[i])
+                min_idx = int(dist.argmin().item())
+                d_min = float(dist[min_idx].item())
+                delta_i = p[i] - closest[min_idx]
+                overlap = contact_r - d_min
             if inside:
                 # Signed distance: the centre is behind the surface, so the
                 # outward penetration is contact_r + d_min and the outward
                 # normal is (closest - centre) / d_min.
                 overlap = contact_r + d_min
+        if overlap <= 0.0:
+            continue
         if inside and d_min > 1e-15:
             normal = -delta_i / d_min
         elif d_min > 1e-15:
