@@ -13,7 +13,10 @@ This script *derives every claim from the tree* instead of asserting it:
 
 * implementation files are hashed, counted and scanned for placeholder markers;
 * the entry point is executed in a subprocess and its verdict read back;
-* run artefacts are hashed (a stale/missing artefact fails the check);
+* run artefacts are hashed (a stale/missing artefact fails the check) **and**
+  must be tracked by git -- evidence parked in an untracked directory is
+  invisible in a fresh checkout, which is exactly how this node's gate
+  silently degraded to L1 before;
 * the integration call site is located in ``src/tensordem/dem3d.py`` and the
   integration demo is re-run so the claim "the main solver closes the ledger"
   is backed by a fresh number;
@@ -41,9 +44,13 @@ import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-ART = ROOT / "artifacts" / "ice_structure_energy_ledger"
+#: Run-evidence root.  Must stay a *tracked* path (``docs/artifacts/...`` is the
+#: tree convention): the repo gate does not carry ``artifacts/`` at the repo
+#: root, so evidence written there never reaches a fresh checkout.
+ART = ROOT / "docs" / "artifacts" / "ice_structure_energy_ledger"
 DOC = ROOT / "docs" / "DEM_ENERGY_AUDIT_MATURITY.md"
-EVIDENCE = ART / "maturity_evidence.json"
+EVIDENCE = ROOT / "docs" / "DEM_ENERGY_AUDIT_MATURITY.evidence.json"
+DOC_REL = "docs/DEM_ENERGY_AUDIT_MATURITY.md"
 
 IMPL_FILES = [
     "src/tensordem/ice_structure_energy_ledger.py",
@@ -56,17 +63,18 @@ TEST_FILES = [
     "tests/test_ice_structure_energy_ledger.py",
     "tests/test_ice_structure_energy_audit_maturity.py",
 ]
+_ART_REL = "docs/artifacts/ice_structure_energy_ledger"
 RUN_ARTIFACTS = [
-    "artifacts/ice_structure_energy_ledger/acceptance.json",
-    "artifacts/ice_structure_energy_ledger/integration_demo.json",
-    "artifacts/ice_structure_energy_ledger/ledger_elastic_dt1.0e-05.csv",
-    "artifacts/ice_structure_energy_ledger/ledger_fracture_dt1.0e-05.csv",
-    "artifacts/ice_structure_energy_ledger/fig1_four_ledger_history.png",
-    "artifacts/ice_structure_energy_ledger/fig2_residual_vs_dt.png",
-    "artifacts/ice_structure_energy_ledger/fig3_energy_budget.png",
-    "artifacts/ice_structure_energy_ledger/fig4_floe_speed_field.png",
-    "artifacts/ice_structure_energy_ledger/fig5_viscous_analytic.png",
-    "artifacts/ice_structure_energy_ledger/fig6_main_solver_integration.png",
+    f"{_ART_REL}/acceptance.json",
+    f"{_ART_REL}/integration_demo.json",
+    f"{_ART_REL}/ledger_elastic_dt1.0e-05.csv",
+    f"{_ART_REL}/ledger_fracture_dt1.0e-05.csv",
+    f"{_ART_REL}/fig1_four_ledger_history.png",
+    f"{_ART_REL}/fig2_residual_vs_dt.png",
+    f"{_ART_REL}/fig3_energy_budget.png",
+    f"{_ART_REL}/fig4_floe_speed_field.png",
+    f"{_ART_REL}/fig5_viscous_analytic.png",
+    f"{_ART_REL}/fig6_main_solver_integration.png",
 ]
 PLACEHOLDER_PATTERNS = (
     r"\bNotImplementedError\b",
@@ -78,7 +86,8 @@ PLACEHOLDER_PATTERNS = (
 REPRO_ACCEPTANCE = "python benchmarks/ice_structure_energy_ledger/run.py"
 REPRO_INTEGRATION = "python benchmarks/ice_structure_energy_ledger/integration_demo.py"
 REPRO_CLI = ("python -m tensordem.ice_structure_energy_audit_cli --case both "
-             "--dt 1e-5 --duration 8e-3 --out artifacts/ice_structure_energy_ledger/cli")
+             "--dt 1e-5 --duration 8e-3 "
+             "--out docs/artifacts/ice_structure_energy_ledger/cli")
 REPRO_TEST = "python -m pytest tests/test_ice_structure_energy_ledger.py tests/test_ice_structure_energy_audit_maturity.py -q"
 
 
@@ -88,6 +97,30 @@ def sha256(path: Path) -> str:
 
 def _rel(path: Path) -> str:
     return str(path.relative_to(ROOT))
+
+
+def git_tracked(paths: list[str]) -> dict:
+    """Report which evidence paths git actually tracks.
+
+    Absence of git (sdist, exported tarball) is not a failure of the drop; a
+    path that *is* untracked in a real checkout is, because the evidence then
+    cannot exist for whoever clones the repository.
+    """
+    try:
+        proc = subprocess.run(["git", "ls-files", "-z", "--", *paths],
+                              cwd=str(ROOT), capture_output=True, text=True,
+                              timeout=300)
+    except (OSError, subprocess.SubprocessError) as exc:  # pragma: no cover
+        return {"git_available": False, "note": f"git unavailable: {exc}",
+                "tracked": [], "untracked": list(paths), "all_tracked": None}
+    if proc.returncode != 0:
+        return {"git_available": False,
+                "note": f"git ls-files failed: {proc.stderr.strip()[:200]}",
+                "tracked": [], "untracked": list(paths), "all_tracked": None}
+    tracked = sorted(p for p in proc.stdout.split("\0") if p)
+    untracked = [p for p in paths if p not in set(tracked)]
+    return {"git_available": True, "tracked": tracked,
+            "untracked": untracked, "all_tracked": not untracked}
 
 
 def file_record(rel: str) -> dict:
@@ -122,6 +155,23 @@ def run(cmd: str, *, timeout: int = 3600, env_extra: dict | None = None) -> dict
             "stderr_tail": proc.stderr.strip().splitlines()[-6:]}
 
 
+def _scrub(obj, needle: str, replacement: str = "<scratch>"):
+    """Replace the run's scratch directory in the record.
+
+    The entry point is executed in a temporary directory, whose name changes on
+    every run; leaving it in the evidence would make the committed JSON differ
+    on every verification (pure noise for a reviewer).  Only the location is
+    scrubbed -- every number is kept as measured.
+    """
+    if isinstance(obj, str):
+        return obj.replace(needle, replacement)
+    if isinstance(obj, list):
+        return [_scrub(v, needle, replacement) for v in obj]
+    if isinstance(obj, dict):
+        return {k: _scrub(v, needle, replacement) for k, v in obj.items()}
+    return obj
+
+
 def entry_evidence(regenerate: bool) -> dict:
     """Run the installed entry point and read its verdict back."""
     with tempfile.TemporaryDirectory() as tmp:
@@ -131,6 +181,8 @@ def entry_evidence(regenerate: bool) -> dict:
                      timeout=1800)
         verdict_path = out / "verdict.json"
         verdict = json.loads(verdict_path.read_text()) if verdict_path.is_file() else None
+        record = _scrub(record, str(out))
+        verdict = _scrub(verdict, str(out))
         record.update({
             "kind": "module console entry (also installed as `tensordem-energy-audit`)",
             "verdict_written": verdict_path.is_file(),
@@ -246,6 +298,7 @@ def build(regenerate: bool) -> dict:
     entry = entry_evidence(regenerate)
     integ = integration_evidence()
     bench = benchmark_table()
+    tracking = git_tracked(RUN_ARTIFACTS + [DOC_REL])
     integ_numbers = integration_numbers()
 
     checks = {
@@ -255,6 +308,10 @@ def build(regenerate: bool) -> dict:
         "entry_runs": bool(entry["pass"]),
         "run_artifacts_present": all(r["exists"] for r in artefacts),
         "run_artifacts_hashed": all(r.get("sha256") for r in artefacts),
+        # evidence that is not tracked by git does not survive a fresh
+        # checkout, so a hashed artefact outside version control is no
+        # evidence at all (git-less exports pass with a recorded note).
+        "run_artifacts_git_tracked": (tracking["all_tracked"] is not False),
         "integration_callers_present": integ["all_present"],
         "integration_demo_pass": bool(integ_numbers.get("all_criteria_pass")),
         "integration_bitwise_neutral":
@@ -274,7 +331,8 @@ def build(regenerate: bool) -> dict:
 
     level = "L1"
     if checks["impl_files_present"] and checks["impl_files_non_placeholder"] \
-            and checks["entry_runs"] and checks["run_artifacts_present"]:
+            and checks["entry_runs"] and checks["run_artifacts_present"] \
+            and checks["run_artifacts_git_tracked"]:
         level = "L2"
     if level == "L2" and checks["integration_callers_present"] \
             and checks["integration_demo_pass"] \
@@ -298,6 +356,8 @@ def build(regenerate: bool) -> dict:
             "tests": tests,
             "entry": entry,
             "run_artifacts": artefacts,
+            "artefact_root": _rel(ART),
+            "git_tracking": tracking,
         },
         "L3": {"integration": integ, "integration_numbers": integ_numbers},
         "L4": {
@@ -338,6 +398,20 @@ def render_markdown(ev: dict) -> str:
         "maturity_evidence.py`; every number below is read from the run "
         "artefacts, not typed in.",
         "",
+        "## 0. Where this evidence lives",
+        "",
+        "Artefact root `%s`, which is a **tracked** path in this repository."
+        % ev["L2"].get("artefact_root", "-"),
+        "That is a hard requirement, not a preference: an earlier revision wrote",
+        "the same artefacts to `artifacts/` at the repo root, which the PR gate",
+        "does not carry, so every fresh checkout verified as `L1` with",
+        "`run_artifacts_present`, `run_artifacts_hashed`, `benchmark_present`,",
+        "`benchmark_all_pass` and `benchmark_has_reference_vs_obtained` failing",
+        "even though the harness passed locally. The check",
+        "`run_artifacts_git_tracked` now makes that failure mode explicit.",
+        "Bulk per-step sweep histories stay in the git-ignored `sweep/`",
+        "subdirectory; their numbers and sha256 are in `acceptance.json`.",
+        "",
         "## 1. Machine checks",
         "",
         "| check | result |",
@@ -367,7 +441,15 @@ def render_markdown(ev: dict) -> str:
     for rec in ev["L2"]["run_artifacts"]:
         lines.append("| `%s` | %d | `%s` |" % (
             rec["path"], rec.get("bytes", 0), (rec.get("sha256") or "")[:16]))
+    track = ev["L2"].get("git_tracking") or {}
     lines += [
+        "",
+        "Artefact root `%s` -- tracked by git: **%s**%s"
+        % (ev["L2"].get("artefact_root", "-"),
+           track.get("all_tracked"),
+           "" if track.get("all_tracked") is not False
+           else " (untracked: %s -> evidence would not survive a fresh "
+                "checkout)" % ", ".join(track.get("untracked", []))),
         "",
         "## 3. L3 - integration with the main solver",
         "",

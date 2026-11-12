@@ -46,7 +46,7 @@ from tensordem.ice_structure_energy_audit_integration import (  # noqa: E402
     attach_energy_audit,
 )
 
-OUT = ROOT / "artifacts" / "ice_structure_energy_ledger"
+OUT = ROOT / "docs" / "artifacts" / "ice_structure_energy_ledger"
 OUT.mkdir(parents=True, exist_ok=True)
 
 IMPACT_VELOCITY = 1.0      # m/s, +z towards the static tool

@@ -35,7 +35,7 @@ from tensordem.ice_structure_energy_audit_integration import (
 )
 from tensordem.ice_structure_energy_ledger import FourLedgerObserver
 
-EVIDENCE = ROOT / "artifacts" / "ice_structure_energy_ledger" / "maturity_evidence.json"
+EVIDENCE = ROOT / "docs" / "DEM_ENERGY_AUDIT_MATURITY.evidence.json"
 REPORT = ROOT / "docs" / "DEM_ENERGY_AUDIT_MATURITY.md"
 
 GRID = dict(nx=3, ny=2, nz=2, radius=0.025, density=917.0,
@@ -222,3 +222,97 @@ def test_maturity_evidence_is_consistent_with_the_tree():
         assert row["pass"], row["criterion"]
     assert REPORT.is_file()
     assert "P304W2-N03" in REPORT.read_text()
+
+# ---------------------------------------------------------------------------
+# evidence location: the artefact root must be a path the repo tracks
+# ---------------------------------------------------------------------------
+BENCH = ROOT / "benchmarks" / "ice_structure_energy_ledger"
+
+
+def _module_value(path: Path, name: str):
+    """Value of a module-level ``name = ...`` assignment, read without importing.
+
+    The assignment is a ``Path`` expression (``ROOT / "docs" / ...``), so it is
+    compiled and evaluated against this checkout's ``ROOT`` instead of being
+    imported: importing a benchmark module would run its whole harness.
+    """
+    import ast
+
+    tree = ast.parse(path.read_text())
+    for node in tree.body:
+        if isinstance(node, ast.Assign) and len(node.targets) == 1 \
+                and isinstance(node.targets[0], ast.Name) \
+                and node.targets[0].id == name:
+            expr = ast.Expression(node.value)
+            return eval(compile(expr, str(path), "eval"),
+                        {"ROOT": ROOT, "Path": Path})
+    raise AssertionError(f"{name} not found in {path}")
+
+
+def test_artefact_root_is_shared_and_gate_tracked():
+    """All three harnesses write to one root, and that root is versioned.
+
+    Regression guard: the node's evidence previously landed in ``artifacts/``
+    at the repo root, which the PR gate does not carry, so every fresh
+    checkout found no run artefacts and the maturity gate reported L1.
+    """
+    run_src = (BENCH / "run.py").read_text()
+    roots = {
+        "run.py": _module_value(BENCH / "run.py", "OUT"),
+        "integration_demo.py": _module_value(BENCH / "integration_demo.py", "OUT"),
+        "maturity_evidence.py": _module_value(BENCH / "maturity_evidence.py", "ART"),
+    }
+    assert len(set(roots.values())) == 1, roots
+    root = roots["run.py"]
+    assert root == ROOT / "docs" / "artifacts" / "ice_structure_energy_ledger", root
+    # the finer-dt sweep histories are bulk data and stay out of the bundle
+    assert "COMMITTED_DT_LEVELS" in run_src
+    assert '"sweep"' in run_src
+
+    ev = json.loads(EVIDENCE.read_text())
+    assert ev["L2"]["artefact_root"] == "docs/artifacts/ice_structure_energy_ledger"
+    for record in ev["L2"]["run_artifacts"]:
+        assert record["path"].startswith("docs/artifacts/"), record["path"]
+
+
+def test_committed_evidence_is_tracked_by_git():
+    """Evidence outside version control is not evidence."""
+    import os
+    import subprocess
+
+    if not (ROOT / ".git").exists():
+        pytest.skip("not a git checkout")
+    ev = json.loads(EVIDENCE.read_text())
+    paths = [r["path"] for r in ev["L2"]["run_artifacts"]] + [
+        "docs/DEM_ENERGY_AUDIT_MATURITY.md", "docs/DEM_ENERGY_AUDIT_MATURITY.evidence.json"]
+    proc = subprocess.run(["git", "ls-files", "-z", "--", *paths], cwd=str(ROOT),
+                          capture_output=True, text=True, timeout=300,
+                          env={**os.environ})
+    if proc.returncode != 0:
+        pytest.skip(f"git unavailable: {proc.stderr[:120]}")
+    tracked = {p for p in proc.stdout.split("\0") if p}
+    missing = [p for p in paths if p not in tracked]
+    assert not missing, f"evidence paths not under version control: {missing}"
+
+
+def test_verification_mode_is_byte_stable():
+    """A re-verification must reproduce the committed evidence byte for byte.
+
+    The evidence embeds sha256 digests and the entry-point verdict; if a plain
+    verification run perturbed it, the committed bundle would drift on every
+    checker execution and reviewers would stop trusting the digests.
+    """
+    import os
+    import subprocess
+
+    if not EVIDENCE.is_file():
+        pytest.skip("maturity evidence not generated in this tree")
+    before_ev = EVIDENCE.read_bytes()
+    before_doc = REPORT.read_bytes()
+    proc = subprocess.run(
+        [sys.executable, "benchmarks/ice_structure_energy_ledger/maturity_evidence.py"],
+        cwd=str(ROOT), capture_output=True, text=True, timeout=1800,
+        env={**os.environ, "PYTHONPATH": str(ROOT / "src")})
+    assert proc.returncode == 0, proc.stdout[-3000:] + proc.stderr[-2000:]
+    assert EVIDENCE.read_bytes() == before_ev, "verification perturbed the evidence JSON"
+    assert REPORT.read_bytes() == before_doc, "verification perturbed the report"
