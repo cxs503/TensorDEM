@@ -157,6 +157,9 @@ def run_point(I: float, kn: float = KN, box_depth: float = D,
         "step_scale": scale,
         "plate_height": res["plate_height"],
         "shear_steps": res["shear_steps"],
+        # actual accumulated strain: the requested ``shear_strain`` is a lower
+        # bound, because ``min_shear_steps`` overrides it at low I (round 4a)
+        "strain_achieved": res["shear_strain_achieved"],
         "settle_steps": res["settle_steps"],
         "dt": res["dt"],
         "max_velocity": res["max_velocity"],

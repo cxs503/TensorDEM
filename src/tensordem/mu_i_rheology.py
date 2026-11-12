@@ -428,6 +428,7 @@ class ServoShearCase:
     min_shear_steps: int = 2000
     servo_relax: float = 0.2
     servo_stride: int = 10
+    servo_max_step_d: float = 0.002
     bulk_margin_z: float = 0.25
 
     @property
@@ -687,7 +688,8 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
         if step % case.servo_stride == 0:
             n_c = max(1, int(np.count_nonzero(pos[:, 2] + r > plate_z)))
             delta = case.servo_relax * (fn_avg - target_force) / (kn * n_c)
-            delta = max(min(delta, 0.002 * d), -0.002 * d)
+            delta = max(min(delta, case.servo_max_step_d * d),
+                        -case.servo_max_step_d * d)
             plate_z += delta
             plate_vz = delta / (case.servo_stride * dt)
         vel += force / mass * dt
@@ -736,7 +738,8 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
         if step % case.servo_stride == 0:
             n_c = max(1, int(np.count_nonzero(pos[:, 2] + r > plate_z)))
             delta = case.servo_relax * (fn_avg - target_force) / (kn * n_c)
-            delta = max(min(delta, 0.002 * d), -0.002 * d)
+            delta = max(min(delta, case.servo_max_step_d * d),
+                        -case.servo_max_step_d * d)
             plate_z += delta
             plate_vz = delta / (case.servo_stride * dt)
         vel += force / mass * dt
