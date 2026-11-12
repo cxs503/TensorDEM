@@ -79,6 +79,14 @@ def main() -> int:
         json.dump(result, fh, indent=1, default=float)
     print(json.dumps({"passed": result["passed"], "runtime_s": result["runtime_s"],
                       "written": path}, indent=1))
+    # CI gate: any requested case that did not pass must fail the run (rc != 0),
+    # so a regression cannot be silently swallowed by a 0 exit code.
+    # (audit m15192: "run_validation.py 恒返回 rc=0, case passed=False 也返回 0
+    #  -> 不能当 CI 闸门")
+    failed = [name for name, ok in result["passed"].items() if not ok]
+    if failed:
+        print("FAILED cases: %s" % (", ".join(failed),), file=sys.stderr)
+        return 1
     return 0
 
 

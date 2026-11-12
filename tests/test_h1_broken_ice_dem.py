@@ -144,3 +144,31 @@ def test_integration_caller_reports_maturity_gaps(tmp_path):
     good = {"cases": {"buoyancy": {"passed": True, "ref": {"a": 1.0}, "got": {"a": 1.0}}},
             "integration": {"caller": "test"}, "repro_cmd": "cmd"}
     assert check_h1_maturity(good, required_level="L4")["passed"] is True
+
+
+def test_runner_returns_nonzero_when_case_fails(tmp_path):
+    """CI gate: run_validation.py must exit non-zero when any requested case fails.
+
+    Regression for audit m15192 ("run_validation.py 恒返回 rc=0, case passed=False
+    也返回 0 -> 不能当 CI 闸门"): a failing case must not be swallowed by a 0 exit
+    code, otherwise the runner cannot gate a CI pipeline.
+    """
+    import subprocess, sys, os
+    here = os.path.dirname(os.path.abspath(__file__))
+    root = os.path.abspath(os.path.join(here, ".."))
+    runner = os.path.join(root, "benchmarks", "h1_broken_ice_dem", "run_validation.py")
+    env = dict(os.environ, PYTHONPATH=os.path.join(root, "src"))
+    # a channel case with too few steps -> sweep incomplete -> passed=False
+    r = subprocess.run(
+        [sys.executable, runner, "--cases", "channel",
+         "--channel-floes", "6", "--channel-steps", "120",
+         "--out", str(tmp_path / "fail.json")],
+        capture_output=True, text=True, env=env, timeout=120)
+    assert r.returncode != 0, "runner must fail (rc!=0) when a case does not pass"
+    assert "FAILED" in (r.stdout + r.stderr)
+    # and a passing case (buoyancy) must exit 0
+    r2 = subprocess.run(
+        [sys.executable, runner, "--cases", "buoyancy",
+         "--out", str(tmp_path / "ok.json")],
+        capture_output=True, text=True, env=env, timeout=120)
+    assert r2.returncode == 0, "runner must exit 0 when all cases pass"
