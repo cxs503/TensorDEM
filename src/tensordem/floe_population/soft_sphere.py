@@ -284,11 +284,58 @@ class SphereAssembly:
         lattice) and the aggregate then explodes within a hundred steps -- a
         failure mode that is easy to mistake for physical fragmentation, so the
         step is derived here and the stability is asserted in the tests.
+
+        .. warning::
+            This is a **stability** bound only.  It does not resolve the
+            *response* of an unbonded contact: at this step a collision is
+            advanced by roughly 2.5 steps and the produced restitution can be
+            off by tens of per cent (and an elastic contact can gain energy).
+            Use :meth:`restitution_dt` whenever the coefficient of restitution
+            is a physical input, as it is for the collision statistics.
         """
         m_min = float(self.mass.min())
         k_max = max(self.model.k_n, self.model.bond_stiffness)
         elements = max(1, 2 * self.max_coordination() + 1)
         return safety * 2.0 * math.pi * math.sqrt(m_min / (elements * k_max))
+
+    def restitution_dt(self, *, steps_per_contact: float = 80.0) -> float:
+        r"""Step that *resolves the contact response*, not merely stability.
+
+        :meth:`recommended_dt` is an elastic-stability bound: it keeps the
+        stiffest bonded mode from blowing up, but it says nothing about whether
+        a collision is integrated accurately.  For a bond-free pair it returns
+        ``0.2 * 2 pi sqrt(m / k_max)`` with ``k_max = bond_stiffness``, i.e.
+        roughly **2.5 steps per contact**, and at that step the *restitution
+        the engine actually produces* is not the restitution that was asked
+        for.  Measured on a head-on two-sphere collision (three sub-step
+        phases each, ``benchmarks/floe_population_restitution/probe.py``)::
+
+            e prescribed   dt = recommended_dt      dt = t_c/40    dt = t_c/80
+            1.0             +11 ... +21 %            0.00 %         0.00 %
+            0.6             -18 ... +34 %            2.09 %         1.03 %
+            0.4             -48 ... +24 %            1.62 %         1.54 %
+            0.2             +45 ... +278 %           4.55 %         2.22 %
+            0.1             +524 ... +669 %          8.29 %         4.12 %
+
+        So an "elastic" contact can *gain* a fifth of the kinetic energy and an
+        strongly dissipative one (``e = 0.1``) bounces with ``e ~ 0.6`` when the
+        recommended stability step is used.  The bound below is the exact
+        contact half-period of the lightest pair,
+
+        .. math:: t_c = \frac{\pi}{\sqrt{k_n/m_{eff}}\sqrt{1-\zeta^2}},
+                  \qquad m_{eff} = m_{min}/2,
+
+        divided by ``steps_per_contact``.  ``zeta = 0`` is used inside the
+        square root on purpose: damping only *lengthens* the contact, so the
+        undamped period is the conservative (smaller) bound.  ``80`` steps per
+        contact holds every ``e >= 0.2`` inside 2.4 % (ice-like ``e = 0.3 ...
+        0.6`` inside 2.1 %); ``e = 0.1`` needs ``steps_per_contact = 160``.
+        """
+        if steps_per_contact <= 0.0:
+            raise ValueError("steps_per_contact must be positive")
+        m_light = float(self.mass.min())
+        t_c = math.pi * math.sqrt(m_light / (2.0 * self.model.k_n))
+        return t_c / float(steps_per_contact)
 
     def volume(self) -> float:
         return float(np.prod(self.box))
