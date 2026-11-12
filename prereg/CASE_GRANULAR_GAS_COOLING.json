@@ -1,0 +1,22 @@
+{
+  "case": "CASE-GRANULAR-GAS-COOLING",
+  "repo": "TensorDEM",
+  "created": "2026-11-12",
+  "question": "Does the DEM dissipation path reproduce collective inelastic cooling of a dilute granular gas (Haff's law) and the Boltzmann cooling coefficient, not just the single-impact restitution?",
+  "external_anchors": [
+    {"ref": "Haff 1983, J. Fluid Mech. 132:401", "claim": "theta(t) = theta0 (1+t/tau)^-2, exponent -2, theta^-1/2 linear in t"},
+    {"ref": "Jenkins & Savage 1983, J. Fluid Mech. 130:187", "claim": "dilute inelastic hard-sphere cooling rate from collision frequency x energy loss"},
+    {"ref": "Enskog collision frequency (3-D): omega = 24 phi g0 sqrt(theta/pi)/sigma", "claim": "anchor used to validate the collision-frequency branch of the derivation"}
+  ],
+  "acceptance": {
+    "A1_restitution_abs": {"metric": "|e_eff - e_nom|, e_nom >= 0.8", "threshold": 0.01},
+    "A2_haff_r2": {"metric": "R^2 of theta^-1/2 vs t", "threshold": 0.999},
+    "A3_prefactor_rel_per_case": {"metric": "|K_meas/K_Boltzmann(e_eff) - 1| per case", "threshold": 0.15},
+    "A4_prefactor_extrapolated": {"metric": "|intercept(phi->0 of K ratio) - 1|", "threshold": 0.15},
+    "A5_rest_scaling_rel": {"metric": "spread of K_meas/(1-e_eff^2) over the e sweep", "threshold": 0.08},
+    "A6_kurtosis_abs": {"metric": "|excess kurtosis| of velocity components", "threshold": 0.15},
+    "A7_elastic_energy_drift": {"metric": "range of total mechanical energy / E0 at e=1", "threshold": 0.01},
+    "A8_refinement_rel": {"metric": "|K(kn=2000) - K(kn=500)|/K and |K(dt/2) - K|/K at e=0.9", "threshold": 0.10}
+  },
+  "notes": "Prefactor test uses the measured e_eff (clamped spring-dashpot bias), never the nominal restitution. Frictionless and monodisperse by design so the model and the Boltzmann prediction are structurally comparable. Absolute 3% agreement is NOT claimed a priori: finite-density velocity correlations are a known correction; the phi->0 extrapolation (A4) is the fair test of the prefactor."
+}
