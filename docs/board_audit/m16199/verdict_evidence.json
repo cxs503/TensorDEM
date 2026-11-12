@@ -1,0 +1,105 @@
+{
+ "audited_mission": 16142,
+ "audit_mission": 16199,
+ "case_id": "CASE-DEM-ROLLING-SINGLE-PARTICLE",
+ "audited_commit": "7ff16860 (mission branch m16142; merged into main as a5c15138 / 8a1a17b2 'm16142: matured mission deliverables（3 个文件被门禁滤除）')",
+ "impl_files": [
+  "src/tensordem/rolling_resistance.py",
+  "benchmarks/case_rolling_single_particle/run_case.py",
+  "prereg/CASE-DEM-ROLLING-SINGLE-PARTICLE.json"
+ ],
+ "entry": "benchmarks/case_rolling_single_particle/run_case.py",
+ "run_artifacts": [
+  "docs/board_audit/m16199/repro_result.json",
+  "docs/board_audit/m16199/figures/audit_rolling_single_particle.png",
+  "/root/tp-agent/work/m16142/artifacts/case_rolling_single_particle/result.json",
+  "/root/tp-agent/work/m16142/artifacts/case_rolling_single_particle/case_rolling_single_particle.png",
+  "/root/tp-agent/work/m16142/logs/case_rolling_single_particle.log"
+ ],
+ "tests": "tests/test_case_rolling_single_particle.py",
+ "integration_callers": [
+  "tensordem.rolling_resistance",
+  "src/tensordem/contact_tangential.py:642 rolling_resistance_torque wrapper -> tensordem.rolling_resistance.rolling_resistance_torque (M_r <= mu_r r_eff |F_n|, Ai et al. 2011 convention)",
+  "src/tensordem/ball_ball_rolling.py:404 RollingResistanceConfig(model='cdt', mu_r=mu_r)",
+  "src/tensordem/clump_rolling.py:6 sphere-on-plane rolling law",
+  "NOT integrated: simulate_sphere_on_incline is a dedicated 1-DOF incline harness, the case does not drive IceDEM3D's 3-D pair step (declared in report section 6)"
+ ],
+ "benchmark": {
+  "board_table": "tensor_benchmark_cases: 0 rows for anchor_slug='CASE-DEM-ROLLING-SINGLE-PARTICLE' (25 rows total; checked 2026-11-12) -> machine benchmark referee absent, adjudicated by this audit",
+  "case_pool_row": "tensor_case_pool id=90 case_code=DEM-ROLLING-SINGLE-PARTICLE repo=TensorDEM tier=core status='dispatched' (not 'passed') tol_policy='<2% | 指标: 球心平动加速度与转动角加速度 vs 解析 (theta=15deg, 无滑移)'",
+  "ref_vs_got_at_tol": {
+   "a": "ref 1.8135820231826634 vs got 1.8135801271553287 -> rel 1.045e-06 (gate 2%)",
+   "alpha": "ref -181.35820231826634 vs got -181.3586763250976 -> rel 2.614e-06 (gate 2%)",
+   "no_slip_closure": "3.659e-06 (gate 2%)",
+   "oscillation_amplitude": "ref 0.7254328092730654 vs got 0.7322624477619499 -> 0.941%",
+   "rolling_resistance_branch_mu_r_0.1": "rel 4.00e-06",
+   "critical_angle_case_theta5_mu_r0.1": "a=3.276e-06 m/s^2 = 3.83e-06 g sin(theta) -> static hold",
+   "negative_control_mu0.01": "a=2.444258 vs no-slip ref -> 34.78% deviation (correctly rejected); matches sliding branch g(sin-mu cos) to 4.2e-14",
+   "negative_control_no_inertia_ref": "g sin(theta) is 28.57% above got -> rejected by the 2% gate"
+  },
+  "verdict": "PASS inside the declared 2% tolerance on every acceptance item; both negative controls fail as designed (gate has discriminating power)"
+ },
+ "repro_cmd": "cd /root/tp-agent/work/m16199 && PYTHONPATH=src python3 benchmarks/case_rolling_single_particle/run_case.py --out docs/board_audit/m16199/repro_result.json && PYTHONPATH=src python3 -m pytest tests/test_case_rolling_single_particle.py -q  (auditor executed: a_got=1.8135801271553287 BIT-IDENTICAL to the m16142 artifact; a_rel_error=1.0454599298265815e-06; 6 tests passed)",
+ "auditor_independent_estimator": {
+  "script": "docs/board_audit/m16199/probe_independent.py (does not reuse the case's v-slope estimator for P1)",
+  "P1_displacement_quadratic_fit": "a from x(t)=c0+c1 t+c2 t^2/2 at theta=10/15/25 deg: rel err 2.47e-10 each; quad vs v-slope differ by 8.15e-08 (of a_ref) -> the acceptance number is not estimator-specific",
+  "P2_angle_scaling": "a/(g sin theta) = 0.7142857727 at all three angles vs 1/1.4 = 0.7142857143 -> measured inertia factor 0.4 (not assumed in the measurement path)",
+  "P3_mu_r_branch_discriminates": "mu_r=0.1 shifts a by -0.3732069956 measured vs -0.3732050808 predicted (-mu_r cot(theta)); rel err 2.97e-06 -> the CDT torque really enters the equations, the match is not a closed-form tautology"
+ },
+ "auditor_checks": {
+  "artifact_files_present": true,
+  "repro_cmd_executable": true,
+  "rerun_bit_identical": true,
+  "tests_passed_6": true,
+  "within_tolerance_all_items": true,
+  "negative_controls_reject": true,
+  "report_six_sections": true,
+  "report_answers_lt_3pct": "yes: a 0.0001%, alpha 0.0003%, amplitude 0.94% (explicitly stated in section 4 and 6)",
+  "predeclared_thresholds_respected": "no post-hoc tuning: tolerance 2% and negative controls are in prereg/...json dated before the production run"
+ },
+ "findings": [
+  {
+   "sev": "informational",
+   "id": "F1",
+   "text": "tensor_benchmark_cases has no row for this anchor: the platform benchmark referee cannot adjudicate and the case_pool row still says status='dispatched'. Audit adjudicated against the in-code closed form + case_pool tol_policy (<2%). Registry gap, not a mission defect."
+  },
+  {
+   "sev": "minor",
+   "id": "F2",
+   "text": "The merge gate dropped 3 files from the mission branch (artifacts/result.json, artifacts/*.png, logs/*.log) -> the canonical main tree has the harness but not the produced artifacts; they are regenerable and the auditor regenerated them bit-identically, so this is non-blocking, but the board gate must re-run repro_cmd rather than expect stored artifacts."
+  },
+  {
+   "sev": "minor",
+   "id": "F3",
+   "text": "The acceptance metric is the least-squares mean of v(t) over ~195 tangential-oscillation periods, so discrete error is averaged out and any consistent integrator lands at ~1e-6. The claim must not be read as 'solver accuracy 1e-6'. The genuinely discriminating quantities are the oscillation amplitude (0.94% at the base dt, first-order convergent 3.93%->0.94%->0.23%->0.058%) and the mu_r branch (4e-6 against a torque-dependent reference). Both are present and pass."
+  },
+  {
+   "sev": "informational",
+   "id": "F4",
+   "text": "Reference is classical rigid-body closed form plus Ai et al. 2011 model relations only; the paper's table values were not machine-accessible (declared in provenance.reference.access_note and section 1). No experimental anchor. => L5 (scientific/literature-anchored result) refused."
+  }
+ ],
+ "checks_not_run": [
+  "no cross-validation against the 3-D solver IceDEM3D (the case exercises a dedicated 1-DOF incline harness; 3-D pair rolling is covered by other anchors, not by this one)",
+  "no experimental/material validation (none applicable: the reference is a rigid-body kinematic identity, not a material law)",
+  "multi-sphere / clump rolling on an incline not covered by this case"
+ ],
+ "level_rationale": "L4 = complete benchmark case + error analysis + reproducible. Present: pre-registered design, base acceptance point, 4-point dt convergence, 3-point window sensitivity, 3-point stiffness invariance, rolling-resistance branch, critical-angle point, 2 negative controls, 6 CI tests, bit-identical auditor reproduction, error budget every item < 1% (gate 2%). L5 refused: no external literature/experimental anchor (F4). L3 is satisfied too (the rolling law is the shipped single implementation consumed by contact_tangential/ball_ball_rolling) but the case's own instrument is a harness, which is why the L4 evidence rests on the benchmark, not on a 3-D solve.",
+ "external_anchor": null,
+ "external_anchor_note": "Ai, Chen, Rotter, Ooi (2011) Powder Technology 206, 269-282, doi:10.1016/j.powtec.2010.11.003 is used ONLY for the model relations (M_r = mu_r |F_n| r_eff, theta_c = arctan(mu_r)); the PDF/table values were not available in the environment and are NOT claimed (machine-checkable in provenance.reference.access_note). The numerical anchor is the classical closed form a = g (sin t - mu_r cos t)/(1 + I/(mR^2)), evaluated in-code.",
+ "impl_files_note": null,
+ "impl_detail": [
+  "src/tensordem/rolling_resistance.py:443 simulate_sphere_on_incline (Cundall-Strack tangential spring + Coulomb clamp + spring-dashpot normal + CDT rolling torque + symplectic Euler, real integration loop)",
+  "src/tensordem/rolling_resistance.py:73 RollingResistanceConfig / :136 rolling_resistance_torque / :299 critical_incline_angle_deg / :316 incline_rolling_acceleration / :344 pure_rolling_feasible / :401 SphereInclineConfig",
+  "benchmarks/case_rolling_single_particle/run_case.py:127 run_point (estimators: :65 ls_slope on v(t); :88 analytic closed form computed in-code from g/theta/inertia factor; :159 instantaneous a(t) diagnostic)",
+  "benchmarks/case_rolling_single_particle/figures.py + build_report.py generate figures/report from result.json (no hand-typed numbers)"
+ ],
+ "entry_detail": "PYTHONPATH=src python benchmarks/case_rolling_single_particle/run_case.py --out artifacts/case_rolling_single_particle/result.json -> run_point() -> tensordem.rolling_resistance.simulate_sphere_on_incline() (shipped module; no new solver written for the case)",
+ "sha256": {
+  "src/tensordem/rolling_resistance.py": "be54cd5c7aa8ffc3bcde7ed383b298019004ab942a223f62aa979f0e337d4a90",
+  "benchmarks/case_rolling_single_particle/run_case.py": "28038dd12dcac9deff392f0c4d50375e7273b8f95e630a1a1e9c371e828fccc9",
+  "tests/test_case_rolling_single_particle.py": "79380680c839a389f70ea66e99de34e1b548da73dd26c539d66834a84298d082",
+  "prereg/CASE-DEM-ROLLING-SINGLE-PARTICLE.json": "c284bc765a8b1db1cd7e9ef5dc0ff7325c4219a90644b7e8e97829a6bf36830f",
+  "docs/board_audit/m16199/repro_result.json": "6d68e9eccade12c55d46aa9e24b8f686afbb919075076a74ed3ecf6b7f6f2d48"
+ }
+}
