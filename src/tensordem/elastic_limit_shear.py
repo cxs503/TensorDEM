@@ -87,6 +87,9 @@ __all__ = [
     "kappa_of",
     "tau_star_of",
     "inertial_number_of",
+    "elastic_limit_regime",
+    "KAPPA_QUASI_STATIC",
+    "KAPPA_INERTIAL",
 ]
 
 
@@ -117,6 +120,62 @@ def inertial_number_of(tau: float, pressure: float, rho: float, d: float,
     if pressure <= 0.0:
         raise ElasticLimitShearError("inertial number needs P > 0")
     return gamma_dot * d / math.sqrt(pressure / rho)
+
+
+# --- Campbell regime map -----------------------------------------------------
+# Campbell (2002, JFM 465:261) separates the dense (persistent-contact) limit
+# into an *elastic-inertial* regime, where the stresses scale with both the
+# elastic and the inertial properties, and an *elastic-quasi-static* regime in
+# which the stresses scale purely elastically (i.e. are independent of the shear
+# rate).  The stiffness number kappa below is the parameter that separates them.
+# The numeric threshold 1e4 is the one quoted for granular-rheology practice
+# ("kapppa > 1e4 is often assumed" -- arXiv:1712.02693, restating Campbell's
+# map); it is a reference statement, not a calibration of this code, and the
+# measured crossover is reported separately by the case benchmark.
+KAPPA_QUASI_STATIC = 1.0e4
+KAPPA_INERTIAL = 1.0
+
+
+def elastic_limit_regime(kappa: float) -> Dict[str, Any]:
+    """Locate a shear point on Campbell's stiffness-number map.
+
+    Parameters
+    ----------
+    kappa:
+        ``k_n / (rho d^3 gamma_dot^2)`` -- see :func:`kappa_of`.
+
+    Returns
+    -------
+    dict with ``regime`` in ``{"elastic-quasi-static", "elastic-inertial",
+    "inertial"}``, the ``rate_exponent`` band expected there, the thresholds used
+    and the reference they come from.  The classification is a *diagnostic*: it
+    tells a caller whether a measured stress may be used with a rate-independent
+    (mu(I)-style) closure, and it is what the direct-shear device reports in
+    ``tensordem.mu_i_rheology``.
+    """
+    if not np.isfinite(kappa) or kappa <= 0.0:
+        raise ElasticLimitShearError("kappa must be finite and positive")
+    if kappa >= KAPPA_QUASI_STATIC:
+        regime, n_band = "elastic-quasi-static", (0.0, 0.3)
+        note = "stress may be treated as rate independent (mu(I) closure valid)"
+    elif kappa >= KAPPA_INERTIAL:
+        regime, n_band = "elastic-inertial", (0.0, 2.0)
+        note = ("stress depends on BOTH stiffness and shear rate: a rate-independent"
+                " closure is not calibrated here")
+    else:
+        regime, n_band = "inertial", (1.5, 2.5)
+        note = ("Bagnold branch; a linear-spring cell only reaches it with contact"
+                " overlaps of order d")
+    return {
+        "kappa": float(kappa),
+        "regime": regime,
+        "rate_exponent_band": list(n_band),
+        "kappa_quasi_static": KAPPA_QUASI_STATIC,
+        "kappa_inertial": KAPPA_INERTIAL,
+        "source": "Campbell 2002 JFM 465:261; kappa>1e4 threshold as quoted in"
+                  " arXiv:1712.02693",
+        "note": note,
+    }
 
 
 def _damping_ratio(restitution: float) -> float:
@@ -755,7 +814,10 @@ def _loglog_slope(xs: Sequence[float], ys: Sequence[float]) -> Optional[float]:
     ok = (x > 0) & (y > 0)
     if np.count_nonzero(ok) < 2:
         return None
-    return float(np.polyfit(np.log(x[ok]), np.log(y[ok]), 1)[0])
+    lx = np.log(x[ok])
+    if float(np.ptp(lx)) <= 1e-12:
+        return None  # all points at one abscissa: no slope is defined
+    return float(np.polyfit(lx, np.log(y[ok]), 1)[0])
 
 
 def shear_stress_scaling(points: Sequence[Dict[str, Any]],
@@ -778,8 +840,16 @@ def shear_stress_scaling(points: Sequence[Dict[str, Any]],
                          " -- no exponent is extracted (honest refusal)")
         return out
     pts = sorted(pts, key=lambda p: p["kappa"])
-    kap = [p["kappa"] for p in pts]
-    tst = [p["tau_star"] for p in pts]
+    # Points that share kappa (same stiffness and shear rate, different system
+    # size) are one abscissa value: fit on their mean tau* so that a duplicated
+    # kappa cannot silently dominate (or de-rank) the regression.
+    grouped: Dict[float, list[float]] = {}
+    for p in pts:
+        grouped.setdefault(float(p["kappa"]), []).append(float(p["tau_star"]))
+    uniq = sorted(grouped)
+    kap = uniq
+    tst = [float(np.mean(grouped[k])) for k in uniq]
+    out["n_distinct_kappa"] = len(uniq)
     beta = _loglog_slope(kap, tst)
     out.update({
         "status": "ok",
