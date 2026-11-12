@@ -1,0 +1,485 @@
+{
+  "node": "P304W2-N03",
+  "capability": "ice-structure contact-collision four-ledger energy conservation audit (machine-adjudicated per step)",
+  "level_reached": "L4",
+  "checks": {
+    "impl_files_present": true,
+    "impl_files_non_placeholder": true,
+    "tests_present": true,
+    "entry_runs": true,
+    "run_artifacts_present": true,
+    "run_artifacts_hashed": true,
+    "run_artifacts_git_tracked": true,
+    "integration_callers_present": true,
+    "integration_demo_pass": true,
+    "integration_bitwise_neutral": true,
+    "benchmark_present": true,
+    "benchmark_all_pass": true,
+    "benchmark_has_reference_vs_obtained": true,
+    "repro_cmd_present": true
+  },
+  "all_checks_pass": true,
+  "L2": {
+    "impl_files": [
+      {
+        "path": "src/tensordem/ice_structure_energy_ledger.py",
+        "exists": true,
+        "sha256": "8857908d335c5180997dc83fa89ef2a45f219df6daf7fed7c7992e418b24fa8e",
+        "bytes": 42423,
+        "lines": 963,
+        "placeholders": [],
+        "n_functions": 31,
+        "non_placeholder": true
+      },
+      {
+        "path": "src/tensordem/ice_structure_energy_audit_integration.py",
+        "exists": true,
+        "sha256": "3a188326333535c5939eb613d291b53bd7436bb4bd70273c48ff58a636467830",
+        "bytes": 8312,
+        "lines": 181,
+        "placeholders": [],
+        "n_functions": 7,
+        "non_placeholder": true
+      },
+      {
+        "path": "src/tensordem/ice_structure_energy_audit_cli.py",
+        "exists": true,
+        "sha256": "47658db149a6335105505632e5abf524faf38008526593c20399daee9ec95478",
+        "bytes": 5389,
+        "lines": 129,
+        "placeholders": [],
+        "n_functions": 2,
+        "non_placeholder": true
+      }
+    ],
+    "integration_host_files": [
+      {
+        "path": "src/tensordem/dem3d.py",
+        "exists": true,
+        "sha256": "2c7ef7ee449bfa29d39f1847e83aa07284ffad12c3e72b2a6d008c7c47bd0cc7",
+        "bytes": 110349,
+        "lines": 1933,
+        "placeholders": [],
+        "n_functions": 51,
+        "non_placeholder": true
+      }
+    ],
+    "tests": [
+      {
+        "path": "tests/test_ice_structure_energy_ledger.py",
+        "exists": true,
+        "sha256": "7f291bfbe2d971b1d3d811215ea151708a2883b9a5ad7ea6d168d0072d2e883a",
+        "bytes": 10951,
+        "lines": 267,
+        "placeholders": [],
+        "n_functions": 17,
+        "non_placeholder": true
+      },
+      {
+        "path": "tests/test_ice_structure_energy_audit_maturity.py",
+        "exists": true,
+        "sha256": "3ae7387457f6c47433592955827fbe4ee44c6c59d3479f167249d0c8bcc36fc1",
+        "bytes": 13790,
+        "lines": 319,
+        "placeholders": [],
+        "n_functions": 17,
+        "non_placeholder": true
+      }
+    ],
+    "entry": {
+      "cmd": "python -m tensordem.ice_structure_energy_audit_cli --case both --dt 1e-5 --duration 8e-3 --out <scratch>",
+      "exit_code": 0,
+      "stdout_tail": [
+        "verdict: <scratch>/verdict.json",
+        "[elastic] eps_E = 1.75636e-05 (bar 1e-02) -> PASS; E_k=25.4428 J E_s=0.00435193 J E_f=5.26421e-15 J E_v=0 J",
+        "[fracture] eps_E = 0.00123872 (bar 2e-02) -> PASS; E_k=22.3515 J E_s=0.0197729 J E_f=0.323539 J E_v=2.78339 J"
+      ],
+      "stderr_tail": [],
+      "kind": "module console entry (also installed as `tensordem-energy-audit`)",
+      "verdict_written": true,
+      "verdict": {
+        "node": "P304W2-N03",
+        "command": "tensordem-energy-audit",
+        "cases": [
+          {
+            "case": "elastic",
+            "dt_s": 1e-05,
+            "duration_s": 0.008,
+            "n_steps": 801,
+            "ledger_final": {
+              "E_k": 25.442841790608277,
+              "E_s": 0.004351928772841522,
+              "E_f": 5.2642148691612006e-15,
+              "E_v": 0.0
+            },
+            "E_total_0_J": 25.44690049407733,
+            "residual_relative_max": 1.7563563569457816e-05,
+            "threshold": 0.01,
+            "pass": true,
+            "E_k_reference_error": 1.3963509689833133e-16,
+            "E_s_reference_error": 3.1948612639796025e-13,
+            "n_broken": 0,
+            "ledger_csv": "<scratch>/ledger_elastic.csv"
+          },
+          {
+            "case": "fracture",
+            "dt_s": 1e-05,
+            "duration_s": 0.008,
+            "n_steps": 801,
+            "ledger_final": {
+              "E_k": 22.351494076151596,
+              "E_s": 0.01977288609896059,
+              "E_f": 0.32353907158975814,
+              "E_v": 2.7833872586447743
+            },
+            "E_total_0_J": 25.44690049407733,
+            "residual_relative_max": 0.001238720002373407,
+            "threshold": 0.02,
+            "pass": true,
+            "E_k_reference_error": 1.5894748094674997e-16,
+            "E_s_reference_error": 3.22855366669628e-13,
+            "n_broken": 24,
+            "ledger_csv": "<scratch>/ledger_fracture.csv"
+          }
+        ],
+        "all_pass": true
+      },
+      "pass": true
+    },
+    "run_artifacts": [
+      {
+        "path": "docs/artifacts/ice_structure_energy_ledger/acceptance.json",
+        "exists": true,
+        "sha256": "9ca0986b4ab1b971bf2800de105a91386356b535f8057a94145bb0484140760a",
+        "bytes": 18020
+      },
+      {
+        "path": "docs/artifacts/ice_structure_energy_ledger/integration_demo.json",
+        "exists": true,
+        "sha256": "6067aecbac8b4f11fdaff5610a6e73cdc9c31ad59a1feb91bead26ff571ffd54",
+        "bytes": 5392
+      },
+      {
+        "path": "docs/artifacts/ice_structure_energy_ledger/ledger_elastic_dt1.0e-05.csv",
+        "exists": true,
+        "sha256": "5a84cc347baf546c72f512db003a97b86e048138089035ac6a9c77e67250806c",
+        "bytes": 220529
+      },
+      {
+        "path": "docs/artifacts/ice_structure_energy_ledger/ledger_fracture_dt1.0e-05.csv",
+        "exists": true,
+        "sha256": "65059f99ea444a7d74941468f295b9c6cd057c01703b6f58003442fbdc073c7c",
+        "bytes": 266860
+      },
+      {
+        "path": "docs/artifacts/ice_structure_energy_ledger/fig1_four_ledger_history.png",
+        "exists": true,
+        "sha256": "72b4f0ba366e7087ac86ff6c3cb7ea1019588f3b4d9dcce5471669ab2e4c3b37",
+        "bytes": 118985
+      },
+      {
+        "path": "docs/artifacts/ice_structure_energy_ledger/fig2_residual_vs_dt.png",
+        "exists": true,
+        "sha256": "81392c56ecc7370a9f09241d136f2ba507502076383343aeebabb58dddd621d9",
+        "bytes": 59510
+      },
+      {
+        "path": "docs/artifacts/ice_structure_energy_ledger/fig3_energy_budget.png",
+        "exists": true,
+        "sha256": "24aa2c1bf81265042d19c8004bd79c199eb2f5a2e54a7de8e2ea69f725c9cd40",
+        "bytes": 34369
+      },
+      {
+        "path": "docs/artifacts/ice_structure_energy_ledger/fig4_floe_speed_field.png",
+        "exists": true,
+        "sha256": "0aa8afe30750ac087a422d5c7b787503d333653eb99e7c85b81635432ed416a4",
+        "bytes": 73769
+      },
+      {
+        "path": "docs/artifacts/ice_structure_energy_ledger/fig5_viscous_analytic.png",
+        "exists": true,
+        "sha256": "ae220373fee5e8d9d212a5f8731b32cddeb2a6d5efcce29cccef83e05da95d64",
+        "bytes": 52294
+      },
+      {
+        "path": "docs/artifacts/ice_structure_energy_ledger/fig6_main_solver_integration.png",
+        "exists": true,
+        "sha256": "4ddb8a0b97fd89ba0dfd5ef1b00709f8ff6349bdf5ffecfd0682352fe1d6d942",
+        "bytes": 109400
+      }
+    ],
+    "artefact_root": "docs/artifacts/ice_structure_energy_ledger",
+    "git_tracking": {
+      "git_available": true,
+      "tracked": [
+        "docs/DEM_ENERGY_AUDIT_MATURITY.md",
+        "docs/artifacts/ice_structure_energy_ledger/acceptance.json",
+        "docs/artifacts/ice_structure_energy_ledger/fig1_four_ledger_history.png",
+        "docs/artifacts/ice_structure_energy_ledger/fig2_residual_vs_dt.png",
+        "docs/artifacts/ice_structure_energy_ledger/fig3_energy_budget.png",
+        "docs/artifacts/ice_structure_energy_ledger/fig4_floe_speed_field.png",
+        "docs/artifacts/ice_structure_energy_ledger/fig5_viscous_analytic.png",
+        "docs/artifacts/ice_structure_energy_ledger/fig6_main_solver_integration.png",
+        "docs/artifacts/ice_structure_energy_ledger/integration_demo.json",
+        "docs/artifacts/ice_structure_energy_ledger/ledger_elastic_dt1.0e-05.csv",
+        "docs/artifacts/ice_structure_energy_ledger/ledger_fracture_dt1.0e-05.csv"
+      ],
+      "untracked": [],
+      "all_tracked": true
+    }
+  },
+  "L3": {
+    "integration": {
+      "callers": [
+        {
+          "file": "src/tensordem/dem3d.py",
+          "role": "main solver step hook",
+          "lines": [
+            684,
+            685,
+            687,
+            1634,
+            1635
+          ],
+          "call_site": [
+            "self.energy_audit.observe(self)"
+          ],
+          "present": true
+        },
+        {
+          "file": "src/tensordem/ice_structure_energy_audit_integration.py",
+          "role": "adapter main-solver state -> four ledgers",
+          "call_site": [
+            "IceDEMEnergyAuditAdapter.observe"
+          ],
+          "present": true
+        },
+        {
+          "file": "benchmarks/ice_structure_energy_ledger/integration_demo.py",
+          "role": "integration benchmark (bit-for-bit neutrality + closure)",
+          "call_site": [
+            "attach_energy_audit"
+          ],
+          "present": true
+        }
+      ],
+      "all_present": true
+    },
+    "integration_numbers": {
+      "present": true,
+      "path": "docs/artifacts/ice_structure_energy_ledger/integration_demo.json",
+      "sha256": "6067aecbac8b4f11fdaff5610a6e73cdc9c31ad59a1feb91bead26ff571ffd54",
+      "all_criteria_pass": true,
+      "criteria": {
+        "i_audit_called_by_main_solver": {
+          "value": 401,
+          "pass": true
+        },
+        "j_audit_does_not_change_trajectory": {
+          "value": 0.0,
+          "threshold": 0.0,
+          "pass": true
+        },
+        "k_closure_undamped_main_solver_lt_1pct": {
+          "value": 0.0027185360052013924,
+          "threshold": 0.01,
+          "pass": true
+        },
+        "l_missing_channel_detected_and_attributed": {
+          "pass": true
+        },
+        "m_kinetic_ledger_matches_solver_lt_0.1pct": {
+          "value": 3.227356471365265e-16,
+          "threshold": 0.001,
+          "pass": true
+        },
+        "n_explicit_euler_drift_is_first_order": {
+          "pass": true
+        }
+      },
+      "cases": {
+        "closure_undamped": {
+          "residual_relative_max": 0.0027185360052013924,
+          "dt_s": 7.580473143015427e-05,
+          "closed_within_1pct": true
+        },
+        "closure_undamped_dt_over_2": {
+          "residual_relative_max": 0.0013563728562180854,
+          "dt_s": 3.7902365715077136e-05,
+          "closed_within_1pct": true
+        },
+        "closure_undamped_dt_over_4": {
+          "residual_relative_max": 0.0006782378416639391,
+          "dt_s": 1.8951182857538568e-05,
+          "closed_within_1pct": true
+        },
+        "production_damped": {
+          "residual_relative_max": 0.03960117346118143,
+          "dt_s": 3.830904871465213e-05,
+          "closed_within_1pct": false
+        },
+        "production_damped_accounted": {
+          "residual_relative_max": 0.0010935791317093256,
+          "dt_s": 3.830904871465213e-05,
+          "closed_within_1pct": true
+        }
+      },
+      "trajectory_neutrality": {
+        "steps": 60,
+        "max_abs_position_difference_m": 0.0,
+        "max_abs_velocity_difference_m_s": 0.0,
+        "bitwise_identical": true,
+        "audit_rows": 61
+      }
+    }
+  },
+  "L4": {
+    "benchmark": {
+      "present": true,
+      "path": "docs/artifacts/ice_structure_energy_ledger/acceptance.json",
+      "sha256": "9ca0986b4ab1b971bf2800de105a91386356b535f8057a94145bb0484140760a",
+      "all_criteria_pass": true,
+      "rows": [
+        {
+          "criterion": "a_kinetic_energy_error_lt_0.1pct",
+          "reference": {
+            "E_k_reference": 22.35516554766173,
+            "E_s_reference": 0.019908247119772907
+          },
+          "obtained": 1.5892137641414613e-16,
+          "threshold": 0.001,
+          "pass": true
+        },
+        {
+          "criterion": "b_contact_strain_energy_error_lt_0.5pct",
+          "reference": {
+            "E_k_reference": 22.35516554766173,
+            "E_s_reference": 0.019908247119772907
+          },
+          "obtained": 3.8566359250421687e-13,
+          "threshold": 0.005,
+          "pass": true
+        },
+        {
+          "criterion": "b2_tangential_spring_energy_error_lt_0.5pct",
+          "reference": {
+            "E_s_contact_tangential_reference": 0.06127581987581304,
+            "E_s_contact_normal_reference": 0.0
+          },
+          "obtained": 0.0,
+          "threshold": 0.005,
+          "pass": true
+        },
+        {
+          "criterion": "c_fracture_energy_error_lt_1pct",
+          "reference": {
+            "E_f_reference": 0.3237397739072596,
+            "E_v_reference": 2.778522176916118
+          },
+          "obtained": 1.0475860518935097e-06,
+          "threshold": 0.01,
+          "pass": true
+        },
+        {
+          "criterion": "d_viscous_dissipation_error_lt_2pct",
+          "reference": {
+            "trapezoid": 2.778522176916118,
+            "analytic_restitution.E_v_analytic": 0.1908517537055799,
+            "analytic_restitution.E_v_trapezoid": 0.19083912701820044,
+            "analytic_restitution.E_v_trapezoid_error_relative": 1.3176832183560322e-13
+          },
+          "obtained": 2.2695758314479224e-14,
+          "threshold": 0.02,
+          "pass": true
+        },
+        {
+          "criterion": "e_elastic_residual_lt_1pct",
+          "reference": {},
+          "obtained": 4.3908911316259335e-06,
+          "threshold": 0.01,
+          "pass": true
+        },
+        {
+          "criterion": "f_fracture_residual_lt_2pct",
+          "reference": {},
+          "obtained": 0.0011976439574824525,
+          "threshold": 0.02,
+          "pass": true
+        },
+        {
+          "criterion": "g_negative_control_zero_velocity",
+          "reference": {},
+          "obtained": 0.0,
+          "threshold": 0.0,
+          "pass": true
+        },
+        {
+          "criterion": "h_dt_halving_does_not_increase_residual",
+          "reference": {},
+          "obtained": 0.001238720002373407,
+          "threshold": null,
+          "pass": true
+        }
+      ],
+      "reference_checks": {
+        "elastic": {
+          "E_k_ledger": 25.442587523740286,
+          "E_k_reference": 25.442587523740276,
+          "E_k_error_relative": 4.1890947712989006e-16,
+          "E_s_ledger": 0.00435029828907981,
+          "E_s_reference": 0.004350298289079453,
+          "E_s_error_relative": 8.214449040156282e-14
+        },
+        "fracture": {
+          "E_k_ledger": 22.355165547661727,
+          "E_k_reference": 22.35516554766173,
+          "E_k_error_relative": 1.5892137641414613e-16,
+          "E_s_ledger": 0.019908247119780585,
+          "E_s_reference": 0.019908247119772907,
+          "E_s_error_relative": 3.8566359250421687e-13
+        }
+      },
+      "single_sphere_restitution": {
+        "restitution": 0.8,
+        "E_v_ledger": 0.1908391270181753,
+        "E_v_analytic": 0.1908517537055799,
+        "E_v_error_relative": 6.6159661409765e-05,
+        "E_v_trapezoid": 0.19083912701820044,
+        "E_v_trapezoid_error_relative": 1.3176832183560322e-13,
+        "rebound_velocity": 1.212177972201029,
+        "rebound_ratio": -0.8081186481340193,
+        "residual_relative_max": 0.013033137527253325,
+        "ledger_channels": {
+          "E_k": 0.3462134307009055,
+          "E_s": 0.0,
+          "E_f": 0.0,
+          "E_v": 0.1908391270181753,
+          "E_total_0": 0.5301437602932777
+        },
+        "out_of_ledger_channels": {
+          "clamp_loss_J": -0.11269949352889769,
+          "spring_release_J": 0.0,
+          "friction_sliding_J": 0.0
+        }
+      },
+      "criteria_values": {
+        "a_kinetic_energy_error_lt_0.1pct": 1.5892137641414613e-16,
+        "b_contact_strain_energy_error_lt_0.5pct": 3.8566359250421687e-13,
+        "b2_tangential_spring_energy_error_lt_0.5pct": 0.0,
+        "c_fracture_energy_error_lt_1pct": 1.0475860518935097e-06,
+        "d_viscous_dissipation_error_lt_2pct": 2.2695758314479224e-14,
+        "e_elastic_residual_lt_1pct": 4.3908911316259335e-06,
+        "f_fracture_residual_lt_2pct": 0.0011976439574824525,
+        "g_negative_control_zero_velocity": 0.0,
+        "h_dt_halving_does_not_increase_residual": 0.001238720002373407
+      }
+    },
+    "repro_cmd": {
+      "acceptance": "python benchmarks/ice_structure_energy_ledger/run.py",
+      "integration": "python benchmarks/ice_structure_energy_ledger/integration_demo.py",
+      "entry": "python -m tensordem.ice_structure_energy_audit_cli --case both --dt 1e-5 --duration 8e-3 --out docs/artifacts/ice_structure_energy_ledger/cli",
+      "tests": "python -m pytest tests/test_ice_structure_energy_ledger.py tests/test_ice_structure_energy_audit_maturity.py -q"
+    }
+  },
+  "runs": []
+}

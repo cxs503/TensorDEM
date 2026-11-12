@@ -1,6 +1,7 @@
 """Render the report markdown for the ice-structure four-ledger energy audit.
 
-All numbers are injected from ``artifacts/ice_structure_energy_ledger/acceptance.json``
+All numbers are injected from
+``docs/artifacts/ice_structure_energy_ledger/acceptance.json``
 so the document contains no hand-transcribed values.
 """
 from __future__ import annotations
@@ -9,7 +10,7 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-ACC = ROOT / "artifacts" / "ice_structure_energy_ledger" / "acceptance.json"
+ACC = ROOT / "docs" / "artifacts" / "ice_structure_energy_ledger" / "acceptance.json"
 DOC = ROOT / "docs" / "ice_structure_energy_ledger_four_ledger_audit.md"
 
 
@@ -285,12 +286,12 @@ def main() -> Path:
     add("## 6. Reproduction")
     add("")
     add("```bash")
-    add("python benchmarks/ice_structure_energy_ledger/run.py     # writes artifacts/ + acceptance.json")
+    add("python benchmarks/ice_structure_energy_ledger/run.py     # writes docs/artifacts/ + acceptance.json")
     add("python benchmarks/ice_structure_energy_ledger/make_doc.py # regenerates this document")
     add("python -m pytest tests/test_ice_structure_energy_ledger.py -q")
     add("```")
     add("")
-    add("Audit chain: `artifacts/ice_structure_energy_ledger/acceptance.json` (sha256 in the "
+    add("Audit chain: `docs/artifacts/ice_structure_energy_ledger/acceptance.json` (sha256 in the "
         "header above) → per-step ledger CSVs `ledger_{elastic,fracture}_dt*.csv` (sha256 "
         "recorded inside the JSON) → figures → this document.")
     DOC.write_text(lin.join(L) + "\n")

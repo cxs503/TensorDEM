@@ -1,0 +1,186 @@
+{
+  "node": "P304W2-N03",
+  "capability": "ice-structure contact-collision four-ledger energy audit",
+  "integration_target": "tensordem.dem3d.IceDEM3D.step (production DEM main loop)",
+  "hook": "sim.energy_audit (None by default; set by attach_energy_audit)",
+  "scenario": {
+    "grid": [
+      4,
+      3,
+      2
+    ],
+    "n_particles": 24,
+    "n_bonds": 128,
+    "impact_velocity_m_s": 1.0,
+    "steps": 400,
+    "dt_auto_s": 7.580473143015427e-05
+  },
+  "cases": {
+    "closure_undamped": {
+      "case": "closure_undamped",
+      "dt_s": 7.580473143015427e-05,
+      "n_particles": 24,
+      "n_bonds": 128,
+      "n_broken": 7,
+      "residual_relative_max": 0.0027185360052013924,
+      "closed_within_1pct": true,
+      "ledger_final": {
+        "E_k": 0.1838096501651463,
+        "E_s": 0.46715563034393703,
+        "E_f": 0.06891512125475918,
+        "E_v": 0.0,
+        "E_ext": 0.0,
+        "E_total": 0.7198804017638425,
+        "E_total_0": 0.7202101158354601
+      },
+      "kinetic_cross_check_max": 3.227356471365265e-16,
+      "extra_viscous_dissipation_J": 0.0,
+      "external_work_source": null
+    },
+    "closure_undamped_dt_over_2": {
+      "case": "closure_undamped_dt_over_2",
+      "dt_s": 3.7902365715077136e-05,
+      "n_particles": 24,
+      "n_bonds": 128,
+      "n_broken": 7,
+      "residual_relative_max": 0.0013563728562180854,
+      "closed_within_1pct": true,
+      "ledger_final": {
+        "E_k": 0.18395960324146368,
+        "E_s": 0.4672602617921518,
+        "E_f": 0.06882209955088531,
+        "E_v": 0.0,
+        "E_ext": 0.0,
+        "E_total": 0.7200419645845009,
+        "E_total_0": 0.7202101158354601
+      },
+      "kinetic_cross_check_max": 3.7772393175169304e-16,
+      "extra_viscous_dissipation_J": 0.0,
+      "external_work_source": null
+    },
+    "closure_undamped_dt_over_4": {
+      "case": "closure_undamped_dt_over_4",
+      "dt_s": 1.8951182857538568e-05,
+      "n_particles": 24,
+      "n_bonds": 128,
+      "n_broken": 7,
+      "residual_relative_max": 0.0006782378416639391,
+      "closed_within_1pct": true,
+      "ledger_final": {
+        "E_k": 0.18359519025510254,
+        "E_s": 0.4675488470400046,
+        "E_f": 0.06898160186130048,
+        "E_v": 0.0,
+        "E_ext": 0.0,
+        "E_total": 0.7201256391564077,
+        "E_total_0": 0.7202101158354601
+      },
+      "kinetic_cross_check_max": 4.19197133478472e-16,
+      "extra_viscous_dissipation_J": 0.0,
+      "external_work_source": null
+    },
+    "production_damped": {
+      "case": "production_damped",
+      "dt_s": 3.830904871465213e-05,
+      "n_particles": 24,
+      "n_bonds": 128,
+      "n_broken": 0,
+      "residual_relative_max": 0.03960117346118143,
+      "closed_within_1pct": false,
+      "ledger_final": {
+        "E_k": 0.42708809077664606,
+        "E_s": 0.2646008593331164,
+        "E_f": 0.0,
+        "E_v": 0.0,
+        "E_ext": 0.0,
+        "E_total": 0.6916889501097625,
+        "E_total_0": 0.7202101158354601
+      },
+      "kinetic_cross_check_max": 3.826033286803706e-16,
+      "extra_viscous_dissipation_J": 0.0,
+      "external_work_source": null
+    },
+    "production_damped_accounted": {
+      "case": "production_damped_accounted",
+      "dt_s": 3.830904871465213e-05,
+      "n_particles": 24,
+      "n_bonds": 128,
+      "n_broken": 0,
+      "residual_relative_max": 0.0010935791317093256,
+      "closed_within_1pct": true,
+      "ledger_final": {
+        "E_k": 0.42708809077664606,
+        "E_s": 0.2646008593331164,
+        "E_f": 0.0,
+        "E_v": 0.029308772478821243,
+        "E_ext": 0.0,
+        "E_total": 0.7209977225885837,
+        "E_total_0": 0.7202101158354601
+      },
+      "kinetic_cross_check_max": 3.826033286803706e-16,
+      "extra_viscous_dissipation_J": 0.029308772478821243,
+      "external_work_source": null
+    }
+  },
+  "criteria": {
+    "i_audit_called_by_main_solver": {
+      "value": 401,
+      "expected": 401,
+      "pass": true
+    },
+    "j_audit_does_not_change_trajectory": {
+      "value": 0.0,
+      "threshold": 0.0,
+      "pass": true
+    },
+    "k_closure_undamped_main_solver_lt_1pct": {
+      "value": 0.0027185360052013924,
+      "threshold": 0.01,
+      "pass": true
+    },
+    "l_missing_channel_detected_and_attributed": {
+      "unaccounted_residual": 0.03960117346118143,
+      "accounted_residual": 0.0010935791317093256,
+      "pass": true
+    },
+    "m_kinetic_ledger_matches_solver_lt_0.1pct": {
+      "value": 3.227356471365265e-16,
+      "threshold": 0.001,
+      "pass": true
+    },
+    "n_explicit_euler_drift_is_first_order": {
+      "detail": {
+        "dts": [
+          1.8951182857538568e-05,
+          3.7902365715077136e-05,
+          7.580473143015427e-05
+        ],
+        "residuals": [
+          0.0006782378416639391,
+          0.0013563728562180854,
+          0.0027185360052013924
+        ],
+        "ratios": [
+          1.9998483907805253,
+          2.004268953583579
+        ],
+        "first_order": true
+      },
+      "pass": true
+    }
+  },
+  "all_criteria_pass": true,
+  "trajectory_neutrality": {
+    "steps": 60,
+    "max_abs_position_difference_m": 0.0,
+    "max_abs_velocity_difference_m_s": 0.0,
+    "bitwise_identical": true,
+    "audit_rows": 61
+  },
+  "figure": "docs/artifacts/ice_structure_energy_ledger/fig6_main_solver_integration.png",
+  "environment": {
+    "python": "3.11.6",
+    "torch": "2.7.1",
+    "numpy": "2.4.6"
+  }
+}
