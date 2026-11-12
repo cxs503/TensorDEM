@@ -383,9 +383,16 @@ class RaceModel:
     """Momentum-conserving self-similar propeller race.
 
     ``u(x, r) = u_c(x) exp(-r^2 / (2 sigma^2))``, ``sigma = R/2 + beta x`` and
-    ``u_c = sqrt(M / (2 pi sigma^2))`` with momentum flux ``M = T / rho``.  This
-    conserves momentum exactly at every station, which is the physical gate
-    applied in the tests.
+    ``u_c = sqrt(M / (pi sigma^2))`` with momentum flux ``M = T / rho``.  Because
+    ``int_0^inf rho u^2 2 pi r dr = rho u_c^2 pi sigma^2 = rho M = T``, the profile
+    conserves momentum flux exactly at every station, which is the physical gate
+    applied in the tests (``G2_momentum_flux_*``).
+
+    History: the normalisation was ``u_c = sqrt(M / (2 pi sigma^2))``, which
+    delivers ``T/2`` (DEFECT-D1, repaired in this revision).  Note that the repair
+    is a factor ``sqrt(2)``, not the ``sqrt(2 M / (pi sigma^2))`` factor*2 written
+    in the first issue of ``docs/propeller_ice_milling_legacy_verification.md``:
+    the acceptance gate ``int rho u^2 2 pi r dr = T`` is the arbiter.
     """
 
     thrust: float
@@ -402,14 +409,38 @@ class RaceModel:
 
     @property
     def momentum_flux(self) -> float:
+        """``M = T / rho`` -- the flux the axial-velocity field must deliver."""
         return max(self.thrust, 1.0e-6) / RHO_WATER
 
+    @property
+    def wake_half_width(self) -> float:
+        """Wake width ``sigma`` at ``x = 0`` (``R/2``); the spreading origin."""
+        return 0.25 * self.diameter
+
     def sigma(self, x: float) -> float:
-        return 0.25 * self.diameter + self.spreading_rate * max(x, 0.0)
+        return self.wake_half_width + self.spreading_rate * max(x, 0.0)
+
+    def sigma_tensor(self, x: torch.Tensor) -> torch.Tensor:
+        """Vectorised :meth:`sigma` (same convention, same origin)."""
+        return self.wake_half_width + self.spreading_rate * x.clamp_min(0.0)
 
     def centreline(self, x: float) -> float:
         s = self.sigma(x)
-        return math.sqrt(self.momentum_flux / (2.0 * math.pi * s * s))
+        return math.sqrt(self.momentum_flux / (math.pi * s * s))
+
+    def axial_velocity_tensor(self, x: torch.Tensor, r: torch.Tensor) -> torch.Tensor:
+        """Vectorised :meth:`axial_velocity` -- the single source of truth for the race.
+
+        ``integrate_debris`` used to carry its own ``sigma = 0.5 D`` closure, i.e.
+        twice the wake width and a four-times weaker centreline (DEFECT-D2).  Every
+        consumer of the race field must go through this method.
+        """
+        x = x.to(torch.float64)
+        r = r.to(torch.float64)
+        s = self.sigma_tensor(x)
+        u_c = torch.sqrt(torch.as_tensor(self.momentum_flux, dtype=torch.float64)
+                         / (math.pi * s * s))
+        return u_c * torch.exp(-(r * r) / (2.0 * s * s))
 
     def axial_velocity(self, x: float, r: float) -> float:
         s = self.sigma(x)
@@ -935,13 +966,10 @@ def integrate_debris(debris: list[dict[str, float]], race: RaceModel, *,
     r = torch.tensor([d["r"] for d in debris], dtype=torch.float64)
     vx = torch.tensor([d["vx"] for d in debris], dtype=torch.float64)
     vr = torch.tensor([d["vr"] for d in debris], dtype=torch.float64)
-    momentum = race.momentum_flux
-    half_d = 0.5 * race.diameter
-
-    def water_velocity(x_: torch.Tensor, r_: torch.Tensor) -> torch.Tensor:
-        sigma = half_d + race.spreading_rate * x_.clamp_min(0.0)
-        u_c = torch.sqrt(momentum / (2.0 * math.pi * sigma * sigma))
-        return u_c * torch.exp(-(r_ * r_) / (2.0 * sigma * sigma))
+    # DEFECT-D2 (repaired): the carrier is the RaceModel field itself, not a local
+    # sigma = 0.5 D closure -- chips are advected by the jet the milling torque was
+    # computed with.
+    water_velocity = race.axial_velocity_tensor
 
     moving = torch.ones(n, dtype=torch.bool)
     t = 0.0
