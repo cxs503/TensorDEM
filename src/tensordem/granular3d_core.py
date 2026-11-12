@@ -235,7 +235,8 @@ def contact_forces(pos: np.ndarray, vel: np.ndarray, omega: np.ndarray,
                    iu: np.ndarray, ju: np.ndarray, state: ContactState,
                    mat: Material3D, dt: float,
                    state_keys: np.ndarray | None = None,
-                   box=None) -> tuple[np.ndarray, np.ndarray]:
+                   box=None, return_pairs: bool = False
+                   ) -> tuple[np.ndarray, np.ndarray]:
     """Vectorised particle-particle contact forces and torques.
 
     ``iu``/``ju`` index into ``pos``/``vel``/``omega``.  ``state_keys`` is an
@@ -258,6 +259,12 @@ def contact_forces(pos: np.ndarray, vel: np.ndarray, omega: np.ndarray,
     torque = np.zeros((n, 3), dtype=np.float64)
     m_pairs = len(iu)
     if m_pairs == 0:
+        if return_pairs:
+            empty = {"iu": np.zeros(0, dtype=np.int64),
+                     "ju": np.zeros(0, dtype=np.int64),
+                     "force_on_i": np.zeros((0, 3)), "branch": np.zeros((0, 3)),
+                     "f_n": np.zeros(0), "f_t": np.zeros((0, 3))}
+            return force, torque, empty
         return force, torque
 
     r = mat.radius
@@ -272,6 +279,12 @@ def contact_forces(pos: np.ndarray, vel: np.ndarray, omega: np.ndarray,
     overlap = 2.0 * r - dist
     active = overlap > 0.0
     if not active.any():
+        if return_pairs:
+            empty = {"iu": np.zeros(0, dtype=np.int64),
+                     "ju": np.zeros(0, dtype=np.int64),
+                     "force_on_i": np.zeros((0, 3)), "branch": np.zeros((0, 3)),
+                     "f_n": np.zeros(0), "f_t": np.zeros((0, 3))}
+            return force, torque, empty
         return force, torque
 
     iu_a, ju_a = iu[active], ju[active]
@@ -313,6 +326,11 @@ def contact_forces(pos: np.ndarray, vel: np.ndarray, omega: np.ndarray,
     # away from i (+n).  (Same convention as repose_calibration.)
     np.add.at(force, iu_a, -f_total)
     np.add.at(force, ju_a, f_total)
+    if return_pairs:
+        # per-pair forces for virial / fabric estimators: the *total* force
+        # array is a per-particle sum and cannot be used for that purpose.
+        pair_out = {"iu": iu_a, "ju": ju_a, "force_on_i": -f_total,
+                    "branch": dvec_a, "f_n": f_n, "f_t": f_t}
 
     if mat.mu > 0.0:
         # torque on i = r_i x f_t ; on j = r_j x (-f_t); both equal r_i x f_t
@@ -349,4 +367,6 @@ def contact_forces(pos: np.ndarray, vel: np.ndarray, omega: np.ndarray,
         if key not in active_keys:
             del state.roll[key]
 
+    if return_pairs:
+        return force, torque, pair_out
     return force, torque
