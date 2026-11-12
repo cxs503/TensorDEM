@@ -162,6 +162,29 @@ def _cmd_h1_broken_ice(args: argparse.Namespace) -> None:
     print("report:", args.output)
 
 
+def _cmd_elastic_limit_shear(args: argparse.Namespace) -> None:
+    """Run one homogeneous (Lees-Edwards) plane-shear point from the CLI."""
+    import json as _json
+
+    from .elastic_limit_shear import (ElasticLimitShearCase, build_configuration,
+                                      simulate_plane_shear)
+
+    case = ElasticLimitShearCase(
+        n_particles=args.n, kn=args.kn, shear_rate=args.shear_rate,
+        solid_fraction=args.solid_fraction, dt_factor=args.dt_factor,
+        strain_total=args.strain, strain_average_from=args.strain_from,
+        seed=args.seed)
+    res = simulate_plane_shear(case, build_configuration(case), verbose=True)
+    payload = {k: v for k, v in res.items() if k != "final_state"}
+    text = _json.dumps(payload, indent=1, default=float)
+    if args.json:
+        Path(args.json).parent.mkdir(parents=True, exist_ok=True)
+        Path(args.json).write_text(text)
+    print(text)
+    if not res["gates"]["all"]:
+        sys.exit(f"gates failed: {res['gates']}")
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(
         description="TensorDEM: Discrete Element Method solver and verification tools",
@@ -211,6 +234,20 @@ def main(argv: list[str] | None = None) -> None:
     verify_parser.set_defaults(func=_cmd_verify_friction_polyhedron)
 
     # --- h1-broken-ice subcommand (in-repo caller of the H1 case builders) ---
+    els = subparsers.add_parser(
+        "elastic-limit-shear",
+        help="homogeneous Lees-Edwards plane shear (Campbell elastic-limit map)")
+    els.add_argument("--kn", type=float, default=1.0e4)
+    els.add_argument("--shear-rate", type=float, default=1.0)
+    els.add_argument("--n", type=int, default=400)
+    els.add_argument("--solid-fraction", type=float, default=0.80)
+    els.add_argument("--strain", type=float, default=1.8)
+    els.add_argument("--strain-from", type=float, default=0.8)
+    els.add_argument("--dt-factor", type=float, default=0.0025)
+    els.add_argument("--seed", type=int, default=20261112)
+    els.add_argument("--json")
+    els.set_defaults(func=_cmd_elastic_limit_shear)
+
     h1_parser = subparsers.add_parser(
         "h1-broken-ice",
         help="Broken-ice DEM cases: floating equilibrium, rubble repose, channel clearing",
