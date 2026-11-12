@@ -47,6 +47,13 @@ from .stokes_terminal import (
     relaxation_time,
     run_stokes_verification,
 )
+from .settling_transient import (
+    linear_settling_solution,
+    fit_relaxation_time,
+    euler_tau_bias_prediction,
+    integrate_settling_exponential,
+    transient_convergence_study,
+)
 from .added_mass_oscillation import (
     transfer_function,
     amplitude_ratio,
@@ -87,6 +94,12 @@ __all__ = [
     "schiller_naumann_terminal_velocity",
     "relaxation_time",
     "run_stokes_verification",
+    # settling_transient
+    "linear_settling_solution",
+    "fit_relaxation_time",
+    "euler_tau_bias_prediction",
+    "integrate_settling_exponential",
+    "transient_convergence_study",
     # added_mass_oscillation
     "transfer_function",
     "amplitude_ratio",
