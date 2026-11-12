@@ -1,0 +1,110 @@
+{
+  "n_particles": 1000,
+  "final_relax_iterations": 6000,
+  "points": [
+    {
+      "solid_fraction": 0.6000000000000002,
+      "max_overlap_over_diameter": 1.4863070193008032e-08,
+      "mean_overlap_over_diameter": 1.9816607995823716e-09,
+      "overlap_pair_fraction": 0.0035595595595595596,
+      "n_contacts": 1778,
+      "wall_time_s": 13.179381132125854
+    },
+    {
+      "solid_fraction": 0.6049999999999999,
+      "max_overlap_over_diameter": 4.438502007337447e-07,
+      "mean_overlap_over_diameter": 6.448141455287227e-08,
+      "overlap_pair_fraction": 0.0034114114114114115,
+      "n_contacts": 1704,
+      "wall_time_s": 11.137236595153809
+    },
+    {
+      "solid_fraction": 0.6100000000000002,
+      "max_overlap_over_diameter": 3.4049531660342025e-05,
+      "mean_overlap_over_diameter": 5.143205472179317e-06,
+      "overlap_pair_fraction": 0.0035435435435435436,
+      "n_contacts": 1770,
+      "wall_time_s": 11.009416818618774
+    },
+    {
+      "solid_fraction": 0.615,
+      "max_overlap_over_diameter": 5.153070169118708e-05,
+      "mean_overlap_over_diameter": 5.295365922132336e-06,
+      "overlap_pair_fraction": 0.0035235235235235233,
+      "n_contacts": 1760,
+      "wall_time_s": 10.998211145401001
+    },
+    {
+      "solid_fraction": 0.6200000000000001,
+      "max_overlap_over_diameter": 0.0006308579801469431,
+      "mean_overlap_over_diameter": 0.00012404561934799518,
+      "overlap_pair_fraction": 0.0036756756756756758,
+      "n_contacts": 1836,
+      "wall_time_s": 11.117533206939697
+    },
+    {
+      "solid_fraction": 0.6250000000000001,
+      "max_overlap_over_diameter": 0.0019219175782464546,
+      "mean_overlap_over_diameter": 0.0002767615487801498,
+      "overlap_pair_fraction": 0.003775775775775776,
+      "n_contacts": 1886,
+      "wall_time_s": 11.904735565185547
+    },
+    {
+      "solid_fraction": 0.6300000000000002,
+      "max_overlap_over_diameter": 0.00853137863630329,
+      "mean_overlap_over_diameter": 0.001529846142636599,
+      "overlap_pair_fraction": 0.003915915915915916,
+      "n_contacts": 1956,
+      "wall_time_s": 11.17209792137146
+    },
+    {
+      "solid_fraction": 0.635,
+      "max_overlap_over_diameter": 0.014239314338648735,
+      "mean_overlap_over_diameter": 0.00273348299641743,
+      "overlap_pair_fraction": 0.004076076076076076,
+      "n_contacts": 2036,
+      "wall_time_s": 11.213416814804077
+    },
+    {
+      "solid_fraction": 0.6400000000000001,
+      "max_overlap_over_diameter": 0.025243564248223327,
+      "mean_overlap_over_diameter": 0.005146806516082889,
+      "overlap_pair_fraction": 0.004204204204204204,
+      "n_contacts": 2100,
+      "wall_time_s": 12.34231185913086
+    },
+    {
+      "solid_fraction": 0.645,
+      "max_overlap_over_diameter": 0.035844466108192016,
+      "mean_overlap_over_diameter": 0.0070548977335744235,
+      "overlap_pair_fraction": 0.00431031031031031,
+      "n_contacts": 2153,
+      "wall_time_s": 12.620041131973267
+    },
+    {
+      "solid_fraction": 0.6500000000000001,
+      "max_overlap_over_diameter": 0.04430072580136968,
+      "mean_overlap_over_diameter": 0.009411984028033296,
+      "overlap_pair_fraction": 0.004338338338338338,
+      "n_contacts": 2167,
+      "wall_time_s": 11.436158895492554
+    },
+    {
+      "solid_fraction": 0.655,
+      "max_overlap_over_diameter": 0.058656809596384966,
+      "mean_overlap_over_diameter": 0.011154131345556602,
+      "overlap_pair_fraction": 0.004466466466466467,
+      "n_contacts": 2231,
+      "wall_time_s": 12.171811580657959
+    },
+    {
+      "solid_fraction": 0.6600000000000001,
+      "max_overlap_over_diameter": 0.10789160397047437,
+      "mean_overlap_over_diameter": 0.01387534171818563,
+      "overlap_pair_fraction": 0.004586586586586587,
+      "n_contacts": 2291,
+      "wall_time_s": 13.381088018417358
+    }
+  ]
+}

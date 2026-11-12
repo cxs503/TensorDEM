@@ -1,0 +1,103 @@
+{
+  "rows": [
+    {
+      "n_particles": 400,
+      "seed": 42,
+      "target_porosity": 0.3,
+      "target_phi": 0.7,
+      "achieved_phi": 0.7000000000000001,
+      "abs_deviation": 1.1102230246251565e-16
+    },
+    {
+      "n_particles": 400,
+      "seed": 42,
+      "target_porosity": 0.36,
+      "target_phi": 0.64,
+      "achieved_phi": 0.6400000000000001,
+      "abs_deviation": 1.1102230246251565e-16
+    },
+    {
+      "n_particles": 400,
+      "seed": 42,
+      "target_porosity": 0.45,
+      "target_phi": 0.55,
+      "achieved_phi": 0.55,
+      "abs_deviation": 0.0
+    },
+    {
+      "n_particles": 400,
+      "seed": 7,
+      "target_porosity": 0.3,
+      "target_phi": 0.7,
+      "achieved_phi": 0.7000000000000001,
+      "abs_deviation": 1.1102230246251565e-16
+    },
+    {
+      "n_particles": 400,
+      "seed": 7,
+      "target_porosity": 0.36,
+      "target_phi": 0.64,
+      "achieved_phi": 0.6400000000000001,
+      "abs_deviation": 1.1102230246251565e-16
+    },
+    {
+      "n_particles": 400,
+      "seed": 7,
+      "target_porosity": 0.45,
+      "target_phi": 0.55,
+      "achieved_phi": 0.55,
+      "abs_deviation": 0.0
+    },
+    {
+      "n_particles": 1000,
+      "seed": 42,
+      "target_porosity": 0.3,
+      "target_phi": 0.7,
+      "achieved_phi": 0.7,
+      "abs_deviation": 0.0
+    },
+    {
+      "n_particles": 1000,
+      "seed": 42,
+      "target_porosity": 0.36,
+      "target_phi": 0.64,
+      "achieved_phi": 0.6400000000000001,
+      "abs_deviation": 1.1102230246251565e-16
+    },
+    {
+      "n_particles": 1000,
+      "seed": 42,
+      "target_porosity": 0.45,
+      "target_phi": 0.55,
+      "achieved_phi": 0.55,
+      "abs_deviation": 0.0
+    },
+    {
+      "n_particles": 1000,
+      "seed": 7,
+      "target_porosity": 0.3,
+      "target_phi": 0.7,
+      "achieved_phi": 0.7,
+      "abs_deviation": 0.0
+    },
+    {
+      "n_particles": 1000,
+      "seed": 7,
+      "target_porosity": 0.36,
+      "target_phi": 0.64,
+      "achieved_phi": 0.6400000000000001,
+      "abs_deviation": 1.1102230246251565e-16
+    },
+    {
+      "n_particles": 1000,
+      "seed": 7,
+      "target_porosity": 0.45,
+      "target_phi": 0.55,
+      "achieved_phi": 0.55,
+      "abs_deviation": 0.0
+    }
+  ],
+  "max_abs_deviation": 1.1102230246251565e-16,
+  "tautological": true,
+  "note": "phi is imposed as 1 - target_porosity; a tolerance gate on the returned phi cannot fail and does not measure the packing."
+}
