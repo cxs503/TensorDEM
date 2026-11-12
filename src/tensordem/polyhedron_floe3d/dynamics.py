@@ -341,7 +341,8 @@ class DEMSystem3D:
                  water_density: float = 1025.0, dt: float = 2.0e-4,
                  integrator: str = "leapfrog", record: bool = True,
                  constrain_to_plane: bool = False,
-                 linear_drag: float = 0.0, angular_drag: float = 0.0):
+                 linear_drag: float = 0.0, angular_drag: float = 0.0,
+                 dissipation_ledger: str = "midpoint"):
         self.bodies: List[FloeBody] = list(bodies)
         self.law = ContactLaw() if law is None else law
         self.gravity = float(gravity)
@@ -370,6 +371,21 @@ class DEMSystem3D:
         self.pe_spring = 0.0
         self.dissipated = 0.0
         self.work_external = 0.0
+        #: Dissipation of a contact is ``P dt`` with the velocity *at the contact
+        #: point*, and that velocity changes inside the step because the kick moves
+        #: ``v`` and ``omega``.  ``"midpoint"`` books ``P dt`` with the trapezoidal
+        #: (mean of pre- and post-kick) velocity, which is the same second-order
+        #: closure the drag / buoyancy ledgers below already use; ``"begin"`` is the
+        #: pre-fix closure, kept only so the order of the ledger itself can be
+        #: *measured* (see ``scripts/verify_floe3d_energy_ledger_order.py``) and
+        #: guarded by a regression test.  Neither choice touches the dynamics: the
+        #: force law is evaluated before the kick and does not read the ledger.
+        if dissipation_ledger not in ("midpoint", "begin"):
+            raise ValueError("dissipation_ledger must be 'midpoint' or 'begin', got %r"
+                             % (dissipation_ledger,))
+        self.dissipation_ledger = str(dissipation_ledger)
+        #: rows collected during a step: (kind, payload...); settled after the kick
+        self._ledger_rows: List[tuple] = []
         #: buoyancy force per body for the current step; the work it does is booked
         #: in :meth:`step` with the *midpoint* velocity of the kick (see the
         #: ledger note in :meth:`energy_residual`), never as a power.
@@ -586,25 +602,93 @@ class DEMSystem3D:
         torque_a = _cross3(ra, force_a)
         torque_b = _cross3(rb, force_b)
 
-        roll_key = (i, j)
         omega_rel = body_b.omega - body_a.omega
         omega_rel_t = omega_rel - float(omega_rel @ normal) * normal
         spin = float(np.linalg.norm(omega_rel_t))
+        cap_r = 0.0
         if spin > 0.0 and law.mu_rolling > 0.0:
             r_eff = 0.5 * (body_a.radius + body_b.radius)
             cap_r = law.mu_rolling * r_eff * f_n
             torque_r = -cap_r * omega_rel_t / spin
             torque_a += torque_r
             torque_b -= torque_r
-            self.dissipated += float(cap_r * spin * self.dt)
 
         spring = 0.5 * law.kn * depth * depth + 0.5 * law.kt * float(xi @ xi)
         # the dashpot only does work while the contact is loaded: counting it on a
         # separating (f_n = 0) step would create dissipation out of nothing
-        diss = (law.normal_damping(m_eff) * v_n * v_n * self.dt if f_n > 0.0 else 0.0) \
-            + mag * float(np.linalg.norm(v_t)) * self.dt
-        self.dissipated += diss
+        diss = self._book_pair_dissipation(
+            i=i, j=j, ra=ra, rb=rb, normal=normal, v_n=v_n, v_t=v_t, mag=mag,
+            c_n=law.normal_damping(m_eff) if f_n > 0.0 else 0.0,
+            rolling_cap=cap_r, omega_spin=spin)
         return force_a, force_b, spring, diss, torque_a, torque_b, depth
+
+    # -- dissipation ledger ------------------------------------------------
+    def _book_pair_dissipation(self, *, i: int, j: int, ra: np.ndarray, rb: np.ndarray,
+                               normal: np.ndarray, v_n: float, v_t: np.ndarray,
+                               mag: float, c_n: float, rolling_cap: float,
+                               omega_spin: float) -> float:
+        """Record one contact's dissipation power terms; returns the step-start value.
+
+        The returned number is the dissipation that the pre-fix (step-start) closure
+        would book.  It is *not* added to ``dissipated`` here: the rate depends on the
+        velocity at the contact point, which the kick changes, so the step-end velocity
+        is only known after the integration.  :meth:`_settle_dissipation` books the
+        selected closure once both velocities exist.
+        """
+        self._ledger_rows.append(("pair", i, j, ra, rb, normal, v_n, v_t, mag, c_n,
+                                  rolling_cap, omega_spin))
+        return (c_n * v_n * v_n + mag * float(np.linalg.norm(v_t))
+                + rolling_cap * omega_spin) * self.dt
+
+    def _book_wall_dissipation(self, *, index: int, ra: np.ndarray, normal: np.ndarray,
+                               v_n: float, v_t: np.ndarray, mag: float, wall: Wall,
+                               c_n: float) -> None:
+        self._ledger_rows.append(("wall", index, ra, normal, v_n, v_t, mag, wall, c_n))
+
+    def _settle_dissipation(self, v_before: Sequence[np.ndarray],
+                            w_before: Sequence[np.ndarray]) -> None:
+        """Book the step's contact dissipation with the ``dissipation_ledger`` closure."""
+        if not self._ledger_rows:
+            return
+        dt = self.dt
+        midpoint = self.dissipation_ledger == "midpoint"
+        bodies = self.bodies
+        total = 0.0
+        for row in self._ledger_rows:
+            if row[0] == "pair":
+                _, i, j, ra, rb, normal, v_n, v_t, mag, c_n, rolling_cap, _spin0 = row
+                body_i, body_j = bodies[i], bodies[j]
+                if midpoint:
+                    vi = 0.5 * (v_before[i] + body_i.velocity)
+                    vj = 0.5 * (v_before[j] + body_j.velocity)
+                    wi = 0.5 * (w_before[i] + body_i.omega)
+                    wj = 0.5 * (w_before[j] + body_j.omega)
+                else:
+                    vi, vj = v_before[i], v_before[j]
+                    wi, wj = w_before[i], w_before[j]
+                v_rel = (vj + _cross3(wj, rb)) - (vi + _cross3(wi, ra))
+                v_n_now = float(v_rel @ normal)
+                v_t_now = v_rel - v_n_now * normal
+                omega_rel = wj - wi
+                omega_rel_t = omega_rel - float(omega_rel @ normal) * normal
+                total += (c_n * v_n_now * v_n_now
+                          + mag * float(np.linalg.norm(v_t_now))
+                          + rolling_cap * float(np.linalg.norm(omega_rel_t))) * dt
+            else:
+                _, index, ra, normal, v_n, v_t, mag, wall, c_n = row
+                body = bodies[index]
+                if midpoint:
+                    v = 0.5 * (v_before[index] + body.velocity)
+                    w = 0.5 * (w_before[index] + body.omega)
+                else:
+                    v, w = v_before[index], w_before[index]
+                v_rel = (v + _cross3(w, ra)) - wall.velocity
+                v_n_now = float(v_rel @ normal)
+                v_t_now = v_rel - v_n_now * normal
+                total += (c_n * v_n_now * v_n_now
+                          + mag * float(np.linalg.norm(v_t_now))) * dt
+        self.dissipated += total
+        self._ledger_rows = []
 
     def _apply_wall(self, index: int, wall: Wall, body: FloeBody,
                     vertices: Optional[np.ndarray] = None):
@@ -642,9 +726,9 @@ class DEMSystem3D:
         force = f_n * n + f_t
         torque = _cross3(ra, force)
         spring = 0.5 * law.kn * depth * depth + 0.5 * law.kt * float(xi @ xi)
-        self.dissipated += (law.normal_damping(body.mass) * v_n * v_n * self.dt
-                            if f_n > 0.0 else 0.0) \
-            + mag * float(np.linalg.norm(v_t)) * self.dt
+        self._book_wall_dissipation(
+            index=index, ra=ra, normal=n, v_n=v_n, v_t=v_t, mag=mag, wall=wall,
+            c_n=law.normal_damping(body.mass) if f_n > 0.0 else 0.0)
         # work done *by* the moving wall on the body over this step [J]
         self.work_external += float(force @ wall.velocity) * self.dt
         return force, torque, spring, depth
@@ -679,6 +763,7 @@ class DEMSystem3D:
         self.wall_force_by_label = {}
         self.n_pair_contacts = 0
         self.n_wall_contacts = 0
+        self._ledger_rows = []
         self.max_speed = 20.0
         self.max_spin = 200.0
         self.safety_clamps = 0
@@ -785,6 +870,9 @@ class DEMSystem3D:
             body.rotate(_expm_skew(body.omega, dt))
             if self.constrain_to_plane:
                 _project_to_plane(body)
+        # ---- contact dissipation, with the velocity the ledger asks for ---
+        self._settle_dissipation(v_before, w_before)
+
         # ---- hydrostatic / hydrodynamic energy ledger --------------------
         # Book work (J) and dissipation (J) over the step just integrated, with the
         # midpoint velocity of the kick.  Both closures are centred on the body, so
