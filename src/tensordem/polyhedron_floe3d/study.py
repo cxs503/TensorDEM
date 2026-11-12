@@ -38,6 +38,7 @@ import numpy as np
 from .contact import ContactLaw
 from .dynamics import DEMSystem3D, FloeBody
 from .field import BrashIceField, build_brash_ice_field, build_disc_reference_field
+from . import pile_surface
 from .geometry import (ConvexPolyhedron, extrude_polygon, polygon_area,
                        regular_polygon, voronoi_tessellate)
 from .weibull import (fit_mle, fit_probability_plot, fragment_flaw_model,
@@ -791,29 +792,36 @@ def _random_rotation(rng: np.random.Generator) -> np.ndarray:
 
 
 def _pile_metrics(system: DEMSystem3D) -> Dict[str, float]:
-    """Repose angle from a free-surface fit and force-chain statistics."""
+    """Repose angle from the free-surface **flank** fit and force-chain statistics.
+
+    The angle now comes from :func:`tensordem.polyhedron_floe3d.pile_surface.fit_flank`,
+    which fits the descending flank of the free surface and reports the apron
+    separately.  The previous version put one least-squares line through every
+    annulus, so the one-particle apron that a collapsed pile spreads on the
+    floor was averaged into the slope: on a synthetic 30 deg cone with a
+    one-particle apron that fit returns 16.1 deg (see
+    ``tests/test_h1_repose_estimator.py``).  ``repose_angle_deg`` is ``nan`` when
+    no flank is resolved (monolayer, too few bodies) and ``flank_reason`` says
+    which rule refused it.
+    """
     positions = np.array([b.position for b in system.bodies])
     centre = np.array([positions[:, 0].mean(), positions[:, 1].mean()])
     radius = np.linalg.norm(positions[:, :2] - centre, axis=1)
-    top = positions[:, 2] + np.array([b.shape.bounding_radius for b in system.bodies]) * 0.5
+    bounding = np.array([b.shape.bounding_radius for b in system.bodies])
+    top = positions[:, 2] + bounding * 0.5
 
-    bins = np.linspace(0.0, max(float(radius.max()), 1e-6) * 0.95, 7)
-    heights, radii = [], []
-    for lo, hi in zip(bins[:-1], bins[1:]):
-        mask = (radius >= lo) & (radius < hi)
-        if np.count_nonzero(mask) >= 3:
-            heights.append(float(np.percentile(top[mask], 90)))
-            radii.append(0.5 * (lo + hi))
-    if len(heights) >= 3:
-        slope, _ = np.polyfit(np.asarray(radii), np.asarray(heights), 1)
-        angle = math.degrees(math.atan(max(-slope, 0.0)))
-    else:
-        angle = float("nan")
+    profile = pile_surface.bin_free_surface(radius, top)
+    fit = pile_surface.fit_flank(profile["radius"], profile["height"],
+                                 profile["count"],
+                                 min_drop=float(np.median(bounding)))
 
     forces = np.asarray([system.law.kn * geom.depth for geom in system.last_pairs],
                         dtype=np.float64)
     metrics: Dict[str, float] = {
-        "repose_angle_deg": float(angle),
+        "repose_angle_deg": float(fit["angle_deg"]),
+        "repose_flank": fit,
+        "repose_profile": profile,
+        "flank_reason": str(fit["reason"]),
         "n_contacts": int(forces.size),
         "coordination_number": 2.0 * forces.size / max(len(system.bodies), 1),
         "mean_contact_force": float(forces.mean()) if forces.size else 0.0,
