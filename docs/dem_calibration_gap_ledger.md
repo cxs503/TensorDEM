@@ -446,3 +446,31 @@ PYTHONPATH=src python scripts/m5052_clump_rolling_calibration.py --figures-only
   (c) penalty **damping** calibration — the closed-form restitution target is
   implemented in the audit script but **NOT_RUN** (kernel rebuilds its spatial
   hash per call; every attempt was cut by the mission time budget).
+
+## BPM 逐粒子 virial 应力仪接线 + 绝对量级对标（m16734, 2026-11-12）
+
+* **Row changed**: 上一行遗留的 *"`bpm_calibration_feasibility.virial_stress_tensor`（torch
+  逐粒子 Love-Weber 私有求和）仍未接线"* —— **私有求和已删除**：配对张量改由共享仪
+  `granular3d.stress.contact_outer` 生成，力律（存活键轴力 + 未键合对法向排斥）唯一写在新
+  `pair_stress_state()` 里。
+* **顺带发现并修复两个量级缺陷**（此前 AC5 只吃比值，绝对量级从未被检验）：
+  (a) 历史实现对每个配对在两端各记一次全量，区域平均恰为正确值的 **2×**
+  （代数恒等式实测 `sum_p V_p sigma_p = 2 sum_c l⊗f`，偏差 1e-15 级）；
+  (b) 归一化用晶格胞 `8R³` 而非试件比容，误差 **1/n_layers**（实测 33.2 %/19.8 %/10.9 %/5.7 %
+  @ n=3/5/9/17），巴西圆盘格子上为 **24.6 %**。
+* **独立基准**：`granular3d.stress.plane_stress`（穿面接触牵引力，与之零共享代数）。修正后体平均 vs
+  面切割的残差**恰为仿射拉伸因子 (1+ε)**（比值 1.000000000，ε 四点线性），即 Cauchy vs 名义应力差，
+  不是误差；ε→0 时收敛为 0。
+* **非空转**：变异集（符号翻转 2.0、双计 1.0、死键未门控 0.27、接触未门控 0.46、胞体积 0.20）全部可检；
+  诚实负面结果：`f⊗l` 转置变异变化 **0.0000**（两支力均为中心力）⇒ 仪器**无法**测摩擦不对称量
+  σ_ab−σ_ba，这条局限已写进 docstring。
+* **AC5 判决不变**（比值对整体因子不变，实测 max/min 比值两者一致到 1e-12）；`run_brazilian` 现按
+  圆柱比容归一化，报告的张量量级从此是物理量。
+* **证据**：`src/tensordem/bpm_calibration_feasibility.py`（`pair_stress_state` / `specific_volume` /
+  `virial_stress_tensor(scatter, volume_per_particle)`）、
+  `scripts/verify_bpm_virial_absolute_m16734.py`、`tests/test_bpm_virial_absolute_m16734.py`（12 例）、
+  `docs/AUDIT_BPM_VIRIAL_ABSOLUTE_m16734.md`、
+  `artifacts/m16734_virial_absolute/{verification.json,fig_virial_absolute.png}`；
+  回归：含既有 `test_bpm_calibration_feasibility` / `test_granular3d_stress` /
+  `test_stress_symmetry_case` / `test_bpm_identifiability` 共 91 例全绿。
+* **仍未做**：切向/滚动分支（引擎把该历史私有化，仪器因此恒对称）；三轴面切割（本轮只做受载 z 轴）。
