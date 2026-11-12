@@ -253,3 +253,62 @@ def test_deposition_plan_is_consistent_with_the_shard_runner():
     assert {0.0, 0.1} <= tiers
     stiff_kn = {c["kn"] for c in cases if c["kn"] > 4000}
     assert len(stiff_kn) >= 2
+
+
+def test_plan_production_wave_matches_the_ledger_acceptance():
+    """The ledger says "10000 spheres, both friction tiers": the plan must say so.
+
+    This is the guard for the verification debt closed in
+    ``docs/AUDIT_m16929_RCP_PRODUCTION_WAVE.md``: the report once quoted
+    ``N = 2000`` as production while the plan's production wave was 10000, so
+    the acceptance could be "met" without the production runs existing.
+    """
+    import json
+    import os
+    here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    cases = json.load(open(os.path.join(here, "benchmarks", "case_rcp_deposition",
+                                        "plan.json")))["cases"]
+    prod = [c for c in cases if c["n"] >= 10000 and c["kn"] == 4000
+            and "dt_frac" not in c]
+    assert prod, "no N>=10000 production case in plan.json"
+    for mu in (0.0, 0.1):
+        seeds = {c["seed"] for c in prod if abs(c["mu"] - mu) < 1e-12}
+        assert len(seeds) >= 3, f"tier mu={mu} has {len(seeds)} seeds, <3"
+
+
+def test_aggregate_does_not_hardcode_the_seed_claim():
+    """The parameter table's seed row must be read from the runs, not asserted.
+
+    The merged report claimed "production tiers: 3 seeds each" while the run
+    set carried two; the number is now computed, so the literal string must not
+    come back.
+    """
+    import os
+    here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    src = open(os.path.join(here, "benchmarks", "case_rcp_deposition",
+                            "aggregate.py")).read()
+    assert "production tiers: 3 seeds each" not in src
+    assert "PROD_N_MIN" in src and "SEED_MIN" in src
+
+
+def test_debt_audit_reproduces_the_before_after_gates():
+    """The audited gates must be computable from whatever runs are present."""
+    import os
+    import sys
+    here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    sys.path.insert(0, os.path.join(here, "benchmarks", "case_rcp_deposition"))
+    sys.path.insert(0, os.path.join(here, "src"))
+    from debt_audit import summarise
+    from aggregate import load_runs, reference
+    runs = load_runs()
+    if not runs:                                   # pragma: no cover
+        pytest.skip("no deposition runs in the checkout")
+    phi_ref = reference()["phi_rcp"]
+    after = summarise(runs, phi_ref)
+    assert after["n_primary"] >= 1
+    screening = [r for r in runs if r["n"] <= 4000]
+    if screening:
+        before = summarise(screening, phi_ref)
+        # the two views must be internally consistent, and "before" can never
+        # report a larger production size than "after"
+        assert before["n_primary"] <= after["n_primary"]

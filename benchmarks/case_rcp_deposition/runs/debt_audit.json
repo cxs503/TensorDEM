@@ -1,0 +1,223 @@
+{
+ "after_full_set": {
+  "gates": {
+   "G15_production_size": {
+    "criterion": "N_production >= 10000",
+    "got": 10000,
+    "pass": true
+   },
+   "G16_seed_coverage": {
+    "criterion": "each production tier >= 3 seeds",
+    "got": 3,
+    "pass": true
+   }
+  },
+  "n_primary": 10000,
+  "n_prod_runs": 20,
+  "n_runs": 22,
+  "stiffness": {
+   "0": {
+    "delta": [
+     -0.00446936935448472,
+     -0.001106093134926489
+    ],
+    "delta_from_last": 0.0003637649551401223,
+    "kn": [
+     4000.0,
+     16000.0,
+     64000.0
+    ],
+    "limit": 0.6364354536058531,
+    "n_levels": 3,
+    "order": 1.0072992038914157,
+    "order_used": 1.0072992038914157,
+    "ratio": [
+     4.0,
+     4.0
+    ],
+    "value": [
+     0.6423746810504044,
+     0.6379053116959197,
+     0.6367992185609932
+    ]
+   },
+   "0.1": {
+    "delta": [
+     -0.004693643657429747,
+     -0.0023068915771896625
+    ],
+    "delta_from_last": 0.0022297031991581617,
+    "kn": [
+     4000.0,
+     16000.0,
+     64000.0
+    ],
+    "limit": 0.6170509055069715,
+    "n_levels": 3,
+    "order": 0.5123790583140884,
+    "order_used": 0.5123790583140884,
+    "ratio": [
+     4.0,
+     4.0
+    ],
+    "value": [
+     0.6262811439407491,
+     0.6215875002833193,
+     0.6192806087061297
+    ]
+   }
+  },
+  "tiers": {
+   "0": {
+    "Z": 6.357592218743534,
+    "dev_vs_ref": 0.00907112951681488,
+    "in_band": true,
+    "lt_3pct": true,
+    "n_seeds": 3,
+    "phi_mean": 0.6423746810504044,
+    "phi_std": 0.00022340381063669455,
+    "seeds": [
+     1,
+     2,
+     3
+    ]
+   },
+   "0.1": {
+    "Z": 5.817056162186361,
+    "dev_vs_ref": -0.016209324629674837,
+    "in_band": true,
+    "lt_3pct": true,
+    "n_seeds": 3,
+    "phi_mean": 0.6262811439407491,
+    "phi_std": 0.0003985464922471281,
+    "seeds": [
+     1,
+     2,
+     3
+    ]
+   }
+  }
+ },
+ "band": [
+  0.62,
+  0.66
+ ],
+ "before_screening_set": {
+  "gates": {
+   "G15_production_size": {
+    "criterion": "N_production >= 10000",
+    "got": 2000,
+    "pass": false
+   },
+   "G16_seed_coverage": {
+    "criterion": "each production tier >= 3 seeds",
+    "got": 2,
+    "pass": false
+   }
+  },
+  "n_primary": 2000,
+  "n_prod_runs": 10,
+  "n_runs": 10,
+  "stiffness": {
+   "0": {
+    "delta": [
+     -0.002314945711409333
+    ],
+    "delta_from_last": 0.0007716485704697407,
+    "kn": [
+     4000.0,
+     16000.0
+    ],
+    "limit": 0.6343725197696505,
+    "n_levels": 2,
+    "order": null,
+    "order_used": 1.0,
+    "ratio": [
+     4.0
+    ],
+    "value": [
+     0.6374591140515296,
+     0.6351441683401202
+    ]
+   },
+   "0.1": {
+    "delta": [
+     -0.006188093704050823
+    ],
+    "delta_from_last": 0.0020626979013502744,
+    "kn": [
+     4000.0,
+     16000.0
+    ],
+    "limit": 0.6160804654689109,
+    "n_levels": 2,
+    "order": null,
+    "order_used": 1.0,
+    "ratio": [
+     4.0
+    ],
+    "value": [
+     0.624331257074312,
+     0.6181431633702612
+    ]
+   }
+  },
+  "tiers": {
+   "0": {
+    "Z": 6.252397377853123,
+    "dev_vs_ref": 0.0013495351107908338,
+    "in_band": true,
+    "lt_3pct": true,
+    "n_seeds": 2,
+    "phi_mean": 0.6374591140515296,
+    "phi_std": 0.001275626581960915,
+    "seeds": [
+     1,
+     2
+    ]
+   },
+   "0.1": {
+    "Z": 5.720451011339348,
+    "dev_vs_ref": -0.01927229488797988,
+    "in_band": true,
+    "lt_3pct": true,
+    "n_seeds": 2,
+    "phi_mean": 0.624331257074312,
+    "phi_std": 0.00100394737601913,
+    "seeds": [
+     1,
+     2
+    ]
+   }
+  }
+ },
+ "reference": {
+  "origin": "benchmarks/rcp_jamming_audit/runs/audit.json",
+  "phi_rcp": 0.6366,
+  "source": "Scott 1960; Bernal & Mason 1960"
+ },
+ "runs_used": [
+  "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn16000_e0.1_seed1.json",
+  "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn4000_e0.1_seed1.json",
+  "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn4000_e0.1_seed1_dtf0.025.json",
+  "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn4000_e0.1_seed2.json",
+  "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn4000_e0.1_seed3.json",
+  "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn64000_e0.1_seed1.json",
+  "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn16000_e0.1_seed1.json",
+  "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn4000_e0.1_seed1.json",
+  "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn4000_e0.1_seed1_dtf0.025.json",
+  "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn4000_e0.1_seed2.json",
+  "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn4000_e0.1_seed3.json",
+  "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn64000_e0.1_seed1.json",
+  "benchmarks/case_rcp_deposition/runs/deposition_n1000_mu0_kn4000_e0.1_seed1.json",
+  "benchmarks/case_rcp_deposition/runs/deposition_n2000_mu0.1_kn16000_e0.1_seed1.json",
+  "benchmarks/case_rcp_deposition/runs/deposition_n2000_mu0.1_kn4000_e0.1_seed1.json",
+  "benchmarks/case_rcp_deposition/runs/deposition_n2000_mu0.1_kn4000_e0.1_seed2.json",
+  "benchmarks/case_rcp_deposition/runs/deposition_n2000_mu0.3_kn4000_e0.1_seed1.json",
+  "benchmarks/case_rcp_deposition/runs/deposition_n2000_mu0.5_kn4000_e0.1_seed1.json",
+  "benchmarks/case_rcp_deposition/runs/deposition_n2000_mu0_kn16000_e0.1_seed1.json",
+  "benchmarks/case_rcp_deposition/runs/deposition_n2000_mu0_kn4000_e0.1_seed1.json",
+  "benchmarks/case_rcp_deposition/runs/deposition_n2000_mu0_kn4000_e0.1_seed2.json",
+  "benchmarks/case_rcp_deposition/runs/deposition_n4000_mu0_kn4000_e0.1_seed1.json"
+ ]
+}
