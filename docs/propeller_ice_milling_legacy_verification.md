@@ -1,7 +1,7 @@
 # Legacy propeller–ice milling module (IN27-S4): analytic verification and defect report
 
 **Protocol** `tensordem-propeller-ice-milling-legacy-verification-v1` · **module** `src/tensordem/propeller_ice_milling.py` · **campaign node** IN27-S4
-**Tested twin** src/tensordem/propeller_ice/ (IN34-W3-N05, 28 tests) · **gates** 17/25 PASS · **defects** 3
+**Tested twin** src/tensordem/propeller_ice/ (IN34-W3-N05, 28 tests) · **gates** 22/26 PASS · **defects** 1 open / 2 repaired
 **Artifacts** `artifacts/propeller_ice_milling_legacy/` · **Harness** `scripts/verify_propeller_ice_milling_legacy.py` · **Gates as tests** `tests/test_propeller_ice_milling_legacy_verification.py`
 
 ---
@@ -61,12 +61,13 @@ repository, so absolute magnitudes stay **WITHHELD** by construction.
 | `G1a_chord_scale_e0.50` | chord_scale vs closed-form Beta integral (planform exponent 0.5) | 2.1525 | 2.1525 | 3.47e-06 | 0.0001 | **PASS** |
 | `G1b_panel_area_e0.50` | sum of blade-panel areas vs A_E = EAR pi D^2 / 4 (e=0.5) | 5.0147 | 4.948 | 0.0135 | 0.02 | **PASS** |
 | `G1c_pitch_angle_0.7R` | pitch angle at 0.7 R vs atan(P/(2 pi r)) | 0.40778 | 0.40778 | 1.36e-16 | 1e-12 | **PASS** |
-| `G2_momentum_flux_x0.0m` | propeller-race momentum flux at x = 0.0 m | 9999.9 | 20000 | 0.5 | 1e-05 | **FAIL** |
-| `G2_momentum_flux_x1.0m` | propeller-race momentum flux at x = 1.0 m | 9999.9 | 20000 | 0.5 | 1e-05 | **FAIL** |
-| `G2_momentum_flux_x4.0m` | propeller-race momentum flux at x = 4.0 m | 9999.9 | 20000 | 0.5 | 1e-05 | **FAIL** |
+| `G2_momentum_flux_x0.0m` | propeller-race momentum flux at x = 0.0 m | 20000 | 20000 | 1.07e-07 | 1e-05 | **PASS** |
+| `G2_momentum_flux_x1.0m` | propeller-race momentum flux at x = 1.0 m | 20000 | 20000 | 1.07e-07 | 1e-05 | **PASS** |
+| `G2_momentum_flux_x4.0m` | propeller-race momentum flux at x = 4.0 m | 20000 | 20000 | 1.07e-07 | 1e-05 | **PASS** |
 | `G2b_induced_velocity` | race induced velocity vs actuator-disk closed form | 0.95113 | 0.95113 | 0 | 1e-12 | **PASS** |
-| `G3_drag_relax_finest` | legacy RK2 debris exit speed vs closed form in the RaceModel carrier | 5.0493 | 7.4977 | 0.327 | 0.02 | **FAIL** |
-| `G3b_convergence_order` | observed step-refinement order of the debris integrator (self-convergence) | 2.8036 | 2 | 0.402 | 0.6 | **PASS** |
+| `G3c_debris_carrier_equals_race_field` | debris exit speed vs independent RK4 on the RaceModel field (spreading wake) | 8.5404 | 8.555 | 0.00171 | 0.02 | **PASS** |
+| `G3_drag_relax_finest` | legacy RK2 debris exit speed vs closed form in the RaceModel carrier | 9.3323 | 9.3384 | 0.000652 | 0.02 | **PASS** |
+| `G3b_convergence_order` | observed step-refinement order of the debris integrator (self-convergence) | 1.5751 | 2 | 0.212 | 0.6 | **PASS** |
 | `G4a_bpf_amplitude` | recovered BPF torque amplitude vs the synthetic amplitude | 120 | 120 | 5.46e-07 | 0.005 | **PASS** |
 | `G4b_peak_frequency` | spectral peak location vs f_BPF | 6 | 6 | 0 | 0.005 | **PASS** |
 | `G4c_harmonic_2` | recovered 2 x BPF harmonic amplitude | 40 | 40 | 1.03e-06 | 0.02 | **PASS** |
@@ -79,7 +80,7 @@ repository, so absolute magnitudes stay **WITHHELD** by construction.
 | `G6_K_Q_divergence` | agreement 1 - worst |K_Q_legacy - K_Q_package| / K_Q_package over J = 0.2..0.8 | 0.25696 | 1 | 0.743 | 0.25 | **FAIL** |
 | `G6_eta_divergence` | agreement 1 - worst |eta_legacy - eta_package| / eta_package over J = 0.2..0.8 | 0.70131 | 1 | 0.299 | 0.25 | **FAIL** |
 
-The three failing families are the three defects below; every other claim holds to
+The failing gate families (`G6_K_T_divergence, G6_K_Q_divergence, G6_eta_divergence`) are the open defect below; every other claim holds to
 the stated tolerance (the planform scale to 1.5e-5, the pitch law and the
 efficiency identity to machine precision, the spectral amplitudes to <0.5 % and
 <2 % on the BPF and its harmonics).
@@ -99,27 +100,41 @@ Figures: `fig1_open_water_crossval.png` (characteristics of both implementations
 `fig2_debris_convergence.png` (debris transport vs closed form under step
 refinement), `fig3_spectrum_recovery.png` (torque-spectrum harmonic recovery).
 
-## 4. Defects
+## 4. Defects and repairs
 
-### DEFECT-D1 — high — `propeller_ice_milling.RaceModel.centreline`
+### 4.0 Repair record (before / after, recomputed by the harness)
 
-the Gaussian profile is normalised with u_c = sqrt(M/(2 pi sigma^2)), which delivers int rho u^2 2 pi r dr = T/2 for momentum flux M = T/rho; the class docstring claims the profile 'conserves momentum exactly'.
+| defect | quantity | before | after | target | gate after repair |
+|---|---|---|---|---|---|
+| `DEFECT-D1` | int rho u^2 2 pi r dr / T at x = 1 m | 0.5 | 1 | 1 | **PASS** |
+| `DEFECT-D2` | debris exit speed / closed form in the RaceModel carrier | 0.5414 | 1 | 1 | **PASS** |
+
+* `DEFECT-D1`: before is the analytic flux of u_c = sqrt(M/(2 pi sigma^2)); the repair is the factor sqrt(2) that the docstring already claimed
+* `DEFECT-D2`: carrier speed 1.8576 -> 5.2540 m/s (sigma 1.5000 -> 0.7500 m); measured after repair 9.3323 m/s
+
+### DEFECT-D1 — repaired — high — `propeller_ice_milling.RaceModel.centreline`
+
+as shipped, the Gaussian profile was normalised with u_c = sqrt(M/(2 pi sigma^2)), which delivered int rho u^2 2 pi r dr = T/2 for momentum flux M = T/rho, while the class docstring claimed the profile 'conserves momentum exactly'.
 
 *Impact.* propeller-race speeds (and hence chip transport) are sqrt(2) low.
 
-*Evidence.* `{"momentum_flux_ratio": 0.4999946666325328, "gate": "G2_momentum_flux_*"}`
+*Evidence.* `{"momentum_flux_ratio": 0.9999998933333265, "gate": "G2_momentum_flux_*"}`
 
 *Note.* the induced_velocity closed form uses the correct T/(2 rho A) form, so the defect is confined to centreline/axial_velocity
 
-### DEFECT-D2 — high — `propeller_ice_milling.integrate_debris (water_velocity closure)`
+*Repair.* centreline now uses u_c = sqrt(M/(pi sigma^2)); kept as a gate, not a docstring claim
 
-the debris advection uses sigma = 0.5 * diameter (= R) while RaceModel.sigma() returns 0.25 * diameter (= R/2); the two conventions differ by 2 in width, i.e. 4 in u_c, so the chips see a jet that is 4x weaker than the race the milling torque was computed with.
+### DEFECT-D2 — repaired — high — `propeller_ice_milling.integrate_debris (water_velocity closure)`
+
+as shipped, the debris advection used sigma = 0.5 * diameter (= R) while RaceModel.sigma() returned 0.25 * diameter (= R/2); the two conventions differ by 2 in width, i.e. 4 in u_c, so the chips saw a jet 4x weaker than the race the milling torque was computed with.
 
 *Impact.* IN27-S4's own acceptance observable (EJECTION_BAND 0.5-2.0 m/s) is evaluated against an under-driven jet; instability of the band is not evidence of physical agreement.
 
-*Evidence.* `{"exit_speed_rel_err_vs_module_carrier": 0.3265555331830977, "gate": "G3_drag_relax_finest"}`
+*Evidence.* `{"exit_speed_rel_err_vs_module_carrier": 0.0006516941907859772, "gate": "G3_drag_relax_finest"}`
 
-### DEFECT-D3 — medium — `propeller_ice.hydro.solve_open_water`
+*Repair.* integrate_debris consumes RaceModel.axial_velocity_tensor; the local sigma = 0.5 D closure is gone, so the carrier has one definition
+
+### DEFECT-D3 — open — medium — `propeller_ice.hydro.solve_open_water`
 
 at the matched 3 m geometry and J <= 0.2 every strip sits on the induction cap a = 0.85: the blade-element load is then no longer balanced by the annulus momentum, yet the returned residual (max |delta a|) is ~1e-8, so a residual-based test cannot detect the violation. The announced Buhl high-induction branch (_buhl) is never called.
 
@@ -154,35 +169,37 @@ at the matched 3 m geometry and J <= 0.2 every strip sits on the induction cap a
 | blade area vs `A_E` | `EAR·πD²/4` | 0.0108 | yes |
 | BPF torque amplitude | analytic 120 N·m | 5.46e-07 | yes |
 | efficiency identity | `J K_T/(2πK_Q)` | 0 | yes |
-| race momentum flux | `T` | 0.5 | **no — factor 2 (DEFECT-D1)** |
-| debris exit speed | closed form in the module's own carrier | 0.327 | **no (DEFECT-D2)** |
+| race momentum flux | `T` | 1.07e-07 | yes (D1 repaired) |
+| debris exit speed | closed form in the module's own carrier | 0.000652 | yes (D2 repaired) |
 | `K_T` legacy vs package | matched geometry | 0.725 | **no — absolute value WITHHELD (DEFECT-D3)** |
 
 ## 7. Disposition
 
-**request changes on the legacy module; do not delete it yet.** Concretely:
+**approve the race/debris repair; the module still must not be used as an
+absolute-coefficient source.** Concretely:
 
-1. `RaceModel.centreline` must use `u_c = sqrt(2 M/(π σ²))`… i.e. the normalisation
-   that delivers `∫ρu²2πr dr = T`; `integrate_debris` must consume
-   `RaceModel.sigma/centreline` instead of its own `σ = 0.5 D` closure.
-2. The fixed module must pass the two `xfail(strict=True)` gates in
-   `tests/test_propeller_ice_milling_legacy_verification.py` unchanged — that is
-   the acceptance criterion of the repair.
-3. Until then the module's ejection-speed observable and every number derived from
-   its race are **not admissible evidence**; the tested IN34-W3-N05 package remains
-   the canonical propeller–ice engine.
-4. Follow-up (registered, not fixed here — out of this mission's scope): the package
-   BEM's cap-saturation branch and its unused `_buhl` correction need either a
-   blade/momentum imbalance residual or a documented cap-validity limit `J`.
+1. **D1 and D2 are repaired and gated.** `RaceModel.centreline` uses
+   `u_c = sqrt(M/(pi sigma^2))`, so `∫ρu²2πr dr = T` at every station (gate
+   `G2_momentum_flux_*`), and `integrate_debris` consumes
+   `RaceModel.axial_velocity_tensor`, i.e. the jet the milling torque was
+   computed with (gate `G3c_debris_carrier_equals_race_field`).
+   The previously registered acceptance tests are green, not `xfail`.
+2. The factor is `sqrt(M/(pi σ²))`, **not** the `sqrt(2 M/(pi σ²))` written in
+   the first issue of this document: that prescription would deliver `2T`.
+   The gate `∫ρu²2πr dr = T` is the arbiter; the prose was wrong by `sqrt(2)`.
+3. Any number produced by the legacy race *before* this repair (IN27-S4
+   ejection speeds) is `sqrt(2)` low in carrier speed and must be recomputed,
+   not cited.
+4. **D3 stays open.** The package BEM saturates its induction cap `a = 0.85`
+   for `J ≲ 0.2` while reporting a 1e-8 residual; its `_buhl` branch is never
+   called. Either a blade/momentum imbalance residual or a documented cap
+   validity limit `J_min` is required before package `K_T`/`K_Q` below
+   `J = 0.3` can be quoted.
+5. Absolute `K_T`, `K_Q` of both implementations remain **WITHHELD** (no
+   experimental open-water chart in this repository); the plastic-capped Hertz
+   contact branch inside `MillingSimulation` is still not isolated by a gate.
 
-## 8. Evidence pointers
-
-* platform report **id 15253** (`scenario_key = tensordem-propeller-ice-milling-legacy-verification`)
-* gates as tests: 14 passed, 2 xfailed (`xfail(strict)`) in
-  `tests/test_propeller_ice_milling_legacy_verification.py` (7.3 s)
-* machine-readable evidence: `artifacts/propeller_ice_milling_legacy/verification.json`
-
-## 9. Reproduction
+## 8. Reproduction
 
 ```bash
 PYTHONPATH=src python -m pytest tests/test_propeller_ice_milling_legacy_verification.py -q

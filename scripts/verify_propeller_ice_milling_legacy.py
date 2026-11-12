@@ -52,6 +52,7 @@ import numpy as np
 import torch
 
 from tensordem.propeller_ice_milling import (
+    RACE_SPREADING_RATE,
     PropellerGeometry,
     RaceModel,
     integrate_debris,
@@ -141,8 +142,8 @@ def gate_g2() -> list[dict]:
         # analytic: int_0^inf rho u_c^2 exp(-r^2/sigma^2) 2 pi r dr = rho u_c^2 pi sigma^2
         flux_exact = RHO_W * math.pi * sigma ** 2 * race.centreline(x) ** 2
         r = np.linspace(0.0, 8.0 * sigma, 400001)
-        u = np.array([race.axial_velocity(x, float(rr)) for rr in r[::400]])
-        rr = r[::400]
+        rr = r[::40]                      # 10001 nodes: trapezoid error < 1e-9 relative
+        u = np.array([race.axial_velocity(x, float(rr_)) for rr_ in rr])
         flux_num = float(np.trapezoid(RHO_W * u ** 2 * 2.0 * math.pi * rr, rr))
         rows.append(_gate(
             f"G2_momentum_flux_x{x:.1f}m",
@@ -223,6 +224,9 @@ def gate_g3() -> list[dict]:
         rel = abs(v_legacy - v_analytic) / v_analytic
         conv.append({"dt": dt, "v_legacy": v_legacy, "v_analytic": v_analytic, "rel_err": rel,
                      "travel_time": out[0]["travel_time"]})
+    # D2 wiring gate: an independent RK4 integration of the same ODE driven by the
+    # *scalar* RaceModel field (spreading wake, so the local closure cannot hide)
+    rows.append(_gate_debris_carrier(race_spread=True))
     # gate on the finest step available at 2 % (step-quantised crossing time)
     finest = conv[-1]
     row = _gate(
@@ -418,6 +422,104 @@ def gate_g6() -> tuple[list[dict], list[dict]]:
 
 
 # ---------------------------------------------------------------------------
+# D1/D2 repair record: before/after from the OLD and NEW closed forms
+# (nothing hand-copied -- both sides are recomputed by this script)
+# ---------------------------------------------------------------------------
+def _old_race_normalisation(race: RaceModel, x: float) -> tuple[float, float]:
+    """Pre-repair fields: ``sigma = 0.5 D + beta x`` and ``u_c = sqrt(M/(2 pi sigma^2))``.
+
+    ``integrate_debris`` used this width; ``RaceModel`` used ``R/2`` with the same
+    ``2 pi`` normalisation, hence a 4x weaker ``u_c`` on the debris path.
+    """
+    sigma = 0.5 * race.diameter + race.spreading_rate * max(x, 0.0)
+    u_c = math.sqrt(race.momentum_flux / (2.0 * math.pi * sigma * sigma))
+    return sigma, u_c
+
+
+def _repair_record(g2: dict, g3: dict, g3_setup: dict) -> list[dict]:
+    thrust, diameter = 5.0e4, 3.0
+    race = RaceModel(thrust=thrust, diameter=diameter)          # D2's gate setup
+    sigma_old, u_c_old = _old_race_normalisation(race, 0.0)
+    sigma_new, u_c_new = race.sigma(0.0), race.centreline(0.0)
+    mass, diam, c_d = 0.5, 0.05, 1.10
+    k = 0.5 * RHO_W * c_d * math.pi * (0.5 * diam) ** 2 / mass
+    _, v_old = _uniform_carrier_solution(u_c_old, 20.0, k, 1.0)
+    _, v_new = _uniform_carrier_solution(u_c_new, 20.0, k, 1.0)
+    v_ref = g3_setup["detail"]["v_analytic_m_s"]
+    # D1 before: analytic flux of the old normalisation = rho M / 2 = T / 2
+    sigma_d1 = race.sigma(1.0)
+    old_flux = RHO_W * math.pi * sigma_d1 ** 2 * (
+        math.sqrt(race.momentum_flux / (2.0 * math.pi * sigma_d1 ** 2))) ** 2
+    return [
+        {
+            "id": "DEFECT-D1",
+            "quantity": "int rho u^2 2 pi r dr / T at x = 1 m",
+            "before": old_flux / thrust,
+            "after": g2["measured"] / g2["expected"],
+            "target": 1.0,
+            "gate_after": g2["verdict"],
+            "note": "before is the analytic flux of u_c = sqrt(M/(2 pi sigma^2)); the repair is "
+                    "the factor sqrt(2) that the docstring already claimed",
+        },
+        {
+            "id": "DEFECT-D2",
+            "quantity": "debris exit speed / closed form in the RaceModel carrier",
+            "before": v_old / v_ref,
+            "after": v_new / v_ref,
+            "target": 1.0,
+            "gate_after": g3["verdict"],
+            "note": f"carrier speed {u_c_old:.4f} -> {u_c_new:.4f} m/s "
+                    f"(sigma {sigma_old:.4f} -> {sigma_new:.4f} m); "
+                    f"measured after repair {g3['measured']:.4f} m/s",
+        },
+    ]
+
+
+def _gate_debris_carrier(race_spread: bool = True) -> dict:
+    """D2 wiring gate: debris advection vs independent RK4 on the scalar race field."""
+    race = RaceModel(thrust=5.0e4, diameter=3.0,
+                     spreading_rate=RACE_SPREADING_RATE if race_spread else 1.0e-12)
+    mass, diam, c_d = 0.5, 0.05, 1.10
+    k = 0.5 * RHO_W * c_d * math.pi * (0.5 * diam) ** 2 / mass
+    x0, r0, vx0, vr0, x_exit = 0.0, 0.3, 20.0, 0.0, 1.0
+
+    def rhs(x: float, r: float, vx: float, vr: float) -> tuple[float, float, float, float]:
+        u = race.axial_velocity(x, r)
+        dvx = k * abs(u - vx) * (u - vx)
+        dvr = -k * abs(vr) * vr
+        return vx, vr, dvx, dvr
+
+    dt_ref = 1.0e-5                       # RK4 reference, far below the tolerance
+    x, r, vx, vr, t = x0, r0, vx0, vr0, 0.0
+    while x < x_exit and t < 1.0:
+        k1 = rhs(x, r, vx, vr)
+        k2 = rhs(x + 0.5 * dt_ref * k1[0], r + 0.5 * dt_ref * k1[1],
+                 vx + 0.5 * dt_ref * k1[2], vr + 0.5 * dt_ref * k1[3])
+        k3 = rhs(x + 0.5 * dt_ref * k2[0], r + 0.5 * dt_ref * k2[1],
+                 vx + 0.5 * dt_ref * k2[2], vr + 0.5 * dt_ref * k2[3])
+        k4 = rhs(x + dt_ref * k3[0], r + dt_ref * k3[1],
+                 vx + dt_ref * k3[2], vr + dt_ref * k3[3])
+        x += dt_ref * (k1[0] + 2.0 * k2[0] + 2.0 * k3[0] + k4[0]) / 6.0
+        r += dt_ref * (k1[1] + 2.0 * k2[1] + 2.0 * k3[1] + k4[1]) / 6.0
+        vx += dt_ref * (k1[2] + 2.0 * k2[2] + 2.0 * k3[2] + k4[2]) / 6.0
+        vr += dt_ref * (k1[3] + 2.0 * k2[3] + 2.0 * k3[3] + k4[3]) / 6.0
+        t += dt_ref
+    v_ref = math.hypot(vx, vr)
+    out = integrate_debris([{"mass": mass, "d": diam, "x": x0, "r": r0,
+                             "vx": vx0, "vr": vr0}], race, x_exit=x_exit, dt=2.5e-4, c_d=c_d)
+    row = _gate(
+        "G3c_debris_carrier_equals_race_field",
+        "debris exit speed vs independent RK4 on the RaceModel field (spreading wake)",
+        "dv/dt = k|u_field - v|(u_field - v), u_field = RaceModel.axial_velocity(x, r)",
+        out[0]["exit_speed"], v_ref, 2.0e-2, "m/s",
+    )
+    row["detail"] = {"carrier": "RaceModel.axial_velocity_tensor (single definition)",
+                     "sigma0_m": race.sigma(0.0), "spreading_rate": race.spreading_rate,
+                     "reference_dt_s": dt_ref}
+    return row
+
+
+# ---------------------------------------------------------------------------
 # driver
 # ---------------------------------------------------------------------------
 def run() -> dict:
@@ -435,36 +537,46 @@ def run() -> dict:
     g3 = next(g for g in gates if g["id"] == "G3_drag_relax_finest")
     g6 = next(g for g in gates if g["id"] == "G6_K_T_divergence")
     cap_min = min(r["pkg_strips_at_induction_cap"] for r in crossval[0]["table"])
+    g3_setup = next(g for g in gates if g["id"] == "G3_setup")
+    repairs = _repair_record(g2, g3, g3_setup)
     findings = [
         {
             "id": "DEFECT-D1",
+            "status": "repaired",
             "severity": "high",
             "where": "propeller_ice_milling.RaceModel.centreline",
-            "what": "the Gaussian profile is normalised with u_c = sqrt(M/(2 pi sigma^2)), "
-                    "which delivers int rho u^2 2 pi r dr = T/2 for momentum flux M = T/rho; "
-                    "the class docstring claims the profile 'conserves momentum exactly'.",
+            "what": "as shipped, the Gaussian profile was normalised with "
+                    "u_c = sqrt(M/(2 pi sigma^2)), which delivered int rho u^2 2 pi r dr = T/2 "
+                    "for momentum flux M = T/rho, while the class docstring claimed the profile "
+                    "'conserves momentum exactly'.",
             "evidence": {"momentum_flux_ratio": g2["measured"] / g2["expected"],
                          "gate": "G2_momentum_flux_*"},
             "impact": "propeller-race speeds (and hence chip transport) are sqrt(2) low.",
             "note": "the induced_velocity closed form uses the correct T/(2 rho A) form, so the "
                     "defect is confined to centreline/axial_velocity",
+            "repair": "centreline now uses u_c = sqrt(M/(pi sigma^2)); kept as a gate, not a "
+                      "docstring claim",
         },
         {
             "id": "DEFECT-D2",
+            "status": "repaired",
             "severity": "high",
             "where": "propeller_ice_milling.integrate_debris (water_velocity closure)",
-            "what": "the debris advection uses sigma = 0.5 * diameter (= R) while "
-                    "RaceModel.sigma() returns 0.25 * diameter (= R/2); the two conventions "
-                    "differ by 2 in width, i.e. 4 in u_c, so the chips see a jet that is 4x "
-                    "weaker than the race the milling torque was computed with.",
+            "what": "as shipped, the debris advection used sigma = 0.5 * diameter (= R) while "
+                    "RaceModel.sigma() returned 0.25 * diameter (= R/2); the two conventions "
+                    "differ by 2 in width, i.e. 4 in u_c, so the chips saw a jet 4x weaker than "
+                    "the race the milling torque was computed with.",
             "evidence": {"exit_speed_rel_err_vs_module_carrier": g3["rel_err"],
                          "gate": "G3_drag_relax_finest"},
             "impact": "IN27-S4's own acceptance observable (EJECTION_BAND 0.5-2.0 m/s) is "
                       "evaluated against an under-driven jet; instability of the band is not "
                       "evidence of physical agreement.",
+            "repair": "integrate_debris consumes RaceModel.axial_velocity_tensor; the local "
+                      "sigma = 0.5 D closure is gone, so the carrier has one definition",
         },
         {
             "id": "DEFECT-D3",
+            "status": "open",
             "severity": "medium",
             "where": "propeller_ice.hydro.solve_open_water",
             "what": "at the matched 3 m geometry and J <= 0.2 every strip sits on the induction "
@@ -492,6 +604,9 @@ def run() -> dict:
         "n_fail": len(fails),
         "fails": fails,
         "findings": findings,
+        "repairs": repairs,
+        "n_defects_open": sum(1 for f in findings if f["status"] == "open"),
+        "n_defects_repaired": sum(1 for f in findings if f["status"] == "repaired"),
         "gates": gates,
         "open_water_grid": grid,
         "crossval": crossval,
