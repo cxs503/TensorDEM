@@ -449,6 +449,30 @@ def advance_tangential_contact(
 #                       §4.2; the initial slope is k_t0 and the asymptote is
 #                       the Coulomb cap)
 #
+# Unloading branch (``MindlinTangentialConfig.unloading``)
+# --------------------------------------------------------
+# ``"linear"`` (default, unchanged behaviour): the elastic predictor uses the
+#     constant no-slip stiffness ``k_t0``, i.e. a Cundall--Strack unloading
+#     line.  This is *not* the Mindlin--Deresiewicz reversal branch: M&D unload
+#     with a stiffness that starts at ``8 G* a`` and softens to zero, so a
+#     linear branch reaches the opposite cap after ``2 mu F_n / k_t0 = 4/3
+#     delta_s`` instead of the exact ``2 delta_s`` (17 % early at the
+#     turn-around, and up to 29 % of ``mu F_n`` pointwise - see
+#     docs/AUDIT_MINDLIN_ENGINE_VS_MD_m16810.md).
+# ``"mindlin"``: when a reversal starts from a *saturated* anchor (``|F_r| =
+#     mu_s |F_n|``, the steady stick-slip cycle), the predictor is the exact
+#     M&D reversal branch
+#
+#         F = F_r + 2 |F_r| e [1 - (1 - s/(2 delta_s))^{3/2}],  e = -F_r/|F_r|
+#
+#     with ``s = (delta - delta_r) . e`` the excursion back from the turn-around.
+#     The branch lands exactly on the opposite cap at ``s = 2 delta_s``, where
+#     the anchor flips and gross slip resumes.  Turn-arounds *inside* the
+#     envelope are not covered by this closed form (the exact branch needs the
+#     locked-in traction distribution, which this state does not carry); they
+#     fall back to the linear predictor, and the returned ``sliding`` mask stays
+#     False for them, so a caller can tell the two paths apart.
+#
 # Properties that are machine-checked (tests/test_contact_mindlin_history.py):
 #   * "linear" + gamma_t = 0 reproduces advance_tangential_contact exactly;
 #   * virgin loading follows the closed-form backbone;
@@ -460,6 +484,7 @@ def advance_tangential_contact(
 #   * gamma_t > 0 dissipates exactly gamma_t * integral|v_t|^2 dt.
 
 BACKBONES = ("linear", "mindlin")
+UNLOADING_BRANCHES = ("linear", "mindlin")
 
 
 @dataclass(frozen=True)
@@ -475,6 +500,12 @@ class MindlinTangentialConfig:
                           the physically conservative Mindlin elastic branch;
                           values > 1 select a Masing-type stiffening unloading
                           branch and are flagged experimental.
+        unloading:        ``"linear"`` (default) or ``"mindlin"``.  ``"mindlin"``
+                          activates the exact Mindlin--Deresiewicz reversal
+                          branch for reversals that start from a saturated
+                          (gross-slipping) anchor; see the module notes above.
+                          It is incompatible with ``unloading_ratio != 1.0``
+                          (the exact branch has no free stiffness knob).
     """
 
     k_t0: float
@@ -482,6 +513,7 @@ class MindlinTangentialConfig:
     backbone: str = "mindlin"
     gamma_t: float = 0.0
     unloading_ratio: float = 1.0
+    unloading: str = "linear"
 
     def __post_init__(self) -> None:
         if not math.isfinite(self.k_t0) or self.k_t0 <= 0.0:
@@ -492,6 +524,13 @@ class MindlinTangentialConfig:
             raise ValueError(f"backbone must be one of {BACKBONES}, got {self.backbone!r}")
         if not math.isfinite(self.gamma_t) or self.gamma_t < 0.0:
             raise ValueError(f"gamma_t must be finite and nonnegative, got {self.gamma_t}")
+        if self.unloading not in UNLOADING_BRANCHES:
+            raise ValueError(
+                f"unloading must be one of {UNLOADING_BRANCHES}, got {self.unloading!r}")
+        if self.unloading == "mindlin" and self.unloading_ratio != 1.0:
+            raise ValueError(
+                "unloading='mindlin' is the exact M&D branch and has no "
+                "unloading_ratio knob; leave unloading_ratio at 1.0")
         if not math.isfinite(self.unloading_ratio) or self.unloading_ratio < 1.0:
             raise ValueError(
                 f"unloading_ratio must be finite and >= 1, got {self.unloading_ratio}")
@@ -594,11 +633,40 @@ def mindlin_tangential_step(
 
     delta_mag = torch.linalg.vector_norm(delta_new, dim=1)
     env = mindlin_backbone(delta_mag, f_n, config) if config.enabled else torch.zeros_like(delta_mag)
-    trial_mag = torch.linalg.vector_norm(trial, dim=1)
     tiny = torch.finfo(F.dtype).tiny
-    sliding = (trial_mag > env) & active
+
+    # --- opt-in exact Mindlin--Deresiewicz reversal branch (steady cycle) ----
+    md_open = torch.zeros_like(delta_mag, dtype=torch.bool)
+    md_closed = torch.zeros_like(delta_mag, dtype=torch.bool)
+    if config.unloading == "mindlin" and config.enabled:
+        cap = config.mu_s * f_n
+        f_r_mag = torch.linalg.vector_norm(F_r, dim=1)
+        saturated = active & (f_r_mag > 0.0) & (f_r_mag >= cap * (1.0 - 1e-12))
+        # ``F = -k delta`` convention: the force points *against* the stored
+        # displacement, so a reversal (delta moving back) increases the
+        # excursion s = (delta_new - delta_r) . n with n = F_r/|F_r| and drives
+        # the force from F_r toward -F_r.
+        n_rev = F_r / f_r_mag.clamp_min(tiny)[:, None]
+        s_exc = torch.einsum("nd,nd->n", delta_new - d_r, n_rev)
+        d_s = 3.0 * cap / (2.0 * config.k_t0)
+        u = (s_exc / (2.0 * d_s).clamp_min(tiny)).clamp(0.0, 1.0)
+        g = 1.0 - (1.0 - u).clamp_min(0.0).pow(1.5)
+        branch = F_r * (1.0 - 2.0 * g)[:, None]
+        s_full = 2.0 * d_s
+        on_branch = saturated & (s_exc > 0.0)
+        # ``u`` is clamped for the branch shape; completion is tested on the
+        # unclamped excursion so a rounding-level shortfall still closes.
+        complete = s_exc >= s_full * (1.0 - 1e-9)
+        md_open = on_branch & ~complete
+        md_closed = on_branch & complete
+        trial = torch.where(on_branch[:, None], branch, trial)
+
+    trial_mag = torch.linalg.vector_norm(trial, dim=1)
+    sliding = (trial_mag > env) & active & ~(md_open | md_closed)
+    sliding = sliding | md_closed
     scale = torch.where(sliding, env / trial_mag.clamp_min(tiny), torch.ones_like(trial_mag))
     F_new = trial * scale[:, None]
+    F_new = torch.where((md_open | md_closed)[:, None], trial, F_new)
     # Plastic flow moves the anchor onto the yield surface (kinematic hardening).
     F_r_new = torch.where(sliding[:, None], F_new, F_r)
     d_r_new = torch.where(sliding[:, None], delta_new, d_r)

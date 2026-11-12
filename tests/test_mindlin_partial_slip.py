@@ -251,26 +251,31 @@ def test_dem3d_rejects_unsupported_combinations():
         _single_contact_config(tangential_model="hooke")
 
 def test_reversal_loop_area_absolute_closed_form():
-    """The full double-amplitude hysteresis loop area equals 6 (mu F_n)^2 / k_t.
+    """Steady-state hysteresis loop area equals 1.2 (mu F_n)^2 / k_t.
 
-    This is the *absolute-value* verification of :func:`reversal_loop_area`
-    (the existing suite only checks the mu^2 F_n^2 / k_t *scaling*).  For a
-    full Mindlin--Deresiewicz cycle (virgin loading 0 -> delta_s, then a full
-    reversal to -delta_s), the area enclosed by the loading branch and the
-    reversal branch is exactly
+    Absolute-value verification of :func:`reversal_loop_area`.  The closed
+    Mindlin--Deresiewicz steady-state cycle has both turning points on the
+    Coulomb cap, so the enclosed area is the integral over the shared
+    displacement span of forward-minus-reverse branch:
 
-        W_loop = 6 (mu F_n)^2 / k_t
+        W = 0.8 mu F_n delta_s = 1.2 (mu F_n)^2 / k_t
 
-    (derived by direct quadrature of the two closed-form branches; the factor
-    6 is the dimensionless loop-area coefficient).  This is the frictional
-    energy dissipated per full cycle -- the thermodynamic consistency anchor
-    of the partial-slip law.
+    (m16810 corrected this from 6 (mu Fn)^2/k_t, which integrated two curves
+    that do not close -- see docs/AUDIT_MINDLIN_ENGINE_VS_MD_m16810.md).
     """
+    # m16810: the pre-audit closed form 6 (mu Fn)^2/k_t integrated the virgin
+    # backbone against the reversal branch over Delta in [0, 2 delta_s] and
+    # doubled it.  Those curves do not close (they are 2 mu F_n apart at
+    # Delta = 2 delta_s), so the value was 5x the dissipation of the closed
+    # steady-state cycle.  The exact value is 1.2 (mu Fn)^2/k_t
+    # = 0.8 mu F_n delta_s; see docs/AUDIT_MINDLIN_ENGINE_VS_MD_m16810.md.
     for mu, fn in [(0.3, 1.0), (0.5, 2.0), (0.1, 0.5), (0.7, 3.0)]:
         k_t = float(mindlin_partial_slip.mindlin_no_slip_stiffness(
             fn, E_STAR_PLANE, G_STAR_PLANE, R_STAR_PLANE))
         area = float(mindlin_partial_slip.reversal_loop_area(
             fn, mu, k_t, n_quad=200001))
-        closed = 6.0 * (mu * fn) ** 2 / k_t
-        assert area == pytest.approx(closed, rel=1e-6), \
-            f"mu={mu} Fn={fn}: loop area {area:.6e} != 6(mu Fn)^2/k_t {closed:.6e}"
+        closed = 1.2 * (mu * fn) ** 2 / k_t
+        assert area == pytest.approx(closed, rel=1e-5), \
+            f"mu={mu} Fn={fn}: loop area {area:.6e} != 1.2(mu Fn)^2/k_t {closed:.6e}"
+        d_s = float(mindlin_partial_slip.gross_slip_displacement(fn, mu, k_t))
+        assert area == pytest.approx(0.8 * mu * fn * d_s, rel=1e-5)
