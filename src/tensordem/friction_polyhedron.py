@@ -41,7 +41,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass, field
-from typing import Optional, Tuple
+from typing import Dict, Optional, Tuple
 
 import numpy as np
 
@@ -100,6 +100,23 @@ class FrictionPolyhedronConfig:
     density: float = 2500.0  # rock/ice typical
     mu_dynamic: Optional[float] = None
     slip_stick_speed: float = 1.0e-4
+    wall_multi_point: bool = False
+    """Distribute wall contact over the *tied vertices* of a polyhedral particle.
+
+    ``False`` (default) keeps the historical single-point law bit-for-bit: the
+    whole normal/tangential force acts at the mean of the deepest vertices,
+    which is the face centroid for a face-flat contact and therefore passes
+    through the particle centroid -- the normal reaction cannot shift towards
+    the leading edge, so a freely rotating block creeps below ``atan(mu)``
+    (the A5 limitation of ``docs/p273w3_n02_friction_polyhedron_verification.md``).
+
+    ``True`` gives every vertex in contact its own normal spring (stiffness
+    shared among the *active* vertices, so a flat face keeps the same total
+    ``k_n``) and its own Cundall-Strack tangential spring; the resultant of the
+    normal springs is then the physical centre of pressure and can move inside
+    the support polygon.  Corner/edge contacts (one active vertex) fall back to
+    the single-point law, so tipping thresholds are unchanged.
+    """
 
     def __post_init__(self):
         if self.k_n <= 0:
@@ -125,6 +142,9 @@ class ContactState:
     """Mutable state for one contact pair (tangential displacement + rolling spring)."""
     delta_t: np.ndarray = field(default_factory=lambda: np.zeros(3))
     rolling_moment: np.ndarray = field(default_factory=lambda: np.zeros(3))
+    #: Per-vertex tangential displacement used only by the multi-point wall law
+    #: (``FrictionPolyhedronConfig.wall_multi_point``); empty otherwise.
+    delta_t_points: Dict[int, np.ndarray] = field(default_factory=dict)
     active: bool = True
     # Stick-slip latch of the static/dynamic pair; unused (and never written)
     # when ``FrictionPolyhedronConfig.mu_dynamic`` is None.
@@ -133,6 +153,7 @@ class ContactState:
     def reset(self):
         self.delta_t[:] = 0.0
         self.rolling_moment[:] = 0.0
+        self.delta_t_points.clear()
         self.active = True
         self.sliding = False
 
@@ -377,6 +398,176 @@ def wall_penetration(shape: ConvexShape, n: np.ndarray) -> Tuple[float, np.ndarr
     return float(np.dot(point, n)), point
 
 
+def _polyhedral_vertices(shape: ConvexShape) -> Optional[np.ndarray]:
+    """World-frame vertices of a Box/Polytope, ``None`` for genuinely curved shapes."""
+    if isinstance(shape, Polytope):
+        return np.asarray(shape.vertices, dtype=np.float64)
+    if isinstance(shape, Box):
+        return np.asarray(shape.vertices(), dtype=np.float64)
+    return None
+
+
+def compute_wall_contact_force_multi_point(
+    shape: ConvexShape,
+    v: np.ndarray,
+    omega: np.ndarray,
+    m: float,
+    I: np.ndarray,
+    wall_normal: np.ndarray,
+    wall_offset: float,
+    state: ContactState,
+    config: FrictionPolyhedronConfig,
+    dt: float,
+) -> Tuple[dict, bool]:
+    """Vertex-distributed wall contact for a polyhedral particle.
+
+    Each vertex whose signed distance to the wall plane is negative carries an
+    independent normal spring-dashpot and Cundall-Strack tangential spring.  The
+    **stiffness is shared among the vertices that are actually in contact**
+    (``k_n / n_active``), so a face-flat contact reproduces the historic total
+    stiffness ``k_n`` exactly while a corner/edge contact keeps the historic
+    single-vertex value.  Because every force is applied at its own vertex, the
+    torque about the particle centroid includes the *shift of the normal
+    resultant* (centre of pressure), which the single-point law cannot produce:
+    that is the A5 creep defect of
+    ``docs/p273w3_n02_friction_polyhedron_verification.md``.
+
+    Args:
+        shape: Polyhedral particle (Box or Polytope), world frame.
+        v: Particle linear velocity (3,), m/s.
+        omega: Particle angular velocity (3,), rad/s.
+        m: Particle mass, kg (unused; kept for signature symmetry).
+        I: Inertia tensor (unused; kept for signature symmetry).
+        wall_normal: Unit wall normal pointing into the domain (3,).
+        wall_offset: Plane offset, plane is ``n . x = wall_offset``.
+        state: Contact state; ``delta_t_points`` holds the per-vertex history.
+        config: Contact parameters.
+        dt: Time step, s.
+
+    Returns:
+        ``(result, is_contacting)`` with the same keys as
+        :func:`compute_wall_contact_force`, plus ``n_contact_points`` and
+        ``cop_offset_m`` (tangential distance of the centre of pressure from the
+        centroid of the contacting vertices).
+    """
+    n = np.asarray(wall_normal, dtype=np.float64)
+    verts = _polyhedral_vertices(shape)
+    if verts is None or verts.shape[0] < 2:
+        raise ValueError("multi-point wall contact needs a Box/Polytope")
+    center = shape.centroid()
+
+    depth = verts @ n
+    overlap_all = float(wall_offset) - depth
+    scale = max(1.0, float(np.abs(verts).max()))
+    tol = 1e-12 * scale
+    active = overlap_all > tol
+    n_active = int(active.sum())
+
+    if n_active == 0:
+        state.reset()
+        state.active = False
+        return {
+            'force': np.zeros(3), 'torque': np.zeros(3),
+            'normal': n, 'overlap': 0.0,
+            'f_n': 0.0, 'f_t': 0.0, 'm_r': 0.0,
+            'contact_point': center.copy(),
+            'energy_elastic': 0.0, 'energy_dissipated': 0.0,
+            'n_contact_points': 0, 'cop_offset_m': 0.0,
+        }, False
+
+    # Per-vertex stiffness: shared among the vertices in contact.
+    k_v = config.k_n / n_active
+    gamma_v = config.gamma_n / n_active
+    k_tv = config.k_t / n_active
+
+    force = np.zeros(3)
+    torque = np.zeros(3)
+    f_n_total = 0.0
+    f_t_total = 0.0
+    energy_elastic = 0.0
+    energy_dissipated = 0.0
+    cop_num = np.zeros(3)
+
+    active_idx = np.nonzero(active)[0]
+    # Drop history of vertices that have left the contact.
+    for idx in [k for k in state.delta_t_points if k not in set(active_idx.tolist())]:
+        del state.delta_t_points[idx]
+
+    for idx in active_idx:
+        idx = int(idx)
+        pt = verts[idx]
+        r = pt - center
+        overlap_v = float(overlap_all[idx])
+        v_c = v + np.cross(omega, r)
+        v_n_scalar = float(np.dot(v_c, n))
+        f_n_v = k_v * overlap_v + gamma_v * max(0.0, -v_n_scalar)
+        f_n_vec = f_n_v * n
+
+        v_t = v_c - v_n_scalar * n
+        d = state.delta_t_points.get(idx)
+        if d is None:
+            d = np.zeros(3)
+        d = d + v_t * dt
+        d = d - np.dot(d, n) * n
+        f_t_vec = -k_tv * d
+        f_t_mag = float(np.linalg.norm(f_t_vec))
+        limit = friction_cone_limit(config, state, f_t_mag, f_n_v,
+                                    float(np.linalg.norm(v_t)))
+        if f_t_mag > limit:
+            f_t_vec = f_t_vec * (limit / f_t_mag) if limit > 0.0 else np.zeros(3)
+            if k_tv > 0.0:
+                d = -f_t_vec / k_tv
+        state.delta_t_points[idx] = d
+
+        f_i = f_n_vec + f_t_vec
+        force += f_i
+        torque += np.cross(r, f_i)
+        f_n_total += f_n_v
+        f_t_total += float(np.linalg.norm(f_t_vec))
+        cop_num += f_n_v * pt
+        energy_elastic += 0.5 * k_v * overlap_v**2 + 0.5 * k_tv * float(np.dot(d, d))
+        energy_dissipated += gamma_v * max(0.0, -v_n_scalar) ** 2 * dt
+
+    # Rolling resistance: EPSD on the *total* normal load (unchanged physics).
+    r_bound = shape.bounding_radius()
+    omega_roll = omega - np.dot(omega, n) * n
+    m_r_limit = config.mu_r * r_bound * f_n_total
+    if m_r_limit <= 0.0 or config.k_r <= 0.0:
+        state.rolling_moment[:] = 0.0
+        torque_r = state.rolling_moment
+    else:
+        state.rolling_moment -= config.k_r * omega_roll * dt
+        m_r_mag = float(np.linalg.norm(state.rolling_moment))
+        if m_r_mag > m_r_limit:
+            state.rolling_moment *= (m_r_limit / m_r_mag)
+        torque_r = state.rolling_moment
+    torque = torque + torque_r
+
+    if f_n_total > 0.0:
+        cop = cop_num / f_n_total
+    else:
+        cop = verts[active_idx].mean(axis=0)
+    centroid_contact = verts[active_idx].mean(axis=0)
+    cop_vec = cop - centroid_contact
+    cop_vec = cop_vec - np.dot(cop_vec, n) * n
+
+    state.active = True
+    return {
+        'force': force,
+        'torque': torque,
+        'normal': n,
+        'overlap': float(overlap_all[active_idx].max()),
+        'f_n': f_n_total,
+        'f_t': f_t_total,
+        'm_r': float(np.linalg.norm(torque_r)),
+        'contact_point': cop,
+        'energy_elastic': energy_elastic,
+        'energy_dissipated': energy_dissipated,
+        'n_contact_points': n_active,
+        'cop_offset_m': float(np.linalg.norm(cop_vec)),
+    }, True
+
+
 def compute_wall_contact_force(
     shape: ConvexShape,
     v: np.ndarray,
@@ -413,6 +604,11 @@ def compute_wall_contact_force(
     if n_norm == 0.0:
         raise ValueError("wall_normal must be non-zero")
     n = n / n_norm
+    if config.wall_multi_point:
+        verts_mp = _polyhedral_vertices(shape)
+        if verts_mp is not None and verts_mp.shape[0] >= 2:
+            return compute_wall_contact_force_multi_point(
+                shape, v, omega, m, I, n, wall_offset, state, config, dt)
     center = shape.centroid()
     r_bound = shape.bounding_radius()
 
