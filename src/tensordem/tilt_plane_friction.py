@@ -108,11 +108,14 @@ from .friction_polyhedron import (
 
 __all__ = [
     "MU_TARGETS",
+    "ROLLING_SPRING_DEFAULT",
+    "SPHERE_INERTIA_RATIO",
     "REL_ERR_LIMIT_PCT",
     "REPORT_STRICT_PCT",
     "DUAL_MIN_SEPARATION_DEG",
     "DT_LEVELS",
     "TiltPlaneCase",
+    "rolling_acceleration_analytic",
     "plane_basis",
     "build_case",
     "simulate",
@@ -140,6 +143,15 @@ KICK_SPEED = 1.0e-6                                  # m/s, deterministic
 DT_SAFETY = 0.01                                     # 100 steps per spring period
 SPHERE_ROLLING_FACTOR = 3.5                          # tan(theta) = 3.5 mu rolling limit
 GRAVITY = 9.81
+#: ``I / (m R^2)`` of a solid sphere -- the inertia ratio that turns the
+#: translational balance into ``a = g(sin - mu_r cos) / (1 + 2/5)``.
+SPHERE_INERTIA_RATIO = 2.0 / 5.0
+#: Elastic rolling-spring stiffness (N m/rad) used when ``mu_rolling > 0`` and
+#: the case does not set ``k_r``.  The EPSD moment is capped at
+#: ``mu_r R |F_n|``, so ``k_r`` only shapes the transient (it never changes the
+#: steady rolling-resistance torque); 1e2 N m/rad is the
+#: :class:`FrictionPolyhedronConfig` default.
+ROLLING_SPRING_DEFAULT = 1.0e2
 
 
 # ---------------------------------------------------------------------------
@@ -185,6 +197,20 @@ class TiltPlaneCase:
     raft: int = 1
     raft_gap: float = 0.0
     rotation_locked: bool = True
+    mu_rolling: float = 0.0
+    """Rolling-resistance coefficient ``mu_r`` (dimensionless, EPSD/Ai et al.).
+
+    ``0.0`` (default) keeps the historic run bit-for-bit: the wall law is
+    configured with ``mu_r = k_r = 0`` and the rolling moment is identically
+    zero.  A positive value switches on the capped rolling moment
+    ``M_r = min(k_r * integral(omega_roll dt), mu_r * R * F_n)`` in the
+    production wall contact law (:func:`tensordem.friction_polyhedron.compute_wall_contact_force`).
+    Only meaningful for ``shape="sphere"``: the closed-form anchor
+    :func:`rolling_acceleration_analytic` is a *rolling* solution.
+    """
+    k_r: Optional[float] = None
+    """Elastic rolling-spring stiffness (N m/rad); ``None`` -> 1e2 when
+    ``mu_rolling > 0``, ``0`` (moment disabled) otherwise."""
     t_end: float = 0.30
     dt_level: int = 0
     dt_safety: float = DT_SAFETY
@@ -196,6 +222,17 @@ class TiltPlaneCase:
     def mu_dynamic(self) -> float:
         """Coefficient actually used once sliding."""
         return self.mu_s if self.mu_k is None else float(self.mu_k)
+
+    @property
+    def effective_k_r(self) -> float:
+        """Rolling-spring stiffness actually handed to the contact law."""
+        if self.k_r is not None:
+            return float(self.k_r)
+        return ROLLING_SPRING_DEFAULT if self.mu_rolling > 0.0 else 0.0
+
+    @property
+    def rolling_active(self) -> bool:
+        return self.mu_rolling > 0.0 and self.effective_k_r > 0.0
 
     @property
     def particle_extent(self) -> float:
@@ -231,6 +268,8 @@ class TiltPlaneCase:
         rec = asdict(self)
         rec.update({
             "mu_dynamic": self.mu_dynamic,
+            "effective_k_r": self.effective_k_r,
+            "rolling_active": self.rolling_active,
             "particle_mass": self.particle_mass,
             "particle_extent": self.particle_extent,
             "spring_period": self.spring_period,
@@ -281,7 +320,8 @@ def build_case(case: TiltPlaneCase, theta_deg: float
     normal, downslope = plane_basis(theta_deg)
     config = FrictionPolyhedronConfig(
         k_n=case.k_n, gamma_n=case.gamma_n, k_t=case.k_t,
-        mu=case.mu_s, mu_dynamic=case.mu_k, mu_r=0.0, k_r=0.0,
+        mu=case.mu_s, mu_dynamic=case.mu_k,
+        mu_r=case.mu_rolling, k_r=case.effective_k_r,
         density=case.density,
     )
     eps = 1.0e-9
@@ -329,6 +369,44 @@ def build_case(case: TiltPlaneCase, theta_deg: float
         system.wall_states[(idx, 0)] = ContactState(
             delta_t=delta_t_eq * downslope.copy())
     return system, particles, normal, downslope
+
+# ---------------------------------------------------------------------------
+# Rolling-resistance anchor (closed form)
+# ---------------------------------------------------------------------------
+def rolling_acceleration_analytic(case: TiltPlaneCase,
+                                  theta_deg: float) -> Dict[str, float]:
+    """Down-slope acceleration of a *rolling* sphere with rolling resistance.
+
+    Moment balance about the contact with the no-slip constraint ``a = alpha R``
+    and the capped EPSD moment ``M_r = mu_r R F_n`` (``F_n = m g cos(theta)``)::
+
+        m g sin - F_s = m a
+        F_s R - mu_r R m g cos = I a / R          ->  a = g (sin - mu_r cos) / (1 + I/mR^2)
+
+    For a solid sphere (``I/mR^2 = 2/5``) this is ``a = (5/7) g (sin - mu_r cos)``,
+    which reduces at ``mu_r = 0`` to the pure-rolling value ``(5/7) g sin`` (i.e.
+    the ``tan(theta) = 3.5 mu`` rolling limit of the module docstring) and is
+    non-positive when ``tan(theta) <= mu_r`` (the sphere is held).
+
+    Returns ``a``, the rolling limit ``mu_r``, the pure-rolling (``mu_r = 0``)
+    value and the hold verdict, so the report can quote the bracket rather than
+    a single number.
+    """
+    th = math.radians(float(theta_deg))
+    inertia_ratio = SPHERE_INERTIA_RATIO
+    a = (case.gravity * (math.sin(th) - case.mu_rolling * math.cos(th))
+         / (1.0 + inertia_ratio))
+    a_no_resistance = (case.gravity * math.sin(th) / (1.0 + inertia_ratio))
+    return {
+        "a_m_s2": a,
+        "a_no_rolling_resistance_m_s2": a_no_resistance,
+        "inertia_ratio_I_over_mR2": inertia_ratio,
+        "mu_rolling": float(case.mu_rolling),
+        "rolling_hold": bool(math.tan(th) <= case.mu_rolling),
+        "rolling_resistance_ratio": (float(case.mu_rolling / math.tan(th))
+                                     if math.tan(th) > 0.0 else float("inf")),
+    }
+
 
 # ---------------------------------------------------------------------------
 # Measurement
@@ -443,6 +521,9 @@ def simulate(case: TiltPlaneCase, theta_deg: float, *,
         "acceleration_window_start_s": fit_start,
         "acceleration_analytic_m_s2": case.gravity * (
             math.sin(th) - case.mu_dynamic * math.cos(th)),
+        "rolling_anchor": (rolling_acceleration_analytic(case, theta_deg)
+                           if case.shape == "sphere" else None),
+        "rolling_moment_on": bool(case.rolling_active),
         "normal_load_n": normal_load,
         "wall_contacts": contacts,
         "weight_n": weight,
