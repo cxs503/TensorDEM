@@ -1,14 +1,14 @@
 {"cases": [
- {"n": 10000, "mu": 0.0, "seed": 1, "kn": 4000, "role": "frictionless"},
- {"n": 10000, "mu": 0.0, "seed": 2, "kn": 4000, "role": "frictionless"},
- {"n": 10000, "mu": 0.0, "seed": 3, "kn": 4000, "role": "frictionless"},
- {"n": 10000, "mu": 0.1, "seed": 1, "kn": 4000, "role": "low-friction"},
- {"n": 10000, "mu": 0.1, "seed": 2, "kn": 4000, "role": "low-friction"},
- {"n": 10000, "mu": 0.1, "seed": 3, "kn": 4000, "role": "low-friction"},
- {"n": 2000,  "mu": 0.0, "seed": 1, "kn": 4000, "role": "size-scan"},
- {"n": 5000,  "mu": 0.0, "seed": 1, "kn": 4000, "role": "size-scan"},
+ {"n": 10000, "mu": 0.0, "seed": 1, "kn": 4000, "role": "production-frictionless"},
+ {"n": 10000, "mu": 0.0, "seed": 2, "kn": 4000, "role": "production-frictionless"},
+ {"n": 10000, "mu": 0.0, "seed": 3, "kn": 4000, "role": "production-frictionless"},
+ {"n": 10000, "mu": 0.1, "seed": 1, "kn": 4000, "role": "production-low-friction"},
+ {"n": 10000, "mu": 0.1, "seed": 2, "kn": 4000, "role": "production-low-friction"},
+ {"n": 10000, "mu": 0.1, "seed": 3, "kn": 4000, "role": "production-low-friction"},
  {"n": 10000, "mu": 0.0, "seed": 1, "kn": 16000, "role": "stiffness-scan"},
  {"n": 10000, "mu": 0.1, "seed": 1, "kn": 16000, "role": "stiffness-scan"},
- {"n": 10000, "mu": 0.3, "seed": 1, "kn": 4000, "role": "mu-trend"},
- {"n": 10000, "mu": 0.5, "seed": 1, "kn": 4000, "role": "mu-trend"}
+ {"n": 10000, "mu": 0.0, "seed": 1, "kn": 64000, "role": "stiffness-scan"},
+ {"n": 10000, "mu": 0.1, "seed": 1, "kn": 64000, "role": "stiffness-scan"},
+ {"n": 10000, "mu": 0.0, "seed": 1, "kn": 4000, "dt_frac": 0.025, "role": "timestep-probe"},
+ {"n": 10000, "mu": 0.1, "seed": 1, "kn": 4000, "dt_frac": 0.025, "role": "timestep-probe"}
 ]}
