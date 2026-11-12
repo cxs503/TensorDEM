@@ -60,11 +60,15 @@ class DrumConfig:
     omega: float = 2.0             # drum angular velocity [rad/s]
     dt: float = 1.0e-4             # time step [s]
     settle_steps: int = 6000       # static settling before rotation starts
+    settle_speed: float = 5.0e-3   # rms particle speed [m/s] that defines "bed at rest"
+    settle_damping: float = 0.80   # per-step velocity factor of the quasistatic bed prep
+    settle_max_quench_rounds: int = 20   # cap on kinetic-energy quench rounds
     revs: float = 6.0              # number of drum revolutions simulated
     sample_revs: float = 0.25      # snapshot interval in revolutions
 
     # --- misc -----------------------------------------------------------
     n_bins: int = 10               # radial bins for the concentration profile
+    bed_region_factor: float = 2.6  # RSA region / bed area (looseness of the initial bed)
     skin: float = 0.25             # neighbour-list skin (fraction of max diameter)
     rebuild_steps: int = 8         # neighbour list rebuild interval
     seed: int = 0
@@ -164,7 +168,8 @@ def make_bed(cfg: DrumConfig, rng: np.random.Generator | None = None) -> tuple:
     # saturates near 0.55-0.60 area fraction), then the bed is settled under
     # gravity which compacts it to the requested fill.
     gap = 1.01
-    pos, radii_out = _rsa_place(cfg, radii, bed_area, rng, gap)
+    pos, radii_out = _rsa_place(cfg, radii, bed_area, rng, gap,
+                                factor=float(cfg.bed_region_factor))
     pos = np.array(pos)
 
     # relax overlaps and let the bed fall to the bottom of the drum
@@ -192,7 +197,7 @@ def _u_for_segment_area(target_fraction: float) -> float:
 
 
 
-def _rsa_place(cfg, radii, bed_area, rng, gap=1.01, max_tries=6):
+def _rsa_place(cfg, radii, bed_area, rng, gap=1.01, max_tries=6, factor=2.6):
     """Random sequential addition, largest particle first.
 
     Two practical points:
@@ -211,7 +216,6 @@ def _rsa_place(cfg, radii, bed_area, rng, gap=1.01, max_tries=6):
     """
     n = len(radii)
     order = np.argsort(-radii)
-    factor = 2.6
     gaps = [gap, 1.005, 1.0, 0.98, 0.95, 0.9, 0.8, 0.7, 0.6, 0.5]
     placed = 0
     for attempt_no in range(len(gaps) + max_tries):
@@ -286,10 +290,17 @@ def _relax(pos: np.ndarray, radii: np.ndarray, drum_r: float, n_iter: int = 100)
 # dynamics
 # ---------------------------------------------------------------------------
 def _contact_forces(pos, vel, spin, radii, masses, inertia, cfg, dt, zeta):
-    """Return (force, torque, n_pairs, max_overlap_ratio) for one instant."""
+    """Return ``(force, torque, n_pairs, max_overlap_ratio, n_contacts)``.
+
+    ``n_contacts`` counts, per particle, the pair contacts *and* the wall
+    contact carrying a non-zero normal force at this instant; it is the
+    observable behind the ``airborne_fraction`` diagnostic (a particle with
+    ``n_contacts == 0`` is in free flight).
+    """
     n = len(pos)
     force = np.zeros((n, 2))
     torque = np.zeros(n)
+    n_contacts = np.zeros(n, dtype=np.int64)
 
     kn, mu = cfg.kn, cfg.mu
     kt = cfg.kt_ratio * kn
@@ -326,6 +337,8 @@ def _contact_forces(pos, vel, spin, radii, masses, inertia, cfg, dt, zeta):
             fvec = fn[:, None] * nvec + ft[:, None] * tvec
             np.add.at(force, i, -fvec)
             np.add.at(force, j, fvec)
+            np.add.at(n_contacts, i, 1)
+            np.add.at(n_contacts, j, 1)
             np.add.at(torque, i, -radii[i] * ft)
             np.add.at(torque, j, -radii[j] * ft)
             np.add.at(torque, i, -cfg.mu_rolling * fn * radii[i] * np.tanh(spin[i] / 0.5))
@@ -360,8 +373,10 @@ def _contact_forces(pos, vel, spin, radii, masses, inertia, cfg, dt, zeta):
             ft = -np.clip(kt * vt * dt, -mu * fn, mu * fn)
             np.add.at(force, idx, fn[:, None] * nvec + ft[:, None] * tvec)
             np.add.at(torque, idx, -radii[idx] * ft)
+            np.add.at(n_contacts, idx, (fn > 0.0).astype(np.int64))
             np.add.at(torque, idx, -cfg.mu_rolling * fn * radii[idx] * np.tanh(spin[idx] / 0.5))
-    return force, torque, int(len(pairs)) if len(pairs) else 0, max_ov
+    return (force, torque, int(len(pairs)) if len(pairs) else 0, max_ov,
+            n_contacts)
 
 
 def simulate(cfg: DrumConfig, progress: bool = False) -> DrumRun:
@@ -388,15 +403,20 @@ def simulate(cfg: DrumConfig, progress: bool = False) -> DrumRun:
     # actually used is recorded so the report can prove the bed was at rest
     # before the rotation started.
     cfg_settle = cfg.with_(omega=0.0)
-    settle_speed = 5.0e-3
+    settle_speed = float(cfg.settle_speed)
     max_settle = 3 * cfg.settle_steps
     settle_steps_used = 0
     rms_speed = float("inf")
     while settle_steps_used < max_settle:
-        f, t, _, _ = _contact_forces(pos, vel, spin, radii, masses, inertia, cfg_settle, dt, zeta)
+        f, t, _, _, _ = _contact_forces(pos, vel, spin, radii, masses, inertia,
+                                        cfg_settle, dt, zeta)
         vel += (f / masses[:, None] + g_acc) * dt
-        vel *= 0.99             # settling quench (not applied during rotation)
-        spin *= 0.99
+        # quasistatic bed preparation: strong local (viscous) damping, NOT
+        # applied during the rotated phase.  With dt = 1e-4 s the residual
+        # free-fall speed of an overdamped particle is g*dt/(1-damping) ~ 5e-3
+        # m/s, i.e. the rest threshold is reachable only for a supported bed.
+        vel *= cfg.settle_damping
+        spin *= cfg.settle_damping
         pos += vel * dt
         spin += (t / inertia) * dt
         settle_steps_used += 1
@@ -406,25 +426,27 @@ def simulate(cfg: DrumConfig, progress: bool = False) -> DrumRun:
                 break
     # Kinetic-energy quench rounds: zero the velocities and relax the contact
     # network quasistatically.  This removes the residual "jitter" of the
-    # collapse and guarantees that the rotation starts from a bed at rest.
+    # collapse.  The loop is converged (bounded by ``settle_max_quench_rounds``)
+    # and the *measured* residual rms speed is reported, so a bed that never
+    # reaches the rest criterion shows up as such instead of being asserted.
     quench_rounds = 0
-    for _ in range(4):
+    while quench_rounds < int(cfg.settle_max_quench_rounds):
         rms_speed = float(np.sqrt(np.mean(np.sum(vel ** 2, axis=1))))
         if rms_speed < settle_speed:
             break
         vel[:] = 0.0
         spin[:] = 0.0
         for _ in range(1000):
-            f, t, _, _ = _contact_forces(pos, vel, spin, radii, masses, inertia,
-                                         cfg_settle, dt, zeta)
+            f, t, _, _, _ = _contact_forces(pos, vel, spin, radii, masses,
+                                            inertia, cfg_settle, dt, zeta)
             vel += (f / masses[:, None] + g_acc) * dt
-            vel *= 0.98
-            spin *= 0.98
+            vel *= cfg.settle_damping
+            spin *= cfg.settle_damping
             pos += vel * dt
             spin += (t / inertia) * dt
         settle_steps_used += 1000
         quench_rounds += 1
-    rms_speed = float(np.sqrt(np.mean(np.sum(vel ** 2, axis=1))))
+        rms_speed = float(np.sqrt(np.mean(np.sum(vel ** 2, axis=1))))
     initial_ke = float(0.5 * np.sum(masses * np.sum(vel ** 2, axis=1)))
 
     # ---- measurement series ------------------------------------------------
@@ -437,12 +459,22 @@ def simulate(cfg: DrumConfig, progress: bool = False) -> DrumRun:
         "phi_large_outer": [], "phi_large_inner": [],
         "mean_radius_large": [], "mean_radius_small": [],
         "kinetic_energy": [], "max_overlap_ratio": [],
+        # measured kinematics (m15649): the *observables* behind any regime
+        # claim, sampled along with the segregation metrics
+        "wall_velocity_ratio": [],       # <v_theta>_wall / (omega R)
+        "wall_contact_arc_upper_deg": [],  # upper end of the bed/wall contact arc
+        "airborne_fraction": [],         # fraction of particles with n_contacts == 0
+        "upper_flight_fraction": [],     # ... and above the drum centre (ballistic)
+        "r_p05_over_R": [],              # 5th percentile of r/R (annulus indicator)
+        "bed_omega_over_wall": [],       # load angular velocity / wall angular velocity
     }
     snapshots = []
 
     t_sim = 0.0
+    n_contacts = np.zeros(n, dtype=np.int64)
     for step in range(cfg.n_steps):
-        f, t, npairs, max_ov = _contact_forces(pos, vel, spin, radii, masses, inertia, cfg, dt, zeta)
+        f, t, npairs, max_ov, n_contacts = _contact_forces(
+            pos, vel, spin, radii, masses, inertia, cfg, dt, zeta)
         acc = f / masses[:, None] + g_acc
         vel += acc * dt
         pos += vel * dt
@@ -465,6 +497,38 @@ def simulate(cfg: DrumConfig, progress: bool = False) -> DrumRun:
             ke = 0.5 * float(np.sum(masses * np.sum(vel ** 2, axis=1)))
             series["kinetic_energy"].append(ke)
             series["max_overlap_ratio"].append(max_ov)
+            # ---- measured kinematics -------------------------------------
+            r_norm = r_pos / cfg.radius
+            r_hat = pos / np.maximum(r_pos, 1e-12)[:, None]
+            t_hat = np.stack([-r_hat[:, 1], r_hat[:, 0]], axis=1)
+            v_theta = np.sum(vel * t_hat, axis=1)
+            wall_layer = r_pos > cfg.radius - 2.5 * radii
+            if wall_layer.any():
+                if cfg.omega > 0.0:
+                    series["wall_velocity_ratio"].append(
+                        float(np.mean(v_theta[wall_layer])
+                              / (cfg.omega * cfg.radius)))
+                else:
+                    series["wall_velocity_ratio"].append(float("nan"))
+                theta_wall = np.degrees(
+                    np.arctan2(pos[wall_layer, 0], -pos[wall_layer, 1]))
+                series["wall_contact_arc_upper_deg"].append(
+                    float(np.percentile(theta_wall, 95.0)))
+            else:
+                series["wall_velocity_ratio"].append(float("nan"))
+                series["wall_contact_arc_upper_deg"].append(float("nan"))
+            free = n_contacts == 0
+            series["airborne_fraction"].append(float(np.mean(free)))
+            series["upper_flight_fraction"].append(
+                float(np.mean(free & (pos[:, 1] > 0.15 * cfg.radius))))
+            series["r_p05_over_R"].append(
+                float(np.percentile(r_norm, 5.0)))
+            i_bed = float(np.sum(masses * r_pos ** 2))
+            if i_bed > 0.0 and cfg.omega > 0.0:
+                series["bed_omega_over_wall"].append(
+                    float(np.sum(masses * v_theta * r_pos) / i_bed / cfg.omega))
+            else:
+                series["bed_omega_over_wall"].append(float("nan"))
             snapshots.append({"rev": float(series["rev"][-1]),
                               "pos": pos.copy(), "phi": prof["phi"].copy()})
         t_sim += dt
@@ -485,12 +549,21 @@ def simulate(cfg: DrumConfig, progress: bool = False) -> DrumRun:
         "settle_steps_used": settle_steps_used,
         "quench_rounds": quench_rounds,
         "settle_rms_speed": rms_speed,
+        "settle_speed_threshold": float(cfg.settle_speed),
+        "resting_ok": bool(rms_speed < float(cfg.settle_speed)),
         "initial_ke": initial_ke,
         "dt": cfg.dt,
         "steps": cfg.n_steps,
         "physical_time": cfg.n_steps * cfg.dt,
         "mean_radius_large_final": float(final_r[is_large].mean()),
         "mean_radius_small_final": float(final_r[~is_large].mean()),
+        # time-averaged measured kinematics over the whole rotation window
+        "wall_velocity_ratio_mean": _mean(series["wall_velocity_ratio"]),
+        "wall_contact_arc_upper_deg_mean": _mean(series["wall_contact_arc_upper_deg"]),
+        "airborne_fraction_mean": _mean(series["airborne_fraction"]),
+        "upper_flight_fraction_mean": _mean(series["upper_flight_fraction"]),
+        "r_p05_over_R_mean": _mean(series["r_p05_over_R"]),
+        "bed_omega_over_wall_mean": _mean(series["bed_omega_over_wall"]),
     }
 
     # free-surface (dynamic repose) slope: topmost particle per x-column
