@@ -102,9 +102,13 @@ def stokes_terminal_velocity_case(diameter=1.0, rho_p=2.0, rho_f=1.0, mu=0.5,
     ``v_t = (rho_p-rho_f) g d^2 / (18 mu)``.
 
     The grid is deliberately coarse (``h = 2 d``, i.e. the point-particle
-    regime) and the box is ``32 d`` wide, so the *physical* finite-domain effect
-    (``3 pi d / L ~ 0.3 %``) is far below the 2 % gate.  Two model artefacts are
-    handled explicitly and reported separately:
+    regime) and the box is ``32 d`` wide.  With periodic boundaries the lattice
+    of images is a simple cubic array, whose *physical* finite-domain effect is
+    the Hasimoto (1959) drag enhancement ``1.7601 phi^(1/3) + phi``: 4.43 % at
+    ``phi = 1.60e-5`` (``L = 32 d``), i.e. above the 2 % gate, so this case is a
+    gate on the *unbounded-flow surrogate*, not on the array solution; see
+    ``docs/POINT_CFD_DEM_HASIMOTO_ARRAY_AUDIT.md`` (mission m16963).  Two model
+    artefacts are handled explicitly and reported separately:
 
     * ``self_response="spectral"`` -- the particle's own induced flow
       ``R(t) * (-F_drag)`` is removed from the velocity that enters the drag
