@@ -1,0 +1,76 @@
+{
+ "n_main_cases": 9,
+ "theta_pass_20pct": "9/9",
+ "theta_max_err": 0.1853074656122257,
+ "centrifuging_onset_measured": null,
+ "centrifuging_onset_rel_err": NaN,
+ "P1_spearman_wall_ratio_vs_fr": 0.6333333333333333,
+ "P2_spearman_upper_flight_vs_fr": 0.9833333333333333,
+ "P3_spearman_r_p05_vs_fr": 0.8,
+ "regime_family_agreement": "6/9",
+ "regime_pairs": [
+  [
+   "cascading",
+   "cascading"
+  ],
+  [
+   "rolling",
+   "cataracting"
+  ],
+  [
+   "cataracting",
+   "cataracting"
+  ],
+  [
+   "cataracting",
+   "cataracting"
+  ],
+  [
+   "cataracting",
+   "cataracting"
+  ],
+  [
+   "cataracting",
+   "cataracting"
+  ],
+  [
+   "cataracting",
+   "cataracting"
+  ],
+  [
+   "cataracting",
+   "centrifuging"
+  ],
+  [
+   "cataracting",
+   "centrifuging"
+  ]
+ ],
+ "all_cases_resting_ok": true,
+ "settle_rms_max": 0.00392400000000003,
+ "plateau": {},
+ "sensitivity": [
+  {
+   "case": "dt_base",
+   "fr": 0.3,
+   "revs": 6.0,
+   "dt": 0.0001,
+   "n_total": 209,
+   "theta_rel_err": 0.09088047114321496,
+   "r_p05_over_R": 0.32423917418619613,
+   "S_steady": 0.4179325287674763,
+   "mode": "mixed"
+  },
+  {
+   "case": "dt_half",
+   "fr": 0.3,
+   "revs": 6.0,
+   "dt": 5e-05,
+   "n_total": 209,
+   "theta_rel_err": 0.011227630725752008,
+   "r_p05_over_R": 0.3527315112958767,
+   "S_steady": 0.4301463651381145,
+   "mode": "mixed"
+  }
+ ]
+}
