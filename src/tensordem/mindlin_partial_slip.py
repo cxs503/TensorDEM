@@ -96,6 +96,7 @@ __all__ = [
     "inverse_displacement",
     "reversal_branch",
     "reversal_loop_area",
+    "steady_state_cycle_area",
 ]
 
 
@@ -288,14 +289,36 @@ def reversal_branch(delta_excursion, peak_force_mag, normal_force, mu, k_t) -> t
     return peak - 2.0 * cap * (1.0 - (1.0 - x).pow(1.5))
 
 
-def reversal_loop_area(normal_force, mu, k_t, n_quad: int = 4001) -> torch.Tensor:
-    """Hysteretic energy dissipated per steady-state cycle [J].
+def steady_state_cycle_area(normal_force, mu, k_t, n_quad: int = 4001) -> torch.Tensor:
+    """Work absorbed per *closed* steady-state stick-slip cycle [J].
 
-    Computed by quadrature over the closed Mindlin--Deresiewicz loop:
-    virgin loading ``0 -> delta_s`` followed by the reversal branch over
-    ``Delta in [0, 2 delta_s]``, traversed twice per cycle.  The quadrature is
-    a plain trapezoid rule on a fixed grid, so the value is deterministic and
-    independent of any DEM time stepping.
+    The steady-state Mindlin--Deresiewicz cycle has both turning points on the
+    Coulomb cap: the force runs ``+mu F_n -> -mu F_n`` along the reversal
+    branch while the contact-point displacement runs back by ``2 delta_s``, and
+    then returns.  The enclosed area is therefore the integral, over the shared
+    displacement span ``Delta in [0, 2 delta_s]``, of the *forward* branch minus
+    the *reverse* branch::
+
+        W = int_0^{2 delta_s} [ F_fwd(Delta) - F_rev(Delta) ] d Delta
+          = 0.8 mu F_n delta_s = 1.2 (mu F_n)^2 / k_t
+
+    (the dimensionless coefficient follows from
+    ``int_0^1 [2 g(u) + 2 g(1-u) - 2] du`` with ``g(u) = 1-(1-u)^{3/2}``:
+    ``2*(0.6) + 2*(0.6) - 2 = 0.4``, times ``2 mu F_n`` times ``2 delta_s``
+    ... see the quadrature below, which is the authoritative evaluation).
+
+    The quadrature is a plain trapezoid rule on a fixed grid, so the value is
+    deterministic and independent of any DEM time stepping.
+
+    Note
+    ----
+    This is **not** what :func:`reversal_loop_area` used to return: that
+    function integrated the *virgin loading backbone* against the reversal
+    branch over ``Delta in [0, 2 delta_s]`` and doubled the result.  Those two
+    curves do not form a closed loop (they are separated by ``2 mu F_n`` at
+    ``Delta = 2 delta_s``), so the old value, ``6 (mu F_n)^2 / k_t``, is
+    ``5x`` the dissipation of the steady-state cycle.  See
+    ``docs/AUDIT_MINDLIN_ENGINE_VS_MD_m16810.md``.
     """
     f_n = _t(normal_force).clamp_min(0.0)
     mu_t = _check_mu(mu)
@@ -303,15 +326,31 @@ def reversal_loop_area(normal_force, mu, k_t, n_quad: int = 4001) -> torch.Tenso
     cap = mu_t * f_n
     if float(d_s) == 0.0:
         return torch.zeros_like(cap)
-    # Reversal branch: work done *by* the contact force while the displacement
-    # goes back by Delta is -int F dDelta (displacement reverses), so the area
-    # of the loop is the difference between the two branches.
-    grid = torch.linspace(0.0, 2.0 * float(d_s), n_quad, dtype=f_n.dtype)
-    f_rev = reversal_branch(grid, cap, f_n, mu_t, k_t)  # from +cap down to -cap
-    # Loading branch over the same physical span (0 -> 2 delta_s is saturated).
-    f_load = partial_slip_magnitude(grid, f_n, mu_t, k_t)
-    # Loop area per half cycle = integral of (F_load - F_rev) d(delta) over the
-    # span where both are defined; multiply by 2 for the full cycle.
+    span = 2.0 * float(d_s)
+    grid = torch.linspace(0.0, span, n_quad, dtype=f_n.dtype)
+    f_rev = reversal_branch(grid, cap, f_n, mu_t, k_t)      # +cap -> -cap
+    # Forward branch over the same displacement span: the mirror image, i.e.
+    # the same branch traversed with Delta measured back from the far end.
+    f_fwd = -reversal_branch((span - grid).clamp_min(0.0), cap, f_n, mu_t, k_t)
     trap = getattr(torch, "trapezoid", None) or getattr(torch, "trapz")
-    half = trap(f_load - f_rev, grid)
-    return 2.0 * half
+    return trap(f_fwd - f_rev, grid)
+
+
+def reversal_loop_area(normal_force, mu, k_t, n_quad: int = 4001) -> torch.Tensor:
+    """Hysteretic energy dissipated per steady-state cycle [J].
+
+    .. deprecated:: m16810
+       Until m16810 this function returned ``6 (mu F_n)^2 / k_t``, obtained by
+       integrating the *virgin loading backbone* against the reversal branch
+       over ``Delta in [0, 2 delta_s]`` and doubling.  Those two curves do not
+       close: at ``Delta = 2 delta_s`` the backbone sits at ``+mu F_n`` while
+       the reversal branch sits at ``-mu F_n``, so the integral is an *open*
+       two-branch quantity, not a cycle.  It overestimated the closed
+       steady-state loop by a factor of five (400 %) and the merge-time
+       "absolute closed form" check only re-derived that same definition, so
+       it could not see the error.
+
+    The function now delegates to :func:`steady_state_cycle_area`; the returned
+    number changed from ``6 (mu F_n)^2 / k_t`` to ``1.2 (mu F_n)^2 / k_t``.
+    """
+    return steady_state_cycle_area(normal_force, mu, k_t, n_quad=n_quad)
