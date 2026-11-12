@@ -75,12 +75,15 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
 
+from .granular2d.stress_arrays import pressure_2d, shear_components, virial
+
 __all__ = [
     "ElasticLimitShearError",
     "ElasticLimitShearCase",
     "build_configuration",
     "configuration_report",
     "pair_stress",
+    "pair_stress_components",
     "simulate_plane_shear",
     "shear_stress_scaling",
     "shear_rate_exponent",
@@ -485,12 +488,39 @@ def pair_stress(dx: np.ndarray, dy: np.ndarray, fx: np.ndarray, fy: np.ndarray,
     """Virial contribution of a contact set to ``(tau, P)``.
 
     ``(fx, fy)`` is the force **on particle i** from particle j; ``(dx, dy)`` is
-    ``r_j - r_i``.  Then ``S_xy = sum F_i,x (r_i - r_j)_y = -sum fx*dy``,
-    ``tau = -S_xy/A`` and ``P = sum F_ij.(r_i-r_j)/(2A) = -sum(fx dx + fy dy)/(2A)``.
+    ``r_j - r_i``.  The return value is the historical scalar pair
+    ``(sigma_yx, -(tr sigma)/2)``: ``tau = sigma_yx = sum fx*dy/A`` and
+    ``P = -sum(fx dx + fy dy)/(2A)``.
+
+    The estimator is **not re-derived here**: it is evaluated through the shared
+    certified instrument (:mod:`tensordem.granular2d.stress_arrays`, which pads
+    the 2-D vectors and calls :func:`tensordem.granular3d.stress.contact_outer`).
+    Use :func:`pair_stress_components` when the *symmetric* shear stress or the
+    ``sigma_xy - sigma_yx`` gap is what matters -- with Coulomb friction the raw
+    virial is not symmetric and ``sigma_yx`` alone is not the stress a symmetric
+    closure is defined on.
     """
-    sxy = -float(np.sum(fx * dy))
-    tr = -float(np.sum(fx * dx + fy * dy))
-    return -sxy / area, tr / (2.0 * area)
+    comp = pair_stress_components(dx, dy, fx, fy, area)
+    return comp["sigma_yx"], comp["pressure"]
+
+
+def pair_stress_components(dx: np.ndarray, dy: np.ndarray, fx: np.ndarray,
+                           fy: np.ndarray, area: float) -> Dict[str, float]:
+    """Full in-plane reduction of one contact set, from the shared instrument.
+
+    Returns ``sigma_xy``, ``sigma_yx``, ``tau_symmetric``, ``tau_antisymmetric``,
+    ``asymmetry_relative``, ``pressure`` (= ``-(sigma_xx+sigma_yy)/2``) and
+    ``n_contacts``.  ``tau_symmetric == sigma_yx`` exactly for frictionless
+    (central-force) contacts; the gap is the lever-arm torque of the tangential
+    forces.
+    """
+    branch = np.stack([np.asarray(dx, dtype=float).ravel(),
+                       np.asarray(dy, dtype=float).ravel()], axis=1)
+    force = np.stack([np.asarray(fx, dtype=float).ravel(),
+                      np.asarray(fy, dtype=float).ravel()], axis=1)
+    comp = dict(shear_components(branch, force, float(area)))
+    comp["pressure"] = pressure_2d(virial(branch, force, float(area)))
+    return comp
 
 
 # ---------------------------------------------------------------------------
@@ -546,6 +576,8 @@ def simulate_plane_shear(case: ElasticLimitShearCase,
         fx_ = np.zeros(n)
         fy_ = np.zeros(n)
         sxy_ = 0.0
+        sxy_sym_ = 0.0
+        asym_ = 0.0
         pp_ = 0.0
         dn_ = 0.0
         dtang_ = 0.0
@@ -578,11 +610,16 @@ def simulate_plane_shear(case: ElasticLimitShearCase,
             fy_ = np.bincount(ia, weights=f_iy, minlength=n) + \
                 np.bincount(ja, weights=-f_iy, minlength=n)
             sxy_ = -float(np.sum(f_ix * dya))
+            # symmetric off-diagonal (SLLOD work conjugate) and the non-central
+            # lever-arm sum: sigma_xy - sigma_yx = sum(dx*fy - dy*fx)/A
+            sxy_sym_ = -0.5 * float(np.sum(f_ix * dya + f_iy * dxa))
+            asym_ = float(np.sum(dxa * f_iy - dya * f_ix))
             pp_ = -float(np.sum(f_ix * dxa + f_iy * dya))
             dn_ = float(np.sum(c_n * v_n ** 2))
             if np.any(slip):
                 dtang_ = float(np.sum(cap[slip] * np.abs(v_t[slip])))
-        return fx_, fy_, sxy_, pp_, dn_, dtang_, xi_new, dist_, delta_
+        return (fx_, fy_, sxy_, pp_, dn_, dtang_, xi_new, dist_, delta_,
+                sxy_sym_, asym_)
 
     e_kin0 = 0.5 * float(np.sum(m * (vx * vx + vy * vy)))
     delta0 = r[i] + r[j] - d_build
@@ -595,6 +632,8 @@ def simulate_plane_shear(case: ElasticLimitShearCase,
     win = {"work0": 0.0, "diss0": 0.0, "e0": None, "started": False}
 
     tau_samples: List[float] = []
+    tau_sym_samples: List[float] = []
+    asym_samples: List[float] = []
     p_samples: List[float] = []
     z_samples: List[float] = []
     t_samples: List[float] = []
@@ -617,7 +656,7 @@ def simulate_plane_shear(case: ElasticLimitShearCase,
     avg_from = case.strain_average_from
     sample_every = max(1, int(round(0.01 / max(gdot * dt, 1e-12))))
 
-    fx, fy, sxy_p, p_pair, dn, dtg, xi_new, dist, delta = _forces(
+    fx, fy, sxy_p, p_pair, dn, dtg, xi_new, dist, delta, sxy_sym, asym = _forces(
         x, y, s, vx, vy, xi_t, i, j)
     xi_t = xi_new
     kin_xy = float(np.sum(m * vx * vy))
@@ -659,12 +698,12 @@ def simulate_plane_shear(case: ElasticLimitShearCase,
             d_build = np.sqrt(ddx * ddx + ddy * ddy)
             dist = d_build
             rebuilds += 1
-            fx, fy, sxy_p, p_pair, dn, dtg, xi_new, dist, delta = _forces(
+            fx, fy, sxy_p, p_pair, dn, dtg, xi_new, dist, delta, sxy_sym, asym = _forces(
                 x, y, s, vx_h, vy_h, xi_t, i, j)
             xi_t = xi_new
 
         # ---- forces at the new configuration --------------------------------
-        fx, fy, sxy_p2, p_pair2, dn2, dtg2, xi_new, dist, delta = _forces(
+        fx, fy, sxy_p2, p_pair2, dn2, dtg2, xi_new, dist, delta, sxy_sym2, asym2 = _forces(
             x, y, s, vx_h, vy_h, xi_t, i, j)
         xi_t = xi_new
         # ---- second half kick ------------------------------------------------
@@ -675,6 +714,11 @@ def simulate_plane_shear(case: ElasticLimitShearCase,
         kin_22 = float(np.sum(m * (vx * vx + vy * vy)))
         sxy2 = kin_xy2 + sxy_p2
         tau = -sxy2 / area
+        # symmetric-stress counterpart: kinetic term is already symmetric, so only
+        # the contact virial changes -- this is the quantity a symmetric closure
+        # (mu(I), rate-independent tau) is defined on
+        tau_sym = -(kin_xy2 + sxy_sym2) / area
+        asym_stress = asym2 / area
         press = (kin_22 + p_pair2) / (2.0 * area)
         work += -gdot * 0.5 * (sxy + sxy2) * dt
         diss_n += 0.5 * (dn + dn2) * dt
@@ -714,6 +758,8 @@ def simulate_plane_shear(case: ElasticLimitShearCase,
             z = 2.0 * float(np.count_nonzero(touch)) / n
             z_samples.append(z)
             tau_samples.append(tau)
+            tau_sym_samples.append(tau_sym)
+            asym_samples.append(abs(asym_stress))
             p_samples.append(press)
             tau_kin_s.append(-kin_xy2 / area)          # kinetic (peculiar-velocity) xy
             tau_contact_s.append(-sxy_p2 / area)      # contact virial xy
@@ -749,6 +795,8 @@ def simulate_plane_shear(case: ElasticLimitShearCase,
     z_mean = float(np.mean(z_samples)) if z_samples else float("nan")
     tt_mean = float(np.mean(t_samples)) if t_samples else float("nan")
     # additive decomposition: tau = tau_kinetic + tau_contact (exact, same samples)
+    tau_sym_mean = float(np.mean(tau_sym_samples)) if tau_sym_samples else float("nan")
+    asym_mean = float(np.mean(asym_samples)) if asym_samples else float("nan")
     tau_kin_mean = float(np.mean(tau_kin_s)) if tau_kin_s else float("nan")
     tau_contact_mean = float(np.mean(tau_contact_s)) if tau_contact_s else float("nan")
     p_kin_mean = float(np.mean(p_kin_s)) if p_kin_s else float("nan")
@@ -792,6 +840,16 @@ def simulate_plane_shear(case: ElasticLimitShearCase,
         "case": case.describe(),
         "kappa": case.kappa,
         "tau": tau_mean,
+        "tau_symmetric": tau_sym_mean,
+        "tau_minus_symmetric": tau_mean - tau_sym_mean,
+        "tau_symmetry_defect": (abs(tau_mean - tau_sym_mean) / abs(tau_sym_mean)
+                                if np.isfinite(tau_sym_mean) and tau_sym_mean != 0.0
+                                else float("nan")),
+        "stress_asymmetry": asym_mean,
+        "stress_asymmetry_relative": (asym_mean / abs(tau_sym_mean)
+                                      if np.isfinite(tau_sym_mean) and tau_sym_mean != 0.0
+                                      else float("nan")),
+        "stress_instrument": "granular2d.stress_arrays -> granular3d.stress.contact_outer",
         "pressure": p_mean,
         "tau_star": tau_star,
         "mu_eff": tau_mean / p_mean if p_mean > 0 else float("nan"),
