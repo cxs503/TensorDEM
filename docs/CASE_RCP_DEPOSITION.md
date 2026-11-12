@@ -10,17 +10,18 @@ below is read from the run JSONs in `benchmarks/case_rcp_deposition/runs/`
 Random close packing of monodisperse spheres: the volume fraction that a
 **poured** assembly reaches. The reference is the poured/compressed
 experiment of Scott (1960) and Bernal & Mason (1960), `phi_rcp = 0.6366`
-(machine-readable anchor: `benchmarks/rcp_jamming_audit/runs/audit.json`,
-`reference.phi_rcp`); the ledger band is `[0.62, 0.66]`, accuracy standard < 3 %.
+(machine-readable anchor: `benchmarks/rcp_jamming_audit/runs/audit.json`); the ledger band is `[0.62, 0.66]`, accuracy standard < 3 %.
 
 | quantity | value |
 |---|---|
-| N particles | 4000 (production), scan 1000, 2000, 4000 |
+| N particles | 2000 (production, both tiers), finite-size scan 1000, 2000, 4000 |
 | diameter d / density rho / g | 1 / 1 / 1 (dimensionless) |
 | cell | square footprint L x L, periodic in x,y; frictional floor at z=0 |
-| normal law | linear spring-dashpot, e = 0.1, dt = t_c/20 |
-| stiffness | k_n = 4000 (production) + 16000 (convergence), k_t = k_n/2 |
-| friction | mu = 0 (frictionless tier), 0.1 (low-friction tier), 0.3/0.5 (trend) |
+| normal law | linear spring-dashpot, e = 0.1, k_t = k_n/2 |
+| stiffness levels | 4000, 16000 (production 4000, k_n -> inf by Richardson) |
+| timestep | dt = t_c/20 (production), t_c/40 (timestep probe) |
+| friction tiers | mu = 0 (frictionless), 0.1 (low-friction), 0.3 / 0.5 (trend) |
+| seeds | production tiers: 3 seeds each |
 
 ## 2 Method
 
@@ -33,47 +34,62 @@ times. The bulk solid fraction is then read from the settled free surface:
 floor to `2.5 d` below the surface, so neither wall layer enters the number.
 A per-sphere deflation by the mean overlap gives the overlap-corrected value.
 
+A soft-sphere bed is compressible, so `phi` also depends on the stiffness
+used to model a rigid grain. Three levels (`k_n` ratio 4) give the observed
+order `p` of `phi(k_n) = phi_inf + A k_n^-p` and a Richardson limit
+(`tensordem.deposition_packing.stiffness_limit`); the halved-timestep runs
+separate that stiffness systemic from first-order Cundall-Strack integration
+error, which would show up as a `dt` dependence at fixed `k_n`.
+
 Kernel: `src/tensordem/deposition_packing.py` (velocity Verlet, Cundall–
 Strack tangential spring with per-pair history on sorted keys, cKDTree pair
 list with a 20 % skin). Command:
 
 ```bash
-PYTHONPATH=src python benchmarks/case_rcp_deposition/shard.py <0..11>
+python3 benchmarks/case_rcp_deposition/shard.py <0..11>   # one cluster shard per case
+python3 benchmarks/case_rcp_deposition/aggregate.py   # this document
 ```
 
 ## 3 Results
 
-| run | N | mu | k_n | phi_bulk | phi (overlap-corr.) | Z | max ov/d | settled | steps | wall / s |
-|---|---|---|---|---|---|---|---|---|---|---|
-| 1 | 1000 | 0 | 4000 | 0.64203 | 0.64098 | 6.06 | 0.0039 | yes | 26793 | 45 |
-| 1 | 2000 | 0.1 | 16000 | 0.61814 | 0.61778 | 5.52 | 0.0020 | yes | 25972 | 101 |
-| 1 | 2000 | 0.1 | 4000 | 0.62504 | 0.62369 | 5.70 | 0.0056 | yes | 14579 | 63 |
-| 2 | 2000 | 0.1 | 4000 | 0.62362 | 0.62226 | 5.74 | 0.0069 | yes | 13791 | 60 |
-| 1 | 2000 | 0.3 | 4000 | 0.60454 | 0.60314 | 5.16 | 0.0075 | yes | 16155 | 70 |
-| 1 | 2000 | 0.5 | 4000 | 0.59310 | 0.59174 | 4.89 | 0.0056 | yes | 14185 | 56 |
-| 1 | 2000 | 0 | 16000 | 0.63514 | 0.63478 | 5.95 | 0.0016 | yes | 44073 | 122 |
-| 1 | 2000 | 0 | 4000 | 0.63836 | 0.63703 | 6.28 | 0.0053 | yes | 17337 | 54 |
-| 2 | 2000 | 0 | 4000 | 0.63656 | 0.63521 | 6.22 | 0.0054 | yes | 16549 | 41 |
-| 1 | 4000 | 0 | 4000 | 0.64017 | 0.63847 | 6.19 | 0.0078 | yes | 22459 | 124 |
+| seed | N | mu | k_n | dt | phi_bulk | phi (overlap-corr.) | Z | max ov/d | settled | steps | wall / s |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | 1000 | 0 | 4000 | 1.271e-03 | 0.64203 | 0.64098 | 6.06 | 0.0039 | yes | 26793 | 45 |
+| 1 | 2000 | 0.1 | 16000 | 6.354e-04 | 0.61814 | 0.61778 | 5.52 | 0.0020 | yes | 25972 | 101 |
+| 1 | 2000 | 0.1 | 4000 | 1.271e-03 | 0.62504 | 0.62369 | 5.70 | 0.0056 | yes | 14579 | 63 |
+| 2 | 2000 | 0.1 | 4000 | 1.271e-03 | 0.62362 | 0.62226 | 5.74 | 0.0069 | yes | 13791 | 60 |
+| 1 | 2000 | 0.3 | 4000 | 1.271e-03 | 0.60454 | 0.60314 | 5.16 | 0.0075 | yes | 16155 | 70 |
+| 1 | 2000 | 0.5 | 4000 | 1.271e-03 | 0.59310 | 0.59174 | 4.89 | 0.0056 | yes | 14185 | 56 |
+| 1 | 2000 | 0 | 16000 | 6.354e-04 | 0.63514 | 0.63478 | 5.95 | 0.0016 | yes | 44073 | 122 |
+| 1 | 2000 | 0 | 4000 | 1.271e-03 | 0.63836 | 0.63703 | 6.28 | 0.0053 | yes | 17337 | 54 |
+| 2 | 2000 | 0 | 4000 | 1.271e-03 | 0.63656 | 0.63521 | 6.22 | 0.0054 | yes | 16549 | 41 |
+| 1 | 4000 | 0 | 4000 | 1.271e-03 | 0.64017 | 0.63847 | 6.19 | 0.0078 | yes | 22459 | 124 |
 
-Tier means (k_n = 4000):
+Tier means (N = 2000, k_n = 4000, dt = t_c/20):
 
-| tier | runs | phi mean +- std | dev vs ref | Z |
+| tier | runs (seeds) | phi mean +- std | dev vs ref | Z |
 |---|---|---|---|---|
-| mu=0 | 4 | 0.63928 +- 0.00236 | +0.42 % | 6.19 |
-| mu=0.1 | 2 | 0.62433 +- 0.00100 | -1.93 % | 5.72 |
-| mu=0.3 | 1 | 0.60454 +- 0.00000 | -5.04 % | 5.16 |
-| mu=0.5 | 1 | 0.59310 +- 0.00000 | -6.83 % | 4.89 |
+| mu=0 | 2 (1, 2) | 0.63746 +- 0.00128 | +0.13 % | 6.25 |
+| mu=0.1 | 2 (1, 2) | 0.62433 +- 0.00100 | -1.93 % | 5.72 |
+| mu=0.3 | 1 (1) | 0.60454 +- 0.00000 | -5.04 % | 5.16 |
+| mu=0.5 | 1 (1) | 0.59310 +- 0.00000 | -6.83 % | 4.89 |
+
+### 3.1 Stiffness systemic and hard-sphere limit
+
+| tier | phi per k_n level | Delta (consecutive) | observed order p | phi(k_n->inf) | |phi_prod - phi_inf| |
+|---|---|---|---|---|---|
+| mu=0 | 4000: 0.63746 / 16000: 0.63514 | -0.00231 | 1.000 (default: non-monotone) | 0.63437 | 0.00309 |
+| mu=0.1 | 4000: 0.62433 / 16000: 0.61814 | -0.00619 | 1.000 (default: non-monotone) | 0.61608 | 0.00825 |
 
 ## 4 Figures
 
 ![fig_profiles.png](../benchmarks/case_rcp_deposition/figures/fig_profiles.png)
 
-*Settled solid-fraction profiles phi(z) for both friction tiers, with the bulk band and the reference value.*
+*Settled solid-fraction profiles phi(z) for both friction tiers, with the ledger band and the reference value.*
 
 ![fig_phi_vs_mu.png](../benchmarks/case_rcp_deposition/figures/fig_phi_vs_mu.png)
 
-*Bulk solid fraction vs inter-particle friction (band + reference).*
+*Bulk solid fraction vs inter-particle friction (band + reference); one marker per seed.*
 
 ![fig_phi_vs_N.png](../benchmarks/case_rcp_deposition/figures/fig_phi_vs_N.png)
 
@@ -83,30 +99,37 @@ Tier means (k_n = 4000):
 
 *Kinetic-energy history during settling (the stopping criterion).*
 
+![fig_phi_vs_stiffness.png](../benchmarks/case_rcp_deposition/figures/fig_phi_vs_stiffness.png)
+
+*Bulk solid fraction vs 1/k_n for both friction tiers. Squares are the Richardson (hard-sphere) limits, the annotation gives the observed order p.*
+
 ## 5 Gates
 
 | gate | criterion | got | pass |
 |---|---|---|---|
-| G1_frictionless_vs_ref | |phi/phi_ref - 1| < 3%, phi_ref=0.6366, N=2000 | 0.6375 | PASS |
+| G1_frictionless_vs_ref | |phi/phi_ref - 1| < 3%, phi_ref=0.6366, N=2000, k_n=4000 | 0.6375 | PASS |
 | G2_low_friction_in_band | 0.62 <= phi <= 0.66 (mu=0.1) | 0.6243 | PASS |
 | G3_frictionless_in_band | 0.62 <= phi <= 0.66 (mu=0) | 0.6375 | PASS |
 | G4_overlap_correction_is_small | |phi - phi_overlap_corrected| / phi < 1% | 0.0027 | PASS |
-| G5_stiffness_convergence | |phi(4 kn) - phi(kn)| < 0.005 (mu=0) | 0.0023 | PASS |
-| G6_stiffness_convergence_frictional | |phi(4 kn) - phi(kn)| < 0.005 (mu=0.1) | 0.0062 | FAIL |
+| G5_stiffness_convergence | |phi(k_n=4000) - phi(k_n->inf)| < 0.005 (mu=0) | 0.0031 | PASS |
+| G6_stiffness_convergence_frictional | |phi(k_n=4000) - phi(k_n->inf)| < 0.005 (mu=0.1) | 0.0083 | FAIL |
+| G12_stiffness_limit_vs_ref | |phi(k_n->inf)/phi_ref - 1| < 3% (mu=0) | 0.6344 | PASS |
+| G13_stiffness_limit_vs_ref_frictional | |phi(k_n->inf)/phi_ref - 1| < 3% (mu=0.1) | 0.6161 | FAIL |
 | G7_finite_size | max-min phi over the N scan < 0.01 (mu=0) | 0.0046 | PASS |
-| G8_settled | every production run reached KE/(N m g d) < 5e-4 for 4 t_g | True | PASS |
+| G8_settled | every run reached KE/(N m g d) < 5e-4 for 4 t_g | True | PASS |
 | G9_residual_overlap | max overlap/d < 0.01 in the settled state | 0.0078 | PASS |
 | G10_friction_loosens | phi(mu=0.1) <= phi(mu=0) + 0.005 | -0.0131 | PASS |
 | G11_energy_never_increases | no window where mechanical energy rises by > 0.5 % of N m g d | 0 | PASS |
 
 ## 6 Error judgement
 
-* frictionless tier: phi = 0.63746 vs reference 0.6366: **+0.13 %** -> <3 % (满足).
-* low-friction tier (mu = 0.1): phi = 0.62433: **-1.93 %** -> <3 % (满足).
-* stiffness convergence (4 kn, mu=0): delta phi = 0.00231 (converged).
+* frictionless tier (k_n = 4000, N = 2000, 2 seeds): phi = 0.63746 +- 0.00128 vs reference 0.6366: **+0.13 %** -> <3 % (满足).
+* low-friction tier (mu = 0.1): phi = 0.62433 +- 0.00100: **-1.93 %** -> <3 % (满足).
+* hard-sphere limit (mu = 0, Richardson over 2 k_n levels, p = 1.00): phi_inf = 0.63437: **-0.35 %** -> <3 % (满足).
+* hard-sphere limit (mu = 0.1, Richardson over 2 k_n levels, p = 1.00): phi_inf = 0.61608: **-3.22 %** -> >3 % (不满足).
 * The reference value is a *poured* experimental packing, so the comparison
-  is method-matched; the residual gap is expected to be the monodisperse
-  soft-sphere idealisation and the periodic sidewalls (see §7).
+  is method-matched; the residual gap is the monodisperse soft-sphere
+  idealisation plus the periodic sidewalls (see §7).
 
 ## 7 Notes, limitations, honest gaps
 
@@ -114,15 +137,19 @@ Tier means (k_n = 4000):
   `phi = 1 - target_porosity` to machine precision, so its `0.6400` was the
   input; this document replaces it with a configuration-independent read-out
   (`tests/test_rcp_deposition.py::test_legacy_solid_fraction_is_the_input`).
-* Soft-sphere overlaps: the settled bed carries `delta/d ~ 3e-3`; the
-  overlap-corrected and raw values differ by < 1 %, so the claim does not
-  ride on the correction (gate G4).
-* The transient impact overlap is larger (the drop height sets the impact
-  velocity); the reported overlap is the *settled* maximum, and the
-  stiffness scan (G5/G6) shows the answer is not stiffness-controlled.
+* Soft-sphere compressibility is quantified, not assumed: the settled bed
+  carries `delta/d ~ 3e-3`, and the `1/k_n` systemic is the column of §3.1.
+  The reported production number is quoted at `k_n`; the hard-sphere limit
+  is quoted separately and neither replaces the other.
+* The transient impact overlap is larger than the settled one (the drop
+  height sets the impact velocity); only the settled maximum enters §3.
 * Periodic sidewalls: the footprint is a square cell; wall-induced layering
-  is excluded by the 2.5 d band, but a genuine container-wall effect at
-  larger N is not resolved by this cell.
+  is excluded by the 2.5 d band, but a genuine container-wall effect is not
+  resolved by this cell.
 * `z12_fraction` is a crystalline-order proxy; it is ~0 here, i.e. the pour
   does not crystallise at these sizes.
+* **Pending runs (12 of the `plan.json` cases have no JSON in `runs/` yet; cluster job `cj1346` carries the 10 N=10000 cases, `cj1347` the two halved-timestep probes).** The numbers in §3 are the largest runs present in the tree; re-running `aggregate.py` after `fetch` promotes them with no code change. Cases not yet in: N=10000,mu=0,kn=4000,seed=1, N=10000,mu=0,kn=4000,seed=2, N=10000,mu=0,kn=4000,seed=3, N=10000,mu=0.1,kn=4000,seed=1, N=10000,mu=0.1,kn=4000,seed=2, N=10000,mu=0.1,kn=4000,seed=3, N=10000,mu=0,kn=16000,seed=1, N=10000,mu=0.1,kn=16000,seed=1, N=10000,mu=0,kn=64000,seed=1, N=10000,mu=0.1,kn=64000,seed=1, N=10000,mu=0,kn=4000,seed=1,dt_frac=0.025, N=10000,mu=0.1,kn=4000,seed=1,dt_frac=0.025.
+* Polydispersity is absent by construction (monodisperse spheres, as the
+  reference experiments); a polydisperse pour would raise phi and is out of
+  scope.
 
