@@ -337,3 +337,42 @@ PYTHONPATH=src python scripts/m5052_clump_rolling_calibration.py --figures-only
 * **Reproduction:**
   `PYTHONPATH=src python scripts/verify_propeller_ice_milling_legacy.py &&
    PYTHONPATH=src python scripts/render_propeller_ice_milling_legacy_doc.py`
+
+## selfstart write-back (m16448, 2026-11-12) — DEFECT-D3 repaired: validity reporting in the open-water BEM
+
+* **Row changed:** `DEFECT-D3` (*"every strip sits on the induction cap `a = 0.85`
+  while the residual says 1e-8, `_buhl` never called"*) moves from **open** to
+  **repaired at the detection level; absolute coefficients stay WITHHELD**.
+  Evidence: `src/tensordem/propeller_ice/hydro.py`,
+  `scripts/verify_open_water_high_induction.py` (12 gates, 12 PASS),
+  `tests/test_open_water_high_induction.py` (31 cases),
+  `artifacts/open_water_high_induction/verification.json` + 4 figures,
+  `docs/open_water_high_induction_d3_repair.md` (rendered from that JSON).
+* **Root cause, measured:** the update `a_new = X/(1+a)` clipped at `a_cap` makes
+  the cap a fixed point of its own, so `max|da| -> 1e-8` certifies the
+  *iteration*, not the model. The independent residual (blade element vs annulus
+  momentum) is **7.1 %** of the disk thrust at `J = 0.2` on the registered 3 m
+  geometry, with 24/24 strips on the cap and the disk loading **19x** above what
+  the annular streamtube model can represent.
+* **The boundary is derived, not tuned:** the empirical actuator-disk saturation
+  `C_T = 0.96 F` rewritten in this module's convention `C_T = 4 F a (1+a)` gives
+  the breakdown induction `a_s = 0.2` (turbine convention: 0.4). The high-loading
+  closure is the quadratic fixed by the same three conditions Glauert/Buhl use: in
+  the turbine convention it reproduces Buhl's published coefficients to `1.1e-15`,
+  and it is C1-continuous with the classical relation at `a_s` to `2.3e-16`. The
+  state now carries `momentum_residual`, `model_valid`, `validity_flag`,
+  `ct_max_loading`, `converged`; `K_T`/`K_Q` inside the envelope are unchanged to
+  `8.9e-8` relative.
+* **Two defects found in the announced branch itself:** (i) the coded `_buhl`
+  constant form does **not** invert Buhl's parabola at `C_T = 0.96` (it returns
+  `a = 0.9446` at `F = 1`, whose `C_T` is 1.857; the exact inverse is 0.4);
+  (ii) the turbine branch is not a change of variable of this convention
+  (`a_t -> -a_p` flips the sign of `C_T`). "Simply calling the branch" would have
+  introduced a second error; it is kept as the published reference instance of the
+  construction and is not used to advance the state.
+* **Honest limits:** no experimental open-water chart exists in this repository, so
+  absolute `K_T`/`K_Q` stay WITHHELD; the registered 3 m geometry is out of
+  envelope below `J = 0.6`, and every coefficient produced there before or after
+  this repair is cap-limited (provisional, not to be quoted); `milling.py` does not
+  yet act on `model_valid` (next node); the `"high_loading"` mode can fail to
+  converge at the closure vertex and then reports `converged = False`.
