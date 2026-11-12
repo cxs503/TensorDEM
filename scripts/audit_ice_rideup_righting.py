@@ -162,7 +162,9 @@ def main() -> dict:
         k_exact = curve.analytic_stiffness            # rho_w g V GM with BG
         # the merged kernel's own small-angle limit, from the moment curve
         eps = float(tilts[1])
-        k_measured = float(m_exact[1] / eps)
+        # READ OFF the merged kernel's own moment curve at the first tilt step:
+        # this is a solver output, not an external measurement -- hence the name
+        k_from_curve = float(m_exact[1] / eps)
 
         fold_moment = float(torch.rad2deg(tilts[int(torch.argmax(m_exact))]))
         fold_hess = math.degrees(float(capsize_angle_from_hessian(radius, thickness, water)["capsize_angle"]))
@@ -208,9 +210,9 @@ def main() -> dict:
                                       - curve.metacentric_height) / abs(curve.metacentric_height),
             "stiffness_near_level_nm_per_rad": k_near,
             "stiffness_analytic_nm_per_rad": k_exact,
-            "stiffness_measured_nm_per_rad": k_measured,
+            "stiffness_measured_nm_per_rad": k_from_curve,
             "stiffness_near_vs_analytic_rel_error": abs(k_near - k_exact) / abs(k_exact),
-            "stiffness_kernel_vs_analytic_rel_error": abs(k_measured - k_exact) / abs(k_exact),
+            "stiffness_kernel_vs_analytic_rel_error": abs(k_from_curve - k_exact) / abs(k_exact),
             "peak_exact_moment_nm": scale,
             "peak_exact_at_deg": fold_moment,
             "near_level_at_90deg_nm": float(near_level_moment(
