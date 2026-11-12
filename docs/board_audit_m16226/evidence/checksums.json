@@ -1,0 +1,11 @@
+{
+ "note": "sha256 of every artifact, written after results.json",
+ "sha256": {
+  "results.json": "c819c3dc8fdfbbf9508cd85e25967745acf4523e678f3158caa897f5664deade",
+  "curves.csv": "c8e3a7f167f8cc4769919b4a2d722ff9cd233512be2e9091e1b3e76267671ddb",
+  "figures/fig1_ft_delta_curve.png": "562fd50a16b9c079673db90c68e14fdc20af86d4e51117b23b5585ae2a4d7640",
+  "figures/fig2_error_vs_delta.png": "f7918174ab621553285c9cb747f9c32f5221a057b80c553d95171989a0c55a7c",
+  "figures/fig3_dt_and_sensitivity.png": "a2096c83420eca25d517a20aeece864ba0f4ef4411c3a530462bb610fb7b8e86",
+  "figures/fig4_stick_circle_map.png": "45fe63f343e8b0f9c66d2860033be189374c9e11b9588770d441bcfd3a3e41ea"
+ }
+}
