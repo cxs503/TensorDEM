@@ -1,0 +1,92 @@
+{
+  "_doc": [
+    "Triage ledger for tools/self_verification_scan.py.",
+    "An entry does NOT silence a finding: it records that a human/agent reviewed the site",
+    "and why it is not surrogate evidence. Matched sites stay in the JSON report as",
+    "declared=true / allowlisted=true with the reason, so the decision is auditable.",
+    "Keys are (path, target, kind) so the entry survives unrelated line shifts.",
+    "Anything not listed here fails the gate (exit 1) when it is SEV1/SEV2."
+  ],
+  "entries": [
+    {
+      "path": "scripts/m5052_clump_rolling_calibration.py",
+      "target": "measured",
+      "kind": "analytic_direct",
+      "reason": "value read back from the DEM tilt run (result['theta_c_deg']); the analytic/reference quantities in the same scope are the comparison target, not the source",
+      "reviewed_by": "m16381",
+      "reviewed_at": "2026-11-12"
+    },
+    {
+      "path": "scripts/verify_bond_quasistatic_rate.py",
+      "target": "measured",
+      "kind": "analytic_direct",
+      "reason": "axial bond force read from the solver run dict (run['axial_bond_force_N']); the closed form in scope is the analytic reference",
+      "reviewed_by": "m16381",
+      "reviewed_at": "2026-11-12"
+    },
+    {
+      "path": "scripts/verify_dem3d_energy_quadrature_closure.py",
+      "target": "measured",
+      "kind": "analytic_direct",
+      "reason": "closure deficit between the solver work ledger and the analytic quadrature; the analytic term is the cross-check operand, not a stand-in for the measured side",
+      "reviewed_by": "m16381",
+      "reviewed_at": "2026-11-12"
+    },
+    {
+      "path": "tests/test_dem3d_energy_quadrature_closure.py",
+      "target": "measured",
+      "kind": "analytic_direct",
+      "reason": "same deficit definition as the script above: solver work minus analytic quadrature",
+      "reviewed_by": "m16381",
+      "reviewed_at": "2026-11-12"
+    },
+    {
+      "path": "tests/test_fatigue_chain_contract.py",
+      "target": "e_meas",
+      "kind": "analytic_direct",
+      "reason": "restitution recovered from the collision object's own validated history (analytic dict = the solver's recorded state), compared against its own input value; a self-consistency unit test, not an external benchmark",
+      "reviewed_by": "m16381",
+      "reviewed_at": "2026-11-12"
+    },
+    {
+      "path": "tests/test_mts_contact.py",
+      "target": "measured",
+      "kind": "analytic_direct",
+      "reason": "calibrate_alpha -> reference_restitution round-trip: a unit test of the numerical inversion (root find), circular by construction and deliberately so; it must never be cited as evidence of experimental agreement",
+      "reviewed_by": "m16381",
+      "reviewed_at": "2026-11-12"
+    },
+    {
+      "path": "scripts/benchmark_floe_buoyancy.py",
+      "target": "zeta_meas",
+      "kind": "analytic_direct",
+      "reason": "log-decrement damping ratio measured from the simulated free-decay trajectory (traj.t/traj.y)",
+      "reviewed_by": "m16381",
+      "reviewed_at": "2026-11-12"
+    },
+    {
+      "path": "scripts/benchmark_floe_buoyancy.py",
+      "target": "period_meas",
+      "kind": "analytic_direct",
+      "reason": "heave period measured from the simulated trajectory's upward crossings",
+      "reviewed_by": "m16381",
+      "reviewed_at": "2026-11-12"
+    },
+    {
+      "path": "tests/test_hull_geometry.py",
+      "target": "measured",
+      "kind": "analytic_direct",
+      "reason": "running maximum of the geometric direction error over sampled segments; no analytic source",
+      "reviewed_by": "m16381",
+      "reviewed_at": "2026-11-12"
+    },
+    {
+      "path": "tests/test_lattice_elasticity2d.py",
+      "target": "measured",
+      "kind": "analytic_direct",
+      "reason": "stiffness obtained from the lattice solver's strain-energy evaluation after calibration",
+      "reviewed_by": "m16381",
+      "reviewed_at": "2026-11-12"
+    }
+  ]
+}

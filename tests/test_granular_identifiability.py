@@ -263,9 +263,17 @@ def test_conditioning_rejects_bad_sigma():
 
 
 def test_inversion_recovers_analytic_parameters():
+    """Inversion recovers the truth from synthetic data -- correctly synthetic.
+
+    An identifiability test *must* generate its observations from a model with a
+    known parameter vector; the point is the inversion, not physical agreement.
+    Declared in-band so tools/self_verification_scan.py keeps it visible: this
+    test carries no evidence grade for any experimental claim.
+    """
     truth = np.asarray([0.30, 0.60, 0.75])
     sigma = np.asarray([0.01, 0.01, 0.01, 0.01])
     rng = np.random.default_rng(7)
+    # self-verification: synthetic surrogate -- y_obs is model output + noise by design
     y_obs = _analytic_model(truth) + rng.normal(0.0, 1.0, 4) * sigma
     result = invert_parameters(_analytic_model, y_obs, sigma, [0.5, 0.5, 0.5])
     assert np.allclose(result["unit"], truth, atol=2e-2)
