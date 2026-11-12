@@ -1,0 +1,70 @@
+{
+  "mission_id": 15381,
+  "benchmark": "beverloo_flat_silo_discharge",
+  "case_label": "medium_benchmark",
+  "reference": {
+    "source": "Beverloo, W.A., Leniger, H.A., Van de Velde, J. (1961). The flow of granular solids through orifices. Chemical Engineering Science, 15(3-4), 260-269.",
+    "doi": "10.1016/0009-2509(61)80059-4",
+    "correlation": "W = C \u00b7 \u03c1_b \u00b7 \u221ag \u00b7 (D - k\u00b7d)^(5/2)",
+    "C": 0.58,
+    "C_range": [
+      0.55,
+      0.6
+    ],
+    "k": 1.4,
+    "k_range": [
+      1.2,
+      1.6
+    ]
+  },
+  "case": {
+    "orifice_diameter_m": 0.08,
+    "particle_diameter_m": 0.016,
+    "D_over_d": 5.0,
+    "particle_density_kg_m3": 2500.0,
+    "particle_mass_kg": 0.00536165146212658,
+    "silo_radius_m": 0.08,
+    "fill_height_m": 0.1,
+    "wall_friction": 0.0,
+    "particle_friction": 0.15,
+    "mu_rolling": 0.0,
+    "kn_N_m": 100000.0,
+    "kt_ratio": 0.5,
+    "restitution": 0.3,
+    "gravity_m_s2": 9.81,
+    "seed": 42,
+    "packing_gap": 0.15,
+    "jitter_r": 0.04,
+    "dt_s": 5.1438010686510654e-05,
+    "settle_time_s": 0.08,
+    "window_s": 0.08,
+    "n_windows": 5,
+    "max_time_s": 1.0
+  },
+  "results": {
+    "n_initial": 382,
+    "n_discharged": 280,
+    "packing_fraction": 0.40746666666666664,
+    "bulk_density_kg_m3": 1018.6666666666666,
+    "flow_rate_kg_s": 1.9704069123315122,
+    "flow_rate_std_kg_s": 1.2003994057672513,
+    "flow_rate_windows_kg_s": [
+      0.1340412865531645,
+      3.4850734503822776,
+      2.211681228127215,
+      2.1446605848506177,
+      1.8765780117442856
+    ],
+    "mass_balance_residual_kg": 4.440892098500626e-16,
+    "steadiness_r2": 0.9843549848470642,
+    "wall_clock_s": 42.51010990142822
+  },
+  "comparison": {
+    "beverloo_prediction_kg_s": 2.314401427277773,
+    "relative_error": -0.14863217369809142,
+    "relative_error_pct": -14.863217369809142,
+    "recovered_C": 0.7755916323378644,
+    "threshold_pct": 15.0,
+    "passed": true
+  }
+}

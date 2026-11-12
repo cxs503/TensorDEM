@@ -1,0 +1,175 @@
+{
+ "impl_files": [
+  "src/tensordem/beverloo_discharge.py",
+  "docs/board_audit/m15418/refs/run_beverloo_benchmark.py"
+ ],
+ "impl_files_note": "beverloo_discharge.py is PRE-EXISTING (m6457, commit 8d61e496); its :348-379 beverloo_prediction()/recovered_C() with phi=0.64 hard-coded at :354 sets the density basis of every filed rel_err. The m15381 contribution is the entry script (preserved byte-identically in refs/, sha256 6cb94c8507b95964...) plus the tests; both are untracked in the mission worktree. The DEM kernel actually executed is src/tensordem/silo_discharge.py simulate_silo().",
+ "entry": "docs/board_audit/m15418/refs/run_beverloo_benchmark.py",
+ "entry_note": "original command: PYTHONPATH=src python scripts/run_beverloo_benchmark.py --case medium --seed 42; the path above is the audit byte-copy because scripts/run_beverloo_benchmark.py exists in NO commit (0 commits touch it)",
+ "run_artifacts": [
+  "docs/board_audit/m15418/refs/beverloo_medium_benchmark_seed42.json",
+  "docs/board_audit/m15418/refs/beverloo_quick_validation_seed42.json",
+  "docs/board_audit/m15418/refs/report_m15381.json"
+ ],
+ "run_artifacts_note": "byte copies (sha256 medium 65b10a992dc7cd10..., quick 0ac4c8639e36ad74...) of /root/tp-agent/work/m15381/runs/beverloo_m15381/*; git log --all -- runs/beverloo_m15381 = 0 commits and tensor_dev_missions.result.head_commit IS NULL, so the mission shipped no committable artifact",
+ "tests": [
+  "tests/test_beverloo_m15381_artifacts.py (m15381, untracked): 9 tests / 33 asserts",
+  "tests/test_beverloo_discharge_measurement.py (pre-existing, m6457)",
+  "pytest replay in the mission worktree: rc=0 -- 20 passed, 1 warning in 22.57s"
+ ],
+ "tests_note": "4/33 asserts read stored artifact fields and 0 recompute W_bev from the case block; test_comparison_within_tolerance asserts the artifact's own passed=True and test_recovered_C_reasonable only bounds 0.1<C<2.0, so the suite is green independently of the physics",
+ "integration_callers": "NONE for this benchmark (grep run_beverloo_benchmark outside itself = 0 hits; no export/CLI/API); the reused module is called by scripts/run_coarse_graining_campaign.py:156 and scripts/m6457_beverloo_measurement_sweep.py:34 (pre-existing)",
+ "benchmark": {
+  "registry": "tensor_benchmark_cases WHERE anchor_slug='CASE-HOPPER-BEVERLOO' -> 0 rows (table holds 16); no machine-owned criterion exists, so the goal text (<15%) + the artifact's threshold_pct=15.0 are the only criteria",
+  "ref": {
+   "C": 0.58,
+   "k": 1.4,
+   "source": "Beverloo, Leniger & Van de Velde 1961, Chem. Eng. Sci. 15:260-269, DOI 10.1016/0009-2509(61)80059-4 (Eq.4 p.265)"
+  },
+  "got_medium": {
+   "W_meas_kg_s": 1.9704069123315122,
+   "W_bev_filed_kg_s": 2.314401427277773,
+   "rel_err_filed_pct": -14.863217369809142,
+   "passes_as_filed": true
+  },
+  "replay_as_filed_density": {
+   "rho_b": 1600.0,
+   "W_bev_kg_s": 2.314401427277773,
+   "rel_err": -0.14863217369809142,
+   "rel_err_pct": -14.863217369809142,
+   "recovered_C": 0.49379333925510693,
+   "abs_rel_err_lt_15pct": true,
+   "matches_filed": true
+  },
+  "replay_consistent_density": {
+   "rho_b": 1018.6666666666666,
+   "W_bev_kg_s": 1.4735022420335153,
+   "rel_err": 0.3372269523066627,
+   "rel_err_pct": 33.722695230666275,
+   "recovered_C": 0.7755916323378644,
+   "abs_rel_err_lt_15pct": false,
+   "recovered_C_vs_0.58": 1.3372269523066629,
+   "within_literature_C_band": false
+  },
+  "density_basis_defect": {
+   "rho_b_used_by_prediction_kg_m3": 1600.0,
+   "rho_b_measured_in_simulation_kg_m3": 1018.6666666666666,
+   "phi_measured": 0.40746666666666664,
+   "inflation_factor": 1.5706806282722514,
+   "why_wrong": "W is linear in Beverloo's in-situ bulk density; evaluating the correlation at 0.64*rho_p while the simulated bed sits at phi=0.407 understates the deviation by exactly that factor",
+   "implied_C_as_filed_basis": 0.49379333925510693,
+   "implied_C_consistent_basis": 0.7755916323378644
+  },
+  "window_sensitivity": {
+   "series_kg_s": [
+    0.1340412865531645,
+    3.4850734503822776,
+    2.211681228127215,
+    2.1446605848506177,
+    1.8765780117442856
+   ],
+   "mean_all_kg_s": 1.9704069123315122,
+   "mean_excl_startup_kg_s": 2.429498318776099,
+   "mean_tail3_kg_s": 2.0776399415740396,
+   "cv_all": 0.5448975345442407,
+   "cv_excl_startup": 0.2561026845189982,
+   "startup_window_share_of_mean": 0.06802721088435394,
+   "rel_err_pct_excl_startup_consistent_density": 64.87917354121265,
+   "rel_err_pct_excl_startup_filed_density": 4.973073821238716
+  },
+  "quick_case": {
+   "case_label": "quick_validation",
+   "geometry": {
+    "D_m": 0.06,
+    "d_m": 0.02,
+    "D_over_d": 3.0,
+    "beverloo_valid_D_over_d_ge": 4.0,
+    "geometry_valid": false
+   },
+   "packing": {
+    "phi_measured": 0.49382716049382724,
+    "phi_used_by_prediction": 0.64,
+    "rho_b_measured_kg_m3": 1234.5679012345681,
+    "rho_b_used_by_prediction_kg_m3": 1600.0,
+    "density_inflation_factor": 1.2959999999999998
+   },
+   "filed": {
+    "W_bev_kg_s": 0.5324237570592218,
+    "W_meas_kg_s": 0.7330382858376187,
+    "rel_err": 0.37679484831117765,
+    "rel_err_pct": 37.67948483111777,
+    "recovered_C": 1.0349091515785458,
+    "passed_flag": false
+   },
+   "replay_as_filed_density": {
+    "rho_b": 1600.0,
+    "W_bev_kg_s": 0.5324237570592218,
+    "rel_err": 0.37679484831117765,
+    "rel_err_pct": 37.67948483111777,
+    "recovered_C": 0.798541012020483,
+    "abs_rel_err_lt_15pct": false,
+    "matches_filed": true
+   },
+   "replay_consistent_density": {
+    "rho_b": 1234.5679012345681,
+    "W_bev_kg_s": 0.41082080020001693,
+    "rel_err": 0.7843261234112859,
+    "rel_err_pct": 78.43261234112859,
+    "recovered_C": 1.0349091515785458,
+    "abs_rel_err_lt_15pct": false,
+    "recovered_C_vs_0.58": 1.784326123411286,
+    "within_literature_C_band": false
+   },
+   "windows": {
+    "series_kg_s": [
+     0.0,
+     0.7853981633974483,
+     2.0943951023931957,
+     0.7853981633974491,
+     0.0
+    ],
+    "mean_all_kg_s": 0.7330382858376187,
+    "mean_excl_startup_kg_s": 0.9162978572970233,
+    "mean_tail3_kg_s": 0.9599310885968816,
+    "cv_all": 1.0449099170234137,
+    "cv_excl_startup": 0.8206518066482896,
+    "startup_window_share_of_mean": 0.0,
+    "rel_err_pct_excl_startup_consistent_density": 123.04076542641076,
+    "rel_err_pct_excl_startup_filed_density": 72.0993560388972
+   },
+   "ledger": {
+    "mass_residual_kg": 5.551115123125783e-17,
+    "mass_ok": true,
+    "steadiness_r2": 0.8989361702127661,
+    "n_initial": 80,
+    "n_discharged": 16,
+    "wall_clock_s": 4.0730063915252686
+   }
+  },
+  "report_self_contradiction": {
+   "parsed": {
+    "W_ref_kg_s": 0.532424,
+    "W_got_kg_s": 0.733038,
+    "rel_err_pct": 37.68,
+    "recovered_C_quoted": 1.0349
+   },
+   "ratio_W_got_over_W_ref": 1.3767936832299068,
+   "recovered_C_over_0.58": 1.784310344827586,
+   "self_inconsistent": true,
+   "note": "the two columns of the same report table sit on different density bases: rel_err implies W_got/W_ref = 1.377 (C = 0.799) while the quoted recovered C is 1.0349 = x1.78 of 0.58"
+  },
+  "status": "FAIL"
+ },
+ "repro_cmd": "PYTHONPATH=src python scripts/run_beverloo_benchmark.py --case medium --seed 42 -> independent replay from main HEAD src/tensordem/beverloo_discharge.py with the artifact's recorded case block: flow_rate 1.9704069123 vs filed 1.9704069123 kg/s (abs diff 0.0e+00, per-window series identical, mass ledger 4.4e-16 kg)  => the DEM numbers are REAL and reproducible; the comparison BASIS is what is wrong",
+ "external_anchor": "Beverloo 1961 Eq.4 p.265: C=0.58 (0.55-0.60), k=1.4 (1.2-1.6). The mission's own artifact contains the refutation: recovered_C=0.7756 evaluated with the measured rho_b is +34% over 0.58 (beverloo_discharge.py:364-379 documents that rho_b= argument as exactly this consistency check); the report's quick-case table even quotes recovered C=1.0349 (+78%) next to a +37.68% rel_err",
+ "level_reason": "L2 = real code input->compute->output, proven by an independent replay (flow rate identical to 1e-9, per-window series identical, mass ledger 4.4e-16). L3 refused: no integration caller/export/API for the benchmark and every delivered file is untracked (0 commits) so nothing is integrated. L4 refused: on a consistent density basis the anchor reads +33.7% with recovered C=0.776 (+34%); the filed -14.86% 'PASS' comes from a rho_b inflated x1.57; the posted report quotes a different (quick) case at +37.68% FAIL with D/d=3 outside the Beverloo regime; no registered referee row; cj1100 (full case) never executed (still queued).",
+ "gate_expectation": "confirmed at L2 by JUDGE_SCHEME (evidence keys are real) while the anchor stays FAIL: note that JUDGE_SCHEME does not read benchmark status, so an L2 row confirms even with anchor FAIL -- the anchor FAIL and the density-basis defect are recorded here for the ledger and need a separate remediation order (default rho_b := measured packing, or phi as a case parameter)",
+ "audit_artifacts": [
+  "docs/board_audit/m15418/AUDIT.md",
+  "docs/board_audit/m15418/audit_m15381.py",
+  "docs/board_audit/m15418/audit_m15381.json",
+  "docs/board_audit/m15418/fig_anchor_check.png",
+  "scripts/audit/check_beverloo_density_basis.py"
+ ],
+ "repo_head_audited": "cb6189a4b2f14f819209f0107869f16fe0e53d1a on agent/m15381 (mission worktree; the audit worktree m15418 sits on the merged main line)"
+}
