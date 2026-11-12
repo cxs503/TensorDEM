@@ -249,3 +249,28 @@ def test_dem3d_rejects_unsupported_combinations():
         _single_contact_config(friction_regularization="dual")
     with pytest.raises(ValueError):
         _single_contact_config(tangential_model="hooke")
+
+def test_reversal_loop_area_absolute_closed_form():
+    """The full double-amplitude hysteresis loop area equals 6 (mu F_n)^2 / k_t.
+
+    This is the *absolute-value* verification of :func:`reversal_loop_area`
+    (the existing suite only checks the mu^2 F_n^2 / k_t *scaling*).  For a
+    full Mindlin--Deresiewicz cycle (virgin loading 0 -> delta_s, then a full
+    reversal to -delta_s), the area enclosed by the loading branch and the
+    reversal branch is exactly
+
+        W_loop = 6 (mu F_n)^2 / k_t
+
+    (derived by direct quadrature of the two closed-form branches; the factor
+    6 is the dimensionless loop-area coefficient).  This is the frictional
+    energy dissipated per full cycle -- the thermodynamic consistency anchor
+    of the partial-slip law.
+    """
+    for mu, fn in [(0.3, 1.0), (0.5, 2.0), (0.1, 0.5), (0.7, 3.0)]:
+        k_t = float(mindlin_partial_slip.mindlin_no_slip_stiffness(
+            fn, E_STAR_PLANE, G_STAR_PLANE, R_STAR_PLANE))
+        area = float(mindlin_partial_slip.reversal_loop_area(
+            fn, mu, k_t, n_quad=200001))
+        closed = 6.0 * (mu * fn) ** 2 / k_t
+        assert area == pytest.approx(closed, rel=1e-6), \
+            f"mu={mu} Fn={fn}: loop area {area:.6e} != 6(mu Fn)^2/k_t {closed:.6e}"
