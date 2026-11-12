@@ -8,6 +8,16 @@ C3  Permeability vs Kozeny–Carman (error < 20 %)
 C4  Suffusion trend vs Skempton–Brogan (trend consistent)
 C5  Mass conservation (error < 2 %)
 C6  pytest >= 12 all green (this file provides 16 tests)
+
+Evidence grade of C1-C3 in this file: **WITHHELD**.  The repository has no
+particle-fluid DEM coupling (`src/tensordem/seepage/` computes the analytic
+framework), so the "measured" arrays below are *synthetic surrogates*: the
+analytic reference multiplied by a typed factor or by a seeded noise draw.  They
+are declared in-band with ``self-verification: synthetic`` so
+``tools/self_verification_scan.py`` keeps them visible, and they may only be read
+as tests that the judging code accepts/rejects a known input -- never as
+agreement with a physical measurement.  See `docs/seepage_piping_verification.md`
+S3/S6 and `docs/SELF_VERIFICATION_SCAN.md`.
 """
 from __future__ import annotations
 
@@ -82,22 +92,25 @@ def test_effective_stress_equals_buoyant_weight():
 
 
 def test_pore_pressure_profile_c1():
-    """C1: DEM-measured pore pressure vs analytic hydrostatic, error < 10 %.
+    """C1: surrogate pore pressure vs analytic hydrostatic, error < 10 %.
 
-    We simulate a 'DEM measurement' by adding small noise to the analytic
-    solution and verify the chain correctly judges it.
+    Synthetic surrogate: the analytic hydrostatic profile plus a seeded 5 % noise
+    draw, fed to the chain to check that it *judges* a known input correctly.
+    No DEM source exists, so the criterion's evidence grade is WITHHELD.
     """
     col = SaturatedColumn(height=0.10, porosity=0.40, rho_s=2650.0)
     z = np.linspace(0.0, col.height, 21)
     u_analytic = col.pore_pressure(z)
-    # Simulate DEM measurement with 5 % noise
+    # self-verification: synthetic surrogate -- this value is the analytic reference
+    # perturbed by a typed constant / a seeded draw. It exercises the chain's judging
+    # logic only; it is NOT a DEM measurement and carries no evidence grade.
     rng = np.random.default_rng(42)
-    u_measured = u_analytic * (1.0 + 0.05 * rng.standard_normal(len(z)))
-    u_measured[0] = 0.0  # drained boundary
+    synthetic_u_measured = u_analytic * (1.0 + 0.05 * rng.standard_normal(len(z)))
+    synthetic_u_measured[0] = 0.0  # drained boundary
 
     result = run_seepage_chain(
         prototype=SeepagePrototype(height=0.10, porosity=0.40),
-        measured_pore_pressures={"z": z.tolist(), "u": u_measured.tolist()},
+        measured_pore_pressures={"z": z.tolist(), "u": synthetic_u_measured.tolist()},
     )
     assert result["C1_pore_pressure"]["pass"], (
         f"C1 failed: max_dev = {result['C1_pore_pressure']['max_deviation_pct']:.2f} %"
@@ -159,17 +172,21 @@ def test_seepage_force_at_critical():
 
 
 def test_critical_gradient_c2():
-    """C2: DEM-measured i_c vs Terzaghi, error < 15 %.
+    """C2: surrogate i_c vs Terzaghi, error < 15 % (judging-logic test only).
 
-    Simulate a DEM measurement with 10 % error (within tolerance).
+    Synthetic surrogate: Terzaghi i_c scaled by a typed 1.10.  Evidence grade
+    WITHHELD -- there is no DEM source in this repository.
     """
     proto = SeepagePrototype(rho_s=2650.0, porosity=0.40)
     i_c_analytic = proto.terzaghi_i_c
-    i_c_measured = i_c_analytic * 1.10  # 10 % high
+    # self-verification: synthetic surrogate -- this value is the analytic reference
+    # perturbed by a typed constant / a seeded draw. It exercises the chain's judging
+    # logic only; it is NOT a DEM measurement and carries no evidence grade.
+    synthetic_i_c_measured = i_c_analytic * 1.10  # typed 10 % offset
 
     result = run_seepage_chain(
         prototype=proto,
-        measured_critical_gradient=i_c_measured,
+        measured_critical_gradient=synthetic_i_c_measured,
     )
     assert result["C2_critical_gradient"]["pass"], (
         f"C2 failed: dev = {result['C2_critical_gradient']['deviation_pct']:.2f} %"
@@ -181,11 +198,14 @@ def test_critical_gradient_fails_with_large_error():
     """C2 negative control: 25 % error must fail the 15 % gate."""
     proto = SeepagePrototype(rho_s=2650.0, porosity=0.40)
     i_c_analytic = proto.terzaghi_i_c
-    i_c_measured = i_c_analytic * 1.25  # 25 % high
+    # self-verification: synthetic surrogate -- this value is the analytic reference
+    # perturbed by a typed constant / a seeded draw. It exercises the chain's judging
+    # logic only; it is NOT a DEM measurement and carries no evidence grade.
+    synthetic_i_c_measured = i_c_analytic * 1.25  # typed 25 % offset
 
     result = run_seepage_chain(
         prototype=proto,
-        measured_critical_gradient=i_c_measured,
+        measured_critical_gradient=synthetic_i_c_measured,
     )
     assert not result["C2_critical_gradient"]["pass"]
 
@@ -233,22 +253,25 @@ def test_kozeny_carman_conductivity_units():
 
 
 def test_permeability_c3():
-    """C3: DEM-measured k vs K-C formula, error < 20 %.
+    """C3: surrogate k vs Kozeny-Carman, error < 20 % (judging-logic test only).
 
-    Simulate DEM measurements with 15 % error (within tolerance).
+    Synthetic surrogate: the K-C conductivity scaled by a typed 1.15.  Evidence
+    grade WITHHELD -- there is no DEM source in this repository.
     """
     proto = SeepagePrototype(diameter=2.0e-4)
     porosities = [0.35, 0.40, 0.45, 0.50]
     kc_model = KozenyCarmanModel(diameter=proto.diameter)
     k_analytic = [kc_model.conductivity(phi) for phi in porosities]
-    # Simulate DEM with 15 % error
-    k_measured = [k * 1.15 for k in k_analytic]
+    # self-verification: synthetic surrogate -- this value is the analytic reference
+    # perturbed by a typed constant / a seeded draw. It exercises the chain's judging
+    # logic only; it is NOT a DEM measurement and carries no evidence grade.
+    synthetic_k_measured = [k * 1.15 for k in k_analytic]
 
     result = run_seepage_chain(
         prototype=proto,
         measured_permeabilities={
             "porosities": porosities,
-            "k_measured": k_measured,
+            "k_measured": synthetic_k_measured,
         },
     )
     assert result["C3_permeability"]["pass"], (
@@ -263,13 +286,16 @@ def test_permeability_fails_with_large_error():
     porosities = [0.35, 0.40, 0.45]
     kc_model = KozenyCarmanModel(diameter=proto.diameter)
     k_analytic = [kc_model.conductivity(phi) for phi in porosities]
-    k_measured = [k * 1.30 for k in k_analytic]  # 30 % error
+    # self-verification: synthetic surrogate -- this value is the analytic reference
+    # perturbed by a typed constant / a seeded draw. It exercises the chain's judging
+    # logic only; it is NOT a DEM measurement and carries no evidence grade.
+    synthetic_k_measured = [k * 1.30 for k in k_analytic]  # typed 30 % offset
 
     result = run_seepage_chain(
         prototype=proto,
         measured_permeabilities={
             "porosities": porosities,
-            "k_measured": k_measured,
+            "k_measured": synthetic_k_measured,
         },
     )
     assert not result["C3_permeability"]["pass"]
@@ -399,7 +425,12 @@ def test_mass_conservation_fails_with_large_error():
 # ===================================================================
 
 def test_full_chain_all_pass():
-    """Full chain with all good measurements must pass overall."""
+    """Full chain with all surrogate inputs inside tolerance must pass overall.
+
+    Every input here is a synthetic surrogate of the analytic reference (see the
+    module docstring): the test exercises the aggregate judging path, it does not
+    certify a measurement.
+    """
     proto = SeepagePrototype(
         height=0.10, porosity=0.40, rho_s=2650.0,
         diameter=2.0e-4, fine_fraction=0.20,
@@ -407,18 +438,20 @@ def test_full_chain_all_pass():
     col = SaturatedColumn(height=proto.height, porosity=proto.porosity, rho_s=proto.rho_s)
     z = np.linspace(0.0, proto.height, 21)
     u_analytic = col.pore_pressure(z)
-    # Small noise (3 %)
+    # self-verification: synthetic surrogate -- this value is the analytic reference
+    # perturbed by a typed constant / a seeded draw. It exercises the chain's judging
+    # logic only; it is NOT a DEM measurement and carries no evidence grade.
     rng = np.random.default_rng(42)
-    u_measured = u_analytic * (1.0 + 0.03 * rng.standard_normal(len(z)))
-    u_measured[0] = 0.0
+    synthetic_u_measured = u_analytic * (1.0 + 0.03 * rng.standard_normal(len(z)))
+    synthetic_u_measured[0] = 0.0
 
     i_c_analytic = proto.terzaghi_i_c
-    i_c_measured = i_c_analytic * 1.05  # 5 % error
+    synthetic_i_c_measured = i_c_analytic * 1.05  # typed 5 % offset
 
     kc_model = KozenyCarmanModel(diameter=proto.diameter)
     phis = [0.35, 0.40, 0.45]
     k_analytic = [kc_model.conductivity(phi) for phi in phis]
-    k_measured = [k * 1.10 for k in k_analytic]  # 10 % error
+    synthetic_k_measured = [k * 1.10 for k in k_analytic]  # typed 10 % offset
 
     env = SkemptonBroganEnvelope()
     i_c_suff = env.critical_gradient(proto.terzaghi_i_c, proto.fine_fraction)
@@ -427,9 +460,9 @@ def test_full_chain_all_pass():
 
     result = run_seepage_chain(
         prototype=proto,
-        measured_pore_pressures={"z": z.tolist(), "u": u_measured.tolist()},
-        measured_critical_gradient=i_c_measured,
-        measured_permeabilities={"porosities": phis, "k_measured": k_measured},
+        measured_pore_pressures={"z": z.tolist(), "u": synthetic_u_measured.tolist()},
+        measured_critical_gradient=synthetic_i_c_measured,
+        measured_permeabilities={"porosities": phis, "k_measured": synthetic_k_measured},
         measured_erosion_rates={"gradients": grads, "rates": rates},
         mass_audit={
             "initial_solid_mass": 10.0,
