@@ -36,6 +36,10 @@ def main() -> int:
     ap.add_argument("--repose-bodies", type=int, default=None)
     ap.add_argument("--repose-steps", type=int, default=None)
     ap.add_argument("--repose-dt", type=float, default=None)
+    ap.add_argument("--repose-kn", type=float, default=None,
+                    help="normal stiffness; must be co-varied with --repose-dt so that "
+                         "the step resolves the contact period (see the stability table "
+                         "in docs/H1_BROKEN_ICE_DEM_ROUND3.md)")
     ap.add_argument("--repose-settle-tol", type=float, default=None)
     ap.add_argument("--repose-shard", type=int, default=None,
                     help="1-based index into FRICTION_GRID %s; runs that mu only"
@@ -53,6 +57,8 @@ def main() -> int:
         rk["n_steps"] = args.repose_steps
     if args.repose_dt:
         rk["dt"] = args.repose_dt
+    if args.repose_kn:
+        rk["kn"] = args.repose_kn
     if args.repose_settle_tol is not None:
         rk["settle_tol"] = args.repose_settle_tol
     if args.repose_shard is not None:
