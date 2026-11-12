@@ -453,6 +453,49 @@ def mesh_contact_forces(
 
 
 # ---------------------------------------------------------------------------
+# Restitution calibration of the penalty law
+# ---------------------------------------------------------------------------
+
+def penalty_damping_for_restitution(e_target: float, stiffness: float,
+                                    mass: float) -> float:
+    """Viscous damping ``c`` that reproduces ``e_target`` with *this* force law.
+
+    The kernel evaluates ``F_n = max(k * overlap - c * vn, 0)``.  The force is
+    therefore switched off while the sphere is still overlapping, so the impact
+    is a **clamped** oscillator and the classical closed form
+    ``e = exp(-pi zeta / sqrt(1 - zeta**2))`` (``zeta = c / (2 sqrt(k m))``) is
+    *not* the restitution this contact delivers: the classical inverse
+    underestimates the requested damping and the measured restitution comes out
+    high (about +9 % at e = 0.5 and +33 % at e = 0.3, see
+    ``docs/AUDIT_DEM_G3_HULL_PENALTY_RESTITUTION.md``).
+
+    This helper inverts the clamped model by bisection
+    (:func:`tensordem.contact_restitution.damping_for_target_restitution`), so a
+    user who asks for ``e_target`` gets it back from the shipped kernel to
+    better than 3 % for ``dt <= t_c / 400``.  ``mass`` is the *effective* mass
+    of the contact (the sphere mass for a hull contact, ``m/2`` for two free
+    equal spheres).
+
+    Parameters
+    ----------
+    e_target   : requested coefficient of restitution, ``0 < e_target <= 1``.
+    stiffness  : penalty stiffness ``k`` [N/m] used in the same call.
+    mass       : effective contact mass [kg].
+
+    Returns
+    -------
+    c [N s/m].
+    """
+    from .contact_restitution import damping_for_target_restitution
+
+    if not math.isfinite(stiffness) or stiffness <= 0.0:
+        raise ValueError(f"stiffness must be finite and positive, got {stiffness}")
+    if not math.isfinite(mass) or mass <= 0.0:
+        raise ValueError(f"mass must be finite and positive, got {mass}")
+    return float(damping_for_target_restitution(e_target, stiffness, mass)["gamma_n"])
+
+
+# ---------------------------------------------------------------------------
 # Convenience: build a simple hull mesh for testing
 # ---------------------------------------------------------------------------
 
