@@ -1,0 +1,93 @@
+{
+ "case_id": "CASE-DEM-ROLLING-SINGLE-PARTICLE",
+ "repo": "TensorDEM",
+ "created_utc": "2026-11-12",
+ "skill": "experimental-design",
+ "decision": "Admit or reject (honest-FAIL) the benchmark case 'single sphere rolling down an inclined plane' into the DEM case pool: does the existing TensorDEM rigid-body-on-incline capability (tensordem.rolling_resistance.simulate_sphere_on_incline) reproduce the classical rigid-body reference a = g sin(theta) / (1 + I/(m R^2)) and alpha = a / R within 2 % at theta = 15 deg in the no-slip regime, with the rolling-resistance branch of Ai et al. (2011) reproduced when mu_r > 0?",
+ "alternatives": {
+  "primary": "reuse the repository's existing single-sphere incline harness (no new solver): Cundall-Strack tangential contact with no-slip, semi-implicit Euler, CDT rolling-resistance branch of Ai et al. 2011; reference = closed-form rigid-body acceleration",
+  "alternative_1": "write a new minimal rigid-body integrator for the case (rejected: duplicates an existing verified capability, cost without information gain; see docs/dem3d_rolling_resistance.md)",
+  "alternative_2": "measure the instantaneous acceleration instead of the steady-window least-squares slope (rejected as the acceptance metric, reported as a diagnostic: the undamped tangential spring makes the instantaneous a(t) oscillate about the mean, so an instantaneous sample is not a state variable of the model; the slope of v(t) over many oscillation periods is)",
+  "alternative_3": "frictionless/sliding branch as the reference (rejected: outside the declared no-slip regime of this case)"
+ },
+ "hypothesis": "At theta = 15 deg with mu = 0.9 well above the pure-rolling requirement (f/(mu N) = 0.085), the sphere rolls without macroscopic slip and both the translational acceleration fitted from v(t) and the angular acceleration fitted from omega(t) match the closed-form rigid-body values within 2 %, independent of contact stiffness k_n and converging under time-step refinement.",
+ "metrics": {
+  "M1_a_translational": "a_t = LS slope of v(t) over the steady window (t >= settle), m/s^2",
+  "M2_alpha_rotational": "alpha = LS slope of omega(t) over the steady window, rad/s^2",
+  "M3_no_slip_consistency": "|a_t + R alpha| / |a_t| (kinematic closure v + R omega = 0)",
+  "M4_slip_residual": "rms of the contact slip velocity v + R omega over the steady window, m/s",
+  "M5_rolling_resistance_branch": "a_t (mu_r = 0.1 case) vs g (sin t - mu_r cos t) / (1 + I/(m R^2))",
+  "M6_critical_angle": "measured zero-acceleration angle vs arctan(mu_r) (sign test on a_t)"
+ },
+ "unit_of_analysis": "one harness run (one parameter point, one deterministic seed-free integration); the reported value is the least-squares slope over the steady window of that run. The integration is deterministic, so run-to-run scatter is exactly zero and no repetitions are used for M1/M2; uncertainty comes instead from the time-step refinement sequence (M1/M2 vs dt).",
+ "baseline_and_control": {
+  "analytic_baseline": "closed-form a = g sin(theta)/(1 + I/(m R^2)) evaluated in-code from g, theta and the sphere inertia factor I/(m R^2) = 2/5 (no hand-typed constants)",
+  "negative_control_1": "artificially inflate the friction demand by setting mu = 0.01 (< 0.051 required) -> the sphere must slip and the no-slip reference must be violated by a large margin (proves the acceptance test can fail)",
+  "negative_control_2": "eta = 0 must be rejected/raise instead of silently returning a wrong acceleration",
+  "negative_control_3": "a_wrong = g sin(theta) (no inertia correction, i.e. sliding-without-rotation limit) must be rejected by the 2 % gate, proving the gate discriminates 1/1.4 = 71.4 % error"
+ },
+ "thresholds_declared_before_production_runs": {
+  "M1_rel_error_max": 0.02,
+  "M2_rel_error_max": 0.02,
+  "M3_no_slip_closure_max": 0.02,
+  "M5_rel_error_max": 0.02,
+  "M6_angle_error_max_deg": 0.5,
+  "convergence": "M1/M2 relative error must be non-increasing on the dt sequence 4e-5 -> 2e-5 -> 1e-5 -> 5e-6 (allow one non-monotone step of at most 1.5x the previous error, documented)",
+  "stiffness_invariance": "M1 spread over k_n in {5e4, 2e5, 8e5} N/m must be < 2 % (the reference does not contain k_n)",
+  "stopping_rule": "if the base point fails the 2 % gate, stop and file honest-FAIL with fail_stage; do not retune parameters to pass (no threshold tuning after seeing results)"
+ },
+ "variables": {
+  "controlled": [
+   "sphere radius R = 0.01 m, density 900 kg/m^3 (ice), solid-sphere inertia I/(m R^2) = 0.4",
+   "sliding friction mu = 0.9, rolling resistance mu_r = 0.0 (case A) / 0.1 (case B)",
+   "normal damping gamma_n = 0 (clean contact, no normal oscillation), initial height at static equilibrium",
+   "time integration: semi-implicit (symplectic) Euler, fixed dt swept over the declared sequence",
+   "steady window: t >= 0.06 s of a 0.24 s run (>= 300 tangential-oscillation periods)"
+  ],
+  "changed": [
+   "dt (convergence)",
+   "k_n and k_t = k_n (stiffness invariance)",
+   "mu_r (rolling-resistance branch)"
+  ],
+  "confounders_and_nuisances": [
+   "undamped tangential spring: a(t) oscillates about the mean with amplitude mu-independent ~0.29 g sin theta; the LS slope is the correct estimator of the mean, an instantaneous sample is not",
+   "semi-implicit Euler is only first-order and weakly amplifies/attenuates the slip oscillator at dt/period ~ 0.04; visible only at the coarsest dt (reported)",
+   "tangential demand vs Coulomb cone: if mu were near 0.051 the case would sit on the rolling/sliding boundary (excluded by mu = 0.9)",
+   "no rolling resistance in case A means the model has no static branch; irrelevant here because the sphere never stops"
+  ]
+ },
+ "environment": {
+  "python": "3.11",
+  "packages": "torch 2.7.1 (float64), numpy, matplotlib",
+  "threads": "OMP_NUM_THREADS=1, torch.set_num_threads(1) for run-time determinism/reproducibility of wall clock",
+  "compute": "local (single core), total wall clock < 5 min, no cluster needed",
+  "raw_data": "artifacts/case_rolling_single_particle/result.json + figures"
+ },
+ "analysis_plan": "Per point: fit slopes over the declared steady mask, compute relative errors against the in-code analytic value, mark pass/fail at 2 %. Aggregate: table ref vs got per metric with error column; convergence table over dt; invariance table over k_n; two negative controls executed and required to fail. Outliers are not removed; missing points are reported as such. Correlation vs causation: the agreement is a verification against a closed-form law, not evidence about any physical material.",
+ "amendments": [
+  {
+   "after": "first full run (result.json v1)",
+   "what": "reference alpha sign convention corrected to alpha_ref = -a/R (harness convention v>0 down-slope, omega about +z, no-slip v+R*omega=0). Before the fix the acceptance gate reported a spurious 200% error for alpha.",
+   "kind": "reference definition fix (not a threshold change; the 2% tolerance is unchanged)",
+   "evidence": "docs/CASE-DEM-ROLLING-SINGLE-PARTICLE.md section 1, provenance of the same run"
+  },
+  {
+   "after": "first full run (result.json v1)",
+   "what": "added two DIAGNOSTIC metrics, not acceptance criteria: (i) instantaneous-acceleration oscillation amplitude vs the closed-form amplitude f*g*sin(t)/(1+f); (ii) sliding-branch comparison for the mu=0.01 negative control.",
+   "kind": "diagnostic added after seeing results; explicitly excluded from pass/fail (pass still decided by M1/M2/M3 only)",
+   "rationale": "the first run showed that the mean acceleration is exact at every dt while the instantaneous amplitude is the first-order-converged quantity; leaving that unquantified would overstate the model's instantaneous accuracy"
+  },
+  {
+   "after": "first full run",
+   "what": "runtime defect found while sizing the case: per-step cost in simulate_sphere_on_incline grew with step count (list-of-tensors history). Fixed by preallocating the history buffers; measured 5.8 -> 0.637 ms/step at 12k steps, results unchanged (54 existing rolling tests still pass).",
+   "kind": "defect_fix in src (not a physics change)"
+  }
+ ],
+ "artifacts": {
+  "run": "artifacts/case_rolling_single_particle/result.json",
+  "figure": "artifacts/case_rolling_single_particle/case_rolling_single_particle.png",
+  "report": "docs/CASE-DEM-ROLLING-SINGLE-PARTICLE.md",
+  "driver": "benchmarks/case_rolling_single_particle/run_case.py",
+  "test": "tests/test_case_rolling_single_particle.py"
+ }
+}

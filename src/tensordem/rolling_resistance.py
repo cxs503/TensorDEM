@@ -466,8 +466,10 @@ def simulate_sphere_on_incline(
     Returns:
         Dict of tensors with time on axis 0 and columns on axis 1:
         ``time``, ``x`` (down-slope displacement), ``v`` (down-slope velocity),
-        ``omega`` (spin, positive clockwise, i.e. ``omega = -v/R`` when rolling
-        without slip), ``normal_force``, ``torque``, ``slip_velocity``.
+        ``omega`` (spin about +z; rolling without slip down-slope therefore has
+        ``omega = -v/R < 0``, i.e. clockwise while descending, and the angular
+        acceleration reference is ``alpha = -a/R``), ``normal_force``,
+        ``torque``, ``slip_velocity``.
     """
     angles = torch.as_tensor(list(angles_deg), dtype=torch.float64)
     if angles.ndim != 1 or angles.numel() == 0:
@@ -495,9 +497,13 @@ def simulate_sphere_on_incline(
     mu_r = rolling.mu_r
 
     steps = int(round(duration / dt))
-    history = {key: [] for key in ("x", "v", "omega", "normal_force", "torque", "slip_velocity")}
+    # Preallocated history buffers: appending per-step tensors to Python lists
+    # makes the loop cost grow with the number of stored steps (observed ~6x
+    # slowdown over 12k steps), which is pure overhead for long runs.
+    keys = ("x", "v", "omega", "normal_force", "torque", "slip_velocity")
+    history = {key: torch.empty(steps, n, dtype=torch.float64) for key in keys}
 
-    for _ in range(steps):
+    for step in range(steps):
         penetration = radius - y
         active = penetration > 0.0
         # Normal contact: spring-dashpot, clamped at zero (no adhesion).
@@ -534,14 +540,14 @@ def simulate_sphere_on_incline(
         x = x + v * dt
         y = y + vy * dt
 
-        history["x"].append(x)
-        history["v"].append(v)
-        history["omega"].append(omega)
-        history["normal_force"].append(f_n)
-        history["torque"].append(torque_z)
-        history["slip_velocity"].append(v_slip)
+        history["x"][step] = x
+        history["v"][step] = v
+        history["omega"][step] = omega
+        history["normal_force"][step] = f_n
+        history["torque"][step] = torque_z
+        history["slip_velocity"][step] = v_slip
 
-    out = {key: torch.stack(values) for key, values in history.items()}
+    out = dict(history)
     out["time"] = torch.arange(steps, dtype=torch.float64) * dt
     out["angles_deg"] = angles
     out["steady_mask"] = out["time"] >= settle_time
