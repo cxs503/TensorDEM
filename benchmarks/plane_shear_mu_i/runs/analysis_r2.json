@@ -1,0 +1,141 @@
+{
+ "case": "CASE-DEM-PLANE-SHEAR-MUIDI",
+ "round": 2,
+ "mission": "m16427",
+ "arm": "baseline",
+ "reference": {
+  "mu_s": 0.36,
+  "mu_2": 0.84,
+  "I_0": 0.3,
+  "phi_c": 0.58,
+  "phi_j": 0.64,
+  "source": "da Cruz et al. 2005 PRE 72:021309; GDR MiDi 2004 JFM 509:165"
+ },
+ "ref_constants_in_repo": {
+  "mu_s_mu_2_I_0": "tensordem.brash_ice_rheology.mu_i.LITERATURE_JOP = (0.36, 0.84, 0.30) -- anchored",
+  "phi_c_phi_j": "no in-repo anchor found (grep brash_ice_rheology.mu_i / granular_column.scaling); hand-copied -> PROVENANCE-UNVERIFIED"
+ },
+ "metric_defect": {
+  "phi_settled_spread": 0.0,
+  "phi_settled_unique_values": 1,
+  "plate_height_settled_unique_values": 1,
+  "phi_steady_spread": 0.0158761501385819,
+  "dilatancy_range": [
+   -0.025768920816378205,
+   0.003990197864844045
+  ],
+  "verdict": "round-1 phi metric is degenerate: the settled platen height is identical at every shear rate, so phi_bed_settled cannot carry an I-dependence"
+ },
+ "points": [
+  {
+   "I": 0.0010069592280999953,
+   "mu": 0.32945187944154625,
+   "ref_mu": 0.3616057450323656,
+   "mu_err_pct": -8.891967573120663,
+   "phi_steady": 0.5356173107715182,
+   "phi_settled": 0.5218150307023655,
+   "dilatancy": -0.025768920816378205,
+   "ref_phi": 0.5802007181290456,
+   "phi_steady_err_pct": -7.684135156070482,
+   "phi_settled_err_pct": -10.063015367329186,
+   "K_contacts": 4.021297457530498,
+   "wall_clock_s": 93.7995172496885
+  },
+  {
+   "I": 0.0030919454508580584,
+   "mu": 0.3289064973868583,
+   "ref_mu": 0.36489664551858736,
+   "mu_err_pct": -9.863107423358263,
+   "phi_steady": 0.5342023686883063,
+   "phi_settled": 0.5218150307023655,
+   "dilatancy": -0.023188474465878968,
+   "ref_phi": 0.5806120806898234,
+   "phi_steady_err_pct": -7.993239125575524,
+   "phi_settled_err_pct": -10.126735550800348,
+   "K_contacts": 3.7676802264529976,
+   "wall_clock_s": 59.594780469313264
+  },
+  {
+   "I": 0.010847434229938776,
+   "mu": 0.3850229137074961,
+   "ref_mu": 0.376750237759785,
+   "mu_err_pct": 2.1957984676802544,
+   "phi_steady": 0.5287157963760726,
+   "phi_settled": 0.5218150307023655,
+   "dilatancy": -0.013051937772630355,
+   "ref_phi": 0.5820937797199731,
+   "phi_steady_err_pct": -9.169997207250525,
+   "phi_settled_err_pct": -10.355504751589317,
+   "K_contacts": 3.6480165099747768,
+   "wall_clock_s": 38.356792990118265
+  },
+  {
+   "I": 0.034552263794651636,
+   "mu": 0.4073756765078135,
+   "ref_mu": 0.409573978168065,
+   "mu_err_pct": -0.5367288395820569,
+   "phi_steady": 0.5241095363400731,
+   "phi_settled": 0.5218150307023655,
+   "dilatancy": -0.004377912399248598,
+   "ref_phi": 0.5861967472710081,
+   "phi_steady_err_pct": -10.591531123292153,
+   "phi_settled_err_pct": -10.982953567785314,
+   "K_contacts": 3.498944405348346,
+   "wall_clock_s": 31.277985779568553
+  },
+  {
+   "I": 0.11793312941875463,
+   "mu": 0.4302482418419039,
+   "ref_mu": 0.49544727167173924,
+   "mu_err_pct": -13.159630410283752,
+   "phi_steady": 0.5231160452143909,
+   "phi_settled": 0.5218150307023655,
+   "dilatancy": -0.0024870476138661862,
+   "ref_phi": 0.5969309089589674,
+   "phi_steady_err_pct": -12.365729875390063,
+   "phi_settled_err_pct": -12.583680477796355,
+   "K_contacts": 3.3044217687074826,
+   "wall_clock_s": 29.60503295995295
+  },
+  {
+   "I": 0.3283239984277493,
+   "mu": 0.4915930657119066,
+   "ref_mu": 0.6108188763116955,
+   "mu_err_pct": -19.519012136577953,
+   "phi_steady": 0.5197411606329363,
+   "phi_settled": 0.5218150307023655,
+   "dilatancy": 0.003990197864844045,
+   "ref_phi": 0.6113523595389619,
+   "phi_steady_err_pct": -14.985007823493513,
+   "phi_settled_err_pct": -14.645781183231076,
+   "K_contacts": 3.047619047619048,
+   "wall_clock_s": 32.951611598953605
+  }
+ ],
+ "gates": {
+  "mu_within_10pct": false,
+  "mu_worst_err_pct": 19.519012136577953,
+  "mu_failing_points": [
+   0.11793312941875463,
+   0.3283239984277493
+  ],
+  "phi_steady_within_10pct": false,
+  "phi_steady_worst_err_pct": 14.985007823493513,
+  "phi_steady_failing_points": [
+   0.034552263794651636,
+   0.11793312941875463,
+   0.3283239984277493
+  ]
+ },
+ "direction": {
+  "dphi_steady_per_decade": -0.0065900888863795375,
+  "dphi_steady_per_decade_se": 0.0005827327395384156,
+  "dphi_settled_per_decade": 6.260984574892901e-17,
+  "dphi_settled_per_decade_se": 1.3289968252738093e-16,
+  "ref_implied_slope_per_decade_high_I": 0.042751980420949964,
+  "measured_sign": "falling",
+  "ref_sign": "rising (phi_j=0.64 > phi_c=0.58)",
+  "consistent_with_ref_direction": false,
+  "consistent_with_dilatancy": true
+ }
+}
