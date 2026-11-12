@@ -107,3 +107,94 @@ def test_case_runner_accepts_any_predeclared_id_and_rejects_unknown(tmp_path, ca
     assert mod.main(["--list-cases"]) == 0
     listed = capsys.readouterr().out.split()
     assert set(ids) <= set(listed)
+
+
+# ---------------------------------------------------------------------------
+# Round 3 (m16534): contact-friction *curve* grid.  The pre-registration
+# (MU_SWEEP x SWEEP_ASPECTS) is pinned here so that a silent edit of the grid
+# cannot masquerade as a new result, and the two post-hoc controls are checked
+# to be what they claim (doubled duration, labelled post-hoc).
+# ---------------------------------------------------------------------------
+def test_round3_grid_matches_preregistration():
+    mod = _bench()
+    specs = mod.wave3_cases(mod.BASE["mu_rolling"])
+    assert len(specs) == len(mod.MU_SWEEP) * len(mod.SWEEP_ASPECTS)
+    assert tuple(mod.MU_SWEEP) == (0.5, 0.6, 0.7, 0.8)
+    assert tuple(mod.SWEEP_ASPECTS) == (0.5, 1.0, 1.5, 2.0, 3.0)
+    seen = {(p["params"]["mu"], p["params"]["aspect_ratio"]) for p in specs}
+    assert seen == {(mu, a) for mu in mod.MU_SWEEP for a in mod.SWEEP_ASPECTS}
+    assert all(p["phase"] == "sweep_mu" for p in specs)
+    # nothing but mu and the aspect ratio may vary across the grid
+    fixed = [("mu_rolling", p["params"]["mu_rolling"]) for p in specs]
+    assert len(set(fixed)) == 1
+    for key in ("grains_per_radius", "dt_scale", "restitution", "kn", "radius"):
+        assert len({p["params"][key] for p in specs}) == 1, key
+
+
+def test_round3_controls_are_doubled_duration_and_labelled_post_hoc():
+    mod = _bench()
+    ctrl = mod.wave3_control_cases(mod.BASE["mu_rolling"])
+    assert len(ctrl) == 2
+    for c in ctrl:
+        assert c["phase"] == "sweep_mu_control"
+        assert c["params"]["duration_factor"] == 2 * mod.BASE["duration_factor"]
+        assert "post-hoc" in c["note"].lower()
+        # the control must differ from its sweep point *only* in the duration
+        sweep = {p["id"]: p["params"] for p in mod.wave3_cases(mod.BASE["mu_rolling"])}
+        twin = [p for pid, p in sweep.items()
+                if p["mu"] == c["params"]["mu"]
+                and p["aspect_ratio"] == c["params"]["aspect_ratio"]]
+        assert len(twin) == 1
+        diff = {k for k in c["params"] if c["params"][k] != twin[0][k]}
+        assert diff == {"duration_factor"}, diff
+
+
+def test_all_cases_union_has_unique_ids():
+    mod = _bench()
+    every = mod.all_cases(mod.BASE["mu_rolling"])
+    ids = [c["id"] for c in every]
+    assert len(ids) == len(set(ids))
+    phases = {c["phase"] for c in every}
+    assert {"control", "calibration", "validation", "sensitivity",
+            "sweep_mu", "sweep_mu_control"} <= phases
+
+
+def test_analysis_required_mu_interpolates_and_flags_extrapolation():
+    import importlib.util as ilu
+
+    path = _path.Path(__file__).resolve().parents[1] / "scripts" / "analyze_column_collapse_m16534.py"
+    spec = ilu.spec_from_file_location("_analyze_m16534", path)
+    mod = ilu.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(mod)
+
+    def row(mu, runout, ref=2.0, a=2.0):
+        return {"mu": mu, "runout_ratio_p995": runout,
+                "ref_runout_ratio": ref, "aspect": a}
+
+    # bracketed crossing: runout falls through the reference between 0.5 and 0.7
+    q = mod.required_mu([row(0.5, 2.4), row(0.7, 1.8)])
+    assert q["extrapolated"] is False
+    assert q["required_mu"] == pytest.approx(0.6333333, rel=1e-6)
+    # monotone increasing runout: crossing lies below the sampled range
+    q2 = mod.required_mu([row(0.6, 1.0), row(0.8, 1.5)])
+    assert q2["extrapolated"] is True and q2["required_mu"] > 0.8
+    # exact hit on a sampled level
+    q3 = mod.required_mu([row(0.5, 2.0), row(0.7, 2.5)])
+    assert q3["extrapolated"] is False
+    assert q3["required_mu"] == pytest.approx(0.5)
+
+
+def test_analysis_tilt_fit_recovers_known_slope():
+    import importlib.util as ilu
+
+    path = _path.Path(__file__).resolve().parents[1] / "scripts" / "analyze_column_collapse_m16534.py"
+    spec = ilu.spec_from_file_location("_analyze_m16534_tilt", path)
+    mod = ilu.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(mod)
+    rows = [{"aspect": a, "err_runout": -0.20 + 0.10 * a} for a in (0.5, 1.0, 1.5, 2.0, 3.0)]
+    fit = mod.tilt_fit(rows)
+    assert fit["slope_per_aspect"] == pytest.approx(0.10, rel=1e-9)
+    assert fit["intercept"] == pytest.approx(-0.20, rel=1e-9)
+    assert fit["rms_residual"] == pytest.approx(0.0, abs=1e-12)
