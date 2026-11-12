@@ -134,6 +134,25 @@ def candidates(token: str, doc: str) -> list[str]:
     doc_rel = posixpath.normpath(posixpath.join(posixpath.dirname(doc), token))
     if doc_rel not in out:
         out.append(doc_rel)
+    # Python modules are cited in docs by their *import path*, not by their repo
+    # path: ``tensordem/ice_creep.py`` and package-relative ``freeze_bond/__init__.py``
+    # both live under ``src/`` in this repository.  Without these candidates such
+    # a pointer resolves nowhere and is reported MISSING even though the module is
+    # tracked, which buries the *real* dangling pointers in false positives.
+    if root_rel.endswith(".py"):
+        for prefix in ("src/", "src/tensordem/"):
+            cand = posixpath.normpath(prefix + stripped)
+            if cand not in out:
+                out.append(cand)
+        # A module that was later promoted to a package keeps being cited by its
+        # old module path (``src/tensordem/freeze_bond.py`` now lives as
+        # ``src/tensordem/freeze_bond/__init__.py``).  The claim is still backed
+        # by tracked code, so resolve it through the package ``__init__``.
+        for base in list(out):
+            if base.endswith(".py") and not base.startswith(("/", "~")):
+                pkg_init = base[:-3] + "/__init__.py"
+                if pkg_init not in out:
+                    out.append(pkg_init)
     return out
 
 
