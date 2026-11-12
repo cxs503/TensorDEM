@@ -1,0 +1,87 @@
+{
+ "case": "CASE-DEM-SHEAR-CAMPBELL-ELASTIC-LIMIT",
+ "round": "R2 (concentration route)",
+ "written_before_any_point": true,
+ "utc": "2026-11-12T16:56:56Z",
+ "anchor_sha256": "2d817a4809d977e1bbc64851d0eab60ed493657e5df929063478d542b9ceda22",
+ "apparatus": {
+  "kernel": "tensordem.elastic_limit_shear (Lees-Edwards SLLOD, 2-D disks)",
+  "kn": 10000.0,
+  "n_particles": 400,
+  "dt_factor": 0.004,
+  "strain_total": 1.4,
+  "strain_average_from": 0.7,
+  "seed": 20261112,
+  "friction": 0.5,
+  "restitution": 0.7,
+  "size_ratio": 1.4,
+  "gates": "unchanged from round 1 (energy/overlap/steady/coordination/pressure_positive/finite); rejection is reported, never overwritten"
+ },
+ "sweeps": {
+  "phi_map": {
+   "phis": [
+    0.8,
+    0.79,
+    0.78,
+    0.77,
+    0.76,
+    0.75,
+    0.74,
+    0.73,
+    0.72,
+    0.71,
+    0.7,
+    0.69,
+    0.68,
+    0.67,
+    0.66,
+    0.65,
+    0.64
+   ],
+   "gamma_dot": 1.0,
+   "note": "0.01 spacing so that a 2 % (0.02) window is exactly two grid steps"
+  },
+  "rate_ladder": {
+   "phis": [
+    0.8,
+    0.76,
+    0.7
+   ],
+   "gamma_dots": [
+    0.5,
+    1.0,
+    2.0
+   ]
+  }
+ },
+ "predictions": [
+  {
+   "id": "P1",
+   "statement": "Reducing the concentration by 2 % (absolute) drops the shear stress by nearly 3 orders of magnitude (Campbell 2002 abstract).",
+   "metric": "R2 = max_i tau(phi_i) / tau(phi_i - 0.02) over the phi map, gated points only; tau = |mean sampled shear stress|",
+   "pass_rule": "PASS if R2 >= 100 (within one decade of the quoted 1e3); PARTIAL if 10 <= R2 < 100; NOT_SUPPORTED if R2 < 10",
+   "note": "order-of-magnitude agreement is the honest target: the quoted 'nearly three orders' is not a number we can reproduce exactly in a 2-D frictional cell"
+  },
+  {
+   "id": "P2",
+   "statement": "There is no path from quasi-static to inertial flow by varying the shear rate at fixed concentration: the shear rate exponent n stays small (elastic scaling) at every concentration on the map.",
+   "metric": "n(phi) = d ln tau / d ln gamma_dot from the 3-point rate ladder (gamma_dot = 0.5, 1, 2) at phi in {0.80, 0.76, 0.70}",
+   "pass_rule": "PASS if max_phi n(phi) <= 0.6 (the inertial/Bagnold value is n = 2); NOT_SUPPORTED if any n(phi) >= 1.2"
+  },
+  {
+   "id": "P3",
+   "statement": "The elastic -> purely inertial transition is a switch from contact-borne to collision-borne stress: the kinetic share of the shear stress rises as the concentration falls.",
+   "metric": "kinetic_stress_share(phi) = mean|tau_kin| / (mean|tau_kin| + mean|tau_contact|), same samples",
+   "pass_rule": "PASS if Spearman(phi, share) <= -0.8 AND share >= 0.5 at the lowest phi measured; PARTIAL if monotone but share stays < 0.5"
+  }
+ ],
+ "controls": {
+  "seed_twin": "at the two phi values bracketing the steepest 2 % drop, one extra point with seed + 1",
+  "strain_twin": "at the same two phi values, strain_total x 2 (2.8) with the averaging window shifted to 1.4 -> 2.8, to rule out a transient masquerading as a transition"
+ },
+ "honesty_rules": [
+  "gate-rejected points are reported with their gate flags and are excluded from the fits; they are never re-labelled as PASS",
+  "no parameter is retuned after seeing the verdicts",
+  "if a control contradicts a fitted number, the fitted number is withdrawn"
+ ]
+}

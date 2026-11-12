@@ -599,6 +599,12 @@ def simulate_plane_shear(case: ElasticLimitShearCase,
     z_samples: List[float] = []
     t_samples: List[float] = []
     kin_frac: List[float] = []
+    # kinetic / contact decomposition of the stress (Campbell 2002 relies on the
+    # distinction: 'elastic' = contact-borne, 'purely inertial' = collision-borne)
+    tau_kin_s: List[float] = []
+    tau_contact_s: List[float] = []
+    p_kin_s: List[float] = []
+    p_contact_s: List[float] = []
     overlap_max = 0.0
     overlap_sum = 0.0
     overlap_n = 0
@@ -709,6 +715,10 @@ def simulate_plane_shear(case: ElasticLimitShearCase,
             z_samples.append(z)
             tau_samples.append(tau)
             p_samples.append(press)
+            tau_kin_s.append(-kin_xy2 / area)          # kinetic (peculiar-velocity) xy
+            tau_contact_s.append(-sxy_p2 / area)      # contact virial xy
+            p_kin_s.append(kin_22 / (2.0 * area))
+            p_contact_s.append(p_pair2 / (2.0 * area))
             t_samples.append(kin_22 / (2.0 * n))
             kin_frac.append(abs(kin_xy2) / max(abs(sxy2), 1e-30))
             if np.any(touch):
@@ -738,6 +748,17 @@ def simulate_plane_shear(case: ElasticLimitShearCase,
     p_mean = float(np.mean(p_samples)) if p_samples else float("nan")
     z_mean = float(np.mean(z_samples)) if z_samples else float("nan")
     tt_mean = float(np.mean(t_samples)) if t_samples else float("nan")
+    # additive decomposition: tau = tau_kinetic + tau_contact (exact, same samples)
+    tau_kin_mean = float(np.mean(tau_kin_s)) if tau_kin_s else float("nan")
+    tau_contact_mean = float(np.mean(tau_contact_s)) if tau_contact_s else float("nan")
+    p_kin_mean = float(np.mean(p_kin_s)) if p_kin_s else float("nan")
+    p_contact_mean = float(np.mean(p_contact_s)) if p_contact_s else float("nan")
+    if tau_kin_s:
+        kin_abs = float(np.mean(np.abs(tau_kin_s)))
+        con_abs = float(np.mean(np.abs(tau_contact_s)))
+        kin_share = kin_abs / (kin_abs + con_abs) if (kin_abs + con_abs) > 0 else float("nan")
+    else:
+        kin_share = float("nan")
     arr = np.asarray(tau_samples, dtype=float)
     if arr.size >= 4:
         half = arr.size // 2
@@ -780,6 +801,11 @@ def simulate_plane_shear(case: ElasticLimitShearCase,
         "max_overlap_ratio": overlap_max,
         "mean_overlap_ratio": (overlap_sum / overlap_n) if overlap_n else 0.0,
         "kinetic_stress_fraction": float(np.mean(kin_frac)) if kin_frac else float("nan"),
+        "tau_kinetic": tau_kin_mean,
+        "tau_contact": tau_contact_mean,
+        "pressure_kinetic": p_kin_mean,
+        "pressure_contact": p_contact_mean,
+        "kinetic_stress_share": kin_share,
         "steady_drift_tau": drift,
         "energy": {
             "work": work,
