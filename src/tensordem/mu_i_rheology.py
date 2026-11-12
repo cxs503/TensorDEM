@@ -465,6 +465,33 @@ class ServoShearCase:
         return 2.0 * self.radius
 
     @property
+    def kappa(self):
+        """Campbell stiffness number ``k_n/(rho d^3 gdot^2)`` of this shear point.
+
+        ``None`` before a shear rate is imposed (a static box has no kappa).
+        """
+        if not self.shear_rate > 0.0:
+            return None
+        from .elastic_limit_shear import kappa_of
+        return kappa_of(self.kn, self.density, self.particle_diameter, self.shear_rate)
+
+    @property
+    def elastic_limit_regime(self):
+        """Where this device sits on Campbell's stiffness-number map.
+
+        A rate-independent (mu(I)) reading of the measured stress is only valid
+        in the ``elastic-quasi-static`` band; at finite stiffness the friction
+        coefficient keeps a shear-rate dependence and the measurement must be
+        reported with its kappa.  This is a diagnostic, it does not change the
+        integration.
+        """
+        kappa = self.kappa
+        if kappa is None:
+            return None
+        from .elastic_limit_shear import elastic_limit_regime
+        return elastic_limit_regime(kappa)
+
+    @property
     def area(self) -> float:
         return self.box_width * self.box_depth
 
@@ -776,6 +803,12 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
         "settle_pressure_pa": p_settle,
         "max_velocity": float(np.abs(vel).max()),
     }
+    # stiffness-number diagnostic (Campbell 2002 elastic limit): a mu(I)
+    # (rate-independent) reading is only licensed in the quasi-static band.
+    regime = case.elastic_limit_regime
+    if regime is not None:
+        result["kappa"] = regime["kappa"]
+        result["elastic_limit"] = regime
     if return_series:
         result["series"] = series
     return result
