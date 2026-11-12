@@ -26,6 +26,8 @@ from typing import Optional
 
 import torch
 
+from .hull_mesh_contact_signed import is_watertight, ray_parity_inside
+
 
 # ---------------------------------------------------------------------------
 # Mesh I/O
@@ -294,6 +296,7 @@ def mesh_contact_forces(
     stiffness: float = 1e4,
     damping: float = 0.0,
     cell_width: Optional[float] = None,
+    closed_surface: bool = False,
 ) -> tuple[torch.Tensor, torch.Tensor]:
     """Compute penalty contact forces between spheres and a triangle mesh.
 
@@ -309,6 +312,12 @@ def mesh_contact_forces(
     stiffness   : penalty spring constant (N/m)
     damping     : viscous damping coefficient (N·s/m)
     cell_width  : spatial hash cell width; defaults to 4 × max(particle_radius)
+    closed_surface : if True, the mesh is a closed (watertight) hull surface and
+        the overlap is measured with the **signed** distance: a sphere centre
+        that has crossed the surface is pushed back *out* instead of being
+        pulled in, and it keeps a restoring force at any penetration depth.
+        Requires an edge-manifold closed mesh (checked, ``ValueError`` otherwise).
+        Default False reproduces the historical one-sided behaviour bit for bit.
 
     Returns
     -------
@@ -348,6 +357,12 @@ def mesh_contact_forces(
     else:
         radii = torch.full((N,), float(particle_radius), dtype=dtype, device=device)
 
+    if closed_surface:
+        if not is_watertight(verts, faces):
+            raise ValueError("closed_surface=True requires a watertight "
+                             "(closed, edge-manifold) mesh: inside/outside is "
+                             "undefined for an open surface")
+
     max_r = float(radii.max().item()) + float(hull_radius)
 
     # Broad phase: spatial hash
@@ -381,7 +396,17 @@ def mesh_contact_forces(
             continue
         # Contact normal (from closest point to sphere centre)
         delta_i = delta[min_idx]
-        if d_min > 1e-15:
+        inside = False
+        if closed_surface:
+            inside = bool(ray_parity_inside(p[i:i + 1], verts, faces)[0].item())
+            if inside:
+                # Signed distance: the centre is behind the surface, so the
+                # outward penetration is contact_r + d_min and the outward
+                # normal is (closest - centre) / d_min.
+                overlap = contact_r + d_min
+        if inside and d_min > 1e-15:
+            normal = -delta_i / d_min
+        elif d_min > 1e-15:
             normal = delta_i / d_min
         else:
             # Degenerate: sphere centre on triangle – use triangle normal
