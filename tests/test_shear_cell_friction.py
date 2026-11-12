@@ -28,10 +28,14 @@ from dataclasses import replace
 
 import pytest
 
+import ast
+import pathlib
+
 from tensordem.shear_cell import (
     ShearCellCase,
     _fit_mohr_coulomb,
     _validity_gate,
+    inertial_number,
     measure_macro_friction,
     prepare_bed,
     simulate_shear_cell,
@@ -162,3 +166,57 @@ def test_every_stress_level_starts_from_the_same_prepared_bed():
     # reusing the bed must not mutate it
     assert bed["pos"].shape == (a["n_particles"], 3)
     assert a["normal_stress_measured"] != b["normal_stress_measured"]
+
+# --------------------------------- inertial-number bookkeeping (m16114)
+def test_inertial_number_matches_the_published_definition():
+    # I = gamma_dot * d * sqrt(rho / sigma); hand-checked value
+    got = inertial_number(1.68, 0.005, 2500.0, 2000.0)
+    assert got == pytest.approx(1.68 * 0.01 / math.sqrt(2000.0 / 2500.0), rel=1e-12)
+    # scaling: I ~ 1/sqrt(sigma) at fixed rate
+    assert inertial_number(1.0, 0.005, 2500.0, 8000.0) == pytest.approx(
+        inertial_number(1.0, 0.005, 2500.0, 2000.0) / 2.0, rel=1e-12)
+    # undefined inputs must not manufacture a number
+    for bad in (dict(shear_rate=0.0), dict(normal_stress=0.0),
+                dict(density=0.0), dict(radius=0.0),
+                dict(normal_stress=-5.0)):
+        kw = dict(shear_rate=1.0, radius=0.005, density=2500.0, normal_stress=800.0)
+        kw.update(bad)
+        assert math.isnan(inertial_number(**kw)), bad
+
+
+def test_result_reports_measured_not_nominal_inertial_number():
+    """Regression for the duplicate-dict-key defect (m16114).
+
+    ``simulate_shear_cell`` used to end its result dict with a *second*
+    ``"inertial_number"`` entry built from the nominal fill height and the
+    *target* stress, so the measured-bed-height value (m14840) was silently
+    overwritten.  Both numbers must now be exposed under distinct keys and the
+    primary key must agree with its own definition.
+    """
+    case = _tiny_case()
+    out = simulate_shear_cell(case, bed=prepare_bed(case))
+    assert "inertial_number_nominal" in out
+    assert out["inertial_number_nominal"] == pytest.approx(
+        inertial_number(case.shear_rate, case.radius, case.density,
+                        case.normal_stress), rel=1e-12)
+    if out["normal_stress_measured"] > 0 and out["bed_height_mean"] > 0:
+        assert out["inertial_number"] == pytest.approx(
+            inertial_number(out["shear_rate_actual"], case.radius, case.density,
+                            out["normal_stress_measured"]), rel=1e-12)
+        # compaction makes the actual rate >= the nominal one
+        assert out["shear_rate_actual"] >= out["shear_rate"] * 0.999
+
+
+def test_simulate_shear_cell_result_dict_has_no_duplicate_keys():
+    """Structural gate: a duplicate literal key silently drops a physics fix."""
+    src = pathlib.Path(__file__).resolve().parents[1] / "src" / "tensordem" / "shear_cell.py"
+    tree = ast.parse(src.read_text())
+    fn = next(n for n in ast.walk(tree)
+              if isinstance(n, ast.FunctionDef) and n.name == "simulate_shear_cell")
+    returned = [n.value for n in ast.walk(fn)
+                if isinstance(n, ast.Return) and isinstance(n.value, ast.Dict)]
+    assert returned, "simulate_shear_cell must return a dict literal"
+    for d in returned:
+        keys = [k.value for k in d.keys if isinstance(k, ast.Constant)]
+        assert len(keys) == len(set(keys)), sorted(
+            {k for k in keys if keys.count(k) > 1})
