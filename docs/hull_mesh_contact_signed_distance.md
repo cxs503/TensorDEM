@@ -39,11 +39,11 @@ references that never touch the triangle kernel. Force is scored against
 | classifier, sphere (n=1200) | analytic containment | mismatch 1 | **no** |
 | classifier, capped cylinder (n=1200) | analytic containment | mismatch 0 | yes |
 | classifier, Wigley hull (n=1000) | analytic containment | mismatch 0 | yes |
-| signed distance, Wigley (n=6) | parametric minimisation | max 100.00 %, mean 30.11 % | **no** |
-| force, cylinder inside 0.25–3R (max) | k(R+δ) | 100.00 % | **no** |
-| force, Wigley inside 0.25–2R (max) | k(R+δ), analytic foot | 100.00 % | **no** |
+| signed distance, Wigley (n=6) | parametric minimisation | max 53.88 %, mean 13.46 % | **no** |
+| force, cylinder inside 0.25–3R (max) | k(R+δ) | 0.89 % | yes |
+| force, Wigley inside 0.25–2R (max) | k(R+δ), analytic foot | 53.88 % | **no** |
 | direction, Wigley inside (min cos) | outward normal at analytic foot | -0.99999 | **no** |
-| direction, cylinder inside (min cos) | outward radial | 0.00000 | yes |
+| direction, cylinder inside (min cos) | outward radial | 0.99880 | yes |
 | baseline reversal (control) | outward force must be > 0 | 37515 N (outward cos -1.00) | **no** (defect) |
 
 ## 4. Figures
