@@ -37,6 +37,7 @@ from .ice_bond_viscoelastic import (
 
 from .buoyancy_wet3d import submerged_fraction_sphere_tensor
 from . import hertz_mindlin
+from . import mindlin_partial_slip
 
 
 # --------------------------------------------------------------------------
@@ -198,6 +199,20 @@ class DEM3DConfig:
     #   F = max(k*delta - c*delta_dot, 0) whose reference solution is
     #   tensordem.restitution.unilateral_restitution(c, k, m_eff).
     contact_damping_model: str = "restitution"  # "restitution" | "absolute"
+    # --- Opt-in tangential constitutive law ---
+    # "cundall_strack" (default, bit-for-bit legacy): linear spring
+    #   F_t = k_t delta_t saturated at mu F_n, so the whole pre-slip branch is a
+    #   straight line up to the Coulomb clamp.
+    # "mindlin_partial_slip": the Mindlin & Deresiewicz (1953) micro-slip law
+    #   F_t = mu F_n [1 - (1 - delta/delta_s)^{3/2}] with delta_s = 3 mu F_n/(2 k_t)
+    #   (tensordem.mindlin_partial_slip).  It replaces the *branch shape* only:
+    #   the Coulomb cap mu F_n, the cone regularizations and the damping terms
+    #   are unchanged.  Requires contact_model="hertz" (the law needs the Hertz
+    #   contact radius a = sqrt(R* delta) through k_t = 8 G* a) and
+    #   friction_regularization="none" (a static/dynamic cone would make the
+    #   envelope's asymptote differ from the mu used in delta_s).
+    # A separated contact still loses its history in both models.
+    tangential_model: str = "cundall_strack"  # "cundall_strack" | "mindlin_partial_slip"
     # --- Opt-in body forces: gravity + Archimedes buoyancy ---
     # Both are OFF by default (gravity = 0, water_level = None), so every
     # pre-existing DEM3D trajectory is bit-for-bit unchanged.  Vertical axis is
@@ -319,6 +334,20 @@ class DEM3DConfig:
         if self.contact_damping_model not in ("restitution", "absolute"):
             raise ValueError(
                 "contact_damping_model must be 'restitution' or 'absolute'")
+        if self.tangential_model not in ("cundall_strack", "mindlin_partial_slip"):
+            raise ValueError(
+                "tangential_model must be 'cundall_strack' or 'mindlin_partial_slip'")
+        if self.tangential_model == "mindlin_partial_slip":
+            if self.contact_model != "hertz":
+                raise ValueError(
+                    "tangential_model='mindlin_partial_slip' requires "
+                    "contact_model='hertz' (the law is parameterised by the Hertz "
+                    "contact radius)")
+            if self.friction_regularization != "none":
+                raise ValueError(
+                    "tangential_model='mindlin_partial_slip' requires "
+                    "friction_regularization='none' (the partial-slip envelope "
+                    "asymptotes to the single mu used in delta_s)")
         if (self.contact_damping_model == "absolute"
                 and self.restitution_coefficient < 1.0):
             raise ValueError(
@@ -1162,6 +1191,22 @@ class IceDEM3D:
         if update_history:
             tang_disp = tang_disp + v_tangent * self.dt
             tang_disp = torch.where(mask[:, None], tang_disp, torch.zeros_like(tang_disp))
+        if cfg.tangential_model == "mindlin_partial_slip":
+            # Mindlin & Deresiewicz (1953) branch against a rigid plane: the
+            # no-slip stiffness is k_t = 8 G*_rigid a with the rigid-counterpart
+            # reduced moduli, so delta_s = 3 mu N / (2 k_t) follows the same
+            # closed form as the particle-particle branch.
+            e_star_rigid, r_eff_rigid = self._hertz_rigid_params
+            g_star_rigid = hertz_mindlin.hertz_reduced_shear_modulus(
+                cfg.young_modulus, cfg.poisson_ratio, rigid_counterpart=True)
+            k_t0 = mindlin_partial_slip.mindlin_no_slip_stiffness(
+                normal_mag, e_star_rigid, g_star_rigid, r_eff_rigid)
+            delta_mag = torch.linalg.vector_norm(tang_disp, dim=1)
+            mag = mindlin_partial_slip.partial_slip_magnitude(
+                delta_mag, normal_mag, cfg.platen_friction_coefficient, k_t0)
+            unit = tang_disp / delta_mag.clamp_min(eps).unsqueeze(1)
+            return -mag.unsqueeze(1) * unit, tang_disp
+
         # The offset is the particle's own tangential travel relative to the plane
         # (the plane does not translate tangentially), so the spring pulls the
         # particle back towards its anchor: F = -k_t * delta, saturated at mu*N.
@@ -1388,19 +1433,26 @@ class IceDEM3D:
                         k_t = torch.full_like(
                             overlap, cfg.effective_tangential_stiffness)
 
-                    F_t_raw = k_t[:, None] * tang_disp
-                    F_t_mag = torch.linalg.vector_norm(F_t_raw, dim=1)
-                    F_limit = self.friction_cone_limit(
-                        F_t_mag, contact_mag,
-                        torch.linalg.vector_norm(v_tangent, dim=1))
+                    if cfg.tangential_model == "mindlin_partial_slip":
+                        # Mindlin & Deresiewicz (1953) micro-slip branch:
+                        # F_t = mu F_n [1 - (1 - delta/delta_s)^{3/2}] along delta.
+                        # The Coulomb cap is the asymptote of the law itself.
+                        F_t, _slip_ratio = mindlin_partial_slip.partial_slip_force(
+                            tang_disp, contact_mag, cfg.friction_coefficient, k_t)
+                    else:
+                        F_t_raw = k_t[:, None] * tang_disp
+                        F_t_mag = torch.linalg.vector_norm(F_t_raw, dim=1)
+                        F_limit = self.friction_cone_limit(
+                            F_t_mag, contact_mag,
+                            torch.linalg.vector_norm(v_tangent, dim=1))
 
-                    # Coulomb saturation
-                    scale = torch.where(
-                        F_t_mag > F_limit,
-                        F_limit / F_t_mag.clamp_min(1e-15),
-                        torch.ones_like(F_t_mag),
-                    )
-                    F_t = F_t_raw * scale[:, None]
+                        # Coulomb saturation
+                        scale = torch.where(
+                            F_t_mag > F_limit,
+                            F_limit / F_t_mag.clamp_min(1e-15),
+                            torch.ones_like(F_t_mag),
+                        )
+                        F_t = F_t_raw * scale[:, None]
 
                     # Power delivered to the particles by the friction force
                     # (force on i is F_t, on j is -F_t): P = F_t . (v_i - v_j).
@@ -1417,7 +1469,13 @@ class IceDEM3D:
                     # Update tangential state (step owner only).
                     # Project onto friction cone: delta_t <- F_t / k_t
                     if update_history:
-                        tang_disp_next = F_t / k_t[:, None]
+                        if cfg.tangential_model == "mindlin_partial_slip":
+                            # delta itself is the state: the force is an explicit
+                            # function of it, so the accumulated slip is kept
+                            # (no cone projection -- gross slip grows delta).
+                            tang_disp_next = tang_disp
+                        else:
+                            tang_disp_next = F_t / k_t[:, None]
                         self._update_tangential_state(ci, cj, cnormal, tang_disp_next)
 
                 # --- SIR-PC2|F05: Rolling resistance torque ---
