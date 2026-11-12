@@ -1,0 +1,24 @@
+{
+  "case": "CASE-DEM-PLANE-SHEAR-MUIDI",
+  "round": 6,
+  "mission": 16758,
+  "device": "tensordem.mu_i_rheology.simulate_servo_shear (bulk_stress=True)",
+  "points": {
+    "arm": "baseline",
+    "I_target": [
+      0.01,
+      0.03,
+      0.1,
+      0.3
+    ],
+    "kn": 62500.0,
+    "normal_stress_pa": 62500.0,
+    "seed": 5279
+  },
+  "hypotheses": {
+    "P1_estimator_validity": "|p_bulk/P_applied - 1| <= 0.30 (tail window)",
+    "P2_wall_vs_bulk": "|mu_bulk/mu_wall - 1| <= 0.15",
+    "P3_no_localisation": "|gamma_dot_measured/gamma_dot_imposed - 1| <= 0.15"
+  },
+  "falsification": "any |mu_bulk - mu_ref| <= 10 % would overturn the R5 verdict that the mu(I) point is WITHHELD at I >= 0.1"
+}
