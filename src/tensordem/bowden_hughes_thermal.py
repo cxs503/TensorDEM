@@ -30,6 +30,19 @@ Key equations (Bowden-Hughes):
 3. Melt film thickness: h = q_melt / (L_f * ρ_water * V_melt)
 4. Viscous friction: μ_film = η * V / (h * σ)
 
+Known limitations (measured, see docs/AUDIT_BOWDEN_HUGHES_THERMAL_m16736.md):
+- The returned friction coefficient is *not* used to generate the heat:
+  ``heat_flux_total`` is always ``asperity_friction * sigma * V``, so the
+  state violates its own energy identity whenever film friction is active.
+  ``energy_conservation_check`` only re-checks the internal split and is
+  therefore true by construction; use :func:`closure_residual` for the
+  physical closure ``q = mu * sigma * V``.
+- ``contact_time`` (default 120 s) sets the conduction depth while the film
+  thickness uses the residence time ``contact_radius / velocity``; the two
+  time scales differ by up to 5 decades, which makes the melting branch
+  energetically dominant but mechanically invisible (``film_area_fraction``
+  ~1e-4) and keeps ``regime`` at "boundary" for every V in 1e-4..1e2 m/s.
+
 References:
 - Bowden & Hughes (1950) "The mechanism of friction on ice"
 - Evans et al. (1982) "Friction and melting of ice"
@@ -49,6 +62,7 @@ __all__ = [
     "compute_bowden_hughes_equilibrium",
     "compute_mu_velocity_curve",
     "energy_conservation_check",
+    "closure_residual",
 ]
 
 
@@ -481,3 +495,26 @@ def energy_conservation_check(result: BowdenHughesResult, tolerance: float = 0.0
     
     residual = abs(q_total - q_sum) / q_total
     return residual <= tolerance
+
+
+def closure_residual(result: BowdenHughesResult) -> float:
+    """Relative residual of the physical energy closure ``q = mu * sigma * V``.
+
+    ``energy_conservation_check`` verifies ``q_ice + q_steel + q_melt ==
+    q_total``, an identity that holds by construction.  The closure that can
+    *fail* is between the returned friction coefficient and the heat flux the
+    solver used: the equilibrium state is only self-consistent if the heat it
+    reports is the heat its own friction generates.
+
+    Args:
+        result: BowdenHughesResult to check.
+
+    Returns:
+        ``|mu_total * sigma * V - q_total| / q_total`` (0 for a self-consistent
+        state, 0 for a zero-flux state).
+    """
+    q_total = result.heat_flux_total
+    if q_total == 0:
+        return 0.0
+    q_from_mu = result.friction_coefficient * result.normal_stress * result.velocity
+    return abs(q_from_mu - q_total) / q_total
