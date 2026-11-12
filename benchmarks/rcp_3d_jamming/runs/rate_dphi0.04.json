@@ -1,0 +1,128 @@
+{
+ "n": 500,
+ "seed": 1,
+ "method": "fire",
+ "dphi": 0.01,
+ "force_tol": 1e-05,
+ "polydispersity": 1.0,
+ "placement_phi": 0.3,
+ "box": 19.112277960443443,
+ "mean_radius": 1.3200061217959116,
+ "rows": [
+  {
+   "volume_fraction": 0.33000000000000007,
+   "pressure": 2.8223840883123195e-10,
+   "coordination": 0.004,
+   "energy": 4.098883280151092e-12,
+   "max_overlap_over_diameter": 1.3868203832174951e-06,
+   "max_force": 2.863174210609998e-06,
+   "minimiser": "fire",
+   "steps": 279,
+   "converged": true
+  },
+  {
+   "volume_fraction": 0.37000000000000005,
+   "pressure": 0.0,
+   "coordination": 0.0,
+   "energy": 0.0,
+   "max_overlap_over_diameter": 0.0,
+   "max_force": 0.0,
+   "minimiser": "fire",
+   "steps": 250,
+   "converged": true
+  },
+  {
+   "volume_fraction": 0.4100000000000002,
+   "pressure": 1.516470049734327e-09,
+   "coordination": 0.012,
+   "energy": 5.002003173525519e-11,
+   "max_overlap_over_diameter": 4.167390690794479e-06,
+   "max_force": 9.249432348479303e-06,
+   "minimiser": "fire",
+   "steps": 417,
+   "converged": true
+  },
+  {
+   "volume_fraction": 0.44999999999999984,
+   "pressure": 0.0,
+   "coordination": 0.0,
+   "energy": 0.0,
+   "max_overlap_over_diameter": 0.0,
+   "max_force": 0.0,
+   "minimiser": "fire",
+   "steps": 387,
+   "converged": true
+  },
+  {
+   "volume_fraction": 0.48999999999999977,
+   "pressure": 1.4579323612547616e-09,
+   "coordination": 0.008,
+   "energy": 4.5890971744666795e-11,
+   "max_overlap_over_diameter": 3.5877081299647965e-06,
+   "max_force": 8.450298341511342e-06,
+   "minimiser": "fire",
+   "steps": 488,
+   "converged": true
+  },
+  {
+   "volume_fraction": 0.5300000000000001,
+   "pressure": 5.396832753177043e-09,
+   "coordination": 0.036,
+   "energy": 1.8583711116879015e-10,
+   "max_overlap_over_diameter": 4.6699836001412275e-06,
+   "max_force": 9.206487188606616e-06,
+   "minimiser": "fire",
+   "steps": 680,
+   "converged": true
+  },
+  {
+   "volume_fraction": 0.5699999999999998,
+   "pressure": 1.6927841743834993e-08,
+   "coordination": 0.216,
+   "energy": 3.3245875518918483e-10,
+   "max_overlap_over_diameter": 3.4195894280073273e-06,
+   "max_force": 9.909494862963732e-06,
+   "minimiser": "fire",
+   "steps": 1036,
+   "converged": true
+  },
+  {
+   "volume_fraction": 0.6099999999999995,
+   "pressure": 6.769311826109364e-07,
+   "coordination": 2.952,
+   "energy": 3.199194391629728e-08,
+   "max_overlap_over_diameter": 1.1108930442781669e-05,
+   "max_force": 9.533149221393876e-06,
+   "minimiser": "fire",
+   "steps": 4783,
+   "converged": true
+  },
+  {
+   "volume_fraction": 0.6500000000000006,
+   "pressure": 0.0024315111079214156,
+   "coordination": 6.924,
+   "energy": 0.17276104881930446,
+   "max_overlap_over_diameter": 0.020153713164641904,
+   "max_force": 9.970340304242518e-06,
+   "minimiser": "fire",
+   "steps": 14676,
+   "converged": true
+  },
+  {
+   "volume_fraction": 0.6899999999999996,
+   "pressure": 0.010716399066732692,
+   "coordination": 8.056,
+   "energy": 2.6874613694934846,
+   "max_overlap_over_diameter": 0.07240353035180054,
+   "max_force": 9.703756568327611e-06,
+   "minimiser": "fire",
+   "steps": 9553,
+   "converged": true
+  }
+ ],
+ "minimiser_steps": 32549,
+ "rejected_steps": 192,
+ "tag": "rate_dphi0.04",
+ "arm": "rate",
+ "wall_time_s": 23.754562377929688
+}
