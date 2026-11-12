@@ -606,8 +606,10 @@ class DEMSystem3D:
         self.dissipated += diss
         return force_a, force_b, spring, diss, torque_a, torque_b, depth
 
-    def _apply_wall(self, index: int, wall: Wall, body: FloeBody):
-        vertices = body.world_vertices()
+    def _apply_wall(self, index: int, wall: Wall, body: FloeBody,
+                    vertices: Optional[np.ndarray] = None):
+        if vertices is None:
+            vertices = body.world_vertices()
         hit = wall_contact(vertices, wall.normal, wall.offset)
         if hit is None:
             self.wall_friction_state.pop((index, id(wall)), None)
@@ -681,10 +683,16 @@ class DEMSystem3D:
         self.max_spin = 200.0
         self.safety_clamps = 0
 
-        if len(bodies) > 1:
+        # World-frame geometry is built *once* per step and shared by the pair
+        # SAT tests and the wall tests: ``world_vertices`` used to be recomputed
+        # inside every ``_apply_wall`` call (n_bodies x n_walls times per step),
+        # which was the single largest cost of a step for wall-bounded cases.
+        world = None
+        if len(bodies) > 1 or self.walls:
             world = [(b.world_vertices(), b.world_normals(), b.world_edges(),
                       None if b.shape.extrusion_axis is None
                       else b.rotation @ b.shape.extrusion_axis) for b in bodies]
+        if len(bodies) > 1:
             for (i, j) in self._broad_phase(np.zeros(len(bodies))):
                 va, na, ea, xa = world[i]
                 vb, nb, eb, xb = world[j]
@@ -707,8 +715,17 @@ class DEMSystem3D:
                 self.n_pair_contacts += 1
 
         for index, body in enumerate(bodies):
+            vertices = world[index][0] if world is not None else body.world_vertices()
             for wall in self.walls:
-                result = self._apply_wall(index, wall, body)
+                # wall broad phase: a half-space cannot touch a body whose bounding
+                # sphere stays on the inside (``min_v n.v >= n.c - R_b``).  The
+                # friction accumulator is dropped on the skip exactly as it is on
+                # a "tested but not penetrating" wall, so no stale tangential
+                # spring can be revived when the body comes back.
+                if float(wall.normal @ body.position) - body.shape.bounding_radius >= wall.offset:
+                    self.wall_friction_state.pop((index, id(wall)), None)
+                    continue
+                result = self._apply_wall(index, wall, body, vertices)
                 if result is None:
                     continue
                 force, torque, spring, depth = result
