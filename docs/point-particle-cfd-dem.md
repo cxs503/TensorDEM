@@ -136,6 +136,17 @@ momentum on a grid of the order of its own size:
    represented by the container-frame constraint instead.
 7. Velocity field is collocated and spectral: no walls, so wall-bounded
    point-particle coupling (e.g. a ship hull boundary layer) is out of scope.
+8. **Gate 1 is an unbounded-surrogate gate.** With periodic boundaries the
+   images form a simple cubic array whose physical drag enhancement is the
+   Hasimoto (1959) value `1.7601 phi^(1/3) + phi` -- 4.43 % at `L = 32 d`, not
+   the 0.3 % previously quoted in the `verification.py` docstring. The
+   `self_response` correction removes a *grid-scale* self-field that is 12.7x
+   that physical effect at the gate grid (`C R = 0.563` vs `C_H = 0.044`) and
+   that scales like `1/h` and with the particle's sub-grid position, so it
+   cannot be read as "removing the finite-domain effect". Fully developed runs
+   (`t = 6 L^2/nu`, `L = 8 d`) land at `0.911 v_t` (module mode) and
+   `1.242 v_t` (uncorrected), i.e. 7.4 % / 46 % away from the array solution.
+   See `docs/POINT_CFD_DEM_HASIMOTO_ARRAY_AUDIT.md`.
 
 ## 5. Error assessment versus the requirement
 
