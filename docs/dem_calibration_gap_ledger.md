@@ -267,3 +267,38 @@ PYTHONPATH=src python scripts/m5052_clump_rolling_calibration.py --figures-only
 * **Audit pointer:** `scripts/run_coarse_graining_campaign.py` consumed this module's
   `friction_angle_deg`/`r_squared`; that path could never have executed before this milestone, so
   any shear-box numbers attributed to it lack evidence and should be traced.
+
+## selfstart write-back (legacy propeller-ice milling module, IN27-S4)
+
+* **New row (was missing from the ledger entirely):** *propeller–ice milling
+  hydrodynamics / debris transport* — m605 state **not listed**; the IN34-W3-N05
+  package is **REAL and tested**, the legacy IN27-S4 module
+  (`src/tensordem/propeller_ice_milling.py`, 1140 lines) was **shipped untested**
+  and is now **verified-and-defective**.
+* **Verification surface added:** `scripts/verify_propeller_ice_milling_legacy.py`
+  (protocol `tensordem-propeller-ice-milling-legacy-verification-v1`, 25 gates,
+  17 PASS), `tests/test_propeller_ice_milling_legacy_verification.py` (14 green +
+  2 `xfail(strict)`), `docs/propeller_ice_milling_legacy_verification.md`,
+  `artifacts/propeller_ice_milling_legacy/verification.json` + 3 figures.
+* **Closed by analytic reference:** planform scale vs `B(1+e,1+e)` (1.5e-5), blade
+  area vs `EAR·πD²/4` (2 %), helicoidal pitch law (machine precision), BPF and
+  harmonic amplitudes (<0.5 %, <2 %) with a white-noise negative control,
+  efficiency identity `η = J K_T/(2πK_Q)` (machine precision), actuator-disk
+  induced velocity (machine precision), debris integrator vs closed-form quadratic
+  drag in the module's own carrier, and second-order self-convergence under step
+  refinement.
+* **Defects registered (not silently fixed):** D1 race momentum flux is `T/2`, not
+  `T`, although the class claims exact momentum conservation; D2 `integrate_debris`
+  uses `σ = 0.5 D` while `RaceModel.sigma()` returns `0.25 D`, so chips are
+  advected by a 4× weaker jet than the torque model assumes (the IN27-S4 ejection
+  band 0.5–2.0 m/s is therefore not admissible evidence); D3 the *package* BEM
+  (IN34-W3-N05) saturates every strip on its induction cap `a = 0.85` for `J ≲ 0.2`
+  at a 3 m geometry while reporting a 1e-8 residual, and never calls its own
+  `_buhl` high-induction branch.
+* **Withheld:** absolute `K_T`, `K_Q` of *both* implementations (no experimental or
+  Wageningen-B style open-water table in this repository); the two implementations
+  disagree by up to 72 % in `K_T` on a matched geometry, which is itself the
+  argument for keeping both at WITHHELD.
+* **Not addressed:** the legacy plastic-capped Hertz contact branch (inside
+  `MillingSimulation`, needs a full transient case), D1/D2 repair, and the D3
+  package follow-up.
