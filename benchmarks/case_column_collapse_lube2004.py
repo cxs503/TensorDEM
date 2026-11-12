@@ -171,11 +171,67 @@ def wave3_control_cases(mu_rolling: float) -> list[dict]:
             for mu, a in ((0.7, 0.5), (0.7, 1.0))]
 
 
+# --- round 4 (m16862): joint (mu, mu_r) identifiability --------------------
+# Round 3 left the anchor open with a *structural* reading: at the round-1
+# rolling resistance (mu_r = 0.4) the linear branch (a <= 1.5) wants
+# mu = 0.53-0.57 while the square-root branch (a >= 2) wants mu = 0.80-0.84, so
+# no single contact friction covers the curve.  That statement is conditional
+# on mu_r = 0.4, which round 1 *fitted* at a = 0.5; mu_r was never varied
+# afterwards.  Round 4 therefore asks the joint question, pre-registered before
+# any wave-4 run:
+#
+#   H4: there exists ONE constant pair (mu, mu_r) that reproduces the Lube
+#       (2004) runout ratio within 15 % at every aspect ratio
+#       a in SWEEP_ASPECTS = {0.5, 1.0, 1.5, 2.0, 3.0}.
+#
+# Decision rule (fixed here, before the runs): probe only the two branch
+# representatives a = 1.0 (linear, a < 1.7) and a = 3.0 (square root, a > 1.7)
+# on the WAVE4_MU x WAVE4_MUR grid; for every (branch, mu_r) find the required
+# contact friction mu_req by linear interpolation of the *signed* runout error
+# through zero.  H4 is refuted iff |mu_req(sqrt, mu_r) - mu_req(linear, mu_r)|
+# does not pass through zero on the grid (i.e. no grid interval changes sign);
+# otherwise the interpolated crossing (mu, mu_r) is the pre-registered fit and
+# is checked on all five aspects (the a in {0.5, 1.5, 2.0} rows are out of
+# sample for the fit).  Tolerance (15 %), discretisation, dt, restitution and
+# the energy ledger are unchanged from rounds 1-3.
+WAVE4_MU = (0.5, 0.6, 0.7, 0.8, 0.9)
+WAVE4_MUR = (0.1, 0.2, 0.3, 0.4, 0.5)
+PROBE_ASPECTS = (1.0, 3.0)
+
+
+def wave4_cases() -> list[dict]:
+    """Joint ``(mu, mu_r)`` probe grid on the two branch representatives.
+
+    Interleaved order (mu_r outermost) so that ``--shard i/n`` keeps every
+    shard balanced and every shard still contains both probe aspects.
+    """
+    return [{"id": f"probe_mu{mu:g}_mur{mur:g}_a{a:g}", "phase": "probe_mu_mur",
+             "note": f"joint (mu, mu_r) probe: mu = {mu:g}, mu_r = {mur:g}, "
+                     f"a = {a:g} ({'linear' if a < 1.7 else 'square-root'} branch)",
+             "params": dict(BASE, aspect_ratio=a, mu=mu, mu_rolling=mur)}
+            for mur in WAVE4_MUR for mu in WAVE4_MU for a in PROBE_ASPECTS]
+
+
+def wave4_validation_cases(mu: float, mu_rolling: float) -> list[dict]:
+    """The pre-registered rule's chosen ``(mu, mu_r)`` checked on every aspect.
+
+    ``a in {0.5, 1.5, 2.0}`` were **not** used to pick the pair, so they are
+    out-of-sample confirmations; ``a in {1.0, 3.0}`` reproduce the probe rows
+    (determinism control).
+    """
+    return [{"id": f"wave4_valid_mu{mu:g}_mur{mu_rolling:g}_a{a:g}",
+             "phase": "wave4_validation",
+             "note": f"curve-level check of the pre-registered pair "
+                     f"(mu = {mu:g}, mu_r = {mu_rolling:g}) at a = {a:g}",
+             "params": dict(BASE, aspect_ratio=a, mu=mu, mu_rolling=mu_rolling)}
+            for a in SWEEP_ASPECTS]
+
+
 def all_cases(mu_rolling: float) -> list[dict]:
     """Every pre-declared case: wave 1 (control + calibration), wave 2
     (validation + sensitivity), wave 3 (mu curve grid)."""
     return (wave1_cases() + wave2_cases(mu_rolling) + wave3_cases(mu_rolling)
-            + wave3_control_cases(mu_rolling))
+            + wave3_control_cases(mu_rolling) + wave4_cases())
 
 
 def case_path(case_id: str) -> str:
@@ -285,6 +341,8 @@ def collect() -> dict:
             "sensitivity": stats(group("sensitivity")),
             "sweep_mu": stats(group("sweep_mu")),
             "sweep_mu_control": stats(group("sweep_mu_control")),
+            "probe_mu_mur": stats(group("probe_mu_mur")),
+            "wave4_validation": stats(group("wave4_validation")),
         },
         "rows": rows,
     }
@@ -331,6 +389,12 @@ def main(argv: list[str] | None = None) -> int:
                     help="run the round-3 mu curve grid (mu x a)")
     ap.add_argument("--wave3-control", action="store_true",
                     help="run the post-hoc truncation controls (doubled duration)")
+    ap.add_argument("--wave4", action="store_true",
+                    help="run the round-4 joint (mu, mu_r) probe grid")
+    ap.add_argument("--wave4-shard",
+                    help="i/n: run the i-th of n interleaved wave-4 probe cases")
+    ap.add_argument("--wave4-validate", nargs=2, type=float, metavar=("MU", "MU_R"),
+                    help="check the pre-registered (mu, mu_r) pair on all aspects")
     ap.add_argument("--collect", action="store_true", help="aggregate + verdicts")
     ap.add_argument("--case", action="append", default=[],
                     help="run one pre-declared case id (wave-1 or wave-2); repeatable")
@@ -382,6 +446,18 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.wave3_control:
         _run_specs(wave3_control_cases(args.mu_rolling), "wave3-control", args.progress)
+        return 0
+    if args.wave4:
+        _run_specs(wave4_cases(), "wave4", args.progress)
+        return 0
+    if args.wave4_shard:
+        i, n = (int(x) for x in args.wave4_shard.split("/"))
+        mine = [c for k, c in enumerate(wave4_cases()) if k % n == i]
+        _run_specs(mine, f"wave4 {i}/{n}", args.progress)
+        return 0
+    if args.wave4_validate:
+        mu, mur = args.wave4_validate
+        _run_specs(wave4_validation_cases(mu, mur), "wave4-validate", args.progress)
         return 0
     if args.shard:
         i, n = (int(x) for x in args.shard.split("/"))
