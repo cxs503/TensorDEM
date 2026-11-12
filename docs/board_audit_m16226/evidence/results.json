@@ -1,0 +1,162 @@
+{
+ "case": "CASE-DEM-MINDLIN-TANGENTIAL",
+ "reference": {
+  "citation": "Mindlin, R. D. & Deresiewicz, H. (1953) J. Appl. Mech. 20:327-344, DOI 10.1115/1.4010702",
+  "closed_form": "F_t = mu F_n [1 - (1 - delta/delta_s)^{3/2}], delta_s = 3 mu F_n / (16 G* a); equal spheres: 3 mu F_n (2-nu)/(8 G a)",
+  "secondary_source": "Johnson, Contact Mechanics (1985) Sec. 4.3 eq. 4.32",
+  "provenance": "closed form evaluated in run.py from Hertz first principles; the 1953 original is paywalled and no network access exists in the sandbox, so no table value is transcribed",
+  "chain": {
+   "E_star_Pa": 1098901098.901099,
+   "G_Pa": 384615384.6153846,
+   "G_star_Pa": 226244343.89140272,
+   "R_eff_m": 0.025,
+   "a_m": 0.00025744288172888433,
+   "k_n_N_per_m": 377205.68751484883,
+   "k_t_N_per_m": 465959.9669301074,
+   "k_t_over_k_n": 1.2352941176470589,
+   "delta_n_m": 2.6510734941148934e-06,
+   "delta_s_m": 9.657482014275674e-07,
+   "delta_s_alt_form_m": 9.657482014275674e-07,
+   "delta_s_form_identity_rel": 0.0,
+   "delta_s_over_delta_n": 0.36428571428571394,
+   "a_over_R": 0.010297715269155372,
+   "delta_n_over_R": 0.00010604293976459573,
+   "mu_Fn_over_G_a2": 0.011768817450463275,
+   "mu": 0.3,
+   "normal_load_N": 1.0,
+   "young_modulus_Pa": 1000000000.0,
+   "poisson_ratio": 0.3,
+   "radius_m": 0.025,
+   "mass_kg": 0.06001750965295503
+  }
+ },
+ "solver": {
+  "class": "tensordem.dem3d.IceDEM3D",
+  "tangential_model": "mindlin_partial_slip",
+  "dt_s": 2.787827761586778e-06,
+  "steps": 6438,
+  "wall_s": 26.686681032180786,
+  "drive_k_N_per_m": 20000.0,
+  "drive_v_m_per_s": 0.001,
+  "platen_damping_Ns_per_m": 2.0
+ },
+ "got_mindlin_partial_slip": {
+  "n_samples": 6438,
+  "delta_max_m": 1.5467353109984608e-06,
+  "max_micro_slip_err": 3.7007434154171886e-16,
+  "max_transition_err": 1.8503717077085943e-16,
+  "max_gross_slip_err": 1.8503717077085943e-16,
+  "mean_gross_slip_err": 1.850371707708594e-16,
+  "plateau_force_N": 0.2999999999999999,
+  "mu_Fn_N": 0.3,
+  "k_t_secant_N_per_m": 461694.6267949187,
+  "k_t_theory_N_per_m": 465959.9669301074,
+  "k_t_rel_err": 0.009153876808967376,
+  "delta_s_fit_m": 9.657482014275678e-07,
+  "delta_s_theory_m": 9.657482014275674e-07
+ },
+ "comparison_legacy_cundall_strack": {
+  "max_dev_vs_analytic_muN": 0.19244083267712608,
+  "analytic_linear_max_dev_muN": 0.19231275905537065,
+  "analytic_linear_dev_at_half_delta_s": 0.10355339059327368,
+  "note": "1 - 2^-1.5 = 0.6464 vs 0.5 -> the linear spring is off by 14.6 % of mu F_n at delta = delta_s/2"
+ },
+ "convergence": [
+  {
+   "dt": 1.393913880793389e-06,
+   "dt_factor": 0.5,
+   "steps": 12311,
+   "wall_s": 47.085681676864624,
+   "max_micro_slip_err": 7.401486830834377e-16,
+   "max_gross_slip_err": 1.8503717077085943e-16
+  },
+  {
+   "dt": 2.787827761586778e-06,
+   "dt_factor": 1.0,
+   "steps": 6156,
+   "wall_s": 24.878490447998047,
+   "max_micro_slip_err": 3.7007434154171886e-16,
+   "max_gross_slip_err": 1.8503717077085943e-16
+  },
+  {
+   "dt": 5.575655523173556e-06,
+   "dt_factor": 2.0,
+   "steps": 3079,
+   "wall_s": 12.29162049293518,
+   "max_micro_slip_err": 3.7007434154171886e-16,
+   "max_gross_slip_err": 3.7007434154171886e-16
+  }
+ ],
+ "convergence_order_fit": -0.5000000000000028,
+ "sensitivity_mu": [
+  {
+   "mu": 0.2,
+   "delta_s_fit_m": 6.43832134285048e-07,
+   "delta_s_theory_m": 6.43832134285045e-07,
+   "rel_err": 4.60464018106546e-15,
+   "max_micro_slip_err": 3.469446951953614e-16
+  },
+  {
+   "mu": 0.3,
+   "delta_s_fit_m": 9.657482014275678e-07,
+   "delta_s_theory_m": 9.657482014275674e-07,
+   "rel_err": 4.3853716010147245e-16,
+   "max_micro_slip_err": 3.7007434154171886e-16
+  },
+  {
+   "mu": 0.5,
+   "delta_s_fit_m": 1.6095803357126155e-06,
+   "delta_s_theory_m": 1.6095803357126124e-06,
+   "rel_err": 1.973417220456626e-15,
+   "max_micro_slip_err": 3.3306690738754696e-16
+  }
+ ],
+ "sensitivity_Fn": [
+  {
+   "normal_load_N": 0.5,
+   "delta_s_fit_m": 6.083832439383547e-07,
+   "delta_s_theory_m": 6.08383243938353e-07,
+   "rel_err": 2.7845373970888963e-15,
+   "max_micro_slip_err": 6.47630097698008e-16
+  },
+  {
+   "normal_load_N": 1.0,
+   "delta_s_fit_m": 9.657482014275678e-07,
+   "delta_s_theory_m": 9.657482014275674e-07,
+   "rel_err": 4.3853716010147245e-16,
+   "max_micro_slip_err": 3.7007434154171886e-16
+  },
+  {
+   "normal_load_N": 2.0,
+   "delta_s_fit_m": 1.5330297108825196e-06,
+   "delta_s_theory_m": 1.5330297108825168e-06,
+   "rel_err": 1.795697147312131e-15,
+   "max_micro_slip_err": 3.7007434154171886e-16
+  }
+ ],
+ "scaling_exponent_delta_s_mu": 0.9999999999999983,
+ "scaling_exponent_delta_s_Fn": 0.6666666666666661,
+ "criteria": {
+  "micro_slip_max_err_lt_5pct": true,
+  "transition_max_err_lt_5pct": true,
+  "gross_slip_plateau_within_1pct": true,
+  "initial_slope_within_2pct": true,
+  "fitted_delta_s_within_5pct": true,
+  "case_discriminates_linear_gt_5pct": true
+ },
+ "all_criteria_pass": true,
+ "gate": 0.05,
+ "wall_s": 318.32889199256897,
+ "environment": {
+  "python": "3.11.6",
+  "torch": "2.7.1",
+  "numpy": "2.4.6",
+  "platform": "Linux-6.6.52-1.7.lns23.loongarch64-loongarch64-with-glibc2.38"
+ },
+ "figures": [
+  "figures/fig1_ft_delta_curve.png",
+  "figures/fig2_error_vs_delta.png",
+  "figures/fig3_dt_and_sensitivity.png",
+  "figures/fig4_stick_circle_map.png"
+ ]
+}
