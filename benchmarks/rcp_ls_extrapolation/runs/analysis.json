@@ -1,0 +1,114 @@
+{
+ "reference": 0.6366,
+ "tolerance_rule": 0.03,
+ "anchor_band": [
+  0.62,
+  0.66
+ ],
+ "n_runs": 9,
+ "rate": {
+  "linear_all": 0.618956571121621,
+  "linear_slow3": null,
+  "dphi_dlnrate": -0.015015434459241406,
+  "rows": [
+   {
+    "rho_growth": 0.0002,
+    "rate_per_step": 0.0005999400079988003,
+    "seeds": [
+     0.5971056084116989,
+     0.5991759095903197
+    ],
+    "mean": 0.5981407590010093,
+    "spread": 0.002070301178620837
+   },
+   {
+    "rho_growth": 0.0001,
+    "rate_per_step": 0.00029998500099992503,
+    "seeds": [
+     0.6079199878009205,
+     0.6091773423217097
+    ],
+    "mean": 0.6085486650613151,
+    "spread": 0.0012573545207892334
+   }
+  ]
+ },
+ "budget": {
+  "n_particles": 1000,
+  "rho_growth": 0.0001,
+  "rows": [
+   {
+    "relax_steps": 30,
+    "phi": 0.5984908109491115,
+    "seeds": [
+     0.5984908109491115
+    ]
+   },
+   {
+    "relax_steps": 60,
+    "phi": 0.6085486650613151,
+    "seeds": [
+     0.6079199878009205,
+     0.6091773423217097
+    ]
+   }
+  ],
+  "spread": 0.010057854112203612,
+  "slope_per_doubling": 0.01005785411220373
+ },
+ "size": {
+  "rows": [
+   {
+    "n_particles": 500,
+    "phi": 0.5994546908341105
+   },
+   {
+    "n_particles": 1000,
+    "phi": 0.5991759095903197
+   },
+   {
+    "n_particles": 2000,
+    "phi": 0.6002833233728957
+   }
+  ],
+  "infinite_n_limit": 0.600729864438287,
+  "spread": 0.00110741378257595
+ },
+ "criterion": {
+  "rows": [
+   {
+    "overlap_stop": 0.0001,
+    "phi": 0.5649339893343264
+   },
+   {
+    "overlap_stop": 0.001,
+    "phi": 0.6091773423217097
+   },
+   {
+    "overlap_stop": 0.01,
+    "phi": 0.6467037456002578
+   }
+  ],
+  "spread": 0.08176975626593141
+ },
+ "best_estimate": {
+  "protocol": {
+   "n_particles": 1000,
+   "rho_growth": 0.0001
+  },
+  "shallow_relax": 30,
+  "shallow_phi": 0.5984908109491115,
+  "deep_relax": 60,
+  "phi_estimate": 0.6085486650613151,
+  "budget_correction": 0.010057854112203612,
+  "residual_rate_slope": -0.015015434459241406,
+  "assumption": "budget dependence measured inside one (N, rate); the remaining rate sensitivity is quoted from the shallow-budget rate scan and is NOT extrapolated into the estimate",
+  "abs_error": 0.028051334938684946,
+  "rel_error": 0.04406430244845263,
+  "within_3pct": false,
+  "within_anchor_band": false
+ },
+ "hosts": [
+  "36cb7828dbd5"
+ ]
+}
