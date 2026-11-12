@@ -23,7 +23,10 @@ Usage
     python benchmarks/case_column_collapse_lube2004.py --shard 2/6    # wave-2 worker
     python benchmarks/case_column_collapse_lube2004.py --collect      # verdicts
 
-``--wave1`` runs the negative control (``mu_r = 0``, no rolling resistance) and
+``--case ID`` runs a single pre-declared case id (wave-1 or wave-2, at
+``--mu-rolling``); ``--list-cases`` prints every id — this is how cluster
+shards fill the grid point by point.  ``--wave1`` runs the negative control
+(``mu_r = 0``, no rolling resistance) and
 the one-parameter calibration grid at ``a = 0.5``; ``--shard i/n`` runs one
 worker of the wave-2 grid (validation + sensitivity) at a given ``mu_r``
 (``--mu-rolling``, read off the calibration by ``--collect``).
@@ -107,6 +110,11 @@ def wave2_cases(mu_rolling: float) -> list[dict]:
          "contact friction mu = 0.3"),
         ("sens_gpr11_a2.0", dict(aspect_ratio=2.0, grains_per_radius=11.0),
          "particle resolution: 11 grains per column radius"),
+        ("sens_gpr14_a2.0", dict(aspect_ratio=2.0, grains_per_radius=14.0),
+         "particle resolution: 14 grains per column radius "
+         "(the pre-registered ladder point, see module docstring)"),
+        ("sens_mu0.8_a2.0", dict(aspect_ratio=2.0, mu=0.8),
+         "contact friction mu = 0.8 (pre-registered axis)"),
     )
     for cid, params, note in sens:
         cases.append({"id": cid + ("" if mu_rolling == BASE["mu_rolling"]
@@ -264,7 +272,11 @@ def main(argv: list[str] | None = None) -> int:
                     help="calibrated rolling resistance for the wave-2 grid")
     ap.add_argument("--shard", help="i/n: run the i-th of n interleaved wave-2 cases")
     ap.add_argument("--collect", action="store_true", help="aggregate + verdicts")
+    ap.add_argument("--case", action="append", default=[],
+                    help="run one pre-declared case id (wave-1 or wave-2); repeatable")
     ap.add_argument("--list", action="store_true", help="list wave-1 case ids")
+    ap.add_argument("--list-cases", action="store_true",
+                    help="list every pre-declared case id (wave-1 + wave-2)")
     ap.add_argument("--progress", action="store_true")
     args = ap.parse_args(argv)
 
@@ -272,11 +284,24 @@ def main(argv: list[str] | None = None) -> int:
         for spec in wave1_cases():
             print(spec["id"], spec["phase"], spec["params"]["aspect_ratio"])
         return 0
+    if args.list_cases:
+        for spec in wave1_cases() + wave2_cases(args.mu_rolling):
+            print(spec["id"], spec["phase"], spec["params"]["aspect_ratio"])
+        return 0
     if args.collect:
         s = collect()
         print(json.dumps({k: v for k, v in s.items() if k != "rows"}, indent=1))
         for r in s["rows"]:
             print(_report_row(r))
+        return 0
+    if args.case:
+        specs = wave1_cases() + wave2_cases(args.mu_rolling)
+        unknown = [cid for cid in args.case if not any(s["id"] == cid for s in specs)]
+        if unknown:
+            print(f"unknown case id(s) {unknown}; see --list-cases", file=sys.stderr)
+            return 2
+        _run_specs([s for cid in args.case for s in specs if s["id"] == cid], "case",
+                   args.progress)
         return 0
     if args.run:
         spec = next((s for s in wave1_cases() if s["id"] == args.run), None)
