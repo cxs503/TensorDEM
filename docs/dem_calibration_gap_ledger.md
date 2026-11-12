@@ -422,3 +422,27 @@ PYTHONPATH=src python scripts/m5052_clump_rolling_calibration.py --figures-only
 * **Evidence:** `src/tensordem/granular2d/stress_arrays.py`, `src/tensordem/elastic_limit_shear.py` (+`pair_stress_components`), `scripts/verify_stress_symmetry_case.py`, `scripts/write_stress_symmetry_doc.py`, `docs/stress_symmetry_case_verification.md`, `artifacts/stress_symmetry_case/{verification.json,fig_stress_symmetry.png}`, `tests/test_stress_symmetry_case.py` (7 cases; 50 passed / 2 skipped together with the pre-existing elastic-limit, decomposition and 3-D instrument suites).
 * **Still open:** `bpm_calibration_feasibility.virial_stress_tensor` (torch per-particle Love-Weber private sum) remains unwired -- next node.
 
+
+## selfstart write-back (m16794): real ship-hull-form contact (GAP-DEM-G3, part 2)
+
+* **Row changed**: *"curved-hull validation on a real hull"* — **closed for a
+  ship-hull form** (Wigley, doubly curved, closing keel line and stem), on top
+  of the earlier faceted-cylinder close-out.  Evidence:
+  `src/tensordem/hull_form_mesh.py`, `scripts/m16794_wigley_hull_contact_audit.py`,
+  `tests/test_hull_form_mesh_contact.py`,
+  `docs/AUDIT_GAP_DEM_G3_WIGLEY_REAL_HULL_CONTACT.md`,
+  `artifacts/m16794_wigley_hull_audit/`.
+* **Numbers** (from `metrics.json` / the run log): 160×64 hull mesh, 72 probe
+  points, max relative force error **0.30 %**, direction
+  error **0.35°**; 240-sphere ice-floe cloud global force
+  error **0.055 %**, contacts 240/240, action/reaction 0.0 N, broad phase 0/300
+  violations.
+* **New dimensional rule** (replaces the "sagitta/overlap" heuristic for hull
+  digitisation): `s = (κ_u h_u² + κ_v h_v²)/8`, relative force error `≈ s/pen`,
+  with `pen` the *penetration*, not the stand-off.  Conservative at every tested
+  resolution (measured ≤ predicted, tightness 0.5–0.9).
+* **Still open**: (a) digitised offset hull (SUBOFF-class) — no offset table in
+  this repository; (b) friction / rolling resistance on the hull contact path;
+  (c) penalty **damping** calibration — the closed-form restitution target is
+  implemented in the audit script but **NOT_RUN** (kernel rebuilds its spatial
+  hash per call; every attempt was cut by the mission time budget).
