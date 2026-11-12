@@ -1,0 +1,58 @@
+{
+  "task_key": "paper-exp-formation-ice-channel-2-rework1",
+  "mission_id": 16718,
+  "repo": "TensorDEM",
+  "case": "formation-ice-channel",
+  "authored_before_results": true,
+  "authoring_note": "Written before any production run of this round. Two probe runs (single hull, V=1.0 m/s, one seed each) were used only to size the discretisation and to confirm that a single realisation has a tens-of-percent seed spread; they are not part of the reported data set and do not enter any figure or verdict.",
+  "question": "Does a three-ship column formation in a broken-ice channel save ice resistance, how does that saving depend on spacing (1L-5L) and speed (0.5-2.0 m/s), and is the single-ship limit consistent with the Lindqvist (1989) three-component analytic anchor?",
+  "hypotheses": {
+    "H1_calibration": "The DEM single-ship ice load agrees with the Lindqvist (1989) three-component anchor converted to the case caliber within 15% at every swept speed.",
+    "H2_saving": "The column saving decreases monotonically as the spacing grows (the lead's cleared corridor is re-filled by cross-channel drift), for every swept speed.",
+    "H3_convergence": "The reported ice load is particle-count convergent: the grid-convergence index of the N, 2N, 4N family is below 5% and the family converges monotonically."
+  },
+  "caliber_declaration": {
+    "ship": "L = 80 m, B = 20 m, rectangular box hull (planar 2-D kinematics; no bow, no entry angle, no heave of the hull).",
+    "ice": "h = 0.7 m, 8/10 concentration, hexagonal jittered field, mean floe radius 10 m (floe diameter = ship beam).",
+    "environment": "No wind. A cross-channel drift of 0.05 m/s represents the current-driven re-closure of the corridor the lead has cleared; its sensitivity band is 0.03 / 0.05 / 0.08 m/s.",
+    "numerics": "Constant contact CFL: base dt = 0.008 s at the base floe radius, dt scaled with the floe radius in the refinement family; sample every 5 steps.",
+    "measurement_window": "A hull contributes samples only while its centre is inside the ice field at least L/2 from either longitudinal edge and t >= 60 s. The reported per-hull load is the time mean of the upstream contact reaction over that window; the formation total is the sum over hulls.",
+    "ensemble": "Three floe-field realisations (seed offsets 0, 1, 2) for every physical case; the reported value is the ensemble mean and the error bar is the standard error of the mean.",
+    "lindqvist_conversion": "Level-ice Lindqvist three-component total in the case caliber, primary point alpha = 20 deg, mu = 0.05; the full band alpha in {15, 20, 30} deg x mu in {0.05, 0.10, 0.15} is reported. Coefficient provenance stays WITHHELD (primary paper not readable offline) and is carried through from src/tensordem/level_ice/formula.py."
+  },
+  "metrics": [
+    "M1 single-ship ice load (ensemble mean, N) versus Lindqvist total (N): relative deviation, per swept speed.",
+    "M2 saving = 1 - R_formation_total / (3 R_single) per (speed, spacing), ensemble mean +/- SEM, plus the paired estimator 1 - R_total/(3 R_lead) that removes the single-ship reference noise.",
+    "M3 monotonicity of M2 against spacing at fixed speed (non-increasing), strict and with a one-SEM tolerance.",
+    "M4 grid-convergence index of the N/2N/4N particle family for the single-ship and the 3-ship column load, with the observed order and the monotone/oscillatory verdict.",
+    "M5 numerical controls: timestep halving at the base mesh; cross-channel drift sensitivity band."
+  ],
+  "decision_rules": {
+    "C1": "PASS iff |relative deviation| < 15% at every swept speed for the pre-declared primary caliber; otherwise FAIL or WITHHELD.",
+    "C2a": "PASS iff the saving is non-increasing in spacing at every swept speed, using the paired estimator with a one-SEM slack (the strict verdict is reported alongside).",
+    "C2b": "PASS iff both refinement families converge monotonically (observed order defined, asymptotic ratio >= 1).",
+    "C3": "PASS iff the GCI of both refinement families is below 5%."
+  },
+  "out_of_domain_rule": "The Lindqvist bending + submersion terms are a floor for any model that carries a continuous ice cover: a DEM load below that floor cannot be brought inside 15% by refinement, so a C1 failure whose cause is a load below the floor is registered as a capability gap (model-form), not as a numerical defect. The test is computed and stored (dem_below_anchor_floor).",
+  "alternatives_considered": [
+    "A1 compare against the full Lindqvist total in the level-ice caliber (primary).",
+    "A2 compare against the Lindqvist bending + submersion floor (mechanism-resolved; the channel model has no crushing wedge).",
+    "A3 report only the formation saving (a ratio) and declare the absolute caliber WITHHELD. Rejected unless C1 fails, because the absolute number is what a designer would use."
+  ],
+  "variables": {
+    "controlled": ["ship L, B", "ice thickness h", "concentration 8/10", "floe field generator and seed base", "contact law and parameters", "measurement window rule"],
+    "varied": ["speed 0.5 ... 2.0 m/s (7 points)", "spacing 1L ... 5L (5 points)", "seed (3 realisations)", "floe radius (N, 2N, 4N)", "drift (0.03 / 0.05 / 0.08 m/s, control only)"]
+  },
+  "confounders": [
+    "Rigid discs cannot bend or break, so the model has no flexural-failure mechanism; the level-ice Lindqvist anchor contains one.",
+    "The 2-D hull has no entry angle, so the anchor's crushing term is out of domain (alpha = 90 deg diverges) and any finite alpha is a substitute.",
+    "The thickness of every floe is 0.7 m +/- 0, so the anchor's thickness dependence cannot be exercised here.",
+    "The cross-channel drift is a modelling choice; it is the only mechanism that can re-fill the lead's corridor and therefore the only source of a spacing dependence.",
+    "Contacts are penalty springs; the measured instantaneous load contains rare spikes of O(1 MN) against a mean of O(10 kN), so the time mean is a heavy-tailed statistic and the seed spread is reported instead of hidden."
+  ],
+  "repetitions": "3 seeds per physical case (134 DEM runs in total), 5 dm-spacing points x 7 speeds x 3 seeds for the saving surface.",
+  "stopping_rule": "Stop after the pre-registered 134 cases have run once. No case is re-run with a different seed to improve the result, and no threshold is revised after inspecting results. A case that blows up is reported as such, not replaced.",
+  "analysis_predeclared": "The collector benchmarks/w25_formation_collect.py computes every number in the artifact from the raw per-run JSON ledgers; no value is hand-typed. Verdicts are computed programmatically and an honest FAIL is never overwritten.",
+  "safety_and_resource_limits": "DEM runs on the TensorDEM cluster queue (loong64 nodes); one process per case, single-threaded; total budget 14400 s wall clock via sharded submission.",
+  "interpretation_limits": "A C1 PASS would support the absolute caliber; a C1 FAIL with dem_below_anchor_floor = true means the reported absolute load is a broken-ice channel loading, not a level-ice resistance, and only ratio statements (saving) should be read as validated by this experiment."
+}
