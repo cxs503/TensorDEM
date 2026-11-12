@@ -409,3 +409,16 @@ PYTHONPATH=src python scripts/m5052_clump_rolling_calibration.py --figures-only
   stress ordinate (Campbell elastic limit, mu(I) plane shear, biaxial band);
   until they call it, their stress numbers remain private sums.  Non-central
   couples (rolling/drilling) stay outside the symmetric-stress contract.
+
+## 2-D plane-shear ordinate wired to the instrument (m16719, 2026-11-13)
+
+* **Row closed:** the first of the two named private sums -- `elastic_limit_shear`'s `S_xy = sum F_{i,x}(r_i-r_j)_y` -- is no longer a private sum. `pair_stress` is now evaluated through the shared per-contact instrument (`granular2d.stress_arrays` -> `granular3d.stress.contact_outer`), and the force kernel additionally accumulates the symmetric off-diagonal and the lever-arm antisymmetric sum, so both ordinates are reported every sample.
+* **What the private sum was hiding:** it reported `sigma_yx` (one raw Virial component) and added it to a *symmetric* kinetic term. With Coulomb friction the raw Virial is not symmetric: `sigma_xy - sigma_yx = sum_c |l| f_t / A`.
+* **Measured gap (9 points, N=400, rates 0.1, 0.3, 1):**
+  - mu=0.5: time-averaged ordinate defect 0.09% (gdot=0.1), 0.71% (0.3), 1.87% (1.0); per-sample `mean|sigma_xy-sigma_yx|/|tau_sym|` 5.97/4.52/6.14% -- the instantaneous asymmetry is large but cancels in the time average.
+  - mu=0.0 control: defect and asymmetry exactly 0 (`sigma_xy == sigma_yx`), so the gap is carried entirely by the tangential force (non-vacuity).
+  - rate exponent (three-point log-log, mu=0.5): n_historical=0.05244 vs n_symmetric=0.06045, |dn|=0.00801 (15.3% relative). The elastic-limit conclusion is unchanged, but the published exponent must be recomputed on the symmetric ordinate.
+* **Not changed on purpose:** the gates are untouched (no silent re-judgement); the historical `tau` is still returned for reproducibility, with `tau_symmetric`/`tau_symmetry_defect` alongside it.
+* **Evidence:** `src/tensordem/granular2d/stress_arrays.py`, `src/tensordem/elastic_limit_shear.py` (+`pair_stress_components`), `scripts/verify_stress_symmetry_case.py`, `scripts/write_stress_symmetry_doc.py`, `docs/stress_symmetry_case_verification.md`, `artifacts/stress_symmetry_case/{verification.json,fig_stress_symmetry.png}`, `tests/test_stress_symmetry_case.py` (7 cases; 50 passed / 2 skipped together with the pre-existing elastic-limit, decomposition and 3-D instrument suites).
+* **Still open:** `bpm_calibration_feasibility.virial_stress_tensor` (torch per-particle Love-Weber private sum) remains unwired -- next node.
+
