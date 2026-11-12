@@ -1,0 +1,431 @@
+{
+ "all_gates_pass": false,
+ "band": [
+  0.62,
+  0.66
+ ],
+ "figures": [
+  "benchmarks/case_rcp_deposition/figures/fig_profiles.png",
+  "benchmarks/case_rcp_deposition/figures/fig_phi_vs_mu.png",
+  "benchmarks/case_rcp_deposition/figures/fig_phi_vs_N.png",
+  "benchmarks/case_rcp_deposition/figures/fig_settling.png"
+ ],
+ "gates": [
+  {
+   "criterion": "|phi/phi_ref - 1| < 3%, phi_ref=0.6366, N=2000",
+   "got": 0.6374591140515296,
+   "id": "G1_frictionless_vs_ref",
+   "pass": true,
+   "value": 0.0013495351107908338
+  },
+  {
+   "criterion": "0.62 <= phi <= 0.66 (mu=0.1)",
+   "got": 0.624331257074312,
+   "id": "G2_low_friction_in_band",
+   "pass": true,
+   "value": 0.624331257074312
+  },
+  {
+   "criterion": "0.62 <= phi <= 0.66 (mu=0)",
+   "got": 0.6374591140515296,
+   "id": "G3_frictionless_in_band",
+   "pass": true,
+   "value": 0.6374591140515296
+  },
+  {
+   "criterion": "|phi - phi_overlap_corrected| / phi < 1%",
+   "got": 0.0026597604355835095,
+   "id": "G4_overlap_correction_is_small",
+   "pass": true,
+   "value": 0.0026597604355835095
+  },
+  {
+   "criterion": "|phi(4 kn) - phi(kn)| < 0.005 (mu=0)",
+   "got": 0.002314945711409333,
+   "id": "G5_stiffness_convergence",
+   "pass": true,
+   "value": 0.002314945711409333
+  },
+  {
+   "criterion": "|phi(4 kn) - phi(kn)| < 0.005 (mu=0.1)",
+   "got": 0.006188093704050823,
+   "id": "G6_stiffness_convergence_frictional",
+   "pass": false,
+   "value": 0.006188093704050823
+  },
+  {
+   "criterion": "max-min phi over the N scan < 0.01 (mu=0)",
+   "got": 0.004575499048449672,
+   "id": "G7_finite_size",
+   "pass": true,
+   "value": 0.004575499048449672
+  },
+  {
+   "criterion": "every production run reached KE/(N m g d) < 5e-4 for 4 t_g",
+   "got": true,
+   "id": "G8_settled",
+   "pass": true,
+   "value": true
+  },
+  {
+   "criterion": "max overlap/d < 0.01 in the settled state",
+   "got": 0.007781134582714788,
+   "id": "G9_residual_overlap",
+   "pass": true,
+   "value": 0.007781134582714788
+  },
+  {
+   "criterion": "phi(mu=0.1) <= phi(mu=0) + 0.005",
+   "got": -0.013127856977217522,
+   "id": "G10_friction_loosens",
+   "pass": true,
+   "value": -0.013127856977217522
+  },
+  {
+   "criterion": "no window where mechanical energy rises by > 0.5 % of N m g d",
+   "got": 0,
+   "id": "G11_energy_never_increases",
+   "pass": true,
+   "value": 0
+  }
+ ],
+ "impl_sha256": "beca38735d16376b",
+ "n_particles_max": 4000,
+ "reference": {
+  "phi_rcp": 0.6366,
+  "source": "Scott 1960; Bernal & Mason 1960"
+ },
+ "runs": [
+  {
+   "Z": 6.060329067641682,
+   "band": [
+    2.5,
+    7.605336819413347
+   ],
+   "dt": 0.0012707911881051173,
+   "e": 0.1,
+   "impl": "beca38735d16376b",
+   "ke_final": 0.0002707225006726149,
+   "kn": 4000.0,
+   "mean_ov": 0.000547245508677028,
+   "mu": 0.0,
+   "n": 1000,
+   "ovmax": 0.003881369849598748,
+   "path": "benchmarks/case_rcp_deposition/runs/deposition_n1000_mu0_kn4000_e0.1_seed1.json",
+   "phi": 0.6420346130999792,
+   "phi_corr": 0.640979737209077,
+   "phi_surface": 0.592336820620363,
+   "seed": 1,
+   "settled": true,
+   "steps": 26793,
+   "surface": 10.105336819413347,
+   "t_end": 34.0483083029009,
+   "wall": 45.2478575091809,
+   "z12": 0.0
+  },
+  {
+   "Z": 5.5170118343195265,
+   "band": [
+    2.5,
+    10.649836727457547
+   ],
+   "dt": 0.0006353955940525586,
+   "e": 0.1,
+   "impl": "beca38735d16376b",
+   "ke_final": 2.0287328464533395e-05,
+   "kn": 16000.0,
+   "mean_ov": 0.0001954792542538258,
+   "mu": 0.1,
+   "n": 2000,
+   "ovmax": 0.0020149412701423453,
+   "path": "benchmarks/case_rcp_deposition/runs/deposition_n2000_mu0.1_kn16000_e0.1_seed1.json",
+   "phi": 0.6181431633702612,
+   "phi_corr": 0.6177829130606083,
+   "phi_surface": 0.573511980730049,
+   "seed": 1,
+   "settled": true,
+   "steps": 25972,
+   "surface": 13.149836727457547,
+   "t_end": 16.50249436873329,
+   "wall": 101.2531259804964,
+   "z12": 0.0
+  },
+  {
+   "Z": 5.702556158017041,
+   "band": [
+    2.5,
+    10.273935962181405
+   ],
+   "dt": 0.0012707911881051173,
+   "e": 0.1,
+   "impl": "beca38735d16376b",
+   "ke_final": 2.224178566805823e-05,
+   "kn": 4000.0,
+   "mean_ov": 0.0007319700034902378,
+   "mu": 0.1,
+   "n": 2000,
+   "ovmax": 0.005551850621600352,
+   "path": "benchmarks/case_rcp_deposition/runs/deposition_n2000_mu0.1_kn4000_e0.1_seed1.json",
+   "phi": 0.6250411550718497,
+   "phi_corr": 0.6236879602972634,
+   "phi_surface": 0.5903888143927289,
+   "seed": 1,
+   "settled": true,
+   "steps": 14579,
+   "surface": 12.773935962181405,
+   "t_end": 18.52686473138477,
+   "wall": 62.768198259174824,
+   "z12": 0.0
+  },
+  {
+   "Z": 5.738345864661654,
+   "band": [
+    2.5,
+    10.512637494706608
+   ],
+   "dt": 0.0012707911881051173,
+   "e": 0.1,
+   "impl": "beca38735d16376b",
+   "ke_final": 0.00010266200678123692,
+   "kn": 4000.0,
+   "mean_ov": 0.000724670927540767,
+   "mu": 0.1,
+   "n": 2000,
+   "ovmax": 0.006897321587938987,
+   "path": "benchmarks/case_rcp_deposition/runs/deposition_n2000_mu0.1_kn4000_e0.1_seed2.json",
+   "phi": 0.6236213590767745,
+   "phi_corr": 0.6222565374203026,
+   "phi_surface": 0.5795588258651451,
+   "seed": 2,
+   "settled": true,
+   "steps": 13791,
+   "surface": 13.012637494706608,
+   "t_end": 17.525481275157922,
+   "wall": 60.16584376990795,
+   "z12": 0.0
+  },
+  {
+   "Z": 5.155172413793103,
+   "band": [
+    2.5,
+    10.836375816014062
+   ],
+   "dt": 0.0012707911881051173,
+   "e": 0.1,
+   "impl": "beca38735d16376b",
+   "ke_final": 1.1161710420674594e-05,
+   "kn": 4000.0,
+   "mean_ov": 0.0007642655234149959,
+   "mu": 0.3,
+   "n": 2000,
+   "ovmax": 0.007465513711106708,
+   "path": "benchmarks/case_rcp_deposition/runs/deposition_n2000_mu0.3_kn4000_e0.1_seed1.json",
+   "phi": 0.6045403013956709,
+   "phi_corr": 0.6031399636605921,
+   "phi_surface": 0.5654901310433327,
+   "seed": 1,
+   "settled": true,
+   "steps": 16155,
+   "surface": 13.336375816014062,
+   "t_end": 20.529631643838464,
+   "wall": 69.69301982969046,
+   "z12": 0.0
+  },
+  {
+   "Z": 4.889530685920578,
+   "band": [
+    2.5,
+    11.282236977971953
+   ],
+   "dt": 0.0012707911881051173,
+   "e": 0.1,
+   "impl": "beca38735d16376b",
+   "ke_final": 7.273498750024616e-06,
+   "kn": 4000.0,
+   "mean_ov": 0.0007745757052515567,
+   "mu": 0.5,
+   "n": 2000,
+   "ovmax": 0.005620580278619225,
+   "path": "benchmarks/case_rcp_deposition/runs/deposition_n2000_mu0.5_kn4000_e0.1_seed1.json",
+   "phi": 0.5931017869475017,
+   "phi_corr": 0.5917353658164646,
+   "phi_surface": 0.5471962875035881,
+   "seed": 1,
+   "settled": true,
+   "steps": 14185,
+   "surface": 13.782236977971953,
+   "t_end": 18.026173003271346,
+   "wall": 56.18122033961117,
+   "z12": 0.0
+  },
+  {
+   "Z": 5.950769230769231,
+   "band": [
+    2.5,
+    10.188930844375417
+   ],
+   "dt": 0.0006353955940525586,
+   "e": 0.1,
+   "impl": "beca38735d16376b",
+   "ke_final": 0.0002539824583701465,
+   "kn": 16000.0,
+   "mean_ov": 0.00019166201443669232,
+   "mu": 0.0,
+   "n": 2000,
+   "ovmax": 0.0015886769193192984,
+   "path": "benchmarks/case_rcp_deposition/runs/deposition_n2000_mu0_kn16000_e0.1_seed1.json",
+   "phi": 0.6351441683401202,
+   "phi_corr": 0.6347836405425482,
+   "phi_surface": 0.5943439207239324,
+   "seed": 1,
+   "settled": true,
+   "steps": 44073,
+   "surface": 12.688930844375417,
+   "t_end": 28.003790016678824,
+   "wall": 122.28352325037122,
+   "z12": 0.0
+  },
+  {
+   "Z": 6.281201848998459,
+   "band": [
+    2.5,
+    10.13227743073824
+   ],
+   "dt": 0.0012707911881051173,
+   "e": 0.1,
+   "impl": "beca38735d16376b",
+   "ke_final": 0.00020443635900532146,
+   "kn": 4000.0,
+   "mean_ov": 0.0006925511229793321,
+   "mu": 0.0,
+   "n": 2000,
+   "ovmax": 0.005298406483408069,
+   "path": "benchmarks/case_rcp_deposition/runs/deposition_n2000_mu0_kn4000_e0.1_seed1.json",
+   "phi": 0.6383611182578959,
+   "phi_corr": 0.6370311039193913,
+   "phi_surface": 0.5970094426116628,
+   "seed": 1,
+   "settled": true,
+   "steps": 17337,
+   "surface": 12.63227743073824,
+   "t_end": 22.031706828178734,
+   "wall": 53.65762671083212,
+   "z12": 0.0
+  },
+  {
+   "Z": 6.223592906707787,
+   "band": [
+    2.5,
+    10.159562964876223
+   ],
+   "dt": 0.0012707911881051173,
+   "e": 0.1,
+   "impl": "beca38735d16376b",
+   "ke_final": 0.0001832934464729986,
+   "kn": 4000.0,
+   "mean_ov": 0.0007033485413970965,
+   "mu": 0.0,
+   "n": 2000,
+   "ovmax": 0.005448133167553992,
+   "path": "benchmarks/case_rcp_deposition/runs/deposition_n2000_mu0_kn4000_e0.1_seed2.json",
+   "phi": 0.6365571098451631,
+   "phi_corr": 0.635214463953022,
+   "phi_surface": 0.5957226903302235,
+   "seed": 2,
+   "settled": true,
+   "steps": 16549,
+   "surface": 12.659562964876223,
+   "t_end": 21.030323371951887,
+   "wall": 40.852377539500594,
+   "z12": 0.0
+  },
+  {
+   "Z": 6.189521800281294,
+   "band": [
+    2.5,
+    13.027621609168937
+   ],
+   "dt": 0.0012707911881051173,
+   "e": 0.1,
+   "impl": "beca38735d16376b",
+   "ke_final": 0.0003627865519698377,
+   "kn": 4000.0,
+   "mean_ov": 0.0008982964290074839,
+   "mu": 0.0,
+   "n": 4000,
+   "ovmax": 0.007781134582714788,
+   "path": "benchmarks/case_rcp_deposition/runs/deposition_n4000_mu0_kn4000_e0.1_seed1.json",
+   "phi": 0.6401700389897128,
+   "phi_corr": 0.638467340047962,
+   "phi_surface": 0.6119292995285076,
+   "seed": 1,
+   "settled": true,
+   "steps": 22459,
+   "surface": 15.527621609168937,
+   "t_end": 28.54069929365324,
+   "wall": 123.63169238902628,
+   "z12": 0.0
+  }
+ ],
+ "tiers": {
+  "mu=0": {
+   "Z": 6.188661405907306,
+   "dev_vs_ref": 0.00421099599149799,
+   "n_particles": [
+    1000,
+    2000,
+    4000
+   ],
+   "n_runs": 4,
+   "ovmax": 0.007781134582714788,
+   "phi_corr_mean": 0.637923161282363,
+   "phi_mean": 0.6392807200481877,
+   "phi_std": 0.002355032562491689,
+   "settled": true,
+   "z12": 0.0
+  },
+  "mu=0.1": {
+   "Z": 5.720451011339348,
+   "dev_vs_ref": -0.01927229488797988,
+   "n_particles": [
+    2000
+   ],
+   "n_runs": 2,
+   "ovmax": 0.006897321587938987,
+   "phi_corr_mean": 0.622972248858783,
+   "phi_mean": 0.624331257074312,
+   "phi_std": 0.00100394737601913,
+   "settled": true,
+   "z12": 0.0
+  },
+  "mu=0.3": {
+   "Z": 5.155172413793103,
+   "dev_vs_ref": -0.05036082093045724,
+   "n_particles": [
+    2000
+   ],
+   "n_runs": 1,
+   "ovmax": 0.007465513711106708,
+   "phi_corr_mean": 0.6031399636605921,
+   "phi_mean": 0.6045403013956709,
+   "phi_std": 0.0,
+   "settled": true,
+   "z12": 0.0
+  },
+  "mu=0.5": {
+   "Z": 4.889530685920578,
+   "dev_vs_ref": -0.06832895547046547,
+   "n_particles": [
+    2000
+   ],
+   "n_runs": 1,
+   "ovmax": 0.005620580278619225,
+   "phi_corr_mean": 0.5917353658164646,
+   "phi_mean": 0.5931017869475017,
+   "phi_std": 0.0,
+   "settled": true,
+   "z12": 0.0
+  }
+ },
+ "tolerance_rel": 0.03
+}
