@@ -1,0 +1,149 @@
+{
+ "case": "CASE-ROTATING-DRUM",
+ "round": 2,
+ "mission": 15649,
+ "repository": "TensorDEM",
+ "frozen_before_runs": true,
+ "frozen_at_utc": "2026-11-12T01:45:00Z",
+ "note": "Acceptance thresholds, reference anchors and the measured-regime classifier are fixed HERE, before any production run of this round. Nothing below may be tuned after inspecting results.",
+ "reference_anchors": {
+  "release_angle": {
+   "formula": "theta_d = arccos(-Fr)  [deg, measured from the 6 o'clock position]",
+   "exactness": "exact radial force balance N = m(omega^2 R + g cos theta) = 0 for a particle carried by the shell",
+   "fr_limit": "Fr >= 1 -> theta_d = 180 deg (load pinned, no release point)",
+   "external_anchor": "Haff 1983, JFM 132:401-430 (Froude-number similarity of rotating granular beds); identical expression in tensordem.drum_flow.regimes.detachment_angle_deg docstring",
+   "tolerance": "relative error < 20% (case-pool tolerance), target < 5%"
+  },
+  "centrifuging_onset": {
+   "formula": "Fr_c = 1",
+   "exactness": "exact: at Fr = 1 the normal force at the top of the shell vanishes (N = m(omega^2 R - g) = 0); for Fr > 1 no particle can leave the wall",
+   "external_anchor": "Haff 1983 JFM 132:401; classical Froude-number drum regime diagram",
+   "tolerance": "bracketed onset within 20% of Fr = 1"
+  },
+  "flow_regimes": {
+   "diagram": "sliding / surging / rolling / cascading / cataracting / centrifuging vs Fr = omega^2 R / g",
+   "external_anchor": "Mellmann 2001, Powder Technology 118:251-270 (transverse motion of solids in rotating cylinders)",
+   "exactness": "only the endpoints used here are exact (Fr -> 0 sliding, Fr = 1 centrifuging); intermediate bands are the literature's order-of-magnitude transitions and are used for QUALITATIVE labels only",
+   "tolerance": "qualitative"
+  }
+ },
+ "measured_regime_classifier": {
+  "note": "independent of Fr; computed only from DEM observables. Fixed before the runs.",
+  "rules_in_order": [
+   [
+    "centrifuging",
+    "r_p05_over_R >= 0.75"
+   ],
+   [
+    "cataracting",
+    "upper_flight_fraction >= 0.05"
+   ],
+   [
+    "slipping",
+    "wall_velocity_ratio < 0.35"
+   ],
+   [
+    "cascading",
+    "wall_velocity_ratio < 0.70"
+   ],
+   [
+    "rolling",
+    "otherwise"
+   ]
+  ],
+  "observables": {
+   "r_p05_over_R": "5th percentile of r/R (annulus indicator; a pinned load has no particle near the axis)",
+   "upper_flight_fraction": "fraction of particles with zero contacts AND y > 0.15 R (ballistic flight above the centre)",
+   "wall_velocity_ratio": "mean tangential speed of the wall layer / (omega R)"
+  }
+ },
+ "directional_predictions": [
+  {
+   "id": "P1",
+   "claim": "wall_velocity_ratio increases with Fr (the load couples to the shell as the Froude number grows)"
+  },
+  {
+   "id": "P2",
+   "claim": "upper_flight_fraction increases with Fr (ballistic throwing appears as Fr -> 1)"
+  },
+  {
+   "id": "P3",
+   "claim": "r_p05_over_R increases with Fr and jumps at Fr >= 1 (pinned annulus)"
+  },
+  {
+   "id": "P4",
+   "claim": "measured wall-contact-arc upper end follows theta_d = arccos(-Fr) within 20%"
+  },
+  {
+   "id": "P5",
+   "claim": "the segregation metric S(rev) reaches a plateau; a short window is not accepted as evidence of a steady state"
+  }
+ ],
+ "acceptance": {
+  "quantitative": "P4 relative error < 20% at every Fr < 1 with a finite release angle; centrifuging onset Fr_c within 20% of 1",
+  "qualitative": "P1-P3 signs as predicted; P5 plateau demonstrated at two revolution counts",
+  "honesty": "any failed prediction is reported as failed; no threshold is changed after the runs"
+ },
+ "runs": {
+  "main": {
+   "fr": [
+    0.05,
+    0.1,
+    0.2,
+    0.3,
+    0.5,
+    0.7,
+    0.9,
+    1.0,
+    1.1
+   ],
+   "revs": 10,
+   "d_small": 0.006,
+   "dt": 0.0001,
+   "radius": 0.15,
+   "fill": 0.3,
+   "large_area_fraction": 0.3
+  },
+  "sensitivity": [
+   {
+    "name": "rev20",
+    "fr": 0.1,
+    "revs": 20,
+    "d_small": 0.006,
+    "dt": 0.0001
+   },
+   {
+    "name": "rev10coarse",
+    "fr": 0.1,
+    "revs": 10,
+    "d_small": 0.01,
+    "dt": 0.0001
+   },
+   {
+    "name": "dt_half",
+    "fr": 0.3,
+    "revs": 6,
+    "d_small": 0.006,
+    "dt": 5e-05
+   },
+   {
+    "name": "dt_base",
+    "fr": 0.3,
+    "revs": 6,
+    "d_small": 0.006,
+    "dt": 0.0001
+   }
+  ]
+ },
+ "artifacts": {
+  "cases": "artifacts/case_rotating_drum_r2/cases/*.json",
+  "merged": "artifacts/case_rotating_drum_r2/merged.json",
+  "figures": "artifacts/case_rotating_drum_r2/figures/*.png"
+ },
+ "amendment_1": {
+  "amended_at_utc": "2026-11-12T02:25:00Z",
+  "reason": "the 6 mm (N=581) bed could not be brought to the frozen rest criterion (rms < 5e-3 m/s) within 20 quench rounds with the shipped bed-preparation protocol; the 10 mm (N=209) bed reaches it. Production runs therefore use d_small = 10 mm and the 6 mm case is reported as an open limitation.",
+  "changed": "main runs and sensitivity runs use d_small = 0.010 m",
+  "unchanged": "all reference anchors, thresholds, classifier rules and predictions"
+ }
+}
