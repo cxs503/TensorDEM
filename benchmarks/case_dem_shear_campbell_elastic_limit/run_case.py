@@ -6,6 +6,9 @@ elastic_limit_shear`` and writes one JSON per point plus the aggregated scaling.
 
 Usage
 -----
+    # production sweep shipped with the run artifacts (this is the repro_cmd)
+    python benchmarks/case_dem_shear_campbell_elastic_limit/run_case.py --production
+
     # full sweep (kappa ladder + shear-rate sweep), writes artifacts + figure
     python benchmarks/case_dem_shear_campbell_elastic_limit/run_case.py --all
 
@@ -41,6 +44,26 @@ from tensordem.elastic_limit_shear import (  # noqa: E402
 ART = REPO / "artifacts" / "case_dem_shear_campbell_elastic_limit"
 DEFAULT_DT_FACTOR = 0.004
 
+# --- production profile (the sweep behind the shipped artifacts) -------------
+# Strain window: 1.0 total, averaged over 0.6 -> 1.0 (0.4 of strain of steady
+# sampling at ~10 samples per unit strain).  The window was chosen from the
+# steady-drift diagnostic, not from the answer: the half-window drift of tau is
+# < 0.25 at this window for every gated point (see point_*.json).
+PRODUCTION_STRAIN = 1.0
+PRODUCTION_STRAIN_FROM = 0.6
+PRODUCTION_N = 400
+# kappa ladder at fixed shear rate: kappa = kn / (rho d^3 gdot^2), so kn from
+# 1e1 to 1e6 is kappa from 5.8 to 5.8e5 (d_mean = 1.2, rho = 1).
+PRODUCTION_LADDER = (1.0e1, 1.0e2, 1.0e3, 1.0e4, 1.0e5, 1.0e6)
+# direct shear-rate exponent at two stiffnesses (n = d ln tau / d ln gdot)
+PRODUCTION_RATE_SWEEPS = {1.0e3: (0.25, 0.5, 2.0), 1.0e4: (0.25, 0.5, 2.0)}
+# finite-size check at the stiffest affordable point (the cell must hold >= 20
+# particles across its height for a homogeneous shear band)
+PRODUCTION_SIZE_CHECK = {1.0e4: (200, 800)}
+# soft-particle probe: kappa = 0.58, i.e. the inertial (Bagnold) end, which this
+# linear-spring cell can only reach with overlap of order d (see docs)
+PRODUCTION_SOFT_PROBE = 1.0e0
+
 
 def _jsonable(obj):
     """Drop the raw state arrays and numpy scalars; keep numbers and flags."""
@@ -55,6 +78,8 @@ def _jsonable(obj):
         return int(obj)
     if isinstance(obj, (np.bool_, bool)):
         return bool(obj)
+    if isinstance(obj, Path):
+        return str(obj)
     return obj
 
 
@@ -75,6 +100,66 @@ def run_point(kn: float, shear_rate: float, n_particles: int, strain: float,
         outdir.mkdir(parents=True, exist_ok=True)
         (outdir / f"point_{res['tag']}.json").write_text(json.dumps(payload, indent=1))
     return payload
+
+
+def production_specs(args) -> list[dict]:
+    """Point list of the production profile (ladder + rate sweeps + size check)."""
+    common = dict(strain=PRODUCTION_STRAIN, strain_from=PRODUCTION_STRAIN_FROM,
+                  dt_factor=args.dt_factor, seed=args.seed, n_particles=PRODUCTION_N)
+    specs = []
+    for kn in PRODUCTION_LADDER:
+        specs.append(dict(kn=kn, shear_rate=1.0, **common))
+    for kn, rates in PRODUCTION_RATE_SWEEPS.items():
+        for gd in rates:
+            specs.append(dict(kn=kn, shear_rate=gd, **common))
+    for kn, sizes in PRODUCTION_SIZE_CHECK.items():
+        for n in sizes:
+            specs.append(dict(kn=kn, shear_rate=1.0, strain=PRODUCTION_STRAIN,
+                              strain_from=PRODUCTION_STRAIN_FROM,
+                              dt_factor=args.dt_factor, seed=args.seed,
+                              n_particles=n))
+    specs.append(dict(kn=PRODUCTION_SOFT_PROBE, shear_rate=1.0, **common))
+    return specs
+
+
+def write_manifest(outdir: Path, profile: str, specs: list[dict],
+                   argv: list[str] | None = None) -> dict:
+    """Provenance of a sweep: code identity, inputs, environment."""
+    import hashlib
+    import platform
+    import subprocess
+    import time as _time
+
+    def sha(path: Path) -> str:
+        return hashlib.sha256(path.read_bytes()).hexdigest()
+
+    try:
+        rev = subprocess.run(["git", "-C", str(REPO), "rev-parse", "HEAD"],
+                             capture_output=True, text=True).stdout.strip()
+        dirty = subprocess.run(["git", "-C", str(REPO), "status", "--porcelain"],
+                               capture_output=True, text=True).stdout.strip()
+    except Exception:  # pragma: no cover
+        rev, dirty = "", ""
+    man = {
+        "profile": profile,
+        "utc": _time.strftime("%Y-%m-%dT%H:%M:%SZ", _time.gmtime()),
+        "argv": argv or sys.argv,
+        "git_head": rev,
+        "git_dirty": bool(dirty),
+        "python": platform.python_version(),
+        "numpy": np.__version__,
+        "sha256": {
+            "impl": sha(REPO / "src" / "tensordem" / "elastic_limit_shear.py"),
+            "runner": sha(Path(__file__).resolve()),
+        },
+        "specs": [{k: v for k, v in sp.items() if k != "outdir"} for sp in specs],
+        "defaults": {"strain": PRODUCTION_STRAIN, "strain_from": PRODUCTION_STRAIN_FROM,
+                     "n_particles": PRODUCTION_N, "dt_factor": DEFAULT_DT_FACTOR,
+                     "solid_fraction": 0.80, "seed": specs[0].get("seed") if specs else None},
+    }
+    outdir.mkdir(parents=True, exist_ok=True)
+    (outdir / "run_manifest.json").write_text(json.dumps(_jsonable(man), indent=1))
+    return man
 
 
 def _parallel(jobs_spec, jobs: int) -> list[dict]:
@@ -122,8 +207,26 @@ def aggregate(outdir: Path, min_points: int = 3) -> dict:
     points = []
     for f in sorted(outdir.glob("point_*.json")):
         points.append(re_gate(json.loads(f.read_text())))
-    ladder = [p for p in points if p["case"]["shear_rate"] == 1.0]
+    # The kappa ladder is the fixed-shear-rate row at the nominal system size.
+    # The finite-size check points and the rate sweeps are reported separately:
+    # mixing them into one log-log fit would put two ordinates on one abscissa.
+    rate_one = [p for p in points if p["case"]["shear_rate"] == 1.0]
+    sizes = [p["case"]["n_particles"] for p in rate_one if p.get("gates", {}).get("all")]
+    nominal_n = max(set(sizes), key=sizes.count) if sizes else 400
+    ladder = [p for p in rate_one if p["case"]["n_particles"] == nominal_n]
     scaling = shear_stress_scaling(ladder, min_points=min_points)
+    scaling["nominal_n_particles"] = nominal_n
+    size_check = {}
+    for n in sorted({p["case"]["n_particles"] for p in rate_one}):
+        gated = [p for p in rate_one
+                 if p["case"]["n_particles"] == n and p.get("gates", {}).get("all")]
+        if gated:
+            size_check[f"n{n}"] = {
+                "tau_star": float(np.mean([p["tau_star"] for p in gated])),
+                "tau": float(np.mean([p["tau"] for p in gated])),
+                "mu_eff": float(np.mean([p["mu_eff"] for p in gated])),
+                "n_points": len(gated),
+            }
     rates = sorted({p["case"]["shear_rate"] for p in points if p["case"]["shear_rate"] != 1.0})
     sweeps = {}
     for gd in rates:
@@ -138,8 +241,15 @@ def aggregate(outdir: Path, min_points: int = 3) -> dict:
         gammas = {p["case"]["shear_rate"] for p in subset}
         if len(gammas) >= 3:
             rate_sweeps[f"kn{kn:.0e}"] = shear_rate_exponent(subset)
+    if len(size_check) >= 2:
+        base = size_check[f"n{nominal_n}"]["tau_star"]
+        for rec in size_check.values():
+            rec["rel_dev_vs_nominal"] = float(rec["tau_star"] / base - 1.0)
+        scaling["size_check_rel_spread"] = float(
+            max(abs(r["rel_dev_vs_nominal"]) for r in size_check.values()))
     out = {
         "scaling_vs_kappa": scaling,
+        "size_check": size_check,
         "rate_sweeps": rate_sweeps,
         "n_points": len(points),
         "points": [{k: p[k] for k in ("tag", "kappa", "tau", "pressure", "tau_star",
@@ -161,7 +271,10 @@ def make_figure(outdir: Path) -> Path | None:
     except Exception:  # pragma: no cover - matplotlib is optional
         return None
     points = [json.loads(f.read_text()) for f in sorted(outdir.glob("point_*.json"))]
-    ladder = sorted([p for p in points if p["case"]["shear_rate"] == 1.0],
+    rate_one = [p for p in points if p["case"]["shear_rate"] == 1.0]
+    sizes = [p["case"]["n_particles"] for p in rate_one if p.get("gates", {}).get("all")]
+    nominal_n = max(set(sizes), key=sizes.count) if sizes else 400
+    ladder = sorted([p for p in rate_one if p["case"]["n_particles"] == nominal_n],
                     key=lambda p: p["kappa"])
     if not ladder:
         return None
@@ -202,6 +315,8 @@ def make_figure(outdir: Path) -> Path | None:
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--all", action="store_true", help="run the full sweep")
+    ap.add_argument("--production", action="store_true",
+                    help="run the production profile behind the shipped artifacts")
     ap.add_argument("--aggregate", action="store_true", help="only re-aggregate")
     ap.add_argument("--tag")
     ap.add_argument("--kn", type=float, default=1.0e4)
@@ -220,6 +335,24 @@ def main(argv=None) -> int:
         out = aggregate(outdir)
         print(json.dumps({k: out[k] for k in ("n_points", "scaling_vs_kappa")}, indent=1))
         print(make_figure(outdir))
+        return 0
+
+    if args.production:
+        specs = production_specs(args)
+        for sp in specs:
+            sp["outdir"] = outdir
+        t0 = __import__("time").time()
+        man = write_manifest(outdir, "production", specs)
+        results = _parallel(specs, args.jobs)
+        for r in results:
+            print(f"{r['tag']:>26s} kappa={r['kappa']:.3e} tau*={r['tau_star']:.4g} "
+                  f"mu={r['mu_eff']:.3f} I={r['I']:.2e} ov={r['max_overlap_ratio']:.3f} "
+                  f"gates={r['gates']['all']}")
+        out = aggregate(outdir)
+        print(json.dumps(_jsonable(out["scaling_vs_kappa"]), indent=1))
+        print(make_figure(outdir))
+        man["wall_seconds"] = __import__("time").time() - t0
+        (outdir / "run_manifest.json").write_text(json.dumps(_jsonable(man), indent=1))
         return 0
 
     if args.all:

@@ -22,9 +22,9 @@ import pytest
 
 from tensordem.elastic_limit_shear import (
     ElasticLimitShearCase, ElasticLimitShearError, build_configuration,
-    configuration_report, inertial_number_of, kappa_of, pair_stress,
-    shear_rate_exponent, shear_stress_scaling, simulate_plane_shear, tau_star_of,
-    _min_image)
+    configuration_report, elastic_limit_regime, inertial_number_of, kappa_of,
+    pair_stress, shear_rate_exponent, shear_stress_scaling, simulate_plane_shear,
+    tau_star_of, _loglog_slope, _min_image)
 
 REPO = Path(__file__).resolve().parents[1]
 ART = REPO / "artifacts" / "case_dem_shear_campbell_elastic_limit"
@@ -180,3 +180,56 @@ def test_production_artifacts_are_present_and_gated():
     assert scaling["n_points"] >= 3
     assert scaling["scaling_vs_kappa"]["status"] == "ok", scaling["scaling_vs_kappa"]
     assert scaling["scaling_vs_kappa"]["n_gated"] >= 3
+
+# ------------------------------------------------- Campbell regime diagnostic ----
+def test_regime_map_classifies_the_two_campbell_bands():
+    """kappa >= 1e4 -> elastic-quasi-static, 1 <= kappa < 1e4 -> elastic-inertial."""
+    assert elastic_limit_regime(5.8e5)["regime"] == "elastic-quasi-static"
+    assert elastic_limit_regime(5.8e3)["regime"] == "elastic-inertial"
+    assert elastic_limit_regime(0.5)["regime"] == "inertial"
+    lo, hi = elastic_limit_regime(5.8e3)["rate_exponent_band"]
+    assert 0.0 <= lo < hi <= 2.0
+    with pytest.raises(ElasticLimitShearError):
+        elastic_limit_regime(0.0)
+
+
+def test_regime_map_is_wired_into_the_servo_shear_device():
+    """The mu(I) device must report the stiffness number of its own shear point."""
+    from tensordem.mu_i_rheology import ServoShearCase
+    static = ServoShearCase(shear_rate=0.0)
+    assert static.kappa is None and static.elastic_limit_regime is None
+    shaken = ServoShearCase(kn=1.0e3, shear_rate=4.0)   # kappa = 2.5e4 by hand
+    assert shaken.kappa == pytest.approx(2.5e4)
+    assert shaken.elastic_limit_regime["regime"] == "elastic-quasi-static"
+
+
+def test_slope_is_undefined_for_a_single_abscissa():
+    """Two system sizes at one kappa must not manufacture a slope."""
+    assert _loglog_slope([5787.0, 5787.0], [83.5, 88.8]) is None
+    assert _loglog_slope([1.0, 10.0], [1.0, 1.0]) == pytest.approx(0.0)
+
+
+def test_scaling_averages_duplicate_kappa_instead_of_de_ranking_the_fit():
+    # two sizes at kn = 1e3 (mean tau* = 2.0) and one at kn = 1e4 (tau* = 20.0)
+    pts = _synthetic([1e3, 1e3, 1e4], [1.8, 2.2, 20.0])
+    out = shear_stress_scaling(pts)
+    assert out["n_distinct_kappa"] == 2
+    assert out["beta_global"] == pytest.approx(1.0, abs=0.01)
+
+
+# ------------------------------------------------------ benchmark artifacts ----
+@pytest.mark.skipif(not ART.exists(), reason="case artifacts not present")
+def test_benchmark_table_is_shipped_and_states_its_legs():
+    bench = json.loads((ART / "benchmark.json").read_text())
+    assert bench["status"] == "ok"
+    legs = {r["leg"]: r for r in bench["legs"]}
+    # the reference-vs-got table must carry numbers, not prose
+    assert isinstance(legs["R1_elastic_quasi_static_exponent"]["got"], float)
+    assert legs["R4_coefficient_of_the_elastic_branch"]["verdict"] == "WITHHELD"
+    # an honest FAIL is allowed; a silent pass is not
+    assert all(r["verdict"] in ("PASS", "FAIL", "WITHHELD", "NOT_MEASURED")
+               for r in bench["legs"])
+    assert bench["overall"] == "PASS"
+    manifest = json.loads((ART / "run_manifest.json").read_text())
+    assert manifest["profile"] == "production"
+    assert manifest["sha256"]["impl"]
