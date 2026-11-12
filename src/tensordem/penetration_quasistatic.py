@@ -387,8 +387,12 @@ class QuasiStaticPenetration:
         dt = float(sp.dt)
         z_bottom0 = z0 - R
         target_depth = cfg.penetrate_over_r * R
+        # The indenter starts above the free surface; initial_depth is negative.
+        # Total travel = target_depth - initial_depth = target_depth + |initial_depth|.
+        initial_depth = float(self.z_surface - z_bottom0)
+        total_travel = target_depth - initial_depth  # = target_depth + |initial_depth|
         n_block = max(1, int(cfg.sample_every_steps))
-        max_steps = int(math.ceil(target_depth / (v_pen * dt) * 1.2)) + 1000
+        max_steps = int(math.ceil(total_travel / (v_pen * dt) * 1.2)) + 2000
 
         rec: Dict[str, List[float]] = dict(step=[], z=[], F=[], ke=[], ke_drive=[],
                                            n_contacts=[])
