@@ -38,6 +38,8 @@ BAND = (0.62, 0.66)          # feature_ledger acceptance band for this case
 TOL_REL = 0.03               # <3 % against the reference (accuracy standard)
 DT_DEFAULT = 1.0 / 20.0      # production timestep, dt = t_c / 20
 STIFF_GATE = 0.005           # |phi(k_n_production) - phi(k_n -> inf)|
+PROD_N_MIN = 10000           # feature_ledger: "10000 spheres, both friction tiers"
+SEED_MIN = 3                 # the seed claim the document makes must be met
 DT_GATE = 0.002              # |phi(dt/2) - phi(dt)|
 
 sys.path.insert(0, os.path.join(ROOT, "src"))
@@ -200,6 +202,18 @@ def main() -> int:
                   "criterion": "every run reached KE/(N m g d) < 5e-4 for 4 t_g",
                   "got": settled_all, "value": bool(settled_all),
                   "pass": bool(settled_all)})
+    gates.append({"id": "G15_production_size",
+                  "criterion": f"N_production >= {PROD_N_MIN} (feature_ledger: "
+                               f"10000 spheres, both friction tiers; largest N "
+                               f"carrying both tiers)",
+                  "got": n_primary, "value": n_primary,
+                  "pass": bool(n_primary >= PROD_N_MIN)})
+    seed_counts = {mu: (stat(mu)[1] if stat(mu) else 0) for mu in (0.0, 0.1)}
+    seed_min = min(seed_counts.values())
+    gates.append({"id": "G16_seed_coverage",
+                  "criterion": f"each production tier >= {SEED_MIN} independent seeds",
+                  "got": seed_min, "value": seed_min,
+                  "pass": bool(seed_min >= SEED_MIN)})
     ovmax = max(r["ovmax"] for r in runs_all)
     gates.append({"id": "G9_residual_overlap",
                   "criterion": "max overlap/d < 0.01 in the settled state",
@@ -389,7 +403,10 @@ def main() -> int:
     A("| timestep | dt = t_c/20 (production), t_c/40 (timestep probe) |")
     A("| friction tiers | mu = 0 (frictionless), 0.1 (low-friction), "
       "0.3 / 0.5 (trend) |")
-    A("| seeds | production tiers: 3 seeds each |")
+    A("| seeds | " + ", ".join(
+        f"mu={mu:g}: {stat(mu)[1]} seed{'s' if stat(mu)[1] != 1 else ''}"
+        for mu in sorted({r["mu"] for r in runs if r["n"] == n_primary
+                          and abs(r["kn"] - kn_prod) < 1e-9})) + " |")
     A("")
     A("## 2 Method")
     A("")
