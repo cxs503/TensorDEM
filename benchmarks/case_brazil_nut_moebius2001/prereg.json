@@ -1,0 +1,35 @@
+{
+ "reference": {
+  "citation": "M.E. Moebius, B.E. Lauderdale, S.R. Nagel & H.M. Jaeger, Nature 414, 270 (2001), DOI 10.1038/35104697, Fig. 1",
+  "measured": "rising time T_rise vs density ratio rho/rho_m and size ratio D/d",
+  "config": {
+   "d_m": 0.0005,
+   "rho_m_kg_m3": 2400.0,
+   "fill_height_m": 0.086,
+   "cell_diameter_m": 0.082,
+   "Gamma": 5.0,
+   "f_Hz": 13.0,
+   "D_m": 0.0254,
+   "initial_top_depth_m": 0.046
+  }
+ },
+ "hypotheses": {
+  "H1_direction": "a large intruder denser than the bed (rho/rho_m = 3.24) rises (Brazil-nut ascent) at Gamma = 5",
+  "H2_nonmonotonic": "T_rise(rho/rho_m) is non-monotonic with an interior maximum near rho/rho_m ~ 0.5 (the reference's rho*/rho_m ~ 0.47-0.5, measured on the ambient-pressure branch)",
+  "H3_size": "the rise time decreases as D/d grows (size dependence becomes pronounced for large D/d)"
+ },
+ "metrics": {
+  "T_rise": "taps from release until the intruder top reaches the free surface (censored at the tap budget)",
+  "rise_per_tap": "mean increase of intruder centre height per tap, in units of the small-particle diameter d",
+  "layering_index": "(z_intruder - z_small_centroid)/H_bed"
+ },
+ "tolerances": {
+  "qualitative": "sign/direction and the ordering of T_rise must match the reference trend",
+  "quantitative": "T_rise relative error < 20 % for trend descriptors that the reference reports numerically",
+  "withheld": "absolute T_rise values of the reference are only published graphically (Fig. 1, paywalled body); they are marked WITHHELD, never digitised by guesswork"
+ },
+ "scale_gap": {
+  "D_over_d": "8 (reference 50.8): a 1:1 reproduction needs ~1e4 particles across the bed depth; declared, not hidden",
+  "air": "the 2D dry-disk engine has no interstitial gas; the reference's pressure branch (90 torr) is out of scope for this round"
+ }
+}
