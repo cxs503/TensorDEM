@@ -1,0 +1,493 @@
+{
+ "audit_mission": 16316,
+ "audited_mission": 16243,
+ "anchor": "CASE-DEM-SHEAR-CAMPBELL-ELASTIC-LIMIT",
+ "provenance": {
+  "branch": "agent/m16243",
+  "branch_tip": "5a4f14140f0a",
+  "main_head": "181b91cd2b4a",
+  "merged_into_main": false,
+  "branches_containing": [
+   "+ agent/m16243"
+  ],
+  "files": {
+   "src/tensordem/elastic_limit_shear.py": {
+    "exists_on_disk": true,
+    "bytes": 35555,
+    "sha256": "c835017b69aa5c8441a882e4f0c0918779cf6801b4d636c37576f50087bcc5d3",
+    "ref_copy": "docs/board_audit/m16316/refs/elastic_limit_shear.py",
+    "commits_touching_file": 3,
+    "in_any_commit": true
+   },
+   "src/tensordem/cli.py": {
+    "exists_on_disk": true,
+    "bytes": 13010,
+    "sha256": "f83c4f2b280f3bb1686951729d8421696839de4a3bfe519ce4e0826c890b7259",
+    "ref_copy": "docs/board_audit/m16316/refs/cli.py",
+    "commits_touching_file": 17,
+    "in_any_commit": true
+   },
+   "benchmarks/case_dem_shear_campbell_elastic_limit/run_case.py": {
+    "exists_on_disk": true,
+    "bytes": 11044,
+    "sha256": "459cdf42d5bc7551ebf2a1099042a02b53f2598ee559c564e6b778f648c08942",
+    "ref_copy": "docs/board_audit/m16316/refs/run_case.py",
+    "commits_touching_file": 3,
+    "in_any_commit": true
+   },
+   "tests/test_elastic_limit_shear.py": {
+    "exists_on_disk": true,
+    "bytes": 7457,
+    "sha256": "26d359dc6cd7c6ded68af568c48819df416f181f9649be5d84cd1025ddd1915c",
+    "ref_copy": "docs/board_audit/m16316/refs/test_elastic_limit_shear.py",
+    "commits_touching_file": 3,
+    "in_any_commit": true
+   },
+   "docs/CASE_DEM_SHEAR_CAMPBELL_ELASTIC_LIMIT.md": {
+    "exists_on_disk": true,
+    "bytes": 18465,
+    "sha256": "ff013c122447c07ce34d9b95b30319cda1f9fa838a8d3982991063464bb65e40",
+    "ref_copy": "docs/board_audit/m16316/refs/CASE_DEM_SHEAR_CAMPBELL_ELASTIC_LIMIT.md",
+    "commits_touching_file": 3,
+    "in_any_commit": true
+   },
+   "artifacts/case_dem_shear_campbell_elastic_limit/scaling.json": {
+    "exists_on_disk": true,
+    "bytes": 5942,
+    "sha256": "320dc6060872bea459042d0cef889f96be8926a8231410788bc8fd442453c775",
+    "ref_copy": "docs/board_audit/m16316/refs/scaling.json",
+    "commits_touching_file": 2,
+    "in_any_commit": true
+   },
+   "artifacts/case_dem_shear_campbell_elastic_limit/dt_convergence.json": {
+    "exists_on_disk": true,
+    "bytes": 638,
+    "sha256": "a151365eb80abbb40d5d8eedb11780d56f48dda4cf984ae161af6e75befa526c",
+    "ref_copy": "docs/board_audit/m16316/refs/dt_convergence.json",
+    "commits_touching_file": 1,
+    "in_any_commit": true
+   },
+   "artifacts/case_dem_shear_campbell_elastic_limit/fig_tau_star_kappa.png": {
+    "exists_on_disk": true,
+    "bytes": 44768,
+    "sha256": "2f14ec8ad4d010b9bd35fd4a22876a7ae22ece3a5a9fe1644631b656119cc7c3",
+    "ref_copy": "docs/board_audit/m16316/refs/fig_tau_star_kappa.png",
+    "commits_touching_file": 2,
+    "in_any_commit": true
+   },
+   "artifacts/case_dem_shear_campbell_elastic_limit/logs/sweep_all.log": {
+    "exists_on_disk": true,
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "ref_copy": "docs/board_audit/m16316/refs/sweep_all.log",
+    "commits_touching_file": 1,
+    "in_any_commit": true
+   }
+  },
+  "trunk_cli_wiring_lines": 0,
+  "note": "deliverables are committed on the mission branch, but that branch is not an ancestor of main: trunk still ships the round-1 kernel and has no CLI wiring for this case"
+ },
+ "referee": {
+  "query": "tensor_benchmark_cases WHERE anchor_slug='CASE-DEM-SHEAR-CAMPBELL-ELASTIC-LIMIT'",
+  "rows": [
+   "R1_bagnold_exponent_inertial_limit|n = d ln tau / d ln gdot in the inertial limit (tau ~ rho d^2 gdot^2)|15 % rel.|pending",
+   "R2_regime_boundary_kappa_c|kappa_c for the elastic-inertial -> inertial transition|factor 3 (order of magnitude)|pending",
+   "R3_elastic_quasistatic_exponent|n for tau* ~ kappa (elastic-quasi-static limit)|absolute 0.3|pending",
+   "R4_bagnold_coefficient_plateau|tau* plateau coefficient (WITHHELD: JFM 2002 pp.261-291 CLOSED, no OA copy)|WITHHELD|pending"
+  ],
+  "n_rows": 4
+ },
+ "points_loaded": [
+  "kn1e+00_g0.25_n400",
+  "kn1e+00_g0.5_n400",
+  "kn1e+00_g1_n400",
+  "kn1e+00_g2_n400",
+  "kn1e+01_g1_n400",
+  "kn1e+02_g1_n400",
+  "kn1e+03_g1_n400",
+  "kn1e+04_g1_n400"
+ ],
+ "arithmetic": {
+  "per_point": {
+   "kn1e+00_g0.25_n400": {
+    "max_rel_diff": 0.0,
+    "recomputed": {
+     "kappa": 9.2592592593,
+     "tau_star": 0.3211046984,
+     "mu_eff": 0.445360826,
+     "I": 1.1776945811
+    }
+   },
+   "kn1e+00_g0.5_n400": {
+    "max_rel_diff": 0.0,
+    "recomputed": {
+     "kappa": 2.3148148148,
+     "tau_star": 0.0877706511,
+     "mu_eff": 0.392045458,
+     "I": 2.1134576675
+    }
+   },
+   "kn1e+00_g1_n400": {
+    "max_rel_diff": 0.0,
+    "recomputed": {
+     "kappa": 0.5787037037,
+     "tau_star": 0.025017754,
+     "mu_eff": 0.4107904236,
+     "I": 4.0521545093
+    }
+   },
+   "kn1e+00_g2_n400": {
+    "max_rel_diff": 0.0,
+    "recomputed": {
+     "kappa": 0.1446759259,
+     "tau_star": 0.0060218967,
+     "mu_eff": 0.4045074633,
+     "I": 8.1958993762
+    }
+   },
+   "kn1e+01_g1_n400": {
+    "max_rel_diff": 0.0,
+    "recomputed": {
+     "kappa": 5.787037037,
+     "tau_star": 0.208225791,
+     "mu_eff": 0.4267104667,
+     "I": 1.4315264857
+    }
+   },
+   "kn1e+02_g1_n400": {
+    "max_rel_diff": 0.0,
+    "recomputed": {
+     "kappa": 57.8703703704,
+     "tau_star": 1.5374020654,
+     "mu_eff": 0.4754567513,
+     "I": 0.5561113759
+    }
+   },
+   "kn1e+03_g1_n400": {
+    "max_rel_diff": 0.0,
+    "recomputed": {
+     "kappa": 578.7037037037,
+     "tau_star": 11.187963375,
+     "mu_eff": 0.4962588645,
+     "I": 0.2106098218
+    }
+   },
+   "kn1e+04_g1_n400": {
+    "max_rel_diff": 0.0,
+    "recomputed": {
+     "kappa": 5787.037037037,
+     "tau_star": 84.3286741765,
+     "mu_eff": 0.4911715215,
+     "I": 0.0763183466
+    }
+   }
+  },
+  "worst": {
+   "rel": 0.0,
+   "tag": null,
+   "what": null
+  },
+  "verdict": "filed dimensionless groups are arithmetic-consistent with the artifacts' own case blocks"
+ },
+ "gating": {
+  "as_filed_in_artifacts": {
+   "energy_gate": 0.1,
+   "n_gated": 0,
+   "gated_tags": [],
+   "status": "refused: fewer than 2 points pass the gate"
+  },
+  "committed_code_default": {
+   "energy_gate": 0.3,
+   "n_gated": 3,
+   "gated_tags": [
+    "kn1e+02_g1_n400",
+    "kn1e+03_g1_n400",
+    "kn1e+04_g1_n400"
+   ],
+   "beta": 0.8695939060835742,
+   "n": 0.26081218783285154,
+   "local": [
+    {
+     "beta": 0.8619635757997344,
+     "n": 0.27607284840053126,
+     "kappa": [
+      57.87037037037038,
+      578.7037037037038
+     ]
+    },
+    {
+     "beta": 0.8772242363674143,
+     "n": 0.24555152726517138,
+     "kappa": [
+      578.7037037037038,
+      5787.037037037037
+     ]
+    }
+   ]
+  },
+  "filed_scaling_json": {
+   "n_gated": 3,
+   "beta_global": 0.8695939060835746,
+   "n_global": 0.2608121878328509,
+   "rejected_kn": [
+    1.0,
+    10.0
+   ],
+   "rate_sweeps_status": {
+    "kn1e+00": {
+     "status": "refused",
+     "n_gated": 1,
+     "reason": "fewer than 3 gated points in the rate sweep"
+    }
+   }
+  },
+  "agrees_with_filed": true,
+  "gate_conflict": {
+   "artifacts_record_energy_gate": [
+    0.1
+   ],
+   "artifacts_all_gate_flag": {
+    "kn1e+00_g1_n400": 0,
+    "kn1e+01_g1_n400": 0,
+    "kn1e+02_g1_n400": 0,
+    "kn1e+03_g1_n400": 0,
+    "kn1e+04_g1_n400": 0
+   },
+   "finding": "every point in the shipped artifacts carries gates.energy=0 and gates.all=0 under the energy gate recorded inside the artifact (0.1); the headline scaling exists only after re-gating at 0.30, and the artifacts were never regenerated to reflect it"
+  }
+ },
+ "referee_legs": {
+  "R3": {
+   "reference": "n = 0 (tau* ~ kappa, elastic / quasi-static limit)",
+   "tolerance": "absolute 0.3",
+   "got_n": 0.26081218783285154,
+   "got_beta": 0.8695939060835742,
+   "abs_dev_from_reference": 0.26081218783285154,
+   "within_tolerance": true,
+   "side_check_relative_on_beta": {
+    "rel_dev": 0.13040609391642577,
+    "within_15pct": true
+   },
+   "tau_star_growth_over_window": 54.851412048698755,
+   "kappa_window": [
+    57.87037037037038,
+    5787.037037037037
+   ],
+   "inertial_numbers": [
+    0.5561,
+    0.2106,
+    0.0763
+   ],
+   "caveat": "passes the registered absolute band, but tau* still grows by the factor above across the window and I=0.08..0.56 is the dense-inertial regime: a cross-over exponent, not a demonstrated plateau"
+  },
+  "R1": {
+   "reference": "n = 2 (Bagnold, tau ~ rho d^2 gdot^2)",
+   "tolerance": "relative 15%",
+   "gated_points": 0,
+   "declared_status": "not_run / NOT_SUPPORTED",
+   "available_evidence": {
+    "kn": 1.0,
+    "shear_rates": [
+     0.25,
+     0.5,
+     1.0,
+     2.0
+    ],
+    "n_from_ungated_sweep": 0.09791676707317055,
+    "pressure_exponent": 0.1328211095552432,
+    "max_overlap_ratio": [
+     0.495,
+     0.517,
+     0.593,
+     0.567
+    ]
+   },
+   "within_tolerance": false,
+   "rel_error_if_taken_at_face_value": 0.9510416164634147,
+   "note": "no gated point reaches the inertial branch (the kn=1e0 sweep sits at 0.37-0.60 d overlap, outside the linear-spring validity window); the ungated sweep gives n~0.1, so the available data contradict Bagnold rather than support it"
+  },
+  "R2": {
+   "reference": "kappa_c = 1e4 (elastic -> inertial regime boundary)",
+   "tolerance": "order of magnitude (factor 3.0)",
+   "kappa_span_measured": [
+    0.5787037037037038,
+    5787.037037037037
+   ],
+   "highest_gated_kappa": 5787.037037037037,
+   "points_inside_factor_3_band": [
+    5787.037037037037
+   ],
+   "within_tolerance": false,
+   "reason": "no regime break anywhere in the measured span; the point inside the factor-3 band (kappa=5787) still follows the same power law, so a boundary at 1e4 is neither located nor corroborated"
+  },
+  "R4": {
+   "reference": "Bagnold plateau coefficient (Campbell JFM 465)",
+   "tolerance": "WITHHELD",
+   "within_tolerance": null,
+   "reason": "declared WITHHELD in the case doc and the report; no coefficient value is asserted anywhere in the deliverables, so nothing is over-claimed"
+  }
+ },
+ "energy_audit": {
+  "per_point": {
+   "kn1e+00_g0.25_n400": {
+    "recomputed_global_defect": 0.09050723121942213,
+    "filed_global_defect": 0.090507231219422,
+    "window_defect": 0.15667256596444193,
+    "gate_recorded_in_artifact": 0.1,
+    "ratio_window_defect_to_recorded_gate": 1.5667256596444192
+   },
+   "kn1e+00_g0.5_n400": {
+    "recomputed_global_defect": 0.02196252463410167,
+    "filed_global_defect": 0.021962524634101786,
+    "window_defect": 0.05222615324594561,
+    "gate_recorded_in_artifact": 0.1,
+    "ratio_window_defect_to_recorded_gate": 0.5222615324594561
+   },
+   "kn1e+00_g1_n400": {
+    "recomputed_global_defect": 0.03425394176076762,
+    "filed_global_defect": 0.03425394176076762,
+    "window_defect": 0.04737100880538855,
+    "gate_recorded_in_artifact": 0.1,
+    "ratio_window_defect_to_recorded_gate": 0.4737100880538854
+   },
+   "kn1e+00_g2_n400": {
+    "recomputed_global_defect": 0.01630329556287738,
+    "filed_global_defect": 0.01630329556287738,
+    "window_defect": 0.021775426059013597,
+    "gate_recorded_in_artifact": 0.1,
+    "ratio_window_defect_to_recorded_gate": 0.21775426059013595
+   },
+   "kn1e+01_g1_n400": {
+    "recomputed_global_defect": 0.07209828208366685,
+    "filed_global_defect": 0.07209828208366695,
+    "window_defect": 0.13522693812311973,
+    "gate_recorded_in_artifact": 0.1,
+    "ratio_window_defect_to_recorded_gate": 1.3522693812311972
+   },
+   "kn1e+02_g1_n400": {
+    "recomputed_global_defect": 0.15338646050592225,
+    "filed_global_defect": 0.15338646050592214,
+    "window_defect": 0.19244936137955218,
+    "gate_recorded_in_artifact": 0.1,
+    "ratio_window_defect_to_recorded_gate": 1.9244936137955218
+   },
+   "kn1e+03_g1_n400": {
+    "recomputed_global_defect": 0.21882164205745283,
+    "filed_global_defect": 0.21882164205745278,
+    "window_defect": 0.2547307718837541,
+    "gate_recorded_in_artifact": 0.1,
+    "ratio_window_defect_to_recorded_gate": 2.5473077188375406
+   },
+   "kn1e+04_g1_n400": {
+    "recomputed_global_defect": 0.20923731448959507,
+    "filed_global_defect": 0.20923731448959507,
+    "window_defect": 0.23859693786390193,
+    "gate_recorded_in_artifact": 0.1,
+    "ratio_window_defect_to_recorded_gate": 2.385969378639019
+   }
+  },
+  "arithmetic_reproduces": true,
+  "probe": {
+   "log": "runs/audit_m16316/probe_kn1e3.log",
+   "line": "PROBE kn=1e+03 work_win=9366.42 diss_win=7054.29 dE_window=-73.788 residual=2385.92 | xi_dead=0 (0.00% of work) xi_live=262.473 elastic_n=1247.28 rel_defect_excl_dead=0.2547",
+   "hypothesis_tested": "the residual is the tangential-spring energy retained by pairs that have separated",
+   "result": "rejected as the (sole) mechanism: retained tangential energy of non-contacting pairs is 0.00% of the window work while the residual stays at 25.5%"
+  },
+  "verdict": "the audit residual is 1.9-2.5x the energy gate recorded in the artifacts; the 'model-level, dt-independent' explanation is plausible but its mechanism is unidentified, so the audit cannot certify the energetics of the gated points"
+ },
+ "reproduction": {
+  "filed_tau_star": 11.187963375044525,
+  "repro_artifact": "runs/audit_m16316/point_audit_repro_kn1e3.json",
+  "repro_tau_star": 11.187963375044525,
+  "rel_diff": 0.0,
+  "bit_identical": true,
+  "params": {
+   "kn": 1000.0,
+   "shear_rate": 1.0,
+   "n_particles": 400,
+   "strain_total": 1.8,
+   "strain_average_from": 0.8,
+   "dt_over_contact_time": 0.0025,
+   "seed": 20261112
+  },
+  "verdict": "point reproduces bit-exactly from the branch commit at the filed parameters -- the artifact is real output of this code",
+  "documented_repro_cmd": {
+   "command": "PYTHONPATH=src python -m tensordem.cli elastic-limit-shear --kn 1e4 --shear-rate 1.0",
+   "exit_code": 0,
+   "stdout_bytes": 0,
+   "stderr_bytes": 0,
+   "cli_py_main_guard_hits": 0,
+   "finding": "the documented command is a silent no-op: cli.py has no `if __name__ == '__main__'` guard, so `python -m tensordem.cli` imports the module, never calls main(), prints nothing and exits 0",
+   "working_invocation": "PYTHONPATH=src python -m tensordem elastic-limit-shear --kn/--n/--strain ..."
+  },
+  "cli_subcommand_really_runs": {
+   "artifact": "runs/audit_m16316/cli_point_kn1e2.json",
+   "kappa": 57.87037037037038,
+   "tau_star": 1.5620518782513184,
+   "mu_eff": 0.46235181203320175,
+   "N": 200,
+   "gates_all": true
+  }
+ },
+ "report": {
+  "markdown_bytes": 2422,
+  "sections_present": {
+   "①": true,
+   "②": true,
+   "③": true,
+   "④": true,
+   "⑤": true,
+   "⑥": true
+  },
+  "n_sections": 6,
+  "figures_json_bytes": 150,
+  "png_base64_embedded": false,
+  "mission_figure_png": {
+   "size": [
+    1540,
+    616
+   ],
+   "mean": 249.5755702900995,
+   "std": 27.522077693062336,
+   "nonwhite_fraction": 0.10434622195985832
+  },
+  "explicit_3pct_answer": false
+ },
+ "tests": {
+  "cmd": "PYTHONPATH=src pytest -q tests/test_elastic_limit_shear.py",
+  "exit_code": 0,
+  "summary": "15 passed, 1 warning in 8.72s",
+  "asserts_invariants": [
+   "min-image vs brute force for s in {0,.1,.3,.5,-.4}",
+   "single-contact stress sign + normalisation",
+   "packing solid fraction + overlap-free start",
+   "synthetic n=0 / n=2 branch recovery by the fitter",
+   "refusal when fewer than 3 gated points"
+  ]
+ },
+ "verdict": {
+  "level": 3,
+  "rationale": "L1 met: 15 tests assert invariants (min-image vs brute force, single-contact stress sign+normalisation, packing fraction, synthetic n=0/n=2 recovery, gate-refusal path) -- replayed green by the auditor. L2 met: a self-contained 825-line SLLOD/Lees-Edwards kernel with a real input->compute->output path; one filed point reproduces bit-exactly (tau*=11.187963375044525). L3 met at branch level: `elastic-limit-shear` is wired into src/tensordem/cli.py (+37 lines) and runs end-to-end via `python -m tensordem` (kappa=57.87, tau*=1.562, all gates pass at N=200) -- but the branch is NOT merged into main, so trunk still ships the round-1 kernel with no wiring. L4 NOT met: of the 4 registered referee legs only ['R3'] passes (1/4); R1 and R2 fail, R4 is WITHHELD. That single pass is a cross-over exponent in the dense-inertial regime (I=0.08-0.56, tau* still growing x54.9), it exists only after an energy gate loosened 3x after the runs (the shipped artifacts carry gates.all=0 under their own gate 0.1 and were never regenerated), the energy audit closes only to 19-25% of the shear work with an unidentified mechanism, the documented CLI repro command is a silent no-op, and the finite-size study is not run. Real kernel + tests + CLI wiring + a partially validated case = L3.",
+  "passed_legs": [
+   "R3"
+  ],
+  "failed_legs": [
+   "R1",
+   "R2"
+  ],
+  "withheld_legs": [
+   "R4"
+  ],
+  "why_not_L4": "The structural L4 tests (complete case, error analysis, reproducibility) are met on paper: a full kappa ladder + rate sweeps, a dt-convergence pair, an explicit per-leg error statement, and bit-exact reproducibility by the auditor. What is NOT met is the referee itself: 3 of the 4 registered legs are unmet, and the single passing leg collapses to zero gated points if the gate recorded inside the artifacts (0.1) is applied instead of the 0.30 that the committed code silently substitutes. An honest FAIL is a legitimate scientific result, but it cannot be booked as 'benchmark validated' while the case's own artifacts contradict the gated set they are supposed to support. Hence L3, not L4; nothing in this verdict disputes the physics numbers themselves, which reproduce exactly.",
+  "what_moves_it_to_L4": [
+   "run kn=1e5/1e6 rungs + rate sweeps at kn=1e6 (sharded) so R1/R2 have gated points in the inertial band",
+   "identify or fix the mechanism of the 19-25% energy-audit residual (the retained-tangential-history hypothesis was falsified by the probe)",
+   "regenerate the artifacts under the final gate so point JSONs and scaling.json stop contradicting each other",
+   "merge agent/m16243 into main, otherwise the capability is not in trunk",
+   "N=800 finite-size + an uncertainty on n (the 3-point fit carries no error bar)",
+   "fix the documented repro command (python -m tensordem, not python -m tensordem.cli)"
+  ]
+ },
+ "figure": "docs/board_audit/m16316/fig_m16316_audit.png",
+ "verdict_row_id": "467\nINSERT 0 1"
+}
