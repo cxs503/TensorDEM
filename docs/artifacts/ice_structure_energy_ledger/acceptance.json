@@ -1,0 +1,499 @@
+{
+  "node": "P304W2-N06",
+  "capability": "ice-structure contact-collision four-ledger energy conservation audit",
+  "model": {
+    "particles": 27,
+    "bonds": 126,
+    "radius_m": 0.05,
+    "density_kgm3": 900.0,
+    "mass_kg": 0.4712388980384691,
+    "contact": {
+      "k_normal_N_m": 1000000.0,
+      "kt_ratio": 0.5,
+      "restitution_elastic": 1.0,
+      "restitution_fracture": 0.9
+    },
+    "elastic_bond": {
+      "stiffness_N_m": 10000000.0,
+      "area_m2": 0.001,
+      "tensile_strength_Pa": 400000.0,
+      "fracture_energy_J_m2": 10.0,
+      "elastic_limit_m": 4e-05,
+      "separation_m": 5e-05
+    },
+    "fracture_bond": {
+      "stiffness_N_m": 10000000.0,
+      "area_m2": 0.001,
+      "tensile_strength_Pa": 200000.0,
+      "fracture_energy_J_m2": 10.0,
+      "elastic_limit_m": 2e-05,
+      "separation_m": 0.0001,
+      "surface_energy_J": 0.01
+    },
+    "impact_velocity_m_s": 2.0,
+    "initial_gap_m": 0.002,
+    "duration_s": 0.008
+  },
+  "criteria": {
+    "a_kinetic_energy_error_lt_0.1pct": {
+      "value": 1.5892137641414613e-16,
+      "threshold": 0.001,
+      "pass": true,
+      "detail": {
+        "E_k_ledger": 22.355165547661727,
+        "E_k_reference": 22.35516554766173,
+        "E_k_error_relative": 1.5892137641414613e-16,
+        "E_s_ledger": 0.019908247119780585,
+        "E_s_reference": 0.019908247119772907,
+        "E_s_error_relative": 3.8566359250421687e-13
+      }
+    },
+    "b_contact_strain_energy_error_lt_0.5pct": {
+      "value": 3.8566359250421687e-13,
+      "threshold": 0.005,
+      "pass": true,
+      "detail": {
+        "E_k_ledger": 22.355165547661727,
+        "E_k_reference": 22.35516554766173,
+        "E_k_error_relative": 1.5892137641414613e-16,
+        "E_s_ledger": 0.019908247119780585,
+        "E_s_reference": 0.019908247119772907,
+        "E_s_error_relative": 3.8566359250421687e-13
+      }
+    },
+    "b2_tangential_spring_energy_error_lt_0.5pct": {
+      "value": 0.0,
+      "threshold": 0.005,
+      "pass": true,
+      "detail": {
+        "peak_tangential_strain_energy": 0.06127581987581304,
+        "time_of_peak_s": 0.001465999999999976,
+        "peak_rotational_kinetic_energy": 0.17546128693697566,
+        "E_s_contact_tangential_ledger": 0.06127581987581304,
+        "E_s_contact_tangential_reference": 0.06127581987581304,
+        "E_s_contact_tangential_error_relative": 0.0,
+        "E_s_contact_normal_ledger": 0.0,
+        "E_s_contact_normal_reference": 0.0,
+        "E_v_ledger": 0.06816283137076205,
+        "E_v_tangential_ledger": 0.016465555924454114,
+        "residual_relative_max": 0.045695807452097864,
+        "clamp_loss_J": -0.0019074665036874516,
+        "friction_sliding_J": 0.0022610732195658505,
+        "spring_release_J": 0.037720254666396974
+      }
+    },
+    "c_fracture_energy_error_lt_1pct": {
+      "value": 1.0475860518935097e-06,
+      "threshold": 0.01,
+      "pass": true,
+      "detail": {
+        "dt": 5e-06,
+        "summary": {
+          "n_steps": 1601,
+          "dt": 5e-06,
+          "t_end": 0.007999999999999759,
+          "E_total_0": 25.44690049407733,
+          "E_k": 22.355165547661727,
+          "E_s": 0.019908247119780585,
+          "E_f": 0.323739434761988,
+          "E_v": 2.778522176916181,
+          "E_total": 25.477335406459677,
+          "residual_relative_final": 0.0011960164810417948,
+          "residual_relative_max": 0.0011976439574824525,
+          "n_broken": 24,
+          "max_tangential_utilization": 0.8554028880525002,
+          "clamp_loss_J": -0.04482443204746375,
+          "friction_sliding_J": 0.0017743416731224712,
+          "spring_release_J": 0.003253358695068456,
+          "wall_work_J": 0.0,
+          "peak_wall_force_N": 20454.231828214335,
+          "max_penetration_m": 0.002294428187269597
+        },
+        "E_f_reference": 0.3237397739072596,
+        "E_f_error_relative": 1.0475860518935097e-06,
+        "n_fully_separated": 24,
+        "E_v_reference": 2.778522176916118,
+        "E_v_error_relative": 2.2695758314479224e-14,
+        "ledger_csv": "docs/artifacts/ice_structure_energy_ledger/sweep/ledger_fracture_dt5.0e-06.csv",
+        "ledger_csv_sha256": "b022d2060db75f96db49ad36d3e3721062d3227871f493892913aedf9d496888"
+      }
+    },
+    "d_viscous_dissipation_error_lt_2pct": {
+      "value": 2.2695758314479224e-14,
+      "threshold": 0.02,
+      "pass": true,
+      "detail": {
+        "trapezoid": 2.778522176916118,
+        "analytic_restitution": {
+          "restitution": 0.8,
+          "E_v_ledger": 0.1908391270181753,
+          "E_v_analytic": 0.1908517537055799,
+          "E_v_error_relative": 6.6159661409765e-05,
+          "E_v_trapezoid": 0.19083912701820044,
+          "E_v_trapezoid_error_relative": 1.3176832183560322e-13,
+          "rebound_velocity": 1.212177972201029,
+          "rebound_ratio": -0.8081186481340193,
+          "residual_relative_max": 0.013033137527253325,
+          "ledger_channels": {
+            "E_k": 0.3462134307009055,
+            "E_s": 0.0,
+            "E_f": 0.0,
+            "E_v": 0.1908391270181753,
+            "E_total_0": 0.5301437602932777
+          },
+          "out_of_ledger_channels": {
+            "clamp_loss_J": -0.11269949352889769,
+            "spring_release_J": 0.0,
+            "friction_sliding_J": 0.0
+          }
+        }
+      }
+    },
+    "e_elastic_residual_lt_1pct": {
+      "value": 4.3908911316259335e-06,
+      "threshold": 0.01,
+      "pass": true
+    },
+    "f_fracture_residual_lt_2pct": {
+      "value": 0.0011976439574824525,
+      "threshold": 0.02,
+      "pass": true
+    },
+    "g_negative_control_zero_velocity": {
+      "value": 0.0,
+      "threshold": 0.0,
+      "pass": true,
+      "detail": {
+        "E_total_0": 0.0,
+        "E_k": 0.0,
+        "E_s": 0.0,
+        "E_f": 0.0,
+        "E_v": 0.0,
+        "max_abs_total_over_run": 0.0,
+        "max_abs_velocity": 0.0,
+        "n_broken": 0,
+        "pass": true
+      }
+    },
+    "h_dt_halving_does_not_increase_residual": {
+      "pass": true,
+      "detail": {
+        "elastic": {
+          "dts": [
+            1e-05,
+            5e-06,
+            2.5e-06
+          ],
+          "residuals": [
+            1.7563563569457816e-05,
+            4.3908911316259335e-06,
+            1.1655853338386217e-06
+          ],
+          "monotone": true
+        },
+        "fracture": {
+          "dts": [
+            1e-05,
+            5e-06,
+            2.5e-06
+          ],
+          "residuals": [
+            0.001238720002373407,
+            0.0011976439574824525,
+            0.0011345939488766775
+          ],
+          "monotone": true
+        }
+      },
+      "value": 0.001238720002373407
+    }
+  },
+  "all_criteria_pass": true,
+  "sweep": {
+    "elastic": {
+      "1.0e-05": {
+        "dt": 1e-05,
+        "summary": {
+          "n_steps": 801,
+          "dt": 1e-05,
+          "t_end": 0.007999999999999842,
+          "E_total_0": 25.44690049407733,
+          "E_k": 25.442841790608277,
+          "E_s": 0.004351928772841522,
+          "E_f": 5.2642148691612006e-15,
+          "E_v": 0.0,
+          "E_total": 25.447193719381122,
+          "residual_relative_final": 1.1523026305732493e-05,
+          "residual_relative_max": 1.7563563569457816e-05,
+          "n_broken": 0,
+          "max_tangential_utilization": 0.04892664577014207,
+          "clamp_loss_J": 0.0,
+          "friction_sliding_J": 0.0,
+          "spring_release_J": 6.289206042875043e-05,
+          "wall_work_J": 0.0,
+          "peak_wall_force_N": 21037.959714305507,
+          "max_penetration_m": 0.0023614318699871073
+        },
+        "E_f_reference": 2.290377089375628e-18,
+        "E_f_error_relative": 0.0,
+        "n_fully_separated": 0,
+        "E_v_reference": 0.0,
+        "E_v_error_relative": 0.0,
+        "ledger_csv": "docs/artifacts/ice_structure_energy_ledger/ledger_elastic_dt1.0e-05.csv",
+        "ledger_csv_sha256": "5a84cc347baf546c72f512db003a97b86e048138089035ac6a9c77e67250806c"
+      },
+      "5.0e-06": {
+        "dt": 5e-06,
+        "summary": {
+          "n_steps": 1601,
+          "dt": 5e-06,
+          "t_end": 0.007999999999999759,
+          "E_total_0": 25.44690049407733,
+          "E_k": 25.442587523740286,
+          "E_s": 0.00435029828907981,
+          "E_f": 1.0455638910344768e-14,
+          "E_v": 0.0,
+          "E_total": 25.446937822029376,
+          "residual_relative_final": 1.4668958231429045e-06,
+          "residual_relative_max": 4.3908911316259335e-06,
+          "n_broken": 0,
+          "max_tangential_utilization": 0.12032908265659649,
+          "clamp_loss_J": 0.0,
+          "friction_sliding_J": 0.0,
+          "spring_release_J": 5.651517033771671e-05,
+          "wall_work_J": 0.0,
+          "peak_wall_force_N": 21037.91384027219,
+          "max_penetration_m": 0.0023614213155953023
+        },
+        "E_f_reference": 6.606856988583543e-18,
+        "E_f_error_relative": 0.0,
+        "n_fully_separated": 0,
+        "E_v_reference": 0.0,
+        "E_v_error_relative": 0.0,
+        "ledger_csv": "docs/artifacts/ice_structure_energy_ledger/sweep/ledger_elastic_dt5.0e-06.csv",
+        "ledger_csv_sha256": "7d3aa543b0ae2392808341eb6f5cb9ce35750d0eebc249eaee5838a06b28161b"
+      },
+      "2.5e-06": {
+        "dt": 2.5e-06,
+        "summary": {
+          "n_steps": 3201,
+          "dt": 2.5e-06,
+          "t_end": 0.007999999999999782,
+          "E_total_0": 25.44690049407733,
+          "E_k": 25.442520834341344,
+          "E_s": 0.004350251257467267,
+          "E_f": 2.1001525629359537e-14,
+          "E_v": 0.0,
+          "E_total": 25.446871085598833,
+          "residual_relative_final": 1.155680178169695e-06,
+          "residual_relative_max": 1.1655853338386217e-06,
+          "n_broken": 0,
+          "max_tangential_utilization": 0.5796878141388644,
+          "clamp_loss_J": 0.0,
+          "friction_sliding_J": 0.0,
+          "spring_release_J": 5.340333066893642e-05,
+          "wall_work_J": 0.0,
+          "peak_wall_force_N": 21037.88070555307,
+          "max_penetration_m": 0.0023614143217659186
+        },
+        "E_f_reference": 2.710505431213761e-18,
+        "E_f_error_relative": 0.0,
+        "n_fully_separated": 0,
+        "E_v_reference": 0.0,
+        "E_v_error_relative": 0.0,
+        "ledger_csv": "docs/artifacts/ice_structure_energy_ledger/sweep/ledger_elastic_dt2.5e-06.csv",
+        "ledger_csv_sha256": "123789abdd3027f6a6a981cd5727f84c1102d04890d1621d58d03af072951ecf"
+      }
+    },
+    "fracture": {
+      "1.0e-05": {
+        "dt": 1e-05,
+        "summary": {
+          "n_steps": 801,
+          "dt": 1e-05,
+          "t_end": 0.007999999999999842,
+          "E_total_0": 25.44690049407733,
+          "E_k": 22.351494076151596,
+          "E_s": 0.01977288609896059,
+          "E_f": 0.32353907158975814,
+          "E_v": 2.7833872586447743,
+          "E_total": 25.478193292485088,
+          "residual_relative_final": 0.0012297292715488673,
+          "residual_relative_max": 0.001238720002373407,
+          "n_broken": 24,
+          "max_tangential_utilization": 0.9252805123238049,
+          "clamp_loss_J": -0.022493253905933135,
+          "friction_sliding_J": 0.0017889990194338852,
+          "spring_release_J": 0.003252839418012669,
+          "wall_work_J": 0.0,
+          "peak_wall_force_N": 20453.48532208998,
+          "max_penetration_m": 0.0022941774593011194
+        },
+        "E_f_reference": 0.32355704390856627,
+        "E_f_error_relative": 5.5546059486198546e-05,
+        "n_fully_separated": 24,
+        "E_v_reference": 2.783387258644736,
+        "E_v_error_relative": 1.3721292978003124e-14,
+        "ledger_csv": "docs/artifacts/ice_structure_energy_ledger/ledger_fracture_dt1.0e-05.csv",
+        "ledger_csv_sha256": "65059f99ea444a7d74941468f295b9c6cd057c01703b6f58003442fbdc073c7c"
+      },
+      "5.0e-06": {
+        "dt": 5e-06,
+        "summary": {
+          "n_steps": 1601,
+          "dt": 5e-06,
+          "t_end": 0.007999999999999759,
+          "E_total_0": 25.44690049407733,
+          "E_k": 22.355165547661727,
+          "E_s": 0.019908247119780585,
+          "E_f": 0.323739434761988,
+          "E_v": 2.778522176916181,
+          "E_total": 25.477335406459677,
+          "residual_relative_final": 0.0011960164810417948,
+          "residual_relative_max": 0.0011976439574824525,
+          "n_broken": 24,
+          "max_tangential_utilization": 0.8554028880525002,
+          "clamp_loss_J": -0.04482443204746375,
+          "friction_sliding_J": 0.0017743416731224712,
+          "spring_release_J": 0.003253358695068456,
+          "wall_work_J": 0.0,
+          "peak_wall_force_N": 20454.231828214335,
+          "max_penetration_m": 0.002294428187269597
+        },
+        "E_f_reference": 0.3237397739072596,
+        "E_f_error_relative": 1.0475860518935097e-06,
+        "n_fully_separated": 24,
+        "E_v_reference": 2.778522176916118,
+        "E_v_error_relative": 2.2695758314479224e-14,
+        "ledger_csv": "docs/artifacts/ice_structure_energy_ledger/sweep/ledger_fracture_dt5.0e-06.csv",
+        "ledger_csv_sha256": "b022d2060db75f96db49ad36d3e3721062d3227871f493892913aedf9d496888"
+      },
+      "2.5e-06": {
+        "dt": 2.5e-06,
+        "summary": {
+          "n_steps": 3201,
+          "dt": 2.5e-06,
+          "t_end": 0.007999999999999782,
+          "E_total_0": 25.44690049407733,
+          "E_k": 22.358812257790845,
+          "E_s": 0.020073757862774252,
+          "E_f": 0.32403273333727145,
+          "E_v": 2.772809450744145,
+          "E_total": 25.475728199735038,
+          "residual_relative_final": 0.0011328572477586228,
+          "residual_relative_max": 0.0011345939488766775,
+          "n_broken": 24,
+          "max_tangential_utilization": 1.8052063067636772,
+          "clamp_loss_J": -0.08997569709535479,
+          "friction_sliding_J": 0.0017188188567936003,
+          "spring_release_J": 0.0032476197150266813,
+          "wall_work_J": 0.0,
+          "peak_wall_force_N": 20455.458159219485,
+          "max_penetration_m": 0.0022946516887474636
+        },
+        "E_f_reference": 0.32403218399631284,
+        "E_f_error_relative": 1.6953283832364137e-06,
+        "n_fully_separated": 24,
+        "E_v_reference": 2.7728094507440337,
+        "E_v_error_relative": 4.0199802277237516e-14,
+        "ledger_csv": "docs/artifacts/ice_structure_energy_ledger/sweep/ledger_fracture_dt2.5e-06.csv",
+        "ledger_csv_sha256": "90910427ade86ff43e75d8abc9e431bcf6edc1b45cf487989e05fd96bb537530"
+      }
+    }
+  },
+  "reference_checks": {
+    "elastic": {
+      "E_k_ledger": 25.442587523740286,
+      "E_k_reference": 25.442587523740276,
+      "E_k_error_relative": 4.1890947712989006e-16,
+      "E_s_ledger": 0.00435029828907981,
+      "E_s_reference": 0.004350298289079453,
+      "E_s_error_relative": 8.214449040156282e-14
+    },
+    "fracture": {
+      "E_k_ledger": 22.355165547661727,
+      "E_k_reference": 22.35516554766173,
+      "E_k_error_relative": 1.5892137641414613e-16,
+      "E_s_ledger": 0.019908247119780585,
+      "E_s_reference": 0.019908247119772907,
+      "E_s_error_relative": 3.8566359250421687e-13
+    }
+  },
+  "single_sphere_restitution": {
+    "restitution": 0.8,
+    "E_v_ledger": 0.1908391270181753,
+    "E_v_analytic": 0.1908517537055799,
+    "E_v_error_relative": 6.6159661409765e-05,
+    "E_v_trapezoid": 0.19083912701820044,
+    "E_v_trapezoid_error_relative": 1.3176832183560322e-13,
+    "rebound_velocity": 1.212177972201029,
+    "rebound_ratio": -0.8081186481340193,
+    "residual_relative_max": 0.013033137527253325,
+    "ledger_channels": {
+      "E_k": 0.3462134307009055,
+      "E_s": 0.0,
+      "E_f": 0.0,
+      "E_v": 0.1908391270181753,
+      "E_total_0": 0.5301437602932777
+    },
+    "out_of_ledger_channels": {
+      "clamp_loss_J": -0.11269949352889769,
+      "spring_release_J": 0.0,
+      "friction_sliding_J": 0.0
+    }
+  },
+  "oblique_impact": {
+    "peak_tangential_strain_energy": 0.06127581987581304,
+    "time_of_peak_s": 0.001465999999999976,
+    "peak_rotational_kinetic_energy": 0.17546128693697566,
+    "E_s_contact_tangential_ledger": 0.06127581987581304,
+    "E_s_contact_tangential_reference": 0.06127581987581304,
+    "E_s_contact_tangential_error_relative": 0.0,
+    "E_s_contact_normal_ledger": 0.0,
+    "E_s_contact_normal_reference": 0.0,
+    "E_v_ledger": 0.06816283137076205,
+    "E_v_tangential_ledger": 0.016465555924454114,
+    "residual_relative_max": 0.045695807452097864,
+    "clamp_loss_J": -0.0019074665036874516,
+    "friction_sliding_J": 0.0022610732195658505,
+    "spring_release_J": 0.037720254666396974
+  },
+  "negative_control": {
+    "E_total_0": 0.0,
+    "E_k": 0.0,
+    "E_s": 0.0,
+    "E_f": 0.0,
+    "E_v": 0.0,
+    "max_abs_total_over_run": 0.0,
+    "max_abs_velocity": 0.0,
+    "n_broken": 0,
+    "pass": true
+  },
+  "figures": [
+    {
+      "name": "fig1_four_ledger_history.png",
+      "caption": "Four-ledger energies and per-step closure residual for the fracturing floe impact.",
+      "path": "docs/artifacts/ice_structure_energy_ledger/fig1_four_ledger_history.png"
+    },
+    {
+      "name": "fig2_residual_vs_dt.png",
+      "caption": "Maximum closure residual versus timestep: halving dt never increases the residual (acceptance criterion h).",
+      "path": "docs/artifacts/ice_structure_energy_ledger/fig2_residual_vs_dt.png"
+    },
+    {
+      "name": "fig3_energy_budget.png",
+      "caption": "Final partition of the initial kinetic energy over the four ledgers (fracture case).",
+      "path": "docs/artifacts/ice_structure_energy_ledger/fig3_energy_budget.png"
+    },
+    {
+      "name": "fig4_floe_speed_field.png",
+      "caption": "Particle speed field (x-y projection) of the 3x3x3 ice floe before and after the 2 m/s impact with the rigid structure.",
+      "path": "docs/artifacts/ice_structure_energy_ledger/fig4_floe_speed_field.png"
+    },
+    {
+      "name": "fig5_viscous_analytic.png",
+      "caption": "Viscous dissipation ledger against the analytic restitution loss for a single-sphere wall impact.",
+      "path": "docs/artifacts/ice_structure_energy_ledger/fig5_viscous_analytic.png"
+    }
+  ]
+}

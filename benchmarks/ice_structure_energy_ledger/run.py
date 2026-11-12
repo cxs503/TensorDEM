@@ -5,6 +5,14 @@ P304W2-N06 against *independent* reference implementations, writes the ledger
 histories and the acceptance JSON, and renders the report figures.
 
 Usage:  python benchmarks/ice_structure_energy_ledger/run.py
+
+Artefacts are written to ``docs/artifacts/ice_structure_energy_ledger/`` -- the
+tree convention for committed run evidence (``artifacts/`` at the repo root is
+not tracked by the repo gate, so evidence placed there disappears in every
+fresh checkout and the maturity gate can never verify it).  The per-step ledger
+histories of the finer ``dt`` levels of the convergence sweep are bulk data:
+they live in the ``sweep/`` subdirectory, which is git-ignored, while their
+numbers and sha256 stay in ``acceptance.json``.
 """
 from __future__ import annotations
 
@@ -31,8 +39,12 @@ from tensordem.ice_structure_energy_ledger import (  # noqa: E402
     viscous_dissipation_reference,
 )
 
-OUT = ROOT / "artifacts" / "ice_structure_energy_ledger"
+OUT = ROOT / "docs" / "artifacts" / "ice_structure_energy_ledger"
 OUT.mkdir(parents=True, exist_ok=True)
+#: Bulk per-step histories of the sweep levels outside this tuple go to the
+#: git-ignored ``sweep/`` subdirectory; only the canonical level is committed.
+COMMITTED_DT_LEVELS = (1.0e-5,)
+SWEEP_OUT = OUT / "sweep"
 
 RADIUS = 0.05
 DENSITY = 900.0
@@ -87,7 +99,9 @@ def run_dt_sweep(dt_levels: tuple[float, ...]) -> dict[str, dict]:
             summary = sim.summary()
             ref_f = bond_dissipation_reference(sim.bond_law, sim.bond_max_extension)
             ev_ref = viscous_dissipation_reference(sim.history)
-            csv_path = OUT / f"ledger_{name}_dt{dt:.1e}.csv"
+            csv_dir = OUT if dt in COMMITTED_DT_LEVELS else SWEEP_OUT
+            csv_dir.mkdir(parents=True, exist_ok=True)
+            csv_path = csv_dir / f"ledger_{name}_dt{dt:.1e}.csv"
             _write_csv(csv_path, sim.history)
             out[name][f"{dt:.1e}"] = {
                 "dt": dt,
