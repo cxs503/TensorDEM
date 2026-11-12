@@ -85,6 +85,7 @@ __all__ = [
     "couple_threshold_slope",
     "critical_tilt_angle_deg",
     "drilling_resistance_moment",
+    "inertial_moment_about",
     "invert_rolling_friction",
     "resistance_moment",
     "rolling_component",
@@ -93,6 +94,8 @@ __all__ = [
     "support_offset",
     "tilt_test",
     "tipping_threshold_slope",
+    "viscous_damping_gain",
+    "viscous_stability_dt",
 ]
 
 _ROLLING_MODELS = ("cdt", "viscous", "epsd")
@@ -119,6 +122,124 @@ def rolling_component(omega_rel: Sequence[float],
     return omega - spin, spin
 
 
+# --------------------------------------------------------------------------
+# Stability of the viscous (rate-proportional) branch
+# --------------------------------------------------------------------------
+def inertial_moment_about(inverse_inertia_world: Sequence[Sequence[float]],
+                          axis: Sequence[float]) -> float:
+    """Moment of inertia [kg m^2] of a rigid body about ``axis`` (body frame free).
+
+    ``inverse_inertia_world`` is the world-frame inverse inertia tensor, so
+    ``I_axis = 1 / (a^T I_world^-1 a)`` for a unit ``a``.  Needed because the
+    viscous rolling law is a *rate* law: its stability limit is set by the
+    inertia about the rolling axis, not by the mass.
+    """
+    a = _unit(axis)
+    inverse = np.asarray(inverse_inertia_world, dtype=np.float64)
+    if inverse.shape != (3, 3):
+        raise ValueError("inverse_inertia_world must be 3x3")
+    projected = float(a @ inverse @ a)
+    if not math.isfinite(projected) or projected <= 0.0:
+        raise ValueError("inverse inertia projected on the axis must be positive")
+    return 1.0 / projected
+
+
+def viscous_damping_gain(gamma: float, dt: float, inertia: float | None = None) -> float:
+    r"""Effective damping gain [N m s] to apply over one step of length ``dt``.
+
+    The viscous branch is the rate law :math:`M = -\gamma\,\omega_{roll}` with
+    :math:`\gamma = \mu_r |F_n| r / \omega_{ref}`, i.e. the rolling rate obeys
+    :math:`\dot\omega = -\lambda\,\omega` with :math:`\lambda = \gamma / I`.
+    Applied *explicitly* it requires :math:`\lambda \Delta t \ll 1`; at the
+    default :math:`\omega_{ref} = 10^{-3}` rad/s and :math:`\Delta t = 2\cdot10^{-4}` s
+    the ratio is ~90 and the configuration diverges (honest FAIL recorded in
+    ``docs/clump_rolling_resistance_calibration.md`` §3.4).
+
+    With ``inertia`` given this returns the implicit-damping gain of the
+    velocity-Verlet half-kick splitting used by
+    :meth:`tensordem.clump_dynamics.ClumpBody.step` (two half kicks of
+    :math:`h = \Delta t/2`, each damping the rate it starts from):
+
+    .. math::
+
+       g = \frac{\gamma}{1 + \gamma h / I},\qquad
+       \frac{\omega_{half}}{\omega} = 1 - \frac{g h}{I} = \frac{1}{1 + \lambda h}.
+
+    Three properties justify the choice, and they are what
+    ``tests/test_clump_viscous_rolling_stability.py`` checks:
+
+    * **Unconditional stability / no energy creation.** The one-half-step factor
+      lies in :math:`(0, 1]` for any :math:`\Delta t`, so the branch is monotone
+      dissipative and can never reverse the spin; :math:`g \le \gamma` for all
+      steps.
+    * **Exact steady state (DC gain).** Backward Euler preserves the fixed point
+      of a constant forcing: with an external torque :math:`T`, the two half
+      kicks settle at :math:`\omega^{*} = T/\gamma` *to round-off, for any*
+      :math:`\Delta t`.  (A pure exponential-integrator gain
+      :math:`\gamma(1-e^{-y})/y` reproduces the free decay better but shifts
+      that fixed point by :math:`\lambda\Delta t/(1-e^{-\lambda\Delta t})`,
+      +7.4 % at :math:`\lambda\Delta t = 0.29` -- rejected for that reason.)
+    * **Consistency.** :math:`g \to \gamma` as :math:`\Delta t \to 0`, i.e. the
+      declared law is recovered in the resolved limit; the transient error is
+      first order, :math:`(1+\lambda h)^{-2n}` vs :math:`e^{-\lambda t}`
+      (0.25 % per unit :math:`\lambda\Delta t`, quantified in
+      ``docs/clump_rolling_viscous_stability.md``).
+
+    Without ``inertia`` (legacy call signature) the declared gain is returned
+    unchanged, so the explicit branch stays bit-identical.
+    """
+    gamma = float(gamma)
+    if gamma <= 0.0:
+        return 0.0
+    if inertia is None:
+        return gamma
+    inertia = float(inertia)
+    dt = float(dt)
+    if not (math.isfinite(inertia) and inertia > 0.0):
+        raise ValueError("inertia must be finite and positive")
+    if not (math.isfinite(dt) and dt >= 0.0):
+        raise ValueError("dt must be finite and non-negative")
+    if dt == 0.0:
+        return gamma
+    return gamma / (1.0 + 0.5 * gamma * dt / inertia)
+
+
+def viscous_stability_dt(inertia: float, normal_force: float, radius: float,
+                         mu_r: float, omega_ref: float, *,
+                         safety: float = 0.25) -> dict[str, float]:
+    """Time-step limits of the **explicit** viscous rolling branch.
+
+    The branch is integrated by the velocity-Verlet half-kick splitting of
+    :meth:`tensordem.clump_dynamics.ClumpBody.step`, so each half step of length
+    ``h = dt/2`` multiplies the rolling rate by ``1 - lambda*h`` and one full
+    step by ``(1 - lambda*dt/2)**2``.  Hence:
+
+    * ``dt_monotone = 2/lambda`` -- beyond this the one-step factor turns
+      negative: the rate reverses sign every half step (overshoot), although the
+      amplitude still decays towards ``-1``.
+    * ``dt_divergence = 4/lambda`` -- beyond this ``|1 - lambda*dt/2| > 1`` and
+      the run grows without bound; this is the blow-up reported as the honest
+      FAIL in ``docs/clump_rolling_resistance_calibration.md`` §3.4.
+    * ``dt_safe = safety * dt_monotone`` -- conservative usable step.
+
+    All values in seconds; ``inf`` when ``mu_r == 0`` (no rate law).
+    """
+    for name, value in (("inertia", inertia), ("radius", radius),
+                        ("omega_ref", omega_ref), ("safety", safety)):
+        if not (math.isfinite(float(value)) and float(value) > 0.0):
+            raise ValueError(f"{name} must be finite and positive")
+    if mu_r < 0.0 or not math.isfinite(mu_r):
+        raise ValueError("mu_r must be finite and non-negative")
+    force = max(float(normal_force), 0.0)
+    limit = mu_r * force * float(radius)
+    if limit <= 0.0:
+        return {"dt_monotone": math.inf, "dt_divergence": math.inf,
+                "dt_safe": math.inf, "lambda": 0.0}
+    lam = limit / (float(omega_ref) * float(inertia))
+    return {"dt_monotone": 2.0 / lam, "dt_divergence": 4.0 / lam,
+            "dt_safe": float(safety) * 2.0 / lam, "lambda": lam}
+
+
 def resistance_moment(
     normal: Sequence[float],
     omega_rel: Sequence[float],
@@ -134,6 +255,7 @@ def resistance_moment(
     normal_stiffness: float | None = None,
     stiffness_factor: float = 2.25,
     omega_ref: float = 1.0e-3,
+    inertia: float | None = None,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Contact moment resisting rolling (``mu_r``) and drilling (``mu_t``).
 
@@ -160,6 +282,13 @@ def resistance_moment(
     k_r
         Rolling stiffness [N m/rad]; defaults to
         ``stiffness_factor * mu_r * normal_stiffness * radius**2``.
+    inertia
+        Moment of inertia [kg m^2] of the body about the rolling axis.  When
+        supplied, the ``"viscous"`` gain is ``dt``-limited through
+        :func:`viscous_damping_gain`, which reproduces the exact exponential
+        decay of the rate law for *any* step and therefore removes the
+        conditional-stability failure at the default ``omega_ref``.  ``None``
+        keeps the declared (explicit) gain, i.e. the legacy behaviour.
 
     Returns
     -------
@@ -199,7 +328,9 @@ def resistance_moment(
                 moment -= limit * omega_roll / magnitude
             state = np.zeros(3)
         elif model == "viscous":
-            moment -= (limit / max(float(omega_ref), 1.0e-12)) * omega_roll
+            gain = viscous_damping_gain(limit / max(float(omega_ref), 1.0e-12),
+                                        dt, inertia)
+            moment -= gain * omega_roll
             state = moment.copy()
         else:  # epsd
             stiffness = k_r
