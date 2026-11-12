@@ -48,6 +48,10 @@ __all__ = [
     "compute_floe_rao_dem",
     "rao_peak_error",
     "rao_amplitude_error",
+    "thin_disc_added_mass",
+    "oblate_spheroid_axial_added_mass",
+    "heave_added_mass",
+    "THIN_DISC_ADDED_MASS_FACTOR",
 ]
 
 
@@ -75,6 +79,16 @@ class FloeRAOConfig:
     water_depth: float = 1e6
     added_mass_coeff: float = 1.0
     damping_ratio: float = 0.02
+    #: Heave added-mass law.  ``"displaced"`` is the legacy displaced-volume
+    #: scaling A33 = added_mass_coeff * rho_w * pi R^2 T (bit-for-bit
+    #: backward compatible, kept as the default).  ``"lamb_disc"`` uses the
+    #: classical *thin-disc* limit A33 = added_mass_coeff * (8/3) rho_w R^3
+    #: (Lamb 1932 §102/114) and ``"spheroid"`` the exact zero-thickness
+    #: corrected value of the equivalent oblate spheroid of semi-thickness
+    #: T/2.  For a thin floe (R/T >> 1) the added mass is O(rho R^3), *not*
+    #: O(displaced mass), so the legacy law under-predicts it by ~R/T.
+    #: See docs/CASE_FLOE_RAO_THIN_DISC_ANCHOR.md.
+    added_mass_model: str = "displaced"
 
 
 @dataclass
@@ -141,6 +155,72 @@ def _dispersion_relation(period: float, water_depth: float, gravity: float) -> f
             k = 0.01 * omega**2 / gravity
     
     return k
+
+
+#: Classical thin-disc heave added-mass factor: A33 -> (8/3) rho R^3 as the
+#: thickness vanishes (Lamb, *Hydrodynamics*, 6th ed., §102; same limit from
+#: the general-ellipsoid kinetic-energy coefficients of §114).  Note that this
+#: is an O(rho R^3) quantity: it does *not* scale with the displaced volume.
+THIN_DISC_ADDED_MASS_FACTOR: float = 8.0 / 3.0
+
+
+def thin_disc_added_mass(radius: float, rho_water: float = 1025.0) -> float:
+    """Heave added mass of a zero-thickness circular disc [kg] = (8/3) rho R^3."""
+    return THIN_DISC_ADDED_MASS_FACTOR * rho_water * radius**3
+
+
+def oblate_spheroid_axial_added_mass(radius: float, half_thickness: float,
+                                     rho_water: float = 1025.0) -> float:
+    """Exact axial added mass of an oblate spheroid (semi-axes R, R, h) [kg].
+
+    Closed form of the Lamb §114 ellipsoid coefficient for motion along the
+    axis of revolution (normal to the disc plane)::
+
+        A33 = (4/3) pi rho R^2 h * alpha3 / (2 - alpha3)
+        alpha3 = 2 R^2 h/(R^2 - h^2) * [1/h - (pi/2 - atan(h/m))/m],
+        m = sqrt(R^2 - h^2)
+
+    ``h -> 0`` reproduces :func:`thin_disc_added_mass` (the 2 - alpha3
+    cancellation is handled in the thin limit).
+    """
+    R = float(radius)
+    h = abs(float(half_thickness))
+    if h == 0.0:
+        return thin_disc_added_mass(R, rho_water)
+    if R <= 0.0:
+        raise ValueError("radius must be positive")
+    vol = (4.0 / 3.0) * math.pi * R * R * h
+    if h / R < 1.0e-4:                       # thin limit, avoid 2 - alpha3 -> 0
+        return thin_disc_added_mass(R, rho_water)
+    if h > R * (1.0 + 1e-12):
+        raise ValueError("oblate spheroid requires half_thickness <= radius")
+    m = math.sqrt(max(R * R - h * h, 0.0))
+    if m < 1.0e-9 * R:                       # sphere limit: alpha3 = 2/3
+        alpha3 = 2.0 / 3.0
+    else:
+        alpha3 = (2.0 * R * R * h / (R * R - h * h)) * (
+            1.0 / h - (0.5 * math.pi - math.atan(h / m)) / m)
+    return vol * rho_water * alpha3 / (2.0 - alpha3)
+
+
+def heave_added_mass(config: "FloeRAOConfig", radius: float, thickness: float,
+                     rho_water: float) -> float:
+    """Heave added mass [kg] for ``config.added_mass_model``.
+
+    ``"displaced"`` (legacy) -> ``added_mass_coeff * rho_w * pi R^2 T``;
+    ``"lamb_disc"`` -> ``added_mass_coeff * (8/3) rho_w R^3``;
+    ``"spheroid"``  -> ``added_mass_coeff * A33(spheroid, h = T/2)``.
+    """
+    model = getattr(config, "added_mass_model", "displaced")
+    coeff = float(config.added_mass_coeff)
+    if model == "displaced":
+        return coeff * rho_water * math.pi * radius**2 * thickness
+    if model == "lamb_disc":
+        return coeff * thin_disc_added_mass(radius, rho_water)
+    if model == "spheroid":
+        return coeff * oblate_spheroid_axial_added_mass(
+            radius, 0.5 * thickness, rho_water)
+    raise ValueError(f"unknown added_mass_model {model!r}")
 
 
 def _hydrostatic_restoring_heave(
@@ -345,8 +425,8 @@ def compute_floe_rao_analytic(config: FloeRAOConfig) -> FloeRAOResult:
     mass = rho_i * math.pi * R**2 * T
     I_xx = mass * (3*R**2 + T**2) / 12.0  # Moment of inertia for pitch/roll
     
-    # Added mass (frequency-independent approximation)
-    A33 = config.added_mass_coeff * rho_w * math.pi * R**2 * T  # Heave added mass
+    # Added mass (frequency-independent; law selected by config.added_mass_model)
+    A33 = heave_added_mass(config, R, T, rho_w)  # Heave added mass
     A44 = config.added_mass_coeff * rho_w * math.pi * R**4 * T / 4.0  # Pitch added mass
     
     # Hydrostatic restoring
@@ -445,8 +525,8 @@ def compute_floe_rao_dem(
     mass = rho_i * math.pi * R**2 * T
     I_xx = mass * (3*R**2 + T**2) / 12.0
     
-    # Added mass (high-frequency limit)
-    A33 = config.added_mass_coeff * rho_w * math.pi * R**2 * T
+    # Added mass (frequency-independent; law selected by config.added_mass_model)
+    A33 = heave_added_mass(config, R, T, rho_w)
     A44 = config.added_mass_coeff * rho_w * math.pi * R**4 * T / 4.0
     
     # Hydrostatic restoring
