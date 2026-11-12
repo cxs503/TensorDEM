@@ -200,11 +200,15 @@ def test_race_induced_velocity_matches_actuator_disk_closed_form():
 # cross-implementation: package BEM saturates its induction cap at low J
 # ---------------------------------------------------------------------------
 def test_defect_d3_package_bem_saturates_induction_cap_at_low_J():
-    """DEFECT-D3 characterisation: every strip sits on ``a = 0.85`` at J = 0.2.
+    """DEFECT-D3 repair guard (mission m16448): the cap is now *reported*.
 
-    The blade-element load is then unbalanced by the annulus momentum while the
-    returned residual (``max|delta a|``) is ~1e-8, so a residual-based acceptance
-    test cannot see it.  ``_buhl`` is never called by ``solve_open_water``.
+    Pre-repair the solver sat on ``a = 0.85`` for every strip, returned a residual
+    of ~1e-8 and said nothing else: the blade-element thrust was unbalanced by the
+    annulus momentum and no residual-based test could see it.  The repair adds an
+    independent momentum residual plus a model-validity flag, so this test asserts
+    both halves -- the registered numbers still reproduce, and the state now
+    carries the diagnosis the pre-repair code did not have (which is why the
+    pre-repair code fails the last four assertions).
     """
     from tensordem.propeller_ice.geometry import PropellerGeometry as PkgGeometry
     from tensordem.propeller_ice.hydro import OpenWaterConfig, solve_open_water
@@ -213,5 +217,12 @@ def test_defect_d3_package_bem_saturates_induction_cap_at_low_J():
                        chord_ratio=0.539, skew_tip_deg=0.0, thickness_ratio=0.05)
     state = solve_open_water(geom, 1.0, 0.2 * 3.0, config=OpenWaterConfig(n_strips=24))
     assert int(np.sum(np.asarray(state.a) >= 0.849)) == np.asarray(state.a).size
-    assert state.residual < 1.0e-6            # converged by its own metric
+    assert state.residual < 1.0e-6             # converged by its own metric
     assert state.thrust_coefficient > 0.6      # far above the legacy strip result (0.315)
+    # --- what the repair added (these fail on the pre-repair code) ---------
+    assert state.momentum_residual > 1.0e-2    # ~7 % of the thrust is unbalanced
+    assert not state.model_valid
+    assert state.validity_flag == "thrust_closure_exceeded"
+    assert state.ct_max_loading > 10.0         # ~19x above the closure bound
+
+
