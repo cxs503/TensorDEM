@@ -48,6 +48,20 @@ from .granular3d_core import (
 )
 
 
+def inertial_number(shear_rate: float, radius: float, density: float,
+                    normal_stress: float) -> float:
+    """Inertial number ``I = gamma_dot * d * sqrt(rho / sigma)``, ``d = 2 r``.
+
+    da Cruz et al. (2005) *Phys. Rev. E* 72:021309 / GDR MiDi (2004) definition.
+    Returns ``nan`` when any input cannot define it (non-positive stress, size,
+    density or rate), so an unloaded record can never manufacture an ``I``.
+    """
+    if not (shear_rate > 0.0 and radius > 0.0 and density > 0.0
+            and normal_stress > 0.0):
+        return float("nan")
+    return shear_rate * 2.0 * radius / math.sqrt(normal_stress / density)
+
+
 @dataclass(frozen=True)
 class ShearCellCase:
     """Direct-shear cell parameters (SI)."""
@@ -542,8 +556,7 @@ def simulate_shear_cell(case: ShearCellCase, bed: Optional[dict] = None) -> dict
     bed_s = _steady(bed_hist)
     bed_height = float(bed_s["mean"])
     shear_rate_actual = (case.shear_velocity / bed_height) if bed_height > 0 else float("nan")
-    inertial = (shear_rate_actual * 2.0 * r / math.sqrt(sig_s["mean"] / case.density)
-                if sig_s["mean"] > 0 and bed_height > 0 else float("nan"))
+    inertial = inertial_number(shear_rate_actual, r, case.density, sig_s["mean"])
     floor_s = _steady(floor_hist)
     mu_macro = tau_s["mean"] / sig_s["mean"] if sig_s["mean"] > 0 else float("nan")
     phi_deg = math.degrees(math.atan(mu_macro)) if mu_macro == mu_macro else float("nan")
@@ -604,8 +617,14 @@ def simulate_shear_cell(case: ShearCellCase, bed: Optional[dict] = None) -> dict
         "bed_prep_steps": n_settle_done,
         "timestep": dt,
         "shear_rate": case.shear_rate,
-        "inertial_number": case.shear_rate * 2.0 * r
-        / math.sqrt(case.normal_stress / case.density),
+        # Nominal (pre-compaction) reference value, kept under a *distinct* key.
+        # This entry used to be spelled ``inertial_number`` as well, so the dict
+        # literal silently overwrote the measured-bed-height value above and
+        # every consumer of ``results["inertial_number"]`` got the nominal
+        # (gamma_dot_nominal, sigma_target) number -- i.e. the m14840 rate
+        # bookkeeping fix was dead at the result level.
+        "inertial_number_nominal": inertial_number(
+            case.shear_rate, r, case.density, case.normal_stress),
     }
 
 
