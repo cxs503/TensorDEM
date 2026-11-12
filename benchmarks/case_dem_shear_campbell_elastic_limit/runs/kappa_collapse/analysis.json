@@ -1,0 +1,606 @@
+{
+ "case": "CASE-DEM-SHEAR-CAMPBELL-ELASTIC-LIMIT",
+ "round": "R3 (kappa-similarity route)",
+ "n_points": 12,
+ "n_gated": 11,
+ "rejected": [
+  {
+   "tag": "kn1e5_g0.5",
+   "gates": {
+    "energy": true,
+    "overlap": true,
+    "steady": false,
+    "coordination": true,
+    "pressure_positive": true,
+    "finite": true,
+    "all": false
+   }
+  }
+ ],
+ "prereg_sha256": "dff1db08488aa9e5b23f3aba3b9adfd27a89f769a40fb20e8a64446fafc94935",
+ "points": [
+  {
+   "tag": "kn1e6_g1.0",
+   "kn": 1000000.0,
+   "gamma_dot": 1.0,
+   "kappa": 578703.7037037038,
+   "tau": 11308.371575759891,
+   "pressure": 22108.4570663692,
+   "tau_star": 7853.035816499924,
+   "mu_eff": 0.5114952862523313,
+   "I": 0.008070529490056632,
+   "coordination": 3.0078571428571426,
+   "kinetic_stress_share": 0.0002282214440778745,
+   "max_overlap_ratio": 0.1473058724108874,
+   "mean_overlap_ratio": 0.029237110946837536,
+   "steady_drift_tau": 0.0867319012316891,
+   "energy_defect": 0.20777040429196866,
+   "gates": {
+    "energy": true,
+    "overlap": true,
+    "steady": true,
+    "coordination": true,
+    "pressure_positive": true,
+    "finite": true,
+    "all": true
+   },
+   "group": null
+  },
+  {
+   "tag": "kn1e5_g0.5",
+   "kn": 100000.0,
+   "gamma_dot": 0.5,
+   "kappa": 231481.48148148152,
+   "tau": 1095.0289942025624,
+   "pressure": 2188.4538617496773,
+   "tau_star": 3041.7472061182293,
+   "mu_eff": 0.500366497709521,
+   "I": 0.012825743576861722,
+   "coordination": 3.0655,
+   "kinetic_stress_share": 0.00048421769977950767,
+   "max_overlap_ratio": 0.15016079283830938,
+   "mean_overlap_ratio": 0.02866457891336475,
+   "steady_drift_tau": 0.3095704487434674,
+   "energy_defect": 0.22560967428655285,
+   "gates": {
+    "energy": true,
+    "overlap": true,
+    "steady": false,
+    "coordination": true,
+    "pressure_positive": true,
+    "finite": true,
+    "all": false
+   },
+   "group": null
+  },
+  {
+   "tag": "kn1e5_g1.0",
+   "kn": 100000.0,
+   "gamma_dot": 1.0,
+   "kappa": 57870.37037037038,
+   "tau": 1077.9603380706558,
+   "pressure": 2168.0527411736007,
+   "tau_star": 748.5835681046221,
+   "mu_eff": 0.4972020825873171,
+   "I": 0.02577189329932357,
+   "coordination": 3.0202857142857145,
+   "kinetic_stress_share": 0.0012994337024741516,
+   "max_overlap_ratio": 0.12156031025025668,
+   "mean_overlap_ratio": 0.028397336115965198,
+   "steady_drift_tau": 0.028828851830247793,
+   "energy_defect": 0.2304424945157624,
+   "gates": {
+    "energy": true,
+    "overlap": true,
+    "steady": true,
+    "coordination": true,
+    "pressure_positive": true,
+    "finite": true,
+    "all": true
+   },
+   "group": "kn1e5_g1.0"
+  },
+  {
+   "tag": "kn4e5_g2.0",
+   "kn": 400000.0,
+   "gamma_dot": 2.0,
+   "kappa": 57870.37037037038,
+   "tau": 4311.841352282623,
+   "pressure": 8672.210964694403,
+   "tau_star": 748.5835681046221,
+   "mu_eff": 0.4972020825873171,
+   "I": 0.02577189329932357,
+   "coordination": 3.0202857142857145,
+   "kinetic_stress_share": 0.0012994337024741516,
+   "max_overlap_ratio": 0.12156031025025668,
+   "mean_overlap_ratio": 0.028397336115965198,
+   "steady_drift_tau": 0.028828851830247793,
+   "energy_defect": 0.2304424945157624,
+   "gates": {
+    "energy": true,
+    "overlap": true,
+    "steady": true,
+    "coordination": true,
+    "pressure_positive": true,
+    "finite": true,
+    "all": true
+   },
+   "group": "kn1e5_g1.0"
+  },
+  {
+   "tag": "kn1e4_g0.5",
+   "kn": 10000.0,
+   "gamma_dot": 0.5,
+   "kappa": 23148.14814814815,
+   "tau": 113.96410490992439,
+   "pressure": 220.84328889731475,
+   "tau_star": 316.5669580831233,
+   "mu_eff": 0.5160406072512086,
+   "I": 0.04037468502316328,
+   "coordination": 2.9942142857142855,
+   "kinetic_stress_share": 0.0025945400898661213,
+   "max_overlap_ratio": 0.14209594183105562,
+   "mean_overlap_ratio": 0.029540923602609796,
+   "steady_drift_tau": 0.047494182841618535,
+   "energy_defect": 0.2336215460000767,
+   "gates": {
+    "energy": true,
+    "overlap": true,
+    "steady": true,
+    "coordination": true,
+    "pressure_positive": true,
+    "finite": true,
+    "all": true
+   },
+   "group": null
+  },
+  {
+   "tag": "kn1e4_g1.0",
+   "kn": 10000.0,
+   "gamma_dot": 1.0,
+   "kappa": 5787.037037037037,
+   "tau": 122.89762292230033,
+   "pressure": 249.10315142911946,
+   "tau_star": 85.34557147381967,
+   "mu_eff": 0.49336036985975257,
+   "I": 0.07603116325354305,
+   "coordination": 2.934642857142857,
+   "kinetic_stress_share": 0.005611288804564357,
+   "max_overlap_ratio": 0.15894523583164344,
+   "mean_overlap_ratio": 0.03448761956917904,
+   "steady_drift_tau": 0.021333793021823748,
+   "energy_defect": 0.2483020884930595,
+   "gates": {
+    "energy": true,
+    "overlap": true,
+    "steady": true,
+    "coordination": true,
+    "pressure_positive": true,
+    "finite": true,
+    "all": true
+   },
+   "group": "kn1e4_g1.0"
+  },
+  {
+   "tag": "kn2.5e3_g0.5",
+   "kn": 2500.0,
+   "gamma_dot": 0.5,
+   "kappa": 5787.037037037037,
+   "tau": 30.724405730575082,
+   "pressure": 62.275787857279866,
+   "tau_star": 85.34557147381967,
+   "mu_eff": 0.49336036985975257,
+   "I": 0.07603116325354305,
+   "coordination": 2.934642857142857,
+   "kinetic_stress_share": 0.005611288804564357,
+   "max_overlap_ratio": 0.15894523583164344,
+   "mean_overlap_ratio": 0.03448761956917904,
+   "steady_drift_tau": 0.021333793021823748,
+   "energy_defect": 0.2483020884930595,
+   "gates": {
+    "energy": true,
+    "overlap": true,
+    "steady": true,
+    "coordination": true,
+    "pressure_positive": true,
+    "finite": true,
+    "all": true
+   },
+   "group": "kn1e4_g1.0"
+  },
+  {
+   "tag": "kn4e4_g2.0",
+   "kn": 40000.0,
+   "gamma_dot": 2.0,
+   "kappa": 5787.037037037037,
+   "tau": 491.5904916892013,
+   "pressure": 996.4126057164779,
+   "tau_star": 85.34557147381967,
+   "mu_eff": 0.49336036985975257,
+   "I": 0.07603116325354305,
+   "coordination": 2.934642857142857,
+   "kinetic_stress_share": 0.005611288804564357,
+   "max_overlap_ratio": 0.15894523583164344,
+   "mean_overlap_ratio": 0.03448761956917904,
+   "steady_drift_tau": 0.021333793021823748,
+   "energy_defect": 0.2483020884930595,
+   "gates": {
+    "energy": true,
+    "overlap": true,
+    "steady": true,
+    "coordination": true,
+    "pressure_positive": true,
+    "finite": true,
+    "all": true
+   },
+   "group": "kn1e4_g1.0"
+  },
+  {
+   "tag": "kn1e4_g2.0",
+   "kn": 10000.0,
+   "gamma_dot": 2.0,
+   "kappa": 1446.7592592592594,
+   "tau": 144.80943721882772,
+   "pressure": 289.02312222118064,
+   "tau_star": 25.14052729493537,
+   "mu_eff": 0.5010306307189134,
+   "I": 0.14117082332575454,
+   "coordination": 2.8440714285714286,
+   "kinetic_stress_share": 0.014413359892865317,
+   "max_overlap_ratio": 0.18844950315475295,
+   "mean_overlap_ratio": 0.041538327981454515,
+   "steady_drift_tau": 0.011667104321417883,
+   "energy_defect": 0.24641768147668197,
+   "gates": {
+    "energy": true,
+    "overlap": true,
+    "steady": true,
+    "coordination": true,
+    "pressure_positive": true,
+    "finite": true,
+    "all": true
+   },
+   "group": "kn1e4_g2.0"
+  },
+  {
+   "tag": "kn4e4_g4.0",
+   "kn": 40000.0,
+   "gamma_dot": 4.0,
+   "kappa": 1446.7592592592594,
+   "tau": 579.2377488753109,
+   "pressure": 1156.0924888847226,
+   "tau_star": 25.14052729493537,
+   "mu_eff": 0.5010306307189134,
+   "I": 0.14117082332575454,
+   "coordination": 2.8440714285714286,
+   "kinetic_stress_share": 0.014413359892865317,
+   "max_overlap_ratio": 0.18844950315475295,
+   "mean_overlap_ratio": 0.041538327981454515,
+   "steady_drift_tau": 0.011667104321417883,
+   "energy_defect": 0.24641768147668197,
+   "gates": {
+    "energy": true,
+    "overlap": true,
+    "steady": true,
+    "coordination": true,
+    "pressure_positive": true,
+    "finite": true,
+    "all": true
+   },
+   "group": "kn1e4_g2.0"
+  },
+  {
+   "tag": "kn1e4_g4.0",
+   "kn": 10000.0,
+   "gamma_dot": 4.0,
+   "kappa": 361.68981481481484,
+   "tau": 177.6840721353353,
+   "pressure": 341.3966477835815,
+   "tau_star": 7.711982297540595,
+   "mu_eff": 0.5204622637301728,
+   "I": 0.2597835284274024,
+   "coordination": 2.748714285714286,
+   "kinetic_stress_share": 0.03602273217473712,
+   "max_overlap_ratio": 0.2523414683246588,
+   "mean_overlap_ratio": 0.05039949787232648,
+   "steady_drift_tau": 0.16336975731168615,
+   "energy_defect": 0.263797019979752,
+   "gates": {
+    "energy": true,
+    "overlap": true,
+    "steady": true,
+    "coordination": true,
+    "pressure_positive": true,
+    "finite": true,
+    "all": true
+   },
+   "group": "kn1e4_g4.0"
+  },
+  {
+   "tag": "kn2.5e3_g2.0",
+   "kn": 2500.0,
+   "gamma_dot": 2.0,
+   "kappa": 361.68981481481484,
+   "tau": 44.421018033833825,
+   "pressure": 85.34916194589537,
+   "tau_star": 7.711982297540595,
+   "mu_eff": 0.5204622637301728,
+   "I": 0.2597835284274024,
+   "coordination": 2.748714285714286,
+   "kinetic_stress_share": 0.03602273217473712,
+   "max_overlap_ratio": 0.2523414683246588,
+   "mean_overlap_ratio": 0.05039949787232648,
+   "steady_drift_tau": 0.16336975731168615,
+   "energy_defect": 0.263797019979752,
+   "gates": {
+    "energy": true,
+    "overlap": true,
+    "steady": true,
+    "coordination": true,
+    "pressure_positive": true,
+    "finite": true,
+    "all": true
+   },
+   "group": "kn1e4_g4.0"
+  }
+ ],
+ "noise_floor": {
+  "tags": [
+   "kn4e4_g2.0_seed20261113",
+   "kn4e4_g2.0_seed20261114",
+   85.34557147381967
+  ],
+  "tau_star": [
+   75.3235942535447,
+   79.96725147280424,
+   85.34557147381967
+  ],
+  "relative_std": 0.06252762415398136,
+  "n_seeds": 3
+ },
+ "P5_verdict": "PASS",
+ "collapse_groups": [
+  {
+   "group": "kn1e5_g1.0",
+   "kappa": 57870.37037037038,
+   "n_members": 2,
+   "members": [
+    {
+     "tag": "kn1e5_g1.0",
+     "kn": 100000.0,
+     "gamma_dot": 1.0,
+     "tau_star": 748.5835681046221
+    },
+    {
+     "tag": "kn4e5_g2.0",
+     "kn": 400000.0,
+     "gamma_dot": 2.0,
+     "tau_star": 748.5835681046221
+    }
+   ],
+   "tau_star_mean": 748.5835681046221,
+   "spread": 0.0,
+   "deviation": [
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "group": "kn1e4_g1.0",
+   "kappa": 5787.037037037037,
+   "n_members": 3,
+   "members": [
+    {
+     "tag": "kn1e4_g1.0",
+     "kn": 10000.0,
+     "gamma_dot": 1.0,
+     "tau_star": 85.34557147381967
+    },
+    {
+     "tag": "kn2.5e3_g0.5",
+     "kn": 2500.0,
+     "gamma_dot": 0.5,
+     "tau_star": 85.34557147381967
+    },
+    {
+     "tag": "kn4e4_g2.0",
+     "kn": 40000.0,
+     "gamma_dot": 2.0,
+     "tau_star": 85.34557147381967
+    }
+   ],
+   "tau_star_mean": 85.34557147381967,
+   "spread": 0.0,
+   "deviation": [
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "group": "kn1e4_g2.0",
+   "kappa": 1446.7592592592594,
+   "n_members": 2,
+   "members": [
+    {
+     "tag": "kn1e4_g2.0",
+     "kn": 10000.0,
+     "gamma_dot": 2.0,
+     "tau_star": 25.14052729493537
+    },
+    {
+     "tag": "kn4e4_g4.0",
+     "kn": 40000.0,
+     "gamma_dot": 4.0,
+     "tau_star": 25.14052729493537
+    }
+   ],
+   "tau_star_mean": 25.14052729493537,
+   "spread": 0.0,
+   "deviation": [
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "group": "kn1e4_g4.0",
+   "kappa": 361.68981481481484,
+   "n_members": 2,
+   "members": [
+    {
+     "tag": "kn1e4_g4.0",
+     "kn": 10000.0,
+     "gamma_dot": 4.0,
+     "tau_star": 7.711982297540595
+    },
+    {
+     "tag": "kn2.5e3_g2.0",
+     "kn": 2500.0,
+     "gamma_dot": 2.0,
+     "tau_star": 7.711982297540595
+    }
+   ],
+   "tau_star_mean": 7.711982297540595,
+   "spread": 0.0,
+   "deviation": [
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "collapse_worst_spread": 0.0,
+ "P1_verdict": "PASS",
+ "global_fit": {
+  "status": "ok",
+  "beta": 0.9290320167467995,
+  "r2": 0.9984442657524497,
+  "n": 0.14193596650640106,
+  "n_points": 11,
+  "kappa_span": [
+   361.68981481481484,
+   578703.7037037038
+  ],
+  "decades": 3.204119982655925,
+  "beta_elastic_ref": 1.0,
+  "beta_inertial_ref": 0.0,
+  "sigma_beta_est": 0.008321120515963364
+ },
+ "P2_verdict": "PASS",
+ "P3_verdict": "PASS",
+ "local_slopes": [
+  {
+   "rate": "kn2.5e3_g2.0->kn1e4_g2.0",
+   "k_lo": 361.68981481481484,
+   "k_hi": 1446.7592592592594,
+   "gmid": 723.3796296296297,
+   "beta_local": 0.8524206319835327,
+   "n_local": 0.29515873603293463,
+   "sigma_beta": 0.06378689590145459,
+   "sigma_n": 0.12757379180290918
+  },
+  {
+   "rate": "kn4e4_g4.0->kn1e4_g1.0",
+   "k_lo": 1446.7592592592594,
+   "k_hi": 5787.037037037037,
+   "gmid": 2893.5185185185187,
+   "beta_local": 0.8816506928345473,
+   "n_local": 0.23669861433090533,
+   "sigma_beta": 0.06378689590145459,
+   "sigma_n": 0.12757379180290918
+  },
+  {
+   "rate": "kn4e4_g2.0->kn1e4_g0.5",
+   "k_lo": 5787.037037037037,
+   "k_hi": 23148.14814814815,
+   "gmid": 11574.074074074075,
+   "beta_local": 0.9455612405704492,
+   "n_local": 0.10887751885910157,
+   "sigma_beta": 0.06378689590145459,
+   "sigma_n": 0.12757379180290918
+  },
+  {
+   "rate": "kn1e4_g0.5->kn1e5_g1.0",
+   "k_lo": 23148.14814814815,
+   "k_hi": 57870.37037037038,
+   "gmid": 36600.435881578465,
+   "beta_local": 0.9392740076809729,
+   "n_local": 0.12145198463805418,
+   "sigma_beta": 0.0965058480081546,
+   "sigma_n": 0.1930116960163092
+  },
+  {
+   "rate": "kn4e5_g2.0->kn1e6_g1.0",
+   "k_lo": 57870.37037037038,
+   "k_hi": 578703.7037037038,
+   "gmid": 183002.17940789237,
+   "beta_local": 1.0207972883706404,
+   "n_local": -0.041594576741280864,
+   "sigma_beta": 0.038403537993267386,
+   "sigma_n": 0.07680707598653477
+  }
+ ],
+ "approach": {
+  "beta_low_half": 0.8932108551295098,
+  "beta_high_half": 0.9800356480258067,
+  "sigma_beta_low_half": 0.03682738151947544,
+  "sigma_beta_high_half": 0.051933155185712926,
+  "n_low_half": 0.21357828974098036,
+  "n_high_half": 0.03992870394838666,
+  "elastic_limit_demonstrated_3pct": false,
+  "note": "point estimate vs the elastic limit, and whether that is demonstrated at 3% once seed noise (2 sigma) is included"
+ },
+ "P4_verdict": "PASS",
+ "family_rate_exponents": {
+  "1e+04": {
+   "n_from_rate_ladder": 0.21589032219997015,
+   "r2": 0.9631519192914515,
+   "gammas": [
+    0.5,
+    1.0,
+    2.0,
+    4.0
+   ],
+   "taus": [
+    113.96410490992439,
+    122.89762292230033,
+    144.80943721882772,
+    177.6840721353353
+   ],
+   "tau_stars": [
+    316.5669580831233,
+    85.34557147381967,
+    25.14052729493537,
+    7.711982297540595
+   ]
+  }
+ },
+ "elastic_coefficient": {
+  "tag": "kn1e6_g1.0",
+  "kappa": 578703.7037037038,
+  "tau_star": 7853.035816499924,
+  "tau_star_over_kappa": 0.013570045890911866,
+  "note": "tau* = A * kappa in the elastic limit; Campbell's prefactor is WITHHELD"
+ },
+ "invariants": {
+  "max_tau_symmetry_defect": 0.02337525627968241,
+  "max_energy_defect": 0.263797019979752,
+  "energy_gate_pass_all": true,
+  "overlap_gate_pass_all": true
+ },
+ "amendments": {
+  "P1_collapse_is_a_theoretical_identity": "The SLLOD + linear-spring + Coulomb system is exactly invariant under (k_n, gamma_dot) -> (lambda^2 k_n, lambda gamma_dot) with time rescaled by 1/lambda: the equations map onto themselves and kappa is unchanged. Because the time step is defined as a fixed fraction of t_c = sqrt(m/k_n), the discrete trajectory is the same as well, so tau* is bit-for-bit identical. P1 therefore verifies that the kernel carries NO hidden absolute time, length or unit scale (an implementation invariant, and it would fail if dt were fixed in absolute time or the neighbour skin were in physical units) -- it is NOT empirical evidence for Campbell's similarity hypothesis, which no constant-stiffness experiment could supply in the first place.",
+  "physics_legs_are_P2_P3_P4_only": "The empirical content of this round is the SHAPE of f(kappa): the exponent and its drift, not the collapse.",
+  "global_beta_is_an_average_over_a_curved_curve": "The local exponent runs from ~0.89 to ~0.98 across the grid, so the global beta is an average; the elastic-limit estimate is beta_high_half.",
+  "energy_audit_is_the_limiting_gate": "The energy-audit defect reaches the gate value (0.30) at the stiffest contacts; points passing at a defect near the gate are less trustworthy than their neighbours, which is why the top-decade exponent carries the larger uncertainty.",
+  "rejected_point_is_physics_not_bug": "kn1e5_g0.5 (kappa=2.3e5) failed only the steady-state drift gate; it is reported as rejected and excluded from every fit rather than re-run until it passed."
+ },
+ "verdicts": {
+  "P1_kappa_collapse": "PASS",
+  "P2_elastic_exponent": "PASS",
+  "P3_rate_exponent": "PASS",
+  "P4_monotone_approach": "PASS",
+  "P5_noise_floor": "PASS",
+  "coefficient_vs_campbell": "WITHHELD (paywalled ref tables)",
+  "geometry": "2-D (declared deviation from Campbell's 3-D)"
+ }
+}

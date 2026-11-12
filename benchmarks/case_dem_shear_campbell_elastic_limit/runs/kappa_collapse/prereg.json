@@ -1,0 +1,265 @@
+{
+ "case": "CASE-DEM-SHEAR-CAMPBELL-ELASTIC-LIMIT",
+ "round": "R3 (kappa-similarity route)",
+ "created": "before any grid point was run",
+ "anchor_file": "reference_anchors.json",
+ "anchor_sha256": "2d817a4809d977e1bbc64851d0eab60ed493657e5df929063478d542b9ceda22",
+ "apparatus": {
+  "phi": 0.8,
+  "n_particles": 400,
+  "dt_factor": 0.004,
+  "strain_total": 1.4,
+  "strain_from": 0.7,
+  "seed": 20261112,
+  "kernel": "tensordem.elastic_limit_shear.simulate_plane_shear (Lees-Edwards SLLOD)"
+ },
+ "design": [
+  {
+   "tag": "kn2.5e3_g0.5",
+   "kn": 2500.0,
+   "gdot": 0.5,
+   "kappa_predicted": 5787.037037037037,
+   "phi": 0.8,
+   "n_particles": 400,
+   "seed": 20261112,
+   "group": "kn1e4_g1.0",
+   "group_size": 3
+  },
+  {
+   "tag": "kn2.5e3_g2.0",
+   "kn": 2500.0,
+   "gdot": 2.0,
+   "kappa_predicted": 361.68981481481484,
+   "phi": 0.8,
+   "n_particles": 400,
+   "seed": 20261112,
+   "group": "kn1e4_g4.0",
+   "group_size": 2
+  },
+  {
+   "tag": "kn1e4_g0.5",
+   "kn": 10000.0,
+   "gdot": 0.5,
+   "kappa_predicted": 23148.14814814815,
+   "phi": 0.8,
+   "n_particles": 400,
+   "seed": 20261112,
+   "group": null,
+   "group_size": 1
+  },
+  {
+   "tag": "kn1e4_g1.0",
+   "kn": 10000.0,
+   "gdot": 1.0,
+   "kappa_predicted": 5787.037037037037,
+   "phi": 0.8,
+   "n_particles": 400,
+   "seed": 20261112,
+   "group": "kn1e4_g1.0",
+   "group_size": 3
+  },
+  {
+   "tag": "kn1e4_g2.0",
+   "kn": 10000.0,
+   "gdot": 2.0,
+   "kappa_predicted": 1446.7592592592594,
+   "phi": 0.8,
+   "n_particles": 400,
+   "seed": 20261112,
+   "group": "kn1e4_g2.0",
+   "group_size": 2
+  },
+  {
+   "tag": "kn1e4_g4.0",
+   "kn": 10000.0,
+   "gdot": 4.0,
+   "kappa_predicted": 361.68981481481484,
+   "phi": 0.8,
+   "n_particles": 400,
+   "seed": 20261112,
+   "group": "kn1e4_g4.0",
+   "group_size": 2
+  },
+  {
+   "tag": "kn4e4_g2.0",
+   "kn": 40000.0,
+   "gdot": 2.0,
+   "kappa_predicted": 5787.037037037037,
+   "phi": 0.8,
+   "n_particles": 400,
+   "seed": 20261112,
+   "group": "kn1e4_g1.0",
+   "group_size": 3
+  },
+  {
+   "tag": "kn4e4_g4.0",
+   "kn": 40000.0,
+   "gdot": 4.0,
+   "kappa_predicted": 1446.7592592592594,
+   "phi": 0.8,
+   "n_particles": 400,
+   "seed": 20261112,
+   "group": "kn1e4_g2.0",
+   "group_size": 2
+  },
+  {
+   "tag": "kn1e5_g0.5",
+   "kn": 100000.0,
+   "gdot": 0.5,
+   "kappa_predicted": 231481.48148148152,
+   "phi": 0.8,
+   "n_particles": 400,
+   "seed": 20261112,
+   "group": null,
+   "group_size": 1
+  },
+  {
+   "tag": "kn1e5_g1.0",
+   "kn": 100000.0,
+   "gdot": 1.0,
+   "kappa_predicted": 57870.37037037038,
+   "phi": 0.8,
+   "n_particles": 400,
+   "seed": 20261112,
+   "group": "kn1e5_g1.0",
+   "group_size": 2
+  },
+  {
+   "tag": "kn4e5_g2.0",
+   "kn": 400000.0,
+   "gdot": 2.0,
+   "kappa_predicted": 57870.37037037038,
+   "phi": 0.8,
+   "n_particles": 400,
+   "seed": 20261112,
+   "group": "kn1e5_g1.0",
+   "group_size": 2
+  },
+  {
+   "tag": "kn1e6_g1.0",
+   "kn": 1000000.0,
+   "gdot": 1.0,
+   "kappa_predicted": 578703.7037037038,
+   "phi": 0.8,
+   "n_particles": 400,
+   "seed": 20261112,
+   "group": null,
+   "group_size": 1
+  }
+ ],
+ "iso_kappa_groups": [
+  {
+   "group": "kn1e5_g1.0",
+   "kappa_predicted": 57870.37037037038,
+   "members": [
+    {
+     "tag": "kn1e5_g1.0",
+     "kn": 100000.0,
+     "gamma_dot": 1.0
+    },
+    {
+     "tag": "kn4e5_g2.0",
+     "kn": 400000.0,
+     "gamma_dot": 2.0
+    }
+   ]
+  },
+  {
+   "group": "kn1e4_g1.0",
+   "kappa_predicted": 5787.037037037037,
+   "members": [
+    {
+     "tag": "kn2.5e3_g0.5",
+     "kn": 2500.0,
+     "gamma_dot": 0.5
+    },
+    {
+     "tag": "kn1e4_g1.0",
+     "kn": 10000.0,
+     "gamma_dot": 1.0
+    },
+    {
+     "tag": "kn4e4_g2.0",
+     "kn": 40000.0,
+     "gamma_dot": 2.0
+    }
+   ]
+  },
+  {
+   "group": "kn1e4_g2.0",
+   "kappa_predicted": 1446.7592592592594,
+   "members": [
+    {
+     "tag": "kn1e4_g2.0",
+     "kn": 10000.0,
+     "gamma_dot": 2.0
+    },
+    {
+     "tag": "kn4e4_g4.0",
+     "kn": 40000.0,
+     "gamma_dot": 4.0
+    }
+   ]
+  },
+  {
+   "group": "kn1e4_g4.0",
+   "kappa_predicted": 361.68981481481484,
+   "members": [
+    {
+     "tag": "kn2.5e3_g2.0",
+     "kn": 2500.0,
+     "gamma_dot": 2.0
+    },
+    {
+     "tag": "kn1e4_g4.0",
+     "kn": 10000.0,
+     "gamma_dot": 4.0
+    }
+   ]
+  }
+ ],
+ "predictions": {
+  "P1_kappa_collapse": {
+   "statement": "same-kappa points at different (k_n, gamma_dot) give the same tau*: group spread <= 15 %, and no more than 2x the in-run seed-noise floor",
+   "rule": "PASS if every multi-point kappa group has spread <= 0.15 AND spread <= 2 x noise_floor; PARTIAL if spread <= 0.30; else NOT_SUPPORTED"
+  },
+  "P2_elastic_exponent": {
+   "statement": "global log-log slope beta of tau*(kappa) over 362..5.79e5 approaches the elastic-quasi-static value beta = 1",
+   "rule": "PASS if |beta - 1| <= 0.15; PARTIAL if <= 0.30; else NOT_SUPPORTED"
+  },
+  "P3_rate_exponent": {
+   "statement": "n = 2 (1 - beta) -> 0 in the elastic limit",
+   "rule": "PASS if |n| <= 0.15; PARTIAL if <= 0.30; else NOT_SUPPORTED"
+  },
+  "P4_monotone_approach": {
+   "statement": "the local exponent increases with kappa: the flow moves toward the elastic limit as kappa grows (beta_low_kappa < beta_high_kappa)",
+   "rule": "PASS if beta_low_half < beta_high_half; NOT_SUPPORTED otherwise"
+  },
+  "P5_noise_floor": {
+   "statement": "seed scatter at phi = 0.80, k_n = 4e4, gamma_dot = 2 is <= 15 %",
+   "rule": "PASS if relative std <= 0.15; else the collapse test is inconclusive"
+  }
+ },
+ "non_predictions": {
+  "coefficient": "Campbell 2002 numerical tables are paywalled (reference_anchors.json: Unpaywall OA = null); the prefactor leg is WITHHELD and our own coefficient is reported as such.",
+  "3d": "2-D disks throughout; Campbell's study is 3-D (declared deviation, unchanged)."
+ },
+ "thresholds": {
+  "tol_collapse": 0.15,
+  "tol_partial": 0.3,
+  "tol_exponent": 0.15,
+  "min_gated_fit": 4,
+  "min_gated_slope": 3
+ },
+ "noise_twins": {
+  "from": "kn4e4_g2.0",
+  "seeds": [
+   20261113,
+   20261114
+  ]
+ },
+ "declared_debt_filled": [
+  "k_n = 1e5 (round-1 not_run)",
+  "k_n = 1e6 (round-1 not_run)"
+ ]
+}
