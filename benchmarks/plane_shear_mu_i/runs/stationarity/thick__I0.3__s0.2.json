@@ -1,0 +1,76 @@
+{
+ "case": "CASE-DEM-PLANE-SHEAR-MUIDI",
+ "round": 5,
+ "experiment": "strain_stationarity_ladder",
+ "arm": "thick",
+ "I_target": 0.3,
+ "strain_target": 0.2,
+ "strain_sampled_lo": 0.1012685835390678,
+ "strain_sampled_hi": 0.19771485357627536,
+ "I_measured": 0.19106153323285477,
+ "mu_tail": 1.3052650205097842,
+ "mu_ratio_of_means": 1.3052650205097842,
+ "mu_ratio_bias_pct": 0.0,
+ "mu_blocks": [
+  {
+   "strain_lo": 0.1012685835390678,
+   "strain_hi": 0.6012685835390678,
+   "n": 3,
+   "mu": 1.426188883605011,
+   "mu_ratio": 1.4139088690531387,
+   "tau_pa": 183638.59115457427,
+   "p_pa": 129880.0758478534,
+   "plate_z": 0.08730586778408178
+  }
+ ],
+ "block_bin_width": 0.5,
+ "mu_block_first": 1.426188883605011,
+ "mu_block_last": 1.426188883605011,
+ "mu_block_drift_pct": NaN,
+ "mu_half_drift_pct": -7.016387072922292,
+ "phi_bed_steady": 0.5772098009898701,
+ "phi_bed_settled": 0.5772500279572801,
+ "plate_height_settled": 0.08730425242190877,
+ "plate_height_steady": 0.08731033683924005,
+ "dilatancy": 6.969210734295454e-05,
+ "coordination": 4.090909090909091,
+ "normal_stress_measured_pa": 154090.55154906676,
+ "normal_stress_applied_pa": 62500.0,
+ "pressure_control_error": 1.465448824785068,
+ "shear_stress_pa": 201129.0069280566,
+ "shear_rate_imposed": 150.0,
+ "n_particles": 924,
+ "settle_steps": 3865,
+ "shear_steps": 42,
+ "dt": 3.214875667906916e-05,
+ "plate_travel_in_d": 1.768235595940787,
+ "n_samples": 3,
+ "wall_clock_s": 36.921559451147914,
+ "ref_mu": 0.5467577273829812,
+ "ref_phi": 0.6033447159228726,
+ "mu_err_pct": 138.72822552638567,
+ "phi_err_pct": -4.331672134233699,
+ "series": [
+  {
+   "strain": 0.1012685835390678,
+   "mu": 1.4961737793676821,
+   "p_pa": 97122.0621597565,
+   "tau_pa": 145311.48280154585,
+   "plate_z": 0.08730251010775134
+  },
+  {
+   "strain": 0.14949171855767154,
+   "mu": 1.4771278509375665,
+   "p_pa": 138427.61383473696,
+   "tau_pa": 204475.28373412034,
+   "plate_z": 0.08730475640525395
+  },
+  {
+   "strain": 0.19771485357627536,
+   "mu": 1.3052650205097842,
+   "p_pa": 154090.55154906676,
+   "tau_pa": 201129.0069280566,
+   "plate_z": 0.08731033683924005
+  }
+ ]
+}
