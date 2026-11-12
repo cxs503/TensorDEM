@@ -82,6 +82,13 @@ class FrictionPolyhedronConfig:
         k_r: Rolling spring stiffness (N*m/rad). Required for EPSD model.
         e: Coefficient of restitution (alternative to gamma_n).
         density: Particle density (kg/m^3), used for mass computation.
+        mu_dynamic: Opt-in dynamic (residual) friction coefficient.  ``None``
+            (default) keeps the single-coefficient Coulomb cone bit-for-bit;
+            when set, the cone is the static/dynamic pair ``mu`` / ``mu_dynamic``
+            with the stick-slip hysteresis described in
+            :func:`friction_cone_limit`.
+        slip_stick_speed: Slip speed (m/s) below which a sliding contact
+            re-sticks (only used when ``mu_dynamic`` is set).
     """
     k_n: float = 1.0e5
     gamma_n: float = 100.0
@@ -91,6 +98,8 @@ class FrictionPolyhedronConfig:
     k_r: float = 1.0e2
     e: Optional[float] = None
     density: float = 2500.0  # rock/ice typical
+    mu_dynamic: Optional[float] = None
+    slip_stick_speed: float = 1.0e-4
 
     def __post_init__(self):
         if self.k_n <= 0:
@@ -99,6 +108,13 @@ class FrictionPolyhedronConfig:
             raise ValueError("mu must be non-negative")
         if self.mu_r < 0:
             raise ValueError("mu_r must be non-negative")
+        if self.mu_dynamic is not None:
+            if self.mu_dynamic < 0:
+                raise ValueError("mu_dynamic must be non-negative")
+            if self.mu_dynamic > self.mu:
+                raise ValueError("mu_dynamic must not exceed the static mu")
+        if self.slip_stick_speed < 0:
+            raise ValueError("slip_stick_speed must be non-negative")
 
 
 # ---------------------------------------------------------------------------
@@ -110,11 +126,66 @@ class ContactState:
     delta_t: np.ndarray = field(default_factory=lambda: np.zeros(3))
     rolling_moment: np.ndarray = field(default_factory=lambda: np.zeros(3))
     active: bool = True
+    # Stick-slip latch of the static/dynamic pair; unused (and never written)
+    # when ``FrictionPolyhedronConfig.mu_dynamic`` is None.
+    sliding: bool = False
 
     def reset(self):
         self.delta_t[:] = 0.0
         self.rolling_moment[:] = 0.0
         self.active = True
+        self.sliding = False
+
+
+# ---------------------------------------------------------------------------
+# Coulomb cone: single coefficient or static/dynamic pair
+# ---------------------------------------------------------------------------
+def friction_cone_limit(
+    config: "FrictionPolyhedronConfig",
+    state: ContactState,
+    tangential_force_mag: float,
+    normal_force_mag: float,
+    tangential_speed: float,
+) -> float:
+    """Coulomb cone limit ``|F_t| <= mu N`` for the active friction law.
+
+    ``config.mu_dynamic is None`` returns the legacy scalar cone
+    ``config.mu * N`` and never touches ``state``, so every pre-existing
+    trajectory stays bit-for-bit identical.
+
+    With ``mu_dynamic`` set the cone is the classical static/dynamic pair with a
+    stick-slip latch:
+
+    * stuck contact (``state.sliding == False``): the cone is ``mu_s N``; the
+      contact carries the elastic tangential force up to that value, and the
+      moment the elastic force would exceed it the contact latches to sliding
+      (``state.sliding = True``) and the cone drops to the residual ``mu_d N``.
+    * sliding contact: the cone stays ``mu_d N`` -- *not* re-selected from the
+      instantaneous force -- so a steadily sliding contact carries exactly
+      ``mu_d N`` instead of ratcheting between the two cones (a stateless
+      selection would make the mean friction mesh dependent).
+    * the latch releases only when the slip speed falls below
+      ``config.slip_stick_speed``, i.e. when the body has actually stopped.
+
+    Args:
+        config: contact parameters (``mu`` = static, ``mu_dynamic`` = dynamic).
+        state: per-contact state (the ``sliding`` latch is updated here).
+        tangential_force_mag: magnitude of the elastic tangential force, N.
+        normal_force_mag: normal force magnitude, N.
+        tangential_speed: tangential relative speed at the contact, m/s.
+
+    Returns:
+        The cone limit in newtons.
+    """
+    if config.mu_dynamic is None:
+        return config.mu * normal_force_mag
+    mu_s = float(config.mu)
+    mu_d = float(config.mu_dynamic)
+    if state.sliding and tangential_speed < config.slip_stick_speed:
+        state.sliding = False
+    if not state.sliding and tangential_force_mag > mu_s * normal_force_mag:
+        state.sliding = True
+    return (mu_d if state.sliding else mu_s) * normal_force_mag
 
 
 # ---------------------------------------------------------------------------
@@ -206,9 +277,10 @@ def compute_contact_force(
     state.delta_t -= np.dot(state.delta_t, normal) * normal
 
     f_t_vec = -config.k_t * state.delta_t
-    # Coulomb saturation
+    # Coulomb saturation (single coefficient, or the static/dynamic pair)
     f_t_mag = np.linalg.norm(f_t_vec)
-    f_t_limit = config.mu * f_n_mag
+    f_t_limit = friction_cone_limit(config, state, f_t_mag, f_n_mag,
+                                    float(np.linalg.norm(v_t)))
     if f_t_mag > f_t_limit:
         # Plastic slip: project onto yield surface
         if f_t_limit > 0:
@@ -381,7 +453,8 @@ def compute_wall_contact_force(
     state.delta_t -= np.dot(state.delta_t, n) * n
     f_t_vec = -config.k_t * state.delta_t
     f_t_mag = np.linalg.norm(f_t_vec)
-    f_t_limit = config.mu * f_n_mag
+    f_t_limit = friction_cone_limit(config, state, f_t_mag, f_n_mag,
+                                    float(np.linalg.norm(v_t)))
     if f_t_limit > 0 and f_t_mag > f_t_limit:
         f_t_vec = f_t_vec * (f_t_limit / f_t_mag)
         state.delta_t = -f_t_vec / config.k_t
