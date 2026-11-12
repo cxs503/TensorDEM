@@ -302,3 +302,38 @@ PYTHONPATH=src python scripts/m5052_clump_rolling_calibration.py --figures-only
 * **Not addressed:** the legacy plastic-capped Hertz contact branch (inside
   `MillingSimulation`, needs a full transient case), D1/D2 repair, and the D3
   package follow-up.
+
+
+## selfstart write-back (m16290, 2026-11-12) — IN27-S4 legacy race defects D1/D2 repaired
+
+* **Rows closed (they were registered defects, not capabilities):** `DEFECT-D1`
+  (race momentum flux delivered `T/2`) and `DEFECT-D2` (debris carrier used a local
+  `sigma = 0.5 D` closure, i.e. a 4x weaker jet than the torque model) in
+  `src/tensordem/propeller_ice_milling.py`. D1 fixed in `RaceModel.centreline`
+  (`u_c = sqrt(M/(pi sigma^2))` ⇒ `∫ρu²2πr dr = T` at every station); D2 fixed
+  structurally by giving the race field one vectorised definition
+  (`RaceModel.axial_velocity_tensor` / `sigma_tensor`) and making
+  `integrate_debris` consume it.
+* **Before → after (recomputed by the harness, no hand-copied digits):**
+  momentum-flux ratio `0.5 → 1.0` (rel. err `1.07e-5`); debris transport factor
+  vs the module's own carrier `0.541 → 1.000` (`G3_drag_relax_finest` rel. err
+  `3.27e-1 → 6.5e-4`); new wiring gate `G3c_debris_carrier_equals_race_field`
+  against an independent RK4 on the scalar field in a *spreading* wake.
+* **The pre-repair doc's own prescription was wrong by `sqrt(2)`:** it asked for
+  `u_c = sqrt(2 M/(pi sigma^2))`, which would deliver `2T`. The arbiter is the gate
+  `∫ρu²2πr dr = T`; recorded in the module docstring and §7.2 of the report.
+* **Invalidated legacy numbers:** every IN27-S4 ejection speed produced before this
+  repair is `sqrt(2)` low in carrier speed and must be recomputed, not cited
+  (the `0.5–2.0 m/s` band was never admissible evidence anyway).
+* **Still open:** `DEFECT-D3` (package BEM cap saturation at `J ≲ 0.2` with a 1e-8
+  residual and an unused `_buhl` branch), absolute `K_T`/`K_Q` of both
+  implementations (**WITHHELD**, no experimental chart), and the plastic-capped
+  Hertz contact branch inside `MillingSimulation` (no gate).
+* **Verification surface:** `scripts/verify_propeller_ice_milling_legacy.py`
+  (26 gates, 22 PASS) + `tests/test_propeller_ice_milling_legacy_verification.py`
+  (17 tests green; the two former `xfail(strict)` acceptance tests now pass and the
+  two characterisation tests were rewritten as repair guards that the old code
+  fails) + `artifacts/propeller_ice_milling_legacy/` (json + 3 png).
+* **Reproduction:**
+  `PYTHONPATH=src python scripts/verify_propeller_ice_milling_legacy.py &&
+   PYTHONPATH=src python scripts/render_propeller_ice_milling_legacy_doc.py`

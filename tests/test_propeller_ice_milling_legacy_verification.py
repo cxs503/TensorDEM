@@ -131,59 +131,61 @@ def _analytic_crossing(u: float, v0: float, k: float, x_exit: float) -> tuple[fl
     return t_cross, u + w0 / (1.0 + k * w0 * t_cross)
 
 
-def test_defect_d2_debris_carrier_width_differs_from_race_model():
-    """DEFECT-D2 characterisation: ``integrate_debris`` uses ``sigma = R``, not ``R/2``.
+def test_debris_carrier_is_the_race_model_field():
+    """D2 repair: the transport carrier is ``RaceModel``'s own field (width ``R/2``).
 
-    With the *integrator's own* wake width (``sigma = 0.5 D``) the RK2 transport
-    reproduces the closed-form quadratic-drag solution, which isolates the defect
-    to the width/normalisation convention rather than to the ODE integration.
+    The old defect used a local ``sigma = 0.5 D`` closure (= ``R``, twice the wake
+    width and hence a 4x weaker ``u_c``).  This test is written so that the old
+    closure *fails* it: the analytic crossing with the module's carrier reproduces
+    the RK2 exit speed, and the same closed form evaluated with the old width
+    differs by far more than the 2 % tolerance.
     """
     race, mass, diam, c_d, k = _drag_setup()
-    sigma_int = 0.5 * race.diameter                     # what integrate_debris assumes
-    u_int = float(race.centreline(0.0)) * (race.sigma(0.0) / sigma_int)  # u_c ~ 1/sigma
-    _, v_ref = _analytic_crossing(u_int, 20.0, k, 1.0)
-    out = integrate_debris([{"mass": mass, "d": diam, "x": 0.0, "r": 0.0, "vx": 20.0, "vr": 0.0}],
-                           race, x_exit=1.0, dt=2.5e-4, c_d=c_d)
-    assert out[0]["exit_speed"] == pytest.approx(v_ref, rel=2.0e-2)
-    # ... and that width is twice the RaceModel's own sigma
-    assert sigma_int == pytest.approx(2.0 * race.sigma(0.0), rel=1.0e-12)
-
-
-@pytest.mark.xfail(strict=True, reason="DEFECT-D2: integrate_debris uses sigma=R while "
-                                      "RaceModel.sigma()=R/2 -> chips see a 4x weaker jet")
-def test_debris_exit_speed_matches_closed_form_in_race_model_carrier():
-    race, mass, diam, c_d, k = _drag_setup()
-    u = race.axial_velocity(0.0, 0.0)                   # module's own carrier speed
+    u = float(race.axial_velocity(0.0, 0.0))            # module's own carrier speed
     _, v_ref = _analytic_crossing(u, 20.0, k, 1.0)
     out = integrate_debris([{"mass": mass, "d": diam, "x": 0.0, "r": 0.0, "vx": 20.0, "vr": 0.0}],
                            race, x_exit=1.0, dt=2.5e-4, c_d=c_d)
     assert out[0]["exit_speed"] == pytest.approx(v_ref, rel=2.0e-2)
+    # discrimination: the pre-repair sigma = 0.5 D carrier predicts something else
+    sigma_old = 0.5 * race.diameter
+    u_old = float(race.centreline(0.0)) * (race.sigma(0.0) / sigma_old)
+    _, v_old = _analytic_crossing(u_old, 20.0, k, 1.0)
+    assert abs(v_old - out[0]["exit_speed"]) / out[0]["exit_speed"] > 0.2
+
+
+def test_axial_velocity_tensor_agrees_with_scalar_field():
+    """The vectorised race field is the same field as the scalar API (1e-12)."""
+    race = RaceModel(thrust=3.0e4, diameter=2.4, spreading_rate=0.085)
+    x = torch.linspace(0.0, 6.0, 13, dtype=torch.float64)
+    r = torch.linspace(0.0, 2.0, 11, dtype=torch.float64)
+    xx, rr = torch.meshgrid(x, r, indexing="ij")
+    field = race.axial_velocity_tensor(xx, rr)
+    ref = torch.tensor([[race.axial_velocity(float(a), float(b)) for b in r] for a in x],
+                       dtype=torch.float64)
+    assert torch.allclose(field, ref, rtol=0.0, atol=1.0e-12 * float(ref.max()))
+    sig = race.sigma_tensor(x)
+    assert torch.allclose(sig, torch.tensor([race.sigma(float(a)) for a in x],
+                                            dtype=torch.float64), rtol=1.0e-12)
 
 
 # ---------------------------------------------------------------------------
-# propeller race: momentum conservation
+# propeller race: momentum conservation (D1 repair)
 # ---------------------------------------------------------------------------
-@pytest.mark.xfail(strict=True, reason="DEFECT-D1: u_c = sqrt(M/(2 pi sigma^2)) delivers "
-                                      "int rho u^2 2 pi r dr = T/2, not T")
-def test_race_conserves_momentum_flux():
+@pytest.mark.parametrize("x", [0.0, 1.0, 4.0])
+def test_race_conserves_momentum_flux(x):
+    """D1 repair: ``int_0^inf rho u^2 2 pi r dr = T`` at every station (1 %).
+
+    Pre-repair the ratio was ``0.5`` exactly (``u_c = sqrt(M/(2 pi sigma^2))``);
+    the repair is ``u_c = sqrt(M/(pi sigma^2))``, i.e. a factor ``sqrt(2)``.
+    """
     thrust, diameter = 2.0e4, 3.0
     race = RaceModel(thrust=thrust, diameter=diameter)
-    sigma = race.sigma(1.0)
+    sigma = race.sigma(x)
     r = np.linspace(0.0, 8.0 * sigma, 4001)
-    u = np.array([race.axial_velocity(1.0, float(rr)) for rr in r])
+    u = np.array([race.axial_velocity(x, float(rr)) for rr in r])
     flux = float(np.trapezoid(RHO_W * u ** 2 * 2.0 * math.pi * r, r))
     assert flux == pytest.approx(thrust, rel=1.0e-2)
-
-
-def test_defect_d1_race_momentum_flux_is_half_the_thrust():
-    """DEFECT-D1 characterisation: the delivered flux is ``T/2`` to quadrature accuracy."""
-    thrust, diameter = 2.0e4, 3.0
-    race = RaceModel(thrust=thrust, diameter=diameter)
-    sigma = race.sigma(0.0)
-    r = np.linspace(0.0, 8.0 * sigma, 4001)
-    u = np.array([race.axial_velocity(0.0, float(rr)) for rr in r])
-    flux = float(np.trapezoid(RHO_W * u ** 2 * 2.0 * math.pi * r, r))
-    assert flux == pytest.approx(0.5 * thrust, rel=1.0e-2)
+    assert abs(flux / thrust - 0.5) > 0.1            # the old half-flux cannot pass
 
 
 def test_race_induced_velocity_matches_actuator_disk_closed_form():
