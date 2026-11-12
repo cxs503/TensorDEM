@@ -76,6 +76,19 @@ BASE = dict(radius=0.03, density=2500.0, mu=0.5, mu_rolling=0.3,
             grains_per_radius=8.0)
 
 VALIDATION_ASPECTS = (1.0, 1.5, 2.0, 3.0)
+
+# --- round 3 (m16534): contact-friction *curve* grid -----------------------
+# Round 2 established that mu is the dominant lever at a = 2 (mu = 0.8 gave
+# +0.03 % while mu = 0.5 gave +22.8 %), but that is a single grid point, so it
+# cannot be distinguished from a point-wise coincidence.  Round 3 therefore
+# asks a curve-level question, pre-registered before the runs: does *one* mu
+# value reproduce the Lube (2004) runout law at every aspect ratio
+# a in SWEEP_ASPECTS simultaneously (< 15 % each) at the round-1 rolling
+# resistance mu_r = 0.4?  Nothing else is varied: the same discretisation,
+# dt, restitution and energy ledger as the round-1/2 validation points, and
+# the mu = 0.5 row is a reproduction control for rounds 1-2.
+MU_SWEEP = (0.5, 0.6, 0.7, 0.8)
+SWEEP_ASPECTS = (0.5, 1.0, 1.5, 2.0, 3.0)
 CALIBRATION_ASPECT = 0.5
 CALIBRATION_MUR = (0.2, 0.3, 0.4)
 
@@ -122,6 +135,47 @@ def wave2_cases(mu_rolling: float) -> list[dict]:
                       "phase": "sensitivity", "note": note,
                       "params": dict(BASE, **params, mu_rolling=mu_rolling)})
     return cases
+
+
+def wave3_cases(mu_rolling: float) -> list[dict]:
+    """Contact-friction curve grid: ``mu x a`` at the calibrated ``mu_rolling``.
+
+    Pre-registered (see ``MU_SWEEP`` / ``SWEEP_ASPECTS``): the hypothesis under
+    test is that one ``mu`` reproduces the reference runout law over the whole
+    aspect-ratio range, i.e. curve-level rather than point-level agreement.
+    """
+    suffix = "" if mu_rolling == BASE["mu_rolling"] else f"_mur{mu_rolling:g}"
+    return [{"id": f"sweep_mu{mu:g}_a{a:g}" + suffix, "phase": "sweep_mu",
+             "note": f"contact friction mu = {mu:g} at a = {a:g} "
+                     f"(mu_r = {mu_rolling:g} fixed)",
+             "params": dict(BASE, aspect_ratio=a, mu=mu, mu_rolling=mu_rolling)}
+            for mu in MU_SWEEP for a in SWEEP_ASPECTS]
+
+
+def wave3_control_cases(mu_rolling: float) -> list[dict]:
+    """**Post-hoc** controls for round 3 (added *after* inspecting the sweep,
+    labelled as such): the rounds-1/2 duration factor ``duration_factor = 8``
+    was inherited unchanged, but two sweep points (mu = 0.7, a = 0.5 and
+    a = 1.0) terminated on ``stop_reason = time_limit`` instead of ``at_rest``,
+    i.e. their runout could in principle be truncated.  Here the duration is
+    doubled (16) at unchanged everything else, so a converged runout shows up
+    as an unchanged ratio.  These two points do not enter the pre-registered
+    verdict; they only test whether that verdict is truncation-limited.
+    """
+    suffix = "" if mu_rolling == BASE["mu_rolling"] else f"_mur{mu_rolling:g}"
+    return [{"id": f"ctrl_dur16_mu{mu:g}_a{a:g}" + suffix, "phase": "sweep_mu_control",
+             "note": f"post-hoc truncation control: duration_factor = 16, "
+                     f"mu = {mu:g}, a = {a:g} (mu_r = {mu_rolling:g})",
+             "params": dict(BASE, aspect_ratio=a, mu=mu, mu_rolling=mu_rolling,
+                            duration_factor=16.0)}
+            for mu, a in ((0.7, 0.5), (0.7, 1.0))]
+
+
+def all_cases(mu_rolling: float) -> list[dict]:
+    """Every pre-declared case: wave 1 (control + calibration), wave 2
+    (validation + sensitivity), wave 3 (mu curve grid)."""
+    return (wave1_cases() + wave2_cases(mu_rolling) + wave3_cases(mu_rolling)
+            + wave3_control_cases(mu_rolling))
 
 
 def case_path(case_id: str) -> str:
@@ -229,6 +283,8 @@ def collect() -> dict:
             "validation": stats(valid),
             "validation_out_of_sample": stats(out_of_sample),
             "sensitivity": stats(group("sensitivity")),
+            "sweep_mu": stats(group("sweep_mu")),
+            "sweep_mu_control": stats(group("sweep_mu_control")),
         },
         "rows": rows,
     }
@@ -271,6 +327,10 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--mu-rolling", type=float, default=BASE["mu_rolling"],
                     help="calibrated rolling resistance for the wave-2 grid")
     ap.add_argument("--shard", help="i/n: run the i-th of n interleaved wave-2 cases")
+    ap.add_argument("--wave3", action="store_true",
+                    help="run the round-3 mu curve grid (mu x a)")
+    ap.add_argument("--wave3-control", action="store_true",
+                    help="run the post-hoc truncation controls (doubled duration)")
     ap.add_argument("--collect", action="store_true", help="aggregate + verdicts")
     ap.add_argument("--case", action="append", default=[],
                     help="run one pre-declared case id (wave-1 or wave-2); repeatable")
@@ -285,7 +345,7 @@ def main(argv: list[str] | None = None) -> int:
             print(spec["id"], spec["phase"], spec["params"]["aspect_ratio"])
         return 0
     if args.list_cases:
-        for spec in wave1_cases() + wave2_cases(args.mu_rolling):
+        for spec in all_cases(args.mu_rolling):
             print(spec["id"], spec["phase"], spec["params"]["aspect_ratio"])
         return 0
     if args.collect:
@@ -295,7 +355,7 @@ def main(argv: list[str] | None = None) -> int:
             print(_report_row(r))
         return 0
     if args.case:
-        specs = wave1_cases() + wave2_cases(args.mu_rolling)
+        specs = all_cases(args.mu_rolling)
         unknown = [cid for cid in args.case if not any(s["id"] == cid for s in specs)]
         if unknown:
             print(f"unknown case id(s) {unknown}; see --list-cases", file=sys.stderr)
@@ -316,6 +376,12 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.wave1:
         _run_specs(wave1_cases(), "wave1", args.progress)
+        return 0
+    if args.wave3:
+        _run_specs(wave3_cases(args.mu_rolling), "wave3", args.progress)
+        return 0
+    if args.wave3_control:
+        _run_specs(wave3_control_cases(args.mu_rolling), "wave3-control", args.progress)
         return 0
     if args.shard:
         i, n = (int(x) for x in args.shard.split("/"))
