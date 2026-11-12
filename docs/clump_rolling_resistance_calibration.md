@@ -282,3 +282,37 @@ stored amount stays inside the analytic bound.
 | stored spring energy | `M_lim²/(2k_r)` | 56.7 % of bound | **yes** |
 | viscous branch threshold (default `omega_ref`) | `arctan(mu_r)` | 49.2 % | **no — honest FAIL**: numerically unstable configuration, withdrawn rather than tuned away |
 | laboratory tilt-table / repose measurement | — | no data | **WITHHELD** |
+
+## m16340 write-back (viscous branch stability, 2026-11-12)
+
+The §3.4 honest FAIL above is **resolved as a defect, not as a physics result**:
+the `viscous` branch keeps its declared law, but the configuration that produced the
+5.74° artefact is now refused with an actionable message instead of overflowing, and
+the analytic window is verified.
+
+* **Analytic window.** The velocity-Verlet half-kick splitting gives a one-step factor
+  `(1 - lambda*dt/2)**2` with `lambda = mu_r |F_n| r / (omega_ref I)`: monotone decay
+  for `lambda*dt <= 2`, divergence beyond `lambda*dt >= 4`. Bisection over a 36× mass
+  range measures the boundary at `lambda*dt = 4.0017` (0.04 % from 4), confirming that
+  `lambda*dt` is the control parameter
+  (`artifacts/m16340/viscous_rolling_stability.json`).
+* **Guard.** `ContactConfig.rolling_stability_guard` (default on) raises with the
+  offending `lambda*dt`, both bounds, the admissible `dt`/`omega_ref` and the opt-in
+  alternative. The default pair `omega_ref = 1e-3`, `dt = 2e-4` gives `lambda*dt = 88.3`
+  and is refused; with the guard off it still overflows (`|omega| ~ 4.8e153` by step 47),
+  preserved as a regression test.
+* **Accuracy is a stricter limit than stability.** The free spin-down matches
+  `exp(-lambda t)` to 2.55 % at `lambda*dt = 0.1` but 6.6 % at 0.25: the 3 % envelope is
+  `lambda*dt <= ~0.12`, i.e. `omega_ref >= ~4 dt M_lim / I`. Calibrations must respect
+  that, not merely the boundedness bound.
+* **Steady state.** The declared law reproduces `omega* = omega_ref tan(theta)/mu_r`
+  exactly on an incline (0.0000 % at `lambda*dt = 0.29` and 0.98); the opt-in
+  gain-limited gain (`rolling_viscous_implicit=True`) is stable at any step but inflates
+  the steady rate by the predicted `1 + lambda*dt/2` (+14.49 % at 0.294, measured 1.145
+  vs predicted 1.147).
+* **Energy.** Dissipated rolling work now equals the kinetic-energy drop to 4.5e-16;
+  the previous single-evaluation rectangle rule under-reported it by up to 63 %
+  (`lambda*dt = 0.88`).
+
+Details, tables and reproduction: `docs/clump_rolling_viscous_stability.md`.
+Tests: `tests/test_clump_viscous_rolling_stability.py` (12 passed).
