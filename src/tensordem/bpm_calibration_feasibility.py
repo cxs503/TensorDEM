@@ -63,6 +63,7 @@ import torch
 from .bpm_calibration import LITERATURE_UCS_RANGES
 from .bpm_identifiability import LoadProtocol, MicroParameters, SpecimenGeometry
 from .dem3d import DEM3DConfig, IceDEM3D
+from .granular3d.stress import contact_outer
 
 __all__ = [
     "COND_NUMBER_LIMIT",
@@ -88,6 +89,8 @@ __all__ = [
     "geometry_prior_check",
     "holdout_error",
     "nsga2",
+    "LATTICE_CELL_VOLUME_PER_PARTICLE_FACTOR",
+    "pair_stress_state",
     "principal_stress_ratio",
     "protocol_prior_check",
     "region_stress",
@@ -95,6 +98,7 @@ __all__ = [
     "run_axial",
     "run_brazilian",
     "size_effect_modulus",
+    "specific_volume",
     "surrogate_quadratic",
     "virial_stress_tensor",
 ]
@@ -367,25 +371,54 @@ def axial_config(vector: CalibrationVector, geometry: SpecimenGeometry, *,
 # Discrete stress field (Love-Weber virial)
 # ===========================================================================
 
-def virial_stress_tensor(engine: IceDEM3D) -> torch.Tensor:
-    """Per-particle Love-Weber stress tensor ``(N, 3, 3)`` [Pa].
+#: Per-contact tensor convention of the shared stress instrument
+#: (:mod:`tensordem.granular3d.stress`): ``l (x) f`` with ``l = x_j - x_i`` the
+#: branch vector and ``f`` the force *on* ``i`` from ``j``.
 
-    Bond contribution: for every *alive* bond the axial force ``k_b * (L - L0)``
-    acts along the bond direction (tension positive), so
-    ``sigma_p = (1/V_p) sum_q f_pq (x) (x_q - x_p)`` is positive in tension and
-    negative in compression -- the Cauchy sign convention.
+#: Volume per particle of the model lattice: the simple-cubic cell ``(2R)^3``.
+#: It is the historical normalisation of this instrument and it is *not* the
+#: specific volume of a finite specimen, so it does not reproduce the applied
+#: boundary stress (see :func:`specific_volume` and the m16734 audit).
+LATTICE_CELL_VOLUME_PER_PARTICLE_FACTOR: float = 8.0
 
-    Contact contribution: for pairs that are *not* bonded (broken bond or
-    post-failure contact) with a positive overlap, the linear contact normal force
-    ``k_c * overlap`` pushes the pair apart and enters with the same convention.
-    Tangential/frictional contact forces are **not** included (the engine keeps
-    their state internally); at the read-out instants of a quasi-static hold the
-    tangential forces are small, and the acceptance criterion uses a *ratio* of two
-    principal stresses in which a common omission largely cancels.  The limitation
-    is stated in the report.
 
-    ``V_p = 8 R^3`` is the cube volume of one lattice cell; the absolute level of
-    the tensor is only used through ratios.
+def specific_volume(volume: float, n_particles: int) -> float:
+    """Volume per particle ``V / N`` [m^3] of a specimen of volume ``volume``.
+
+    Use this as ``volume_per_particle`` when the absolute stress level matters.
+    The gauge volume (``A * gauge``) is the one that makes the volume average of
+    :func:`virial_stress_tensor` reproduce the independent plane-cut traction of
+    a homogeneously strained lattice (verified in
+    ``scripts/verify_bpm_virial_absolute_m16734.py``).
+    """
+    volume = float(volume)
+    n_particles = int(n_particles)
+    if not (math.isfinite(volume) and volume > 0.0):
+        raise ValueError("volume must be finite and positive")
+    if n_particles <= 0:
+        raise ValueError("n_particles must be positive")
+    return volume / float(n_particles)
+
+
+def pair_stress_state(engine: IceDEM3D) -> dict[str, Any]:
+    """Pair list, branch vectors and pair forces of the discrete stress instrument.
+
+    The force law of the *stress* instrument is written down here and nowhere
+    else:
+
+    * **bonds** -- every *alive* bond carries the axial force ``k_b (L - L0)``,
+      tension positive (a positive force pulls ``i`` towards ``j``);
+    * **contacts** -- pairs that are *not* bonded (broken bond, or a pair that was
+      never bonded) with a positive overlap ``2R - L`` carry the linear repulsive
+      normal force ``k_c * overlap``.
+
+    Tangential (Cundall-Strack) and rolling forces are **not** included -- the
+    engine keeps that history private -- so the tensor built from this state is
+    symmetric by construction and cannot show the friction asymmetry
+    ``sigma_ab - sigma_ba = sum_c |l| f_t / A``.  See the module notes.
+
+    Returns a dict with the numpy ``branch`` ``(m, 3)`` (``x_j - x_i``),
+    ``force_on_i`` ``(m, 3)``, the pair indices and the two branch masks.
     """
     pos = engine.positions
     i, j = engine.pairs.T
@@ -399,17 +432,74 @@ def virial_stress_tensor(engine: IceDEM3D) -> torch.Tensor:
     f_bond = torch.where(engine.alive, f_bond, torch.zeros_like(f_bond))
 
     overlap = 2.0 * float(engine.config.radius) - length
-    f_contact = torch.where((~engine.alive) & (overlap > 0.0),
+    contact = (~engine.alive) & (overlap > 0.0)
+    f_contact = torch.where(contact,
                             float(engine.config.contact_stiffness) * overlap,
                             torch.zeros_like(overlap))
     # bond: tension pulls i towards j (+unit); contact: repulsion pushes i away
     force_on_i = (f_bond - f_contact)[:, None] * unit
+    return {
+        "i": i.detach().cpu().numpy().astype(np.int64),
+        "j": j.detach().cpu().numpy().astype(np.int64),
+        "branch": direction.detach().cpu().numpy(),
+        "force_on_i": force_on_i.detach().cpu().numpy(),
+        "bonded": engine.alive.detach().cpu().numpy().astype(bool),
+        "contact": contact.detach().cpu().numpy().astype(bool),
+        "n_particles": int(pos.shape[0]),
+    }
 
-    volume = 8.0 * float(engine.config.radius) ** 3
-    stress = torch.zeros((pos.shape[0], 3, 3), dtype=pos.dtype, device=pos.device)
-    outer = force_on_i[:, :, None] * direction[:, None, :]
-    stress.index_add_(0, i, outer)
-    stress.index_add_(0, j, outer)
+
+def virial_stress_tensor(engine: IceDEM3D, *,
+                         volume_per_particle: float | None = None,
+                         scatter: str = "half") -> torch.Tensor:
+    """Per-particle Love-Weber stress tensor ``(N, 3, 3)`` [Pa].
+
+    The per-contact tensor ``l (x) f`` is produced by the shared instrument
+    :func:`tensordem.granular3d.stress.contact_outer` from
+    :func:`pair_stress_state` -- this function owns no private pair algebra any
+    more (m16734).
+
+    ``scatter`` -- how a pair is distributed over its two particles:
+
+    * ``"half"`` (default, correct): ``+/- 1/2 l (x) f`` to each end, so the
+      volume-weighted sum over all particles is exactly the virial sum
+      ``sum_c l (x) f`` (verified to the last bit in
+      ``tests/test_bpm_virial_absolute_m16734.py``);
+    * ``"legacy"``: the full ``l (x) f`` to *both* ends, i.e. every pair counted
+      twice.  This was the historical behaviour; it makes the region average a
+      factor **2** too large.  Kept only to reproduce pre-m16734 numbers.
+
+    ``volume_per_particle`` -- the specific volume used to normalise [m^3].
+    ``None`` means the lattice cell ``8 R^3``, the historical value; pass
+    :func:`specific_volume` (gauge volume / N) when the absolute level is used,
+    because ``8 R^3`` is not the specific volume of a finite specimen.
+
+    Sign convention: tension positive.  Bond and contact normal forces only (see
+    :func:`pair_stress_state`), so the tensor is symmetric.
+    """
+    if scatter not in ("half", "legacy"):
+        raise ValueError("scatter must be 'half' or 'legacy'")
+    state = pair_stress_state(engine)
+    outer = contact_outer(state["branch"], state["force_on_i"])   # (m, 3, 3)
+    weight = 0.5 if scatter == "half" else 1.0
+    if volume_per_particle is None:
+        volume = LATTICE_CELL_VOLUME_PER_PARTICLE_FACTOR * float(
+            engine.config.radius) ** 3
+        volume = float(volume)
+    else:
+        volume = float(volume_per_particle)
+        if not (math.isfinite(volume) and volume > 0.0):
+            raise ValueError("volume_per_particle must be finite and positive")
+
+    dtype, device = engine.positions.dtype, engine.positions.device
+    per_contact = torch.from_numpy(np.ascontiguousarray(outer * weight)).to(
+        dtype=dtype, device=device)
+    stress = torch.zeros((int(state["n_particles"]), 3, 3), dtype=dtype,
+                         device=device)
+    index = torch.from_numpy(state["i"]).to(device=device)
+    stress.index_add_(0, index, per_contact)
+    index = torch.from_numpy(state["j"]).to(device=device)
+    stress.index_add_(0, index, per_contact)
     return stress / volume
 
 
@@ -433,7 +523,9 @@ def principal_stress_ratio(eigenvalues: Sequence[float] | torch.Tensor) -> float
 
 
 def region_stress(engine: IceDEM3D, *, center: Sequence[float] = (0.0, 0.0, 0.0),
-                  radius: float, axes: Sequence[int] = (0, 2)) -> dict[str, Any]:
+                  radius: float, axes: Sequence[int] = (0, 2),
+                  volume_per_particle: float | None = None,
+                  scatter: str = "half") -> dict[str, Any]:
     """Love-Weber stress averaged over the particles inside ``radius`` of ``center``.
 
     Returns the averaged tensor (full 3x3 and the in-plane 2x2 block on ``axes``,
@@ -443,7 +535,8 @@ def region_stress(engine: IceDEM3D, *, center: Sequence[float] = (0.0, 0.0, 0.0)
     point of AC5: the lattice-level stress is noisy, the region average is the
     continuum quantity comparable with Hondros' solution.
     """
-    stress = virial_stress_tensor(engine)
+    stress = virial_stress_tensor(engine, volume_per_particle=volume_per_particle,
+                                  scatter=scatter)
     centre = torch.tensor(list(center), dtype=engine.positions.dtype,
                           device=engine.device)
     delta = engine.positions - centre
@@ -778,9 +871,17 @@ def run_brazilian(vector: CalibrationVector, geometry: DiscGeometry,
         decay_steps=protocol.decay_steps, bond_seed=bond_seed)
     centre = meta["centre_m"]
     region_radius = float(probe_region_ratio) * geometry.diameter_m
+    # Specific volume of the *cylinder* lattice (m16734): the probe reports an
+    # absolute stress level, so it must be normalised by the specimen's specific
+    # volume rather than by the lattice cell ``8 R^3`` (the two differ by 1.33x
+    # on this lattice).  The AC5 ratio is invariant under either choice.
+    volume_disc = math.pi * (geometry.diameter_m ** 2) / 4.0 * geometry.thickness_m
+    volume_per_particle = specific_volume(volume_disc, meta["n_particles"])
+    meta["volume_per_particle_m3"] = volume_per_particle
 
     def _probe() -> dict[str, Any]:
-        return region_stress(engine, center=centre, radius=region_radius)
+        return region_stress(engine, center=centre, radius=region_radius,
+                             volume_per_particle=volume_per_particle)
 
     result = _run_drive(engine, drive, support, protocol=protocol, sign=-1.0,
                         stress_scale=meta["stress_scale_m2_per_N"],
