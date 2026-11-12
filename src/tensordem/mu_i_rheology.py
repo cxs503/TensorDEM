@@ -557,6 +557,15 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
     at ``gamma_dot`` (from ``inertial_number`` if given, else ``shear_rate``)
     to a target strain, sampling stress and microstructure after a 40 % warm-up.
 
+    Solid-fraction bookkeeping (important, see m16427 / plane-shear round 2):
+    ``plate_height`` is the **settle-phase** platen height, frozen when the
+    shear phase starts, so a bed solid fraction built from it
+    (``phi_bed_settled``) is identical for every shear rate by construction and
+    must not be read as an ``phi(I)`` curve.  The steady-state counterparts
+    ``plate_height_steady`` / ``phi_bed_steady`` are tail averages over the
+    shear-phase samples (``plate_z`` is servo-updated during shear), and
+    ``dilatancy`` is their relative height change against the settled bed.
+
     Particle contacts use :func:`tensordem.granular3d_core.contact_forces`
     (Cundall-Strack tangential spring, velocity-independent -- no regularised
     Coulomb, so the low-I limit is not smeared by a slip-velocity cutoff).
@@ -769,6 +778,16 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
                        "coordination", "solid_fraction")}
     n_tail = max(1, int(0.6 * len(series)))
     mean = {key: float(np.nanmean(value[-n_tail:])) for key, value in arr.items()}
+    # steady-state bed bookkeeping: the platen keeps moving during shear, so the
+    # settled height alone cannot express a shear-rate dependent solid fraction
+    plate_series = np.array([s["plate_z"] for s in series], dtype=float)
+    plate_height_steady = float(np.nanmean(plate_series[-n_tail:]))
+    phi_bed_settled = (n * volume_particle / (W * D * plate_height)
+                       if plate_height > 0.0 else float("nan"))
+    phi_bed_steady = (n * volume_particle / (W * D * plate_height_steady)
+                      if plate_height_steady > 0.0 else float("nan"))
+    dilatancy = ((plate_height_steady - plate_height) / plate_height
+                 if plate_height > 0.0 else float("nan"))
     p_mean = mean["normal_stress_pa"]
     i_measured = gamma_dot * d / math.sqrt(p_mean / rho) if p_mean > 0 else float("nan")
 
@@ -793,6 +812,11 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
         "solid_fraction": mean["solid_fraction"],
         "porosity": 1.0 - mean["solid_fraction"],
         "plate_height": plate_height,
+        "plate_height_settled": plate_height,
+        "plate_height_steady": plate_height_steady,
+        "phi_bed_settled": phi_bed_settled,
+        "phi_bed_steady": phi_bed_steady,
+        "dilatancy": dilatancy,
         "dt": dt,
         "settle_steps": settle_steps,
         "shear_steps": shear_steps,

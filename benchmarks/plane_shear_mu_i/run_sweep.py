@@ -11,9 +11,17 @@ GDR MiDi (2004) JFM 509:165:
 
 Contact friction is set to the literature quasi-static limit (0.36) so the
 high-I rise must emerge from the dynamics (the brash_ice_rheology protocol).
+
+Round 2 (m16427) adds the steady-state bed bookkeeping of the device
+(``phi_bed_steady`` / ``dilatancy``): round 1 judged ``phi(I)`` on a bed height
+that is frozen at the end of the settle phase, hence I-independent by
+construction.  ``--arm stiff`` repeats the sweep with a 10x stiffer contact
+(P/kn = 0.1 instead of 1) to test whether the low bed solid fraction is a
+contact-softness artefact.
 """
 from __future__ import annotations
 
+import argparse
 import json
 import math
 import sys
@@ -31,8 +39,17 @@ from tensordem.mu_i_rheology import ServoShearCase, simulate_servo_shear  # noqa
 OUT = Path(__file__).resolve().parent / "runs"
 OUT.mkdir(parents=True, exist_ok=True)
 
+ARMS = {
+    "baseline": {"kn": 6.25e4, "label": "P/kn=1 (round-1 configuration)"},
+    "stiff": {"kn": 6.25e5, "label": "P/kn=0.1 (10x stiffer contact)"},
+}
+
 # --- reference (da Cruz 2005 / GDR MiDi 2004), glass beads -----------------
 MU_S, MU_2, I_0 = 0.36, 0.84, 0.30
+# phi(I) constants: NO in-repo literature anchor exists for these two numbers
+# (grep of brash_ice_rheology.mu_i / granular_column.scaling returns the mu(I)
+# trio only), so the phi curve is a hand-copied reference and is reported as
+# PROVENANCE-UNVERIFIED (see analyse.py -> phi_reference_status).
 PHI_C, PHI_J = 0.58, 0.64
 
 
@@ -58,9 +75,9 @@ SHEAR_STRAIN = 0.2
 SEED = 5279
 
 
-def run_point(I: float) -> dict:
+def run_point(I: float, kn: float = KN) -> dict:
     case = ServoShearCase(inertial_number=I, mu=MU_CONTACT,
-                          mu_rolling=MU_ROLLING, restitution=E, kn=KN,
+                          mu_rolling=MU_ROLLING, restitution=E, kn=kn,
                           normal_stress=P, shear_strain=SHEAR_STRAIN,
                           settle_steps=2500, min_shear_steps=400,
                           packing_gap=0.02, jitter=0.01, seed=SEED,
@@ -77,6 +94,12 @@ def run_point(I: float) -> dict:
         "mu_measured": res["mu_effective"],
         "phi_device": res["solid_fraction"],
         "phi_bed": phi_bed,
+        "phi_bed_settled": res["phi_bed_settled"],
+        "phi_bed_steady": res["phi_bed_steady"],
+        "plate_height_settled": res["plate_height_settled"],
+        "plate_height_steady": res["plate_height_steady"],
+        "dilatancy": res["dilatancy"],
+        "kn": kn,
         "coordination": res["coordination_number"],
         "normal_stress_pa": res["normal_stress_measured_pa"],
         "shear_stress_pa": res["shear_stress_pa"],
@@ -93,20 +116,30 @@ def run_point(I: float) -> dict:
 
 
 def main() -> None:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--arm", choices=tuple(ARMS), default="baseline")
+    ap.add_argument("--out", default=None)
+    args = ap.parse_args()
+    arm = ARMS[args.arm]
+    kn = float(arm["kn"])
+    out_name = args.out or f"sweep_{args.arm}.json"
     rows = []
     for I in I_TARGETS:
-        rec = run_point(I)
+        rec = run_point(I, kn=kn)
         rows.append(rec)
         print(f"I={I:g} -> I={rec['I_measured']:.4g} mu={rec['mu_measured']:.4f} "
               f"(ref {rec['ref_mu']:.4f}, {100*(rec['mu_measured']/rec['ref_mu']-1):+.1f}%) "
-              f"phi_bed={rec['phi_bed']:.4f} (ref {rec['ref_phi']:.4f}) "
+              f"phi_bed_settled={rec['phi_bed_settled']:.4f} "
+              f"phi_bed_steady={rec['phi_bed_steady']:.4f} (ref {rec['ref_phi']:.4f}) "
               f"wc={rec['wall_clock_s']:.0f}s", flush=True)
         # incremental save
-        (OUT / "sweep_partial.json").write_text(json.dumps(rows, indent=1))
+        (OUT / f"partial_{args.arm}.json").write_text(json.dumps(rows, indent=1))
     payload = {
         "case": "CASE-DEM-PLANE-SHEAR-MUIDI",
         "device": "tensordem.mu_i_rheology.simulate_servo_shear",
-        "config": {"P_pa": P, "kn": KN, "mu_contact": MU_CONTACT,
+        "arm": args.arm,
+        "arm_label": arm["label"],
+        "config": {"P_pa": P, "kn": kn, "mu_contact": MU_CONTACT,
                    "mu_rolling": MU_ROLLING, "e": E, "r": R, "rho": RHO,
                    "box": [W, D, H], "shear_strain": SHEAR_STRAIN,
                    "seed": SEED, "packing_gap": 0.02},
@@ -116,8 +149,8 @@ def main() -> None:
                                "GDR MiDi 2004 JFM 509:165"},
         "rows": rows,
     }
-    (OUT / "sweep.json").write_text(json.dumps(payload, indent=1))
-    print("WROTE", OUT / "sweep.json", flush=True)
+    (OUT / out_name).write_text(json.dumps(payload, indent=1))
+    print("WROTE", OUT / out_name, flush=True)
 
 
 if __name__ == "__main__":
