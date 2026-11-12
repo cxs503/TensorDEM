@@ -2,7 +2,7 @@
 
 **Node** P304W2-N06 · **Module** `src/tensordem/ice_structure_energy_ledger.py` · **Harness** `benchmarks/ice_structure_energy_ledger/run.py` · **Tests** `tests/test_ice_structure_energy_ledger.py`
 
-**Acceptance status:** all criteria pass = `True` · acceptance JSON `artifacts/ice_structure_energy_ledger/acceptance.json` (sha256 `0e16857bca46cac9…`)
+**Acceptance status:** all criteria pass = `True` · acceptance JSON `docs/artifacts/ice_structure_energy_ledger/acceptance.json` (sha256 `9ca0986b4ab1b971…`)
 
 ## 1. Case introduction
 
@@ -123,23 +123,23 @@ Single ice sphere vs wall, v0 = 1.5 m/s, e = 0.8:
 
 ### 3.6 Figures
 
-![fig1_four_ledger_history.png](../artifacts/ice_structure_energy_ledger/fig1_four_ledger_history.png)
+![fig1_four_ledger_history.png](../docs/artifacts/ice_structure_energy_ledger/fig1_four_ledger_history.png)
 
 *Four-ledger energies and per-step closure residual for the fracturing floe impact.*
 
-![fig2_residual_vs_dt.png](../artifacts/ice_structure_energy_ledger/fig2_residual_vs_dt.png)
+![fig2_residual_vs_dt.png](../docs/artifacts/ice_structure_energy_ledger/fig2_residual_vs_dt.png)
 
 *Maximum closure residual versus timestep: halving dt never increases the residual (acceptance criterion h).*
 
-![fig3_energy_budget.png](../artifacts/ice_structure_energy_ledger/fig3_energy_budget.png)
+![fig3_energy_budget.png](../docs/artifacts/ice_structure_energy_ledger/fig3_energy_budget.png)
 
 *Final partition of the initial kinetic energy over the four ledgers (fracture case).*
 
-![fig4_floe_speed_field.png](../artifacts/ice_structure_energy_ledger/fig4_floe_speed_field.png)
+![fig4_floe_speed_field.png](../docs/artifacts/ice_structure_energy_ledger/fig4_floe_speed_field.png)
 
 *Particle speed field (x-y projection) of the 3x3x3 ice floe before and after the 2 m/s impact with the rigid structure.*
 
-![fig5_viscous_analytic.png](../artifacts/ice_structure_energy_ledger/fig5_viscous_analytic.png)
+![fig5_viscous_analytic.png](../docs/artifacts/ice_structure_energy_ledger/fig5_viscous_analytic.png)
 
 *Viscous dissipation ledger against the analytic restitution loss for a single-sphere wall impact.*
 
@@ -171,9 +171,9 @@ Every key quantity is compared against an independent base (analytic value, fine
 ## 6. Reproduction
 
 ```bash
-python benchmarks/ice_structure_energy_ledger/run.py     # writes artifacts/ + acceptance.json
+python benchmarks/ice_structure_energy_ledger/run.py     # writes docs/artifacts/ + acceptance.json
 python benchmarks/ice_structure_energy_ledger/make_doc.py # regenerates this document
 python -m pytest tests/test_ice_structure_energy_ledger.py -q
 ```
 
-Audit chain: `artifacts/ice_structure_energy_ledger/acceptance.json` (sha256 in the header above) → per-step ledger CSVs `ledger_{elastic,fracture}_dt*.csv` (sha256 recorded inside the JSON) → figures → this document.
+Audit chain: `docs/artifacts/ice_structure_energy_ledger/acceptance.json` (sha256 in the header above) → per-step ledger CSVs `ledger_{elastic,fracture}_dt*.csv` (sha256 recorded inside the JSON) → figures → this document.

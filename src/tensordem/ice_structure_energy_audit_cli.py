@@ -12,7 +12,7 @@ Exit code is 0 only when every requested residual is inside its bar
 Example::
 
     python -m tensordem.ice_structure_energy_audit_cli --case both \
-        --out artifacts/ice_structure_energy_ledger/cli
+        --out docs/artifacts/ice_structure_energy_ledger/cli
 """
 from __future__ import annotations
 
