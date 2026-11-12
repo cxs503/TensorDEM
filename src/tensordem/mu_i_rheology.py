@@ -429,6 +429,14 @@ class ServoShearCase:
     servo_relax: float = 0.2
     servo_stride: int = 10
     bulk_margin_z: float = 0.25
+    # constant-stress validity gate (m16671): the shear phase may run past the
+    # requested strain budget until the servo has held the applied normal
+    # stress within ``pressure_control_tol`` for ``pressure_recover_window``
+    # steps.  Without it the platen stress drifts (measured +58 % / -17 % at
+    # I >= 0.1) and the point is not a constant-stress measurement.
+    pressure_control_tol: float = 0.05
+    pressure_recover_window: int = 200
+    max_recover_steps: int = 20000
 
     @property
     def mass(self) -> float:
@@ -727,8 +735,11 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
                           math.ceil(case.shear_strain / (gamma_dot * dt))))
     warmup = int(0.4 * shear_steps)
     strain = 0.0
-
-    for step in range(shear_steps):
+    max_shear_steps = shear_steps + max(0, int(case.max_recover_steps))
+    recover_streak = 0
+    step = -1
+    while step + 1 < max_shear_steps:
+        step += 1
         if step % case.servo_stride == 0:
             plate_vx = gamma_dot * plate_z
         force, torque, fn_sum, ftx_sum, n_contacts = _step_forces(plate_vx, plate_vz)
@@ -769,6 +780,18 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
                 "solid_fraction": phi,
             })
 
+        # constant-stress validity gate: once the requested strain budget is
+        # spent, keep shearing until the servo holds the applied pressure
+        if step + 1 >= shear_steps and target_force > 0.0:
+            err_now = abs(fn_avg / target_force - 1.0)
+            if err_now <= case.pressure_control_tol:
+                recover_streak += 1
+            else:
+                recover_streak = 0
+            if recover_streak >= case.pressure_recover_window:
+                break
+
+    shear_steps_executed = step + 1
     wall_clock = _time.perf_counter() - wall_clock
     if not series:
         raise MuIRheologyError("no samples collected in the shear phase")
@@ -790,6 +813,15 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
                  if plate_height > 0.0 else float("nan"))
     p_mean = mean["normal_stress_pa"]
     i_measured = gamma_dot * d / math.sqrt(p_mean / rho) if p_mean > 0 else float("nan")
+    # final-window (last 20 % of samples) counterparts: with a drifting servo the
+    # 60 % tail average mixes the transient, so the validity verdict is taken on
+    # the final window (this is the window the recovery gate settles on).
+    n_final = max(1, int(0.2 * len(series)))
+    p_final = float(np.nanmean(arr["normal_stress_pa"][-n_final:]))
+    mu_final = float(np.nanmean(arr["mu"][-n_final:]))
+    plate_height_final = float(np.nanmean(plate_series[-n_final:]))
+    phi_bed_final = (n * volume_particle / (W * D * plate_height_final)
+                     if plate_height_final > 0.0 else float("nan"))
 
     result = {
         "device": "servo_shear_cell",
@@ -822,6 +854,18 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
         "shear_steps": shear_steps,
         "shear_strain_achieved": strain,
         "n_samples": len(series),
+        "shear_steps_executed": shear_steps_executed,
+        "recover_steps": shear_steps_executed - shear_steps,
+        "pressure_control_error": (p_mean / case.normal_stress - 1.0
+                                   if case.normal_stress > 0 else float('nan')),
+        "pressure_control_error_final": (
+            p_final / case.normal_stress - 1.0
+            if case.normal_stress > 0 else float('nan')),
+        "mu_final": mu_final,
+        "phi_bed_final": phi_bed_final,
+        "servo_valid": bool(case.normal_stress > 0 and
+                            abs(p_final / case.normal_stress - 1.0)
+                            <= case.pressure_control_tol),
         "wall_clock_s": wall_clock,
         "box_volume": W * D * plate_height,
         "settle_pressure_pa": p_settle,
