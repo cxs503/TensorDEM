@@ -1,0 +1,73 @@
+{
+ "mission": 17455,
+ "anchor": "XVAL-DEM-LIBRARY-BINDING-FROZEN-CONTRACT",
+ "source_worktree": "/root/tp-agent/work/m17455",
+ "files": {
+  "src/tensordem/binding_contract.py": {
+   "copy": "docs/board_audit/m17496/refs/src__tensordem__binding_contract.py",
+   "sha256": "6478c4d23792ba177d7616df10e16ecb76c9227cd15112a86b8203d56def44f7",
+   "bytes": 37425,
+   "exists": true
+  },
+  "tests/test_binding_contract.py": {
+   "copy": "docs/board_audit/m17496/refs/tests__test_binding_contract.py",
+   "sha256": "bcd871a0b42867375f8d373948d1d5d9336598d5c2cd4756f88afda3d5e691c9",
+   "bytes": 5999,
+   "exists": true
+  },
+  "scripts/xval_library_binding_contract.py": {
+   "copy": "docs/board_audit/m17496/refs/scripts__xval_library_binding_contract.py",
+   "sha256": "f19559af8095873038ce8aac93f8b2b6a52b5401e0e732d5228ffc1013d17e7a",
+   "bytes": 16471,
+   "exists": true
+  },
+  "docs/XVAL_DEM_LIBRARY_BINDING_CONTRACT.md": {
+   "copy": "docs/board_audit/m17496/refs/docs__XVAL_DEM_LIBRARY_BINDING_CONTRACT.md",
+   "sha256": "93414c4317a8da30128b13399235f3fd8f20a3df9cd208cbda179d2c3d79b85e",
+   "bytes": 18469,
+   "exists": true
+  },
+  "prereg/XVAL_DEM_LIBRARY_BINDING_CONTRACT.json": {
+   "copy": "docs/board_audit/m17496/refs/prereg__XVAL_DEM_LIBRARY_BINDING_CONTRACT.json",
+   "sha256": "f68b690dd30a8e88e21d40fe24b516943ab735700c1e58746bee257438194335",
+   "bytes": 3644,
+   "exists": true
+  },
+  "artifacts/xval_library_binding_contract/result.json": {
+   "copy": "docs/board_audit/m17496/refs/artifacts__xval_library_binding_contract__result.json",
+   "sha256": "abe0efb1f134d48b500e4eff2c0afa03a4c19340119e10394005c7d7ecfe32a8",
+   "bytes": 19254,
+   "exists": true
+  },
+  "artifacts/xval_library_binding_contract/fig_impulse_error.png": {
+   "copy": "docs/board_audit/m17496/refs/artifacts__xval_library_binding_contract__fig_impulse_error.png",
+   "sha256": "3ddfb9e7610bc52349452805b8a9f50a742a8ec0f10dfea43a8fe66dbb3c02a0",
+   "bytes": 47002,
+   "exists": true
+  },
+  "artifacts/xval_library_binding_contract/fig_mutation_matrix.png": {
+   "copy": "docs/board_audit/m17496/refs/artifacts__xval_library_binding_contract__fig_mutation_matrix.png",
+   "sha256": "f4e1e0116899962d1ed5fb3c03e5049495c396cdbb91544fde5de1fe40c13c19",
+   "bytes": 38583,
+   "exists": true
+  },
+  "artifacts/xval_library_binding_contract/fig_coverage.png": {
+   "copy": "docs/board_audit/m17496/refs/artifacts__xval_library_binding_contract__fig_coverage.png",
+   "sha256": "1284b965a15e85ed5f7073d877e8323916acc7446ac82d5398a29ee105c1e178",
+   "bytes": 34725,
+   "exists": true
+  },
+  "artifacts/xval_library_binding_contract/fig_substep_boundary.png": {
+   "copy": "docs/board_audit/m17496/refs/artifacts__xval_library_binding_contract__fig_substep_boundary.png",
+   "sha256": "51351652c7a81552a0d7f21164164fb408c8df22d4d17839b6564a737be5f32b",
+   "bytes": 27148,
+   "exists": true
+  },
+  "runs/xval_library_binding_contract/run.json": {
+   "copy": "docs/board_audit/m17496/refs/runs__xval_library_binding_contract__run.json",
+   "sha256": "d7b08cb3e6aea5203788126047d1c41fb710d6156daf76d2e8fa98cf13f8c463",
+   "bytes": 776,
+   "exists": true
+  }
+ }
+}

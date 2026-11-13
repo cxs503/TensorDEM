@@ -1,0 +1,21 @@
+{
+  "name": "xval_library_binding_contract",
+  "anchor": "XVAL-DEM-LIBRARY-BINDING-FROZEN-CONTRACT",
+  "mission_id": 17455,
+  "commands": [
+    "python3 scripts/xval_library_binding_contract.py",
+    "PYTHONPATH=src python3 -m pytest tests/test_binding_contract.py -q"
+  ],
+  "results": {
+    "script_wall_s": 1.96,
+    "pytest": "20 passed in 7.07s"
+  },
+  "artifacts": [
+    "artifacts/xval_library_binding_contract/result.json",
+    "artifacts/xval_library_binding_contract/fig_impulse_error.png",
+    "artifacts/xval_library_binding_contract/fig_mutation_matrix.png",
+    "artifacts/xval_library_binding_contract/fig_coverage.png",
+    "artifacts/xval_library_binding_contract/fig_substep_boundary.png"
+  ],
+  "note": "single node, single core; no cluster job submitted"
+}
