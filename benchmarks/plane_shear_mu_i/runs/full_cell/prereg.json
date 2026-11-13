@@ -1,0 +1,43 @@
+{
+  "case": "CASE-DEM-PLANE-SHEAR-MUIDI",
+  "round": 8,
+  "device": "tensordem.mu_i_rheology.simulate_servo_shear (bulk_stress=True)",
+  "points": {
+    "arm": "baseline",
+    "I_target": [
+      0.01,
+      0.03,
+      0.1,
+      0.3
+    ],
+    "kn": 62500.0,
+    "normal_stress_pa": 62500.0,
+    "seed": 5279
+  },
+  "reference": {
+    "mu": {
+      "law": "mu_s+(mu_2-mu_s)/(I0/I+1)",
+      "constants": {
+        "mu_s": 0.36,
+        "mu_2": 0.84,
+        "I_0": 0.3
+      },
+      "status": "da Cruz 2005 / GDR MiDi 2004 fit as quoted in rounds 1-5: mu_s=0.36, mu_2=0.84, I0=0.30"
+    },
+    "phi": {
+      "law": "phi_max-(phi_max-phi_min)/(I0/I+1)",
+      "constants": {
+        "phi_max": 0.64,
+        "phi_min": 0.58,
+        "I_0": 0.3
+      },
+      "status": "PROVENANCE-UNVERIFIED magnitudes (0.58, 0.64 inherited from round 1, no in-repo anchor; da Cruz 2005 is a 2D-disk study with phi ~ 0.84 -> 0.79, so these are 3D glass-bead numbers) + VERIFIED monotonicity (decreasing with I, i.e. dilatancy) and limits phi(I->0)=0.64, phi(I->inf)=0.58"
+    }
+  },
+  "hypotheses": {
+    "P1_estimator_calibration": "|sigma_zz_full / P_applied + 1| <= 0.05 (final 20 % window, every point)",
+    "P2_truncation": "mu_slab(both) < mu_slab(midpoint) < mu_full at every point",
+    "P3_ledger_verdict": "|mu_full/mu_ref - 1| <= 10 % at every point"
+  },
+  "analytic_anchor": "virial identity: sum_pairs f (x) (x_j - x_i) = -sum_i F_ext (x) x_i => sigma_zz * A (h - 2r) = -P A (h - 2r)"
+}
