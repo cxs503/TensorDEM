@@ -1,0 +1,1337 @@
+{
+ "artifact": "papers/artifacts/w26/dem-hertz-impact-duration/anchor_register.json",
+ "mission": "paper-exp-dem-hertz-impact-duration-1",
+ "mission_id": 17564,
+ "repo": "TensorDEM",
+ "runner": "native",
+ "generated_utc": "2026-11-13T06:51:52+00:00",
+ "generator": "tools/gen_w26_hertz_anchor_register.py",
+ "environment": {
+  "python": "3.11.6",
+  "numpy": "2.4.6",
+  "scipy": "1.16.0",
+  "torch": "2.7.1",
+  "platform": "Linux-6.6.52-1.7.lns23.loongarch64-loongarch64-with-glibc2.38"
+ },
+ "git": {
+  "commit": "f2e227f6ae9b736abad0124382320c5fd7d1ef8d",
+  "branch": "agent/m17564",
+  "dirty_files": [
+   "?? papers/artifacts/w26/",
+   "?? src/tensordem/hertz_anchor_register.py",
+   "?? tests/test_hertz_anchor_register.py",
+   "?? tools/gen_w26_hertz_anchor_register.py"
+  ]
+ },
+ "anchors": {
+  "primary": {
+   "id": "JOHNSON-1985-CONTACT-MECHANICS-HERTZ-IMPACT",
+   "citation": {
+    "author": "K. L. Johnson",
+    "title": "Contact Mechanics",
+    "publisher": "Cambridge University Press",
+    "year": 1985,
+    "claim_scope": "elastic (Hertzian) impact: contact duration t_c and peak overlap / peak force in terms of m_eff, R_eff, E*"
+   },
+   "status": "WITHHELD",
+   "verbatim": null,
+   "document_sha256": null,
+   "quote_position": null,
+   "withheld_reason": "The primary document is not present in this environment: a whole filesystem search for the PDF/text turned up no copy, and the mission forbids transcribing numbers from memory or from secondary sources. The anchor is therefore registered WITHHELD, and only the operator layer (dimensional closure, algebraic identity, limits, applicability domain) is machine checked. Secondary in-tree citations of the same result are registered separately with their sha256 and line positions; they are code/docstrings, not the anchor.",
+   "search_evidence": {
+    "commands": [
+     "find / -iname '*contact_mechanics*' -o -iname '*johnson*1985*'",
+     "find / -maxdepth 6 -iname '*.pdf' | grep -Ei 'contact|johnson|mechanic'"
+    ],
+    "result": "no hit: no copy of the primary source in this environment"
+   },
+   "secondary_in_tree_citations": [
+    {
+     "path": "src/tensordem/hertz_impact_time.py",
+     "sha256": "d1efed1614636551d285396751ed71753527a1eee738dcd159667e0fc5d89b39",
+     "kind": "secondary_code_or_doc_citation",
+     "counts_as_verbatim_anchor": false,
+     "needles": [
+      "Johnson",
+      "4.2"
+     ],
+     "hits": [
+      {
+       "line": 17,
+       "text": "The literature anchor (Johnson, *Contact Mechanics*, 1985, Sec. 4.2; the same"
+      }
+     ]
+    },
+    {
+     "path": "src/tensordem/clump_clump.py",
+     "sha256": "f22b29e473ad4e0358c230d65fcc6af4769197227d20d245a8bbd183e5921dde",
+     "kind": "secondary_code_or_doc_citation",
+     "counts_as_verbatim_anchor": false,
+     "needles": [
+      "Johnson",
+      "Hertz"
+     ],
+     "hits": [
+      {
+       "line": 77,
+       "text": "* Johnson, *Contact Mechanics* (1985), ch. 4 (Hertz) and eq. 3.39 (reduced shear"
+      }
+     ]
+    },
+    {
+     "path": "docs/HERTZ_VERIFY.md",
+     "sha256": "d511135b8c7bd4e6c0605014a8440864a3697d26c23804f593af986627ad8871",
+     "kind": "secondary_code_or_doc_citation",
+     "counts_as_verbatim_anchor": false,
+     "needles": [
+      "Hertz"
+     ],
+     "hits": [
+      {
+       "line": 1,
+       "text": "# Hertz contact contract re-verification (TensorDEM, selfstart tp-doc-3 / m6518)"
+      },
+      {
+       "line": 49,
+       "text": "| delta/R | F measured [N] | F Hertz closed form [N] | measured/closed form |"
+      },
+      {
+       "line": 63,
+       "text": "every Hertz trajectory, so it is filed rather than quietly patched."
+      },
+      {
+       "line": 92,
+       "text": "* Applying the linear closed form to a Hertz law is the defect class. A corrected"
+      }
+     ]
+    }
+   ],
+   "what_is_still_verified_without_the_book": [
+    "operator layer: dimensional closure, algebraic identity between the two textbook forms, limits (including v -> 0), stiffness-ratio and damping applicability domain",
+    "cross-implementation identity of the prefactor C against the two independent in-tree derivations",
+    "solver cross-check of the closed form by real DEM impact runs"
+   ]
+  },
+  "quantitative_target": {
+   "note": "recorded as the mission states it; the coefficient is NOT used as an anchor value, it is re-derived and checked",
+   "mission_form": "t_c = 2.87 (m_eff^2 / (R_eff E*^2))^(1/5) v^(-1/5)",
+   "derived_coefficient": 2.8682656991953324,
+   "mission_brief_value": 2.87,
+   "relative_difference": 0.0006042859946577828,
+   "agrees_at_3sf": true
+  }
+ },
+ "criteria": [
+  {
+   "id": "C1",
+   "statement": "verbatim anchor position >= 1, or an honest WITHHELD",
+   "verdict": "WITHHELD",
+   "measured": {
+    "verbatim_anchor_count": 0,
+    "secondary_citations_registered": 3,
+    "primary_document_sha256": null
+   },
+   "tolerance": "n/a (honest WITHHELD accepted by the mission)",
+   "reason": "The primary document is not present in this environment: a whole filesystem search for the PDF/text turned up no copy, and the mission forbids transcribing numbers from memory or from secondary sources. The anchor is therefore registered WITHHELD, and only the operator layer (dimensional closure, algebraic identity, limits, applicability domain) is machine checked. Secondary in-tree citations of the same result are registered separately with their sha256 and line positions; they are code/docstrings, not the anchor.",
+   "evidence": [
+    "anchors.primary.status",
+    "anchors.secondary_in_tree_citations"
+   ]
+  },
+  {
+   "id": "C2",
+   "statement": "analytic-form dimension closure residual <= 1e-12",
+   "verdict": "PASS",
+   "measured": {
+    "max_relative_residual": 6.661338147750939e-16,
+    "sensitivity_control_min_residual_nontrivial": 0.12201845430196379,
+    "quantities_checked": [
+     "F_max",
+     "delta_max",
+     "t_c",
+     "t_c_reduced_form",
+     "t_c_wrong_velocity_exponent_-1/4"
+    ],
+    "unit_systems": [
+     "cgs_ms",
+     "mixed",
+     "si"
+    ]
+   },
+   "tolerance": 1e-12,
+   "reason": "unit-rescaling covariance of t_c, delta_max, F_max and the reduced-parameter form; the wrong-exponent control leaves the tolerance by 11 orders of magnitude, so the test is sensitive and not a tautology",
+   "evidence": [
+    "tables.dimension_closure"
+   ]
+  },
+  {
+   "id": "C3",
+   "statement": "stiffness-ratio and damping applicability domain written down with numbers",
+   "verdict": "PASS",
+   "measured": {
+    "k_eq_over_k_secant_constant": 0.9114398120809647,
+    "max_ratio_residual": 1.9984014443252818e-15,
+    "linear_spring_duration_error": 0.04530643027148984,
+    "linear_secant_spring_within_3pct": false,
+    "alpha_v0_bound_for_3pct_duration": 0.3,
+    "restitution_at_bound": 0.8328697921913891
+   },
+   "tolerance": {
+    "ratio_constant_residual": 1e-12,
+    "duration_band": 0.03
+   },
+   "reason": "a linear spring set to the Hertz peak secant stiffness is systematically short in duration (universal 1 - sqrt(k_eq/k_secant) = -4.5 %), which is already outside the 3 % band: a linear surrogate must scale the secant stiffness by 1/0.9117 = 1.0968, or the duration must come from the Hertz closed form itself / the undamped closed form is admissible only while the dimensionless damping number alpha*v0 stays below the quoted bound; beyond it the anchor's duration is a lower bound and the realised restitution must be used instead of e = 1",
+   "evidence": [
+    "tables.stiffness_ratio",
+    "tables.damping_domain",
+    "applicability_domain"
+   ]
+  },
+  {
+   "id": "C4",
+   "statement": "v -> 0 divergence form quantified (exponents + invariant)",
+   "verdict": "PASS",
+   "measured": {
+    "exponents_measured": {
+     "t_c": -0.20000000000000004,
+     "delta_max": 0.8,
+     "F_max": 1.2000000000000002
+    },
+    "exponents_exact": {
+     "t_c": -0.2,
+     "delta_max": 0.8,
+     "F_max": 1.2
+    },
+    "exponent_residuals": {
+     "t_c": 2.7755575615628914e-17,
+     "delta_max": 0.0,
+     "F_max": 2.220446049250313e-16
+    },
+    "invariant_spread": {
+     "t_c_times_v0_pow_1_5": 2.220446049250313e-16,
+     "delta_max_over_v0_pow_4_5": 2.220446049250313e-16,
+     "F_max_over_v0_pow_6_5": 1.7763568394002505e-15
+    },
+    "A_si": 0.0004993940640234893
+   },
+   "tolerance": 1e-12,
+   "reason": "t_c = A v^(-1/5) with A speed independent; delta_max and F_max vanish as v^(4/5) and v^(6/5)",
+   "evidence": [
+    "tables.limits"
+   ]
+  },
+  {
+   "id": "C5",
+   "statement": "shipped solver reproduces the closed form within the platform 15 % standard (self-imposed 1 %) on every speed",
+   "verdict": "PASS",
+   "measured": {
+    "speeds": [
+     0.25,
+     0.5,
+     1.0,
+     2.0
+    ],
+    "hertz_duration_ratio_measured": 1.5157165665103978,
+    "hertz_duration_ratio_exact": 1.5157165665103982,
+    "linear_control_velocity_independent": true,
+    "max_abs_duration_rel_error": 0.0016666666666667052,
+    "max_abs_peak_overlap_rel_error": 1.2962372262226296e-06,
+    "steps_per_contact": 600
+   },
+   "tolerance": 0.15,
+   "reason": "real DEM impact runs; the residual is the step-counting bias of one integration step (1/600 = 1.67e-3), not a model error",
+   "evidence": [
+    "tables.solver_vs_anchor"
+   ]
+  },
+  {
+   "id": "C6",
+   "statement": "prefactor C re-derived (Beta function) and cross-checked against independent quadrature and the second in-tree implementation",
+   "verdict": "PASS",
+   "measured": {
+    "C_beta_lgamma": 2.9432751843247056,
+    "I_quadrature": 1.4716375921612659,
+    "I_beta": 1.4716375921623528,
+    "quadrature_residual": 7.385203559806541e-13,
+    "C_in_tree_other_module": 2.9432751843247056,
+    "cross_implementation_residual": 0.0
+   },
+   "tolerance": {
+    "quadrature": 1e-11,
+    "cross_implementation": 1e-14
+   },
+   "reason": "the constant is computed from the defining integral, never typed; C = 2.9432751843",
+   "evidence": [
+    "tables.constants"
+   ]
+  }
+ ],
+ "tables": {
+  "constants": {
+   "contact_time_integral_beta_lgamma": 1.4716375921623528,
+   "contact_time_integral_quadrature": 1.4716375921612659,
+   "quadrature_residual": 7.385203559806541e-13,
+   "prefactor_C": 2.9432751843247056,
+   "prefactor_in_tree_other_module": 2.9432751843247056,
+   "reduced_form_coefficient": 2.8682656991953324,
+   "reduced_form_coefficient_derivation": 2.8682656991953324
+  },
+  "dimension_closure": {
+   "rows": [
+    {
+     "quantity": "t_c",
+     "unit_system": "si",
+     "unit_sizes_si": {
+      "mass": 1.0,
+      "length": 1.0,
+      "time": 1.0
+     },
+     "output_dimension": [
+      "0",
+      "0",
+      "1"
+     ],
+     "value_si": 0.00047087803744844776,
+     "value_in_scaled_units": 0.00047087803744844776,
+     "value_scaled_back_to_si": 0.00047087803744844776,
+     "relative_residual": 0.0,
+     "sensitivity_control": false
+    },
+    {
+     "quantity": "t_c",
+     "unit_system": "cgs_ms",
+     "unit_sizes_si": {
+      "mass": 0.001,
+      "length": 0.01,
+      "time": 0.001
+     },
+     "output_dimension": [
+      "0",
+      "0",
+      "1"
+     ],
+     "value_si": 0.00047087803744844776,
+     "value_in_scaled_units": 0.470878037448448,
+     "value_scaled_back_to_si": 0.000470878037448448,
+     "relative_residual": 4.440892098500626e-16,
+     "sensitivity_control": false
+    },
+    {
+     "quantity": "t_c",
+     "unit_system": "mixed",
+     "unit_sizes_si": {
+      "mass": 2.5,
+      "length": 0.007,
+      "time": 0.00031
+     },
+     "output_dimension": [
+      "0",
+      "0",
+      "1"
+     ],
+     "value_si": 0.00047087803744844776,
+     "value_in_scaled_units": 1.518961411124026,
+     "value_scaled_back_to_si": 0.00047087803744844803,
+     "relative_residual": 6.661338147750939e-16,
+     "sensitivity_control": false
+    },
+    {
+     "quantity": "delta_max",
+     "unit_system": "si",
+     "unit_sizes_si": {
+      "mass": 1.0,
+      "length": 1.0,
+      "time": 1.0
+     },
+     "output_dimension": [
+      "0",
+      "1",
+      "0"
+     ],
+     "value_si": 0.0001599843738554417,
+     "value_in_scaled_units": 0.0001599843738554417,
+     "value_scaled_back_to_si": 0.0001599843738554417,
+     "relative_residual": 0.0,
+     "sensitivity_control": false
+    },
+    {
+     "quantity": "delta_max",
+     "unit_system": "cgs_ms",
+     "unit_sizes_si": {
+      "mass": 0.001,
+      "length": 0.01,
+      "time": 0.001
+     },
+     "output_dimension": [
+      "0",
+      "1",
+      "0"
+     ],
+     "value_si": 0.0001599843738554417,
+     "value_in_scaled_units": 0.015998437385544177,
+     "value_scaled_back_to_si": 0.00015998437385544178,
+     "relative_residual": 4.440892098500626e-16,
+     "sensitivity_control": false
+    },
+    {
+     "quantity": "delta_max",
+     "unit_system": "mixed",
+     "unit_sizes_si": {
+      "mass": 2.5,
+      "length": 0.007,
+      "time": 0.00031
+     },
+     "output_dimension": [
+      "0",
+      "1",
+      "0"
+     ],
+     "value_si": 0.0001599843738554417,
+     "value_in_scaled_units": 0.02285491055077739,
+     "value_scaled_back_to_si": 0.00015998437385544175,
+     "relative_residual": 4.440892098500626e-16,
+     "sensitivity_control": false
+    },
+    {
+     "quantity": "F_max",
+     "unit_system": "si",
+     "unit_sizes_si": {
+      "mass": 1.0,
+      "length": 1.0,
+      "time": 1.0
+     },
+     "output_dimension": [
+      "1",
+      "1",
+      "-2"
+     ],
+     "value_si": 468.795784191825,
+     "value_in_scaled_units": 468.795784191825,
+     "value_scaled_back_to_si": 468.795784191825,
+     "relative_residual": 0.0,
+     "sensitivity_control": false
+    },
+    {
+     "quantity": "F_max",
+     "unit_system": "cgs_ms",
+     "unit_sizes_si": {
+      "mass": 0.001,
+      "length": 0.01,
+      "time": 0.001
+     },
+     "output_dimension": [
+      "1",
+      "1",
+      "-2"
+     ],
+     "value_si": 468.795784191825,
+     "value_in_scaled_units": 46.879578419182536,
+     "value_scaled_back_to_si": 468.79578419182536,
+     "relative_residual": 6.661338147750939e-16,
+     "sensitivity_control": false
+    },
+    {
+     "quantity": "F_max",
+     "unit_system": "mixed",
+     "unit_sizes_si": {
+      "mass": 2.5,
+      "length": 0.007,
+      "time": 0.00031
+     },
+     "output_dimension": [
+      "1",
+      "1",
+      "-2"
+     ],
+     "value_si": 468.795784191825,
+     "value_in_scaled_units": 0.002574358563476252,
+     "value_scaled_back_to_si": 468.79578419182525,
+     "relative_residual": 4.440892098500626e-16,
+     "sensitivity_control": false
+    },
+    {
+     "quantity": "t_c_reduced_form",
+     "unit_system": "si",
+     "unit_sizes_si": {
+      "mass": 1.0,
+      "length": 1.0,
+      "time": 1.0
+     },
+     "output_dimension": [
+      "0",
+      "0",
+      "1"
+     ],
+     "value_si": 0.0004708780374484478,
+     "value_in_scaled_units": 0.0004708780374484478,
+     "value_scaled_back_to_si": 0.0004708780374484478,
+     "relative_residual": 0.0,
+     "sensitivity_control": false
+    },
+    {
+     "quantity": "t_c_reduced_form",
+     "unit_system": "cgs_ms",
+     "unit_sizes_si": {
+      "mass": 0.001,
+      "length": 0.01,
+      "time": 0.001
+     },
+     "output_dimension": [
+      "0",
+      "0",
+      "1"
+     ],
+     "value_si": 0.0004708780374484478,
+     "value_in_scaled_units": 0.470878037448448,
+     "value_scaled_back_to_si": 0.000470878037448448,
+     "relative_residual": 4.440892098500626e-16,
+     "sensitivity_control": false
+    },
+    {
+     "quantity": "t_c_reduced_form",
+     "unit_system": "mixed",
+     "unit_sizes_si": {
+      "mass": 2.5,
+      "length": 0.007,
+      "time": 0.00031
+     },
+     "output_dimension": [
+      "0",
+      "0",
+      "1"
+     ],
+     "value_si": 0.0004708780374484478,
+     "value_in_scaled_units": 1.518961411124026,
+     "value_scaled_back_to_si": 0.00047087803744844803,
+     "relative_residual": 4.440892098500626e-16,
+     "sensitivity_control": false
+    },
+    {
+     "quantity": "t_c_wrong_velocity_exponent_-1/4",
+     "unit_system": "si",
+     "unit_sizes_si": {
+      "mass": 1.0,
+      "length": 1.0,
+      "time": 1.0
+     },
+     "output_dimension": [
+      "0",
+      "0",
+      "1"
+     ],
+     "value_si": 0.00047087803744844776,
+     "value_in_scaled_units": 0.00047087803744844776,
+     "value_scaled_back_to_si": 0.00047087803744844776,
+     "relative_residual": 0.0,
+     "sensitivity_control": true
+    },
+    {
+     "quantity": "t_c_wrong_velocity_exponent_-1/4",
+     "unit_system": "cgs_ms",
+     "unit_sizes_si": {
+      "mass": 0.001,
+      "length": 0.01,
+      "time": 0.001
+     },
+     "output_dimension": [
+      "0",
+      "0",
+      "1"
+     ],
+     "value_si": 0.00047087803744844776,
+     "value_in_scaled_units": 0.5283338477426496,
+     "value_scaled_back_to_si": 0.0005283338477426496,
+     "relative_residual": 0.12201845430196379,
+     "sensitivity_control": true
+    },
+    {
+     "quantity": "t_c_wrong_velocity_exponent_-1/4",
+     "unit_system": "mixed",
+     "unit_sizes_si": {
+      "mass": 2.5,
+      "length": 0.007,
+      "time": 0.00031
+     },
+     "output_dimension": [
+      "0",
+      "0",
+      "1"
+     ],
+     "value_si": 0.00047087803744844776,
+     "value_in_scaled_units": 1.7751438744793324,
+     "value_scaled_back_to_si": 0.0005502946010885931,
+     "relative_residual": 0.16865633417621417,
+     "sensitivity_control": true
+    }
+   ],
+   "max_residual_honest": 6.661338147750939e-16,
+   "min_residual_control_nontrivial": 0.12201845430196379,
+   "min_residual_control": 0.0,
+   "closure_holds_at_1e-12": true,
+   "control_separates": true
+  },
+  "algebraic_identity": {
+   "coefficient_value": 2.8682656991953324,
+   "coefficient_stiffness_form": 2.9432751843247056,
+   "coefficient_predicted_by_derivation": 2.8682656991953324,
+   "mission_brief_value": 2.87,
+   "rounded_value_relative_difference": 0.0006042859946577828,
+   "rounded_value_consistent_at_3sf": true,
+   "rows": [
+    {
+     "label": "ice_grain",
+     "m_eff": 0.06,
+     "R_eff": 0.025,
+     "E_star": 1098901098.901099,
+     "v0": 1.0,
+     "k_h": 231668693.05262852,
+     "t_c_stiffness_form": 0.00047087803744844776,
+     "t_c_reduced_form": 0.0004708780374484478,
+     "relative_residual": 2.220446049250313e-16
+    },
+    {
+     "label": "steel_ball",
+     "m_eff": 0.1,
+     "R_eff": 0.01,
+     "E_star": 100000000000.0,
+     "v0": 0.5,
+     "k_h": 13333333333.333334,
+     "t_c_stiffness_form": 0.00013116723945118898,
+     "t_c_reduced_form": 0.00013116723945118898,
+     "relative_residual": 0.0
+    },
+    {
+     "label": "fine_sand",
+     "m_eff": 1e-09,
+     "R_eff": 0.00015,
+     "E_star": 50000000000.0,
+     "v0": 3.0,
+     "k_h": 816496580.9277259,
+     "t_c_stiffness_form": 1.767619869911801e-07,
+     "t_c_reduced_form": 1.7676198699118007e-07,
+     "relative_residual": 1.1102230246251565e-16
+    },
+    {
+     "label": "floe_edge",
+     "m_eff": 50.0,
+     "R_eff": 2.0,
+     "E_star": 5000000000.0,
+     "v0": 0.05,
+     "k_h": 9428090415.820633,
+     "t_c_stiffness_form": 0.002868265699195331,
+     "t_c_reduced_form": 0.002868265699195331,
+     "relative_residual": 0.0
+    }
+   ],
+   "max_structural_residual": 2.220446049250313e-16
+  },
+  "limits": {
+   "conditions": {
+    "m_eff": 0.06,
+    "k_h": 200000000.0,
+    "speeds": [
+     1e-06,
+     0.0001,
+     0.001,
+     0.01,
+     0.1,
+     1.0,
+     10.0
+    ]
+   },
+   "rows": [
+    {
+     "v0": 1e-06,
+     "t_c": 0.007914862524263178,
+     "delta_max": 2.6891343923314223e-09,
+     "F_max": 2.789001554324564e-05,
+     "t_c_times_v0_pow_1_5": 0.0004993940640234893,
+     "delta_max_over_v0_pow_4_5": 0.00016967290951357936,
+     "F_max_over_v0_pow_6_5": 442.02695772124633
+    },
+    {
+     "v0": 0.0001,
+     "t_c": 0.0031509635248543246,
+     "delta_max": 1.070563684169161e-07,
+     "F_max": 0.0070056551617670056,
+     "t_c_times_v0_pow_1_5": 0.0004993940640234893,
+     "delta_max_over_v0_pow_4_5": 0.00016967290951357936,
+     "F_max_over_v0_pow_6_5": 442.0269577212467
+    },
+    {
+     "v0": 0.001,
+     "t_c": 0.001988123578196034,
+     "delta_max": 6.754800192603061e-07,
+     "F_max": 0.11103215174614585,
+     "t_c_times_v0_pow_1_5": 0.0004993940640234894,
+     "delta_max_over_v0_pow_4_5": 0.0001696729095135793,
+     "F_max_over_v0_pow_6_5": 442.02695772124656
+    },
+    {
+     "v0": 0.01,
+     "t_c": 0.0012544211733970293,
+     "delta_max": 4.261990792019126e-06,
+     "F_max": 1.7597410144677592,
+     "t_c_times_v0_pow_1_5": 0.0004993940640234893,
+     "delta_max_over_v0_pow_4_5": 0.0001696729095135793,
+     "F_max_over_v0_pow_6_5": 442.02695772124673
+    },
+    {
+     "v0": 0.1,
+     "t_c": 0.0007914862524263178,
+     "delta_max": 2.6891343923314236e-05,
+     "F_max": 27.89001554324566,
+     "t_c_times_v0_pow_1_5": 0.0004993940640234894,
+     "delta_max_over_v0_pow_4_5": 0.00016967290951357933,
+     "F_max_over_v0_pow_6_5": 442.02695772124684
+    },
+    {
+     "v0": 1.0,
+     "t_c": 0.0004993940640234893,
+     "delta_max": 0.00016967290951357936,
+     "F_max": 442.0269577212471,
+     "t_c_times_v0_pow_1_5": 0.0004993940640234893,
+     "delta_max_over_v0_pow_4_5": 0.00016967290951357936,
+     "F_max_over_v0_pow_6_5": 442.0269577212471
+    },
+    {
+     "v0": 10.0,
+     "t_c": 0.00031509635248543245,
+     "delta_max": 0.0010705636841691615,
+     "F_max": 7005.655161767008,
+     "t_c_times_v0_pow_1_5": 0.0004993940640234894,
+     "delta_max_over_v0_pow_4_5": 0.00016967290951357933,
+     "F_max_over_v0_pow_6_5": 442.0269577212471
+    }
+   ],
+   "exponents_measured": {
+    "t_c": -0.20000000000000004,
+    "delta_max": 0.8,
+    "F_max": 1.2000000000000002
+   },
+   "exponents_exact": {
+    "t_c": -0.2,
+    "delta_max": 0.8,
+    "F_max": 1.2
+   },
+   "exponent_residuals": {
+    "t_c": 2.7755575615628914e-17,
+    "delta_max": 0.0,
+    "F_max": 2.220446049250313e-16
+   },
+   "invariant_spread": {
+    "t_c_times_v0_pow_1_5": 2.220446049250313e-16,
+    "delta_max_over_v0_pow_4_5": 2.220446049250313e-16,
+    "F_max_over_v0_pow_6_5": 1.7763568394002505e-15
+   },
+   "divergence": {
+    "form": "t_c = A v0^(-1/5), A = C (5 m / (4 k_h))^(2/5) [m^(2/5) s^(4/5)] => t_c -> +inf as v0 -> 0",
+    "A_si": 0.0004993940640234893,
+    "speed_at_reference_time_m_s": 3.106110339950066e-17,
+    "reference_time_s": 1.0,
+    "speed_ratio_for_10x_duration": 1e-05,
+    "decade_note": "t_c grows by a factor 10 for every 5 decades of speed decrease (v^(-1/5)); this is the quantified divergence form of the v -> 0 limit",
+    "reading": "the divergence is an ideal-elastic asymptote; the closed form loses physical meaning once t_c exceeds the external time scale (gravity, preload, or the next collision), i.e. below the quoted v_ref"
+   },
+   "vanishing_limits": {
+    "delta_max_as_v_to_0": "delta_max ~ v0^(4/5) -> 0 (spread check)",
+    "F_max_as_v_to_0": "F_max ~ v0^(6/5) -> 0 (spread check)"
+   }
+  },
+  "stiffness_ratio": {
+   "ratio_constant_predicted": 0.9114398120809647,
+   "ratio_constant_form": "(4/5) pi^2 / C^2",
+   "max_ratio_residual": 1.9984014443252818e-15,
+   "rows": [
+    {
+     "label": "ice_grain_v0.1",
+     "m_eff": 0.06,
+     "k_h": 200000000.0,
+     "v0": 0.1,
+     "t_c": 0.0007914862524263178,
+     "delta_max": 2.6891343923314236e-05,
+     "k_equivalent_linear": 945288.2160951564,
+     "k_secant_at_peak": 1037137.2893366478,
+     "ratio_k_eq_over_k_secant": 0.9114398120809656,
+     "ratio_residual_vs_constant": 8.881784197001252e-16,
+     "t_c_linear_spring_secant": 0.000755626835719922,
+     "linear_duration_relative_error": -0.04530643027148984,
+     "stiffness_scale_to_match_duration": 1.097165152043158
+    },
+    {
+     "label": "ice_grain_v1.0",
+     "m_eff": 0.06,
+     "k_h": 200000000.0,
+     "v0": 1.0,
+     "t_c": 0.0004993940640234893,
+     "delta_max": 0.00016967290951357936,
+     "k_equivalent_linear": 2374456.64387532,
+     "k_secant_at_peak": 2605171.0846973513,
+     "ratio_k_eq_over_k_secant": 0.9114398120809659,
+     "ratio_residual_vs_constant": 1.3322676295501878e-15,
+     "t_c_linear_spring_secant": 0.00047676830168381316,
+     "linear_duration_relative_error": -0.04530643027148984,
+     "stiffness_scale_to_match_duration": 1.0971651520431576
+    },
+    {
+     "label": "steel_ball_v0.5",
+     "m_eff": 0.1,
+     "k_h": 23000000000.0,
+     "v0": 0.5,
+     "t_c": 0.00010546533553873915,
+     "delta_max": 1.7916322622571344e-05,
+     "k_equivalent_linear": 88731999.4784129,
+     "k_secant_at_peak": 97353657.6988263,
+     "ratio_k_eq_over_k_secant": 0.9114398120809657,
+     "ratio_residual_vs_constant": 1.1102230246251565e-15,
+     "t_c_linear_spring_secant": 0.000100687077668094,
+     "linear_duration_relative_error": -0.04530643027148973,
+     "stiffness_scale_to_match_duration": 1.097165152043158
+    },
+    {
+     "label": "fine_sand_v3.0",
+     "m_eff": 1e-09,
+     "k_h": 11000000.0,
+     "v0": 3.0,
+     "t_c": 9.899506587423249e-07,
+     "delta_max": 1.0090296660141777e-06,
+     "k_equivalent_linear": 10071.001193738903,
+     "k_secant_at_peak": 11049.551555955359,
+     "ratio_k_eq_over_k_secant": 0.9114398120809665,
+     "ratio_residual_vs_constant": 1.9984014443252818e-15,
+     "t_c_linear_spring_secant": 9.450995282498008e-07,
+     "linear_duration_relative_error": -0.045306430271489395,
+     "stiffness_scale_to_match_duration": 1.097165152043157
+    },
+    {
+     "label": "floe_edge_v0.05",
+     "m_eff": 50.0,
+     "k_h": 3000000000.0,
+     "v0": 0.05,
+     "t_c": 0.004534614505805907,
+     "delta_max": 7.703347838415441e-05,
+     "k_equivalent_linear": 23998771.119521677,
+     "k_secant_at_peak": 26330615.364198945,
+     "ratio_k_eq_over_k_secant": 0.9114398120809658,
+     "ratio_residual_vs_constant": 1.1102230246251565e-15,
+     "t_c_linear_spring_secant": 0.004329167309890526,
+     "linear_duration_relative_error": -0.04530643027148973,
+     "stiffness_scale_to_match_duration": 1.0971651520431578
+    }
+   ],
+   "max_linear_duration_error": 0.04530643027148984,
+   "linear_secant_spring_within_3pct": false,
+   "reading": "a linear spring set to the Hertz peak secant stiffness is systematically short in duration (universal 1 - sqrt(k_eq/k_secant) = -4.5 %), which is already outside the 3 % band: a linear surrogate must scale the secant stiffness by 1/0.9117 = 1.0968, or the duration must come from the Hertz closed form itself"
+  },
+  "damping_domain": {
+   "conditions": {
+    "v0": 1.0,
+    "m_eff": 0.06,
+    "k_h": 200000000.0,
+    "damping_free_time": 0.0004993940640234893
+   },
+   "rows": [
+    {
+     "v0": 1.0,
+     "m_eff": 0.06,
+     "k_h": 200000000.0,
+     "alpha": 0.0,
+     "alpha_v0": 0.0,
+     "t_c": 0.0004995189125349565,
+     "t_c_damping_free": 0.0004993940640234893,
+     "duration_relative_change": 0.00024999999091157576,
+     "delta_max": 0.00016967290950737902,
+     "restitution": 0.999999999999998,
+     "steps_per_contact": 4000,
+     "duration_error_vs_undamped": 0.00024999999091157576,
+     "within_3pct_of_undamped": true,
+     "restitution_small_damping_asymptote": 1.0,
+     "restitution_asymptote_residual": 1.9984014443252818e-15
+    },
+    {
+     "v0": 1.0,
+     "m_eff": 0.06,
+     "k_h": 200000000.0,
+     "alpha": 0.01,
+     "alpha_v0": 0.01,
+     "t_c": 0.000499684347901819,
+     "t_c_damping_free": 0.0004993940640234893,
+     "duration_relative_change": 0.0005812721841165214,
+     "delta_max": 0.00016922291841800404,
+     "restitution": 0.9933774524890597,
+     "steps_per_contact": 4000,
+     "duration_error_vs_undamped": 0.0005812721841165214,
+     "within_3pct_of_undamped": true,
+     "restitution_small_damping_asymptote": 0.9933333333333333,
+     "restitution_asymptote_residual": 4.4415257442809164e-05
+    },
+    {
+     "v0": 1.0,
+     "m_eff": 0.06,
+     "k_h": 200000000.0,
+     "alpha": 0.1,
+     "alpha_v0": 0.1,
+     "t_c": 0.0005028338922616911,
+     "t_c_damping_free": 0.0004993940640234893,
+     "duration_relative_change": 0.00688800385508781,
+     "delta_max": 0.00016538151030020534,
+     "restitution": 0.9374755795158446,
+     "steps_per_contact": 4000,
+     "duration_error_vs_undamped": 0.00688800385508781,
+     "within_3pct_of_undamped": true,
+     "restitution_small_damping_asymptote": 0.9333333333333333,
+     "restitution_asymptote_residual": 0.004438120909833421
+    },
+    {
+     "v0": 1.0,
+     "m_eff": 0.06,
+     "k_h": 200000000.0,
+     "alpha": 0.3,
+     "alpha_v0": 0.3,
+     "t_c": 0.0005102149287136885,
+     "t_c_damping_free": 0.0004993940640234893,
+     "duration_relative_change": 0.02166798820758542,
+     "delta_max": 0.0001579674650281502,
+     "restitution": 0.8328697921913891,
+     "steps_per_contact": 4000,
+     "duration_error_vs_undamped": 0.02166798820758542,
+     "within_3pct_of_undamped": true,
+     "restitution_small_damping_asymptote": 0.8,
+     "restitution_asymptote_residual": 0.04108724023923638
+    },
+    {
+     "v0": 1.0,
+     "m_eff": 0.06,
+     "k_h": 200000000.0,
+     "alpha": 1.0,
+     "alpha_v0": 1.0,
+     "t_c": 0.0005394436170198738,
+     "t_c_damping_free": 0.0004993940640234893,
+     "duration_relative_change": 0.08019629363175751,
+     "delta_max": 0.00013957143401612405,
+     "restitution": 0.5936242600263235,
+     "steps_per_contact": 4000,
+     "duration_error_vs_undamped": 0.08019629363175751,
+     "within_3pct_of_undamped": false,
+     "restitution_small_damping_asymptote": 0.33333333333333337,
+     "restitution_asymptote_residual": 0.7808727800789703
+    },
+    {
+     "v0": 1.0,
+     "m_eff": 0.06,
+     "k_h": 200000000.0,
+     "alpha": 3.0,
+     "alpha_v0": 3.0,
+     "t_c": 0.0006376505213276869,
+     "t_c_damping_free": 0.0004993940640234893,
+     "duration_relative_change": 0.27684841944315663,
+     "delta_max": 0.00011257895811999777,
+     "restitution": 0.3068967982607905,
+     "steps_per_contact": 4000,
+     "duration_error_vs_undamped": 0.27684841944315663,
+     "within_3pct_of_undamped": false,
+     "restitution_small_damping_asymptote": -1.0,
+     "restitution_asymptote_residual": 1.3068967982607904
+    },
+    {
+     "v0": 1.0,
+     "m_eff": 0.06,
+     "k_h": 200000000.0,
+     "alpha": 10.0,
+     "alpha_v0": 10.0,
+     "t_c": 0.0010022433756431202,
+     "t_c_damping_free": 0.0004993940640234893,
+     "duration_relative_change": 1.0069188799888882,
+     "delta_max": 7.987264058572732e-05,
+     "restitution": 0.09998162475285967,
+     "steps_per_contact": 4000,
+     "duration_error_vs_undamped": 1.0069188799888882,
+     "within_3pct_of_undamped": false,
+     "restitution_small_damping_asymptote": -5.666666666666666,
+     "restitution_asymptote_residual": 1.0176438161328576
+    }
+   ],
+   "alpha_v0_bound_for_3pct_duration": 0.3,
+   "restitution_at_bound": 0.8328697921913891,
+   "reading": "the undamped closed form is admissible only while the dimensionless damping number alpha*v0 stays below the quoted bound; beyond it the anchor's duration is a lower bound and the realised restitution must be used instead of e = 1"
+  },
+  "solver_vs_anchor": {
+   "conditions": {
+    "radius_m": 0.025,
+    "density_kg_m3": 917.0,
+    "young_modulus_Pa": 1000000000.0,
+    "poisson_ratio": 0.3,
+    "platen_stiffness_N_m": 5000.0,
+    "steps_per_contact": 600,
+    "model": "rigid platen, single particle, IceDEM3D"
+   },
+   "rows": [
+    {
+     "contact_model": "hertz",
+     "v_in": 0.25,
+     "dt": 1.0356663620707948e-06,
+     "contact_steps": 599,
+     "measured_duration_s": 0.0006203641508804061,
+     "peak_overlap_m": 5.278139009981184e-05,
+     "restitution_measured": 1.0000000005622522,
+     "post_separation_reaction_N": 1.6612944338146533e-22,
+     "recommended_dt": 2.787827761586778e-06,
+     "particle_mass": 0.06001750965295501,
+     "duration_reference_s": 0.0006213998172424769,
+     "peak_overlap_reference_m": 5.2781321684761926e-05,
+     "duration_rel_error": -0.0016666666666667052,
+     "peak_overlap_rel_error": 1.2961981195047656e-06
+    },
+    {
+     "contact_model": "hertz",
+     "v_in": 0.5,
+     "dt": 9.015999348875781e-07,
+     "contact_steps": 599,
+     "measured_duration_s": 0.0005400583609976593,
+     "peak_overlap_m": 9.189773776742752e-05,
+     "restitution_measured": 1.0000000005622465,
+     "post_separation_reaction_N": 1.328695981422671e-21,
+     "recommended_dt": 2.787827761586778e-06,
+     "particle_mass": 0.06001750965295501,
+     "duration_reference_s": 0.0005409599609325469,
+     "peak_overlap_reference_m": 9.189761864836685e-05,
+     "duration_rel_error": -0.0016666666666665941,
+     "peak_overlap_rel_error": 1.2962148794315453e-06
+    },
+    {
+     "contact_model": "hertz",
+     "v_in": 1.0,
+     "dt": 7.8488833118413e-07,
+     "contact_steps": 599,
+     "measured_duration_s": 0.0004701481103792939,
+     "peak_overlap_m": 0.00016000325476018054,
+     "restitution_measured": 1.0000000005622423,
+     "post_separation_reaction_N": 1.0628811590742654e-20,
+     "recommended_dt": 2.787827761586778e-06,
+     "particle_mass": 0.06001750965295501,
+     "duration_reference_s": 0.000470932998710478,
+     "peak_overlap_reference_m": 0.00016000304735981632,
+     "duration_rel_error": -0.0016666666666665941,
+     "peak_overlap_rel_error": 1.2962275883765528e-06
+    },
+    {
+     "contact_model": "hertz",
+     "v_in": 2.0,
+     "dt": 6.832849788368993e-07,
+     "contact_steps": 599,
+     "measured_duration_s": 0.0004092877023233027,
+     "peak_overlap_m": 0.00027858184712406184,
+     "restitution_measured": 1.000000000562239,
+     "post_separation_reaction_N": 8.502761002646372e-20,
+     "recommended_dt": 2.787827761586778e-06,
+     "particle_mass": 0.06001750965295501,
+     "duration_reference_s": 0.00040997098730213957,
+     "peak_overlap_reference_m": 0.0002785814860163691,
+     "duration_rel_error": -0.0016666666666665941,
+     "peak_overlap_rel_error": 1.2962372262226296e-06
+    },
+    {
+     "contact_model": "linear",
+     "v_in": 0.5,
+     "dt": 1.8140640032400362e-05,
+     "contact_steps": 599,
+     "measured_duration_s": 0.010866243379407817,
+     "peak_overlap_m": 0.0017323094335939745,
+     "restitution_measured": 1.00000000006612,
+     "post_separation_reaction_N": 3.060233547400548e-10,
+     "recommended_dt": 0.0001341836536090984,
+     "particle_mass": 0.06001750965295501,
+     "duration_reference_s": 0.010884384019440217,
+     "peak_overlap_reference_m": 0.0017323035192043429,
+     "duration_rel_error": -0.0016666666666665941,
+     "peak_overlap_rel_error": 3.4141763070039133e-06
+    },
+    {
+     "contact_model": "linear",
+     "v_in": 1.0,
+     "dt": 1.8140640032400362e-05,
+     "contact_steps": 599,
+     "measured_duration_s": 0.010866243379407817,
+     "peak_overlap_m": 0.003464618898467029,
+     "restitution_measured": 1.0000000056650946,
+     "post_separation_reaction_N": 2.4431455967332984e-09,
+     "recommended_dt": 0.0001341836536090984,
+     "particle_mass": 0.06001750965295501,
+     "duration_reference_s": 0.010884384019440217,
+     "peak_overlap_reference_m": 0.0034646070384086857,
+     "duration_rel_error": -0.0016666666666665941,
+     "peak_overlap_rel_error": 3.4232044823223617e-06
+    }
+   ],
+   "max_abs_duration_rel_error_hertz": 0.0016666666666667052,
+   "max_abs_peak_overlap_rel_error_hertz": 1.2962372262226296e-06,
+   "linear_control_duration_rel_error": [
+    {
+     "v_in": 0.5,
+     "duration_rel_error": -0.0016666666666665941
+    },
+    {
+     "v_in": 1.0,
+     "duration_rel_error": -0.0016666666666665941
+    }
+   ],
+   "linear_control_velocity_independent": true,
+   "linear_control_durations_s": {
+    "0.5": 0.010866243379407817,
+    "1.0": 0.010866243379407817
+   },
+   "hertz_duration_ratio_measured": 1.5157165665103978,
+   "hertz_duration_ratio_exact": 1.5157165665103982,
+   "hertz_duration_ratio_speeds": {
+    "slow": 0.25,
+    "fast": 2.0
+   },
+   "residual_bias_origin": "the duration is counted in whole steps, so a one-step bias 1/steps_per_contact = 1.667e-3 is expected and is what is measured; it is a discretisation of the measurement, not a model error"
+  }
+ },
+ "applicability_domain": {
+  "stiffness_ratio": {
+   "definition": "k_eq is the linear spring that reproduces the Hertz duration; k_secant = k_h sqrt(delta_max) at peak overlap",
+   "constant": 0.9114398120809647,
+   "form": "(4/5) pi^2 / C^2",
+   "max_residual_over_conditions": 1.9984014443252818e-15,
+   "linear_spring_duration_error": 0.04530643027148984,
+   "within_3pct": false,
+   "scale_to_match_duration": 1.0971651520431591,
+   "reading": "a linear spring set to the Hertz peak secant stiffness is systematically short in duration (universal 1 - sqrt(k_eq/k_secant) = -4.5 %), which is already outside the 3 % band: a linear surrogate must scale the secant stiffness by 1/0.9117 = 1.0968, or the duration must come from the Hertz closed form itself"
+  },
+  "damping": {
+   "law": "Hunt-Crossley normal force F = k_h delta^(3/2) (1 + alpha delta_dot), integrated with RK4 (4000 steps/contact)",
+   "governing_group": "alpha v0 (dimensionless)",
+   "alpha_v0_bound_for_3pct_duration": 0.3,
+   "restitution_at_bound": 0.8328697921913891,
+   "rows": [
+    {
+     "v0": 1.0,
+     "m_eff": 0.06,
+     "k_h": 200000000.0,
+     "alpha": 0.0,
+     "alpha_v0": 0.0,
+     "t_c": 0.0004995189125349565,
+     "t_c_damping_free": 0.0004993940640234893,
+     "duration_relative_change": 0.00024999999091157576,
+     "delta_max": 0.00016967290950737902,
+     "restitution": 0.999999999999998,
+     "steps_per_contact": 4000,
+     "duration_error_vs_undamped": 0.00024999999091157576,
+     "within_3pct_of_undamped": true,
+     "restitution_small_damping_asymptote": 1.0,
+     "restitution_asymptote_residual": 1.9984014443252818e-15
+    },
+    {
+     "v0": 1.0,
+     "m_eff": 0.06,
+     "k_h": 200000000.0,
+     "alpha": 0.01,
+     "alpha_v0": 0.01,
+     "t_c": 0.000499684347901819,
+     "t_c_damping_free": 0.0004993940640234893,
+     "duration_relative_change": 0.0005812721841165214,
+     "delta_max": 0.00016922291841800404,
+     "restitution": 0.9933774524890597,
+     "steps_per_contact": 4000,
+     "duration_error_vs_undamped": 0.0005812721841165214,
+     "within_3pct_of_undamped": true,
+     "restitution_small_damping_asymptote": 0.9933333333333333,
+     "restitution_asymptote_residual": 4.4415257442809164e-05
+    },
+    {
+     "v0": 1.0,
+     "m_eff": 0.06,
+     "k_h": 200000000.0,
+     "alpha": 0.1,
+     "alpha_v0": 0.1,
+     "t_c": 0.0005028338922616911,
+     "t_c_damping_free": 0.0004993940640234893,
+     "duration_relative_change": 0.00688800385508781,
+     "delta_max": 0.00016538151030020534,
+     "restitution": 0.9374755795158446,
+     "steps_per_contact": 4000,
+     "duration_error_vs_undamped": 0.00688800385508781,
+     "within_3pct_of_undamped": true,
+     "restitution_small_damping_asymptote": 0.9333333333333333,
+     "restitution_asymptote_residual": 0.004438120909833421
+    },
+    {
+     "v0": 1.0,
+     "m_eff": 0.06,
+     "k_h": 200000000.0,
+     "alpha": 0.3,
+     "alpha_v0": 0.3,
+     "t_c": 0.0005102149287136885,
+     "t_c_damping_free": 0.0004993940640234893,
+     "duration_relative_change": 0.02166798820758542,
+     "delta_max": 0.0001579674650281502,
+     "restitution": 0.8328697921913891,
+     "steps_per_contact": 4000,
+     "duration_error_vs_undamped": 0.02166798820758542,
+     "within_3pct_of_undamped": true,
+     "restitution_small_damping_asymptote": 0.8,
+     "restitution_asymptote_residual": 0.04108724023923638
+    },
+    {
+     "v0": 1.0,
+     "m_eff": 0.06,
+     "k_h": 200000000.0,
+     "alpha": 1.0,
+     "alpha_v0": 1.0,
+     "t_c": 0.0005394436170198738,
+     "t_c_damping_free": 0.0004993940640234893,
+     "duration_relative_change": 0.08019629363175751,
+     "delta_max": 0.00013957143401612405,
+     "restitution": 0.5936242600263235,
+     "steps_per_contact": 4000,
+     "duration_error_vs_undamped": 0.08019629363175751,
+     "within_3pct_of_undamped": false,
+     "restitution_small_damping_asymptote": 0.33333333333333337,
+     "restitution_asymptote_residual": 0.7808727800789703
+    },
+    {
+     "v0": 1.0,
+     "m_eff": 0.06,
+     "k_h": 200000000.0,
+     "alpha": 3.0,
+     "alpha_v0": 3.0,
+     "t_c": 0.0006376505213276869,
+     "t_c_damping_free": 0.0004993940640234893,
+     "duration_relative_change": 0.27684841944315663,
+     "delta_max": 0.00011257895811999777,
+     "restitution": 0.3068967982607905,
+     "steps_per_contact": 4000,
+     "duration_error_vs_undamped": 0.27684841944315663,
+     "within_3pct_of_undamped": false,
+     "restitution_small_damping_asymptote": -1.0,
+     "restitution_asymptote_residual": 1.3068967982607904
+    },
+    {
+     "v0": 1.0,
+     "m_eff": 0.06,
+     "k_h": 200000000.0,
+     "alpha": 10.0,
+     "alpha_v0": 10.0,
+     "t_c": 0.0010022433756431202,
+     "t_c_damping_free": 0.0004993940640234893,
+     "duration_relative_change": 1.0069188799888882,
+     "delta_max": 7.987264058572732e-05,
+     "restitution": 0.09998162475285967,
+     "steps_per_contact": 4000,
+     "duration_error_vs_undamped": 1.0069188799888882,
+     "within_3pct_of_undamped": false,
+     "restitution_small_damping_asymptote": -5.666666666666666,
+     "restitution_asymptote_residual": 1.0176438161328576
+    }
+   ],
+   "integration_noise_floor": 0.00024999999091157576,
+   "reading": "the undamped closed form is admissible only while the dimensionless damping number alpha*v0 stays below the quoted bound; beyond it the anchor's duration is a lower bound and the realised restitution must be used instead of e = 1"
+  },
+  "elastic_small_strain": {
+   "condition": "delta_max / R* << 1 (Hertz small-strain assumption)",
+   "measured_worst": 0.04282254736676646,
+   "note": "worst delta_max/R* over the limit sweep at R* = 0.025 m"
+  },
+  "quasi_static": {
+   "condition": "v0 << elastic wave speed; the closed form is a quasi-static energy balance, valid for v0 up to a few percent of sqrt(E*/rho)",
+   "note": "plastic yield caps the peak pressure at ~1.6 Y; beyond it the elastic anchor is not admissible (Johnson 1985 elastic range) -- this bound is physics, and WITHOUT the primary text it is stated qualitatively, not as a registered number"
+  },
+  "v_to_zero": {
+   "divergence": {
+    "form": "t_c = A v0^(-1/5), A = C (5 m / (4 k_h))^(2/5) [m^(2/5) s^(4/5)] => t_c -> +inf as v0 -> 0",
+    "A_si": 0.0004993940640234893,
+    "speed_at_reference_time_m_s": 3.106110339950066e-17,
+    "reference_time_s": 1.0,
+    "speed_ratio_for_10x_duration": 1e-05,
+    "decade_note": "t_c grows by a factor 10 for every 5 decades of speed decrease (v^(-1/5)); this is the quantified divergence form of the v -> 0 limit",
+    "reading": "the divergence is an ideal-elastic asymptote; the closed form loses physical meaning once t_c exceeds the external time scale (gravity, preload, or the next collision), i.e. below the quoted v_ref"
+   },
+   "meaning": "the ideal-elastic duration diverges; the anchor is not admissible once t_c exceeds the external time scale"
+  }
+ },
+ "provenance": {
+  "commands": [
+   "PYTHONPATH=src python tools/gen_w26_hertz_anchor_register.py",
+   "PYTHONPATH=src python -m pytest tests/test_hertz_anchor_register.py -q"
+  ],
+  "inputs": {
+   "closure_condition": {
+    "m_eff": 0.06,
+    "R_star": 0.025,
+    "E_star": 1098901098.901099,
+    "v0": 1.0
+   },
+   "limit_sweep": {
+    "m_eff": 0.06,
+    "k_h": 200000000.0,
+    "speeds": [
+     1e-06,
+     0.0001,
+     0.001,
+     0.01,
+     0.1,
+     1.0,
+     10.0
+    ]
+   },
+   "solver_sweep": {
+    "hertz": [
+     0.25,
+     0.5,
+     1.0,
+     2.0
+    ],
+    "linear": [
+     0.5,
+     1.0
+    ]
+   }
+  },
+  "sha256": {
+   "src/tensordem/hertz_anchor_register.py": "12b44686e354344b5c76489d31644463edd42fff18304d1e64decbd78d0e11ff",
+   "src/tensordem/hertz_impact_time.py": "d1efed1614636551d285396751ed71753527a1eee738dcd159667e0fc5d89b39",
+   "tests/test_hertz_anchor_register.py": "8aff572ac6d336c487810ebd64a097fa67915accba0b7cb41c3eccafef40992e",
+   "tools/gen_w26_hertz_anchor_register.py": "f736f7507969ca7bd7d7ea77ea48adbda7652013a842f639ba3bcfae14dd9eb8"
+  },
+  "quote_positions": [
+   {
+    "anchor": "primary",
+    "status": "WITHHELD",
+    "position": null,
+    "reason": "no primary document in the environment"
+   },
+   {
+    "anchor": "src/tensordem/hertz_impact_time.py",
+    "position": 17,
+    "text": "The literature anchor (Johnson, *Contact Mechanics*, 1985, Sec. 4.2; the same",
+    "counts_as_verbatim_anchor": false
+   },
+   {
+    "anchor": "src/tensordem/clump_clump.py",
+    "position": 77,
+    "text": "* Johnson, *Contact Mechanics* (1985), ch. 4 (Hertz) and eq. 3.39 (reduced shear",
+    "counts_as_verbatim_anchor": false
+   },
+   {
+    "anchor": "docs/HERTZ_VERIFY.md",
+    "position": 1,
+    "text": "# Hertz contact contract re-verification (TensorDEM, selfstart tp-doc-3 / m6518)",
+    "counts_as_verbatim_anchor": false
+   },
+   {
+    "anchor": "docs/HERTZ_VERIFY.md",
+    "position": 49,
+    "text": "| delta/R | F measured [N] | F Hertz closed form [N] | measured/closed form |",
+    "counts_as_verbatim_anchor": false
+   }
+  ]
+ },
+ "limitations": [
+  "the primary text (Johnson 1985) is absent: the WITHHELD verdict is final for this round and must not be overwritten by a later round",
+  "the operator-layer checks constrain the *form* of the closed form (exponents, dimensions, algebra, limits), not the literature's own numeric printing",
+  "the elastic anchor excludes plastic yield; the plastic bound is stated qualitatively only (no registered number without the text)",
+  "the solver cross-check is a single-particle rigid-platen impact; multi-contact screening is out of scope for this node"
+ ]
+}
