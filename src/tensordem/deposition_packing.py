@@ -843,3 +843,71 @@ def stiffness_limit(points: list[tuple[float, float]],
         "delta_from_last": float(abs(limit - val[-1])),
         "n_levels": int(len(pts)),
     }
+
+
+def extrapolation_selfconsistency(points: list[tuple[float, float]],
+                                  default_order: float = 1.0,
+                                  order_bounds: tuple[float, float] = (0.2, 4.0)
+                                  ) -> dict[str, Any]:
+    """Leave-one-level-out test of a geometric-refinement extrapolation.
+
+    :func:`stiffness_limit` always returns a number; nothing in its signature
+    says whether that number is *extrapolable*.  With ``n >= 4`` levels the
+    question becomes falsifiable without any external reference: fit the
+    coarsest ``n - 1`` levels, **predict** the stiffest one, then compare with
+    what the simulation actually measured.  Three numbers follow:
+
+    * ``prediction_error`` -- how far the ``n - 1`` level model lands from the
+      withheld measurement (an out-of-sample error, not a fit residual);
+    * ``limit_shift`` -- how far the reported ``k_n -> inf`` limit moves when
+      the new level is admitted (the extrapolation's own error bar);
+    * ``pair_orders`` -- the observed order of each adjacent pair, i.e. whether
+      one power law describes the whole ladder or the exponent is drifting.
+
+    The model is the same one :func:`stiffness_limit` inverts,
+    ``value(k) = limit + C k^{-p}``, so ``limit_shift`` and ``prediction_error``
+    are the two quantities a reader needs before quoting ``limit`` to a
+    tolerance; ``points`` must be distinct, positive and sorted by nothing in
+    particular (they are sorted here).
+
+    Returns
+    -------
+    dict with ``fit`` (the ``n - 1`` level :func:`stiffness_limit` result),
+    ``full`` (all levels), ``predicted``/``measured``/``prediction_error``,
+    ``limit_shift``, ``pair_orders`` and ``n_levels``.
+    """
+    pts = sorted((float(k), float(v)) for k, v in points)
+    if len(pts) < 4:
+        raise ValueError("need at least four levels for a leave-one-out prediction")
+    if len({p[0] for p in pts}) != len(pts):
+        raise ValueError("levels must be distinct")
+    if np.any(np.array([p[0] for p in pts]) <= 0.0):
+        raise ValueError("the refinement parameter must be positive")
+
+    fit = stiffness_limit(pts[:-1], default_order=default_order,
+                          order_bounds=order_bounds)
+    full = stiffness_limit(pts, default_order=default_order,
+                           order_bounds=order_bounds)
+    kn_last_fit, val_last_fit = pts[-2]
+    kn_new, val_new = pts[-1]
+    # value(k) = limit + C k^{-p} with C fixed by the last fitted level
+    predicted = float(fit["limit"]
+                      + (val_last_fit - fit["limit"]) * (kn_new / kn_last_fit) ** (-fit["order_used"]))
+    pair_orders = []
+    for (k0, v0), (k1, v1), (k2, v2) in zip(pts[:-2], pts[1:-1], pts[2:]):
+        d0, d1 = v1 - v0, v2 - v1
+        p = None
+        if d0 != 0.0 and d1 != 0.0 and np.sign(d0) == np.sign(d1):
+            p = float(math.log(abs(d0) / abs(d1)) / math.log(k2 / k1))
+        pair_orders.append({"kn": [k0, k1, k2], "order": p})
+    return {
+        "fit": fit,
+        "full": full,
+        "points": pts,
+        "predicted": predicted,
+        "measured": float(val_new),
+        "prediction_error": float(abs(predicted - val_new)),
+        "limit_shift": float(abs(full["limit"] - fit["limit"])),
+        "pair_orders": pair_orders,
+        "n_levels": int(len(pts)),
+    }
