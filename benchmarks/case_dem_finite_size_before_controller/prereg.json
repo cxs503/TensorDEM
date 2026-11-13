@@ -1,0 +1,40 @@
+{
+  "mission_id": 17417,
+  "anchor": "XVAL-DEM-FINITE-SIZE-BEFORE-CONTROLLER",
+  "written_before_runs": true,
+  "decision": "Should TensorDEM's LBM-DEM closure calibration apply the periodic-box (finite-size) drag enhancement BEFORE the flow controller / settling drive is set, instead of only as a post-hoc division of the measured force?  Answer decides whether `SettlingSpec.finite_size_in_drive` becomes the default path and whether the post-hoc multiplication must be switched off together with it.",
+  "alternatives": {
+    "M0_posthoc_only": "drive/seed from the unbounded Stokes force; array correction applied only to the reported number (current code path: finite_size_in_drive=False, apply_array_correction_posthoc=True)",
+    "M1_drive_and_posthoc": "correction folded into the drive AND kept in the post-processing (double counting, lambda^2)",
+    "M2_drive_only": "correction folded into the drive, no post-hoc multiplication (the 'finite-size-before-controller' practice)"
+  },
+  "hypothesis": [
+    "H1 (operating point): M0's achieved Re at L/d=4 is biased low by (1/lambda - 1) = -43.7% because the drive is built for unbounded Stokes drag while the periodic array has lambda = 1.7754 > 1. M2 removes that bias to within the IBM/SN residual.",
+    "H2 (double counting): M1's reported corrected velocity is high by (lambda - 1) = +77.5% at L/d=4, i.e. applying the correction in both places is worse than not applying it at all.",
+    "H3 (fixed-sphere seed): for the constant-flow-rate pump the converged ratio is seed independent; correction_timing affects only the transient (steps to within 2% of the final force), by a factor to be measured at L/d=4, gain in {0.005, 0.02}.",
+    "H4 (formula validity): the dilute Hasimoto/Sangani-Acrivos ratio lambda(phi)=1+1.7601 phi^(1/3)+phi reproduces the measured array ratio to <15% for phi <= 0.0654 at fixed resolution; the residual is dominated by the IBM resolution error, not by the phi term."
+  ],
+  "metrics": {
+    "xval_error": "|measured ratio / analytic ratio - 1| per phi for the fixed-sphere array drag",
+    "operating_point": "re_terminal_vs_target = Re_terminal/Re_target - 1 (settling)",
+    "reported_bias": "u_rel_error_sn_corrected (settling, reported corrected velocity vs Schiller-Naumann at the measured Re)",
+    "convergence": "steps_to_within_2pct (first sample with |F - F_final|/|F_final| <= 0.02)",
+    "steadiness": "|mean(tail window) - mean(previous window)| / u_terminal"
+  },
+  "thresholds": {
+    "xval_accept": 0.15,
+    "operating_point_accept": 0.05,
+    "convergence_material_factor": 2.0,
+    "steadiness_accept": 0.02
+  },
+  "stopping_rule": "Run the pre-declared case list once; no case is added after inspecting results. If a case does not reach steady state within its step budget the outcome is reported as a budget-limited FAIL, not re-run with a larger budget.",
+  "variables": {
+    "controlled": ["tau0=0.8 (nu=0.1)", "Re_target", "density_ratio=2 (settling)", "scheme=mem", "dtype=float32", "lattice code version (git sha recorded)"],
+    "changed": ["L/d in {4,6,8,16} (=> phi and lambda)", "correction placement M0/M1/M2", "controller_gain in {0.005,0.02}", "sphere diameter d in {4,6,8} at fixed L/d=8"],
+    "confounders": ["IBM/MEM discretisation error grows as d shrinks (independent of phi at fixed d) - handled by the fixed-resolution phi scan and by the d-scan at fixed L/d", "Schiller-Naumann is itself only ~1-2% accurate at Re~1", "float32 round-off limits force-drift convergence to ~1e-4"]
+  },
+  "environment": {
+    "host": "m17417 worktree, CPU torch, torch threads pinned per worker",
+    "note": "cluster queue depth 517 at submission time -> sweep kept to <=6 min per single case and run in parallel workers; every run's wall time is recorded"
+  }
+}
