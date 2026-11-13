@@ -138,6 +138,14 @@ class AxisymCase:
     #: model only reproduces if ``mu_wall`` is at least the grain friction.
     mu_wall: float | None = None
     restitution: float = 0.5
+    #: rolling-resistance lever convention, forwarded to ``Material3D``:
+    #: ``"particle_radius"`` (legacy) or ``"reduced_radius"`` (LIGGGHTS EPSD2
+    #: ``reff``; see docs/XVAL_DEM_ROUND2_METHOD_SELECTION.md).  Default keeps
+    #: every historical result bit for bit.
+    rolling_lever: str = "particle_radius"
+    #: include the normal (torsion) spin in the rolling spring (legacy True;
+    #: LIGGGHTS removes it by default).
+    rolling_torsion: bool = True
     kn: float = 1.0e4
     kt_ratio: float = 0.5
     gravity: float = 9.81
@@ -176,6 +184,9 @@ class AxisymCase:
             wall = float(self.mu_wall)
             if not math.isfinite(wall) or wall < 0.0:
                 raise AxisymError("mu_wall must be finite and nonnegative")
+        if self.rolling_lever not in ("particle_radius", "reduced_radius"):
+            raise AxisymError(
+                "rolling_lever must be 'particle_radius' or 'reduced_radius'")
         if self.mu_inertial is not None:
             values = tuple(float(v) for v in self.mu_inertial)
             if len(values) != 3:
@@ -193,7 +204,9 @@ class AxisymCase:
     def material(self) -> Material3D:
         return Material3D(radius=self.radius, density=self.density, mu=self.mu,
                           mu_rolling=self.mu_rolling, restitution=self.restitution,
-                          kn=self.kn, kt_ratio=self.kt_ratio, gravity=self.gravity)
+                          kn=self.kn, kt_ratio=self.kt_ratio, gravity=self.gravity,
+                          rolling_lever=self.rolling_lever,
+                          rolling_torsion=self.rolling_torsion)
 
     def signature(self) -> dict:
         return {
@@ -224,6 +237,8 @@ class AxisymCase:
             "duration_factor": float(self.duration_factor),
             "min_time": float(self.min_time),
             "t_reach_fraction": float(self.t_reach_fraction),
+            "rolling_lever": self.rolling_lever,
+            "rolling_torsion": bool(self.rolling_torsion),
             "contact_mode": self.contact_mode,
             "label": self.label,
         }

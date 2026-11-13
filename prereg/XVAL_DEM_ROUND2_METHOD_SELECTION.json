@@ -1,0 +1,51 @@
+{
+  "anchor": "XVAL-DEM-ROUND2-METHOD-SELECTION",
+  "mission_id": 17643,
+  "repo": "TensorDEM",
+  "case_card": "CASE-COLUMN-COLLAPSE",
+  "upstream_row": "oss_solutions: TensorDEM|CASE-COLUMN-COLLAPSE|round2-method-selection",
+  "date": "2026-11-13",
+  "decision": {
+    "statement": "Which rolling-resistance projection of the round-2 grain-shape surrogate mu_r is admissible: (i) keep the TensorDEM lever convention (lever = particle radius r for pair and wall) and quote mu_r only inside TensorDEM, (ii) adopt the LIGGGHTS EPSD2 reduced-radius convention (reff = r for wall, radi*radj/(radi+radj) = r/2 for equal spheres) as the default, or (iii) add (ii) as an opt-in switch plus a published parameter-mapping factor.",
+    "adopt_rule": "Adopt an OSS convention as the *default* only if the TensorDEM law deviates from the OSS law by more than 15% on a closed single-contact metric with an analytic reference AND the port keeps the energy ledger. Otherwise keep the legacy default and publish the mapping factor.",
+    "threshold": 0.15,
+    "threshold_source": "owner precision standard (XVAL: >15% not acceptable)"
+  },
+  "hypotheses": {
+    "H1": "The TensorDEM rolling law is a different *family* from the OSS rolling models (elastic-plastic spring vs constant directional torque), so trajectories disagree by more than 15%.",
+    "H2": "The two codes implement the same family (linear rolling spring + Coulomb cap) and differ only in the lever arm reff and in torsion handling.",
+    "H3": "A literature/OSS value of mu_r is transferable between codes without a conversion factor."
+  },
+  "metrics": {
+    "M1_t_stop": "rolling spin-down stopping time of one sphere on a plane (closed-form reference (5/7) mu_r g)",
+    "M2_t_half_pair": "half-time of the relative-spin relaxation of an equal-sphere pair (reference: Coulomb-saturated linear decay)",
+    "M3_creep": "residual speed of a sphere on a slope below/above arctan(mu_r)",
+    "M4_torsion": "remaining drilling (axial) spin after 50 ms",
+    "M5_dt": "fraction of the OSS Rayleigh timestep used by the case timestep",
+    "M6_identity": "max |omega_kernel - omega_OSS| on a wall-contact spin-down (identity check)"
+  },
+  "baseline_control": {
+    "analytic": "M1, M2, M3 thresholds derived in the docstring of tensordem.xval.scenes (not fitted)",
+    "oss_reference": "LIGGGHTS-PUBLIC @3d5c00f2, rolling_model_cdt.h / rolling_model_epsd2.h / fix_check_timestep_gran.cpp, transcribed in tensordem.xval.oss_rolling",
+    "negative_control": "legacy TensorDEM law with reff = r (the current default) on the same scenes; a null result there means 'no port needed'"
+  },
+  "sweeps": {
+    "mu_r": [0.1, 0.2, 0.3, 0.5, 0.8],
+    "slope_deg": [5, 15, 20, 25, 30],
+    "dt_s": [1e-5, 5e-5, 1e-4, 2e-4]
+  },
+  "stopping_rule": "Run every sweep point once (deterministic scenes, no stochastic sampling); no point is dropped. A metric that lands inside +/-15% of the reference supports the mapping arm; outside, the difference is reported as a law difference.",
+  "environment": {
+    "python": "3.11",
+    "numpy": "2.4.6",
+    "scene_step_default_s": 5e-5,
+    "deterministic": true,
+    "runtime_s": 45
+  },
+  "exclusions": "No thermal, cohesive or non-spherical contacts; single-contact scenes only. The macroscopic column-level arms (benchmarks/xval_dem_round2_column_arms.py) were not executed in this round (compute budget) - declared as an open item.",
+  "interpretation_limits": [
+    "The OSS reference is a *source transcription*, not a compiled LIGGGHTS binary: identical formulas, but no cross-code integration test.",
+    "The Hertz-equivalent shear modulus used in M5 is a declared mapping (one grain weight on the case's linear kn), not a material property.",
+    "Creep speeds below the static threshold are dt- and hysteresis-dependent in both laws; they are reported, not used as pass/fail."
+  ]
+}
