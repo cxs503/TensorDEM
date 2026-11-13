@@ -64,6 +64,13 @@ class FixedSphereSpec:
     marker_density: float = 1.4
     separation_radius: float | None = None  # centre separation / radius
     flow_control: bool = True  # constant-flow-rate pump instead of a frozen body force
+    # Where the periodic-box (finite-size) drag enhancement is applied.  "before"
+    # folds it into the force estimate that seeds the pump controller, so the
+    # controller starts at the array-corrected operating point; "after" seeds from
+    # the uncorrected Stokes/Schiller--Naumann force and leaves the correction to
+    # the post-processing ratio only.  The converged force is the same for both;
+    # only the transient (hence the affine-to-budget result) differs.
+    correction_timing: str = "before"  # "before" | "after"
     controller_gain: float = 0.02
     controller_window: int = 10
     max_steps: int = 6000
@@ -79,6 +86,8 @@ class FixedSphereSpec:
             raise ValueError("re_target must be positive")
         if self.separation_radius is not None and self.separation_radius <= 1.0:
             raise ValueError("separation_radius must exceed 1 (non-overlapping spheres)")
+        if self.correction_timing not in {"before", "after"}:
+            raise ValueError("correction_timing must be 'before' or 'after'")
 
     @property
     def n_spheres(self) -> int:
@@ -110,11 +119,13 @@ def run_fixed_sphere(spec: FixedSphereSpec = FixedSphereSpec()) -> dict[str, Any
     solid_fraction = _solid_fraction_of_box(spec, length)
     correction = array_correction(solid_fraction)
     if spec.re_target < 1.0:
-        force_estimate = stokes_drag(nu, diameter, u_target) * correction
+        force_estimate_unbounded = stokes_drag(nu, diameter, u_target)
     else:
-        force_estimate = (
-            drag_from_cd(schiller_naumann_cd(spec.re_target), 1.0, u_target, diameter) * correction
+        force_estimate_unbounded = drag_from_cd(
+            schiller_naumann_cd(spec.re_target), 1.0, u_target, diameter
         )
+    seed_correction = correction if spec.correction_timing == "before" else 1.0
+    force_estimate = force_estimate_unbounded * seed_correction
     body = spec.n_spheres * force_estimate / length**3
 
     lattice = Lattice(
@@ -242,6 +253,9 @@ def run_fixed_sphere(spec: FixedSphereSpec = FixedSphereSpec()) -> dict[str, Any
         "force_total": total_force,
         "force_per_sphere": [float(v) for v in forces[:, 0].tolist()],
         "force_estimated": spec.n_spheres * force_estimate,
+        "force_estimated_unbounded": spec.n_spheres * force_estimate_unbounded,
+        "correction_timing": spec.correction_timing,
+        "seed_correction": seed_correction,
         "pump_force": pump_force,
         "body_force": body,
         "u_target": u_target,
@@ -276,6 +290,14 @@ class SettlingSpec:
     sample_every: int = 5
     window: int = 200
     dtype: str = "float64"
+    # Finite-size (periodic-array) handling of the *drive*: when True the
+    # effective weight is built from the array-corrected drag, i.e. the
+    # correction is applied before the settling drive is set.  The post-hoc
+    # multiplication of the measured relative velocity is controlled separately,
+    # because applying both double-counts the correction (lambda^2) -- see
+    # ``double_counts_correction``.
+    finite_size_in_drive: bool = False
+    apply_array_correction_posthoc: bool = True
 
 
 def run_settling(spec: SettlingSpec = SettlingSpec()) -> dict[str, Any]:
@@ -289,9 +311,15 @@ def run_settling(spec: SettlingSpec = SettlingSpec()) -> dict[str, Any]:
     volume = math.pi * diameter**3 / 6.0
     mass = spec.density_ratio * volume
     u_guess = spec.re_target * nu / diameter
+    solid_fraction = volume / length**3
+    correction = array_correction(solid_fraction)
     # Effective weight that would give the target terminal velocity in the
     # Stokes limit; the case then relaxes to the true Schiller-Naumann balance.
-    gravity = 18.0 * nu * u_guess / ((spec.density_ratio - 1.0) * diameter**2)
+    # ``finite_size_in_drive`` multiplies it by the periodic-array drag
+    # enhancement so that the *operating point* is the target Re even in a small
+    # box, instead of leaving the box bias in the achieved velocity.
+    gravity_unbounded = 18.0 * nu * u_guess / ((spec.density_ratio - 1.0) * diameter**2)
+    gravity = gravity_unbounded * (correction if spec.finite_size_in_drive else 1.0)
     drive = (mass - volume) * gravity
 
     lattice = Lattice(LatticeShape(length, length, length), tau0=spec.tau0, dtype=spec.dtype)
@@ -365,8 +393,7 @@ def run_settling(spec: SettlingSpec = SettlingSpec()) -> dict[str, Any]:
     u_relative = sum(row["relative_velocity"] for row in tail) / window
     drag_terminal = sum(row["drag"] for row in tail) / window
     re_terminal = reynolds(diameter, u_relative, nu)
-    solid_fraction = volume / length**3
-    correction = array_correction(solid_fraction)
+    posthoc = correction if spec.apply_array_correction_posthoc else 1.0
     u_analytic_sn = terminal_velocity_schiller_naumann(
         diameter, spec.density_ratio, 1.0, nu, gravity=gravity
     )
@@ -385,17 +412,26 @@ def run_settling(spec: SettlingSpec = SettlingSpec()) -> dict[str, Any]:
         "tau0": spec.tau0,
         "nu": nu,
         "gravity": gravity,
+        "gravity_unbounded": gravity_unbounded,
         "drive_force": drive,
+        "u_guess": u_guess,
+        "finite_size_in_drive": spec.finite_size_in_drive,
+        "apply_array_correction_posthoc": spec.apply_array_correction_posthoc,
+        "double_counts_correction": spec.finite_size_in_drive
+        and spec.apply_array_correction_posthoc,
         "mass": mass,
         "solid_fraction": solid_fraction,
         "array_correction": correction,
         "u_terminal": u_terminal,
         "u_relative_terminal": u_relative,
-        "u_relative_terminal_corrected": u_relative * correction,
+        "u_relative_terminal_corrected": u_relative * posthoc,
+        "u_relative_terminal_times_correction": u_relative * correction,
+        "re_terminal_vs_target": re_terminal / spec.re_target - 1.0,
+        "u_relative_vs_target": u_relative / u_guess - 1.0,
         "u_analytic_stokes": u_analytic_stokes,
         "u_analytic_schiller_naumann": u_analytic_sn,
-        "u_rel_error_stokes_corrected": u_relative * correction / u_analytic_stokes - 1.0,
-        "u_rel_error_sn_corrected": u_relative * correction / u_analytic_sn - 1.0,
+        "u_rel_error_stokes_corrected": u_relative * posthoc / u_analytic_stokes - 1.0,
+        "u_rel_error_sn_corrected": u_relative * posthoc / u_analytic_sn - 1.0,
         "re_terminal": re_terminal,
         "drag_terminal": drag_terminal,
         "drag_balance_residual": abs(drag_terminal - drive) / drive,
