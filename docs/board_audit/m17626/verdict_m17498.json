@@ -1,0 +1,121 @@
+{
+  "impl_files": [
+    "src/tensordem/shear_band_structure_tensor.py:1 measure_band_structure_tensor() (244 lines, new in 1d7a0b6e)",
+    "src/tensordem/biaxial_shear_band.py:154 radon_band_angle() (binning='equal_count', the R2 aspect-bias fix, already in main at 7a5ea5d2)",
+    "benchmarks/biaxial_shear_band/run_r3_ensemble.py:1 (pre-registered 5-specimen ensemble + 2 sensitivity axes)",
+    "benchmarks/biaxial_shear_band/run_r3_estimator_audit.py:1",
+    "benchmarks/biaxial_shear_band/summarise_r3_log.py:1"
+  ],
+  "entry": "CLI only: benchmarks/biaxial_shear_band/run_r3_ensemble.py:363 (--out/--figure/--workers/--cache-dir/--only). No library entry: src/tensordem/__init__.py exports neither measure_band_structure_tensor nor the band measurement.",
+  "run_artifacts": [
+    "artifacts/biaxial_shear_band/r3_ensemble.json (4216 B, sha256 43fbc577349dff53c2a7736d49e290837af90618050f770dc85d9531809d2a15)",
+    "artifacts/biaxial_shear_band/r3_ensemble.png (106794 B, sha256 f63866d661626abdf034661d25ee31185ff8ef52d1cfef0ee3e4908a41c6f955)",
+    "artifacts/biaxial_shear_band/r3_estimator_audit.json (39218 B, sha256 e5c5f9f4b6557c6e9bf04c0da95bfaed5ffbe10295edb3f07754f46bf8749604)",
+    "logs/r3_ensemble.log (389 B, 6 lines = the primary artefact, sha256 5d954cd463efc04f8278d19db65dfdae49f65773200025db72970e73fe0d369e)"
+  ],
+  "tests": [
+    "tests/test_shear_band_structure_tensor.py (9 tests: known-angle 30/45/60/70 deg on the case lattice, aspect neutrality, uniform-deformation rejection, degenerate input, empty-cell fill, shape mismatch)",
+    "auditor rerun 2026-11-13 on the m17498 worktree: 5/9 executed, 5 passed (60.0 deg known-angle case 17.6 s; the four fast guards 27.1 s); the full 9-test file did not fit the 110 s shell cap at load 216/128 cores -> remainder not_run locally",
+    "tests/test_biaxial_shear_band.py (15 tests, production operator, author-run only = not_run by the auditor)"
+  ],
+  "integration_callers": "NONE. `grep -rn shear_band_structure_tensor` over main HEAD c6b2b86f returns 0 hits; commit 1d7a0b6e is not an ancestor of main (git merge-base --is-ancestor = false); no __init__ export, no CLI/API/harness caller -> L3 refused.",
+  "benchmark": {
+    "registry": "tensor_benchmark_cases id=59, anchor_slug=CASE-DEM-BIAXIAL-CELL-KNOWN-ANGLE, metric='shear band inclination vs anchor (deg)', tolerance='<15% (owner standard)', status='passed' -- note status was written equal to created_at (2026-11-13 06:13:49), i.e. it is a registration default, not a measured pass",
+    "ref": {
+      "value_deg": 60.0,
+      "source": "Desrues & Viggiani 2004 IJNAMG 28:279-321 (55-60 deg, midpoint 60)",
+      "file": "docs/BIAXIAL_SHEAR_BAND.md:30-31"
+    },
+    "got": {
+      "value_deg": 53.831999999999994,
+      "statistic": "ensemble mean over 5 independent specimens, Radon focus (production operator)"
+    },
+    "abs_error_deg": 6.168000000000006,
+    "rel_error": 0.1028000000000001,
+    "tolerance_rel": 0.15,
+    "within_owner_15pct": true,
+    "within_3pct": false,
+    "vs_literature_lower_bound_55_deg": 0.02123636363636375,
+    "ci95_deg": [
+      52.71736081200058,
+      54.94663918799941
+    ],
+    "ci95_inside_tolerance_band": true,
+    "platform_referee": {
+      "tensorbench_results_rows": 0,
+      "l4_verdict_endpoint": "CLAIMED_NOT_PROVEN",
+      "failed_checks": [
+        "execution_success",
+        "source_cluster_job",
+        "cluster_job_bound",
+        "ref_got_error_present",
+        "within_tolerance"
+      ]
+    },
+    "auditor_recomputation": {
+      "recomputed_mean_deg": 53.831999999999994,
+      "published_mean_deg": 53.831999999999994,
+      "delta_mean_deg": 0.0,
+      "delta_std_deg": 0.0,
+      "log_vs_json_specimen_mismatches": 0
+    },
+    "specimen_coverage": {
+      "log_rows": 6,
+      "declared_completed": 6,
+      "declared_planned": 8,
+      "anchor_members": 5
+    }
+  },
+  "repro_cmd": "cd /root/tp-agent/work/m17498 && PYTHONPATH=src python3 benchmarks/biaxial_shear_band/run_r3_ensemble.py --workers 5 (~95 s per specimen, 8 specimens; the 120 s run_shell cap reaps it -> per-specimen cache/npz), then PYTHONPATH=src python3 benchmarks/biaxial_shear_band/summarise_r3_log.py. Auditor's independent re-derivation: PYTHONPATH=src python3 docs/board_audit/m17626/audit_m17498.py (recomputes mean/std/CI from the log and re-measures synthetic known-angle bands on the 24x48 lattice).",
+  "external_anchor": {
+    "citation": "Desrues & Viggiani 2004, Int. J. Numer. Anal. Meth. Geomech. 28:279-321 -- dense Hostun sand plane-strain biaxial shear band 55-60 deg",
+    "repo_pointer": "docs/BIAXIAL_SHEAR_BAND.md:30-31",
+    "value_used_deg": 60.0,
+    "value_provenance": "inherited from the pre-declared case sheet; the original paper table was not re-read in R3 (author-declared WITHHELD) and was not re-read by the auditor either"
+  },
+  "auditor_checks": {
+    "operator_unbiasedness": {
+      "what": "production Radon on a synthetic band of known angle injected into the exact 24x48 / 1128-particle case lattice, noise-free, slip 0.02 m",
+      "rows": [
+        {
+          "angle_true_deg": 45.0,
+          "radon_deg": 45.0,
+          "error_deg": 0.0,
+          "slip_m": 0.02
+        },
+        {
+          "angle_true_deg": 60.0,
+          "radon_deg": 59.0,
+          "error_deg": -1.0,
+          "slip_m": 0.02
+        },
+        {
+          "angle_true_deg": 70.0,
+          "radon_deg": 70.0,
+          "error_deg": 0.0,
+          "slip_m": 0.02
+        }
+      ],
+      "max_abs_error_deg": 1.0,
+      "conclusion": "<=1.0 deg over 45/60/70 deg -> the 53.8 deg reading is not the R1/R2 aspect-rescaling artefact (that defect produced 44 deg from a 60 deg band)"
+    },
+    "residual_risk": [
+      "no raw field snapshot retained (npz=[] and r3_cache/ empty) -> the noise level of the real incremental fields, the factor the author's own audit identifies as decisive beyond 0.5 %, was never measured on the actual data",
+      "the two operators disagree by 13.0 deg on average / 30.5 deg max on identical snapshots; the structure-tensor member s11 reads 83.03 deg (38.4 % off) -> operator-dependent, not converged",
+      "the 200 kPa sensitivity specimen is unresolved (73.50 deg, 22.5 %) -> the physical trend across confinement is unknown"
+    ],
+    "three_deliverables": {
+      "run_artifacts": "present and hashed (see run_artifacts), but the ensemble JSON was machine-transcribed from 6 log lines after the run was reaped, and no per-specimen field was persisted",
+      "ref_vs_got": "present and inside the <15 % tolerance; audited arithmetic reproduces mean/std to 0.0 deg and CI to 1.8e-4 deg",
+      "repro_cmd": "present and executable in form (CLI args verified, dependencies importable, operator re-measured by the auditor); end-to-end ensemble rerun not_run (~8 min at load>200; cluster job cj1619 queued behind 383)"
+    }
+  },
+  "level_reason": "L2 = real implementation (DEM biaxial cell on RidgeMaterial, 1128 particles, 4000 consolidation steps; new structure-tensor operator; 9 executable tests; artefacts hashed and arithmetic reproduced by the auditor). L3 refused: not in main, zero callers/exports. L4 refused: no platform-recomputed benchmark row (CLAIMED_NOT_PROVEN), no raw fields persisted (got only re-derivable from a 6-line log), 2/8 pre-registered specimens + cumulative window + 32x64 WITHHELD, and 10.3 % error fails the 3 % bar even though it passes the 15 % owner bar.",
+  "audit_artifacts": [
+    "docs/board_audit/m17626/AUDIT.md",
+    "docs/board_audit/m17626/audit_m17498.py",
+    "docs/board_audit/m17626/audit_m17498.json",
+    "docs/board_audit/m17626/verdict_m17498.json",
+    "docs/board_audit/m17626/m17626_audit.png"
+  ]
+}
