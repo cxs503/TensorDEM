@@ -566,7 +566,7 @@ def _wall_spring(dxi: np.ndarray, v_t: np.ndarray, dt: float, kt: float,
 
 
 def bulk_virial_stress(pos, vel, pairs, *, z_lo, z_hi,
-                       y_lo, y_hi, box_width, n, mass):
+                       y_lo, y_hi, box_width, n, mass, rule="both"):
     """Love-Weber stress of the slab ``z in [z_lo, z_hi]`` (tension positive).
 
     The wall traction the device reports is ``tau_wall / p_wall`` on the top
@@ -583,9 +583,19 @@ def bulk_virial_stress(pos, vel, pairs, *, z_lo, z_hi,
     stresses, so the pressure is ``p = -trace(sigma)/3`` and the shear stress
     magnitude is ``|sigma_xz|``.
 
-    A contact is counted once, and only when *both* endpoints lie in the slab
-    (``y`` inside ``[y_lo, y_hi]``); wall contacts are not part of the pair list
-    so the estimator is a pure particle-particle virial.
+    ``rule`` selects which contacts enter the sum (m17126):
+
+    * ``"both"`` (legacy, rounds 6-7): only contacts whose *both* endpoints lie
+      in the slab.  On a 2-4 diameter slab this discards 40-50 % of the
+      load-bearing chains (the ``straddle_fraction`` diagnostic), so the slab
+      stress reads systematically low.
+    * ``"midpoint"``: a contact enters when the *midpoint* of the branch vector
+      lies in the slab.  This is the standard slab-averaging rule; it counts
+      each crossing chain once and is unbiased for a homogeneous slab.
+
+    Wall contacts are not part of the pair list, so the estimator is a pure
+    particle-particle virial (see :func:`full_cell_virial_stress` for the
+    momentum-balance-normalised domain average).
     """
     import numpy as _np
 
@@ -603,9 +613,20 @@ def bulk_virial_stress(pos, vel, pairs, *, z_lo, z_hi,
                 "n_contacts": 0, "kinetic_pressure": float("nan"),
                 "contact_pressure": float("nan"), "sigma_zz": float("nan"),
                 "sigma_yy": float("nan"), "sigma_xx": float("nan")}
-    endpoint_in = sel[_np.mod(pairs["iu"], n)] | sel[_np.mod(pairs["ju"], n)]
-    both_in = sel[_np.mod(pairs["iu"], n)] & sel[_np.mod(pairs["ju"], n)]
-    inside = both_in
+    in_i = sel[_np.mod(pairs["iu"], n)]
+    in_j = sel[_np.mod(pairs["ju"], n)]
+    endpoint_in = in_i | in_j
+    both_in = in_i & in_j
+    if rule == "midpoint":
+        mid = pos[_np.mod(pairs["iu"], n)] + 0.5 * pairs["branch"]
+        mid[:, 0] = _np.mod(mid[:, 0], box_width)      # undo the periodic image
+        mid[:, 1] += 0.0
+        inside = ((mid[:, 2] >= z_lo) & (mid[:, 2] <= z_hi)
+                  & (mid[:, 1] >= y_lo) & (mid[:, 1] <= y_hi))
+    elif rule == "both":
+        inside = both_in
+    else:
+        raise ValueError(f"unknown virial rule {rule!r}")
     # contacts with exactly one endpoint in the slab: the both-endpoints rule
     # drops them, and for a thin slab (a few particle diameters) they are a
     # large fraction of the load-bearing chains, so the estimate reads low.
@@ -634,6 +655,75 @@ def bulk_virial_stress(pos, vel, pairs, *, z_lo, z_hi,
             "contact_pressure": pressure - kinetic_pressure,
             "sigma_zz": float(sigma[2, 2]), "sigma_yy": float(sigma[1, 1]),
             "sigma_xx": float(sigma[0, 0])}
+
+
+def full_cell_virial_stress(pos, vel, pairs, *, box_width, box_depth,
+                             height, radius, mass):
+    """Domain-average Love-Weber stress over the *whole* cell (m17126).
+
+    Why this estimator exists: it is the only one in this device with an
+    **exact** analytic reference.  For a packing in static equilibrium, zero
+    gravity, with all internal contacts counted,
+
+        sum_pairs f_ij (x) (x_j - x_i) = -sum_i F_i^ext (x) x_i
+
+    (this follows from per-particle force balance).  The external loads sit on
+    the floor (z ~ r) and the platen (z ~ plate_z - r), so the sum of pair
+    virials has a ``zz`` component of magnitude ``P A (height - 2 r)``.  Dividing
+    by the *centre-accessible* volume ``V = A (height - 2 r)`` therefore gives
+
+        sigma_zz = -P_applied      (exactly, up to the dynamic/kinetic term)
+
+    which makes ``sigma_zz / P_applied = -1`` a machine-checkable momentum
+    balance invariant, independent of any literature constant.  Rounds 6-7 used
+    only the thin-slab estimator, whose truncation (40-50 % of the chains
+    dropped) could not be distinguished from a genuine stress deficit; this
+    function supplies the check.
+
+    The kinetic part uses the fluctuation about the measured affine shear
+    profile ``v_x = a + b z`` (a bulk sheared cell has no other mean field in
+    x/y/z beyond the platen drift).
+    """
+    import numpy as _np
+
+    n = int(pos.shape[0])
+    volume = box_width * box_depth * max(height - 2.0 * radius, 1e-12)
+    sigma = _np.zeros((3, 3))
+    n_contacts = 0
+    if n < 2 or pairs.get("branch") is None or len(pairs["branch"]) == 0:
+        return {"sigma": sigma, "pressure": float("nan"),
+                "shear_xz": float("nan"), "mu": float("nan"),
+                "volume": float(volume), "n_contacts": 0,
+                "kinetic_pressure": float("nan"), "contact_pressure": float("nan"),
+                "sigma_zz": float("nan"), "sigma_yy": float("nan"),
+                "sigma_xx": float("nan"), "shear_rate": float("nan"),
+                "profile_r2": float("nan")}
+    # every pair of the periodic pair list is one physical contact of the cell
+    sigma += _np.einsum("ni,nj->ij", pairs["force_on_i"], pairs["branch"]) / volume
+    n_contacts = int(len(pairs["branch"]))
+    contact_sigma = sigma.copy()
+
+    z = pos[:, 2]
+    zc = z - z.mean()
+    vx = vel[:, 0]
+    denom = float(zc @ zc)
+    slope = float(zc @ (vx - vx.mean()) / denom) if denom > 1e-30 else 0.0
+    intercept = float(vx.mean() - slope * z.mean())
+    fluc = vel.copy()
+    fluc[:, 0] -= slope * z + intercept
+    fluc -= fluc.mean(axis=0, keepdims=True)
+    sigma -= mass * (fluc.T @ fluc) / volume
+    kinetic_sigma = sigma - contact_sigma
+    pressure = -float(_np.trace(sigma)) / 3.0
+    shear_xz = float(sigma[0, 2])
+    return {"sigma": sigma, "pressure": pressure, "shear_xz": shear_xz,
+            "mu": abs(shear_xz) / pressure if pressure > 0 else float("nan"),
+            "volume": float(volume), "n_contacts": n_contacts,
+            "kinetic_pressure": -float(_np.trace(kinetic_sigma)) / 3.0,
+            "contact_pressure": pressure + float(_np.trace(kinetic_sigma)) / 3.0,
+            "sigma_zz": float(sigma[2, 2]), "sigma_yy": float(sigma[1, 1]),
+            "sigma_xx": float(sigma[0, 0]),
+            "shear_rate": slope, "profile_r2": float("nan")}
 
 
 def shear_rate_profile(pos, vel, *, z_lo, z_hi, y_lo, y_hi, n_bins=6):
@@ -946,6 +1036,33 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
                             if p_b and p_b > 0 and math.isfinite(
                                 prof["shear_rate"]) else float("nan")),
                     })
+                    # m17126: the R7-recommended midpoint rule and the exact
+                    # momentum-balance estimator on the same sample.
+                    vir_mid = bulk_virial_stress(
+                        pos, vel, contacts, z_lo=z_lo, z_hi=z_hi,
+                        y_lo=y_lo, y_hi=y_hi, box_width=W, n=n, mass=mass,
+                        rule="midpoint")
+                    full = full_cell_virial_stress(
+                        pos, vel, contacts, box_width=W, box_depth=D,
+                        height=plate_z, radius=r, mass=mass)
+                    sample.update({
+                        "bulk_mid_pressure_pa": vir_mid["pressure"],
+                        "bulk_mid_shear_pa": abs(vir_mid["shear_xz"]),
+                        "bulk_mid_mu": vir_mid["mu"],
+                        "bulk_mid_n_contacts": vir_mid["n_contacts"],
+                        "full_pressure_pa": full["pressure"],
+                        "full_shear_pa": abs(full["shear_xz"]),
+                        "full_mu": full["mu"],
+                        "full_mu_zz": (abs(full["shear_xz"])
+                                       / abs(full["sigma_zz"])
+                                       if full["sigma_zz"] else float("nan")),
+                        "full_sigma_zz": full["sigma_zz"],
+                        "full_kinetic_pressure_pa": full["kinetic_pressure"],
+                        "full_n_contacts": full["n_contacts"],
+                        "full_momentum_balance": (
+                            full["sigma_zz"] / (-case.normal_stress)
+                            if case.normal_stress > 0 else float("nan")),
+                    })
             series.append(sample)
 
         # constant-stress validity gate: once the requested strain budget is
@@ -970,7 +1087,11 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
         keys += ["bulk_pressure_pa", "bulk_shear_pa", "bulk_mu",
                  "bulk_kinetic_pressure_pa", "bulk_sigma_zz",
                  "shear_rate_measured", "profile_r2", "bulk_inertial_number",
-                 "bulk_straddle_fraction"]
+                 "bulk_straddle_fraction", "bulk_mid_pressure_pa",
+                 "bulk_mid_shear_pa", "bulk_mid_mu", "bulk_mid_n_contacts",
+                 "full_pressure_pa", "full_shear_pa", "full_mu",
+                 "full_sigma_zz", "full_kinetic_pressure_pa",
+                 "full_n_contacts", "full_momentum_balance", "full_mu_zz"]
     arr = {key: np.array([s.get(key, float("nan")) for s in series], dtype=float)
            for key in keys}
     n_tail = max(1, int(0.6 * len(series)))
@@ -1067,6 +1188,35 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
         "inertial_number_bulk_final": (
             float(np.nanmean(arr["bulk_inertial_number"][-n_final:]))
             if "bulk_inertial_number" in arr else None),
+        "bulk_mid_mu": (mean["bulk_mid_mu"] if "bulk_mid_mu" in mean else None),
+        "bulk_mid_mu_final": (float(np.nanmean(arr["bulk_mid_mu"][-n_final:]))
+                              if "bulk_mid_mu" in arr else None),
+        "bulk_mid_pressure_pa": (mean["bulk_mid_pressure_pa"]
+                                 if "bulk_mid_pressure_pa" in mean else None),
+        "full_mu": (mean["full_mu"] if "full_mu" in mean else None),
+        "full_mu_final": (float(np.nanmean(arr["full_mu"][-n_final:]))
+                          if "full_mu" in arr else None),
+        "full_pressure_pa": (mean["full_pressure_pa"]
+                             if "full_pressure_pa" in mean else None),
+        "full_shear_pa": (mean["full_shear_pa"]
+                          if "full_shear_pa" in mean else None),
+        "full_mu_zz": (mean["full_mu_zz"] if "full_mu_zz" in mean else None),
+        "full_mu_zz_final": (float(np.nanmean(arr["full_mu_zz"][-n_final:]))
+                             if "full_mu_zz" in arr else None),
+        "full_anisotropy": ((mean["full_pressure_pa"]
+                             / abs(np.nanmean(arr["full_sigma_zz"][-n_tail:])))
+                            if "full_pressure_pa" in mean else None),
+        "full_sigma_zz_final": (float(np.nanmean(arr["full_sigma_zz"][-n_final:]))
+                                if "full_sigma_zz" in arr else None),
+        "full_kinetic_pressure_pa": (mean["full_kinetic_pressure_pa"]
+                                     if "full_kinetic_pressure_pa" in mean else None),
+        "full_n_contacts": (mean["full_n_contacts"]
+                            if "full_n_contacts" in mean else None),
+        "full_momentum_balance": (mean["full_momentum_balance"]
+                                  if "full_momentum_balance" in mean else None),
+        "full_momentum_balance_final": (
+            float(np.nanmean(arr["full_momentum_balance"][-n_final:]))
+            if "full_momentum_balance" in arr else None),
         "box_volume": W * D * plate_height,
         "settle_pressure_pa": p_settle,
         "max_velocity": float(np.abs(vel).max()),
@@ -1087,6 +1237,10 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
         result["bulk_pressure_vs_wall"] = (p_b / result["normal_stress_measured_pa"]
                                            if result["normal_stress_measured_pa"]
                                            else float("nan"))
+        if result.get("full_mu") is not None:
+            result["full_cell_volume_proxy"] = W * D * (plate_height - 2.0 * r)
+            result["mu_full_over_wall"] = (
+                result["full_mu"] / mu_w if mu_w else float("nan"))
         result["shear_rate_ratio"] = (
             result["shear_rate_measured"] / gamma_dot
             if gamma_dot else float("nan"))
