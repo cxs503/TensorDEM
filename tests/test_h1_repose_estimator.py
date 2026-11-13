@@ -107,6 +107,49 @@ def test_apron_is_excluded_from_the_fitted_flank():
     assert fit["flank_height_drop_m"] > 0.0
 
 
+@pytest.mark.parametrize("angle_deg", [30.0, 40.0, 45.0])
+def test_clean_cone_is_not_cut_into_a_shallow_flank(angle_deg):
+    """A clean cone has no apron, so no break may be carved out of it.
+
+    Regression: the BIC break search was free to place the break anywhere, so on
+    a clean cone it could keep a short near-apex segment as the "flank" and dump
+    the steeper outer part into the "apron" -- a 40 deg cone was reported as
+    35.10 deg (5 deg of pure metrology error, and the *inverted* structural
+    signature of an apron, which is flatter than the flank).  The admissibility
+    rule rejects a split whose outward segment descends faster than the flank;
+    ``require_flatter_apron=False`` keeps the pre-fix behaviour as the baseline
+    (seed 7, the seed the committed evidence uses: at 400 bodies the defect is
+    profile-dependent, so the contrast is pinned to the documented profile).
+    """
+    profile = _synthetic_pile(angle_deg, 400, seed=7)
+    pre_fix = fit_flank(profile["radius"], profile["height"], profile["count"],
+                        min_drop=PARTICLE_RADIUS, require_flatter_apron=False)
+    fit = fit_flank(profile["radius"], profile["height"], profile["count"],
+                    min_drop=PARTICLE_RADIUS)
+    assert fit["reason"] == "ok"
+    assert abs(fit["angle_deg"] - angle_deg) <= 1.5
+    # baseline: the pre-fix split either lost > 2 deg or refused the angle
+    # outright (the short apex segment it carved out had under one particle of
+    # relief, so the relief gate fired on a clean cone -- both are defects)
+    pre_fix_angle = pre_fix["angle_deg"]
+    assert (not math.isfinite(pre_fix_angle)) or (angle_deg - pre_fix_angle > 2.0), (
+        "baseline weakened: pre-fix fit = %r deg" % pre_fix_angle)
+    # no admissible split -> the flank reaches the outermost annulus
+    assert fit["toe_radius_m"] == pytest.approx(max(profile["radius"]))
+
+
+def test_steeper_outboard_segment_is_never_reported_as_an_apron():
+    """Structural signature check: an apron is flatter than the flank, always."""
+    for angle_deg in (25.0, 35.0, 45.0):
+        for share in (0.0, 0.2, 0.4):
+            profile = _synthetic_pile(angle_deg, 400, apron_share=share)
+            fit = fit_flank(profile["radius"], profile["height"], profile["count"],
+                            min_drop=PARTICLE_RADIUS)
+            if not math.isfinite(fit["angle_deg"]) or not math.isfinite(fit["apron_angle_deg"]):
+                continue
+            assert fit["apron_angle_deg"] <= fit["angle_deg"] + 1e-9, (angle_deg, share)
+
+
 def test_monolayer_is_reported_as_no_pile_not_as_zero_degrees():
     """A dispersed monolayer has no flank: nan + reason, never a 0 deg angle.
 
