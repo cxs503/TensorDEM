@@ -1,0 +1,461 @@
+{
+  "case": "CASE-DEM-PLANE-SHEAR-MUIDI",
+  "round": 10,
+  "kind": "archival re-analysis (zero new simulation)",
+  "constants": {
+    "d_particle_m": 0.01,
+    "rho_grain": 2500.0,
+    "P_applied_pa": 62500.0,
+    "band": 0.1
+  },
+  "provenance": {
+    "files": {
+      "full_cell/point_0.01.json": "ab5c15df01b625838c2ceb4612f3a4c5425f55c6d2a56cca85d5eb86ce3609c4",
+      "full_cell/point_0.03.json": "4762b7f8668f4359d310f524b9dd80b09851b62fe75e8208e692c01d79124407",
+      "full_cell/point_0.1.json": "d216d3994f70d05cedc11e5e9418f2dc51d903eb54577015f5388e064906a638",
+      "full_cell/point_0.3.json": "d4be155c9ccfa210ec707a74167a91173631d885d712d8ff14136e2c08865d7d",
+      "bulk_rheometry/point_0.01.json": "9e5a8a428fb93d23f3df35c5c3b21e14d33fa531cc461361599a99254bce468a",
+      "bulk_rheometry/point_0.03.json": "81db10030135d09314e34b0cb0e0fadd79c6d20aab62f97804c0c932ece5a9e6",
+      "bulk_rheometry/point_0.1.json": "8275e00a6747faec7534d14e561b936565c33486e10a6abfd30139b99b99b8b7",
+      "bulk_rheometry/point_0.3.json": "df7622dab1a9aeff32e8ea59cc72e0deac749cf22bfa5d0324c5b3b6b8123f45"
+    },
+    "law_max_rel_disagreement": 0.0
+  },
+  "arms": {
+    "full_cell": {
+      "ordinates": [
+        "mu_full",
+        "mu_full_final",
+        "mu_full_zz",
+        "mu_full_zz_final"
+      ],
+      "n_points": 4,
+      "n_gate_pass": 2,
+      "pass_within_10pct_all_points": {
+        "I_target|mu_full": 1,
+        "I_target|mu_full_final": 2,
+        "I_target|mu_full_zz": 0,
+        "I_target|mu_full_zz_final": 1,
+        "I_imposed_measP|mu_full": 1,
+        "I_imposed_measP|mu_full_final": 2,
+        "I_imposed_measP|mu_full_zz": 0,
+        "I_imposed_measP|mu_full_zz_final": 1,
+        "I_vol|mu_full": 1,
+        "I_vol|mu_full_final": 2,
+        "I_vol|mu_full_zz": 0,
+        "I_vol|mu_full_zz_final": 1,
+        "I_bulk|mu_full": 1,
+        "I_bulk|mu_full_final": 2,
+        "I_bulk|mu_full_zz": 0,
+        "I_bulk|mu_full_zz_final": 1
+      },
+      "pass_within_10pct_gate_only": {
+        "I_target|mu_full": 1,
+        "I_target|mu_full_final": 1,
+        "I_target|mu_full_zz": 0,
+        "I_target|mu_full_zz_final": 0,
+        "I_imposed_measP|mu_full": 1,
+        "I_imposed_measP|mu_full_final": 1,
+        "I_imposed_measP|mu_full_zz": 0,
+        "I_imposed_measP|mu_full_zz_final": 0,
+        "I_vol|mu_full": 1,
+        "I_vol|mu_full_final": 1,
+        "I_vol|mu_full_zz": 0,
+        "I_vol|mu_full_zz_final": 0,
+        "I_bulk|mu_full": 1,
+        "I_bulk|mu_full_final": 1,
+        "I_bulk|mu_full_zz": 0,
+        "I_bulk|mu_full_zz_final": 0
+      },
+      "points": [
+        {
+          "I_target": 0.01,
+          "abscissae": {
+            "I_target": 0.01,
+            "I_imposed_measP": 0.01020484840369706,
+            "I_vol": 0.003880748339435936,
+            "I_bulk": 0.005901577095376541
+          },
+          "mu": {
+            "mu_full": 0.35123587432397657,
+            "mu_full_final": 0.37507703683715266,
+            "mu_full_zz": 0.2703959150962706,
+            "mu_full_zz_final": 0.28691222648197406
+          },
+          "mu_ref": {
+            "I_target": 0.37548387096774194,
+            "I_imposed_measP": 0.3757906211298153,
+            "I_vol": 0.36612990198657974,
+            "I_bulk": 0.3692603543684821
+          },
+          "err_pct": {
+            "I_target|mu_full": -6.457799793442664,
+            "I_target|mu_full_final": -0.10834929594731868,
+            "I_target|mu_full_zz": -27.98734219944684,
+            "I_target|mu_full_zz_final": -23.588668204972542,
+            "I_imposed_measP|mu_full": -6.53415636931407,
+            "I_imposed_measP|mu_full_final": -0.189888797787785,
+            "I_imposed_measP|mu_full_zz": -28.046124652253248,
+            "I_imposed_measP|mu_full_zz_final": -23.651041204974245,
+            "I_vol|mu_full": -4.067962649810863,
+            "I_vol|mu_full_final": 2.443705035296695,
+            "I_vol|mu_full_zz": -26.147546641469955,
+            "I_vol|mu_full_zz_final": -21.63649433569328,
+            "I_bulk|mu_full": -4.881238895881856,
+            "I_bulk|mu_full_final": 1.575225284777293,
+            "I_bulk|mu_full_zz": -26.77364036041503,
+            "I_bulk|mu_full_zz_final": -22.300831083624395
+          },
+          "rate_ratio": 0.3802847613130637,
+          "profile_r2": 0.5706519556109598,
+          "servo_valid": true,
+          "n_particles": 294,
+          "pressure_control_error_final": -0.03605878867001655
+        },
+        {
+          "I_target": 0.03,
+          "abscissae": {
+            "I_target": 0.03,
+            "I_imposed_measP": 0.031429072105551306,
+            "I_vol": 0.030508724370942167,
+            "I_bulk": 0.03497035292529658
+          },
+          "mu": {
+            "mu_full": 0.345647707237288,
+            "mu_full_final": 0.4089754391840835,
+            "mu_full_zz": 0.3273064458719136,
+            "mu_full_zz_final": 0.39976282428286647
+          },
+          "mu_ref": {
+            "I_target": 0.4036363636363636,
+            "I_imposed_measP": 0.4055178977354773,
+            "I_vol": 0.4043080215988989,
+            "I_bulk": 0.4101112091191122
+          },
+          "err_pct": {
+            "I_target|mu_full": -14.366559017789005,
+            "I_target|mu_full_final": 1.3227439420026688,
+            "I_target|mu_full_zz": -18.9105652119133,
+            "I_target|mu_full_zz_final": -0.959660650641192,
+            "I_imposed_measP|mu_full": -14.763883624501117,
+            "I_imposed_measP|mu_full_final": 0.8526236370611784,
+            "I_imposed_measP|mu_full_zz": -19.286806402459135,
+            "I_imposed_measP|mu_full_zz_final": -1.4191909863285335,
+            "I_vol|mu_full": -14.50881783884217,
+            "I_vol|mu_full_final": 1.1544212174486645,
+            "I_vol|mu_full_zz": -19.045275288496775,
+            "I_vol|mu_full_zz_final": -1.1241917234433574,
+            "I_bulk|mu_full": -15.718541812179899,
+            "I_bulk|mu_full_final": -0.27694193910676734,
+            "I_bulk|mu_full_zz": -20.190807128889976,
+            "I_bulk|mu_full_zz_final": -2.5233118739849347
+          },
+          "rate_ratio": 0.9707166749461056,
+          "profile_r2": 0.8777176951642567,
+          "servo_valid": false,
+          "n_particles": 294,
+          "pressure_control_error_final": -0.05390739195217131
+        },
+        {
+          "I_target": 0.1,
+          "abscissae": {
+            "I_target": 0.1,
+            "I_imposed_measP": 0.10377064566383075,
+            "I_vol": 0.06945577153958724,
+            "I_bulk": 0.07358162034842039
+          },
+          "mu": {
+            "mu_full": 0.36936872379087327,
+            "mu_full_final": 0.37723688765422286,
+            "mu_full_zz": 0.3309338242086505,
+            "mu_full_zz_final": 0.3393510901562284
+          },
+          "mu_ref": {
+            "I_target": 0.48,
+            "I_imposed_measP": 0.48336188985890083,
+            "I_vol": 0.45023751395213923,
+            "I_bulk": 0.45454206482187587
+          },
+          "err_pct": {
+            "I_target|mu_full": -23.048182543568064,
+            "I_target|mu_full_final": -21.40898173870357,
+            "I_target|mu_full_zz": -31.055453289864488,
+            "I_target|mu_full_zz_final": -29.301856217452414,
+            "I_imposed_measP|mu_full": -23.583399614169732,
+            "I_imposed_measP|mu_full_final": -21.955599816869544,
+            "I_imposed_measP|mu_full_zz": -31.53497800472974,
+            "I_imposed_measP|mu_full_zz_final": -29.79357759146277,
+            "I_vol|mu_full": -17.96136209339998,
+            "I_vol|mu_full_final": -16.213803611592525,
+            "I_vol|mu_full_zz": -26.49794520590989,
+            "I_vol|mu_full_zz_final": -24.628428409387983,
+            "I_bulk|mu_full": -18.738274765478526,
+            "I_bulk|mu_full_final": -17.007265806729478,
+            "I_bulk|mu_full_zz": -27.1940157313415,
+            "I_bulk|mu_full_zz_final": -25.34220341318423
+          },
+          "rate_ratio": 0.6693200287544905,
+          "profile_r2": 0.898231430434543,
+          "servo_valid": false,
+          "n_particles": 294,
+          "pressure_control_error_final": -0.0611356752525003
+        },
+        {
+          "I_target": 0.3,
+          "abscissae": {
+            "I_target": 0.3,
+            "I_imposed_measP": 0.3033230611997974,
+            "I_vol": 0.27529082702327795,
+            "I_bulk": 0.34543194742119177
+          },
+          "mu": {
+            "mu_full": 0.43700335290173753,
+            "mu_full_final": 0.43328135919879013,
+            "mu_full_zz": 0.35231054061693057,
+            "mu_full_zz_final": 0.35523992121397996
+          },
+          "mu_ref": {
+            "I_target": 0.6,
+            "I_imposed_measP": 0.6013219032045043,
+            "I_vol": 0.589691819796436,
+            "I_bulk": 0.6168935972640515
+          },
+          "err_pct": {
+            "I_target|mu_full": -27.166107849710407,
+            "I_target|mu_full_final": -27.786440133534974,
+            "I_target|mu_full_zz": -41.2815765638449,
+            "I_target|mu_full_zz_final": -40.793346464336665,
+            "I_imposed_measP|mu_full": -27.32622068597482,
+            "I_imposed_measP|mu_full_final": -27.94518927552936,
+            "I_imposed_measP|mu_full_zz": -41.41065895996261,
+            "I_imposed_measP|mu_full_zz_final": -40.92350215069981,
+            "I_vol|mu_full": -25.892926062194178,
+            "I_vol|mu_full_final": -26.52410214061294,
+            "I_vol|mu_full_zz": -40.255141958972814,
+            "I_vol|mu_full_zz_final": -39.758377293310566,
+            "I_bulk|mu_full": -29.160659984174675,
+            "I_bulk|mu_full_final": -29.764004502492682,
+            "I_bulk|mu_full_zz": -42.889577363188344,
+            "I_bulk|mu_full_zz_final": -42.414717418127914
+          },
+          "rate_ratio": 0.9075829115477152,
+          "profile_r2": 0.969050430147211,
+          "servo_valid": true,
+          "n_particles": 294,
+          "pressure_control_error_final": -0.004904672061274096
+        }
+      ],
+      "budget": [
+        {
+          "delta_ref_pct": -2.4911773059796194,
+          "explained_tail": 0.38576254849355873,
+          "explained_final": null
+        },
+        {
+          "delta_ref_pct": 0.1664017474749535,
+          "explained_tail": -0.0115825750111012,
+          "explained_final": 0.12580042303804992
+        },
+        {
+          "delta_ref_pct": -6.20051792663766,
+          "explained_tail": 0.26902415905969157,
+          "explained_final": 0.28962227173225363
+        },
+        {
+          "delta_ref_pct": -1.7180300339273202,
+          "explained_tail": 0.06324167022496874,
+          "explained_final": 0.06182979991934481
+        }
+      ]
+    },
+    "bulk_rheometry": {
+      "ordinates": [
+        "mu_wall",
+        "mu_wall_final"
+      ],
+      "n_points": 4,
+      "n_gate_pass": 2,
+      "pass_within_10pct_all_points": {
+        "I_target|mu_wall": 0,
+        "I_target|mu_wall_final": 1,
+        "I_imposed_measP|mu_wall": 0,
+        "I_imposed_measP|mu_wall_final": 1,
+        "I_vol|mu_wall": 0,
+        "I_vol|mu_wall_final": 1,
+        "I_bulk|mu_wall": 0,
+        "I_bulk|mu_wall_final": 1
+      },
+      "pass_within_10pct_gate_only": {
+        "I_target|mu_wall": 0,
+        "I_target|mu_wall_final": 0,
+        "I_imposed_measP|mu_wall": 0,
+        "I_imposed_measP|mu_wall_final": 0,
+        "I_vol|mu_wall": 0,
+        "I_vol|mu_wall_final": 0,
+        "I_bulk|mu_wall": 0,
+        "I_bulk|mu_wall_final": 0
+      },
+      "points": [
+        {
+          "I_target": 0.01,
+          "abscissae": {
+            "I_target": 0.01,
+            "I_imposed_measP": 0.01020484840369706,
+            "I_vol": 0.003880748339435936,
+            "I_bulk": 0.005901577095376541
+          },
+          "mu": {
+            "mu_wall": 0.27093177554963094,
+            "mu_wall_final": 0.2878896246357754
+          },
+          "mu_ref": {
+            "I_target": 0.37548387096774194,
+            "I_imposed_measP": 0.3757906211298153,
+            "I_vol": 0.36612990198657974,
+            "I_bulk": 0.3692603543684821
+          },
+          "err_pct": {
+            "I_target|mu_wall": -27.844630223036436,
+            "I_target|mu_wall_final": -23.328364572946413,
+            "I_imposed_measP|mu_wall": -27.90352916869666,
+            "I_imposed_measP|mu_wall_final": -23.390950053454073,
+            "I_vol|mu_wall": -26.001188627428263,
+            "I_vol|mu_wall_final": -21.369540408003118,
+            "I_bulk|mu_wall": -26.628523115354486,
+            "I_bulk|mu_wall_final": -22.036140292360628
+          },
+          "rate_ratio": 0.3802847613130637,
+          "profile_r2": 0.5706519556109598,
+          "servo_valid": true,
+          "n_particles": 294,
+          "pressure_control_error_final": -0.03605878867001655
+        },
+        {
+          "I_target": 0.03,
+          "abscissae": {
+            "I_target": 0.03,
+            "I_imposed_measP": 0.031429072105551306,
+            "I_vol": 0.030508724370942167,
+            "I_bulk": 0.03497035292529658
+          },
+          "mu": {
+            "mu_wall": 0.33273327179945655,
+            "mu_wall_final": 0.4119737410998152
+          },
+          "mu_ref": {
+            "I_target": 0.4036363636363636,
+            "I_imposed_measP": 0.4055178977354773,
+            "I_vol": 0.4043080215988989,
+            "I_bulk": 0.4101112091191122
+          },
+          "err_pct": {
+            "I_target|mu_wall": -17.566081310945446,
+            "I_target|mu_wall_final": 2.0655664886929603,
+            "I_imposed_measP|mu_wall": -17.948560678201876,
+            "I_imposed_measP|mu_wall_final": 1.5919996134299064,
+            "I_vol|mu_wall": -17.703024915604903,
+            "I_vol|mu_wall_final": 1.8960097478652571,
+            "I_bulk|mu_wall": -18.8675499715937,
+            "I_bulk|mu_wall_final": 0.4541529076231843
+          },
+          "rate_ratio": 0.9707166749461056,
+          "profile_r2": 0.8777176951642567,
+          "servo_valid": false,
+          "n_particles": 294,
+          "pressure_control_error_final": -0.05390739195217131
+        },
+        {
+          "I_target": 0.1,
+          "abscissae": {
+            "I_target": 0.1,
+            "I_imposed_measP": 0.10377064566383075,
+            "I_vol": 0.06945577153958724,
+            "I_bulk": 0.07358162034842039
+          },
+          "mu": {
+            "mu_wall": 0.33045454519788997,
+            "mu_wall_final": 0.33087408822494585
+          },
+          "mu_ref": {
+            "I_target": 0.48,
+            "I_imposed_measP": 0.48336188985890083,
+            "I_vol": 0.45023751395213923,
+            "I_bulk": 0.45454206482187587
+          },
+          "err_pct": {
+            "I_target|mu_wall": -31.15530308377292,
+            "I_target|mu_wall_final": -31.067898286469607,
+            "I_imposed_measP|mu_wall": -31.634133321029168,
+            "I_imposed_measP|mu_wall_final": -31.547336443605023,
+            "I_vol|mu_wall": -26.604395467362664,
+            "I_vol|mu_wall_final": -26.511212866167753,
+            "I_bulk|mu_wall": -27.299457900032376,
+            "I_bulk|mu_wall_final": -27.207157745761666
+          },
+          "rate_ratio": 0.6693200287544905,
+          "profile_r2": 0.898231430434543,
+          "servo_valid": false,
+          "n_particles": 294,
+          "pressure_control_error_final": -0.0611356752525003
+        },
+        {
+          "I_target": 0.3,
+          "abscissae": {
+            "I_target": 0.3,
+            "I_imposed_measP": 0.3033230611997974,
+            "I_vol": 0.27529082702327795,
+            "I_bulk": 0.34543194742119177
+          },
+          "mu": {
+            "mu_wall": 0.35176977722411057,
+            "mu_wall_final": 0.3547155312355176
+          },
+          "mu_ref": {
+            "I_target": 0.6,
+            "I_imposed_measP": 0.6013219032045043,
+            "I_vol": 0.589691819796436,
+            "I_bulk": 0.6168935972640515
+          },
+          "err_pct": {
+            "I_target|mu_wall": -41.371703795981574,
+            "I_target|mu_wall_final": -40.88074479408041,
+            "I_imposed_measP|mu_wall": -41.5005880628172,
+            "I_imposed_measP|mu_wall_final": -41.01070835018595,
+            "I_vol|mu_wall": -40.34684467124829,
+            "I_vol|mu_wall_final": -39.84730340028003,
+            "I_bulk|mu_wall": -42.97723646602526,
+            "I_bulk|mu_wall_final": -42.49972234941397
+          },
+          "rate_ratio": 0.9075829115477152,
+          "profile_r2": 0.969050430147211,
+          "servo_valid": true,
+          "n_particles": 294,
+          "pressure_control_error_final": -0.004904672061274096
+        }
+      ],
+      "budget": [
+        {
+          "delta_ref_pct": -2.4911773059796194,
+          "explained_tail": 0.08946706370403214,
+          "explained_final": 0.10678748174523145
+        },
+        {
+          "delta_ref_pct": 0.1664017474749535,
+          "explained_tail": -0.009472900900855353,
+          "explained_final": 0.08055986015741785
+        },
+        {
+          "delta_ref_pct": -6.20051792663766,
+          "explained_tail": 0.19901966320036116,
+          "explained_final": 0.19957957469360105
+        },
+        {
+          "delta_ref_pct": -1.7180300339273202,
+          "explained_tail": 0.04152669279465818,
+          "explained_final": 0.042025409335890905
+        }
+      ]
+    }
+  },
+  "figure": true
+}
