@@ -1,0 +1,4696 @@
+{
+ "mission_id": 17417,
+ "anchor": "XVAL-DEM-FINITE-SIZE-BEFORE-CONTROLLER",
+ "prereg": {
+  "mission_id": 17417,
+  "anchor": "XVAL-DEM-FINITE-SIZE-BEFORE-CONTROLLER",
+  "written_before_runs": true,
+  "decision": "Should TensorDEM's LBM-DEM closure calibration apply the periodic-box (finite-size) drag enhancement BEFORE the flow controller / settling drive is set, instead of only as a post-hoc division of the measured force?  Answer decides whether `SettlingSpec.finite_size_in_drive` becomes the default path and whether the post-hoc multiplication must be switched off together with it.",
+  "alternatives": {
+   "M0_posthoc_only": "drive/seed from the unbounded Stokes force; array correction applied only to the reported number (current code path: finite_size_in_drive=False, apply_array_correction_posthoc=True)",
+   "M1_drive_and_posthoc": "correction folded into the drive AND kept in the post-processing (double counting, lambda^2)",
+   "M2_drive_only": "correction folded into the drive, no post-hoc multiplication (the 'finite-size-before-controller' practice)"
+  },
+  "hypothesis": [
+   "H1 (operating point): M0's achieved Re at L/d=4 is biased low by (1/lambda - 1) = -43.7% because the drive is built for unbounded Stokes drag while the periodic array has lambda = 1.7754 > 1. M2 removes that bias to within the IBM/SN residual.",
+   "H2 (double counting): M1's reported corrected velocity is high by (lambda - 1) = +77.5% at L/d=4, i.e. applying the correction in both places is worse than not applying it at all.",
+   "H3 (fixed-sphere seed): for the constant-flow-rate pump the converged ratio is seed independent; correction_timing affects only the transient (steps to within 2% of the final force), by a factor to be measured at L/d=4, gain in {0.005, 0.02}.",
+   "H4 (formula validity): the dilute Hasimoto/Sangani-Acrivos ratio lambda(phi)=1+1.7601 phi^(1/3)+phi reproduces the measured array ratio to <15% for phi <= 0.0654 at fixed resolution; the residual is dominated by the IBM resolution error, not by the phi term."
+  ],
+  "metrics": {
+   "xval_error": "|measured ratio / analytic ratio - 1| per phi for the fixed-sphere array drag",
+   "operating_point": "re_terminal_vs_target = Re_terminal/Re_target - 1 (settling)",
+   "reported_bias": "u_rel_error_sn_corrected (settling, reported corrected velocity vs Schiller-Naumann at the measured Re)",
+   "convergence": "steps_to_within_2pct (first sample with |F - F_final|/|F_final| <= 0.02)",
+   "steadiness": "|mean(tail window) - mean(previous window)| / u_terminal"
+  },
+  "thresholds": {
+   "xval_accept": 0.15,
+   "operating_point_accept": 0.05,
+   "convergence_material_factor": 2.0,
+   "steadiness_accept": 0.02
+  },
+  "stopping_rule": "Run the pre-declared case list once; no case is added after inspecting results. If a case does not reach steady state within its step budget the outcome is reported as a budget-limited FAIL, not re-run with a larger budget.",
+  "variables": {
+   "controlled": [
+    "tau0=0.8 (nu=0.1)",
+    "Re_target",
+    "density_ratio=2 (settling)",
+    "scheme=mem",
+    "dtype=float32",
+    "lattice code version (git sha recorded)"
+   ],
+   "changed": [
+    "L/d in {4,6,8,16} (=> phi and lambda)",
+    "correction placement M0/M1/M2",
+    "controller_gain in {0.005,0.02}",
+    "sphere diameter d in {4,6,8} at fixed L/d=8"
+   ],
+   "confounders": [
+    "IBM/MEM discretisation error grows as d shrinks (independent of phi at fixed d) - handled by the fixed-resolution phi scan and by the d-scan at fixed L/d",
+    "Schiller-Naumann is itself only ~1-2% accurate at Re~1",
+    "float32 round-off limits force-drift convergence to ~1e-4"
+   ]
+  },
+  "environment": {
+   "host": "m17417 worktree, CPU torch, torch threads pinned per worker",
+   "note": "cluster queue depth 517 at submission time -> sweep kept to <=6 min per single case and run in parallel workers; every run's wall time is recorded"
+  }
+ },
+ "environment": {
+  "git_sha": "b191d10c",
+  "python": "3.11.6",
+  "torch": "2.7.1",
+  "host": "36cb7828dbd5",
+  "nproc": 128,
+  "workers": 4,
+  "td_threads": 10,
+  "cluster_queue_depth_at_submit": 517,
+  "not_run": [
+   "settle_ld8_M2_drive_only",
+   "fixed_phi_ld8_d8",
+   "fixed_phi_ld16_d4"
+  ],
+  "not_run_reason": "background sweeps were reaped by the sandbox after ~10 min; the three remaining cases need >=230 s each and the cluster queue stood at 517, so they are reported not_run"
+ },
+ "cases": [
+  {
+   "label": "fixed_ld4_g0.005_after",
+   "kind": "fixed_sphere",
+   "scheme": "mem",
+   "diameter": 6.0,
+   "domain_length": 24,
+   "domain_ratio": 4.0,
+   "n_spheres": 1,
+   "separation_radius": null,
+   "solid_fraction": 0.008181230868723419,
+   "array_correction": 1.362839610651772,
+   "smagorinsky_cs": 0.0,
+   "tau0": 0.8,
+   "nu": 0.10000000000000002,
+   "re_target": 0.05,
+   "re_measured": 0.037503871652815074,
+   "reynolds": 0.037503871652815074,
+   "u_mean": 0.000625064527546918,
+   "max_mach": 0.0013156057426126466,
+   "force_total": 0.004954975098371506,
+   "force_per_sphere": [
+    0.004954975098371506
+   ],
+   "force_estimated": 0.004712388980384692,
+   "force_estimated_unbounded": 0.004712388980384692,
+   "correction_timing": "after",
+   "seed_correction": 1.0,
+   "pump_force": 0.06135844589588138,
+   "body_force": 4.438544986681234e-06,
+   "u_target": 0.0008333333333333335,
+   "flow_control": true,
+   "momentum_balance_ratio": 0.08075457300172759,
+   "cd_measured": 897.0762998324631,
+   "cd_schiller_naumann": 649.9943637796246,
+   "cd_rel_error": 0.3801293516086697,
+   "stokes_ratio": 1.4018264338207893,
+   "stokes_ratio_corrected": 1.0286070516767356,
+   "n_interface": [
+    179
+   ],
+   "n_markers": [],
+   "steps": 3000,
+   "converged": false,
+   "history": [
+    {
+     "step": 50.0,
+     "force": 0.0077645257115364075,
+     "u_mean": 0.0008032548206823843,
+     "max_mach": 0.001539093516447896
+    },
+    {
+     "step": 100.0,
+     "force": 0.007438709959387779,
+     "u_mean": 0.0007941507630878025,
+     "max_mach": 0.0015741605534310473
+    },
+    {
+     "step": 150.0,
+     "force": 0.006599210202693939,
+     "u_mean": 0.000786512538238808,
+     "max_mach": 0.0015925135761248109
+    },
+    {
+     "step": 200.0,
+     "force": 0.006333678960800171,
+     "u_mean": 0.000780043778596101,
+     "max_mach": 0.001594518959416404
+    },
+    {
+     "step": 250.0,
+     "force": 0.0060855187475681305,
+     "u_mean": 0.0007742853076369674,
+     "max_mach": 0.0015957346304098197
+    },
+    {
+     "step": 300.0,
+     "force": 0.006049098446965218,
+     "u_mean": 0.0007688314826400192,
+     "max_mach": 0.0015956774662488258
+    },
+    {
+     "step": 350.0,
+     "force": 0.0060854461044073105,
+     "u_mean": 0.0007635779954768994,
+     "max_mach": 0.0015953696669833673
+    },
+    {
+     "step": 400.0,
+     "force": 0.006041308864951134,
+     "u_mean": 0.0007585193271990176,
+     "max_mach": 0.0015920584808466322
+    },
+    {
+     "step": 450.0,
+     "force": 0.005962032824754715,
+     "u_mean": 0.0007536427842246161,
+     "max_mach": 0.0015849595389276256
+    },
+    {
+     "step": 500.0,
+     "force": 0.005899645388126373,
+     "u_mean": 0.000748964923399466,
+     "max_mach": 0.0015759021951967844
+    },
+    {
+     "step": 550.0,
+     "force": 0.005861271172761917,
+     "u_mean": 0.0007444272438685099,
+     "max_mach": 0.0015670939742910162
+    },
+    {
+     "step": 600.0,
+     "force": 0.005835693329572678,
+     "u_mean": 0.0007400120849962588,
+     "max_mach": 0.0015584043160895321
+    },
+    {
+     "step": 650.0,
+     "force": 0.005806125700473785,
+     "u_mean": 0.0007357238619415848,
+     "max_mach": 0.0015501793309357055
+    },
+    {
+     "step": 700.0,
+     "force": 0.00577210821211338,
+     "u_mean": 0.0007315598152301929,
+     "max_mach": 0.0015418125947935938
+    },
+    {
+     "step": 750.0,
+     "force": 0.005738446488976479,
+     "u_mean": 0.0007275238081260964,
+     "max_mach": 0.0015332234527623233
+    },
+    {
+     "step": 800.0,
+     "force": 0.00570601224899292,
+     "u_mean": 0.000723597076204088,
+     "max_mach": 0.0015248469372134805
+    },
+    {
+     "step": 850.0,
+     "force": 0.005675729364156723,
+     "u_mean": 0.0007197729967258594,
+     "max_mach": 0.0015170224036424908
+    },
+    {
+     "step": 900.0,
+     "force": 0.005647774785757065,
+     "u_mean": 0.0007160681265371817,
+     "max_mach": 0.0015095390403021959
+    },
+    {
+     "step": 950.0,
+     "force": 0.005620548501610756,
+     "u_mean": 0.0007124719796357331,
+     "max_mach": 0.0015020889471085114
+    },
+    {
+     "step": 1000.0,
+     "force": 0.005594465881586075,
+     "u_mean": 0.0007089679991757428,
+     "max_mach": 0.0014947415880948143
+    },
+    {
+     "step": 1050.0,
+     "force": 0.005567878484725952,
+     "u_mean": 0.0007055423877857349,
+     "max_mach": 0.0014871070976340077
+    },
+    {
+     "step": 1100.0,
+     "force": 0.005541909486055374,
+     "u_mean": 0.0007022094947320444,
+     "max_mach": 0.0014796895688565508
+    },
+    {
+     "step": 1150.0,
+     "force": 0.005520038306713104,
+     "u_mean": 0.0006989753908581204,
+     "max_mach": 0.0014726936635734102
+    },
+    {
+     "step": 1200.0,
+     "force": 0.005494588986039162,
+     "u_mean": 0.0006958064105775622,
+     "max_mach": 0.0014660948828584452
+    },
+    {
+     "step": 1250.0,
+     "force": 0.005470322445034981,
+     "u_mean": 0.0006927075209441009,
+     "max_mach": 0.0014596286786367912
+    },
+    {
+     "step": 1300.0,
+     "force": 0.005447568371891975,
+     "u_mean": 0.0006897190102824459,
+     "max_mach": 0.0014532044149635913
+    },
+    {
+     "step": 1350.0,
+     "force": 0.005425421521067619,
+     "u_mean": 0.0006867983826884517,
+     "max_mach": 0.001446767448143504
+    },
+    {
+     "step": 1400.0,
+     "force": 0.005403229966759682,
+     "u_mean": 0.0006839881340662638,
+     "max_mach": 0.0014408005985768828
+    },
+    {
+     "step": 1450.0,
+     "force": 0.005381375551223755,
+     "u_mean": 0.0006812551507243404,
+     "max_mach": 0.0014352796697934662
+    },
+    {
+     "step": 1500.0,
+     "force": 0.005361700430512428,
+     "u_mean": 0.0006785955693986681,
+     "max_mach": 0.0014300942653976832
+    },
+    {
+     "step": 1550.0,
+     "force": 0.005339786410331726,
+     "u_mean": 0.0006760165647224143,
+     "max_mach": 0.0014245861405797803
+    },
+    {
+     "step": 1600.0,
+     "force": 0.005322786048054695,
+     "u_mean": 0.000673495509006359,
+     "max_mach": 0.0014192034341327354
+    },
+    {
+     "step": 1650.0,
+     "force": 0.005302656441926956,
+     "u_mean": 0.000671052822360286,
+     "max_mach": 0.001414169862587847
+    },
+    {
+     "step": 1700.0,
+     "force": 0.0052869562059640884,
+     "u_mean": 0.0006686730517281427,
+     "max_mach": 0.0014088357507185784
+    },
+    {
+     "step": 1750.0,
+     "force": 0.0052681565284729,
+     "u_mean": 0.0006663484705819024,
+     "max_mach": 0.0014037314044981733
+    },
+    {
+     "step": 1800.0,
+     "force": 0.005250468850135803,
+     "u_mean": 0.0006640807346061424,
+     "max_mach": 0.0013988483551620398
+    },
+    {
+     "step": 1850.0,
+     "force": 0.005235383287072182,
+     "u_mean": 0.0006618814335929023,
+     "max_mach": 0.001393727978780086
+    },
+    {
+     "step": 1900.0,
+     "force": 0.005217051133513451,
+     "u_mean": 0.0006597428410141556,
+     "max_mach": 0.0013893681781133693
+    },
+    {
+     "step": 1950.0,
+     "force": 0.00520160049200058,
+     "u_mean": 0.0006576737871876469,
+     "max_mach": 0.0013849921456478519
+    },
+    {
+     "step": 2000.0,
+     "force": 0.005188796669244766,
+     "u_mean": 0.000655653852003592,
+     "max_mach": 0.0013806779150001287
+    },
+    {
+     "step": 2050.0,
+     "force": 0.005173932760953903,
+     "u_mean": 0.0006537045593614932,
+     "max_mach": 0.001376382940709989
+    },
+    {
+     "step": 2100.0,
+     "force": 0.005158849060535431,
+     "u_mean": 0.0006517845171469229,
+     "max_mach": 0.001372388103469725
+    },
+    {
+     "step": 2150.0,
+     "force": 0.005142254754900932,
+     "u_mean": 0.0006499257352617052,
+     "max_mach": 0.0013682094738740954
+    },
+    {
+     "step": 2200.0,
+     "force": 0.005130494013428688,
+     "u_mean": 0.000648112760649787,
+     "max_mach": 0.0013639949528475772
+    },
+    {
+     "step": 2250.0,
+     "force": 0.005116008222103119,
+     "u_mean": 0.0006463489046803227,
+     "max_mach": 0.0013606514039318665
+    },
+    {
+     "step": 2300.0,
+     "force": 0.005104029551148415,
+     "u_mean": 0.0006446120915589509,
+     "max_mach": 0.001356834007473524
+    },
+    {
+     "step": 2350.0,
+     "force": 0.005089739337563515,
+     "u_mean": 0.0006429398501360858,
+     "max_mach": 0.0013536938097266406
+    },
+    {
+     "step": 2400.0,
+     "force": 0.0050780754536390305,
+     "u_mean": 0.0006413167273556745,
+     "max_mach": 0.0013504115585355938
+    },
+    {
+     "step": 2450.0,
+     "force": 0.005065113306045532,
+     "u_mean": 0.0006397305815308182,
+     "max_mach": 0.0013470396795859513
+    },
+    {
+     "step": 2500.0,
+     "force": 0.005053481087088585,
+     "u_mean": 0.0006382056960353145,
+     "max_mach": 0.0013440383090871965
+    },
+    {
+     "step": 2550.0,
+     "force": 0.005042405799031258,
+     "u_mean": 0.0006367183393902249,
+     "max_mach": 0.0013408242112873878
+    },
+    {
+     "step": 2600.0,
+     "force": 0.0050306860357522964,
+     "u_mean": 0.0006352679597006904,
+     "max_mach": 0.0013378806098613835
+    },
+    {
+     "step": 2650.0,
+     "force": 0.005020810291171074,
+     "u_mean": 0.0006338633872844555,
+     "max_mach": 0.0013350308705762709
+    },
+    {
+     "step": 2700.0,
+     "force": 0.005010206252336502,
+     "u_mean": 0.000632500206982648,
+     "max_mach": 0.001331997641391671
+    },
+    {
+     "step": 2750.0,
+     "force": 0.005000695586204529,
+     "u_mean": 0.0006311668290032281,
+     "max_mach": 0.001329215652223292
+    },
+    {
+     "step": 2800.0,
+     "force": 0.004986172541975975,
+     "u_mean": 0.0006298687722947863,
+     "max_mach": 0.0013263046152135155
+    },
+    {
+     "step": 2850.0,
+     "force": 0.004980981349945068,
+     "u_mean": 0.0006286181785442211,
+     "max_mach": 0.0013235938039951574
+    },
+    {
+     "step": 2900.0,
+     "force": 0.004970569163560867,
+     "u_mean": 0.0006274045617492111,
+     "max_mach": 0.0013209215054919663
+    },
+    {
+     "step": 2950.0,
+     "force": 0.004960794001817703,
+     "u_mean": 0.0006262212991714478,
+     "max_mach": 0.0013185943091458877
+    },
+    {
+     "step": 3000.0,
+     "force": 0.004954975098371506,
+     "u_mean": 0.000625064527546918,
+     "max_mach": 0.0013156057426126466
+    }
+   ],
+   "steps_to_within_2pct": 2500,
+   "converged_flag": false,
+   "stokes_ratio_corrected_at_600": 1.0232612393449767,
+   "stokes_ratio_corrected_at_1200": 1.0246597103184616,
+   "stokes_ratio_unbounded_model": 1.362839610651772,
+   "xval_error_vs_hasimoto": 0.028607051676735606,
+   "wall_seconds": 21.650688648223877
+  },
+  {
+   "label": "fixed_ld4_g0.005_before",
+   "kind": "fixed_sphere",
+   "scheme": "mem",
+   "diameter": 6.0,
+   "domain_length": 24,
+   "domain_ratio": 4.0,
+   "n_spheres": 1,
+   "separation_radius": null,
+   "solid_fraction": 0.008181230868723419,
+   "array_correction": 1.362839610651772,
+   "smagorinsky_cs": 0.0,
+   "tau0": 0.8,
+   "nu": 0.10000000000000002,
+   "re_target": 0.05,
+   "re_measured": 0.0483460227648417,
+   "reynolds": 0.0483460227648417,
+   "u_mean": 0.0008057670460806952,
+   "max_mach": 0.0016915074859030408,
+   "force_total": 0.006400905549526215,
+   "force_per_sphere": [
+    0.006400905549526215
+   ],
+   "force_estimated": 0.006422230363267175,
+   "force_estimated_unbounded": 0.004712388980384692,
+   "correction_timing": "before",
+   "seed_correction": 1.362839610651772,
+   "pump_force": 0.00701977558881717,
+   "body_force": 5.07796266552168e-07,
+   "u_target": 0.0008333333333333335,
+   "flow_control": true,
+   "momentum_balance_ratio": 0.9118390564682944,
+   "cd_measured": 697.3648104429233,
+   "cd_schiller_naumann": 505.7131451600105,
+   "cd_rel_error": 0.37897307419658444,
+   "stokes_ratio": 1.4047839583780453,
+   "stokes_ratio_corrected": 1.0307771709880178,
+   "n_interface": [
+    179
+   ],
+   "n_markers": [],
+   "steps": 550,
+   "converged": true,
+   "history": [
+    {
+     "step": 50.0,
+     "force": 0.007865631952881813,
+     "u_mean": 0.0008097048158998843,
+     "max_mach": 0.0015511205736288992
+    },
+    {
+     "step": 100.0,
+     "force": 0.007593249902129173,
+     "u_mean": 0.0008068399296866523,
+     "max_mach": 0.0015983085299339451
+    },
+    {
+     "step": 150.0,
+     "force": 0.0068064965307712555,
+     "u_mean": 0.0008052283966982806,
+     "max_mach": 0.0016281625382177642
+    },
+    {
+     "step": 200.0,
+     "force": 0.006590645760297775,
+     "u_mean": 0.000804620760458487,
+     "max_mach": 0.001642211613763666
+    },
+    {
+     "step": 250.0,
+     "force": 0.0063882265239953995,
+     "u_mean": 0.0008045556368651214,
+     "max_mach": 0.0016551995732699506
+    },
+    {
+     "step": 300.0,
+     "force": 0.006391290575265884,
+     "u_mean": 0.0008046384210939761,
+     "max_mach": 0.0016667080194383373
+    },
+    {
+     "step": 350.0,
+     "force": 0.0064688678830862045,
+     "u_mean": 0.000804778050493311,
+     "max_mach": 0.0016772435658649373
+    },
+    {
+     "step": 400.0,
+     "force": 0.006465476006269455,
+     "u_mean": 0.0008049695580093949,
+     "max_mach": 0.001684982302785123
+    },
+    {
+     "step": 450.0,
+     "force": 0.006423346698284149,
+     "u_mean": 0.0008052101841679325,
+     "max_mach": 0.0016883095190834067
+    },
+    {
+     "step": 500.0,
+     "force": 0.006400555372238159,
+     "u_mean": 0.0008054855797025892,
+     "max_mach": 0.0016898415589254986
+    },
+    {
+     "step": 550.0,
+     "force": 0.006400905549526215,
+     "u_mean": 0.0008057670460806952,
+     "max_mach": 0.0016915074859030408
+    }
+   ],
+   "steps_to_within_2pct": 250,
+   "converged_flag": true,
+   "stokes_ratio_unbounded_model": 1.362839610651772,
+   "xval_error_vs_hasimoto": 0.0307771709880178,
+   "wall_seconds": 4.5858354568481445
+  },
+  {
+   "label": "fixed_ld4_g0.02_after",
+   "kind": "fixed_sphere",
+   "scheme": "mem",
+   "diameter": 6.0,
+   "domain_length": 24,
+   "domain_ratio": 4.0,
+   "n_spheres": 1,
+   "separation_radius": null,
+   "solid_fraction": 0.008181230868723419,
+   "array_correction": 1.362839610651772,
+   "smagorinsky_cs": 0.0,
+   "tau0": 0.8,
+   "nu": 0.10000000000000002,
+   "re_target": 0.05,
+   "re_measured": 0.037503871652815074,
+   "reynolds": 0.037503871652815074,
+   "u_mean": 0.000625064527546918,
+   "max_mach": 0.0013156057426126466,
+   "force_total": 0.004954975098371506,
+   "force_per_sphere": [
+    0.004954975098371506
+   ],
+   "force_estimated": 0.004712388980384692,
+   "force_estimated_unbounded": 0.004712388980384692,
+   "correction_timing": "after",
+   "seed_correction": 1.0,
+   "pump_force": 0.09424777960769384,
+   "body_force": 6.817692390602853e-06,
+   "u_target": 0.0008333333333333335,
+   "flow_control": true,
+   "momentum_balance_ratio": 0.05257391865353834,
+   "cd_measured": 897.0762998324631,
+   "cd_schiller_naumann": 649.9943637796246,
+   "cd_rel_error": 0.3801293516086697,
+   "stokes_ratio": 1.4018264338207893,
+   "stokes_ratio_corrected": 1.0286070516767356,
+   "n_interface": [
+    179
+   ],
+   "n_markers": [],
+   "steps": 3000,
+   "converged": false,
+   "history": [
+    {
+     "step": 50.0,
+     "force": 0.0077645257115364075,
+     "u_mean": 0.0008032548206823843,
+     "max_mach": 0.001539093516447896
+    },
+    {
+     "step": 100.0,
+     "force": 0.007438709959387779,
+     "u_mean": 0.0007941507630878025,
+     "max_mach": 0.0015741605534310473
+    },
+    {
+     "step": 150.0,
+     "force": 0.006599210202693939,
+     "u_mean": 0.000786512538238808,
+     "max_mach": 0.0015925135761248109
+    },
+    {
+     "step": 200.0,
+     "force": 0.006333678960800171,
+     "u_mean": 0.000780043778596101,
+     "max_mach": 0.001594518959416404
+    },
+    {
+     "step": 250.0,
+     "force": 0.0060855187475681305,
+     "u_mean": 0.0007742853076369674,
+     "max_mach": 0.0015957346304098197
+    },
+    {
+     "step": 300.0,
+     "force": 0.006049098446965218,
+     "u_mean": 0.0007688314826400192,
+     "max_mach": 0.0015956774662488258
+    },
+    {
+     "step": 350.0,
+     "force": 0.0060854461044073105,
+     "u_mean": 0.0007635779954768994,
+     "max_mach": 0.0015953696669833673
+    },
+    {
+     "step": 400.0,
+     "force": 0.006041308864951134,
+     "u_mean": 0.0007585193271990176,
+     "max_mach": 0.0015920584808466322
+    },
+    {
+     "step": 450.0,
+     "force": 0.005962032824754715,
+     "u_mean": 0.0007536427842246161,
+     "max_mach": 0.0015849595389276256
+    },
+    {
+     "step": 500.0,
+     "force": 0.005899645388126373,
+     "u_mean": 0.000748964923399466,
+     "max_mach": 0.0015759021951967844
+    },
+    {
+     "step": 550.0,
+     "force": 0.005861271172761917,
+     "u_mean": 0.0007444272438685099,
+     "max_mach": 0.0015670939742910162
+    },
+    {
+     "step": 600.0,
+     "force": 0.005835693329572678,
+     "u_mean": 0.0007400120849962588,
+     "max_mach": 0.0015584043160895321
+    },
+    {
+     "step": 650.0,
+     "force": 0.005806125700473785,
+     "u_mean": 0.0007357238619415848,
+     "max_mach": 0.0015501793309357055
+    },
+    {
+     "step": 700.0,
+     "force": 0.00577210821211338,
+     "u_mean": 0.0007315598152301929,
+     "max_mach": 0.0015418125947935938
+    },
+    {
+     "step": 750.0,
+     "force": 0.005738446488976479,
+     "u_mean": 0.0007275238081260964,
+     "max_mach": 0.0015332234527623233
+    },
+    {
+     "step": 800.0,
+     "force": 0.00570601224899292,
+     "u_mean": 0.000723597076204088,
+     "max_mach": 0.0015248469372134805
+    },
+    {
+     "step": 850.0,
+     "force": 0.005675729364156723,
+     "u_mean": 0.0007197729967258594,
+     "max_mach": 0.0015170224036424908
+    },
+    {
+     "step": 900.0,
+     "force": 0.005647774785757065,
+     "u_mean": 0.0007160681265371817,
+     "max_mach": 0.0015095390403021959
+    },
+    {
+     "step": 950.0,
+     "force": 0.005620548501610756,
+     "u_mean": 0.0007124719796357331,
+     "max_mach": 0.0015020889471085114
+    },
+    {
+     "step": 1000.0,
+     "force": 0.005594465881586075,
+     "u_mean": 0.0007089679991757428,
+     "max_mach": 0.0014947415880948143
+    },
+    {
+     "step": 1050.0,
+     "force": 0.005567878484725952,
+     "u_mean": 0.0007055423877857349,
+     "max_mach": 0.0014871070976340077
+    },
+    {
+     "step": 1100.0,
+     "force": 0.005541909486055374,
+     "u_mean": 0.0007022094947320444,
+     "max_mach": 0.0014796895688565508
+    },
+    {
+     "step": 1150.0,
+     "force": 0.005520038306713104,
+     "u_mean": 0.0006989753908581204,
+     "max_mach": 0.0014726936635734102
+    },
+    {
+     "step": 1200.0,
+     "force": 0.005494588986039162,
+     "u_mean": 0.0006958064105775622,
+     "max_mach": 0.0014660948828584452
+    },
+    {
+     "step": 1250.0,
+     "force": 0.005470322445034981,
+     "u_mean": 0.0006927075209441009,
+     "max_mach": 0.0014596286786367912
+    },
+    {
+     "step": 1300.0,
+     "force": 0.005447568371891975,
+     "u_mean": 0.0006897190102824459,
+     "max_mach": 0.0014532044149635913
+    },
+    {
+     "step": 1350.0,
+     "force": 0.005425421521067619,
+     "u_mean": 0.0006867983826884517,
+     "max_mach": 0.001446767448143504
+    },
+    {
+     "step": 1400.0,
+     "force": 0.005403229966759682,
+     "u_mean": 0.0006839881340662638,
+     "max_mach": 0.0014408005985768828
+    },
+    {
+     "step": 1450.0,
+     "force": 0.005381375551223755,
+     "u_mean": 0.0006812551507243404,
+     "max_mach": 0.0014352796697934662
+    },
+    {
+     "step": 1500.0,
+     "force": 0.005361700430512428,
+     "u_mean": 0.0006785955693986681,
+     "max_mach": 0.0014300942653976832
+    },
+    {
+     "step": 1550.0,
+     "force": 0.005339786410331726,
+     "u_mean": 0.0006760165647224143,
+     "max_mach": 0.0014245861405797803
+    },
+    {
+     "step": 1600.0,
+     "force": 0.005322786048054695,
+     "u_mean": 0.000673495509006359,
+     "max_mach": 0.0014192034341327354
+    },
+    {
+     "step": 1650.0,
+     "force": 0.005302656441926956,
+     "u_mean": 0.000671052822360286,
+     "max_mach": 0.001414169862587847
+    },
+    {
+     "step": 1700.0,
+     "force": 0.0052869562059640884,
+     "u_mean": 0.0006686730517281427,
+     "max_mach": 0.0014088357507185784
+    },
+    {
+     "step": 1750.0,
+     "force": 0.0052681565284729,
+     "u_mean": 0.0006663484705819024,
+     "max_mach": 0.0014037314044981733
+    },
+    {
+     "step": 1800.0,
+     "force": 0.005250468850135803,
+     "u_mean": 0.0006640807346061424,
+     "max_mach": 0.0013988483551620398
+    },
+    {
+     "step": 1850.0,
+     "force": 0.005235383287072182,
+     "u_mean": 0.0006618814335929023,
+     "max_mach": 0.001393727978780086
+    },
+    {
+     "step": 1900.0,
+     "force": 0.005217051133513451,
+     "u_mean": 0.0006597428410141556,
+     "max_mach": 0.0013893681781133693
+    },
+    {
+     "step": 1950.0,
+     "force": 0.00520160049200058,
+     "u_mean": 0.0006576737871876469,
+     "max_mach": 0.0013849921456478519
+    },
+    {
+     "step": 2000.0,
+     "force": 0.005188796669244766,
+     "u_mean": 0.000655653852003592,
+     "max_mach": 0.0013806779150001287
+    },
+    {
+     "step": 2050.0,
+     "force": 0.005173932760953903,
+     "u_mean": 0.0006537045593614932,
+     "max_mach": 0.001376382940709989
+    },
+    {
+     "step": 2100.0,
+     "force": 0.005158849060535431,
+     "u_mean": 0.0006517845171469229,
+     "max_mach": 0.001372388103469725
+    },
+    {
+     "step": 2150.0,
+     "force": 0.005142254754900932,
+     "u_mean": 0.0006499257352617052,
+     "max_mach": 0.0013682094738740954
+    },
+    {
+     "step": 2200.0,
+     "force": 0.005130494013428688,
+     "u_mean": 0.000648112760649787,
+     "max_mach": 0.0013639949528475772
+    },
+    {
+     "step": 2250.0,
+     "force": 0.005116008222103119,
+     "u_mean": 0.0006463489046803227,
+     "max_mach": 0.0013606514039318665
+    },
+    {
+     "step": 2300.0,
+     "force": 0.005104029551148415,
+     "u_mean": 0.0006446120915589509,
+     "max_mach": 0.001356834007473524
+    },
+    {
+     "step": 2350.0,
+     "force": 0.005089739337563515,
+     "u_mean": 0.0006429398501360858,
+     "max_mach": 0.0013536938097266406
+    },
+    {
+     "step": 2400.0,
+     "force": 0.0050780754536390305,
+     "u_mean": 0.0006413167273556745,
+     "max_mach": 0.0013504115585355938
+    },
+    {
+     "step": 2450.0,
+     "force": 0.005065113306045532,
+     "u_mean": 0.0006397305815308182,
+     "max_mach": 0.0013470396795859513
+    },
+    {
+     "step": 2500.0,
+     "force": 0.005053481087088585,
+     "u_mean": 0.0006382056960353145,
+     "max_mach": 0.0013440383090871965
+    },
+    {
+     "step": 2550.0,
+     "force": 0.005042405799031258,
+     "u_mean": 0.0006367183393902249,
+     "max_mach": 0.0013408242112873878
+    },
+    {
+     "step": 2600.0,
+     "force": 0.0050306860357522964,
+     "u_mean": 0.0006352679597006904,
+     "max_mach": 0.0013378806098613835
+    },
+    {
+     "step": 2650.0,
+     "force": 0.005020810291171074,
+     "u_mean": 0.0006338633872844555,
+     "max_mach": 0.0013350308705762709
+    },
+    {
+     "step": 2700.0,
+     "force": 0.005010206252336502,
+     "u_mean": 0.000632500206982648,
+     "max_mach": 0.001331997641391671
+    },
+    {
+     "step": 2750.0,
+     "force": 0.005000695586204529,
+     "u_mean": 0.0006311668290032281,
+     "max_mach": 0.001329215652223292
+    },
+    {
+     "step": 2800.0,
+     "force": 0.004986172541975975,
+     "u_mean": 0.0006298687722947863,
+     "max_mach": 0.0013263046152135155
+    },
+    {
+     "step": 2850.0,
+     "force": 0.004980981349945068,
+     "u_mean": 0.0006286181785442211,
+     "max_mach": 0.0013235938039951574
+    },
+    {
+     "step": 2900.0,
+     "force": 0.004970569163560867,
+     "u_mean": 0.0006274045617492111,
+     "max_mach": 0.0013209215054919663
+    },
+    {
+     "step": 2950.0,
+     "force": 0.004960794001817703,
+     "u_mean": 0.0006262212991714478,
+     "max_mach": 0.0013185943091458877
+    },
+    {
+     "step": 3000.0,
+     "force": 0.004954975098371506,
+     "u_mean": 0.000625064527546918,
+     "max_mach": 0.0013156057426126466
+    }
+   ],
+   "steps_to_within_2pct": 2500,
+   "converged_flag": false,
+   "stokes_ratio_corrected_at_600": 1.0232612393449767,
+   "stokes_ratio_corrected_at_1200": 1.0246597103184616,
+   "stokes_ratio_unbounded_model": 1.362839610651772,
+   "xval_error_vs_hasimoto": 0.028607051676735606,
+   "wall_seconds": 22.71941900253296
+  },
+  {
+   "label": "fixed_ld4_g0.02_before",
+   "kind": "fixed_sphere",
+   "scheme": "mem",
+   "diameter": 6.0,
+   "domain_length": 24,
+   "domain_ratio": 4.0,
+   "n_spheres": 1,
+   "separation_radius": null,
+   "solid_fraction": 0.008181230868723419,
+   "array_correction": 1.362839610651772,
+   "smagorinsky_cs": 0.0,
+   "tau0": 0.8,
+   "nu": 0.10000000000000002,
+   "re_target": 0.05,
+   "re_measured": 0.0483460227648417,
+   "reynolds": 0.0483460227648417,
+   "u_mean": 0.0008057670460806952,
+   "max_mach": 0.0016915074859030408,
+   "force_total": 0.006400905549526215,
+   "force_per_sphere": [
+    0.006400905549526215
+   ],
+   "force_estimated": 0.006422230363267175,
+   "force_estimated_unbounded": 0.004712388980384692,
+   "correction_timing": "before",
+   "seed_correction": 1.362839610651772,
+   "pump_force": 0.009166363411978663,
+   "body_force": 6.630760570007714e-07,
+   "u_target": 0.0008333333333333335,
+   "flow_control": true,
+   "momentum_balance_ratio": 0.6983037069162531,
+   "cd_measured": 697.3648104429233,
+   "cd_schiller_naumann": 505.7131451600105,
+   "cd_rel_error": 0.37897307419658444,
+   "stokes_ratio": 1.4047839583780453,
+   "stokes_ratio_corrected": 1.0307771709880178,
+   "n_interface": [
+    179
+   ],
+   "n_markers": [],
+   "steps": 550,
+   "converged": true,
+   "history": [
+    {
+     "step": 50.0,
+     "force": 0.007865631952881813,
+     "u_mean": 0.0008097048158998843,
+     "max_mach": 0.0015511205736288992
+    },
+    {
+     "step": 100.0,
+     "force": 0.007593249902129173,
+     "u_mean": 0.0008068399296866523,
+     "max_mach": 0.0015983085299339451
+    },
+    {
+     "step": 150.0,
+     "force": 0.0068064965307712555,
+     "u_mean": 0.0008052283966982806,
+     "max_mach": 0.0016281625382177642
+    },
+    {
+     "step": 200.0,
+     "force": 0.006590645760297775,
+     "u_mean": 0.000804620760458487,
+     "max_mach": 0.001642211613763666
+    },
+    {
+     "step": 250.0,
+     "force": 0.0063882265239953995,
+     "u_mean": 0.0008045556368651214,
+     "max_mach": 0.0016551995732699506
+    },
+    {
+     "step": 300.0,
+     "force": 0.006391290575265884,
+     "u_mean": 0.0008046384210939761,
+     "max_mach": 0.0016667080194383373
+    },
+    {
+     "step": 350.0,
+     "force": 0.0064688678830862045,
+     "u_mean": 0.000804778050493311,
+     "max_mach": 0.0016772435658649373
+    },
+    {
+     "step": 400.0,
+     "force": 0.006465476006269455,
+     "u_mean": 0.0008049695580093949,
+     "max_mach": 0.001684982302785123
+    },
+    {
+     "step": 450.0,
+     "force": 0.006423346698284149,
+     "u_mean": 0.0008052101841679325,
+     "max_mach": 0.0016883095190834067
+    },
+    {
+     "step": 500.0,
+     "force": 0.006400555372238159,
+     "u_mean": 0.0008054855797025892,
+     "max_mach": 0.0016898415589254986
+    },
+    {
+     "step": 550.0,
+     "force": 0.006400905549526215,
+     "u_mean": 0.0008057670460806952,
+     "max_mach": 0.0016915074859030408
+    }
+   ],
+   "steps_to_within_2pct": 250,
+   "converged_flag": true,
+   "stokes_ratio_unbounded_model": 1.362839610651772,
+   "xval_error_vs_hasimoto": 0.0307771709880178,
+   "wall_seconds": 4.141942024230957
+  },
+  {
+   "label": "fixed_phi_ld6_d6",
+   "kind": "fixed_sphere",
+   "scheme": "mem",
+   "diameter": 6.0,
+   "domain_length": 36,
+   "domain_ratio": 6.0,
+   "n_spheres": 1,
+   "separation_radius": null,
+   "solid_fraction": 0.0024240684055476798,
+   "array_correction": 1.2388629882609135,
+   "smagorinsky_cs": 0.0,
+   "tau0": 0.8,
+   "nu": 0.10000000000000002,
+   "re_target": 0.05,
+   "re_measured": 0.05015228020310891,
+   "reynolds": 0.05015228020310891,
+   "u_mean": 0.0008358713367184821,
+   "max_mach": 0.00162858133879055,
+   "force_total": 0.005742907524108887,
+   "force_per_sphere": [
+    0.005742907524108887
+   ],
+   "force_estimated": 0.005838004294087179,
+   "force_estimated_unbounded": 0.004712388980384692,
+   "correction_timing": "before",
+   "seed_correction": 1.2388629882609135,
+   "pump_force": 0.006726515301000427,
+   "body_force": 1.4417256732254e-07,
+   "u_target": 0.0008333333333333335,
+   "flow_control": true,
+   "momentum_balance_ratio": 0.8537715692484563,
+   "cd_measured": 581.4208086753488,
+   "cd_schiller_naumann": 487.7282332052718,
+   "cd_rel_error": 0.19209996283041564,
+   "stokes_ratio": 1.2149824713585111,
+   "stokes_ratio_corrected": 0.9807238434526765,
+   "n_interface": [
+    179
+   ],
+   "n_markers": [],
+   "steps": 1350,
+   "converged": true,
+   "history": [
+    {
+     "step": 50.0,
+     "force": 0.007521668449044228,
+     "u_mean": 0.0008258302842965669,
+     "max_mach": 0.0015430626449385067
+    },
+    {
+     "step": 100.0,
+     "force": 0.007066044956445694,
+     "u_mean": 0.0008248255903665257,
+     "max_mach": 0.0015274327333354846
+    },
+    {
+     "step": 150.0,
+     "force": 0.0066994912922382355,
+     "u_mean": 0.0008245632972246335,
+     "max_mach": 0.0015281350358848406
+    },
+    {
+     "step": 200.0,
+     "force": 0.006367288529872894,
+     "u_mean": 0.0008244730317543564,
+     "max_mach": 0.0015190970493302093
+    },
+    {
+     "step": 250.0,
+     "force": 0.005940454080700874,
+     "u_mean": 0.0008245436742963123,
+     "max_mach": 0.0015322784797799642
+    },
+    {
+     "step": 300.0,
+     "force": 0.005943296477198601,
+     "u_mean": 0.0008247713002648373,
+     "max_mach": 0.001547082888472546
+    },
+    {
+     "step": 350.0,
+     "force": 0.005940301343798637,
+     "u_mean": 0.0008251389031220529,
+     "max_mach": 0.0015568398126498387
+    },
+    {
+     "step": 400.0,
+     "force": 0.00587412528693676,
+     "u_mean": 0.0008255549092024605,
+     "max_mach": 0.0015629130258669865
+    },
+    {
+     "step": 450.0,
+     "force": 0.005791863426566124,
+     "u_mean": 0.0008260278217749995,
+     "max_mach": 0.0015684707534489267
+    },
+    {
+     "step": 500.0,
+     "force": 0.005738036707043648,
+     "u_mean": 0.0008265033507379812,
+     "max_mach": 0.001576651479225899
+    },
+    {
+     "step": 550.0,
+     "force": 0.00577223114669323,
+     "u_mean": 0.0008269991567268947,
+     "max_mach": 0.0015864764559758036
+    },
+    {
+     "step": 600.0,
+     "force": 0.0058038849383592606,
+     "u_mean": 0.0008275322462796184,
+     "max_mach": 0.0015929691754961199
+    },
+    {
+     "step": 650.0,
+     "force": 0.005782712250947952,
+     "u_mean": 0.0008280836505654418,
+     "max_mach": 0.0015957452163655596
+    },
+    {
+     "step": 700.0,
+     "force": 0.00573364645242691,
+     "u_mean": 0.0008286232810942724,
+     "max_mach": 0.001598063439853916
+    },
+    {
+     "step": 750.0,
+     "force": 0.005710691213607788,
+     "u_mean": 0.0008291635657207138,
+     "max_mach": 0.0016021630276466894
+    },
+    {
+     "step": 800.0,
+     "force": 0.0057249777019023895,
+     "u_mean": 0.0008297188945922014,
+     "max_mach": 0.001606868434563649
+    },
+    {
+     "step": 850.0,
+     "force": 0.005744127556681633,
+     "u_mean": 0.0008302689906828034,
+     "max_mach": 0.0016103255052523392
+    },
+    {
+     "step": 900.0,
+     "force": 0.005739443004131317,
+     "u_mean": 0.0008308426342873907,
+     "max_mach": 0.0016122947954757916
+    },
+    {
+     "step": 950.0,
+     "force": 0.005725681781768799,
+     "u_mean": 0.0008314058123302067,
+     "max_mach": 0.0016139679813944121
+    },
+    {
+     "step": 1000.0,
+     "force": 0.005720023065805435,
+     "u_mean": 0.0008319637575921372,
+     "max_mach": 0.0016168185272285335
+    },
+    {
+     "step": 1050.0,
+     "force": 0.005731530487537384,
+     "u_mean": 0.0008325223569516782,
+     "max_mach": 0.0016194976813982988
+    },
+    {
+     "step": 1100.0,
+     "force": 0.005738470703363419,
+     "u_mean": 0.0008330829186040515,
+     "max_mach": 0.0016212422469041926
+    },
+    {
+     "step": 1150.0,
+     "force": 0.005734756588935852,
+     "u_mean": 0.0008336421720612033,
+     "max_mach": 0.0016224793922649658
+    },
+    {
+     "step": 1200.0,
+     "force": 0.005733821541070938,
+     "u_mean": 0.0008342066582992407,
+     "max_mach": 0.0016240648659788864
+    },
+    {
+     "step": 1250.0,
+     "force": 0.005737045779824257,
+     "u_mean": 0.0008347639494635604,
+     "max_mach": 0.001625760836907004
+    },
+    {
+     "step": 1300.0,
+     "force": 0.005742892622947693,
+     "u_mean": 0.0008353114291637196,
+     "max_mach": 0.0016272342003087103
+    },
+    {
+     "step": 1350.0,
+     "force": 0.005742907524108887,
+     "u_mean": 0.0008358713367184821,
+     "max_mach": 0.00162858133879055
+    }
+   ],
+   "steps_to_within_2pct": 450,
+   "converged_flag": true,
+   "stokes_ratio_corrected_at_600": 1.0011247817867313,
+   "stokes_ratio_corrected_at_1200": 0.981126178724417,
+   "stokes_ratio_unbounded_model": 1.2388629882609135,
+   "xval_error_vs_hasimoto": -0.01927615654732351,
+   "wall_seconds": 30.209333419799805
+  },
+  {
+   "label": "fixed_phi_ld8_d4",
+   "kind": "fixed_sphere",
+   "scheme": "mem",
+   "diameter": 4.0,
+   "domain_length": 32,
+   "domain_ratio": 8.0,
+   "n_spheres": 1,
+   "separation_radius": null,
+   "solid_fraction": 0.0010226538585904274,
+   "array_correction": 1.1783518437501148,
+   "smagorinsky_cs": 0.0,
+   "tau0": 0.8,
+   "nu": 0.10000000000000002,
+   "re_target": 0.05,
+   "re_measured": 0.05206696689128875,
+   "reynolds": 0.05206696689128875,
+   "u_mean": 0.001301674172282219,
+   "max_mach": 0.0024461248203380527,
+   "force_total": 0.005295837298035622,
+   "force_per_sphere": [
+    0.005295837298035622
+   ],
+   "force_estimated": 0.005552852243504025,
+   "force_estimated_unbounded": 0.0047123889803846915,
+   "correction_timing": "before",
+   "seed_correction": 1.1783518437501148,
+   "pump_force": 0.0018689947722805352,
+   "body_force": 5.703719397828782e-08,
+   "u_target": 0.0012500000000000002,
+   "flow_control": true,
+   "momentum_balance_ratio": 2.833521728674327,
+   "cd_measured": 497.4508648178447,
+   "cd_schiller_naumann": 470.0234374974387,
+   "cd_rel_error": 0.05835331843543545,
+   "stokes_ratio": 1.0791982378547365,
+   "stokes_ratio_corrected": 0.9158539901123071,
+   "n_interface": [
+    81
+   ],
+   "n_markers": [],
+   "steps": 3000,
+   "converged": false,
+   "history": [
+    {
+     "step": 50.0,
+     "force": 0.006173379719257355,
+     "u_mean": 0.0012451186776161194,
+     "max_mach": 0.0022500977214218276
+    },
+    {
+     "step": 100.0,
+     "force": 0.005762355402112007,
+     "u_mean": 0.001244925893843174,
+     "max_mach": 0.002254061103250751
+    },
+    {
+     "step": 150.0,
+     "force": 0.005528738722205162,
+     "u_mean": 0.0012452956289052963,
+     "max_mach": 0.0022558556747951865
+    },
+    {
+     "step": 200.0,
+     "force": 0.005359146744012833,
+     "u_mean": 0.0012459969148039818,
+     "max_mach": 0.002270977057248201
+    },
+    {
+     "step": 250.0,
+     "force": 0.005324380472302437,
+     "u_mean": 0.001246865838766098,
+     "max_mach": 0.0022769178956092906
+    },
+    {
+     "step": 300.0,
+     "force": 0.005266716703772545,
+     "u_mean": 0.0012477422133088112,
+     "max_mach": 0.002282780901991037
+    },
+    {
+     "step": 350.0,
+     "force": 0.005195906385779381,
+     "u_mean": 0.0012487098574638367,
+     "max_mach": 0.0022951406606381433
+    },
+    {
+     "step": 400.0,
+     "force": 0.005165638402104378,
+     "u_mean": 0.001249721273779869,
+     "max_mach": 0.002306948134851518
+    },
+    {
+     "step": 450.0,
+     "force": 0.005151437595486641,
+     "u_mean": 0.00125077273696661,
+     "max_mach": 0.0023161921946778814
+    },
+    {
+     "step": 500.0,
+     "force": 0.005141459405422211,
+     "u_mean": 0.00125185027718544,
+     "max_mach": 0.0023250712910777922
+    },
+    {
+     "step": 550.0,
+     "force": 0.005135888233780861,
+     "u_mean": 0.001252938061952591,
+     "max_mach": 0.002333211991860206
+    },
+    {
+     "step": 600.0,
+     "force": 0.005138147622346878,
+     "u_mean": 0.0012540332973003387,
+     "max_mach": 0.0023402753448042023
+    },
+    {
+     "step": 650.0,
+     "force": 0.005140986293554306,
+     "u_mean": 0.0012551220133900642,
+     "max_mach": 0.002345789720376923
+    },
+    {
+     "step": 700.0,
+     "force": 0.005139119923114777,
+     "u_mean": 0.0012562153860926628,
+     "max_mach": 0.002350271914855715
+    },
+    {
+     "step": 750.0,
+     "force": 0.0051385220140218735,
+     "u_mean": 0.0012573134154081345,
+     "max_mach": 0.0023542502178413
+    },
+    {
+     "step": 800.0,
+     "force": 0.005137844011187553,
+     "u_mean": 0.0012584049254655838,
+     "max_mach": 0.002357697005030129
+    },
+    {
+     "step": 850.0,
+     "force": 0.0051368121057748795,
+     "u_mean": 0.0012595001608133316,
+     "max_mach": 0.0023611599231991324
+    },
+    {
+     "step": 900.0,
+     "force": 0.005137894302606583,
+     "u_mean": 0.0012605953961610794,
+     "max_mach": 0.002364571827143333
+    },
+    {
+     "step": 950.0,
+     "force": 0.005140665918588638,
+     "u_mean": 0.0012616897001862526,
+     "max_mach": 0.002367651029621431
+    },
+    {
+     "step": 1000.0,
+     "force": 0.005144940689206123,
+     "u_mean": 0.0012627756223082542,
+     "max_mach": 0.002370503995102579
+    },
+    {
+     "step": 1050.0,
+     "force": 0.005149001255631447,
+     "u_mean": 0.0012638717889785767,
+     "max_mach": 0.0023731541135080295
+    },
+    {
+     "step": 1100.0,
+     "force": 0.005152691155672073,
+     "u_mean": 0.0012649539858102798,
+     "max_mach": 0.002375564485220634
+    },
+    {
+     "step": 1150.0,
+     "force": 0.005156552419066429,
+     "u_mean": 0.0012660389766097069,
+     "max_mach": 0.0023778437927193187
+    },
+    {
+     "step": 1200.0,
+     "force": 0.0051595065742731094,
+     "u_mean": 0.001267111860215664,
+     "max_mach": 0.0023798353638591375
+    },
+    {
+     "step": 1250.0,
+     "force": 0.0051628462970256805,
+     "u_mean": 0.0012681856751441956,
+     "max_mach": 0.00238196021722265
+    },
+    {
+     "step": 1300.0,
+     "force": 0.005167020484805107,
+     "u_mean": 0.0012692464515566826,
+     "max_mach": 0.002383871335098847
+    },
+    {
+     "step": 1350.0,
+     "force": 0.005171097815036774,
+     "u_mean": 0.0012703072279691696,
+     "max_mach": 0.0023862696085763203
+    },
+    {
+     "step": 1400.0,
+     "force": 0.005174688994884491,
+     "u_mean": 0.0012713512405753136,
+     "max_mach": 0.002388555166829823
+    },
+    {
+     "step": 1450.0,
+     "force": 0.00517953559756279,
+     "u_mean": 0.0012723859399557114,
+     "max_mach": 0.002390617915919663
+    },
+    {
+     "step": 1500.0,
+     "force": 0.005183137953281403,
+     "u_mean": 0.001273415982723236,
+     "max_mach": 0.0023928095112136475
+    },
+    {
+     "step": 1550.0,
+     "force": 0.0051879435777664185,
+     "u_mean": 0.0012744395062327385,
+     "max_mach": 0.0023947780957067175
+    },
+    {
+     "step": 1600.0,
+     "force": 0.005191244184970856,
+     "u_mean": 0.001275448128581047,
+     "max_mach": 0.002396577304907953
+    },
+    {
+     "step": 1650.0,
+     "force": 0.005194526165723801,
+     "u_mean": 0.001276455819606781,
+     "max_mach": 0.0023984234955889473
+    },
+    {
+     "step": 1700.0,
+     "force": 0.005198536440730095,
+     "u_mean": 0.001277456060051918,
+     "max_mach": 0.0024002021377904597
+    },
+    {
+     "step": 1750.0,
+     "force": 0.005202990025281906,
+     "u_mean": 0.001278451643884182,
+     "max_mach": 0.002402309650350284
+    },
+    {
+     "step": 1800.0,
+     "force": 0.00520678423345089,
+     "u_mean": 0.0012794481590390205,
+     "max_mach": 0.002404243553235978
+    },
+    {
+     "step": 1850.0,
+     "force": 0.005211230367422104,
+     "u_mean": 0.001280432567000389,
+     "max_mach": 0.0024061609218669934
+    },
+    {
+     "step": 1900.0,
+     "force": 0.005214717239141464,
+     "u_mean": 0.0012814225628972054,
+     "max_mach": 0.0024082756933678966
+    },
+    {
+     "step": 1950.0,
+     "force": 0.005218476057052612,
+     "u_mean": 0.001282382756471634,
+     "max_mach": 0.002410251536802045
+    },
+    {
+     "step": 2000.0,
+     "force": 0.00522264651954174,
+     "u_mean": 0.0012833569198846817,
+     "max_mach": 0.002412236857187046
+    },
+    {
+     "step": 2050.0,
+     "force": 0.00522606261074543,
+     "u_mean": 0.001284332014620304,
+     "max_mach": 0.0024141576536513484
+    },
+    {
+     "step": 2100.0,
+     "force": 0.005230436101555824,
+     "u_mean": 0.0012852959334850311,
+     "max_mach": 0.00241594637771547
+    },
+    {
+     "step": 2150.0,
+     "force": 0.005234450101852417,
+     "u_mean": 0.0012862682342529297,
+     "max_mach": 0.0024178861280814774
+    },
+    {
+     "step": 2200.0,
+     "force": 0.005237771198153496,
+     "u_mean": 0.0012872116640210152,
+     "max_mach": 0.0024194845065795383
+    },
+    {
+     "step": 2250.0,
+     "force": 0.0052425432950258255,
+     "u_mean": 0.0012881569564342499,
+     "max_mach": 0.0024212958140159046
+    },
+    {
+     "step": 2300.0,
+     "force": 0.0052452124655246735,
+     "u_mean": 0.0012891050428152084,
+     "max_mach": 0.002423022433806354
+    },
+    {
+     "step": 2350.0,
+     "force": 0.0052492860704660416,
+     "u_mean": 0.0012900438159704208,
+     "max_mach": 0.0024248460411151035
+    },
+    {
+     "step": 2400.0,
+     "force": 0.00525377131998539,
+     "u_mean": 0.0012909797951579094,
+     "max_mach": 0.0024264409917798767
+    },
+    {
+     "step": 2450.0,
+     "force": 0.005257727578282356,
+     "u_mean": 0.001291908323764801,
+     "max_mach": 0.0024278558803784503
+    },
+    {
+     "step": 2500.0,
+     "force": 0.005260629579424858,
+     "u_mean": 0.0012928247451782227,
+     "max_mach": 0.0024293982037204035
+    },
+    {
+     "step": 2550.0,
+     "force": 0.0052635930478572845,
+     "u_mean": 0.0012937355786561966,
+     "max_mach": 0.0024312091078822658
+    },
+    {
+     "step": 2600.0,
+     "force": 0.005268407985568047,
+     "u_mean": 0.0012946389615535736,
+     "max_mach": 0.0024326633157450146
+    },
+    {
+     "step": 2650.0,
+     "force": 0.005271602421998978,
+     "u_mean": 0.0012955544516444206,
+     "max_mach": 0.002434380055310107
+    },
+    {
+     "step": 2700.0,
+     "force": 0.0052750129252672195,
+     "u_mean": 0.0012964429333806038,
+     "max_mach": 0.0024361298633845574
+    },
+    {
+     "step": 2750.0,
+     "force": 0.005279092118144035,
+     "u_mean": 0.0012973323464393616,
+     "max_mach": 0.0024381373638672986
+    },
+    {
+     "step": 2800.0,
+     "force": 0.005283623933792114,
+     "u_mean": 0.0012982115149497986,
+     "max_mach": 0.0024398032908448408
+    },
+    {
+     "step": 2850.0,
+     "force": 0.005285246297717094,
+     "u_mean": 0.0012990832328796387,
+     "max_mach": 0.002441259918354616
+    },
+    {
+     "step": 2900.0,
+     "force": 0.005289863795042038,
+     "u_mean": 0.001299952156841755,
+     "max_mach": 0.0024429639547728205
+    },
+    {
+     "step": 2950.0,
+     "force": 0.0052930451929569244,
+     "u_mean": 0.0013008145615458488,
+     "max_mach": 0.0024445423711829148
+    },
+    {
+     "step": 3000.0,
+     "force": 0.005295837298035622,
+     "u_mean": 0.001301674172282219,
+     "max_mach": 0.0024461248203380527
+    }
+   ],
+   "steps_to_within_2pct": 200,
+   "converged_flag": false,
+   "stokes_ratio_corrected_at_600": 0.9223407680224114,
+   "stokes_ratio_corrected_at_1200": 0.916615316147603,
+   "stokes_ratio_unbounded_model": 1.1783518437501148,
+   "xval_error_vs_hasimoto": -0.08414600988769294,
+   "wall_seconds": 43.09058380126953
+  },
+  {
+   "label": "fixed_phi_ld8_d6",
+   "kind": "fixed_sphere",
+   "scheme": "mem",
+   "diameter": 6.0,
+   "domain_length": 48,
+   "domain_ratio": 8.0,
+   "n_spheres": 1,
+   "separation_radius": null,
+   "solid_fraction": 0.0010226538585904274,
+   "array_correction": 1.1783518437501148,
+   "smagorinsky_cs": 0.0,
+   "tau0": 0.8,
+   "nu": 0.10000000000000002,
+   "re_target": 0.05,
+   "re_measured": 0.049365659554799386,
+   "reynolds": 0.049365659554799386,
+   "u_mean": 0.00082276099257999,
+   "max_mach": 0.0015267466625849295,
+   "force_total": 0.005362419411540031,
+   "force_per_sphere": [
+    0.005362419411540031
+   ],
+   "force_estimated": 0.005552852243504026,
+   "force_estimated_unbounded": 0.004712388980384692,
+   "correction_timing": "before",
+   "seed_correction": 1.1783518437501148,
+   "pump_force": 0.006667233425152915,
+   "body_force": 6.028676057176753e-08,
+   "u_target": 0.0008333333333333335,
+   "flow_control": true,
+   "momentum_balance_ratio": 0.804294535617979,
+   "cd_measured": 560.339199239467,
+   "cd_schiller_naumann": 495.39916907947696,
+   "cd_rel_error": 0.13108627186569155,
+   "stokes_ratio": 1.152563089369351,
+   "stokes_ratio_corrected": 0.9781145550732192,
+   "n_interface": [
+    179
+   ],
+   "n_markers": [],
+   "steps": 950,
+   "converged": true,
+   "history": [
+    {
+     "step": 50.0,
+     "force": 0.007723091170191765,
+     "u_mean": 0.0008294168445799085,
+     "max_mach": 0.0015348586300589072
+    },
+    {
+     "step": 100.0,
+     "force": 0.006763137876987457,
+     "u_mean": 0.0008282589691656607,
+     "max_mach": 0.0015084699595911176
+    },
+    {
+     "step": 150.0,
+     "force": 0.006383240222930908,
+     "u_mean": 0.0008274140181364837,
+     "max_mach": 0.0015055689036253242
+    },
+    {
+     "step": 200.0,
+     "force": 0.006226465106010437,
+     "u_mean": 0.0008267760276794434,
+     "max_mach": 0.001499017910939127
+    },
+    {
+     "step": 250.0,
+     "force": 0.005860073491930962,
+     "u_mean": 0.0008262053683952049,
+     "max_mach": 0.0014895057743859854
+    },
+    {
+     "step": 300.0,
+     "force": 0.00574912503361702,
+     "u_mean": 0.0008257517108210811,
+     "max_mach": 0.0014989514714645324
+    },
+    {
+     "step": 350.0,
+     "force": 0.005674988031387329,
+     "u_mean": 0.0008253819412655301,
+     "max_mach": 0.0014940419068297367
+    },
+    {
+     "step": 400.0,
+     "force": 0.005634913221001625,
+     "u_mean": 0.0008250679130907412,
+     "max_mach": 0.0015030913867077427
+    },
+    {
+     "step": 450.0,
+     "force": 0.005674397572875023,
+     "u_mean": 0.0008248212160887542,
+     "max_mach": 0.0015049376782073631
+    },
+    {
+     "step": 500.0,
+     "force": 0.005552200600504875,
+     "u_mean": 0.000824589420247961,
+     "max_mach": 0.0015030031704099122
+    },
+    {
+     "step": 550.0,
+     "force": 0.0055759623646736145,
+     "u_mean": 0.0008243714217786435,
+     "max_mach": 0.0015109784278269094
+    },
+    {
+     "step": 600.0,
+     "force": 0.005467193201184273,
+     "u_mean": 0.0008241788104728416,
+     "max_mach": 0.0015082239621434536
+    },
+    {
+     "step": 650.0,
+     "force": 0.005427131429314613,
+     "u_mean": 0.0008239619157932422,
+     "max_mach": 0.0015146757493015763
+    },
+    {
+     "step": 700.0,
+     "force": 0.005448376759886742,
+     "u_mean": 0.0008237742715411716,
+     "max_mach": 0.0015161976064624332
+    },
+    {
+     "step": 750.0,
+     "force": 0.005382867529988289,
+     "u_mean": 0.000823553513597559,
+     "max_mach": 0.0015158402044329374
+    },
+    {
+     "step": 800.0,
+     "force": 0.005429284647107124,
+     "u_mean": 0.0008233537276585897,
+     "max_mach": 0.0015217150065939366
+    },
+    {
+     "step": 850.0,
+     "force": 0.005378793925046921,
+     "u_mean": 0.0008231589087733517,
+     "max_mach": 0.0015208160069050754
+    },
+    {
+     "step": 900.0,
+     "force": 0.005362182855606079,
+     "u_mean": 0.0008229486368320606,
+     "max_mach": 0.0015256521755800763
+    },
+    {
+     "step": 950.0,
+     "force": 0.005362419411540031,
+     "u_mean": 0.00082276099257999,
+     "max_mach": 0.0015267466625849295
+    }
+   ],
+   "steps_to_within_2pct": 600,
+   "converged_flag": true,
+   "stokes_ratio_corrected_at_600": 0.9955099686032863,
+   "stokes_ratio_unbounded_model": 1.1783518437501148,
+   "xval_error_vs_hasimoto": -0.021885444926780795,
+   "wall_seconds": 45.868370056152344
+  },
+  {
+   "label": "settle_ld4_M0_posthoc",
+   "kind": "settling",
+   "scheme": "mem",
+   "diameter": 6.0,
+   "domain_length": 24,
+   "domain_ratio": 4.0,
+   "density_ratio": 2.0,
+   "tau0": 0.8,
+   "nu": 0.10000000000000002,
+   "gravity": 0.0008333333333333336,
+   "gravity_unbounded": 0.0008333333333333336,
+   "drive_force": 0.09424777960769383,
+   "u_guess": 0.01666666666666667,
+   "finite_size_in_drive": false,
+   "apply_array_correction_posthoc": true,
+   "double_counts_correction": false,
+   "mass": 226.1946710584651,
+   "solid_fraction": 0.008181230868723419,
+   "array_correction": 1.362839610651772,
+   "u_terminal": 0.0856486134789884,
+   "u_relative_terminal": 0.011761856791735803,
+   "u_relative_terminal_corrected": 0.01602952433059112,
+   "u_relative_terminal_times_correction": 0.01602952433059112,
+   "re_terminal_vs_target": -0.29428859249585193,
+   "u_relative_vs_target": -0.29428859249585193,
+   "u_analytic_stokes": 0.01666666666666667,
+   "u_analytic_schiller_naumann": 0.0146544612392806,
+   "u_rel_error_stokes_corrected": -0.03822854016453292,
+   "u_rel_error_sn_corrected": 0.0938323878891385,
+   "re_terminal": 0.7057114075041481,
+   "drag_terminal": 0.09279764148406684,
+   "drag_balance_residual": 0.015386443369416063,
+   "cd_measured": 47.44853167324896,
+   "cd_schiller_naumann": 38.023204961463556,
+   "drag_max": 2.074387788772583,
+   "drag_min": -0.5764223337173462,
+   "drag_never_negative": false,
+   "max_step_jump": 4.598729035002619,
+   "momentum_residual_max": 0.0011430169785652873,
+   "steps": 12000,
+   "history": [
+    {
+     "step": 5.0,
+     "velocity": 0.008586596697568893,
+     "relative_velocity": 0.008420299186750694,
+     "drag": 0.1746140867471695,
+     "position": 12.045398712158203,
+     "momentum_total": 4.2411394119262695
+    },
+    {
+     "step": 155.0,
+     "velocity": 0.011251991614699364,
+     "relative_velocity": 0.010106651940279536,
+     "drag": 0.09105395525693893,
+     "position": 13.47890567779541,
+     "momentum_total": 18.37831687927246
+    },
+    {
+     "step": 305.0,
+     "velocity": 0.013278675265610218,
+     "relative_velocity": 0.011143858751489056,
+     "drag": 0.0928303450345993,
+     "position": 15.33480453491211,
+     "momentum_total": 32.5152702331543
+    },
+    {
+     "step": 455.0,
+     "velocity": 0.01459050178527832,
+     "relative_velocity": 0.011454486736544856,
+     "drag": 0.09338611364364624,
+     "position": 17.428255081176758,
+     "momentum_total": 46.652565002441406
+    },
+    {
+     "step": 605.0,
+     "velocity": 0.01570737175643444,
+     "relative_velocity": 0.011566977051121217,
+     "drag": 0.09269293397665024,
+     "position": 19.702070236206055,
+     "momentum_total": 60.78974151611328
+    },
+    {
+     "step": 755.0,
+     "velocity": 0.016962822526693344,
+     "relative_velocity": 0.011820300999614928,
+     "drag": 0.09119133651256561,
+     "position": 22.143577575683594,
+     "momentum_total": 74.92711639404297
+    },
+    {
+     "step": 905.0,
+     "velocity": 0.018412183970212936,
+     "relative_velocity": 0.012270710120598476,
+     "drag": 0.09750866144895554,
+     "position": 24.890602111816406,
+     "momentum_total": 89.06446838378906
+    },
+    {
+     "step": 1055.0,
+     "velocity": 0.01882828399538994,
+     "relative_velocity": 0.011670962114025046,
+     "drag": 0.09267690777778625,
+     "position": 27.664365768432617,
+     "momentum_total": 103.20167541503906
+    },
+    {
+     "step": 1205.0,
+     "velocity": 0.01979965716600418,
+     "relative_velocity": 0.011635568130899358,
+     "drag": 0.09352642297744751,
+     "position": 30.56268310546875,
+     "momentum_total": 117.33894348144531
+    },
+    {
+     "step": 1355.0,
+     "velocity": 0.02080729231238365,
+     "relative_velocity": 0.011637018924510037,
+     "drag": 0.09041965007781982,
+     "position": 33.60926055908203,
+     "momentum_total": 131.4763641357422
+    },
+    {
+     "step": 1505.0,
+     "velocity": 0.02182134985923767,
+     "relative_velocity": 0.01164500249756707,
+     "drag": 0.0937211662530899,
+     "position": 36.80630874633789,
+     "momentum_total": 145.6136932373047
+    },
+    {
+     "step": 1655.0,
+     "velocity": 0.022806691005825996,
+     "relative_velocity": 0.011623812149520274,
+     "drag": 0.0938103199005127,
+     "position": 40.15382385253906,
+     "momentum_total": 159.75086975097656
+    },
+    {
+     "step": 1805.0,
+     "velocity": 0.02382219396531582,
+     "relative_velocity": 0.01163325824395374,
+     "drag": 0.09273785352706909,
+     "position": 43.65237808227539,
+     "momentum_total": 173.8883056640625
+    },
+    {
+     "step": 1955.0,
+     "velocity": 0.025965489447116852,
+     "relative_velocity": 0.012788944498256401,
+     "drag": 0.08540574461221695,
+     "position": 47.3348274230957,
+     "momentum_total": 188.02581787109375
+    },
+    {
+     "step": 2105.0,
+     "velocity": 0.02594599314033985,
+     "relative_velocity": 0.011746455880778807,
+     "drag": 0.09473556280136108,
+     "position": 51.231040954589844,
+     "momentum_total": 202.1632537841797
+    },
+    {
+     "step": 2255.0,
+     "velocity": 0.02684815786778927,
+     "relative_velocity": 0.011640706065076369,
+     "drag": 0.09243018180131912,
+     "position": 55.18830871582031,
+     "momentum_total": 216.30072021484375
+    },
+    {
+     "step": 2405.0,
+     "velocity": 0.027867691591382027,
+     "relative_velocity": 0.011654252462365008,
+     "drag": 0.0933968797326088,
+     "position": 59.29180145263672,
+     "momentum_total": 230.4381103515625
+    },
+    {
+     "step": 2555.0,
+     "velocity": 0.028847316280007362,
+     "relative_velocity": 0.011627238588752569,
+     "drag": 0.09417334198951721,
+     "position": 63.54533386230469,
+     "momentum_total": 244.57546997070312
+    },
+    {
+     "step": 2705.0,
+     "velocity": 0.029852209612727165,
+     "relative_velocity": 0.011625881893215357,
+     "drag": 0.09455034136772156,
+     "position": 67.94965362548828,
+     "momentum_total": 258.7131652832031
+    },
+    {
+     "step": 2855.0,
+     "velocity": 0.03162484988570213,
+     "relative_velocity": 0.012404850925560349,
+     "drag": 0.0964471846818924,
+     "position": 72.57855987548828,
+     "momentum_total": 272.85064697265625
+    },
+    {
+     "step": 3005.0,
+     "velocity": 0.03191607445478439,
+     "relative_velocity": 0.011678162824224542,
+     "drag": 0.09625065326690674,
+     "position": 77.31494903564453,
+     "momentum_total": 286.9881286621094
+    },
+    {
+     "step": 3155.0,
+     "velocity": 0.0328746922314167,
+     "relative_velocity": 0.011629791033488733,
+     "drag": 0.09377225488424301,
+     "position": 82.17464447021484,
+     "momentum_total": 301.1255798339844
+    },
+    {
+     "step": 3305.0,
+     "velocity": 0.0338822603225708,
+     "relative_velocity": 0.011631162078292283,
+     "drag": 0.0932544693350792,
+     "position": 87.18315124511719,
+     "momentum_total": 315.26318359375
+    },
+    {
+     "step": 3455.0,
+     "velocity": 0.034898463636636734,
+     "relative_velocity": 0.011641303008353268,
+     "drag": 0.09309422224760056,
+     "position": 92.34223937988281,
+     "momentum_total": 329.4008483886719
+    },
+    {
+     "step": 3605.0,
+     "velocity": 0.036194004118442535,
+     "relative_velocity": 0.011935359625904647,
+     "drag": 0.09541141986846924,
+     "position": 97.72946166992188,
+     "momentum_total": 343.53839111328125
+    },
+    {
+     "step": 3755.0,
+     "velocity": 0.0369371734559536,
+     "relative_velocity": 0.011667994023473176,
+     "drag": 0.08659388870000839,
+     "position": 103.20320129394531,
+     "momentum_total": 357.6761169433594
+    },
+    {
+     "step": 3905.0,
+     "velocity": 0.037924543023109436,
+     "relative_velocity": 0.011648837614942481,
+     "drag": 0.09467404335737228,
+     "position": 108.8166732788086,
+     "momentum_total": 371.8136901855469
+    },
+    {
+     "step": 4055.0,
+     "velocity": 0.03890720009803772,
+     "relative_velocity": 0.01162487158068904,
+     "drag": 0.09518082439899445,
+     "position": 114.57954406738281,
+     "momentum_total": 385.9515075683594
+    },
+    {
+     "step": 4205.0,
+     "velocity": 0.040643081068992615,
+     "relative_velocity": 0.012366476434248465,
+     "drag": 0.09478795528411865,
+     "position": 120.54566192626953,
+     "momentum_total": 400.0890197753906
+    },
+    {
+     "step": 4355.0,
+     "velocity": 0.04096074402332306,
+     "relative_velocity": 0.011666639535515395,
+     "drag": 0.08955182135105133,
+     "position": 126.63626861572266,
+     "momentum_total": 414.226806640625
+    },
+    {
+     "step": 4505.0,
+     "velocity": 0.041952844709157944,
+     "relative_velocity": 0.011652278265467397,
+     "drag": 0.09183423966169357,
+     "position": 132.85386657714844,
+     "momentum_total": 428.3645324707031
+    },
+    {
+     "step": 4655.0,
+     "velocity": 0.04296540468931198,
+     "relative_velocity": 0.011658711841812837,
+     "drag": 0.08615490794181824,
+     "position": 139.22059631347656,
+     "momentum_total": 442.50225830078125
+    },
+    {
+     "step": 4805.0,
+     "velocity": 0.04425876587629318,
+     "relative_velocity": 0.011950529559894847,
+     "drag": 0.09076288342475891,
+     "position": 145.7976531982422,
+     "momentum_total": 456.6401672363281
+    },
+    {
+     "step": 4955.0,
+     "velocity": 0.044968388974666595,
+     "relative_velocity": 0.01164906140830782,
+     "drag": 0.09576278924942017,
+     "position": 152.47801208496094,
+     "momentum_total": 470.7779846191406
+    },
+    {
+     "step": 5105.0,
+     "velocity": 0.045983437448740005,
+     "relative_velocity": 0.011658023215002485,
+     "drag": 0.0922251045703888,
+     "position": 159.29861450195312,
+     "momentum_total": 484.9157409667969
+    },
+    {
+     "step": 5255.0,
+     "velocity": 0.04718625172972679,
+     "relative_velocity": 0.011857814948867867,
+     "drag": 0.08824588358402252,
+     "position": 166.2710723876953,
+     "momentum_total": 499.0535888671875
+    },
+    {
+     "step": 5405.0,
+     "velocity": 0.048016879707574844,
+     "relative_velocity": 0.011679307592135889,
+     "drag": 0.09243178367614746,
+     "position": 173.4539794921875,
+     "momentum_total": 513.1917724609375
+    },
+    {
+     "step": 5555.0,
+     "velocity": 0.048991139978170395,
+     "relative_velocity": 0.011646807883624676,
+     "drag": 0.09252546727657318,
+     "position": 180.7294464111328,
+     "momentum_total": 527.32958984375
+    },
+    {
+     "step": 5705.0,
+     "velocity": 0.049988966435194016,
+     "relative_velocity": 0.011638256272783983,
+     "drag": 0.08964239805936813,
+     "position": 188.15298461914062,
+     "momentum_total": 541.4674682617188
+    },
+    {
+     "step": 5855.0,
+     "velocity": 0.05108143016695976,
+     "relative_velocity": 0.011725878411972965,
+     "drag": 0.0926136001944542,
+     "position": 195.7822265625,
+     "momentum_total": 555.60546875
+    },
+    {
+     "step": 6005.0,
+     "velocity": 0.05200629308819771,
+     "relative_velocity": 0.011643171172451089,
+     "drag": 0.09608588367700577,
+     "position": 203.5126953125,
+     "momentum_total": 569.7433471679688
+    },
+    {
+     "step": 6155.0,
+     "velocity": 0.05300762876868248,
+     "relative_velocity": 0.011638177351819143,
+     "drag": 0.09346913546323776,
+     "position": 211.3893585205078,
+     "momentum_total": 583.88134765625
+    },
+    {
+     "step": 6305.0,
+     "velocity": 0.054138317704200745,
+     "relative_velocity": 0.011764656062479374,
+     "drag": 0.09430214762687683,
+     "position": 219.46849060058594,
+     "momentum_total": 598.019287109375
+    },
+    {
+     "step": 6455.0,
+     "velocity": 0.05503822863101959,
+     "relative_velocity": 0.011656577388445534,
+     "drag": 0.08945144712924957,
+     "position": 227.65234375,
+     "momentum_total": 612.1572875976562
+    },
+    {
+     "step": 6605.0,
+     "velocity": 0.056018486618995667,
+     "relative_velocity": 0.011630170323230604,
+     "drag": 0.09140628576278687,
+     "position": 235.98202514648438,
+     "momentum_total": 626.295166015625
+    },
+    {
+     "step": 6755.0,
+     "velocity": 0.05709229037165642,
+     "relative_velocity": 0.011698823422193527,
+     "drag": 0.09611114859580994,
+     "position": 244.5109405517578,
+     "momentum_total": 640.4332885742188
+    },
+    {
+     "step": 6905.0,
+     "velocity": 0.05803646519780159,
+     "relative_velocity": 0.011635732733541064,
+     "drag": 0.09224827587604523,
+     "position": 253.14610290527344,
+     "momentum_total": 654.5712890625
+    },
+    {
+     "step": 7055.0,
+     "velocity": 0.05912803113460541,
+     "relative_velocity": 0.011722439417132628,
+     "drag": 0.09526634961366653,
+     "position": 261.928955078125,
+     "momentum_total": 668.7093505859375
+    },
+    {
+     "step": 7205.0,
+     "velocity": 0.06006259471178055,
+     "relative_velocity": 0.011649565288314116,
+     "drag": 0.09673022478818893,
+     "position": 270.9097900390625,
+     "momentum_total": 682.8475341796875
+    },
+    {
+     "step": 7355.0,
+     "velocity": 0.061055898666381836,
+     "relative_velocity": 0.011636394041555899,
+     "drag": 0.09242616593837738,
+     "position": 279.9957580566406,
+     "momentum_total": 696.9857788085938
+    },
+    {
+     "step": 7505.0,
+     "velocity": 0.062468983232975006,
+     "relative_velocity": 0.01204989105463028,
+     "drag": 0.09259703010320663,
+     "position": 289.26556396484375,
+     "momentum_total": 711.1236572265625
+    },
+    {
+     "step": 7655.0,
+     "velocity": 0.06309256702661514,
+     "relative_velocity": 0.011660950879255928,
+     "drag": 0.08899509906768799,
+     "position": 298.6640625,
+     "momentum_total": 725.2618408203125
+    },
+    {
+     "step": 7805.0,
+     "velocity": 0.06407550722360611,
+     "relative_velocity": 0.011637239268532502,
+     "drag": 0.09104812890291214,
+     "position": 308.2015075683594,
+     "momentum_total": 739.400146484375
+    },
+    {
+     "step": 7955.0,
+     "velocity": 0.06514070183038712,
+     "relative_velocity": 0.0116971375213729,
+     "drag": 0.09679538011550903,
+     "position": 317.9319763183594,
+     "momentum_total": 753.538330078125
+    },
+    {
+     "step": 8105.0,
+     "velocity": 0.06608875095844269,
+     "relative_velocity": 0.011637965286219562,
+     "drag": 0.09404902160167694,
+     "position": 327.773681640625,
+     "momentum_total": 767.6765747070312
+    },
+    {
+     "step": 8255.0,
+     "velocity": 0.06736662983894348,
+     "relative_velocity": 0.01191401812765333,
+     "drag": 0.09522759914398193,
+     "position": 337.7974853515625,
+     "momentum_total": 781.8148803710938
+    },
+    {
+     "step": 8405.0,
+     "velocity": 0.06811092793941498,
+     "relative_velocity": 0.011647761419967366,
+     "drag": 0.09770370274782181,
+     "position": 347.9476623535156,
+     "momentum_total": 795.953125
+    },
+    {
+     "step": 8555.0,
+     "velocity": 0.06928577274084091,
+     "relative_velocity": 0.011819098006795953,
+     "drag": 0.08128123730421066,
+     "position": 358.2407531738281,
+     "momentum_total": 810.0913696289062
+    },
+    {
+     "step": 8705.0,
+     "velocity": 0.07014820724725723,
+     "relative_velocity": 0.011672920374958602,
+     "drag": 0.09243088960647583,
+     "position": 368.72369384765625,
+     "momentum_total": 824.2294921875
+    },
+    {
+     "step": 8855.0,
+     "velocity": 0.071143239736557,
+     "relative_velocity": 0.01166149090837549,
+     "drag": 0.09333295375108719,
+     "position": 379.3187561035156,
+     "momentum_total": 838.367919921875
+    },
+    {
+     "step": 9005.0,
+     "velocity": 0.0721699669957161,
+     "relative_velocity": 0.011682272785239749,
+     "drag": 0.09208129346370697,
+     "position": 390.10174560546875,
+     "momentum_total": 852.50634765625
+    },
+    {
+     "step": 9155.0,
+     "velocity": 0.07312457263469696,
+     "relative_velocity": 0.011629763024824637,
+     "drag": 0.09194941818714142,
+     "position": 401.0,
+     "momentum_total": 866.6446533203125
+    },
+    {
+     "step": 9305.0,
+     "velocity": 0.07424543052911758,
+     "relative_velocity": 0.011746220842555714,
+     "drag": 0.09113971889019012,
+     "position": 412.0815124511719,
+     "momentum_total": 880.7830200195312
+    },
+    {
+     "step": 9455.0,
+     "velocity": 0.0751633271574974,
+     "relative_velocity": 0.011656392779615193,
+     "drag": 0.08862006664276123,
+     "position": 423.2831726074219,
+     "momentum_total": 894.92138671875
+    },
+    {
+     "step": 9605.0,
+     "velocity": 0.07632013410329819,
+     "relative_velocity": 0.011809386864856442,
+     "drag": 0.09274189174175262,
+     "position": 434.6631164550781,
+     "momentum_total": 909.0597534179688
+    },
+    {
+     "step": 9755.0,
+     "velocity": 0.0771743655204773,
+     "relative_velocity": 0.011654842782903602,
+     "drag": 0.09090370684862137,
+     "position": 446.1694030761719,
+     "momentum_total": 923.1983032226562
+    },
+    {
+     "step": 9905.0,
+     "velocity": 0.07842472940683365,
+     "relative_velocity": 0.011902921453670223,
+     "drag": 0.09329298138618469,
+     "position": 457.84796142578125,
+     "momentum_total": 937.3367309570312
+    },
+    {
+     "step": 10055.0,
+     "velocity": 0.07918310910463333,
+     "relative_velocity": 0.011650949440620562,
+     "drag": 0.09416129440069199,
+     "position": 469.65789794921875,
+     "momentum_total": 951.475341796875
+    },
+    {
+     "step": 10205.0,
+     "velocity": 0.08045083284378052,
+     "relative_velocity": 0.011916683779822454,
+     "drag": 0.09753839671611786,
+     "position": 481.63653564453125,
+     "momentum_total": 965.6136474609375
+    },
+    {
+     "step": 10355.0,
+     "velocity": 0.08119722455739975,
+     "relative_velocity": 0.011652533930760836,
+     "drag": 0.09374237805604935,
+     "position": 493.7487487792969,
+     "momentum_total": 979.752197265625
+    },
+    {
+     "step": 10505.0,
+     "velocity": 0.0823952928185463,
+     "relative_velocity": 0.011847451605178694,
+     "drag": 0.09484820812940598,
+     "position": 506.02978515625,
+     "momentum_total": 993.8907470703125
+    },
+    {
+     "step": 10655.0,
+     "velocity": 0.08321786671876907,
+     "relative_velocity": 0.011660737847840344,
+     "drag": 0.09254340827465057,
+     "position": 518.4427490234375,
+     "momentum_total": 1008.0291748046875
+    },
+    {
+     "step": 10805.0,
+     "velocity": 0.0843329131603241,
+     "relative_velocity": 0.01177126500341627,
+     "drag": 0.09193439781665802,
+     "position": 531.027099609375,
+     "momentum_total": 1022.1679077148438
+    },
+    {
+     "step": 10955.0,
+     "velocity": 0.08523046225309372,
+     "relative_velocity": 0.011660736192155768,
+     "drag": 0.09030462056398392,
+     "position": 543.7399291992188,
+     "momentum_total": 1036.3065185546875
+    },
+    {
+     "step": 11105.0,
+     "velocity": 0.08630181849002838,
+     "relative_velocity": 0.011726871132850647,
+     "drag": 0.0937105119228363,
+     "position": 556.626953125,
+     "momentum_total": 1050.445068359375
+    },
+    {
+     "step": 11255.0,
+     "velocity": 0.08721021562814713,
+     "relative_velocity": 0.011627375803611895,
+     "drag": 0.09321791678667068,
+     "position": 569.6397705078125,
+     "momentum_total": 1064.5836181640625
+    },
+    {
+     "step": 11405.0,
+     "velocity": 0.08827993273735046,
+     "relative_velocity": 0.01169184071046335,
+     "drag": 0.09093829989433289,
+     "position": 582.8294067382812,
+     "momentum_total": 1078.7222900390625
+    },
+    {
+     "step": 11555.0,
+     "velocity": 0.08922932296991348,
+     "relative_velocity": 0.011633991919181963,
+     "drag": 0.09299937635660172,
+     "position": 596.1424560546875,
+     "momentum_total": 1092.861083984375
+    },
+    {
+     "step": 11705.0,
+     "velocity": 0.0902586430311203,
+     "relative_velocity": 0.011657406334523807,
+     "drag": 0.09411190450191498,
+     "position": 609.6351928710938,
+     "momentum_total": 1106.99951171875
+    },
+    {
+     "step": 11855.0,
+     "velocity": 0.09185898303985596,
+     "relative_velocity": 0.012261156682614932,
+     "drag": 0.07922329753637314,
+     "position": 623.2539672851562,
+     "momentum_total": 1121.1383056640625
+    }
+   ],
+   "steadiness": 0.07555802671170161,
+   "steps_to_within_2pct_velocity": 11260,
+   "u_terminal_tail": 0.08901137541979551,
+   "predicted_re_vs_target": -0.26623794011846014,
+   "u_reported_vs_target": -0.03822854016453292,
+   "predicted_u_reported_vs_target": 0.0,
+   "wall_seconds": 139.21181297302246
+  },
+  {
+   "label": "settle_ld4_M1_drive_and_posthoc",
+   "kind": "settling",
+   "scheme": "mem",
+   "diameter": 6.0,
+   "domain_length": 24,
+   "domain_ratio": 4.0,
+   "density_ratio": 2.0,
+   "tau0": 0.8,
+   "nu": 0.10000000000000002,
+   "gravity": 0.0011356996755431436,
+   "gravity_unbounded": 0.0008333333333333336,
+   "drive_force": 0.12844460726534346,
+   "u_guess": 0.01666666666666667,
+   "finite_size_in_drive": true,
+   "apply_array_correction_posthoc": true,
+   "double_counts_correction": true,
+   "mass": 226.1946710584651,
+   "solid_fraction": 0.008181230868723419,
+   "array_correction": 1.362839610651772,
+   "u_terminal": 0.11670233020558954,
+   "u_relative_terminal": 0.016006153782622684,
+   "u_relative_terminal_corrected": 0.021813820389141887,
+   "u_relative_terminal_times_correction": 0.021813820389141887,
+   "re_terminal_vs_target": -0.03963077304263918,
+   "u_relative_vs_target": -0.03963077304263918,
+   "u_analytic_stokes": 0.022713993510862864,
+   "u_analytic_schiller_naumann": 0.019465557371753726,
+   "u_rel_error_stokes_corrected": -0.039630773042638845,
+   "u_rel_error_sn_corrected": 0.12063682393167441,
+   "re_terminal": 0.9603692269573608,
+   "drag_terminal": 0.12665889699012042,
+   "drag_balance_residual": 0.013902571024520154,
+   "cd_measured": 34.97029894166165,
+   "cd_schiller_naumann": 28.636242914316462,
+   "drag_max": 2.8270578384399414,
+   "drag_min": -0.7860481142997742,
+   "drag_never_negative": false,
+   "max_step_jump": 4.596545538383913,
+   "momentum_residual_max": 0.00010530215149422873,
+   "steps": 12000,
+   "history": [
+    {
+     "step": 5.0,
+     "velocity": 0.011704402044415474,
+     "relative_velocity": 0.01147780229372007,
+     "drag": 0.23849016427993774,
+     "position": 12.061884880065918,
+     "momentum_total": 5.7799882888793945
+    },
+    {
+     "step": 155.0,
+     "velocity": 0.015327979810535908,
+     "relative_velocity": 0.01376695568776793,
+     "drag": 0.12167988717556,
+     "position": 14.015042304992676,
+     "momentum_total": 25.04670524597168
+    },
+    {
+     "step": 305.0,
+     "velocity": 0.018051788210868835,
+     "relative_velocity": 0.015141616816873904,
+     "drag": 0.1277349591255188,
+     "position": 16.54230499267578,
+     "momentum_total": 44.31342697143555
+    },
+    {
+     "step": 455.0,
+     "velocity": 0.019858714193105698,
+     "relative_velocity": 0.015584378468769568,
+     "drag": 0.127140074968338,
+     "position": 19.391510009765625,
+     "momentum_total": 63.580352783203125
+    },
+    {
+     "step": 605.0,
+     "velocity": 0.021998127922415733,
+     "relative_velocity": 0.01636508997115824,
+     "drag": 0.12139050662517548,
+     "position": 22.49988555908203,
+     "momentum_total": 82.84697723388672
+    },
+    {
+     "step": 755.0,
+     "velocity": 0.023071011528372765,
+     "relative_velocity": 0.01606180056653641,
+     "drag": 0.1273382604122162,
+     "position": 25.988821029663086,
+     "momentum_total": 102.1138687133789
+    },
+    {
+     "step": 905.0,
+     "velocity": 0.024216869845986366,
+     "relative_velocity": 0.01583268624488954,
+     "drag": 0.12498986721038818,
+     "position": 29.529558181762695,
+     "momentum_total": 121.38068389892578
+    },
+    {
+     "step": 1055.0,
+     "velocity": 0.025615498423576355,
+     "relative_velocity": 0.015860475323818346,
+     "drag": 0.12385157495737076,
+     "position": 33.2657356262207,
+     "momentum_total": 140.64752197265625
+    },
+    {
+     "step": 1205.0,
+     "velocity": 0.026979051530361176,
+     "relative_velocity": 0.01585260944234,
+     "drag": 0.11866529285907745,
+     "position": 37.20652389526367,
+     "momentum_total": 159.91445922851562
+    },
+    {
+     "step": 1355.0,
+     "velocity": 0.028334449976682663,
+     "relative_velocity": 0.015836458653211594,
+     "drag": 0.12592729926109314,
+     "position": 41.35293960571289,
+     "momentum_total": 179.18133544921875
+    },
+    {
+     "step": 1505.0,
+     "velocity": 0.029814748093485832,
+     "relative_velocity": 0.01594725616828159,
+     "drag": 0.12493572384119034,
+     "position": 45.70625305175781,
+     "momentum_total": 198.44815063476562
+    },
+    {
+     "step": 1655.0,
+     "velocity": 0.03126606345176697,
+     "relative_velocity": 0.01602858746493304,
+     "drag": 0.12654244899749756,
+     "position": 50.39402770996094,
+     "momentum_total": 217.715087890625
+    },
+    {
+     "step": 1805.0,
+     "velocity": 0.03245392069220543,
+     "relative_velocity": 0.01584214151457504,
+     "drag": 0.12850558757781982,
+     "position": 55.16913604736328,
+     "momentum_total": 236.9821319580078
+    },
+    {
+     "step": 1955.0,
+     "velocity": 0.03380679339170456,
+     "relative_velocity": 0.015823425242194423,
+     "drag": 0.12552371621131897,
+     "position": 60.14019775390625,
+     "momentum_total": 256.2489929199219
+    },
+    {
+     "step": 2105.0,
+     "velocity": 0.03518933802843094,
+     "relative_velocity": 0.015834848913881514,
+     "drag": 0.13135087490081787,
+     "position": 65.31564331054688,
+     "momentum_total": 275.51611328125
+    },
+    {
+     "step": 2255.0,
+     "velocity": 0.03723425045609474,
+     "relative_velocity": 0.016519472968799097,
+     "drag": 0.11980501562356949,
+     "position": 70.70597839355469,
+     "momentum_total": 294.78326416015625
+    },
+    {
+     "step": 2405.0,
+     "velocity": 0.03799918666481972,
+     "relative_velocity": 0.01590317087592902,
+     "drag": 0.12583935260772705,
+     "position": 76.39324188232422,
+     "momentum_total": 314.050537109375
+    },
+    {
+     "step": 2555.0,
+     "velocity": 0.03930501639842987,
+     "relative_velocity": 0.015836621324221294,
+     "drag": 0.12700553238391876,
+     "position": 82.19059753417969,
+     "momentum_total": 333.31768798828125
+    },
+    {
+     "step": 2705.0,
+     "velocity": 0.040661342442035675,
+     "relative_velocity": 0.01582139150963889,
+     "drag": 0.12694856524467468,
+     "position": 88.18949890136719,
+     "momentum_total": 352.5848693847656
+    },
+    {
+     "step": 2855.0,
+     "velocity": 0.04245135188102722,
+     "relative_velocity": 0.01624694025074994,
+     "drag": 0.11770769208669662,
+     "position": 94.39764404296875,
+     "momentum_total": 371.85205078125
+    },
+    {
+     "step": 3005.0,
+     "velocity": 0.04344441741704941,
+     "relative_velocity": 0.015862504917162436,
+     "drag": 0.13340814411640167,
+     "position": 100.89814758300781,
+     "momentum_total": 391.1192626953125
+    },
+    {
+     "step": 3155.0,
+     "velocity": 0.04479261115193367,
+     "relative_velocity": 0.01583900371635402,
+     "drag": 0.12588796019554138,
+     "position": 107.51789093017578,
+     "momentum_total": 410.3865051269531
+    },
+    {
+     "step": 3305.0,
+     "velocity": 0.04615865275263786,
+     "relative_velocity": 0.015833641781851097,
+     "drag": 0.13072842359542847,
+     "position": 114.33939361572266,
+     "momentum_total": 429.65380859375
+    },
+    {
+     "step": 3455.0,
+     "velocity": 0.04802439361810684,
+     "relative_velocity": 0.01633615819392381,
+     "drag": 0.12986382842063904,
+     "position": 121.43612670898438,
+     "momentum_total": 448.9210205078125
+    },
+    {
+     "step": 3605.0,
+     "velocity": 0.04893549531698227,
+     "relative_velocity": 0.015868407984574638,
+     "drag": 0.12775152921676636,
+     "position": 128.6866912841797,
+     "momentum_total": 468.1883544921875
+    },
+    {
+     "step": 3755.0,
+     "velocity": 0.05025662109255791,
+     "relative_velocity": 0.01581738847825262,
+     "drag": 0.12593095004558563,
+     "position": 136.12628173828125,
+     "momentum_total": 487.4557189941406
+    },
+    {
+     "step": 3905.0,
+     "velocity": 0.05355554446578026,
+     "relative_velocity": 0.01777652526895205,
+     "drag": 0.10010543465614319,
+     "position": 143.80088806152344,
+     "momentum_total": 506.72314453125
+    },
+    {
+     "step": 4055.0,
+     "velocity": 0.05304285138845444,
+     "relative_velocity": 0.01586168590519163,
+     "drag": 0.12786926329135895,
+     "position": 151.6980438232422,
+     "momentum_total": 525.9904174804688
+    },
+    {
+     "step": 4205.0,
+     "velocity": 0.05438726022839546,
+     "relative_velocity": 0.015834322544159715,
+     "drag": 0.12690338492393494,
+     "position": 159.75579833984375,
+     "momentum_total": 545.2579345703125
+    },
+    {
+     "step": 4355.0,
+     "velocity": 0.05793822929263115,
+     "relative_velocity": 0.018049630991838594,
+     "drag": 0.10250422358512878,
+     "position": 168.05381774902344,
+     "momentum_total": 564.5253295898438
+    },
+    {
+     "step": 4505.0,
+     "velocity": 0.05715223029255867,
+     "relative_velocity": 0.015856997696337874,
+     "drag": 0.12486416846513748,
+     "position": 176.5574951171875,
+     "momentum_total": 583.7928466796875
+    },
+    {
+     "step": 4655.0,
+     "velocity": 0.05853826180100441,
+     "relative_velocity": 0.015871936938276994,
+     "drag": 0.11960494518280029,
+     "position": 185.23178100585938,
+     "momentum_total": 603.060302734375
+    },
+    {
+     "step": 4805.0,
+     "velocity": 0.06015723571181297,
+     "relative_velocity": 0.01612362003436795,
+     "drag": 0.12484581023454666,
+     "position": 194.1669464111328,
+     "momentum_total": 622.3279418945312
+    },
+    {
+     "step": 4955.0,
+     "velocity": 0.06129112467169762,
+     "relative_velocity": 0.015882292969359293,
+     "drag": 0.12048982083797455,
+     "position": 203.26300048828125,
+     "momentum_total": 641.5953979492188
+    },
+    {
+     "step": 5105.0,
+     "velocity": 0.06261934340000153,
+     "relative_velocity": 0.01583845692652243,
+     "drag": 0.12511608004570007,
+     "position": 212.5543670654297,
+     "momentum_total": 660.8631591796875
+    },
+    {
+     "step": 5255.0,
+     "velocity": 0.06406073272228241,
+     "relative_velocity": 0.01590966350502438,
+     "drag": 0.12792091071605682,
+     "position": 222.1110076904297,
+     "momentum_total": 680.1305541992188
+    },
+    {
+     "step": 5405.0,
+     "velocity": 0.06538081914186478,
+     "relative_velocity": 0.015857558283540935,
+     "drag": 0.12043998390436172,
+     "position": 231.81619262695312,
+     "momentum_total": 699.3983764648438
+    },
+    {
+     "step": 5555.0,
+     "velocity": 0.0670868530869484,
+     "relative_velocity": 0.016197736340540426,
+     "drag": 0.13285285234451294,
+     "position": 241.76998901367188,
+     "momentum_total": 718.6658325195312
+    },
+    {
+     "step": 5705.0,
+     "velocity": 0.06814521551132202,
+     "relative_velocity": 0.01587961558942442,
+     "drag": 0.12788614630699158,
+     "position": 251.89614868164062,
+     "momentum_total": 737.9337158203125
+    },
+    {
+     "step": 5855.0,
+     "velocity": 0.06966041773557663,
+     "relative_velocity": 0.016025827162795596,
+     "drag": 0.12080756574869156,
+     "position": 262.21759033203125,
+     "momentum_total": 757.201416015625
+    },
+    {
+     "step": 6005.0,
+     "velocity": 0.07088768482208252,
+     "relative_velocity": 0.01587938379358362,
+     "drag": 0.12546329200267792,
+     "position": 272.7961730957031,
+     "momentum_total": 776.4691772460938
+    },
+    {
+     "step": 6155.0,
+     "velocity": 0.07221166789531708,
+     "relative_velocity": 0.015831241453135456,
+     "drag": 0.13045352697372437,
+     "position": 283.52825927734375,
+     "momentum_total": 795.7369384765625
+    },
+    {
+     "step": 6305.0,
+     "velocity": 0.0736587792634964,
+     "relative_velocity": 0.01590824513523667,
+     "drag": 0.12868458032608032,
+     "position": 294.5154724121094,
+     "momentum_total": 815.0045776367188
+    },
+    {
+     "step": 6455.0,
+     "velocity": 0.07496121525764465,
+     "relative_velocity": 0.01583820250299242,
+     "drag": 0.12477563321590424,
+     "position": 305.6609802246094,
+     "momentum_total": 834.2723388671875
+    },
+    {
+     "step": 6605.0,
+     "velocity": 0.07642091810703278,
+     "relative_velocity": 0.015927987518133943,
+     "drag": 0.12762127816677094,
+     "position": 317.0555725097656,
+     "momentum_total": 853.540283203125
+    },
+    {
+     "step": 6755.0,
+     "velocity": 0.07770881056785583,
+     "relative_velocity": 0.01584315851882652,
+     "drag": 0.1262350231409073,
+     "position": 328.61395263671875,
+     "momentum_total": 872.80810546875
+    },
+    {
+     "step": 6905.0,
+     "velocity": 0.07921389490365982,
+     "relative_velocity": 0.015979075597392187,
+     "drag": 0.13055750727653503,
+     "position": 340.4178161621094,
+     "momentum_total": 892.075927734375
+    },
+    {
+     "step": 7055.0,
+     "velocity": 0.08045487850904465,
+     "relative_velocity": 0.01584655184436727,
+     "drag": 0.1311674416065216,
+     "position": 352.388671875,
+     "momentum_total": 911.343994140625
+    },
+    {
+     "step": 7205.0,
+     "velocity": 0.08193273842334747,
+     "relative_velocity": 0.015954789740067934,
+     "drag": 0.12811943888664246,
+     "position": 364.6017150878906,
+     "momentum_total": 930.6119384765625
+    },
+    {
+     "step": 7355.0,
+     "velocity": 0.08318158984184265,
+     "relative_velocity": 0.015830261839760676,
+     "drag": 0.13255779445171356,
+     "position": 376.98382568359375,
+     "momentum_total": 949.8800048828125
+    },
+    {
+     "step": 7505.0,
+     "velocity": 0.0846470519900322,
+     "relative_velocity": 0.015925890041722193,
+     "drag": 0.12810206413269043,
+     "position": 389.60845947265625,
+     "momentum_total": 969.1480712890625
+    },
+    {
+     "step": 7655.0,
+     "velocity": 0.08595281839370728,
+     "relative_velocity": 0.015859204309958005,
+     "drag": 0.13149847090244293,
+     "position": 402.4006652832031,
+     "momentum_total": 988.4161987304688
+    },
+    {
+     "step": 7805.0,
+     "velocity": 0.08737284690141678,
+     "relative_velocity": 0.01590866595506668,
+     "drag": 0.1269252896308899,
+     "position": 415.4363708496094,
+     "momentum_total": 1007.68408203125
+    },
+    {
+     "step": 7955.0,
+     "velocity": 0.08866140246391296,
+     "relative_velocity": 0.015824473566479147,
+     "drag": 0.1277644783258438,
+     "position": 428.6390380859375,
+     "momentum_total": 1026.952392578125
+    },
+    {
+     "step": 8105.0,
+     "velocity": 0.09005285799503326,
+     "relative_velocity": 0.015844889812999308,
+     "drag": 0.12478600442409515,
+     "position": 442.08612060546875,
+     "momentum_total": 1046.220458984375
+    },
+    {
+     "step": 8255.0,
+     "velocity": 0.09274224936962128,
+     "relative_velocity": 0.017184469986844947,
+     "drag": 0.09936779737472534,
+     "position": 455.7113952636719,
+     "momentum_total": 1065.488525390625
+    },
+    {
+     "step": 8405.0,
+     "velocity": 0.09280063211917877,
+     "relative_velocity": 0.015849984906337877,
+     "drag": 0.13043129444122314,
+     "position": 469.55828857421875,
+     "momentum_total": 1084.7567138671875
+    },
+    {
+     "step": 8555.0,
+     "velocity": 0.0943216010928154,
+     "relative_velocity": 0.016002025041315288,
+     "drag": 0.12822994589805603,
+     "position": 483.6151123046875,
+     "momentum_total": 1104.02490234375
+    },
+    {
+     "step": 8705.0,
+     "velocity": 0.09556884318590164,
+     "relative_velocity": 0.015875861324645857,
+     "drag": 0.12338151037693024,
+     "position": 497.8506774902344,
+     "momentum_total": 1123.29296875
+    },
+    {
+     "step": 8855.0,
+     "velocity": 0.09698589891195297,
+     "relative_velocity": 0.01592227513039554,
+     "drag": 0.11903664469718933,
+     "position": 512.3214721679688,
+     "momentum_total": 1142.561279296875
+    },
+    {
+     "step": 9005.0,
+     "velocity": 0.09886299818754196,
+     "relative_velocity": 0.016436255916401188,
+     "drag": 0.12039507180452347,
+     "position": 526.96875,
+     "momentum_total": 1161.82958984375
+    },
+    {
+     "step": 9155.0,
+     "velocity": 0.09970398992300034,
+     "relative_velocity": 0.015897183782524527,
+     "drag": 0.12479761242866516,
+     "position": 541.8483276367188,
+     "momentum_total": 1181.0977783203125
+    },
+    {
+     "step": 9305.0,
+     "velocity": 0.10115198791027069,
+     "relative_velocity": 0.015975034347286934,
+     "drag": 0.12436769157648087,
+     "position": 556.9340209960938,
+     "momentum_total": 1200.3662109375
+    },
+    {
+     "step": 9455.0,
+     "velocity": 0.10239341855049133,
+     "relative_velocity": 0.01584296204425671,
+     "drag": 0.12427125126123428,
+     "position": 572.1967163085938,
+     "momentum_total": 1219.6343994140625
+    },
+    {
+     "step": 9605.0,
+     "velocity": 0.10378389060497284,
+     "relative_velocity": 0.01586234183223159,
+     "drag": 0.12426739186048508,
+     "position": 587.6953125,
+     "momentum_total": 1238.90283203125
+    },
+    {
+     "step": 9755.0,
+     "velocity": 0.10531310737133026,
+     "relative_velocity": 0.016022753384378224,
+     "drag": 0.13334143161773682,
+     "position": 603.3942260742188,
+     "momentum_total": 1258.171142578125
+    },
+    {
+     "step": 9905.0,
+     "velocity": 0.10656819492578506,
+     "relative_velocity": 0.01590452343225479,
+     "drag": 0.115554578602314,
+     "position": 619.2765502929688,
+     "momentum_total": 1277.439697265625
+    },
+    {
+     "step": 10055.0,
+     "velocity": 0.10792166739702225,
+     "relative_velocity": 0.01588631200569647,
+     "drag": 0.13407883048057556,
+     "position": 635.3923950195312,
+     "momentum_total": 1296.7080078125
+    },
+    {
+     "step": 10205.0,
+     "velocity": 0.10941960662603378,
+     "relative_velocity": 0.01601491620143254,
+     "drag": 0.12498489767313004,
+     "position": 651.7086791992188,
+     "momentum_total": 1315.9765625
+    },
+    {
+     "step": 10355.0,
+     "velocity": 0.1106489971280098,
+     "relative_velocity": 0.015870583002214084,
+     "drag": 0.1233280822634697,
+     "position": 668.2081909179688,
+     "momentum_total": 1335.2449951171875
+    },
+    {
+     "step": 10505.0,
+     "velocity": 0.11202038079500198,
+     "relative_velocity": 0.01587053885062535,
+     "drag": 0.12219703942537308,
+     "position": 684.939697265625,
+     "momentum_total": 1354.5137939453125
+    },
+    {
+     "step": 10655.0,
+     "velocity": 0.1134941577911377,
+     "relative_velocity": 0.015974583449187105,
+     "drag": 0.12459813803434372,
+     "position": 701.873779296875,
+     "momentum_total": 1373.7823486328125
+    },
+    {
+     "step": 10805.0,
+     "velocity": 0.11528616398572922,
+     "relative_velocity": 0.01640205830335617,
+     "drag": 0.11880072206258774,
+     "position": 718.9912719726562,
+     "momentum_total": 1393.051025390625
+    },
+    {
+     "step": 10955.0,
+     "velocity": 0.11616930365562439,
+     "relative_velocity": 0.015905796377747153,
+     "drag": 0.1212238222360611,
+     "position": 736.3355712890625,
+     "momentum_total": 1412.319580078125
+    },
+    {
+     "step": 11105.0,
+     "velocity": 0.1175246313214302,
+     "relative_velocity": 0.015889457806392948,
+     "drag": 0.12634311616420746,
+     "position": 753.8865966796875,
+     "momentum_total": 1431.588134765625
+    },
+    {
+     "step": 11255.0,
+     "velocity": 0.11900068819522858,
+     "relative_velocity": 0.015995808773570597,
+     "drag": 0.13181163370609283,
+     "position": 771.641357421875,
+     "momentum_total": 1450.8568115234375
+    },
+    {
+     "step": 11405.0,
+     "velocity": 0.12029242515563965,
+     "relative_velocity": 0.01591482868901005,
+     "drag": 0.12692347168922424,
+     "position": 789.5814819335938,
+     "momentum_total": 1470.1253662109375
+    },
+    {
+     "step": 11555.0,
+     "velocity": 0.12164290249347687,
+     "relative_velocity": 0.015893524995556588,
+     "drag": 0.12507909536361694,
+     "position": 807.7517700195312,
+     "momentum_total": 1489.3944091796875
+    },
+    {
+     "step": 11705.0,
+     "velocity": 0.1229969710111618,
+     "relative_velocity": 0.01587590078512828,
+     "drag": 0.12230703979730606,
+     "position": 826.1251220703125,
+     "momentum_total": 1508.6629638671875
+    },
+    {
+     "step": 11855.0,
+     "velocity": 0.12446475774049759,
+     "relative_velocity": 0.01597383149244168,
+     "drag": 0.1270710825920105,
+     "position": 844.7030029296875,
+     "momentum_total": 1527.931884765625
+    }
+   ],
+   "steadiness": 0.07560448570133516,
+   "steps_to_within_2pct_velocity": 11215,
+   "u_terminal_tail": 0.12128726068884134,
+   "predicted_re_vs_target": 0.0,
+   "u_reported_vs_target": 0.3088292233485128,
+   "predicted_u_reported_vs_target": 0.36283961065177195,
+   "wall_seconds": 135.38958406448364
+  },
+  {
+   "label": "settle_ld4_M2_drive_only",
+   "kind": "settling",
+   "scheme": "mem",
+   "diameter": 6.0,
+   "domain_length": 24,
+   "domain_ratio": 4.0,
+   "density_ratio": 2.0,
+   "tau0": 0.8,
+   "nu": 0.10000000000000002,
+   "gravity": 0.0011356996755431436,
+   "gravity_unbounded": 0.0008333333333333336,
+   "drive_force": 0.12844460726534346,
+   "u_guess": 0.01666666666666667,
+   "finite_size_in_drive": true,
+   "apply_array_correction_posthoc": false,
+   "double_counts_correction": false,
+   "mass": 226.1946710584651,
+   "solid_fraction": 0.008181230868723419,
+   "array_correction": 1.362839610651772,
+   "u_terminal": 0.11670233020558954,
+   "u_relative_terminal": 0.016006153782622684,
+   "u_relative_terminal_corrected": 0.016006153782622684,
+   "u_relative_terminal_times_correction": 0.021813820389141887,
+   "re_terminal_vs_target": -0.03963077304263918,
+   "u_relative_vs_target": -0.03963077304263918,
+   "u_analytic_stokes": 0.022713993510862864,
+   "u_analytic_schiller_naumann": 0.019465557371753726,
+   "u_rel_error_stokes_corrected": -0.29531749778092464,
+   "u_rel_error_sn_corrected": -0.17771921569278815,
+   "re_terminal": 0.9603692269573608,
+   "drag_terminal": 0.12665889699012042,
+   "drag_balance_residual": 0.013902571024520154,
+   "cd_measured": 34.97029894166165,
+   "cd_schiller_naumann": 28.636242914316462,
+   "drag_max": 2.8270578384399414,
+   "drag_min": -0.7860481142997742,
+   "drag_never_negative": false,
+   "max_step_jump": 4.596545538383913,
+   "momentum_residual_max": 0.00010530215149422873,
+   "steps": 12000,
+   "history": [
+    {
+     "step": 5.0,
+     "velocity": 0.011704402044415474,
+     "relative_velocity": 0.01147780229372007,
+     "drag": 0.23849016427993774,
+     "position": 12.061884880065918,
+     "momentum_total": 5.7799882888793945
+    },
+    {
+     "step": 155.0,
+     "velocity": 0.015327979810535908,
+     "relative_velocity": 0.01376695568776793,
+     "drag": 0.12167988717556,
+     "position": 14.015042304992676,
+     "momentum_total": 25.04670524597168
+    },
+    {
+     "step": 305.0,
+     "velocity": 0.018051788210868835,
+     "relative_velocity": 0.015141616816873904,
+     "drag": 0.1277349591255188,
+     "position": 16.54230499267578,
+     "momentum_total": 44.31342697143555
+    },
+    {
+     "step": 455.0,
+     "velocity": 0.019858714193105698,
+     "relative_velocity": 0.015584378468769568,
+     "drag": 0.127140074968338,
+     "position": 19.391510009765625,
+     "momentum_total": 63.580352783203125
+    },
+    {
+     "step": 605.0,
+     "velocity": 0.021998127922415733,
+     "relative_velocity": 0.01636508997115824,
+     "drag": 0.12139050662517548,
+     "position": 22.49988555908203,
+     "momentum_total": 82.84697723388672
+    },
+    {
+     "step": 755.0,
+     "velocity": 0.023071011528372765,
+     "relative_velocity": 0.01606180056653641,
+     "drag": 0.1273382604122162,
+     "position": 25.988821029663086,
+     "momentum_total": 102.1138687133789
+    },
+    {
+     "step": 905.0,
+     "velocity": 0.024216869845986366,
+     "relative_velocity": 0.01583268624488954,
+     "drag": 0.12498986721038818,
+     "position": 29.529558181762695,
+     "momentum_total": 121.38068389892578
+    },
+    {
+     "step": 1055.0,
+     "velocity": 0.025615498423576355,
+     "relative_velocity": 0.015860475323818346,
+     "drag": 0.12385157495737076,
+     "position": 33.2657356262207,
+     "momentum_total": 140.64752197265625
+    },
+    {
+     "step": 1205.0,
+     "velocity": 0.026979051530361176,
+     "relative_velocity": 0.01585260944234,
+     "drag": 0.11866529285907745,
+     "position": 37.20652389526367,
+     "momentum_total": 159.91445922851562
+    },
+    {
+     "step": 1355.0,
+     "velocity": 0.028334449976682663,
+     "relative_velocity": 0.015836458653211594,
+     "drag": 0.12592729926109314,
+     "position": 41.35293960571289,
+     "momentum_total": 179.18133544921875
+    },
+    {
+     "step": 1505.0,
+     "velocity": 0.029814748093485832,
+     "relative_velocity": 0.01594725616828159,
+     "drag": 0.12493572384119034,
+     "position": 45.70625305175781,
+     "momentum_total": 198.44815063476562
+    },
+    {
+     "step": 1655.0,
+     "velocity": 0.03126606345176697,
+     "relative_velocity": 0.01602858746493304,
+     "drag": 0.12654244899749756,
+     "position": 50.39402770996094,
+     "momentum_total": 217.715087890625
+    },
+    {
+     "step": 1805.0,
+     "velocity": 0.03245392069220543,
+     "relative_velocity": 0.01584214151457504,
+     "drag": 0.12850558757781982,
+     "position": 55.16913604736328,
+     "momentum_total": 236.9821319580078
+    },
+    {
+     "step": 1955.0,
+     "velocity": 0.03380679339170456,
+     "relative_velocity": 0.015823425242194423,
+     "drag": 0.12552371621131897,
+     "position": 60.14019775390625,
+     "momentum_total": 256.2489929199219
+    },
+    {
+     "step": 2105.0,
+     "velocity": 0.03518933802843094,
+     "relative_velocity": 0.015834848913881514,
+     "drag": 0.13135087490081787,
+     "position": 65.31564331054688,
+     "momentum_total": 275.51611328125
+    },
+    {
+     "step": 2255.0,
+     "velocity": 0.03723425045609474,
+     "relative_velocity": 0.016519472968799097,
+     "drag": 0.11980501562356949,
+     "position": 70.70597839355469,
+     "momentum_total": 294.78326416015625
+    },
+    {
+     "step": 2405.0,
+     "velocity": 0.03799918666481972,
+     "relative_velocity": 0.01590317087592902,
+     "drag": 0.12583935260772705,
+     "position": 76.39324188232422,
+     "momentum_total": 314.050537109375
+    },
+    {
+     "step": 2555.0,
+     "velocity": 0.03930501639842987,
+     "relative_velocity": 0.015836621324221294,
+     "drag": 0.12700553238391876,
+     "position": 82.19059753417969,
+     "momentum_total": 333.31768798828125
+    },
+    {
+     "step": 2705.0,
+     "velocity": 0.040661342442035675,
+     "relative_velocity": 0.01582139150963889,
+     "drag": 0.12694856524467468,
+     "position": 88.18949890136719,
+     "momentum_total": 352.5848693847656
+    },
+    {
+     "step": 2855.0,
+     "velocity": 0.04245135188102722,
+     "relative_velocity": 0.01624694025074994,
+     "drag": 0.11770769208669662,
+     "position": 94.39764404296875,
+     "momentum_total": 371.85205078125
+    },
+    {
+     "step": 3005.0,
+     "velocity": 0.04344441741704941,
+     "relative_velocity": 0.015862504917162436,
+     "drag": 0.13340814411640167,
+     "position": 100.89814758300781,
+     "momentum_total": 391.1192626953125
+    },
+    {
+     "step": 3155.0,
+     "velocity": 0.04479261115193367,
+     "relative_velocity": 0.01583900371635402,
+     "drag": 0.12588796019554138,
+     "position": 107.51789093017578,
+     "momentum_total": 410.3865051269531
+    },
+    {
+     "step": 3305.0,
+     "velocity": 0.04615865275263786,
+     "relative_velocity": 0.015833641781851097,
+     "drag": 0.13072842359542847,
+     "position": 114.33939361572266,
+     "momentum_total": 429.65380859375
+    },
+    {
+     "step": 3455.0,
+     "velocity": 0.04802439361810684,
+     "relative_velocity": 0.01633615819392381,
+     "drag": 0.12986382842063904,
+     "position": 121.43612670898438,
+     "momentum_total": 448.9210205078125
+    },
+    {
+     "step": 3605.0,
+     "velocity": 0.04893549531698227,
+     "relative_velocity": 0.015868407984574638,
+     "drag": 0.12775152921676636,
+     "position": 128.6866912841797,
+     "momentum_total": 468.1883544921875
+    },
+    {
+     "step": 3755.0,
+     "velocity": 0.05025662109255791,
+     "relative_velocity": 0.01581738847825262,
+     "drag": 0.12593095004558563,
+     "position": 136.12628173828125,
+     "momentum_total": 487.4557189941406
+    },
+    {
+     "step": 3905.0,
+     "velocity": 0.05355554446578026,
+     "relative_velocity": 0.01777652526895205,
+     "drag": 0.10010543465614319,
+     "position": 143.80088806152344,
+     "momentum_total": 506.72314453125
+    },
+    {
+     "step": 4055.0,
+     "velocity": 0.05304285138845444,
+     "relative_velocity": 0.01586168590519163,
+     "drag": 0.12786926329135895,
+     "position": 151.6980438232422,
+     "momentum_total": 525.9904174804688
+    },
+    {
+     "step": 4205.0,
+     "velocity": 0.05438726022839546,
+     "relative_velocity": 0.015834322544159715,
+     "drag": 0.12690338492393494,
+     "position": 159.75579833984375,
+     "momentum_total": 545.2579345703125
+    },
+    {
+     "step": 4355.0,
+     "velocity": 0.05793822929263115,
+     "relative_velocity": 0.018049630991838594,
+     "drag": 0.10250422358512878,
+     "position": 168.05381774902344,
+     "momentum_total": 564.5253295898438
+    },
+    {
+     "step": 4505.0,
+     "velocity": 0.05715223029255867,
+     "relative_velocity": 0.015856997696337874,
+     "drag": 0.12486416846513748,
+     "position": 176.5574951171875,
+     "momentum_total": 583.7928466796875
+    },
+    {
+     "step": 4655.0,
+     "velocity": 0.05853826180100441,
+     "relative_velocity": 0.015871936938276994,
+     "drag": 0.11960494518280029,
+     "position": 185.23178100585938,
+     "momentum_total": 603.060302734375
+    },
+    {
+     "step": 4805.0,
+     "velocity": 0.06015723571181297,
+     "relative_velocity": 0.01612362003436795,
+     "drag": 0.12484581023454666,
+     "position": 194.1669464111328,
+     "momentum_total": 622.3279418945312
+    },
+    {
+     "step": 4955.0,
+     "velocity": 0.06129112467169762,
+     "relative_velocity": 0.015882292969359293,
+     "drag": 0.12048982083797455,
+     "position": 203.26300048828125,
+     "momentum_total": 641.5953979492188
+    },
+    {
+     "step": 5105.0,
+     "velocity": 0.06261934340000153,
+     "relative_velocity": 0.01583845692652243,
+     "drag": 0.12511608004570007,
+     "position": 212.5543670654297,
+     "momentum_total": 660.8631591796875
+    },
+    {
+     "step": 5255.0,
+     "velocity": 0.06406073272228241,
+     "relative_velocity": 0.01590966350502438,
+     "drag": 0.12792091071605682,
+     "position": 222.1110076904297,
+     "momentum_total": 680.1305541992188
+    },
+    {
+     "step": 5405.0,
+     "velocity": 0.06538081914186478,
+     "relative_velocity": 0.015857558283540935,
+     "drag": 0.12043998390436172,
+     "position": 231.81619262695312,
+     "momentum_total": 699.3983764648438
+    },
+    {
+     "step": 5555.0,
+     "velocity": 0.0670868530869484,
+     "relative_velocity": 0.016197736340540426,
+     "drag": 0.13285285234451294,
+     "position": 241.76998901367188,
+     "momentum_total": 718.6658325195312
+    },
+    {
+     "step": 5705.0,
+     "velocity": 0.06814521551132202,
+     "relative_velocity": 0.01587961558942442,
+     "drag": 0.12788614630699158,
+     "position": 251.89614868164062,
+     "momentum_total": 737.9337158203125
+    },
+    {
+     "step": 5855.0,
+     "velocity": 0.06966041773557663,
+     "relative_velocity": 0.016025827162795596,
+     "drag": 0.12080756574869156,
+     "position": 262.21759033203125,
+     "momentum_total": 757.201416015625
+    },
+    {
+     "step": 6005.0,
+     "velocity": 0.07088768482208252,
+     "relative_velocity": 0.01587938379358362,
+     "drag": 0.12546329200267792,
+     "position": 272.7961730957031,
+     "momentum_total": 776.4691772460938
+    },
+    {
+     "step": 6155.0,
+     "velocity": 0.07221166789531708,
+     "relative_velocity": 0.015831241453135456,
+     "drag": 0.13045352697372437,
+     "position": 283.52825927734375,
+     "momentum_total": 795.7369384765625
+    },
+    {
+     "step": 6305.0,
+     "velocity": 0.0736587792634964,
+     "relative_velocity": 0.01590824513523667,
+     "drag": 0.12868458032608032,
+     "position": 294.5154724121094,
+     "momentum_total": 815.0045776367188
+    },
+    {
+     "step": 6455.0,
+     "velocity": 0.07496121525764465,
+     "relative_velocity": 0.01583820250299242,
+     "drag": 0.12477563321590424,
+     "position": 305.6609802246094,
+     "momentum_total": 834.2723388671875
+    },
+    {
+     "step": 6605.0,
+     "velocity": 0.07642091810703278,
+     "relative_velocity": 0.015927987518133943,
+     "drag": 0.12762127816677094,
+     "position": 317.0555725097656,
+     "momentum_total": 853.540283203125
+    },
+    {
+     "step": 6755.0,
+     "velocity": 0.07770881056785583,
+     "relative_velocity": 0.01584315851882652,
+     "drag": 0.1262350231409073,
+     "position": 328.61395263671875,
+     "momentum_total": 872.80810546875
+    },
+    {
+     "step": 6905.0,
+     "velocity": 0.07921389490365982,
+     "relative_velocity": 0.015979075597392187,
+     "drag": 0.13055750727653503,
+     "position": 340.4178161621094,
+     "momentum_total": 892.075927734375
+    },
+    {
+     "step": 7055.0,
+     "velocity": 0.08045487850904465,
+     "relative_velocity": 0.01584655184436727,
+     "drag": 0.1311674416065216,
+     "position": 352.388671875,
+     "momentum_total": 911.343994140625
+    },
+    {
+     "step": 7205.0,
+     "velocity": 0.08193273842334747,
+     "relative_velocity": 0.015954789740067934,
+     "drag": 0.12811943888664246,
+     "position": 364.6017150878906,
+     "momentum_total": 930.6119384765625
+    },
+    {
+     "step": 7355.0,
+     "velocity": 0.08318158984184265,
+     "relative_velocity": 0.015830261839760676,
+     "drag": 0.13255779445171356,
+     "position": 376.98382568359375,
+     "momentum_total": 949.8800048828125
+    },
+    {
+     "step": 7505.0,
+     "velocity": 0.0846470519900322,
+     "relative_velocity": 0.015925890041722193,
+     "drag": 0.12810206413269043,
+     "position": 389.60845947265625,
+     "momentum_total": 969.1480712890625
+    },
+    {
+     "step": 7655.0,
+     "velocity": 0.08595281839370728,
+     "relative_velocity": 0.015859204309958005,
+     "drag": 0.13149847090244293,
+     "position": 402.4006652832031,
+     "momentum_total": 988.4161987304688
+    },
+    {
+     "step": 7805.0,
+     "velocity": 0.08737284690141678,
+     "relative_velocity": 0.01590866595506668,
+     "drag": 0.1269252896308899,
+     "position": 415.4363708496094,
+     "momentum_total": 1007.68408203125
+    },
+    {
+     "step": 7955.0,
+     "velocity": 0.08866140246391296,
+     "relative_velocity": 0.015824473566479147,
+     "drag": 0.1277644783258438,
+     "position": 428.6390380859375,
+     "momentum_total": 1026.952392578125
+    },
+    {
+     "step": 8105.0,
+     "velocity": 0.09005285799503326,
+     "relative_velocity": 0.015844889812999308,
+     "drag": 0.12478600442409515,
+     "position": 442.08612060546875,
+     "momentum_total": 1046.220458984375
+    },
+    {
+     "step": 8255.0,
+     "velocity": 0.09274224936962128,
+     "relative_velocity": 0.017184469986844947,
+     "drag": 0.09936779737472534,
+     "position": 455.7113952636719,
+     "momentum_total": 1065.488525390625
+    },
+    {
+     "step": 8405.0,
+     "velocity": 0.09280063211917877,
+     "relative_velocity": 0.015849984906337877,
+     "drag": 0.13043129444122314,
+     "position": 469.55828857421875,
+     "momentum_total": 1084.7567138671875
+    },
+    {
+     "step": 8555.0,
+     "velocity": 0.0943216010928154,
+     "relative_velocity": 0.016002025041315288,
+     "drag": 0.12822994589805603,
+     "position": 483.6151123046875,
+     "momentum_total": 1104.02490234375
+    },
+    {
+     "step": 8705.0,
+     "velocity": 0.09556884318590164,
+     "relative_velocity": 0.015875861324645857,
+     "drag": 0.12338151037693024,
+     "position": 497.8506774902344,
+     "momentum_total": 1123.29296875
+    },
+    {
+     "step": 8855.0,
+     "velocity": 0.09698589891195297,
+     "relative_velocity": 0.01592227513039554,
+     "drag": 0.11903664469718933,
+     "position": 512.3214721679688,
+     "momentum_total": 1142.561279296875
+    },
+    {
+     "step": 9005.0,
+     "velocity": 0.09886299818754196,
+     "relative_velocity": 0.016436255916401188,
+     "drag": 0.12039507180452347,
+     "position": 526.96875,
+     "momentum_total": 1161.82958984375
+    },
+    {
+     "step": 9155.0,
+     "velocity": 0.09970398992300034,
+     "relative_velocity": 0.015897183782524527,
+     "drag": 0.12479761242866516,
+     "position": 541.8483276367188,
+     "momentum_total": 1181.0977783203125
+    },
+    {
+     "step": 9305.0,
+     "velocity": 0.10115198791027069,
+     "relative_velocity": 0.015975034347286934,
+     "drag": 0.12436769157648087,
+     "position": 556.9340209960938,
+     "momentum_total": 1200.3662109375
+    },
+    {
+     "step": 9455.0,
+     "velocity": 0.10239341855049133,
+     "relative_velocity": 0.01584296204425671,
+     "drag": 0.12427125126123428,
+     "position": 572.1967163085938,
+     "momentum_total": 1219.6343994140625
+    },
+    {
+     "step": 9605.0,
+     "velocity": 0.10378389060497284,
+     "relative_velocity": 0.01586234183223159,
+     "drag": 0.12426739186048508,
+     "position": 587.6953125,
+     "momentum_total": 1238.90283203125
+    },
+    {
+     "step": 9755.0,
+     "velocity": 0.10531310737133026,
+     "relative_velocity": 0.016022753384378224,
+     "drag": 0.13334143161773682,
+     "position": 603.3942260742188,
+     "momentum_total": 1258.171142578125
+    },
+    {
+     "step": 9905.0,
+     "velocity": 0.10656819492578506,
+     "relative_velocity": 0.01590452343225479,
+     "drag": 0.115554578602314,
+     "position": 619.2765502929688,
+     "momentum_total": 1277.439697265625
+    },
+    {
+     "step": 10055.0,
+     "velocity": 0.10792166739702225,
+     "relative_velocity": 0.01588631200569647,
+     "drag": 0.13407883048057556,
+     "position": 635.3923950195312,
+     "momentum_total": 1296.7080078125
+    },
+    {
+     "step": 10205.0,
+     "velocity": 0.10941960662603378,
+     "relative_velocity": 0.01601491620143254,
+     "drag": 0.12498489767313004,
+     "position": 651.7086791992188,
+     "momentum_total": 1315.9765625
+    },
+    {
+     "step": 10355.0,
+     "velocity": 0.1106489971280098,
+     "relative_velocity": 0.015870583002214084,
+     "drag": 0.1233280822634697,
+     "position": 668.2081909179688,
+     "momentum_total": 1335.2449951171875
+    },
+    {
+     "step": 10505.0,
+     "velocity": 0.11202038079500198,
+     "relative_velocity": 0.01587053885062535,
+     "drag": 0.12219703942537308,
+     "position": 684.939697265625,
+     "momentum_total": 1354.5137939453125
+    },
+    {
+     "step": 10655.0,
+     "velocity": 0.1134941577911377,
+     "relative_velocity": 0.015974583449187105,
+     "drag": 0.12459813803434372,
+     "position": 701.873779296875,
+     "momentum_total": 1373.7823486328125
+    },
+    {
+     "step": 10805.0,
+     "velocity": 0.11528616398572922,
+     "relative_velocity": 0.01640205830335617,
+     "drag": 0.11880072206258774,
+     "position": 718.9912719726562,
+     "momentum_total": 1393.051025390625
+    },
+    {
+     "step": 10955.0,
+     "velocity": 0.11616930365562439,
+     "relative_velocity": 0.015905796377747153,
+     "drag": 0.1212238222360611,
+     "position": 736.3355712890625,
+     "momentum_total": 1412.319580078125
+    },
+    {
+     "step": 11105.0,
+     "velocity": 0.1175246313214302,
+     "relative_velocity": 0.015889457806392948,
+     "drag": 0.12634311616420746,
+     "position": 753.8865966796875,
+     "momentum_total": 1431.588134765625
+    },
+    {
+     "step": 11255.0,
+     "velocity": 0.11900068819522858,
+     "relative_velocity": 0.015995808773570597,
+     "drag": 0.13181163370609283,
+     "position": 771.641357421875,
+     "momentum_total": 1450.8568115234375
+    },
+    {
+     "step": 11405.0,
+     "velocity": 0.12029242515563965,
+     "relative_velocity": 0.01591482868901005,
+     "drag": 0.12692347168922424,
+     "position": 789.5814819335938,
+     "momentum_total": 1470.1253662109375
+    },
+    {
+     "step": 11555.0,
+     "velocity": 0.12164290249347687,
+     "relative_velocity": 0.015893524995556588,
+     "drag": 0.12507909536361694,
+     "position": 807.7517700195312,
+     "momentum_total": 1489.3944091796875
+    },
+    {
+     "step": 11705.0,
+     "velocity": 0.1229969710111618,
+     "relative_velocity": 0.01587590078512828,
+     "drag": 0.12230703979730606,
+     "position": 826.1251220703125,
+     "momentum_total": 1508.6629638671875
+    },
+    {
+     "step": 11855.0,
+     "velocity": 0.12446475774049759,
+     "relative_velocity": 0.01597383149244168,
+     "drag": 0.1270710825920105,
+     "position": 844.7030029296875,
+     "momentum_total": 1527.931884765625
+    }
+   ],
+   "steadiness": 0.07560448570133516,
+   "steps_to_within_2pct_velocity": 11215,
+   "u_terminal_tail": 0.12128726068884134,
+   "predicted_re_vs_target": 0.0,
+   "u_reported_vs_target": -0.03963077304263918,
+   "predicted_u_reported_vs_target": 0.0,
+   "wall_seconds": 141.19010281562805
+  },
+  {
+   "label": "settle_ld8_M0_posthoc",
+   "kind": "settling",
+   "scheme": "mem",
+   "diameter": 4.0,
+   "domain_length": 32,
+   "domain_ratio": 8.0,
+   "density_ratio": 2.0,
+   "tau0": 0.8,
+   "nu": 0.10000000000000002,
+   "gravity": 0.0028125000000000008,
+   "gravity_unbounded": 0.0028125000000000008,
+   "drive_force": 0.09424777960769382,
+   "u_guess": 0.025000000000000005,
+   "finite_size_in_drive": false,
+   "apply_array_correction_posthoc": true,
+   "double_counts_correction": false,
+   "mass": 67.02064327658225,
+   "solid_fraction": 0.0010226538585904274,
+   "array_correction": 1.1783518437501148,
+   "u_terminal": 0.054335486348718404,
+   "u_relative_terminal": 0.022748325541615485,
+   "u_relative_terminal_corrected": 0.026805531344190437,
+   "u_relative_terminal_times_correction": 0.026805531344190437,
+   "re_terminal_vs_target": -0.0900669783353808,
+   "u_relative_vs_target": -0.0900669783353808,
+   "u_analytic_stokes": 0.025,
+   "u_analytic_schiller_naumann": 0.021981691858920897,
+   "u_rel_error_stokes_corrected": 0.07222125376761745,
+   "u_rel_error_sn_corrected": 0.21944805323580518,
+   "re_terminal": 0.9099330216646192,
+   "drag_terminal": 0.09371179828420281,
+   "drag_balance_residual": 0.005686938469235284,
+   "cd_measured": 28.821430619822124,
+   "cd_schiller_naumann": 30.083506423305053,
+   "drag_max": 0.7954527735710144,
+   "drag_min": 0.05342189222574234,
+   "drag_never_negative": true,
+   "max_step_jump": 13.890014943868097,
+   "momentum_residual_max": 0.0003965582543495853,
+   "steps": 12000,
+   "history": [
+    {
+     "step": 5.0,
+     "velocity": 0.01297143567353487,
+     "relative_velocity": 0.012932449579238892,
+     "drag": 0.11617033183574677,
+     "position": 16.069915771484375,
+     "momentum_total": 2.146850347518921
+    },
+    {
+     "step": 155.0,
+     "velocity": 0.0203363299369812,
+     "relative_velocity": 0.019880974665284157,
+     "drag": 0.09314345568418503,
+     "position": 18.677837371826172,
+     "momentum_total": 16.284034729003906
+    },
+    {
+     "step": 305.0,
+     "velocity": 0.022344686090946198,
+     "relative_velocity": 0.021461984142661095,
+     "drag": 0.09352784603834152,
+     "position": 21.9083309173584,
+     "momentum_total": 30.421932220458984
+    },
+    {
+     "step": 455.0,
+     "velocity": 0.023360688239336014,
+     "relative_velocity": 0.022048662416636944,
+     "drag": 0.09361091256141663,
+     "position": 25.34772300720215,
+     "momentum_total": 44.558109283447266
+    },
+    {
+     "step": 605.0,
+     "velocity": 0.02403264120221138,
+     "relative_velocity": 0.02229055017232895,
+     "drag": 0.09414151310920715,
+     "position": 28.908239364624023,
+     "momentum_total": 58.69552230834961
+    },
+    {
+     "step": 755.0,
+     "velocity": 0.025382012128829956,
+     "relative_velocity": 0.023211246356368065,
+     "drag": 0.09712127596139908,
+     "position": 32.742088317871094,
+     "momentum_total": 72.83277130126953
+    },
+    {
+     "step": 905.0,
+     "velocity": 0.025113128125667572,
+     "relative_velocity": 0.02251038048416376,
+     "drag": 0.09505006670951843,
+     "position": 36.49238204956055,
+     "momentum_total": 86.96993255615234
+    },
+    {
+     "step": 1055.0,
+     "velocity": 0.02553608827292919,
+     "relative_velocity": 0.022502759471535683,
+     "drag": 0.09508954733610153,
+     "position": 40.296382904052734,
+     "momentum_total": 101.1075668334961
+    },
+    {
+     "step": 1205.0,
+     "velocity": 0.02607097290456295,
+     "relative_velocity": 0.022607309743762016,
+     "drag": 0.09082907438278198,
+     "position": 44.17041778564453,
+     "momentum_total": 115.2446060180664
+    },
+    {
+     "step": 1355.0,
+     "velocity": 0.026581773534417152,
+     "relative_velocity": 0.02268771268427372,
+     "drag": 0.09444853663444519,
+     "position": 48.11184310913086,
+     "momentum_total": 129.38211059570312
+    },
+    {
+     "step": 1505.0,
+     "velocity": 0.027035202831029892,
+     "relative_velocity": 0.022710628807544708,
+     "drag": 0.09296853840351105,
+     "position": 52.11927032470703,
+     "momentum_total": 143.51956176757812
+    },
+    {
+     "step": 1655.0,
+     "velocity": 0.02736368030309677,
+     "relative_velocity": 0.022608344443142414,
+     "drag": 0.09562327712774277,
+     "position": 56.19157028198242,
+     "momentum_total": 157.6567840576172
+    },
+    {
+     "step": 1805.0,
+     "velocity": 0.027775870636105537,
+     "relative_velocity": 0.02258993312716484,
+     "drag": 0.0909930020570755,
+     "position": 60.32853698730469,
+     "momentum_total": 171.7943572998047
+    },
+    {
+     "step": 1955.0,
+     "velocity": 0.02912803553044796,
+     "relative_velocity": 0.023513420950621367,
+     "drag": 0.09724116325378418,
+     "position": 64.68732452392578,
+     "momentum_total": 185.93186950683594
+    },
+    {
+     "step": 2105.0,
+     "velocity": 0.028709586709737778,
+     "relative_velocity": 0.022662680130451918,
+     "drag": 0.09659405052661896,
+     "position": 68.97447967529297,
+     "momentum_total": 200.0691680908203
+    },
+    {
+     "step": 2255.0,
+     "velocity": 0.029037097468972206,
+     "relative_velocity": 0.022559416480362415,
+     "drag": 0.09492380172014236,
+     "position": 73.3058853149414,
+     "momentum_total": 214.2067413330078
+    },
+    {
+     "step": 2405.0,
+     "velocity": 0.029516024515032768,
+     "relative_velocity": 0.022607881110161543,
+     "drag": 0.09406302869319916,
+     "position": 77.70206451416016,
+     "momentum_total": 228.34422302246094
+    },
+    {
+     "step": 2555.0,
+     "velocity": 0.02997078001499176,
+     "relative_velocity": 0.02263212762773037,
+     "drag": 0.09107180684804916,
+     "position": 82.16339874267578,
+     "momentum_total": 242.48162841796875
+    },
+    {
+     "step": 2705.0,
+     "velocity": 0.030380243435502052,
+     "relative_velocity": 0.022610983811318874,
+     "drag": 0.09420590847730637,
+     "position": 86.68877410888672,
+     "momentum_total": 256.61920166015625
+    },
+    {
+     "step": 2855.0,
+     "velocity": 0.030782779678702354,
+     "relative_velocity": 0.02258290722966194,
+     "drag": 0.09325504302978516,
+     "position": 91.27903747558594,
+     "momentum_total": 270.7565002441406
+    },
+    {
+     "step": 3005.0,
+     "velocity": 0.03511689975857735,
+     "relative_velocity": 0.026494445279240608,
+     "drag": 0.2146376520395279,
+     "position": 96.03764343261719,
+     "momentum_total": 284.8941345214844
+    },
+    {
+     "step": 3155.0,
+     "velocity": 0.0315949022769928,
+     "relative_velocity": 0.022533802315592766,
+     "drag": 0.09486408531665802,
+     "position": 100.80765533447266,
+     "momentum_total": 299.0316467285156
+    },
+    {
+     "step": 3305.0,
+     "velocity": 0.03210478276014328,
+     "relative_velocity": 0.0226132795214653,
+     "drag": 0.0923018828034401,
+     "position": 105.59090423583984,
+     "momentum_total": 313.16925048828125
+    },
+    {
+     "step": 3455.0,
+     "velocity": 0.032542821019887924,
+     "relative_velocity": 0.022620772011578083,
+     "drag": 0.09308941662311554,
+     "position": 110.4390640258789,
+     "momentum_total": 327.3067321777344
+    },
+    {
+     "step": 3605.0,
+     "velocity": 0.03294987604022026,
+     "relative_velocity": 0.02259720303118229,
+     "drag": 0.09479381144046783,
+     "position": 115.35208129882812,
+     "momentum_total": 341.4447021484375
+    },
+    {
+     "step": 3755.0,
+     "velocity": 0.03338485583662987,
+     "relative_velocity": 0.02260163426399231,
+     "drag": 0.09230447560548782,
+     "position": 120.32935333251953,
+     "momentum_total": 355.58209228515625
+    },
+    {
+     "step": 3905.0,
+     "velocity": 0.03381219133734703,
+     "relative_velocity": 0.022598400712013245,
+     "drag": 0.0945657417178154,
+     "position": 125.37139129638672,
+     "momentum_total": 369.7196044921875
+    },
+    {
+     "step": 4055.0,
+     "velocity": 0.034324534237384796,
+     "relative_velocity": 0.02268034126609564,
+     "drag": 0.09670775383710861,
+     "position": 130.61834716796875,
+     "momentum_total": 383.85736083984375
+    },
+    {
+     "step": 4205.0,
+     "velocity": 0.03464220091700554,
+     "relative_velocity": 0.022567211650311947,
+     "drag": 0.09324420988559723,
+     "position": 135.7913360595703,
+     "momentum_total": 397.9949951171875
+    },
+    {
+     "step": 4355.0,
+     "velocity": 0.03523397073149681,
+     "relative_velocity": 0.02272873930633068,
+     "drag": 0.0889647826552391,
+     "position": 141.02662658691406,
+     "momentum_total": 412.1328125
+    },
+    {
+     "step": 4505.0,
+     "velocity": 0.03553261607885361,
+     "relative_velocity": 0.022596550174057484,
+     "drag": 0.09332134574651718,
+     "position": 146.32669067382812,
+     "momentum_total": 426.2704162597656
+    },
+    {
+     "step": 4655.0,
+     "velocity": 0.03598230332136154,
+     "relative_velocity": 0.022615703754127026,
+     "drag": 0.09385877847671509,
+     "position": 151.6910400390625,
+     "momentum_total": 440.4082946777344
+    },
+    {
+     "step": 4805.0,
+     "velocity": 0.03649308905005455,
+     "relative_velocity": 0.022696085274219513,
+     "drag": 0.09381850808858871,
+     "position": 157.1205596923828,
+     "momentum_total": 454.5460205078125
+    },
+    {
+     "step": 4955.0,
+     "velocity": 0.03690309822559357,
+     "relative_velocity": 0.022675475105643272,
+     "drag": 0.09520730376243591,
+     "position": 162.7451629638672,
+     "momentum_total": 468.68402099609375
+    },
+    {
+     "step": 5105.0,
+     "velocity": 0.03722685948014259,
+     "relative_velocity": 0.02256845124065876,
+     "drag": 0.09257819503545761,
+     "position": 168.30531311035156,
+     "momentum_total": 482.8216857910156
+    },
+    {
+     "step": 5255.0,
+     "velocity": 0.037671443074941635,
+     "relative_velocity": 0.022582482546567917,
+     "drag": 0.09351569414138794,
+     "position": 173.9280242919922,
+     "momentum_total": 496.9598083496094
+    },
+    {
+     "step": 5405.0,
+     "velocity": 0.03813336044549942,
+     "relative_velocity": 0.022613896057009697,
+     "drag": 0.09330372512340546,
+     "position": 179.61566162109375,
+     "momentum_total": 511.0975341796875
+    },
+    {
+     "step": 5555.0,
+     "velocity": 0.038558054715394974,
+     "relative_velocity": 0.02260800451040268,
+     "drag": 0.09360842406749725,
+     "position": 185.3681640625,
+     "momentum_total": 525.2354125976562
+    },
+    {
+     "step": 5705.0,
+     "velocity": 0.04047958552837372,
+     "relative_velocity": 0.024102015420794487,
+     "drag": 0.09083232283592224,
+     "position": 191.20314025878906,
+     "momentum_total": 539.3731689453125
+    },
+    {
+     "step": 5855.0,
+     "velocity": 0.03946224972605705,
+     "relative_velocity": 0.02265113964676857,
+     "drag": 0.0908050686120987,
+     "position": 197.1908721923828,
+     "momentum_total": 553.51123046875
+    },
+    {
+     "step": 6005.0,
+     "velocity": 0.039817988872528076,
+     "relative_velocity": 0.02257615514099598,
+     "drag": 0.10145225375890732,
+     "position": 203.13624572753906,
+     "momentum_total": 567.6490478515625
+    },
+    {
+     "step": 6155.0,
+     "velocity": 0.04024309664964676,
+     "relative_velocity": 0.022570669651031494,
+     "drag": 0.10074282437562943,
+     "position": 209.1465606689453,
+     "momentum_total": 581.7872314453125
+    },
+    {
+     "step": 6305.0,
+     "velocity": 0.040704067796468735,
+     "relative_velocity": 0.022601131349802017,
+     "drag": 0.09630037844181061,
+     "position": 215.2216033935547,
+     "momentum_total": 595.925048828125
+    },
+    {
+     "step": 6455.0,
+     "velocity": 0.041130099445581436,
+     "relative_velocity": 0.022596580907702446,
+     "drag": 0.09430843591690063,
+     "position": 221.36158752441406,
+     "momentum_total": 610.0629272460938
+    },
+    {
+     "step": 6605.0,
+     "velocity": 0.041614044457674026,
+     "relative_velocity": 0.022650055587291718,
+     "drag": 0.09454263746738434,
+     "position": 227.68472290039062,
+     "momentum_total": 624.2009887695312
+    },
+    {
+     "step": 6755.0,
+     "velocity": 0.042100582271814346,
+     "relative_velocity": 0.022706130519509315,
+     "drag": 0.08594433218240738,
+     "position": 233.95379638671875,
+     "momentum_total": 638.3389892578125
+    },
+    {
+     "step": 6905.0,
+     "velocity": 0.04239005967974663,
+     "relative_velocity": 0.022564738988876343,
+     "drag": 0.09716497361660004,
+     "position": 240.28724670410156,
+     "momentum_total": 652.4771118164062
+    },
+    {
+     "step": 7055.0,
+     "velocity": 0.04286034405231476,
+     "relative_velocity": 0.022604530677199364,
+     "drag": 0.09446439146995544,
+     "position": 246.68463134765625,
+     "momentum_total": 666.614990234375
+    },
+    {
+     "step": 7205.0,
+     "velocity": 0.0432615801692009,
+     "relative_velocity": 0.022575128823518753,
+     "drag": 0.10182398557662964,
+     "position": 253.147216796875,
+     "momentum_total": 680.7530517578125
+    },
+    {
+     "step": 7355.0,
+     "velocity": 0.04372622072696686,
+     "relative_velocity": 0.022609245032072067,
+     "drag": 0.09656102955341339,
+     "position": 259.78765869140625,
+     "momentum_total": 694.8916015625
+    },
+    {
+     "step": 7505.0,
+     "velocity": 0.04415002465248108,
+     "relative_velocity": 0.02260245755314827,
+     "drag": 0.0942501500248909,
+     "position": 266.3804931640625,
+     "momentum_total": 709.0296630859375
+    },
+    {
+     "step": 7655.0,
+     "velocity": 0.0446891225874424,
+     "relative_velocity": 0.02271120250225067,
+     "drag": 0.09291274100542068,
+     "position": 273.0359802246094,
+     "momentum_total": 723.1676025390625
+    },
+    {
+     "step": 7805.0,
+     "velocity": 0.04500456526875496,
+     "relative_velocity": 0.02259581908583641,
+     "drag": 0.09398845583200455,
+     "position": 279.7567443847656,
+     "momentum_total": 737.3060302734375
+    },
+    {
+     "step": 7955.0,
+     "velocity": 0.045755740255117416,
+     "relative_velocity": 0.022917069494724274,
+     "drag": 0.09285015612840652,
+     "position": 286.544677734375,
+     "momentum_total": 751.4441528320312
+    },
+    {
+     "step": 8105.0,
+     "velocity": 0.04591376706957817,
+     "relative_velocity": 0.022643953561782837,
+     "drag": 0.09403855353593826,
+     "position": 293.4985656738281,
+     "momentum_total": 765.5823974609375
+    },
+    {
+     "step": 8255.0,
+     "velocity": 0.046294163912534714,
+     "relative_velocity": 0.022593673318624496,
+     "drag": 0.09400926530361176,
+     "position": 300.4134521484375,
+     "momentum_total": 779.7203369140625
+    },
+    {
+     "step": 8405.0,
+     "velocity": 0.04674724489450455,
+     "relative_velocity": 0.022616203874349594,
+     "drag": 0.09391188621520996,
+     "position": 307.3924255371094,
+     "momentum_total": 793.8590087890625
+    },
+    {
+     "step": 8555.0,
+     "velocity": 0.04718020185828209,
+     "relative_velocity": 0.022618576884269714,
+     "drag": 0.09314762055873871,
+     "position": 314.43621826171875,
+     "momentum_total": 807.9973754882812
+    },
+    {
+     "step": 8705.0,
+     "velocity": 0.04789326712489128,
+     "relative_velocity": 0.022901657968759537,
+     "drag": 0.09664282947778702,
+     "position": 321.64019775390625,
+     "momentum_total": 822.1348876953125
+    },
+    {
+     "step": 8855.0,
+     "velocity": 0.04796139523386955,
+     "relative_velocity": 0.0225384421646595,
+     "drag": 0.0951443761587143,
+     "position": 328.8206481933594,
+     "momentum_total": 836.2737426757812
+    },
+    {
+     "step": 9005.0,
+     "velocity": 0.04857737943530083,
+     "relative_velocity": 0.022724218666553497,
+     "drag": 0.08781787753105164,
+     "position": 336.0579528808594,
+     "momentum_total": 850.4120483398438
+    },
+    {
+     "step": 9155.0,
+     "velocity": 0.048907358199357986,
+     "relative_velocity": 0.02262341044843197,
+     "drag": 0.09089172631502151,
+     "position": 343.3597106933594,
+     "momentum_total": 864.5502319335938
+    },
+    {
+     "step": 9305.0,
+     "velocity": 0.049814559519290924,
+     "relative_velocity": 0.023101001977920532,
+     "drag": 0.09168105572462082,
+     "position": 350.7298583984375,
+     "momentum_total": 878.6884765625
+    },
+    {
+     "step": 9455.0,
+     "velocity": 0.04978106915950775,
+     "relative_velocity": 0.022635966539382935,
+     "drag": 0.09503138065338135,
+     "position": 358.2542419433594,
+     "momentum_total": 892.8270874023438
+    },
+    {
+     "step": 9605.0,
+     "velocity": 0.0501670278608799,
+     "relative_velocity": 0.02259124629199505,
+     "drag": 0.09558363258838654,
+     "position": 365.7505187988281,
+     "momentum_total": 906.9654541015625
+    },
+    {
+     "step": 9755.0,
+     "velocity": 0.0505806989967823,
+     "relative_velocity": 0.022574294358491898,
+     "drag": 0.09477640688419342,
+     "position": 373.3108215332031,
+     "momentum_total": 921.1038208007812
+    },
+    {
+     "step": 9905.0,
+     "velocity": 0.051004622131586075,
+     "relative_velocity": 0.022567613050341606,
+     "drag": 0.0934196189045906,
+     "position": 380.9350280761719,
+     "momentum_total": 935.2422485351562
+    },
+    {
+     "step": 10055.0,
+     "velocity": 0.05149182304739952,
+     "relative_velocity": 0.022624332457780838,
+     "drag": 0.09511496871709824,
+     "position": 388.716796875,
+     "momentum_total": 949.3809204101562
+    },
+    {
+     "step": 10205.0,
+     "velocity": 0.051915597170591354,
+     "relative_velocity": 0.02261749841272831,
+     "drag": 0.09401589632034302,
+     "position": 396.4715576171875,
+     "momentum_total": 963.51953125
+    },
+    {
+     "step": 10355.0,
+     "velocity": 0.052296195179224014,
+     "relative_velocity": 0.02256740629673004,
+     "drag": 0.09801319241523743,
+     "position": 404.28936767578125,
+     "momentum_total": 977.6578979492188
+    },
+    {
+     "step": 10505.0,
+     "velocity": 0.052729569375514984,
+     "relative_velocity": 0.02257019467651844,
+     "drag": 0.10050839930772781,
+     "position": 412.1724853515625,
+     "momentum_total": 991.79638671875
+    },
+    {
+     "step": 10655.0,
+     "velocity": 0.05327707156538963,
+     "relative_velocity": 0.02268734574317932,
+     "drag": 0.08970180153846741,
+     "position": 420.2113342285156,
+     "momentum_total": 1005.934814453125
+    },
+    {
+     "step": 10805.0,
+     "velocity": 0.05364235118031502,
+     "relative_velocity": 0.022621890529990196,
+     "drag": 0.09036540985107422,
+     "position": 428.2247619628906,
+     "momentum_total": 1020.0736083984375
+    },
+    {
+     "step": 10955.0,
+     "velocity": 0.05401930585503578,
+     "relative_velocity": 0.02256814017891884,
+     "drag": 0.09705881029367447,
+     "position": 436.3014221191406,
+     "momentum_total": 1034.212158203125
+    },
+    {
+     "step": 11105.0,
+     "velocity": 0.0544949546456337,
+     "relative_velocity": 0.0226132795214653,
+     "drag": 0.09310631453990936,
+     "position": 444.4428405761719,
+     "momentum_total": 1048.35107421875
+    },
+    {
+     "step": 11255.0,
+     "velocity": 0.054956529289484024,
+     "relative_velocity": 0.02264432981610298,
+     "drag": 0.09391302615404129,
+     "position": 452.737060546875,
+     "momentum_total": 1062.4893798828125
+    },
+    {
+     "step": 11405.0,
+     "velocity": 0.055449362844228745,
+     "relative_velocity": 0.022706691175699234,
+     "drag": 0.08605082333087921,
+     "position": 461.00823974609375,
+     "momentum_total": 1076.628173828125
+    },
+    {
+     "step": 11555.0,
+     "velocity": 0.05578835308551788,
+     "relative_velocity": 0.022614892572164536,
+     "drag": 0.089543916285038,
+     "position": 469.34228515625,
+     "momentum_total": 1090.7669677734375
+    },
+    {
+     "step": 11705.0,
+     "velocity": 0.05621073767542839,
+     "relative_velocity": 0.022606663405895233,
+     "drag": 0.09330713748931885,
+     "position": 477.7419738769531,
+     "momentum_total": 1104.9056396484375
+    },
+    {
+     "step": 11855.0,
+     "velocity": 0.056604523211717606,
+     "relative_velocity": 0.022569779306650162,
+     "drag": 0.09689514338970184,
+     "position": 486.2925109863281,
+     "momentum_total": 1119.044189453125
+    }
+   ],
+   "steadiness": 0.0529428153559107,
+   "steps_to_within_2pct_velocity": 10570,
+   "u_terminal_tail": 0.05581293325871229,
+   "predicted_re_vs_target": -0.1513570371159335,
+   "u_reported_vs_target": 0.07222125376761723,
+   "predicted_u_reported_vs_target": 0.0,
+   "wall_seconds": 233.70946073532104
+  }
+ ]
+}

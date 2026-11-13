@@ -1,0 +1,143 @@
+{
+ "mission_id": 17417,
+ "anchor": "XVAL-DEM-FINITE-SIZE-BEFORE-CONTROLLER",
+ "n_gates": 14,
+ "all_pass": false,
+ "gates": [
+  {
+   "gate": "xval_settling_M2_operating_point_ld4",
+   "criterion": "|Re_terminal/Re_target - 1| with the correction folded into the drive only, <= 15 %",
+   "measured": -0.03963077304263918,
+   "threshold": 0.15,
+   "passed": true,
+   "evidence": "settle_ld4_M2_drive_only: Re_target=1, lambda=1.3628, steadiness=0.0756"
+  },
+  {
+   "gate": "defect_settling_M0_operating_point_ld4",
+   "criterion": "post-hoc-only path reproduces the predicted 1/lambda - 1 bias to <= 15 % AND the bias exceeds 15 %",
+   "measured": -0.29428859249585193,
+   "threshold": 0.15,
+   "passed": true,
+   "evidence": "settle_ld4_M0_posthoc: predicted -0.2662, measured -0.2943"
+  },
+  {
+   "gate": "defect_settling_M1_double_count_ld4",
+   "criterion": "drive+post-hoc double counting reproduces the predicted +lambda - 1 bias to <= 15 % AND exceeds 15 %",
+   "measured": 0.3088292233485128,
+   "threshold": 0.15,
+   "passed": true,
+   "evidence": "settle_ld4_M1: predicted +0.3628, measured +0.3088"
+  },
+  {
+   "gate": "xval_settling_M2_operating_point_ld8",
+   "criterion": "|Re_terminal/Re_target - 1| with correction in the drive only, L/d=8 (d=4), <= 15 %",
+   "measured": "not_run",
+   "threshold": 0.15,
+   "passed": false,
+   "evidence": "settle_ld8_M2_drive_only: lambda=1.1784 (busy-case reaped; not_run)"
+  },
+  {
+   "gate": "defect_settling_M0_operating_point_ld8",
+   "criterion": "post-hoc-only bias at L/d=8 matches 1/lambda - 1 to <= 15 % (magnitude reported, not gated)",
+   "measured": -0.0900669783353808,
+   "threshold": 0.15,
+   "passed": true,
+   "evidence": "predicted -0.1514, measured -0.0901"
+  },
+  {
+   "gate": "settling_steady_state",
+   "criterion": "window-to-window drift of the settled velocity, all settling cases, <= 2 %",
+   "measured": 0.07560448570133516,
+   "threshold": 0.02,
+   "passed": false,
+   "evidence": "max over settle_ld4_M0_posthoc, settle_ld4_M1_drive_and_posthoc, settle_ld4_M2_drive_only, settle_ld8_M0_posthoc at 3000"
+  },
+  {
+   "gate": "controller_seed_effect_g0.005",
+   "criterion": "steps-to-within-2%-of-final-force is lower with the correction before the pump seed (materiality: ratio >= 2)",
+   "measured": 10.0,
+   "threshold": 2.0,
+   "passed": true,
+   "evidence": "before=250 steps (wall 5s), after=2500 steps (wall 22s), converged flags: True/False"
+  },
+  {
+   "gate": "controller_converged_ratio_agreement_g0.005",
+   "criterion": "the converged/end-budget corrected Stokes ratio is timing independent, |diff| <= 15 %",
+   "measured": 0.0021701193112821926,
+   "threshold": 0.15,
+   "passed": true,
+   "evidence": "before 1.0308 vs after 1.0286 at 550 steps"
+  },
+  {
+   "gate": "controller_seed_effect_g0.02",
+   "criterion": "steps-to-within-2%-of-final-force is lower with the correction before the pump seed (materiality: ratio >= 2)",
+   "measured": 10.0,
+   "threshold": 2.0,
+   "passed": true,
+   "evidence": "before=250 steps (wall 4s), after=2500 steps (wall 23s), converged flags: True/False"
+  },
+  {
+   "gate": "controller_converged_ratio_agreement_g0.02",
+   "criterion": "the converged/end-budget corrected Stokes ratio is timing independent, |diff| <= 15 %",
+   "measured": 0.0021701193112821926,
+   "threshold": 0.15,
+   "passed": true,
+   "evidence": "before 1.0308 vs after 1.0286 at 550 steps"
+  },
+  {
+   "gate": "xval_array_ratio_vs_hasimoto_d6",
+   "criterion": "|F/lambda - 3 pi mu d U| / (3 pi mu d U) over phi in {0.0082, 0.0024, 0.0010} (d=6), <= 15 %",
+   "measured": 0.0307771709880178,
+   "threshold": 0.15,
+   "passed": true,
+   "evidence": "worst point fixed_ld4_g0.02_before (phi=0.00818, lambda=1.3628)"
+  },
+  {
+   "gate": "resolution_spread_ld8",
+   "criterion": "spread of the corrected array ratio over d in {4,6,8} at L/d=8, <= 15 %",
+   "measured": 0.062260564960912146,
+   "threshold": 0.15,
+   "passed": true,
+   "evidence": "fixed_phi_ld8_d4 d=4: -0.0841; fixed_phi_ld8_d6 d=6: -0.0219"
+  },
+  {
+   "gate": "fitted_dilute_coefficient",
+   "criterion": "phi^(1/3) coefficient fitted from the d=6 scan vs Hasimoto 1.7601, within 15 %",
+   "measured": 0.5491633679906631,
+   "threshold": 0.15,
+   "passed": false,
+   "evidence": "a_fit=2.7267 (c0=0.8965, max|resid|=1.29e-02, 1 dof)"
+  },
+  {
+   "gate": "pump_momentum_balance",
+   "criterion": "|F_drag/(body*L^3) - 1| over all pump cases, <= 5 %",
+   "measured": 1.8335217286743268,
+   "threshold": 0.05,
+   "passed": false,
+   "evidence": "all fixed_* cases"
+  }
+ ],
+ "dilute_fit": {
+  "c0": 0.8965249341181475,
+  "a": 2.726682444000366,
+  "max_abs_residual": 0.012861947479471336,
+  "n_points": 3,
+  "dof_left": 1
+ },
+ "environment": {
+  "git_sha": "b191d10c",
+  "python": "3.11.6",
+  "torch": "2.7.1",
+  "host": "36cb7828dbd5",
+  "nproc": 128,
+  "workers": 4,
+  "td_threads": 10,
+  "cluster_queue_depth_at_submit": 517,
+  "not_run": [
+   "settle_ld8_M2_drive_only",
+   "fixed_phi_ld8_d8",
+   "fixed_phi_ld16_d4"
+  ],
+  "not_run_reason": "background sweeps were reaped by the sandbox after ~10 min; the three remaining cases need >=230 s each and the cluster queue stood at 517, so they are reported not_run"
+ }
+}
