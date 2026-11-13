@@ -264,3 +264,102 @@ def test_cached_case_meets_acceptance():
     assert result["bed"]["settle_contacts"] > 0
     assert result["bed"]["packing_fraction"] > 0.5
     assert result["geometry"]["time_step"] > 0.0
+
+
+# ---------------------------------------------------------------------------
+# 6. Floor clearance: is the bed deep enough for a semi-infinite drag law?
+#    (mission m15404 diagnosed 10x alpha *after* the fact; these tests make the
+#    floor distance a first-class, checkable property of every case)
+# ---------------------------------------------------------------------------
+
+from tensordem.penetration_quasistatic import (  # noqa: E402
+    BASE_SPEED,
+    alpha_shape_fit,
+    alpha_vs_window,
+    preset,
+    protocol_warnings,
+)
+
+
+def test_floor_clearance_is_derived_from_geometry():
+    cfg = PenetrationConfig(intruder_radius_over_d=2.0, bed_depth_over_d=7.0)
+    # bed 7 d = 3.5 R, penetration 1.6 R -> 1.9 R of material under the intruder
+    assert cfg.floor_clearance_over_r == pytest.approx(1.9)
+    assert cfg.floor_clearance_over_d == pytest.approx(3.8)
+    assert cfg.floor_clearance_is_marginal
+    deep = PenetrationConfig(intruder_radius_over_d=2.0, bed_depth_over_d=11.2)
+    assert deep.floor_clearance_over_r == pytest.approx(4.0)
+    assert not deep.floor_clearance_is_marginal
+
+
+def test_validate_rejects_intruder_reaching_the_floor_and_strict_mode_rejects_thin_beds():
+    with pytest.raises(ValueError, match="intruder would reach the floor"):
+        PenetrationConfig(intruder_radius_over_d=2.0, bed_depth_over_d=3.0).validate()
+    cfg = PenetrationConfig(intruder_radius_over_d=2.0, bed_depth_over_d=7.0)
+    cfg.validate()                                    # backwards compatible
+    with pytest.raises(ValueError, match="floor clearance"):
+        cfg.validate(strict=True)
+    PenetrationConfig(intruder_radius_over_d=2.0, bed_depth_over_d=11.2).validate(strict=True)
+
+
+def test_legacy_presets_are_floor_marginal_and_say_so():
+    """The shipped presets put the floor ~1 R under the intruder; the case record
+    must admit it instead of presenting the geometry as semi-infinite."""
+    for name in ("base", "rd2", "rd4"):
+        cfg = preset(name)
+        assert cfg.floor_clearance_over_r < cfg.min_floor_clearance_over_r, name
+        text = " ".join(protocol_warnings(cfg))
+        assert "floor clearance" in text, (name, text)
+    # the rate-control presets must bracket BASE_SPEED by a factor 2, not 5/20
+    assert preset("slow").penetration_speed == pytest.approx(0.5 * BASE_SPEED)
+    assert preset("rate2x").penetration_speed == pytest.approx(2.0 * BASE_SPEED)
+
+
+def test_alpha_vs_window_is_flat_for_a_reference_law_profile():
+    R, mu, rho = 8.0e-3, 0.40, 1508.7
+    z = np.linspace(1e-4, 1.6 * R, 401)
+    F = brzinski_force(z, R, mu=mu, rho_bulk=rho, alpha=REFERENCE["alpha"])
+    ladder = alpha_vs_window(z, F, radius=R, mu=mu, rho_bulk=rho,
+                             smoothing=0.15 * R, fit_from=0.5 * R)
+    alphas = np.array([row["alpha"] for row in ladder])
+    assert len(alphas) >= 5
+    # sampling/edge artefacts only: the ladder must be flat to well inside 1 %
+    assert np.allclose(alphas, REFERENCE["alpha"], rtol=0.01), alphas
+
+
+def test_alpha_vs_window_grows_with_an_additive_excess_force():
+    """A depth-independent excess (rigid floor / rig offset) inflates alpha more
+    over a shallower window -> the ladder slope is the diagnostic that separates
+    an additive contamination from the drag law itself."""
+    R, mu, rho = 8.0e-3, 0.40, 1508.7
+    z = np.linspace(1e-4, 1.6 * R, 401)
+    F = brzinski_force(z, R, mu=mu, rho_bulk=rho, alpha=REFERENCE["alpha"]) + 2.0
+    ladder = alpha_vs_window(z, F, radius=R, mu=mu, rho_bulk=rho,
+                             smoothing=0.15 * R, fit_from=0.5 * R)
+    alphas = np.array([row["alpha"] for row in ladder])
+    assert np.all(np.diff(alphas) < 0.0), alphas          # monotone decreasing
+    assert alphas[0] > 3.0 * alphas[-1], alphas           # a strong, visible trend
+    clean = alpha_vs_window(
+        z, brzinski_force(z, R, mu=mu, rho_bulk=rho, alpha=REFERENCE["alpha"]),
+        radius=R, mu=mu, rho_bulk=rho, smoothing=0.15 * R, fit_from=0.5 * R)
+    assert abs(alphas[-1] - clean[-1]["alpha"]) > 50.0      # the excess is detected
+
+
+def test_alpha_shape_fit_is_the_estimator_used_by_evaluate_profile():
+    """One implementation of the estimator: wall-clock-free consistency check."""
+    R, mu, rho = 8.0e-3, 0.40, 1508.7
+    rng = np.random.default_rng(3)
+    z = np.linspace(1e-4, 1.6 * R, 501)
+    F = brzinski_force(z, R, mu=mu, rho_bulk=rho, alpha=120.0) \
+        + 0.05 * rng.standard_normal(z.size)
+    metrics, _acc, _fit = evaluate_profile(
+        z, F, radius=R, mu=mu, rho_bulk=rho, fit_from=0.5 * R, fit_to=1.6 * R,
+        smoothing=0.15 * R)
+    sel = (z >= 0.5 * R) & (z <= 1.6 * R)
+    Fs = moving_average(F, metrics["window"]["smoothing_window_samples"])
+    alpha, resid = alpha_shape_fit(z[sel], Fs[sel], radius=R, mu=mu, rho_bulk=rho)
+    assert metrics["alpha_fit"] == pytest.approx(alpha, rel=1e-12)
+    # the jitter metric of evaluate_profile is the *shape* residual normalised by
+    # the mean force in the window -- same estimator, same numbers
+    assert metrics["force_variation_coefficient_shape"] == pytest.approx(
+        float(np.sqrt(np.mean(resid ** 2))) / abs(metrics["mean_force_N"]), rel=1e-9)
