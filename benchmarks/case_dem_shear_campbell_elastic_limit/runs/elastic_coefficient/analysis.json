@@ -1,0 +1,411 @@
+{
+ "case": "CASE-DEM-SHEAR-CAMPBELL-ELASTIC-LIMIT",
+ "round": "R4 (elastic-limit coefficient route)",
+ "prereg_script_sha256": "d83c8470c7f7614cb7e0f6df2ab91d0412365c518ec49335f7f6eedd3724cea6",
+ "reference": "Campbell 2002 JFM 465:261 (abstract hashed in reference_anchors.json)",
+ "claim_under_test": "'non-inertial quasi-static regime in which the stresses scale purely elastically' <=> A := tau*/kappa = tau d/k_n saturates to a constant",
+ "leg_a_ladder": [
+  {
+   "tag": "kn1e4_g4.0",
+   "kappa": 361.68981481481484,
+   "A": 0.021322088656240235,
+   "phi": 0.8,
+   "coordination": 2.748714285714286,
+   "mean_overlap_ratio": 0.05039949787232648
+  },
+  {
+   "tag": "kn2.5e3_g2.0",
+   "kappa": 361.68981481481484,
+   "A": 0.021322088656240235,
+   "phi": 0.8,
+   "coordination": 2.748714285714286,
+   "mean_overlap_ratio": 0.05039949787232648
+  },
+  {
+   "tag": "kn1e4_g2.0",
+   "kappa": 1446.7592592592594,
+   "A": 0.017377132466259326,
+   "phi": 0.8,
+   "coordination": 2.8440714285714286,
+   "mean_overlap_ratio": 0.041538327981454515
+  },
+  {
+   "tag": "kn4e4_g4.0",
+   "kappa": 1446.7592592592594,
+   "A": 0.017377132466259326,
+   "phi": 0.8,
+   "coordination": 2.8440714285714286,
+   "mean_overlap_ratio": 0.041538327981454515
+  },
+  {
+   "tag": "kn1e4_g1.0",
+   "kappa": 5787.037037037037,
+   "A": 0.014747714750676039,
+   "phi": 0.8,
+   "coordination": 2.934642857142857,
+   "mean_overlap_ratio": 0.03448761956917904
+  },
+  {
+   "tag": "kn2.5e3_g0.5",
+   "kappa": 5787.037037037037,
+   "A": 0.014747714750676039,
+   "phi": 0.8,
+   "coordination": 2.934642857142857,
+   "mean_overlap_ratio": 0.03448761956917904
+  },
+  {
+   "tag": "kn4e4_g2.0",
+   "kappa": 5787.037037037037,
+   "A": 0.014747714750676039,
+   "phi": 0.8,
+   "coordination": 2.934642857142857,
+   "mean_overlap_ratio": 0.03448761956917904
+  },
+  {
+   "tag": "kn1e4_g0.5",
+   "kappa": 23148.14814814815,
+   "A": 0.013675692589190925,
+   "phi": 0.8,
+   "coordination": 2.9942142857142855,
+   "mean_overlap_ratio": 0.029540923602609796
+  },
+  {
+   "tag": "kn1e5_g1.0",
+   "kappa": 57870.37037037038,
+   "A": 0.012935524056847869,
+   "phi": 0.8,
+   "coordination": 3.0202857142857145,
+   "mean_overlap_ratio": 0.028397336115965198
+  },
+  {
+   "tag": "kn4e5_g2.0",
+   "kappa": 57870.37037037038,
+   "A": 0.012935524056847869,
+   "phi": 0.8,
+   "coordination": 3.0202857142857145,
+   "mean_overlap_ratio": 0.028397336115965198
+  },
+  {
+   "tag": "kn1e6_g1.0",
+   "kappa": 578703.7037037038,
+   "A": 0.01357004589091187,
+   "phi": 0.8,
+   "coordination": 3.0078571428571426,
+   "mean_overlap_ratio": 0.029237110946837536
+  }
+ ],
+ "leg_a_top_kappa_cut": 23000.0,
+ "leg_a_top_spread": 0.05721983346714299,
+ "leg_a_fit": {
+  "A_inf": 0.012655028729017156,
+  "c": 0.1781868230636849,
+  "g": 0.51,
+  "sigma_A_inf": 0.00018843112159122534,
+  "chi2": 6.390997552546173,
+  "dof": 9,
+  "reduced_chi2": 0.710110839171797,
+  "weights": "sigma = 6.25%/sqrt(3 seeds) of each A"
+ },
+ "leg_a_A_stiffest": 0.01357004589091187,
+ "leg_a_A_inf_vs_stiffest_rel": 0.06742918699394515,
+ "leg_b_per_phi": {
+  "0.710": {
+   "n_runs": 1,
+   "A_total_mean": 0.0035234965774019835,
+   "A_total_rel_std": 0.0,
+   "A_normal_mean": 0.0018973695164943233,
+   "f_norm_mean": 0.5384905234939467,
+   "f_norm_rel_std": 0.0,
+   "a_xy_mean": 0.25612999309143347,
+   "a_xy_rel_std": 0.0,
+   "fabric_xy_mean": 0.17691558246498434,
+   "coordination_snapshot_mean": 1.33,
+   "coordination_run_mean": 1.550357142857143,
+   "overlap_snapshot_mean": 0.011007170544993256,
+   "overlap_run_mean": 0.013227614736973137,
+   "factored_residual_absmax": 0.04293285690366688,
+   "all_gated": true
+  },
+  "0.760": {
+   "n_runs": 3,
+   "A_total_mean": 0.0071655732461731805,
+   "A_total_rel_std": 0.01739644952165434,
+   "A_normal_mean": 0.00544871329096052,
+   "f_norm_mean": 0.7604713673188733,
+   "f_norm_rel_std": 0.10432713321424567,
+   "a_xy_mean": 0.216311845409596,
+   "a_xy_rel_std": 0.07331122532395518,
+   "fabric_xy_mean": 0.12082755520381198,
+   "coordination_snapshot_mean": 2.2933333333333334,
+   "coordination_run_mean": 2.3402142857142856,
+   "overlap_snapshot_mean": 0.018928181628130158,
+   "overlap_run_mean": 0.01980703139300906,
+   "factored_residual_absmax": 0.03153737953914759,
+   "all_gated": true
+  },
+  "0.800": {
+   "n_runs": 3,
+   "A_total_mean": 0.013780016162599879,
+   "A_total_rel_std": 0.05162699050131243,
+   "A_normal_mean": 0.010356754020919278,
+   "f_norm_mean": 0.7509085305286569,
+   "f_norm_rel_std": 0.017486624798682772,
+   "a_xy_mean": 0.1867610749068059,
+   "a_xy_rel_std": 0.017056928951837472,
+   "fabric_xy_mean": 0.08158729491922653,
+   "coordination_snapshot_mean": 2.9716666666666662,
+   "coordination_run_mean": 2.9343333333333335,
+   "overlap_snapshot_mean": 0.03217831527507344,
+   "overlap_run_mean": 0.03305866653684513,
+   "factored_residual_absmax": 0.053286976649367324,
+   "all_gated": true
+  }
+ },
+ "leg_b_a_xy_bar": 0.21973430446927847,
+ "leg_b_f_norm_bar": 0.6832901404471589,
+ "leg_b_a_xy_spread": 0.3714313500243174,
+ "leg_b_f_spread": 0.41222794857117306,
+ "leg_b_factored_residual_absmax": 0.053286976649367324,
+ "leg_b_mean_r2": 0.37000000000000005,
+ "leg_b_n_runs": 9,
+ "leg_b_n_gated": 7,
+ "leg_b_rejected": [
+  {
+   "tag": "fab_phi0.71_s20261113",
+   "failed": [
+    "coordination"
+   ],
+   "coordination": 1.1652857142857145,
+   "phi": 0.71,
+   "seed": 20261113,
+   "steady_drift_tau": 0.19140641328162644
+  },
+  {
+   "tag": "fab_phi0.71_s20261114",
+   "failed": [
+    "coordination"
+   ],
+   "coordination": 1.3462857142857143,
+   "phi": 0.71,
+   "seed": 20261114,
+   "steady_drift_tau": 0.08583202264926662
+  }
+ ],
+ "leg_b_branch_shortening_mean": 0.02453813292295385,
+ "leg_b_snapshot_vs_timeavg_absmax": 0.1421331490439991,
+ "leg_c_r2_predictions": [
+  {
+   "tag": "map_phi0.71_g1.0",
+   "phi": 0.71,
+   "coordination": 1.550357142857143,
+   "mean_overlap_ratio": 0.013227614736973137,
+   "A_meas": 0.0036314452177256627,
+   "A_pred": 0.003480378647263299,
+   "A_norm_pred": 0.0023781084146978324,
+   "residual": -0.0415995730088351
+  },
+  {
+   "tag": "map_phi0.72_g1.0",
+   "phi": 0.72,
+   "coordination": 1.637357142857143,
+   "mean_overlap_ratio": 0.013282653297904302,
+   "A_meas": 0.003842969148938788,
+   "A_pred": 0.0037429636291643714,
+   "A_norm_pred": 0.002557530143860331,
+   "residual": -0.026022982724707155
+  },
+  {
+   "tag": "map_phi0.73_g1.0",
+   "phi": 0.73,
+   "coordination": 1.7798571428571426,
+   "mean_overlap_ratio": 0.014778224921464796,
+   "A_meas": 0.004586964468811418,
+   "A_pred": 0.004589708810919756,
+   "A_norm_pred": 0.0031361027780249227,
+   "residual": 0.000598291555776731
+  },
+  {
+   "tag": "map_phi0.74_g1.0",
+   "phi": 0.74,
+   "coordination": 2.0027857142857144,
+   "mean_overlap_ratio": 0.01572226612066662,
+   "A_meas": 0.00529919888929333,
+   "A_pred": 0.005569756419226232,
+   "A_norm_pred": 0.0038057596459495566,
+   "residual": 0.05105630786561832
+  },
+  {
+   "tag": "map_phi0.75_g1.0",
+   "phi": 0.75,
+   "coordination": 2.185857142857143,
+   "mean_overlap_ratio": 0.01807723166671891,
+   "A_meas": 0.006329299088738352,
+   "A_pred": 0.007083857515657082,
+   "A_norm_pred": 0.004840329996780989,
+   "residual": 0.11921674364564439
+  },
+  {
+   "tag": "map_phi0.76_g1.0",
+   "phi": 0.76,
+   "coordination": 2.3007142857142853,
+   "mean_overlap_ratio": 0.01983955446149711,
+   "A_meas": 0.00718879681786336,
+   "A_pred": 0.008292071750652162,
+   "A_norm_pred": 0.005665890871101034,
+   "residual": 0.1534714307194336
+  },
+  {
+   "tag": "map_phi0.77_g1.0",
+   "phi": 0.77,
+   "coordination": 2.3978571428571436,
+   "mean_overlap_ratio": 0.022256287197083318,
+   "A_meas": 0.008401407770148896,
+   "A_pred": 0.009822490163991488,
+   "A_norm_pred": 0.006711610683694581,
+   "residual": 0.16914812763782883
+  },
+  {
+   "tag": "map_phi0.78_g1.0",
+   "phi": 0.78,
+   "coordination": 2.6630714285714285,
+   "mean_overlap_ratio": 0.025156602164078598,
+   "A_meas": 0.010966307219308196,
+   "A_pred": 0.012490627434691828,
+   "A_norm_pred": 0.008534722574123715,
+   "residual": 0.13900032024452003
+  },
+  {
+   "tag": "map_phi0.79_g1.0",
+   "phi": 0.79,
+   "coordination": 2.802142857142857,
+   "mean_overlap_ratio": 0.03133530820417449,
+   "A_meas": 0.013994452537792149,
+   "A_pred": 0.016580827052031216,
+   "A_norm_pred": 0.01132951564511246,
+   "residual": 0.1848142688865133
+  },
+  {
+   "tag": "map_phi0.80_g1.0",
+   "phi": 0.8,
+   "coordination": 2.934642857142857,
+   "mean_overlap_ratio": 0.03448761956917904,
+   "A_meas": 0.014747714750676039,
+   "A_pred": 0.01935366934055,
+   "A_norm_pred": 0.01322417144187228,
+   "residual": 0.3123164956565776
+  }
+ ],
+ "leg_c_worst_residual": 0.3123164956565776,
+ "leg_c_n_points": 10,
+ "seed_noise_floor": 0.0625,
+ "leg_a_noise_twin_A": [
+  0.014747714750676039,
+  0.013015917087012522,
+  0.01381834105450057
+ ],
+ "leg_a_empirical_noise_rel": 0.051053591335259725,
+ "leg_a_sigma_used_rel": 0.051053591335259725,
+ "tolerance": 0.15,
+ "verdicts": {
+  "P1": "PASS",
+  "P2": "PASS",
+  "P3": "PASS",
+  "P4": "FAIL",
+  "P5": "FAIL"
+ },
+ "amendments": {
+  "status": "EXPLORATORY - written after the pre-registered verdicts; does not replace them (P4 and P5 stay FAIL)",
+  "why_P4_failed": "a_xy is not a concentration-independent constant: it falls from 0.256 to 0.187 as phi rises 0.71 -> 0.80 (spread 37.1%)",
+  "why_P5_failed": "with a single a_xy the prediction over-shoots the dense end, where the predicted a_xy is too large by the same 37%",
+  "a_xy_linear_fit": {
+   "a0": 0.8037408538862555,
+   "a1_per_phi": -0.7718148230180314,
+   "residual_max": 0.0039129525126681
+  },
+  "f_norm_linear_fit": {
+   "f0": -1.167079231978224,
+   "f1_per_phi": 2.4454220780952194
+  },
+  "phi_dependent_closure": [
+   {
+    "tag": "map_phi0.71_g1.0",
+    "phi": 0.71,
+    "A_meas": 0.0036314452177256627,
+    "A_pred_phi_dependent": 0.00486307589940485,
+    "residual_phi_dependent": 0.33915716962145037
+   },
+   {
+    "tag": "map_phi0.72_g1.0",
+    "phi": 0.72,
+    "A_meas": 0.003842969148938788,
+    "A_pred_phi_dependent": 0.004863204118634022,
+    "residual_phi_dependent": 0.26548091596753154
+   },
+   {
+    "tag": "map_phi0.73_g1.0",
+    "phi": 0.73,
+    "A_meas": 0.004586964468811418,
+    "A_pred_phi_dependent": 0.005549211347125192,
+    "residual_phi_dependent": 0.20977857684672951
+   },
+   {
+    "tag": "map_phi0.74_g1.0",
+    "phi": 0.74,
+    "A_meas": 0.00529919888929333,
+    "A_pred_phi_dependent": 0.006269800876017263,
+    "residual_phi_dependent": 0.18316013552255384
+   },
+   {
+    "tag": "map_phi0.75_g1.0",
+    "phi": 0.75,
+    "A_meas": 0.006329299088738352,
+    "A_pred_phi_dependent": 0.007426938928072571,
+    "residual_phi_dependent": 0.17342202097657822
+   },
+   {
+    "tag": "map_phi0.76_g1.0",
+    "phi": 0.76,
+    "A_meas": 0.00718879681786336,
+    "A_pred_phi_dependent": 0.008098374988315874,
+    "residual_phi_dependent": 0.12652717742589603
+   },
+   {
+    "tag": "map_phi0.77_g1.0",
+    "phi": 0.77,
+    "A_meas": 0.008401407770148896,
+    "A_pred_phi_dependent": 0.008936055626204654,
+    "residual_phi_dependent": 0.06363788911132495
+   },
+   {
+    "tag": "map_phi0.78_g1.0",
+    "phi": 0.78,
+    "A_meas": 0.010966307219308196,
+    "A_pred_phi_dependent": 0.010583146950902605,
+    "residual_phi_dependent": -0.03493977149673211
+   },
+   {
+    "tag": "map_phi0.79_g1.0",
+    "phi": 0.79,
+    "A_meas": 0.013994452537792149,
+    "A_pred_phi_dependent": 0.01307919259277334,
+    "residual_phi_dependent": -0.0654016255760731
+   },
+   {
+    "tag": "map_phi0.80_g1.0",
+    "phi": 0.8,
+    "A_meas": 0.014747714750676039,
+    "A_pred_phi_dependent": 0.014204913113932056,
+    "residual_phi_dependent": -0.036805813369769735
+   }
+  ],
+  "phi_dependent_worst_residual": 0.33915716962145037,
+  "interpretation": "the virial identity (P3) holds; what fails is the assumption that the fabric anisotropy is a material constant. With a_xy(phi) measured on three concentrations the closure predicts the independent R2 map within 33.9%."
+ },
+ "coefficient_leg": {
+  "status": "MEASURED, no literature comparison",
+  "A_inf": 0.012655028729017156,
+  "sigma_A_inf": 0.00018843112159122534,
+  "campbell_table": "WITHHELD - paywalled (reference_anchors.json)",
+  "why": "the ledger's coefficient tolerance needs a reference; Campbell's table is not accessible, so the coefficient is reported as a measured asymptote plus a structural closure, not as an agreement with Campbell"
+ }
+}

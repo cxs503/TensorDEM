@@ -1,0 +1,82 @@
+{
+ "case": "CASE-DEM-SHEAR-CAMPBELL-ELASTIC-LIMIT",
+ "round": "R4 (elastic-limit coefficient route)",
+ "reference": "Campbell 2002 JFM 465:261 (abstract hashed in reference_anchors.json)",
+ "claim_under_test": "'non-inertial quasi-static regime in which the stresses scale purely elastically' <=> A := tau*/kappa = tau d/k_n saturates to a constant",
+ "grid": {
+  "phi": [
+   0.71,
+   0.76,
+   0.8
+  ],
+  "seeds": [
+   20261112,
+   20261113,
+   20261114
+  ],
+  "kn": 10000.0,
+  "shear_rate": 1.0,
+  "n_particles": 400,
+  "strain_total": 1.4,
+  "strain_average_from": 0.7,
+  "dt_factor": 0.004
+ },
+ "predictions": [
+  {
+   "id": "P1",
+   "statement": "A saturates: spread of A over kappa >= 2.3e4 is < 15%",
+   "rule": "max(A)/min(A) - 1 <= 0.15 for gated R3 points with kappa >= 2.3e4",
+   "threshold": 0.15
+  },
+  {
+   "id": "P2",
+   "statement": "the extrapolated A_inf lies within 15% of the stiffest gated point",
+   "rule": "|A_inf - A(kappa_max)|/A(kappa_max) <= 0.15, fit A = A_inf + c kappa^-g",
+   "threshold": 0.15
+  },
+  {
+   "id": "P3",
+   "statement": "the factored structural identity reproduces the normal-force A",
+   "rule": "|A_pred_factored/A_normal - 1| <= 0.15 on every fabric run",
+   "threshold": 0.15
+  },
+  {
+   "id": "P4",
+   "statement": "the two geometric constants are concentration independent",
+   "rule": "relative spread of a_xy and of f_norm over the 3 concentrations <= 0.15",
+   "threshold": 0.15
+  },
+  {
+   "id": "P5",
+   "statement": "those constants predict the R2 map's total shear stress out of sample",
+   "rule": "|A_pred/A_meas - 1| <= 0.15 on every gated R2 point with phi >= 0.71",
+   "threshold": 0.15
+  }
+ ],
+ "honesty_rules": [
+  "a rejected (ungated) point is reported, never re-run until it passes",
+  "no coefficient is compared to Campbell's table: it stays WITHHELD (paywalled)",
+  "if P3-P5 fail the factorisation is reported as FAIL and not refitted"
+ ],
+ "written": "2026-11-13T11:22:26",
+ "script_sha256": "d83c8470c7f7614cb7e0f6df2ab91d0412365c518ec49335f7f6eedd3724cea6",
+ "r3_points": [
+  "analysis.json",
+  "kn1e4_g0.5.json",
+  "kn1e4_g1.0.json",
+  "kn1e4_g2.0.json",
+  "kn1e4_g4.0.json",
+  "kn1e5_g0.5.json",
+  "kn1e5_g1.0.json",
+  "kn1e6_g1.0.json",
+  "kn2.5e3_g0.5.json",
+  "kn2.5e3_g2.0.json",
+  "kn4e4_g2.0.json",
+  "kn4e4_g2.0_seed20261113.json",
+  "kn4e4_g2.0_seed20261114.json",
+  "kn4e4_g4.0.json",
+  "kn4e5_g2.0.json",
+  "prereg.json",
+  "report_r3.json"
+ ]
+}
