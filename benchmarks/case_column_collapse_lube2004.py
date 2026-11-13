@@ -398,13 +398,69 @@ def wave5c_cases() -> list[dict]:
     return out
 
 
+# --- round 5d (m17917): shallow-column convergence controls ----------------
+# Rounds 5c controls exist only for a = 1 and a = 3, i.e. exactly where the
+# emplacement-time law was already satisfied.  The *open* question of the anchor
+# is the shallow branch: at a = 0.5 the 99 % arrival is +27...+56 % late (see
+# docs/AUDIT_COLUMN_COLLAPSE_TIME_LAW_m17534.md and
+# docs/AUDIT_COLUMN_COLLAPSE_FRONT_KINEMATICS_m17770.md), and that number has
+# never been shown to survive a discretisation change -- both m17770 (lead 1)
+# and m17534 (item 1) name this as the one remaining, compute-bound debt.
+# These controls therefore repeat the *same* triple (mu, mu_r, mu_wall) =
+# (0.5, 0.5, 0.8) at the two shallow/transitional aspect ratios along both
+# axes that can invalidate an emplacement-time verdict:
+#
+#   H_RES: the a = 0.5 overshoot moves by < 15 percentage points when the grain
+#          resolution goes 8 -> 12 grains per column radius (i.e. it is not a
+#          resolution artifact).
+#   H_DT:  dt -> dt/2 changes t95 by < 5 % relative at fixed resolution.
+#   H_SIGN: the emplacement-time excess keeps its sign and order of magnitude
+#          in every refined variant (no refinement flips the verdict).
+#   H_RUNOUT: the runout ratio is likewise stable (< 15 pp drift), so the two
+#          laws cannot be "fixed" by trading one against the other.
+#
+# Decision rule: the shallow branch is declared *physical* (not numerical) only
+# if H_RES and H_DT both hold at a = 0.5; otherwise the anchor's shallow verdict
+# stays "undetermined at this discretisation".
+WAVE5D_MU_WALL = WAVE5C_CONFIRM_MU_WALL
+WAVE5D_ASPECTS = (0.5, 1.5)
+WAVE5D_RESOLUTION_GPR = 12.0
+
+
+def wave5d_cases() -> list[dict]:
+    """Post-hoc convergence controls on the shallow/transitional aspect ratios."""
+    params = dict(BASE, mu_rolling=WAVE5_MUR_PRIMARY, mu_wall=WAVE5D_MU_WALL)
+    out = []
+    for a in WAVE5D_ASPECTS:
+        out.append({"id": f"w5d_gpr{WAVE5D_RESOLUTION_GPR:g}_a{a:g}",
+                    "phase": "wave5d_shallow_convergence",
+                    "note": f"shallow-branch resolution control: "
+                            f"{WAVE5D_RESOLUTION_GPR:g} grains per column radius at "
+                            f"mu_wall = {WAVE5D_MU_WALL:g}, a = {a:g}",
+                    "params": dict(params, aspect_ratio=a,
+                                   grains_per_radius=WAVE5D_RESOLUTION_GPR)})
+        out.append({"id": f"w5d_dt0.5_a{a:g}", "phase": "wave5d_shallow_convergence",
+                    "note": "shallow-branch time-step control: dt = 0.5 * dt_ref at "
+                            f"mu_wall = {WAVE5D_MU_WALL:g}, a = {a:g}",
+                    "params": dict(params, aspect_ratio=a, dt_scale=0.5,
+                                   sample_stride=10)})
+    out.append({"id": "w5d_fine_a0.5", "phase": "wave5d_shallow_convergence",
+                "note": "shallow-branch combined control: 12 grains per column radius "
+                        "AND dt/2 at a = 0.5",
+                "params": dict(params, aspect_ratio=0.5,
+                               grains_per_radius=WAVE5D_RESOLUTION_GPR,
+                               dt_scale=0.5, sample_stride=10)})
+    return out
+
+
 def all_cases(mu_rolling: float) -> list[dict]:
     """Every pre-declared case: wave 1 (control + calibration), wave 2
     (validation + sensitivity), wave 3 (mu curve grid)."""
     return (wave1_cases() + wave2_cases(mu_rolling) + wave3_cases(mu_rolling)
             + wave3_control_cases(mu_rolling) + wave4_cases() + wave5_cases()
             + wave5b_probe_cases()
-            + wave5b_confirmation_cases(WAVE5B_MU_WALL[0]) + wave5c_cases())
+            + wave5b_confirmation_cases(WAVE5B_MU_WALL[0]) + wave5c_cases()
+            + wave5d_cases())
 
 
 def case_path(case_id: str) -> str:
@@ -581,6 +637,10 @@ def main(argv: list[str] | None = None) -> int:
                     help="confirm a surviving mu_wall on every aspect ratio")
     ap.add_argument("--wave5c", action="store_true",
                     help="run the post-hoc convergence controls of the surviving triple")
+    ap.add_argument("--wave5d", action="store_true",
+                    help="run the shallow-branch convergence controls (m17917)")
+    ap.add_argument("--wave5d-shard",
+                    help="i/n: run the i-th of n wave-5d convergence controls")
     ap.add_argument("--collect", action="store_true", help="aggregate + verdicts")
     ap.add_argument("--case", action="append", default=[],
                     help="run one pre-declared case id (wave-1 or wave-2); repeatable")
@@ -658,6 +718,14 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.wave5c:
         _run_specs(wave5c_cases(), "wave5c", args.progress)
+        return 0
+    if args.wave5d:
+        _run_specs(wave5d_cases(), "wave5d", args.progress)
+        return 0
+    if args.wave5d_shard:
+        i, n = (int(x) for x in args.wave5d_shard.split("/"))
+        mine = [c for k, c in enumerate(wave5d_cases()) if k % n == i]
+        _run_specs(mine, f"wave5d {i}/{n}", args.progress)
         return 0
     if args.wave5b_confirm is not None:
         _run_specs(wave5b_confirmation_cases(args.wave5b_confirm), "wave5b-confirm",
