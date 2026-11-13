@@ -1,0 +1,2 @@
+{"wall_mode": "rough", "I_target": 0.1, "seed": 5279, "status": "FAIL", "error": "MuIRheologyError: servo did not reach the target normal stress", "overrides": {"servo_max_step_d": 0.02}, "tag": "servo002"}
+{"wall_mode": "rough", "I_target": 0.3, "seed": 5279, "status": "FAIL", "error": "MuIRheologyError: servo did not reach the target normal stress", "overrides": {"servo_max_step_d": 0.02}, "tag": "servo002"}
