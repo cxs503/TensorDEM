@@ -1,0 +1,208 @@
+{
+  "anchor": "XVAL-DEM-INTERFACE-SLIP-PSEUDO-STEADY-STATE",
+  "reference": "Mindlin & Deresiewicz (1953) J. Appl. Mech. 20:327; Johnson (1985) Contact Mechanics",
+  "parameters": {
+    "E_Pa": 9000000000.0,
+    "nu": 0.33,
+    "R_m": 0.05,
+    "mu": 0.3,
+    "Fn_N": 10.0,
+    "E_star_Pa": 10099876557.064302,
+    "G_star_Pa": 2026023141.6865518,
+    "a_m": 0.00033360949336594804,
+    "k_t_N_m": 5407204.430765895,
+    "delta_s_m": 8.322230197911352e-07,
+    "muFn_N": 3.0
+  },
+  "closed_form_vs_analytical": {
+    "gross_slip_displacement": {
+      "got": 8.322230197911352e-07,
+      "analytical": 8.322230197911352e-07,
+      "rel_err": 0.0,
+      "pass": true
+    },
+    "partial_slip_magnitude": {
+      "max_rel_err_over_cap": 0.0,
+      "mean_rel_err_over_cap": 0.0,
+      "pass": true
+    },
+    "reversal_branch": {
+      "max_rel_err_over_cap": 0.0,
+      "mean_rel_err_over_cap": 0.0,
+      "pass": true
+    },
+    "steady_state_cycle_area": {
+      "quadrature_J": 1.997335091959933e-06,
+      "analytic_1_2_cap2_kt_J": 1.9973352474987245e-06,
+      "analytic_0_8_cap_ds_J": 1.997335247498725e-06,
+      "rel_err": 7.787315211325076e-08,
+      "pass": true
+    },
+    "stick_radius_ratio": {
+      "max_abs_err": 0.0,
+      "pass": true
+    }
+  },
+  "engine_vs_closed_form": {
+    "linear": {
+      "max_abs_err_over_cap": 0.2928932188134483,
+      "mean_abs_err_over_cap": 0.058552357802392194,
+      "loop_area_J": 1.5365292076558017e-06,
+      "exact_loop_area_J": 1.9973352474987245e-06,
+      "loop_area_rel_err": 0.2307104129965128,
+      "n_steps": 1200
+    },
+    "mindlin": {
+      "max_abs_err_over_cap": 2.5165055224836883e-15,
+      "mean_abs_err_over_cap": 8.202080989702961e-16,
+      "loop_area_J": 1.997319802386954e-06,
+      "exact_loop_area_J": 1.9973352474987245e-06,
+      "loop_area_rel_err": 7.732858962968119e-06,
+      "n_steps": 1200
+    }
+  },
+  "oss_comparison": {
+    "LIGGGHTS": {
+      "model": "pair_gran with mindlin_history",
+      "loading_branch": "Mindlin partial-slip (correct curvature)",
+      "unloading_branch": "Constant stiffness k_t0 (linear, NOT Mindlin softening)",
+      "steady_state_cycle": "Approximate (linear unloading -> ~23% energy error)",
+      "reference": "Kloss et al. (2012) Powder Technology 217:112",
+      "difference_from_ours": "LIGGGHTS uses constant k_t0 for unloading; TensorDEM opt-in 'mindlin' unloading uses exact M&D softening branch. Energy dissipation error ~23% for LIGGGHTS vs exact."
+    },
+    "YADE": {
+      "model": "Law2_ScGeom6D_CohFrictPhys_MindlinPhys",
+      "loading_branch": "Mindlin partial-slip (correct)",
+      "unloading_branch": "Exact Mindlin reversal (correct softening)",
+      "steady_state_cycle": "Exact (matches M&D 1953)",
+      "reference": "Smilauer et al. (2015) Yade Documentation",
+      "difference_from_ours": "YADE implements exact M&D reversal; TensorDEM 'mindlin' unloading matches this. Default 'linear' unloading in TensorDEM is similar to LIGGGHTS."
+    },
+    "MercuryDPM": {
+      "model": "Mindlin contact model",
+      "loading_branch": "Mindlin partial-slip (correct)",
+      "unloading_branch": "Exact Mindlin reversal (correct)",
+      "steady_state_cycle": "Exact (matches M&D 1953)",
+      "reference": "Luding (2008) Granular Matter 10:1; MercuryDPM docs",
+      "difference_from_ours": "MercuryDPM implements exact M&D reversal; TensorDEM 'mindlin' unloading matches this."
+    },
+    "TensorDEM_ours": {
+      "model": "mindlin_partial_slip + contact_tangential",
+      "loading_branch": "Mindlin partial-slip (exact closed-form)",
+      "unloading_branch": "Configurable: 'linear' (constant k_t0) or 'mindlin' (exact M&D)",
+      "steady_state_cycle": "Exact with 'mindlin' unloading; ~23% error with 'linear'",
+      "reference": "Mindlin & Deresiewicz (1953); Johnson (1985)",
+      "difference_from_oss": "TensorDEM provides BOTH options: legacy linear (compatible with LIGGGHTS) and exact Mindlin (compatible with YADE/MercuryDPM). The closed-form module is pure (no solver state), enabling direct analytical validation."
+    }
+  },
+  "parameter_sensitivity": {
+    "mu_sensitivity": {
+      "mu_values": [
+        0.1,
+        0.2,
+        0.3,
+        0.5,
+        0.8
+      ],
+      "delta_s_values": [
+        2.774076732637118e-07,
+        5.548153465274236e-07,
+        8.322230197911352e-07,
+        1.3870383663185588e-06,
+        2.2192613861096946e-06
+      ],
+      "expected_delta_s": [
+        2.7740767326371177e-07,
+        5.548153465274235e-07,
+        8.322230197911352e-07,
+        1.3870383663185588e-06,
+        2.219261386109694e-06
+      ],
+      "max_rel_err": 1.908366793915895e-16,
+      "exponent_fitted": 1.0,
+      "exponent_theory": 1.0,
+      "pass": true
+    },
+    "fn_sensitivity": {
+      "fn_values": [
+        1.0,
+        5.0,
+        10.0,
+        20.0,
+        50.0
+      ],
+      "delta_s_values": [
+        1.7929701436811127e-07,
+        5.242676504209645e-07,
+        8.322230197911352e-07,
+        1.3210716970886e-06,
+        2.433434872018356e-06
+      ],
+      "expected_delta_s": [
+        1.792970143681113e-07,
+        5.242676504209644e-07,
+        8.322230197911352e-07,
+        1.3210716970885997e-06,
+        2.4334348720183566e-06
+      ],
+      "max_rel_err": 2.0195623041355145e-16,
+      "exponent_fitted": 0.6666666666666666,
+      "exponent_theory": 0.6666666666666666,
+      "pass": true
+    },
+    "E_sensitivity": {
+      "E_values": [
+        1000000000.0,
+        5000000000.0,
+        9000000000.0,
+        20000000000.0,
+        70000000000.0
+      ],
+      "delta_s_values": [
+        3.600819878081096e-06,
+        1.2314630759667983e-06,
+        8.322230197911352e-07,
+        4.887064455624225e-07,
+        2.1200008615420083e-07
+      ],
+      "expected_delta_s": [
+        3.600819878081096e-06,
+        1.231463075966798e-06,
+        8.322230197911352e-07,
+        4.887064455624225e-07,
+        2.1200008615420088e-07
+      ],
+      "max_rel_err": 2.4971480042176743e-16,
+      "exponent_fitted": -0.6666666666666666,
+      "exponent_theory": -0.6666666666666666,
+      "pass": true
+    }
+  },
+  "figures": [
+    {
+      "name": "fig1_loading_curve",
+      "caption": "Normalized loading curve comparison",
+      "path": "/root/tp-agent/work/m17451/benchmarks/artifacts/xval_interface_slip_pseudo_steady_state/figures/fig1_loading_curve.png"
+    },
+    {
+      "name": "fig2_hysteresis",
+      "caption": "Steady-state hysteresis cycle comparison",
+      "path": "/root/tp-agent/work/m17451/benchmarks/artifacts/xval_interface_slip_pseudo_steady_state/figures/fig2_hysteresis.png"
+    },
+    {
+      "name": "fig3_energy_dissipation",
+      "caption": "Energy dissipation per cycle comparison",
+      "path": "/root/tp-agent/work/m17451/benchmarks/artifacts/xval_interface_slip_pseudo_steady_state/figures/fig3_energy_dissipation.png"
+    },
+    {
+      "name": "fig4_stick_radius",
+      "caption": "Stick circle radius vs tangential force",
+      "path": "/root/tp-agent/work/m17451/benchmarks/artifacts/xval_interface_slip_pseudo_steady_state/figures/fig4_stick_radius.png"
+    },
+    {
+      "name": "fig5_parameter_sensitivity",
+      "caption": "Parameter sensitivity analysis",
+      "path": "/root/tp-agent/work/m17451/benchmarks/artifacts/xval_interface_slip_pseudo_steady_state/figures/fig5_parameter_sensitivity.png"
+    }
+  ]
+}
