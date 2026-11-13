@@ -1,0 +1,57 @@
+{
+  "anchor": "XVAL-DEM-LIBRARY-BINDING-FROZEN-CONTRACT",
+  "round": 1,
+  "repo": "TensorDEM",
+  "mission_id": 17455,
+  "decision": "Adopt a provider-side frozen binding contract (declarative + sha256 pin + introspective verifier + behavioural probes) as the mechanism TensorDEM offers to cross-repo library binders.",
+  "alternatives": [
+    "A: keep prose-only assumptions and per-consumer smoke tests (status quo)",
+    "B: presence-only inventory of public names (lightweight baseline)",
+    "C: declarative contract + fingerprint + signature/negative-assertion checks + behavioural probes (this mission)"
+  ],
+  "hypothesis": "H1: the contract detector classifies all 7 real drift classes, and the binding semantics (instantaneous non-accumulated loads, native clock, restart) satisfy analytic identities to machine precision. H0 (rejected): binders that accumulate loads would reproduce the same impulse (they would give (n+1)/2 times the exact impulse).",
+  "metrics": [
+    "drift detection rate over 7 controlled mutation classes",
+    "semantic probe pass rate (19 probes)",
+    "impulse-momentum relative error vs analytic n*dt*F (2-D and 3-D)",
+    "internal ledger vs analytic impulse relative error",
+    "native clock vs n*dt relative error",
+    "restart round-trip and continuation max position drift (m)",
+    "contract introspection checks matched (count)"
+  ],
+  "baseline_control": "presence-only inventory check (names exist) fed with the same 7 mutants",
+  "thresholds": {
+    "owner_accuracy": "relative error > 0.15 unacceptable",
+    "impulse_relative_error_max": 1e-12,
+    "ledger_relative_error_max": 1e-12,
+    "clock_relative_error_max": 1e-12,
+    "restart_position_drift_m_max": 0.0,
+    "drift_detection_rate_min": 1.0,
+    "probe_pass_rate_min": 1.0,
+    "contract_checks_matched_fraction_min": 1.0
+  },
+  "stopping_rule": "Stop after one scripted run of scripts/xval_library_binding_contract.py; no threshold tuning after inspecting results. If any metric misses its predeclared threshold, report honest-FAIL with the failing stage and do not re-run with relaxed thresholds.",
+  "exclusions": "Physics-accuracy validation of DEM contact laws is out of scope for this anchor; only the binding surface (clock, shapes, units, load semantics, restart entry points) is frozen and probed.",
+  "confounders": [
+    "fixed particles hand momentum to supports",
+    "contact damping and linear drag dissipate momentum",
+    "indenter contact can be the dominant force",
+    "2-D and 3-D surfaces differ in load_time and restart naming"
+  ],
+  "controls": "isolated probe samples: no supports, no dashpot, no drag, indenter held off (tool_gap=10 m)",
+  "repitition_rationale": "The probed identities are algebraic, so error is dominated by floating-point rounding, not sampling; sweep n_steps in {1,2,4,8,16,32,64,128} to show the error does not grow with step count. Mutation detection is exhaustive over the 7 declared drift classes (no sampling).",
+  "environment": {
+    "python": "3.11.6",
+    "torch": "2.7.1",
+    "platform": "linux aarch64 (loong-ish node, single core)",
+    "resource_limits": "single core CPU, <2 s wall per run, no cluster use"
+  },
+  "analysis_plan": "Aggregate per-metric max relative error; compare detection rate against the presence-only baseline; classify each mutation finding by severity; report every miss as a limitation.",
+  "artifacts": [
+    "src/tensordem/binding_contract.py",
+    "tests/test_binding_contract.py",
+    "scripts/xval_library_binding_contract.py",
+    "artifacts/xval_library_binding_contract/result.json",
+    "docs/XVAL_DEM_LIBRARY_BINDING_CONTRACT.md"
+  ]
+}
