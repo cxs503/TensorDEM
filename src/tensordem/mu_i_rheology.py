@@ -603,7 +603,14 @@ def bulk_virial_stress(pos, vel, pairs, *, z_lo, z_hi,
                 "n_contacts": 0, "kinetic_pressure": float("nan"),
                 "contact_pressure": float("nan"), "sigma_zz": float("nan"),
                 "sigma_yy": float("nan"), "sigma_xx": float("nan")}
-    inside = sel[_np.mod(pairs["iu"], n)] & sel[_np.mod(pairs["ju"], n)]
+    endpoint_in = sel[_np.mod(pairs["iu"], n)] | sel[_np.mod(pairs["ju"], n)]
+    both_in = sel[_np.mod(pairs["iu"], n)] & sel[_np.mod(pairs["ju"], n)]
+    inside = both_in
+    # contacts with exactly one endpoint in the slab: the both-endpoints rule
+    # drops them, and for a thin slab (a few particle diameters) they are a
+    # large fraction of the load-bearing chains, so the estimate reads low.
+    # Reported as a diagnostic; it does not enter the sum (m17026).
+    n_straddle = int(_np.count_nonzero(endpoint_in) - _np.count_nonzero(both_in))
     if _np.any(inside):
         rvec = pairs["branch"][inside]
         fvec = pairs["force_on_i"][inside]
@@ -619,7 +626,11 @@ def bulk_virial_stress(pos, vel, pairs, *, z_lo, z_hi,
     return {"sigma": sigma, "pressure": pressure, "shear_xz": shear_xz,
             "mu": abs(shear_xz) / pressure if pressure > 0 else float("nan"),
             "volume": float(volume), "n_particles": n_sel,
-            "n_contacts": n_contacts, "kinetic_pressure": kinetic_pressure,
+            "n_contacts": n_contacts,
+            "n_contacts_straddle": n_straddle,
+            "straddle_fraction": (n_straddle / (n_straddle + n_contacts)
+                                  if (n_straddle + n_contacts) > 0 else float("nan")),
+            "kinetic_pressure": kinetic_pressure,
             "contact_pressure": pressure - kinetic_pressure,
             "sigma_zz": float(sigma[2, 2]), "sigma_yy": float(sigma[1, 1]),
             "sigma_xx": float(sigma[0, 0])}
@@ -884,7 +895,12 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
                     & (pos[:, 1] > 0.2 * D) & (pos[:, 1] < 0.8 * D))
             n_bulk = int(np.count_nonzero(bulk))
             v_bulk = W * 0.6 * D * max(plate_z - 2.0 * margin, 1e-12)
-            phi = 1.0 - n_bulk * volume_particle / v_bulk if v_bulk > 0 else float("nan")
+            # solid fraction of the *interior* slab: n*V_p/V_slab.  Until
+            # m17026 this line read ``1.0 - n*V_p/V_slab``, i.e. it returned the
+            # slab POROSITY under the name ``solid_fraction`` -- a sign
+            # inversion that made every reported ``phi`` ~0.37-0.42 for a dense
+            # bed (and made the case look 30+ % low against the reference law).
+            phi = (n_bulk * volume_particle / v_bulk) if v_bulk > 0 else float("nan")
             sample = {
                 "step": step,
                 "strain": strain,
@@ -894,6 +910,10 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
                 "mu": tau_now / p_now if p_now > 0 else float("nan"),
                 "coordination": 2.0 * n_contacts / n,
                 "solid_fraction": phi,
+                "porosity": 1.0 - phi,
+                # audit fields so the estimator can be re-derived from a sample
+                "slab_n_particles": n_bulk,
+                "slab_volume": v_bulk,
             }
             if case.bulk_stress:
                 z_lo = max(margin, 0.0)
@@ -917,6 +937,7 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
                         "bulk_kinetic_pressure_pa": vir["kinetic_pressure"],
                         "bulk_n_particles": vir["n_particles"],
                         "bulk_n_contacts": vir["n_contacts"],
+                        "bulk_straddle_fraction": vir["straddle_fraction"],
                         "shear_rate_measured": prof["shear_rate"],
                         "profile_r2": prof["r2"],
                         "bulk_inertial_number": (
@@ -944,11 +965,12 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
         raise MuIRheologyError("no samples collected in the shear phase")
 
     keys = ["normal_stress_pa", "shear_stress_pa", "mu",
-            "coordination", "solid_fraction"]
+            "coordination", "solid_fraction", "porosity"]
     if case.bulk_stress and "bulk_mu" in series[0]:
         keys += ["bulk_pressure_pa", "bulk_shear_pa", "bulk_mu",
                  "bulk_kinetic_pressure_pa", "bulk_sigma_zz",
-                 "shear_rate_measured", "profile_r2", "bulk_inertial_number"]
+                 "shear_rate_measured", "profile_r2", "bulk_inertial_number",
+                 "bulk_straddle_fraction"]
     arr = {key: np.array([s.get(key, float("nan")) for s in series], dtype=float)
            for key in keys}
     n_tail = max(1, int(0.6 * len(series)))
@@ -995,7 +1017,7 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
         "inertial_number_target": case.inertial_number,
         "coordination_number": mean["coordination"],
         "solid_fraction": mean["solid_fraction"],
-        "porosity": 1.0 - mean["solid_fraction"],
+        "porosity": mean["porosity"],
         "plate_height": plate_height,
         "plate_height_settled": plate_height,
         "plate_height_steady": plate_height_steady,
@@ -1035,6 +1057,8 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
             if "bulk_kinetic_pressure_pa" in mean else None),
         "bulk_sigma_zz_final": (float(np.nanmean(arr["bulk_sigma_zz"][-n_final:]))
                                 if "bulk_sigma_zz" in arr else None),
+        "bulk_straddle_fraction": (mean["bulk_straddle_fraction"]
+                                   if "bulk_straddle_fraction" in mean else None),
         "shear_rate_measured": (mean["shear_rate_measured"]
                                 if "shear_rate_measured" in mean else None),
         "profile_r2": (mean["profile_r2"] if "profile_r2" in mean else None),

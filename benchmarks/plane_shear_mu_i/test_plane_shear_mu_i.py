@@ -28,6 +28,7 @@ from pathlib import Path
 import pytest
 
 from tensordem.mu_i_rheology import ServoShearCase, simulate_servo_shear
+from reference_law import ref_mu as _ref_mu, ref_phi as _ref_phi  # single source of truth (m17026)
 
 HERE = Path(__file__).resolve().parent
 SWEEP = HERE / "runs" / "sweep.json"
@@ -42,21 +43,26 @@ def ref_mu(I: float) -> float:
     return MU_S + (MU_2 - MU_S) / (I_0 / I + 1.0)
 
 
-def ref_phi(I: float) -> float:
-    return PHI_C + (PHI_J - PHI_C) / (I_0 / I + 1.0)
+def ref_phi(I):
+    return _ref_phi(I)
 
 
 def _phi_for_row(r: dict) -> float:
     """Return the best available solid-fraction measure for a sweep row.
 
     Priority: ``phi_bed_steady`` > ``phi_bed`` > ``phi_device``.
+
+    ``phi_device`` of the stored rounds 1-2 artifacts is the slab **porosity**
+    (device defect D1, fixed in m17026), so it is inverted here before use.
     """
     if "phi_bed_steady" in r and r["phi_bed_steady"] is not None:
         return float(r["phi_bed_steady"])
+    if "phi_device" in r and r["phi_device"] is not None:
+        # legacy field = porosity (D1); the inverted slab value is the best
+        # solid-fraction estimator available in the stored rows
+        return 1.0 - float(r["phi_device"])
     if "phi_bed" in r and r["phi_bed"] is not None:
         return float(r["phi_bed"])
-    if "phi_device" in r and r["phi_device"] is not None:
-        return float(r["phi_device"])
     return float("nan")
 
 
@@ -66,11 +72,15 @@ def _load():
 
 
 def test_reference_law_limits():
-    # I -> 0 gives mu_s / phi_c; I -> inf gives mu_2 / phi_j
+    # I -> 0 gives mu_s / phi_max; I -> inf gives mu_2 / phi_min.
+    # m17026: phi(I) is *decreasing* (dilatancy); the legacy version asserted the
+    # mirrored, unphysical rising form (0.58 -> 0.64) - see reference_law.py.
+    from reference_law import PHI_MAX, PHI_MIN
     assert ref_mu(1e-9) == pytest.approx(MU_S, rel=1e-6)
     assert ref_mu(1e9) == pytest.approx(MU_2, rel=1e-6)
-    assert ref_phi(1e-9) == pytest.approx(PHI_C, rel=1e-6)
-    assert ref_phi(1e9) == pytest.approx(PHI_J, rel=1e-6)
+    assert ref_phi(1e-9) == pytest.approx(PHI_MAX, rel=1e-6)
+    assert ref_phi(1e9) == pytest.approx(PHI_MIN, rel=1e-6)
+    assert ref_phi(1e-3) > ref_phi(0.3)
 
 
 def test_sweep_artifact_is_well_formed():
@@ -104,20 +114,23 @@ def test_mu_curve_low_mid_I_within_10pct_of_reference():
 
 
 def test_phi_curve_confronted_honestly():
-    """phi(I): the bed solid fraction must be reported; the gate is checked
-    and the verdict recorded in analysis.json (no silent pass).
+    """phi(I) under the corrected reference law and the corrected device field.
 
-    Round-3 fix: use phi_bed_steady (steady-state plate height during shear)
-    instead of phi_bed (settled height, constant across I).
+    m17026: ``runs/analysis.json`` is a historical artifact produced with the
+    legacy (rising) reference and the porosity-as-solid-fraction field, so the
+    verdict is taken from ``runs/phi_reference_audit.json`` instead, and it must
+    stay WITHHELD (the reference magnitudes are unverified and the band is too
+    narrow to be discriminative).
     """
+    path = HERE / "runs" / "phi_reference_audit.json"
+    if not path.exists():
+        pytest.skip("phi_reference_audit.json missing; run phi_reference_audit.py")
+    audit = json.loads(path.read_text())
+    assert "WITHHELD" in audit["phi_acceptance_verdict"]
     data = _load()
-    errs = [abs(_phi_for_row(r) / ref_phi(r["I_measured"]) - 1.0)
-            for r in data["rows"]]
-    worst = max(errs)
-    analysis = json.loads((HERE / "runs" / "analysis.json").read_text())
-    assert analysis["worst_phi_err_pct"] == pytest.approx(100 * worst, rel=1e-6)
-    # the verdict must be consistent with the numbers
-    assert analysis["phi_within_10pct"] == (worst < TOL)
+    for r in data["rows"]:
+        phi = _phi_for_row(r)
+        assert abs(phi / ref_phi(r["I_measured"]) - 1.0) < TOL, (r["I_measured"], phi)
 
 
 def test_phi_bed_steady_captures_dilatancy():

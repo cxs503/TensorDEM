@@ -153,20 +153,20 @@ def test_gate_changes_mu_by_more_than_the_model_error_it_was_judging():
 
 
 # ------------------------------------------------------- reference provenance
-def test_phi_reference_slope_contradicts_dilatancy():
-    """The in-repo phi(I) reference *increases* with I (faster shear -> denser
-    bed), while the device dilates in every round-3 arm: phi_bed_steady
-    decreases with I.  This documents that the case's phi criterion is
-    mis-specified / provenance-unverified, so agreement with it is not
-    evidence of correctness."""
-    assert rs.ref_phi(0.3) > rs.ref_phi(1e-3)      # reference: densifies
+def test_phi_reference_slope_now_matches_dilatancy():
+    """m17026: the in-repo phi(I) reference *rose* with I (faster shear -> denser
+    bed) while the device dilates in every round-3 arm (phi_bed_steady decreases
+    with I).  That sign error is fixed in `reference_law.py`, so the reference
+    and the device now agree in direction; this test pins the fix, and the
+    magnitudes are still provenance-unverified (see the module docstring)."""
+    assert rs.ref_phi(0.3) < rs.ref_phi(1e-3)      # reference: dilates
     rows = _stored_rows()
     for arm in ("baseline", "thick"):
         pts = sorted([(I, r["phi_bed_steady"]) for (a, I), r in rows.items() if a == arm])
         assert len(pts) >= 3, arm
         assert pts[-1][1] < pts[0][1], (
             f"{arm}: phi_bed_steady does not decrease with I ({pts}) -- the "
-            "dilatancy contradiction claim would be wrong")
+            "device-dilatancy claim would be wrong")
 
 
 def test_gate_on_bed_is_not_stationary_at_high_i():

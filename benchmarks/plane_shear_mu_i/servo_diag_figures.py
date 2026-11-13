@@ -14,6 +14,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
+from reference_law import ref_mu as _ref_mu, ref_phi as _ref_phi  # single source of truth (m17026)
 
 HERE = Path(__file__).resolve().parent
 RUNS = HERE / "runs"
@@ -30,7 +31,7 @@ def ref_mu(I):
 
 
 def ref_phi(I):
-    return PHI_C + (PHI_J - PHI_C) / (I_0 / np.asarray(I) + 1.0)
+    return _ref_phi(I)
 
 
 def load(path):
