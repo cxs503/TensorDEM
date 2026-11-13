@@ -29,6 +29,14 @@ of that contract, so the contract lives here:
   of the contract that are semantics rather than names: shape guards,
   finiteness guards, ``load_time`` clock guard, impulse-momentum identity,
   non-accumulation of loads, and restart round-trip.
+* :func:`consumer_surface` / :func:`consumer_coverage` -- the *consumer* side:
+  the names a binder actually calls, extracted from the binder's own source
+  with ``ast`` (never from a hand-kept list) and checked against the frozen
+  entries, so the contract cannot silently stop covering real call sites.
+* :func:`audit_surface` / :func:`assert_surface_classified` -- *surface
+  accounting*: every public member of a frozen class must be classified
+  (frozen, or excluded with a reason), so the surface cannot grow or shrink
+  without an explicit decision in the same commit.
 
 Importing this module never imports torch; the declarative part is pure Python
 so that binders can validate a manifest without the solver installed.
@@ -36,9 +44,12 @@ so that binders can validate a manifest without the solver installed.
 
 from __future__ import annotations
 
+import ast
 import hashlib
 import inspect
 import json
+import textwrap
+from pathlib import Path
 from typing import Any, Mapping
 
 CONTRACT_SCHEMA = "tensordem.binding-contract/1"
@@ -161,6 +172,22 @@ BINDING_CONTRACT: dict[str, Any] = {
                 "fracture_events": "fracture_events()",
                 "fragments": "fragments()",
             },
+            # Round 3: every public member of the class is *classified* here, so a
+            # newly added public member cannot silently join the surface.  The 2-D
+            # surface is frozen in full.
+            "surface_ledger": {
+                "broken_bonds": {"disposition": "frozen"},
+                "diagnostics": {"disposition": "frozen"},
+                "exchange_state": {"disposition": "frozen"},
+                "forces": {"disposition": "frozen"},
+                "fracture_events": {"disposition": "frozen"},
+                "fragments": {"disposition": "frozen"},
+                "from_snapshot": {"disposition": "frozen"},
+                "mechanical_energy": {"disposition": "frozen"},
+                "snapshot": {"disposition": "frozen"},
+                "step": {"disposition": "frozen"},
+                "tool_position": {"disposition": "frozen"},
+            },
             "explicitly_absent": ["restore"],
         },
         "IceDEM3D": {
@@ -231,6 +258,43 @@ BINDING_CONTRACT: dict[str, Any] = {
                 "fracture_events": "diagnostics()/forces() only",
                 "fragments": None,
             },
+            # Round 3: same accounting rule as the 2-D entry.  The 3-D entry
+            # freezes 8 of 20 public members; the remaining 12 physics
+            # diagnostics are *explicitly excluded*, not silently uncovered.
+            "surface_ledger": {
+                "body_force_ledger": {"disposition": "excluded",
+                                 "reason": "per-channel cumulative body-force impulse ledger (diagnostic)"},
+                "body_forces": {"disposition": "excluded",
+                                 "reason": "nodal body/external force read-out; binders must use forces() instead"},
+                "bond_creep_reference_force": {"disposition": "excluded",
+                                 "reason": "creep reference force used by the bond law (diagnostic)"},
+                "bond_law_report": {"disposition": "excluded",
+                                 "reason": "bond-law calibration report (diagnostic)"},
+                "bond_stored_energy": {"disposition": "excluded",
+                                 "reason": "derived bond energy scalar (diagnostic)"},
+                "broken_bonds": {"disposition": "frozen"},
+                "buoyancy_active": {"disposition": "excluded",
+                                 "reason": "buoyancy configuration probe (diagnostic)"},
+                "diagnostics": {"disposition": "frozen"},
+                "energy": {"disposition": "frozen"},
+                "forces": {"disposition": "frozen"},
+                "friction_coefficient_pair": {"disposition": "excluded",
+                                 "reason": "per-contact friction lookup (diagnostic)"},
+                "friction_cone_limit": {"disposition": "excluded",
+                                 "reason": "friction-cone bound helper (diagnostic)"},
+                "lateral_platen_energy": {"disposition": "excluded",
+                                 "reason": "lateral platen energy term, ice-structure case diagnostic"},
+                "load_state_dict": {"disposition": "frozen"},
+                "platen_friction_k": {"disposition": "excluded",
+                                 "reason": "platen friction stiffness, ice-structure case diagnostic"},
+                "state_dict": {"disposition": "frozen"},
+                "step": {"disposition": "frozen"},
+                "submerged_fraction": {"disposition": "excluded",
+                                 "reason": "derived submerged-volume fraction (diagnostic)"},
+                "tool_position": {"disposition": "frozen"},
+                "unrelaxed_bond_stiffness": {"disposition": "excluded",
+                                 "reason": "unrelaxed bond stiffness reference (diagnostic)"},
+            },
             "explicitly_absent": ["restore", "exchange_state", "snapshot", "from_snapshot"],
         },
     },
@@ -254,7 +318,7 @@ def fingerprint(contract: Mapping[str, Any] | None = None) -> str:
 #: Pin of the frozen surface.  Regenerate deliberately with
 #: ``python -m tensordem.binding_contract --print-fingerprint`` and update this
 #: constant in the same commit that changes the contract.
-FROZEN_FINGERPRINT = "sha256:0cbfed8c1172f8412dedfc013e87c79f56f0567ca22d782e0387818f0ee4105d"
+FROZEN_FINGERPRINT = "sha256:048e4cf9b3a1257eca0fa5178b64102bc3c291899566e6c9b90020b3e05195cd"
 
 
 class BindingContractError(RuntimeError):
@@ -304,6 +368,38 @@ def _kind_drift(expected: str, actual: str) -> tuple[str, bool]:
     return "param_kind_changed", True
 
 
+def _class_assigns_attribute(cls: type, attr: str) -> bool:
+    """True when *cls* or one of its bases assigns ``self.<attr>`` in source.
+
+    A class target carries no instance state, so ``hasattr(cls, attr)`` is
+    ``False`` for every attribute that only ``__init__`` creates -- which made a
+    documented ``verify({"IceDEM": IceDEM})`` call report bogus ``breaking``
+    drift.  Reading the class source keeps the class path honest *and* still
+    catches a genuine removal (the assignment disappears from the source).
+
+    The walk follows the MRO: a thin subclass (``class Mine(IceDEM): ...``)
+    inherits its state from a base in another module, so a source read of the
+    subclass alone would still report every inherited field as removed.
+    """
+    for klass in getattr(cls, "__mro__", (cls,)):
+        if klass is object:
+            continue
+        try:
+            source = textwrap.dedent(inspect.getsource(klass))
+            tree = ast.parse(source)
+        except (OSError, TypeError, SyntaxError):
+            continue
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Attribute) or node.attr != attr:
+                continue
+            if not isinstance(node.ctx, ast.Store):
+                continue
+            base = node.value
+            if isinstance(base, ast.Name) and base.id in {"self", "cls"}:
+                return True
+    return False
+
+
 def verify(
     instances: Mapping[str, Any] | None = None,
     *,
@@ -320,6 +416,7 @@ def verify(
         instances = default_instances()
 
     findings: list[dict[str, Any]] = []
+    surface_reports: dict[str, Any] = {}
     checked = 0
     matched = 0
 
@@ -340,9 +437,10 @@ def verify(
         for attr in entry.get("state", {}):
             checked += 1
             if inspect.isclass(target):
-                # A class alone cannot carry instance state; check the annotation
-                # or accept an attribute declared on the class.
-                ok = hasattr(cls, attr)
+                # A class alone cannot carry instance state: accept a class-level
+                # declaration (annotation/property) or a ``self.<attr> = ...``
+                # assignment found in the class source.
+                ok = hasattr(cls, attr) or _class_assigns_attribute(cls, attr)
             else:
                 ok = hasattr(target, attr)
             if ok:
@@ -414,6 +512,21 @@ def verify(
             else:
                 matched += 1
 
+        # --- surface accounting (round 3) -------------------------------------
+        try:
+            audit = audit_surface(None, entry_name, payload)
+        except Exception as exc:  # solver not importable: report, do not fake
+            surface_reports[entry_name] = {"status": "UNAVAILABLE",
+                                           "error": f"{type(exc).__name__}: {exc}"}
+        else:
+            surface_reports[entry_name] = audit
+            checked += audit["public_count"]
+            matched += audit["public_count"] - len(
+                [g for g in audit["gaps"] if g["finding"] != "surface_ledger_stale"])
+            for gap in audit["gaps"]:
+                add(f"surface.{gap['name']}", gap["finding"], "breaking",
+                    expected=gap["expected"], actual=gap["actual"])
+
     breaking = [f for f in findings if f["severity"] == "breaking"]
     report = {
         "schema": "tensordem.binding-contract.report/1",
@@ -423,6 +536,7 @@ def verify(
         "frozen_fingerprint_match": fingerprint(payload) == FROZEN_FINGERPRINT,
         "checks": checked,
         "matched": matched,
+        "surface": surface_reports,
         "findings": findings,
         "breaking": len(breaking),
         "other": len(findings) - len(breaking),
@@ -766,6 +880,429 @@ def substep_rule_check(ratios: tuple[float, ...] = (1.0, 2.0, 4.0, 16.0,
 
 
 # ---------------------------------------------------------------------------
+# Consumer surface: what the binder actually calls (machine-derived)
+# ---------------------------------------------------------------------------
+# The frozen entries are the *provider* side of the binding.  They only protect
+# a binder if they still cover every name that binder actually touches, so this
+# section derives that list from the binder's own source with ``ast`` instead of
+# a hand-maintained list -- a hand-kept list rots into a self-fulfilling check
+# (it keeps passing while the binder grows calls the contract never froze).
+#
+# The source is found from an installed ``tensorphysics`` package, from
+# ``$TENSORPHYSICS_SRC`` (a checkout root), or from an explicit source string
+# (tests).  Extraction is purely syntactic: no binder import, no torch.
+CONSUMER_SOURCE_RELPATH = "tensorphysics/adapters/tensordem.py"
+#: The adapter documents itself as the *2-D* ``IceDEM`` binder ("TensorDEM's
+#: 2-D IceDEM stepping API"), so its consumed names are checked against that
+#: entry.  A 3-D binder would be registered here with its own entry name.
+CONSUMER_ENTRY = "IceDEM"
+#: Pin of the extracted surface (``CONSUMER_SURFACE_PIN`` below).  Regenerate
+#: with ``python -m tensordem.binding_contract --consumer-surface`` in the
+#: commit that legitimately changes what the binder calls.
+CONSUMER_SURFACE_PIN: dict[str, Any] = {
+    "schema": "tensordem.binding-contract.consumer-surface/1",
+    "source_relpath": "tensorphysics/adapters/tensordem.py",
+    "source_sha256": "sha256:c94b3cd6d3de0313498877b480d74fe0c44ecc1589be7d88250bff8050846157",
+    "attributes": ["dt", "positions", "step", "step_count", "time"],
+    "methods": {
+        "step": {"keyword_params": ["external_forces", "load_time"],
+                 "positional_count": 0},
+    },
+}
+
+CONSUMER_SURFACE_SCHEMA = "tensordem.binding-contract.consumer-surface/1"
+
+
+def _is_model_receiver(node: ast.AST) -> bool:
+    """True for expressions that denote the DEM model handed to the binder."""
+    if isinstance(node, ast.Name):
+        return node.id == "model"
+    if isinstance(node, ast.Attribute) and node.attr == "model":
+        base = node.value
+        return isinstance(base, ast.Name) and base.id in {"self", "cls"}
+    return False
+
+
+def _const_str(node: ast.AST) -> "str | None":
+    if isinstance(node, ast.Constant) and isinstance(node.value, str):
+        return node.value
+    return None
+
+
+def consumer_surface(source: str) -> dict[str, Any]:
+    """Extract the solver surface a binder module touches from its source text.
+
+    Recognised forms, all anchored on the model receiver (``model`` / ``self.model``):
+
+    * ``model.attr`` / ``self.model.attr``            -> attribute
+    * ``model.method(...)``                           -> method + the keyword
+      parameter names and the positional arity it is called with
+    * ``getattr(model, "x", ...)`` / ``hasattr(model, "x")`` -> attribute
+
+    Private names are ignored: the contract freezes the public surface only.
+    """
+    tree = ast.parse(source)
+    attributes: set[str] = set()
+    methods: dict[str, dict[str, Any]] = {}
+
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Attribute) and _is_model_receiver(node.value):
+            name = node.attr
+        elif (isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
+              and node.func.id in {"getattr", "hasattr"} and node.args
+              and _is_model_receiver(node.args[0]) and len(node.args) >= 2):
+            name = _const_str(node.args[1])
+        else:
+            continue
+        if name and not name.startswith("_"):
+            attributes.add(name)
+
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call):
+            continue
+        func = node.func
+        if not (isinstance(func, ast.Attribute) and _is_model_receiver(func.value)):
+            continue
+        if func.attr.startswith("_"):
+            continue
+        sig = methods.setdefault(func.attr, {"keyword_params": set(),
+                                             "positional_count": 0})
+        sig["keyword_params"].update(kw.arg for kw in node.keywords if kw.arg)
+        sig["positional_count"] = max(
+            sig["positional_count"],
+            len([arg for arg in node.args if not isinstance(arg, ast.Starred)]),
+        )
+
+    return {
+        "schema": CONSUMER_SURFACE_SCHEMA,
+        "source_sha256": "sha256:" + hashlib.sha256(source.encode("utf-8")).hexdigest(),
+        "attributes": sorted(attributes),
+        "methods": {name: {"keyword_params": sorted(sig["keyword_params"]),
+                           "positional_count": sig["positional_count"]}
+                    for name, sig in sorted(methods.items())},
+    }
+
+
+def consumer_source_path() -> "Path | None":
+    """Locate the binder module without importing it (env override wins)."""
+    import os
+
+    candidates: list[Path] = []
+    env = os.environ.get("TENSORPHYSICS_SRC")
+    if env:
+        root = Path(env)
+        candidates.append(root / CONSUMER_SOURCE_RELPATH)
+        candidates.append(root / "src" / CONSUMER_SOURCE_RELPATH)
+    try:
+        import tensorphysics  # type: ignore
+    except Exception:  # pragma: no cover - optional dependency
+        tensorphysics = None
+    if tensorphysics is not None and getattr(tensorphysics, "__file__", None):
+        pkg = Path(tensorphysics.__file__).resolve().parent
+        candidates.append(pkg / "adapters" / "tensordem.py")
+    for path in candidates:
+        if path.is_file():
+            return path
+    return None
+
+
+def live_consumer_surface() -> "dict[str, Any] | None":
+    """Extract the surface from a real binder checkout; ``None`` when absent."""
+    path = consumer_source_path()
+    if path is None:
+        return None
+    surface = consumer_surface(path.read_text(encoding="utf-8"))
+    surface["source_path"] = str(path)
+    return surface
+
+
+def consumer_coverage(surface: Mapping[str, Any] | None = None,
+                      contract: Mapping[str, Any] | None = None) -> dict[str, Any]:
+    """Check that every name the binder consumes is frozen in the contract.
+
+    ``surface`` defaults to :data:`CONSUMER_SURFACE_PIN` so the check runs with
+    no binder checkout at hand; pass :func:`live_consumer_surface` to audit the
+    binder as it is today.
+    """
+    payload = BINDING_CONTRACT if contract is None else contract
+    if surface is None:
+        surface = CONSUMER_SURFACE_PIN
+    entry = payload["entries"][CONSUMER_ENTRY]
+    state_fields = set(entry.get("state", {})) | set(entry.get("properties", {}))
+    method_specs = entry.get("methods", {})
+    absent = set(entry.get("explicitly_absent", []))
+
+    rows: list[dict[str, Any]] = []
+    for name in surface.get("attributes", []):
+        if name in state_fields:
+            rows.append({"name": name, "consumed_as": "state", "covered": True,
+                         "contract_field": f"{CONSUMER_ENTRY}.state.{name}"})
+        elif name in method_specs:
+            rows.append({"name": name, "consumed_as": "method", "covered": True,
+                         "contract_field": f"{CONSUMER_ENTRY}.methods.{name}"})
+        elif name in absent:
+            rows.append({"name": name, "consumed_as": "state", "covered": False,
+                         "reason": "consumer calls a name the contract declares absent"})
+        else:
+            rows.append({"name": name, "consumed_as": "state", "covered": False,
+                         "reason": "name is not in the frozen entry"})
+
+    for name, sig in surface.get("methods", {}).items():
+        params = method_specs.get(name, {}).get("params", {})
+        for pname in sig.get("keyword_params", []):
+            label = f"{name}({pname}=...)"
+            spec = params.get(pname)
+            if spec is None:
+                rows.append({"name": label, "consumed_as": "keyword_param",
+                             "covered": False,
+                             "reason": "parameter is not frozen"})
+            elif spec.get("kind") not in ("keyword_only", "positional_or_keyword"):
+                rows.append({"name": label, "consumed_as": "keyword_param",
+                             "covered": False,
+                             "reason": f"frozen kind {spec.get('kind')!r} rejects a "
+                                       "keyword call"})
+            else:
+                rows.append({"name": label, "consumed_as": "keyword_param",
+                             "covered": True,
+                             "contract_field": f"{CONSUMER_ENTRY}.methods.{name}.{pname}"})
+
+    gaps = [row for row in rows if not row["covered"]]
+    return {
+        "schema": "tensordem.binding-contract.consumer-coverage/1",
+        "contract_entry": CONSUMER_ENTRY,
+        "source_sha256": surface.get("source_sha256"),
+        "source_path": surface.get("source_path"),
+        "pin_match": (surface.get("source_sha256")
+                      == CONSUMER_SURFACE_PIN.get("source_sha256")),
+        "checks": len(rows),
+        "covered": len(rows) - len(gaps),
+        "gaps": [row["name"] for row in gaps],
+        "rows": rows,
+        "status": "COVERED" if not gaps else "GAP",
+    }
+
+
+def assert_consumer_covered(surface: Mapping[str, Any] | None = None,
+                            contract: Mapping[str, Any] | None = None) -> dict[str, Any]:
+    """Raise :class:`BindingContractError` when the binder outgrew the contract."""
+    report = consumer_coverage(surface, contract)
+    if report["status"] != "COVERED":
+        raise BindingContractError({
+            "findings": [{"entry": CONSUMER_ENTRY, "field": row["name"],
+                          "change": "consumer_uncovered", "severity": "breaking"}
+                         for row in report["rows"] if not row["covered"]]})
+    return report
+
+
+# ---------------------------------------------------------------------------
+# Surface accounting: no silent surface (round 3)
+# ---------------------------------------------------------------------------
+# A frozen entry only protects a binder if the *whole* public surface is
+# accounted for.  Round 1 froze 8 of the 20 public members of ``IceDEM3D`` and
+# simply did not mention the other 12: add or rename a physics diagnostic there
+# today and nothing fails, because the drift is outside the frozen surface and outside
+# every binder's coverage check too.  The ledger closes that hole.  Every public
+# member of a frozen class is either
+#
+#   * ``frozen``   -- declared in ``methods``/``properties`` (shape, units,
+#                     semantics all pinned), or
+#   * ``excluded`` -- deliberately outside the binding surface *with a reason*
+#                     (physics diagnostics); a binder that consumes one is still
+#                     caught by :func:`consumer_coverage`, and
+#
+# a member that is neither is ``public_member_unclassified`` (breaking): the
+# surface may not grow or shrink without an explicit decision in the same
+# commit.  Ledger entries that outlive the member they classify are
+# ``surface_ledger_stale`` (a re-freeze gap), and a disposition that contradicts
+# the frozen fields is ``surface_ledger_misclassified``.
+SURFACE_AUDIT_SCHEMA = "tensordem.binding-contract.surface-audit/1"
+SURFACE_DISPOSITIONS = ("frozen", "excluded")
+
+
+def public_members(cls: Any) -> list[str]:
+    """Public callables/properties a binder can reach on *cls* (sorted)."""
+    names: list[str] = []
+    for attr in dir(cls):
+        if attr.startswith("_"):
+            continue
+        try:
+            raw = inspect.getattr_static(cls, attr, None)
+        except AttributeError:  # pragma: no cover - defensive
+            raw = None
+        if isinstance(raw, property) or callable(getattr(cls, attr, None)):
+            names.append(attr)
+    return sorted(names)
+
+
+def canonical_class(entry_name: str, contract: Mapping[str, Any] | None = None) -> Any:
+    """Resolve the frozen class itself (``<entry.module>.<entry_name>``)."""
+    payload = BINDING_CONTRACT if contract is None else contract
+    entry = payload["entries"][entry_name]
+    import importlib
+
+    module = importlib.import_module(entry["module"])
+    cls = getattr(module, entry_name, None)
+    if not inspect.isclass(cls):
+        raise BindingContractError({"findings": [
+            {"entry": entry_name, "field": "<entry>", "change": "entry_missing",
+             "severity": "breaking", "expected": entry_name, "actual": repr(cls)}]})
+    return cls
+
+
+def audit_surface(target: Any = None, entry_name: str = "IceDEM",
+                  contract: Mapping[str, Any] | None = None) -> dict[str, Any]:
+    """Classify every public member of *target* against the frozen ledger.
+
+    ``target`` defaults to the frozen class resolved from the entry, so the
+    production gate audits what TensorDEM ships -- not a caller's subclass.
+    """
+    payload = BINDING_CONTRACT if contract is None else contract
+    entry = payload["entries"][entry_name]
+    cls = canonical_class(entry_name, payload) if target is None else target
+    if not inspect.isclass(cls):
+        cls = type(cls)
+    ledger: Mapping[str, Any] = entry.get("surface_ledger", {})
+    frozen_fields = (set(entry.get("state", {})) | set(entry.get("properties", {}))
+                     | set(entry.get("methods", {})))
+    public = public_members(cls)
+    public_set = set(public)
+
+    rows: list[dict[str, Any]] = []
+    gaps: list[dict[str, Any]] = []
+    for name in public:
+        spec = ledger.get(name)
+        if spec is None:
+            row = {"name": name, "disposition": None, "status": "unclassified",
+                   "finding": "public_member_unclassified"}
+        else:
+            disposition = (spec if isinstance(spec, str) else spec.get("disposition"))
+            row = {"name": name, "disposition": disposition, "status": "classified"}
+            if disposition not in SURFACE_DISPOSITIONS:
+                row.update(status="misclassified", finding="surface_ledger_misclassified")
+            elif disposition == "frozen" and name not in frozen_fields:
+                row.update(status="misclassified", finding="surface_ledger_misclassified",
+                           reason="disposition says frozen but the member is not in "
+                                  "state/properties/methods")
+            elif disposition == "excluded" and name in frozen_fields:
+                row.update(status="misclassified", finding="surface_ledger_misclassified",
+                           reason="disposition says excluded but the member is frozen")
+            else:
+                reason = spec.get("reason") if isinstance(spec, Mapping) else None
+                if disposition == "excluded" and not reason:
+                    row.update(status="misclassified",
+                               finding="surface_ledger_misclassified",
+                               reason="an exclusion needs a documented reason")
+                row["reason"] = reason
+        rows.append(row)
+        if row["status"] != "classified":
+            gaps.append({"name": name, "finding": row["finding"],
+                         "expected": "frozen|excluded (with reason)",
+                         "actual": row.get("disposition") or "<absent>"})
+
+    for name in sorted(set(ledger) - public_set):
+        rows.append({"name": name, "disposition": (ledger[name]
+                                                   if isinstance(ledger[name], str)
+                                                   else ledger[name].get("disposition")),
+                     "status": "stale", "finding": "surface_ledger_stale"})
+        gaps.append({"name": name, "finding": "surface_ledger_stale",
+                     "expected": "public member of the frozen class",
+                     "actual": "<absent from the live class>"})
+
+    frozen_count = sum(1 for row in rows if row.get("disposition") == "frozen"
+                       and row["status"] == "classified")
+    excluded_count = sum(1 for row in rows if row.get("disposition") == "excluded"
+                         and row["status"] == "classified")
+    return {
+        "schema": SURFACE_AUDIT_SCHEMA,
+        "entry": entry_name,
+        "target": f"{cls.__module__}.{cls.__qualname__}",
+        "public_members": public,
+        "public_count": len(public),
+        "frozen_count": frozen_count,
+        "excluded_count": excluded_count,
+        "classified_count": len(public) - len([g for g in gaps if g["finding"]
+                                              != "surface_ledger_stale"]),
+        "classified_ratio": ((len(public) - len([g for g in gaps
+                                                 if g["finding"] != "surface_ledger_stale"]))
+                             / len(public) if public else 1.0),
+        "gaps": gaps,
+        "rows": rows,
+        "status": "COMPLETE" if not gaps else "GAPS",
+    }
+
+
+def assert_surface_classified(target: Any = None, entry_name: str = "IceDEM",
+                              contract: Mapping[str, Any] | None = None) -> dict[str, Any]:
+    """Raise :class:`BindingContractError` when the surface is not fully accounted."""
+    report = audit_surface(target, entry_name, contract)
+    if report["status"] != "COMPLETE":
+        raise BindingContractError({"findings": [
+            {"entry": entry_name, "field": f"surface.{gap['name']}",
+             "change": gap["finding"], "severity": "breaking",
+             "expected": gap["expected"], "actual": gap["actual"]}
+            for gap in report["gaps"]]})
+    return report
+
+
+def surface_mutation_check() -> list[dict[str, Any]]:
+    """Prove the accounting gate is not decorative (3 controlled mutations).
+
+    Each row feeds a deliberately broken surface/ledger to
+    :func:`audit_surface` and records which finding fired, so the detector is
+    measured rather than asserted.
+    """
+    import copy
+
+    from .dem import IceDEM
+
+    rows: list[dict[str, Any]] = []
+
+    class _GrownSurface(IceDEM):  # a public member nobody classified
+        def thermal_flux(self) -> float:  # noqa: D102
+            return 0.0
+
+    grown = audit_surface(_GrownSurface, "IceDEM")
+    # Control: the pre-round-3 check set (frozen fields, signatures, negative
+    # assertions -- no accounting) sees nothing at all in the grown surface.
+    pre_round3 = [f for f in verify_entry(_GrownSurface, "IceDEM")["findings"]
+                  if not str(f["field"]).startswith("surface.")]
+    rows.append({"case": "public_member_added", "expect": "public_member_unclassified",
+                 "observed": next((g["finding"] for g in grown["gaps"]
+                                   if g["name"] == "thermal_flux"), None),
+                 "status": grown["status"],
+                 "baseline_findings": len(pre_round3),
+                 "baseline_detected": bool(pre_round3)})
+
+    dropped = copy.deepcopy(BINDING_CONTRACT)
+    del dropped["entries"]["IceDEM"]["surface_ledger"]["step"]
+    dropped_report = audit_surface(None, "IceDEM", dropped)
+    rows.append({"case": "ledger_entry_missing_for_frozen_member",
+                 "expect": "public_member_unclassified",
+                 "observed": next((g["finding"] for g in dropped_report["gaps"]
+                                   if g["name"] == "step"), None),
+                 "status": dropped_report["status"]})
+
+    mislabelled = copy.deepcopy(BINDING_CONTRACT)
+    mislabelled["entries"]["IceDEM"]["surface_ledger"]["step"] = {
+        "disposition": "excluded", "reason": "pretend it is a diagnostic"}
+    mislabelled_report = audit_surface(None, "IceDEM", mislabelled)
+    rows.append({"case": "frozen_member_marked_excluded",
+                 "expect": "surface_ledger_misclassified",
+                 "observed": next((g["finding"] for g in mislabelled_report["gaps"]
+                                   if g["name"] == "step"), None),
+                 "status": mislabelled_report["status"]})
+
+    clean = audit_surface(None, "IceDEM")
+    rows.append({"case": "unmodified_contract", "expect": None,
+                 "observed": None if clean["status"] == "COMPLETE" else clean["gaps"],
+                 "status": clean["status"]})
+    for row in rows:
+        row["detected"] = (row["observed"] == row["expect"]) if row["expect"] is not None \
+            else row["status"] == "COMPLETE"
+    return rows
+
+
+# ---------------------------------------------------------------------------
 # Live-object gate (used by the solver's own export paths)
 # ---------------------------------------------------------------------------
 # ``verify`` is a full, review-grade introspection of *both* entries.  The
@@ -803,7 +1340,16 @@ def verify_entry(target: Any, entry_name: str, *,
 
     for attr in entry.get("state", {}):
         checked += 1
-        if hasattr(target, attr) or hasattr(cls, attr):
+        if inspect.isclass(target):
+            # A class alone cannot carry instance state.  Same fallback as
+            # ``verify``: accept a class-level declaration or a
+            # ``self.<attr> = ...`` assignment read out of the class source.
+            # Without it a class target reported every state field as removed
+            # (10 bogus breaking findings for IceDEM).
+            ok = hasattr(cls, attr) or _class_assigns_attribute(cls, attr)
+        else:
+            ok = hasattr(target, attr) or hasattr(cls, attr)
+        if ok:
             matched += 1
         else:
             add(f"state.{attr}", "attribute_removed", "breaking")
@@ -829,6 +1375,17 @@ def verify_entry(target: Any, entry_name: str, *,
         else:
             matched += 1
 
+    try:
+        audit = audit_surface(None, entry_name, payload)
+    except Exception as exc:  # pragma: no cover - solver not importable
+        audit = {"status": "UNAVAILABLE", "error": f"{type(exc).__name__}: {exc}"}
+    else:
+        checked += audit["public_count"]
+        matched += audit["public_count"] - len(
+            [g for g in audit["gaps"] if g["finding"] != "surface_ledger_stale"])
+        for gap in audit["gaps"]:
+            add(f"surface.{gap['name']}", gap["finding"], "breaking")
+
     breaking = [f for f in findings if f["severity"] == "breaking"]
     return {
         "schema": "tensordem.binding-contract.entry-report/1",
@@ -840,6 +1397,7 @@ def verify_entry(target: Any, entry_name: str, *,
         "target": f"{cls.__module__}.{cls.__qualname__}",
         "checks": checked,
         "matched": matched,
+        "surface": audit,
         "findings": findings,
         "breaking": len(breaking),
         "status": "CONFORMS" if not breaking else "DRIFT",
@@ -1398,6 +1956,15 @@ def _main(argv: list[str] | None = None) -> int:
                         help="run the behavioural probes (requires torch)")
     parser.add_argument("--benchmark", action="store_true",
                         help="run the numeric ref-vs-got benchmark (requires torch)")
+    parser.add_argument("--consumer-surface", action="store_true",
+                        help="print the binder-consumed surface extracted from "
+                             "TensorPhysics (needs a checkout or $TENSORPHYSICS_SRC)")
+    parser.add_argument("--surface-audit", action="store_true",
+                        help="classify every public member of the frozen classes "
+                             "against the ledger (no silent surface)")
+    parser.add_argument("--consumer-coverage", action="store_true",
+                        help="check the binder-consumed surface against the frozen "
+                             "contract (uses the pinned surface when no checkout)")
     parser.add_argument("--out", type=str, default=None,
                         help="write the chosen reports as JSON to this directory")
     args = parser.parse_args(argv)
@@ -1413,6 +1980,17 @@ def _main(argv: list[str] | None = None) -> int:
     if args.benchmark:
         payload["benchmark"] = benchmark_physics()
         print(json.dumps(payload["benchmark"], indent=2, sort_keys=True))
+    if args.surface_audit:
+        payload["surface_audit"] = {name: audit_surface(None, name)
+                                    for name in BINDING_CONTRACT["entries"]}
+        print(json.dumps(payload["surface_audit"], indent=2, sort_keys=True))
+    if args.consumer_surface:
+        payload["consumer_surface"] = live_consumer_surface()
+        print(json.dumps(payload["consumer_surface"], indent=2, sort_keys=True))
+    if args.consumer_coverage:
+        payload["consumer_coverage"] = consumer_coverage(
+            live_consumer_surface() or CONSUMER_SURFACE_PIN)
+        print(json.dumps(payload["consumer_coverage"], indent=2, sort_keys=True))
     if args.out:
         from pathlib import Path as _Path
         outdir = _Path(args.out)
