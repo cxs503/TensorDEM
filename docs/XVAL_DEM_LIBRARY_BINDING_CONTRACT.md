@@ -4,6 +4,8 @@
 **判据** owner 精度标准：对标误差 >15% 不可接受；本单另有预登记阈值见 `prereg/XVAL_DEM_LIBRARY_BINDING_CONTRACT.json`
 **工件** `artifacts/xval_library_binding_contract/result.json`（所有数字程序化注入，本文件不手抄计算）
 **复现** `python scripts/xval_library_binding_contract.py` → 1.96 s（单核 CPU），`pytest tests/test_binding_contract.py -q` → 20 passed / 7.1 s
+**第 2 轮** 消费者侧覆盖（契约是否仍罩住绑定方真正调用的名字）见 `docs/XVAL_DEM_LIBRARY_BINDING_CONTRACT_R2.md`（mission 18458）
+
 **结论** 8/8 预登记判据达标（含 4 项数值判据相对误差 ≤3.6e-16，远优于 15%）；漂移检测 7/7（对照基线 1/7）
 
 ---
