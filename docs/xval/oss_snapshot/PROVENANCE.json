@@ -1,0 +1,33 @@
+{
+  "repo": "CFDEMproject/LIGGGHTS-PUBLIC",
+  "head_commit": "3d5c00f20519e6bb6eb6756f51f1ad36564e649d",
+  "commit_date": "2024-06-07T06:25:25Z",
+  "license": "GPL-2.0 (repo LICENSE)",
+  "fetched_via": "GitHub REST contents API",
+  "files": {
+    "src/rolling_model_base.h": {
+      "sha256": "b23b4dcfa77e23103a34e13b2de4e70d27477723ad0c13cb5d3852b5dbeef6dd",
+      "bytes": 4810,
+      "path": "docs/xval/oss_snapshot/LIGGGHTS_PUBLIC__src__rolling_model_base.h",
+      "blob": "de3cb60f7cd3f523e972661442f6b7cf866183e2"
+    },
+    "src/rolling_model_cdt.h": {
+      "sha256": "2e2a03e17b4720f7ece140a08e679ddf2fd9c1fc6e2821dbbded2de38644f4b1",
+      "bytes": 6905,
+      "path": "docs/xval/oss_snapshot/LIGGGHTS_PUBLIC__src__rolling_model_cdt.h",
+      "blob": "8d7f2476d709a153aebcdb8f8ca68881889373d5"
+    },
+    "src/rolling_model_epsd2.h": {
+      "sha256": "cef4ff326ebb6eabe9259ce7c9e8d46c55b6007baeca752896e2cd311e12c204",
+      "bytes": 8380,
+      "path": "docs/xval/oss_snapshot/LIGGGHTS_PUBLIC__src__rolling_model_epsd2.h",
+      "blob": "b36c0b91fc69f87076ea7fe1f5295c47eeef2ae4"
+    },
+    "src/fix_check_timestep_gran.cpp": {
+      "sha256": "d08476317379f2fa41fc2a4cc047f3be4a97ad11655e4f93b47d22cfb032f84a",
+      "bytes": 13197,
+      "path": "docs/xval/oss_snapshot/LIGGGHTS_PUBLIC__src__fix_check_timestep_gran.cpp",
+      "blob": "f079e098371040317be3b792b2dd21beeeb2f98e"
+    }
+  }
+}
