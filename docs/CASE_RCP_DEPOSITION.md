@@ -46,7 +46,7 @@ Strack tangential spring with per-pair history on sorted keys, cKDTree pair
 list with a 20 % skin). Command:
 
 ```bash
-python3 benchmarks/case_rcp_deposition/shard.py <0..11>   # one cluster shard per case
+python3 benchmarks/case_rcp_deposition/shard.py <0..15>   # one cluster shard per case
 python3 benchmarks/case_rcp_deposition/aggregate.py   # this document
 ```
 
@@ -93,10 +93,10 @@ Tier means (N = 10000, k_n = 4000, dt = t_c/20):
 
 ### 3.2 Timestep (temporal) convergence
 
-| tier | phi(dt = t_c/20) | phi(dt = t_c/40) | |Delta| |
-|---|---|---|---|
-| mu=0 | 0.64237 | 0.64263 | 0.00026 |
-| mu=0.1 | 0.62628 | 0.62632 | 0.00004 |
+| tier | k_n | seeds | phi(dt = t_c/20) | phi(dt = t_c/40) | |Delta| |
+|---|---|---|---|---|---|
+| mu=0 | 4000 | 1 | 0.64261 | 0.64263 | 0.00002 |
+| mu=0.1 | 4000 | 1 | 0.62671 | 0.62632 | 0.00038 |
 
 ## 4 Figures
 
@@ -132,8 +132,8 @@ Tier means (N = 10000, k_n = 4000, dt = t_c/20):
 | G6_stiffness_convergence_frictional | |phi(k_n=4000) - phi(k_n->inf)| < 0.005 (mu=0.1) | 0.0092 | FAIL |
 | G12_stiffness_limit_vs_ref | |phi(k_n->inf)/phi_ref - 1| < 3% (mu=0) | 0.6364 | PASS |
 | G13_stiffness_limit_vs_ref_frictional | |phi(k_n->inf)/phi_ref - 1| < 3% (mu=0.1) | 0.6171 | FAIL |
-| G14_timestep_convergence_mu0 | |phi(dt/2) - phi(dt)| < 0.002 (mu=0) | 0.0003 | PASS |
-| G14_timestep_convergence_mu0.1 | |phi(dt/2) - phi(dt)| < 0.002 (mu=0.1) | 0.0000 | PASS |
+| G14_timestep_convergence_mu0 | |phi(dt/2) - phi(dt)| < 0.002 (mu=0, k_n=4000, same seed) | 0.0000 | PASS |
+| G14_timestep_convergence_mu0.1 | |phi(dt/2) - phi(dt)| < 0.002 (mu=0.1, k_n=4000, same seed) | 0.0004 | PASS |
 | G7_finite_size | max-min phi over the N scan < 0.01 (mu=0) | 0.0049 | PASS |
 | G8_settled | every run reached KE/(N m g d) < 5e-4 for 4 t_g | True | PASS |
 | G15_production_size | N_production >= 10000 (feature_ledger: 10000 spheres, both friction tiers; largest N carrying both tiers) | 10000 | PASS |
@@ -148,8 +148,8 @@ Tier means (N = 10000, k_n = 4000, dt = t_c/20):
 * low-friction tier (mu = 0.1): phi = 0.62628 +- 0.00040: **-1.62 %** -> <3 % (满足).
 * hard-sphere limit (mu = 0, Richardson over 3 k_n levels, p = 1.01): phi_inf = 0.63644: **-0.03 %** -> <3 % (满足).
 * hard-sphere limit (mu = 0.1, Richardson over 3 k_n levels, p = 0.51): phi_inf = 0.61705: **-3.07 %** -> >3 % (不满足).
-* timestep (mu = 0): halving dt moves phi by 0.00026 (below the 0.002 gate) -> the stiffness systemic is not a disguised timestep error.
-* timestep (mu = 0.1): halving dt moves phi by 0.00004 (below the 0.002 gate) -> the stiffness systemic is not a disguised timestep error.
+* timestep (mu = 0, k_n = 4000): halving dt moves phi by 0.00002 (below the 0.002 gate) -> the stiffness systemic is not a disguised timestep error.
+* timestep (mu = 0.1, k_n = 4000): halving dt moves phi by 0.00038 (below the 0.002 gate) -> the stiffness systemic is not a disguised timestep error.
 * The reference value is a *poured* experimental packing, so the comparison
   is method-matched; the residual gap is the monodisperse soft-sphere
   idealisation plus the periodic sidewalls (see §7).
@@ -171,6 +171,7 @@ Tier means (N = 10000, k_n = 4000, dt = t_c/20):
   resolved by this cell.
 * `z12_fraction` is a crystalline-order proxy; it is ~0 here, i.e. the pour
   does not crystallise at these sizes.
+* **Pending runs (4 of the `plan.json` cases have no JSON in `runs/` yet; cluster job `cj1346` carries the 10 N=10000 cases, `cj1347` the two halved-timestep probes).** The numbers in §3 are the largest runs present in the tree; re-running `aggregate.py` after `fetch` promotes them with no code change. Cases not yet in: N=10000,mu=0,kn=256000,seed=1, N=10000,mu=0.1,kn=256000,seed=1, N=10000,mu=0,kn=64000,seed=1,dt_frac=0.025, N=10000,mu=0.1,kn=64000,seed=1,dt_frac=0.025.
 * Polydispersity is absent by construction (monodisperse spheres, as the
   reference experiments); a polydisperse pour would raise phi and is out of
   scope.
