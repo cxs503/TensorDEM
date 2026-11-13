@@ -144,22 +144,54 @@ def _cmd_verify_friction_polyhedron(args: argparse.Namespace) -> None:
     print(f"Summary: {summary_path}")
 
 
-def _cmd_h1_broken_ice(args: argparse.Namespace) -> None:
-    """Run the H1-BROKEN-ICE-DEM cases (buoyancy / repose / channel)."""
+#: case sizes the ``h1-broken-ice`` subcommand uses when it is *not* in quick
+#: mode.  ``--quick`` deliberately overrides them (that is how the pytest gate
+#: keeps the run short); a flag typed explicitly by the caller always wins.
+H1_FULL_SIZES = {"repose_steps": 6000, "repose_bodies": 45, "channel_steps": 900}
+
+
+def _cmd_h1_broken_ice(args: argparse.Namespace) -> int:
+    """Run the H1-BROKEN-ICE-DEM cases (buoyancy / repose / channel).
+
+    Returns the process exit status: ``1`` as soon as any requested case reports
+    ``passed = False``, so the subcommand can be used as a CI gate.  Before this
+    the command printed ``cases: {...False}`` and still exited ``0`` -- the same
+    "green pipeline, failing case" hole that ``benchmarks/h1_broken_ice_dem/
+    run_validation.py`` had (audit m15192, fixed there first).
+    """
     from .polyhedron_floe3d.h1_cases import validate
 
     cases = [c for c in args.cases.split(",") if c]
+    # only what the caller actually typed, so ``--quick`` can still shrink the
+    # cases (validate() applies its quick presets with setdefault)
     kwargs = {}
-    if args.quick:
-        kwargs = {}
-    else:
-        kwargs = {"repose": {"n_steps": args.repose_steps, "n_bodies": args.repose_bodies},
-                  "channel": {"n_steps": args.channel_steps}}
+    rk = {}
+    if args.repose_steps is not None:
+        rk["n_steps"] = args.repose_steps
+    if args.repose_bodies is not None:
+        rk["n_bodies"] = args.repose_bodies
+    if not args.quick:
+        rk.setdefault("n_steps", H1_FULL_SIZES["repose_steps"])
+        rk.setdefault("n_bodies", H1_FULL_SIZES["repose_bodies"])
+    if rk:
+        kwargs["repose"] = rk
+    ck = {}
+    if args.channel_steps is not None:
+        ck["n_steps"] = args.channel_steps
+    if not args.quick:
+        ck.setdefault("n_steps", H1_FULL_SIZES["channel_steps"])
+    if ck:
+        kwargs["channel"] = ck
     result = validate(cases=cases, quick=args.quick, **kwargs)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(result, indent=1, default=float))
     print("cases:", result["passed"])
     print("report:", args.output)
+    failed = [name for name, ok in result["passed"].items() if not ok]
+    if failed:
+        print("FAILED cases: %s" % (", ".join(failed),), file=sys.stderr)
+        return 1
+    return 0
 
 
 def _cmd_elastic_limit_shear(args: argparse.Namespace) -> None:
@@ -286,9 +318,15 @@ def main(argv: list[str] | None = None) -> None:
                            help="comma separated subset of buoyancy,repose,channel")
     h1_parser.add_argument("--quick", action="store_true",
                            help="reduced case sizes (how the pytest gate runs it)")
-    h1_parser.add_argument("--repose-steps", type=int, default=6000)
-    h1_parser.add_argument("--repose-bodies", type=int, default=45)
-    h1_parser.add_argument("--channel-steps", type=int, default=900)
+    h1_parser.add_argument("--repose-steps", type=int, default=None,
+                           help="step cap for the repose case (default 6000; "
+                                "--quick uses the reduced preset unless this is given)")
+    h1_parser.add_argument("--repose-bodies", type=int, default=None,
+                           help="number of polyhedral cells in the repose heap "
+                                "(default 45; --quick uses the reduced preset)")
+    h1_parser.add_argument("--channel-steps", type=int, default=None,
+                           help="steps for the channel case (default 900; --quick "
+                                "uses the reduced preset unless this is given)")
     h1_parser.add_argument("--output", type=Path,
                            default=Path("artifacts/h1_broken_ice_dem/cli_report.json"))
     h1_parser.set_defaults(func=_cmd_h1_broken_ice)
@@ -313,4 +351,6 @@ def main(argv: list[str] | None = None) -> None:
     if not hasattr(args, "func"):
         parser.print_help()
         sys.exit(1)
-    args.func(args)
+    status = args.func(args)
+    if isinstance(status, int) and status != 0:
+        raise SystemExit(status)
