@@ -1,0 +1,172 @@
+{
+ "case": "CASE-DEM-SHEAR-CAMPBELL-ELASTIC-LIMIT",
+ "round": "R4 (inertial-branch reach + elastic/inertial stress partition)",
+ "created": "before any R4 point was run",
+ "anchor_file": "runs/kappa_collapse/analysis.json",
+ "anchor_sha256": "210dbc74a0ca5e4abb687de45e1c131474e8d5a0e1c53e52d82cae6840a07552",
+ "apparatus": {
+  "phi": 0.8,
+  "n_particles": 400,
+  "dt_factor": 0.004,
+  "strain_total": 1.4,
+  "strain_from": 0.7,
+  "seed": 20261112,
+  "kernel": "tensordem.elastic_limit_shear.simulate_plane_shear"
+ },
+ "design": [
+  {
+   "tag": "kn1e4_g6.0",
+   "kn": 10000.0,
+   "gdot": 6.0,
+   "kappa_predicted": 160.75102880658437,
+   "phi": 0.8,
+   "n_particles": 400,
+   "seed": 20261112,
+   "group": null
+  },
+  {
+   "tag": "kn1e4_g8.0",
+   "kn": 10000.0,
+   "gdot": 8.0,
+   "kappa_predicted": 90.42245370370371,
+   "phi": 0.8,
+   "n_particles": 400,
+   "seed": 20261112,
+   "group": null
+  },
+  {
+   "tag": "kn1e4_g12.0",
+   "kn": 10000.0,
+   "gdot": 12.0,
+   "kappa_predicted": 40.18775720164609,
+   "phi": 0.8,
+   "n_particles": 400,
+   "seed": 20261112,
+   "group": null
+  },
+  {
+   "tag": "kn1e4_g16.0",
+   "kn": 10000.0,
+   "gdot": 16.0,
+   "kappa_predicted": 22.605613425925927,
+   "phi": 0.8,
+   "n_particles": 400,
+   "seed": 20261112,
+   "group": "kn1e4_g16.0"
+  },
+  {
+   "tag": "kn1e4_g24.0",
+   "kn": 10000.0,
+   "gdot": 24.0,
+   "kappa_predicted": 10.046939300411523,
+   "phi": 0.8,
+   "n_particles": 400,
+   "seed": 20261112,
+   "group": null
+  },
+  {
+   "tag": "kn1e4_g32.0",
+   "kn": 10000.0,
+   "gdot": 32.0,
+   "kappa_predicted": 5.651403356481482,
+   "phi": 0.8,
+   "n_particles": 400,
+   "seed": 20261112,
+   "group": null
+  },
+  {
+   "tag": "kn2.5e3_g8.0",
+   "kn": 2500.0,
+   "gdot": 8.0,
+   "kappa_predicted": 22.605613425925927,
+   "phi": 0.8,
+   "n_particles": 400,
+   "seed": 20261112,
+   "group": "kn1e4_g16.0"
+  },
+  {
+   "tag": "kn1e3_g6.0",
+   "kn": 1000.0,
+   "gdot": 6.0,
+   "kappa_predicted": 16.075102880658438,
+   "phi": 0.8,
+   "n_particles": 400,
+   "seed": 20261112,
+   "group": null
+  },
+  {
+   "tag": "kn1e3_g8.0",
+   "kn": 1000.0,
+   "gdot": 8.0,
+   "kappa_predicted": 9.042245370370372,
+   "phi": 0.8,
+   "n_particles": 400,
+   "seed": 20261112,
+   "group": null
+  },
+  {
+   "tag": "kn1e4_g8.0_seed20261113",
+   "kn": 10000.0,
+   "gdot": 8.0,
+   "kappa_predicted": 90.42245370370371,
+   "phi": 0.8,
+   "n_particles": 400,
+   "seed": 20261113,
+   "role": "noise_twin",
+   "group": null
+  },
+  {
+   "tag": "kn1e4_g8.0_seed20261114",
+   "kn": 10000.0,
+   "gdot": 8.0,
+   "kappa_predicted": 90.42245370370371,
+   "phi": 0.8,
+   "n_particles": 400,
+   "seed": 20261114,
+   "role": "noise_twin",
+   "group": null
+  }
+ ],
+ "kappa_floor_reused_r3": 361.68981481481484,
+ "predictions": {
+  "P1_reach": {
+   "statement": "the apparatus stays valid (all physics gates) at least 0.5 decade below the R3 floor kappa = 361.7, i.e. at kappa <= 114, and the first kappa that fails a gate is reported with the failing gate",
+   "rule": "PASS if >= 1 gated point with kappa <= 361.7/10**0.5; PARTIAL if >= 1 gated point below 361.7; else NOT_SUPPORTED (write down the wall)"
+  },
+  "P2_inertial": {
+   "statement": "as kappa falls the local exponent n = 2(1-beta) rises monotonically and reaches >= 0.5 at the deepest gated pair (inertial leg at least half the stress, edit: Bagnold n=2 is the ceiling)",
+   "rule": "PASS if n rises monotonically over the sub-R3 pairs AND n_deepest >= 0.5; PARTIAL if monotone but n_deepest >= 0.3; else NOT_SUPPORTED"
+  },
+  "P3_partition": {
+   "statement": "the two-leg model tau* = A kappa + B beats the single power law at equal parameter count (delta AIC < 0) and recovers the elastic coefficient A within 15 % of R3's stiff-rung value",
+   "rule": "PASS if delta_aic < -2 AND |A/A_R3 - 1| <= 0.15; PARTIAL if only one leg; else NOT_SUPPORTED"
+  },
+  "P4_boundary": {
+   "statement": "the fitted crossover kappa_x = B/A is consistent with Campbell's map boundary kappa_c ~ 1e4 (R2 ledger row, order of magnitude)",
+   "rule": "PASS if kappa_x within a factor 3 of 1e4; PARTIAL within a factor 10; else NOT_SUPPORTED (report the measured kappa_x, do not move the target)"
+  },
+  "P5_kinetic_crosscheck": {
+   "statement": "the fitted inertial fraction c/(kappa+c) is not orders of magnitude above the kinetic stress share measured at the same point: the leg is collisional if the ratio (measured/model) stays within [0.1, 10]",
+   "rule": "kinetic_consistent if every ratio >= 0.1; contact_rate_dependent otherwise (a re-labelling of B, not a fit failure); not_run if no kinetic share"
+  }
+ },
+ "non_predictions": {
+  "bagnold_coefficient": "B is our own measured Bagnold prefactor; Bagnold (1954) / Campbell (2002) table values are not accessible from this sandbox, so the coefficient leg remains WITHHELD rather than reconstructed.",
+  "geometry": "2-D disks; Campbell's map is 3-D (declared deviation, unchanged from R1-R3).",
+  "kappa_definition": "kappa uses the number-average diameter d = 1.2 with rho = 1; a different d (e.g. Sauter) rescales kappa by (d/d')^3 and hence moves the crossover by the same factor -- stated, not fitted away."
+ },
+ "thresholds": {
+  "factor3": 3.0,
+  "kappa_c_campbell": 10000.0,
+  "n_reach_half": 0.5,
+  "tol_a_vs_r3": 0.15,
+  "min_gated_fit": 5
+ },
+ "noise_twins": {
+  "from": "kn1e4_g8.0",
+  "seeds": [
+   20261113,
+   20261114
+  ]
+ }
+}

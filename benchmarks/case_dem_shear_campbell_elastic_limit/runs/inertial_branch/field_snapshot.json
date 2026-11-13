@@ -1,0 +1,62 @@
+[
+ {
+  "kn": 10000.0,
+  "gamma_dot": 6.0,
+  "kappa": 160.75102880658437,
+  "tau_star": 3.847160647613852,
+  "I": 0.3648770968797055,
+  "mu_eff": 0.5121928709154557,
+  "mean_overlap_ratio": 0.05890427834408724,
+  "max_overlap_ratio": 0.23335343951424067,
+  "kinetic_stress_share": 0.05443220135177502,
+  "gates": {
+   "energy": true,
+   "overlap": true,
+   "steady": true,
+   "coordination": true,
+   "pressure_positive": true,
+   "finite": true,
+   "all": true
+  }
+ },
+ {
+  "kn": 10000.0,
+  "gamma_dot": 16.0,
+  "kappa": 22.605613425925927,
+  "tau_star": 0.7335058978247738,
+  "I": 0.8197158340798277,
+  "mu_eff": 0.49286758762758975,
+  "mean_overlap_ratio": 0.0931780736237261,
+  "max_overlap_ratio": 0.37817735381855866,
+  "kinetic_stress_share": 0.0792130764335089,
+  "gates": {
+   "energy": true,
+   "overlap": true,
+   "steady": true,
+   "coordination": true,
+   "pressure_positive": true,
+   "finite": true,
+   "all": true
+  }
+ },
+ {
+  "kn": 1000.0,
+  "gamma_dot": 8.0,
+  "kappa": 9.042245370370372,
+  "tau_star": 0.3304453899838892,
+  "I": 1.199301483387193,
+  "mu_eff": 0.4752875509826487,
+  "mean_overlap_ratio": 0.11768341051733316,
+  "max_overlap_ratio": 0.4078337853817632,
+  "kinetic_stress_share": 0.07367030238895042,
+  "gates": {
+   "energy": true,
+   "overlap": true,
+   "steady": true,
+   "coordination": true,
+   "pressure_positive": true,
+   "finite": true,
+   "all": true
+  }
+ }
+]

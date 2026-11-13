@@ -1,0 +1,784 @@
+{
+ "case": "CASE-DEM-SHEAR-CAMPBELL-ELASTIC-LIMIT",
+ "round": "R4 (inertial-branch reach + elastic/inertial stress partition)",
+ "n_points": 9,
+ "n_gated": 8,
+ "prereg_sha256": "183f9e304821873301cffb722f6315d5109d2043aca6c3ced8ee9dd6f71ec399",
+ "points": [
+  {
+   "tag": "kn1e4_g6.0",
+   "kn": 10000.0,
+   "gamma_dot": 6.0,
+   "kappa": 160.75102880658437,
+   "tau": 199.43680797230206,
+   "pressure": 389.37833635958935,
+   "tau_star": 3.847160647613852,
+   "mu_eff": 0.5121928709154557,
+   "I": 0.3648770968797055,
+   "coordination": 2.684791666666667,
+   "kinetic_stress_share": 0.05443220135177502,
+   "max_overlap_ratio": 0.23335343951424067,
+   "mean_overlap_ratio": 0.05890427834408724,
+   "steady_drift_tau": 0.037253827329988436,
+   "energy_defect": 0.24341040826925633,
+   "gates": {
+    "energy": true,
+    "overlap": true,
+    "steady": true,
+    "coordination": true,
+    "pressure_positive": true,
+    "finite": true,
+    "all": true
+   },
+   "group": null,
+   "runtime_s": 6.1983959674835205
+  },
+  {
+   "tag": "kn1e4_g8.0",
+   "kn": 10000.0,
+   "gamma_dot": 8.0,
+   "kappa": 90.42245370370371,
+   "tau": 217.8522745937084,
+   "pressure": 429.95096298750263,
+   "tau_star": 2.3638484656435375,
+   "mu_eff": 0.5066909795479181,
+   "I": 0.46297950902693386,
+   "coordination": 2.6232142857142855,
+   "kinetic_stress_share": 0.06618194667962171,
+   "max_overlap_ratio": 0.27391139753671534,
+   "mean_overlap_ratio": 0.06634327658670122,
+   "steady_drift_tau": 0.03914859914110791,
+   "energy_defect": 0.251691614169526,
+   "gates": {
+    "energy": true,
+    "overlap": true,
+    "steady": true,
+    "coordination": true,
+    "pressure_positive": true,
+    "finite": true,
+    "all": true
+   },
+   "group": null,
+   "runtime_s": 5.3232033252716064
+  },
+  {
+   "tag": "kn1e4_g12.0",
+   "kn": 10000.0,
+   "gamma_dot": 12.0,
+   "kappa": 40.18775720164609,
+   "tau": 244.2002431893849,
+   "pressure": 496.9330468597983,
+   "tau_star": 1.1776632098253517,
+   "mu_eff": 0.4914147785753562,
+   "I": 0.6459717901541605,
+   "coordination": 2.507279411764706,
+   "kinetic_stress_share": 0.07698546866715363,
+   "max_overlap_ratio": 0.31671630108186866,
+   "mean_overlap_ratio": 0.08116370727172213,
+   "steady_drift_tau": 0.07983422347275254,
+   "energy_defect": 0.2024789168855234,
+   "gates": {
+    "energy": true,
+    "overlap": true,
+    "steady": true,
+    "coordination": true,
+    "pressure_positive": true,
+    "finite": true,
+    "all": true
+   },
+   "group": null,
+   "runtime_s": 3.7626049518585205
+  },
+  {
+   "tag": "kn1e4_g16.0",
+   "kn": 10000.0,
+   "gamma_dot": 16.0,
+   "kappa": 22.605613425925927,
+   "tau": 270.3996141741246,
+   "pressure": 548.6252716996239,
+   "tau_star": 0.7335058978247738,
+   "mu_eff": 0.49286758762758975,
+   "I": 0.8197158340798277,
+   "coordination": 2.4435384615384614,
+   "kinetic_stress_share": 0.0792130764335089,
+   "max_overlap_ratio": 0.37817735381855866,
+   "mean_overlap_ratio": 0.0931780736237261,
+   "steady_drift_tau": 0.07824258540772172,
+   "energy_defect": 0.2075657165548424,
+   "gates": {
+    "energy": true,
+    "overlap": true,
+    "steady": true,
+    "coordination": true,
+    "pressure_positive": true,
+    "finite": true,
+    "all": true
+   },
+   "group": "kn1e4_g16.0",
+   "runtime_s": 3.4059457778930664
+  },
+  {
+   "tag": "kn2.5e3_g8.0",
+   "kn": 2500.0,
+   "gamma_dot": 8.0,
+   "kappa": 22.605613425925927,
+   "tau": 67.59990354353116,
+   "pressure": 137.15631792490598,
+   "tau_star": 0.7335058978247738,
+   "mu_eff": 0.49286758762758975,
+   "I": 0.8197158340798277,
+   "coordination": 2.4435384615384614,
+   "kinetic_stress_share": 0.0792130764335089,
+   "max_overlap_ratio": 0.37817735381855866,
+   "mean_overlap_ratio": 0.0931780736237261,
+   "steady_drift_tau": 0.07824258540772172,
+   "energy_defect": 0.2075657165548424,
+   "gates": {
+    "energy": true,
+    "overlap": true,
+    "steady": true,
+    "coordination": true,
+    "pressure_positive": true,
+    "finite": true,
+    "all": true
+   },
+   "group": "kn1e4_g16.0",
+   "runtime_s": 3.6146535873413086
+  },
+  {
+   "tag": "kn1e3_g6.0",
+   "kn": 1000.0,
+   "gamma_dot": 6.0,
+   "kappa": 16.075102880658438,
+   "tau": 28.543672038208253,
+   "pressure": 58.2016485156239,
+   "tau_star": 0.5506109575271654,
+   "mu_eff": 0.4904272089569055,
+   "I": 0.9437671431549612,
+   "coordination": 2.399296875,
+   "kinetic_stress_share": 0.0763886677505978,
+   "max_overlap_ratio": 0.3724045484869749,
+   "mean_overlap_ratio": 0.10166952535826299,
+   "steady_drift_tau": 0.0816691393853879,
+   "energy_defect": 0.20320044025243922,
+   "gates": {
+    "energy": true,
+    "overlap": true,
+    "steady": true,
+    "coordination": true,
+    "pressure_positive": true,
+    "finite": true,
+    "all": true
+   },
+   "group": null,
+   "runtime_s": 3.0345990657806396
+  },
+  {
+   "tag": "kn1e4_g24.0",
+   "kn": 10000.0,
+   "gamma_dot": 24.0,
+   "kappa": 10.046939300411523,
+   "tau": 301.0785429474252,
+   "pressure": 629.5931774378503,
+   "tau_star": 0.362990141477895,
+   "mu_eff": 0.4782112540873998,
+   "I": 1.14779011759876,
+   "coordination": 2.33703947368421,
+   "kinetic_stress_share": 0.074222010440253,
+   "max_overlap_ratio": 0.3984219230133722,
+   "mean_overlap_ratio": 0.11450407109256824,
+   "steady_drift_tau": 0.09931965276400546,
+   "energy_defect": 0.1830547735267092,
+   "gates": {
+    "energy": true,
+    "overlap": true,
+    "steady": true,
+    "coordination": true,
+    "pressure_positive": true,
+    "finite": true,
+    "all": true
+   },
+   "group": null,
+   "runtime_s": 2.6263349056243896
+  },
+  {
+   "tag": "kn1e3_g8.0",
+   "kn": 1000.0,
+   "gamma_dot": 8.0,
+   "kappa": 9.042245370370372,
+   "tau": 30.45384714091523,
+   "pressure": 64.07457354595641,
+   "tau_star": 0.3304453899838892,
+   "mu_eff": 0.4752875509826487,
+   "I": 1.199301483387193,
+   "coordination": 2.3235416666666664,
+   "kinetic_stress_share": 0.07367030238895042,
+   "max_overlap_ratio": 0.4078337853817632,
+   "mean_overlap_ratio": 0.11768341051733316,
+   "steady_drift_tau": 0.0973090859270704,
+   "energy_defect": 0.17631584164767417,
+   "gates": {
+    "energy": true,
+    "overlap": true,
+    "steady": true,
+    "coordination": true,
+    "pressure_positive": true,
+    "finite": true,
+    "all": true
+   },
+   "group": null,
+   "runtime_s": 2.2944178581237793
+  },
+  {
+   "tag": "kn1e4_g32.0",
+   "kn": 10000.0,
+   "gamma_dot": 32.0,
+   "kappa": 5.651403356481482,
+   "tau": 319.9347828318972,
+   "pressure": 688.2298643230614,
+   "tau_star": 0.21696966066616294,
+   "mu_eff": 0.4648661725055815,
+   "I": 1.4637417738025649,
+   "coordination": 2.256776315789474,
+   "kinetic_stress_share": 0.07451104877848713,
+   "max_overlap_ratio": 0.4514048440568247,
+   "mean_overlap_ratio": 0.13299732953351245,
+   "steady_drift_tau": 0.10817890878346009,
+   "energy_defect": 0.12555610434853856,
+   "gates": {
+    "energy": true,
+    "overlap": false,
+    "steady": true,
+    "coordination": true,
+    "pressure_positive": true,
+    "finite": true,
+    "all": false
+   },
+   "group": null,
+   "runtime_s": 2.163421869277954
+  }
+ ],
+ "rejected": [
+  {
+   "tag": "kn1e4_g32.0",
+   "kappa": 5.651403356481482,
+   "failing_gates": [
+    "overlap"
+   ],
+   "mean_overlap_ratio": 0.13299732953351245,
+   "max_overlap_ratio": 0.4514048440568247,
+   "energy_defect": 0.12555610434853856
+  }
+ ],
+ "noise_floor": {
+  "tags": [
+   "kn1e4_g8.0_seed20261113",
+   "kn1e4_g8.0_seed20261114",
+   "kn1e4_g8.0"
+  ],
+  "tau_star": [
+   2.1919549270451384,
+   2.0355504131271154,
+   2.3638484656435375
+  ],
+  "relative_std": 0.0747387792469801,
+  "n_seeds": 3
+ },
+ "reach": {
+  "kappa_floor_r3": 361.68981481481484,
+  "gated_below_r3_floor": 8,
+  "kappa_min_gated": 9.042245370370372,
+  "decades_below_r3": 1.6020599913279623,
+  "wall": {
+   "tag": "kn1e4_g32.0",
+   "kappa": 5.651403356481482,
+   "failing_gates": [
+    "overlap"
+   ],
+   "mean_overlap_ratio": 0.13299732953351245,
+   "max_overlap_ratio": 0.4514048440568247,
+   "energy_defect": 0.12555610434853856
+  },
+  "rejected_tags": [
+   "kn1e4_g32.0"
+  ]
+ },
+ "P1_verdict": "PASS",
+ "fit_input": {
+  "n_r4": 8,
+  "n_r3": 11,
+  "n_total": 19,
+  "kappa_span": [
+   9.042245370370372,
+   578703.7037037038
+  ],
+  "decades": 4.8061799739838875
+ },
+ "local_slopes": [
+  {
+   "pair": "kn1e3_g8.0->kn1e4_g24.0",
+   "k_lo": 9.042245370370372,
+   "k_hi": 10.046939300411523,
+   "gmid": 9.531363510827726,
+   "beta_local": 0.8915509168628973,
+   "n_local": 0.21689816627420533,
+   "sigma_beta": 1.0031898058429536,
+   "sigma_n": 2.006379611685907
+  },
+  {
+   "pair": "kn1e4_g24.0->kn1e3_g6.0",
+   "k_lo": 10.046939300411523,
+   "k_hi": 16.075102880658438,
+   "gmid": 12.708484681103634,
+   "beta_local": 0.8864885124665661,
+   "n_local": 0.22702297506686775,
+   "sigma_beta": 0.22488463635038425,
+   "sigma_n": 0.4497692727007685
+  },
+  {
+   "pair": "kn1e3_g6.0->kn1e4_g16.0",
+   "k_lo": 16.075102880658438,
+   "k_hi": 22.605613425925927,
+   "gmid": 19.06272702165545,
+   "beta_local": 0.8412577827479929,
+   "n_local": 0.3174844345040142,
+   "sigma_beta": 0.3100274348958446,
+   "sigma_n": 0.6200548697916892
+  },
+  {
+   "pair": "kn2.5e3_g8.0->kn1e4_g12.0",
+   "k_lo": 22.605613425925927,
+   "k_hi": 40.18775720164609,
+   "gmid": 30.14081790123457,
+   "beta_local": 0.8228732870095748,
+   "n_local": 0.3542534259808503,
+   "sigma_beta": 0.1837038268417024,
+   "sigma_n": 0.3674076536834048
+  },
+  {
+   "pair": "kn1e4_g12.0->kn1e4_g8.0",
+   "k_lo": 40.18775720164609,
+   "k_hi": 90.42245370370371,
+   "gmid": 60.28163580246914,
+   "beta_local": 0.8592093849196287,
+   "n_local": 0.28158123016074255,
+   "sigma_beta": 0.1303399394086603,
+   "sigma_n": 0.2606798788173206
+  },
+  {
+   "pair": "kn1e4_g8.0->kn1e4_g6.0",
+   "k_lo": 90.42245370370371,
+   "k_hi": 160.75102880658437,
+   "gmid": 120.56327160493828,
+   "beta_local": 0.8464976306627205,
+   "n_local": 0.3070047386745589,
+   "sigma_beta": 0.1837038268417024,
+   "sigma_n": 0.3674076536834048
+  }
+ ],
+ "local_slopes_sub_r3": [
+  {
+   "pair": "kn1e3_g8.0->kn1e4_g24.0",
+   "k_lo": 9.042245370370372,
+   "k_hi": 10.046939300411523,
+   "gmid": 9.531363510827726,
+   "beta_local": 0.8915509168628973,
+   "n_local": 0.21689816627420533,
+   "sigma_beta": 1.0031898058429536,
+   "sigma_n": 2.006379611685907
+  },
+  {
+   "pair": "kn1e4_g24.0->kn1e3_g6.0",
+   "k_lo": 10.046939300411523,
+   "k_hi": 16.075102880658438,
+   "gmid": 12.708484681103634,
+   "beta_local": 0.8864885124665661,
+   "n_local": 0.22702297506686775,
+   "sigma_beta": 0.22488463635038425,
+   "sigma_n": 0.4497692727007685
+  },
+  {
+   "pair": "kn1e3_g6.0->kn1e4_g16.0",
+   "k_lo": 16.075102880658438,
+   "k_hi": 22.605613425925927,
+   "gmid": 19.06272702165545,
+   "beta_local": 0.8412577827479929,
+   "n_local": 0.3174844345040142,
+   "sigma_beta": 0.3100274348958446,
+   "sigma_n": 0.6200548697916892
+  },
+  {
+   "pair": "kn2.5e3_g8.0->kn1e4_g12.0",
+   "k_lo": 22.605613425925927,
+   "k_hi": 40.18775720164609,
+   "gmid": 30.14081790123457,
+   "beta_local": 0.8228732870095748,
+   "n_local": 0.3542534259808503,
+   "sigma_beta": 0.1837038268417024,
+   "sigma_n": 0.3674076536834048
+  },
+  {
+   "pair": "kn1e4_g12.0->kn1e4_g8.0",
+   "k_lo": 40.18775720164609,
+   "k_hi": 90.42245370370371,
+   "gmid": 60.28163580246914,
+   "beta_local": 0.8592093849196287,
+   "n_local": 0.28158123016074255,
+   "sigma_beta": 0.1303399394086603,
+   "sigma_n": 0.2606798788173206
+  },
+  {
+   "pair": "kn1e4_g8.0->kn1e4_g6.0",
+   "k_lo": 90.42245370370371,
+   "k_hi": 160.75102880658437,
+   "gmid": 120.56327160493828,
+   "beta_local": 0.8464976306627205,
+   "n_local": 0.3070047386745589,
+   "sigma_beta": 0.1837038268417024,
+   "sigma_n": 0.3674076536834048
+  }
+ ],
+ "P2_verdict": "NOT_SUPPORTED",
+ "P2_detail": {
+  "n_by_descending_gmid": [
+   0.3070047386745589,
+   0.28158123016074255,
+   0.3542534259808503,
+   0.3174844345040142,
+   0.22702297506686775,
+   0.21689816627420533
+  ],
+  "monotone": false,
+  "n_deepest": 0.21689816627420533
+ },
+ "partition": {
+  "n_submitted": 19,
+  "n_gated": 19,
+  "model": "tau* = A kappa + B  (elastic + inertial)",
+  "n_distinct_kappa": 13,
+  "status": "ok",
+  "A": 0.016886178100141147,
+  "B": 0.25202960669665425,
+  "kappa_crossover": 14.925201262359517,
+  "A_ci68": [
+   0.016446215694837858,
+   0.017366887965592884
+  ],
+  "kappa_crossover_ci68": [
+   13.515065708147974,
+   16.26408746460913
+  ],
+  "sigma_used_for_bootstrap": 0.0747387792469801,
+  "kappa_span": [
+   9.042245370370372,
+   578703.7037037038
+  ],
+  "decades": 4.8061799739838875,
+  "single_power_law": {
+   "beta": 0.8935424263278949,
+   "C": 0.043014870377645315,
+   "rss_log": 0.13861265646396054,
+   "aic": -55.03327608591627,
+   "rms_log_residual": 0.10325944041921432
+  },
+  "two_term": {
+   "rss_log": 0.5115784107878449,
+   "aic": -38.05764897135979,
+   "rms_log_residual": 0.19837385272565242
+  },
+  "delta_aic_two_term_minus_power": 16.97562711455648,
+  "preferred_model": "single_power_law",
+  "elastic_coefficient_at_stiffest": 0.013570045890911866,
+  "points": [
+   {
+    "kappa": 9.042245370370372,
+    "tau_star": 0.3304453899838892,
+    "model_tau_star": 0.40471857244590514,
+    "model_beta": 0.377271951782394,
+    "model_inertial_fraction": 0.622728048217606,
+    "residual_log": -0.20275053161686107
+   },
+   {
+    "kappa": 10.046939300411523,
+    "tau_star": 0.362990141477895,
+    "model_tau_star": 0.4216840130847107,
+    "model_beta": 0.4023259149593968,
+    "model_inertial_fraction": 0.5976740850406033,
+    "residual_log": -0.14988057396472498
+   },
+   {
+    "kappa": 16.075102880658438,
+    "tau_star": 0.5506109575271654,
+    "model_tau_star": 0.5234766569175446,
+    "model_beta": 0.5185466183330641,
+    "model_inertial_fraction": 0.48145338166693585,
+    "residual_log": 0.05053605467587152
+   },
+   {
+    "kappa": 22.605613425925927,
+    "tau_star": 0.7335058978247738,
+    "model_tau_star": 0.6337520210697813,
+    "model_beta": 0.6023214154469675,
+    "model_inertial_fraction": 0.39767858455303245,
+    "residual_log": 0.14617789424656386
+   },
+   {
+    "kappa": 40.18775720164609,
+    "tau_star": 1.1776632098253517,
+    "model_tau_star": 0.9306472322488801,
+    "model_beta": 0.7291888935320503,
+    "model_inertial_fraction": 0.27081110646794976,
+    "residual_log": 0.23540713061381527
+   },
+   {
+    "kappa": 90.42245370370371,
+    "tau_star": 2.3638484656435375,
+    "model_tau_star": 1.7789192641891627,
+    "model_beta": 0.8583243142225848,
+    "model_inertial_fraction": 0.1416756857774151,
+    "residual_log": 0.2842849717008211
+   },
+   {
+    "kappa": 160.75102880658437,
+    "tau_star": 3.847160647613852,
+    "model_tau_star": 2.966500108905558,
+    "model_beta": 0.9150414301553367,
+    "model_inertial_fraction": 0.08495856984466335,
+    "residual_log": 0.25995253866248524
+   },
+   {
+    "kappa": 361.68981481481484,
+    "tau_star": 7.711982297540595,
+    "model_tau_star": 6.359588236666688,
+    "model_beta": 0.960370137606778,
+    "model_inertial_fraction": 0.03962986239322202,
+    "residual_log": 0.19281162926855866
+   },
+   {
+    "kappa": 1446.7592592592594,
+    "tau_star": 25.14052729493537,
+    "model_tau_star": 24.682264126576786,
+    "model_beta": 0.9897890402029497,
+    "model_inertial_fraction": 0.010210959797050376,
+    "residual_log": 0.018396243127404954
+   },
+   {
+    "kappa": 5787.037037037037,
+    "tau_star": 85.34557147381967,
+    "model_tau_star": 97.97296768621719,
+    "model_beta": 0.9974275597376632,
+    "model_inertial_fraction": 0.0025724402623368706,
+    "residual_log": -0.13798303944595247
+   },
+   {
+    "kappa": 23148.14814814815,
+    "tau_star": 316.5669580831233,
+    "model_tau_star": 391.13578192477877,
+    "model_beta": 0.9993556467642607,
+    "model_inertial_fraction": 0.0006443532357393048,
+    "residual_log": -0.2115199909179175
+   },
+   {
+    "kappa": 57870.37037037038,
+    "tau_star": 748.5835681046221,
+    "model_tau_star": 977.4614104019021,
+    "model_beta": 0.9997421590213029,
+    "model_inertial_fraction": 0.00025784097869707966,
+    "residual_log": -0.26677596816859683
+   },
+   {
+    "kappa": 578703.7037037038,
+    "tau_star": 7853.035816499924,
+    "model_tau_star": 9772.34583755875,
+    "model_beta": 0.9999742099173642,
+    "model_inertial_fraction": 2.5790082635840718e-05,
+    "residual_log": -0.218656358181466
+   }
+  ],
+  "kinetic_cross_check": [
+   {
+    "tag": "kn1e6_g1.0",
+    "kappa": 578703.7037037038,
+    "model_inertial_fraction": 2.5790082635840718e-05,
+    "measured_kinetic_share": 0.0002282214440778745,
+    "ratio_measured_over_model": 8.849193982834047
+   },
+   {
+    "tag": "kn1e5_g1.0",
+    "kappa": 57870.37037037038,
+    "model_inertial_fraction": 0.00025784097869707966,
+    "measured_kinetic_share": 0.0012994337024741516,
+    "ratio_measured_over_model": 5.039670998149485
+   },
+   {
+    "tag": "kn4e5_g2.0",
+    "kappa": 57870.37037037038,
+    "model_inertial_fraction": 0.00025784097869707966,
+    "measured_kinetic_share": 0.0012994337024741516,
+    "ratio_measured_over_model": 5.039670998149485
+   },
+   {
+    "tag": "kn1e4_g0.5",
+    "kappa": 23148.14814814815,
+    "model_inertial_fraction": 0.0006443532357393048,
+    "measured_kinetic_share": 0.0025945400898661213,
+    "ratio_measured_over_model": 4.026580369212007
+   },
+   {
+    "tag": "kn1e4_g1.0",
+    "kappa": 5787.037037037037,
+    "model_inertial_fraction": 0.0025724402623368706,
+    "measured_kinetic_share": 0.005611288804564357,
+    "ratio_measured_over_model": 2.1813096641034995
+   },
+   {
+    "tag": "kn2.5e3_g0.5",
+    "kappa": 5787.037037037037,
+    "model_inertial_fraction": 0.0025724402623368706,
+    "measured_kinetic_share": 0.005611288804564357,
+    "ratio_measured_over_model": 2.1813096641034995
+   },
+   {
+    "tag": "kn4e4_g2.0",
+    "kappa": 5787.037037037037,
+    "model_inertial_fraction": 0.0025724402623368706,
+    "measured_kinetic_share": 0.005611288804564357,
+    "ratio_measured_over_model": 2.1813096641034995
+   },
+   {
+    "tag": "kn1e4_g2.0",
+    "kappa": 1446.7592592592594,
+    "model_inertial_fraction": 0.010210959797050376,
+    "measured_kinetic_share": 0.014413359892865317,
+    "ratio_measured_over_model": 1.4115577946971138
+   },
+   {
+    "tag": "kn4e4_g4.0",
+    "kappa": 1446.7592592592594,
+    "model_inertial_fraction": 0.010210959797050376,
+    "measured_kinetic_share": 0.014413359892865317,
+    "ratio_measured_over_model": 1.4115577946971138
+   },
+   {
+    "tag": "kn1e4_g4.0",
+    "kappa": 361.68981481481484,
+    "model_inertial_fraction": 0.03962986239322202,
+    "measured_kinetic_share": 0.03602273217473712,
+    "ratio_measured_over_model": 0.9089794917102253
+   },
+   {
+    "tag": "kn2.5e3_g2.0",
+    "kappa": 361.68981481481484,
+    "model_inertial_fraction": 0.03962986239322202,
+    "measured_kinetic_share": 0.03602273217473712,
+    "ratio_measured_over_model": 0.9089794917102253
+   },
+   {
+    "tag": "kn1e4_g6.0",
+    "kappa": 160.75102880658437,
+    "model_inertial_fraction": 0.08495856984466335,
+    "measured_kinetic_share": 0.05443220135177502,
+    "ratio_measured_over_model": 0.6406911209934186
+   },
+   {
+    "tag": "kn1e4_g8.0",
+    "kappa": 90.42245370370371,
+    "model_inertial_fraction": 0.1416756857774151,
+    "measured_kinetic_share": 0.06618194667962171,
+    "ratio_measured_over_model": 0.46713694249272486
+   },
+   {
+    "tag": "kn1e4_g12.0",
+    "kappa": 40.18775720164609,
+    "model_inertial_fraction": 0.27081110646794976,
+    "measured_kinetic_share": 0.07698546866715363,
+    "ratio_measured_over_model": 0.2842773683518212
+   },
+   {
+    "tag": "kn1e4_g16.0",
+    "kappa": 22.605613425925927,
+    "model_inertial_fraction": 0.39767858455303245,
+    "measured_kinetic_share": 0.0792130764335089,
+    "ratio_measured_over_model": 0.19918869034031536
+   },
+   {
+    "tag": "kn2.5e3_g8.0",
+    "kappa": 22.605613425925927,
+    "model_inertial_fraction": 0.39767858455303245,
+    "measured_kinetic_share": 0.0792130764335089,
+    "ratio_measured_over_model": 0.19918869034031536
+   },
+   {
+    "tag": "kn1e3_g6.0",
+    "kappa": 16.075102880658438,
+    "model_inertial_fraction": 0.48145338166693585,
+    "measured_kinetic_share": 0.0763886677505978,
+    "ratio_measured_over_model": 0.15866264660166546
+   },
+   {
+    "tag": "kn1e4_g24.0",
+    "kappa": 10.046939300411523,
+    "model_inertial_fraction": 0.5976740850406033,
+    "measured_kinetic_share": 0.074222010440253,
+    "ratio_measured_over_model": 0.12418475603674652
+   },
+   {
+    "tag": "kn1e3_g8.0",
+    "kappa": 9.042245370370372,
+    "model_inertial_fraction": 0.622728048217606,
+    "measured_kinetic_share": 0.07367030238895042,
+    "ratio_measured_over_model": 0.118302528045448
+   }
+  ],
+  "kinetic_cross_check_min_ratio": 0.118302528045448
+ },
+ "P3_detail": {
+  "A": 0.016886178100141147,
+  "A_r3": 0.013570045890911866,
+  "rel_diff_A": 0.24437148082529037,
+  "delta_aic": 16.97562711455648
+ },
+ "P3_verdict": "NOT_SUPPORTED",
+ "P4_detail": {
+  "kappa_crossover": 14.925201262359517,
+  "kappa_c_campbell": 10000.0,
+  "ratio": 0.0014925201262359516,
+  "ci68": [
+   13.515065708147974,
+   16.26408746460913
+  ]
+ },
+ "P4_verdict": "NOT_SUPPORTED",
+ "P5_verdict": "kinetic_consistent",
+ "P5_detail": {
+  "min_ratio": 0.118302528045448,
+  "median_ratio": 0.9089794917102253,
+  "n_points": 19
+ },
+ "overlap_scaling": {
+  "n_points": 19,
+  "exponent_dln_overlap_dln_kappa": -0.14665739071147071,
+  "rms_log_residual": 0.13813593841316027,
+  "measured_overlap_min": 0.028397336115965198,
+  "measured_overlap_max": 0.11768341051733316,
+  "measured_kappa_span": [
+   9.042245370370372,
+   578703.7037037038
+  ],
+  "kappa_at_overlap_gate_crossing": 2.4648821281451405,
+  "gate": "mean_overlap_ratio <= 0.12",
+  "note": "overlap is NOT a clean power law of kappa (residual ~14 %): it saturates near 0.03 at the stiff end because the bed at phi = 0.80 is already jammed, so the overlap floor is packing-geometric rather than stiffness-controlled.  The gate crossing is therefore quoted as a measured window edge, and no extrapolation beyond the measured kappa span is offered -- the flat slope would make such a number meaningless."
+ },
+ "verdicts": {
+  "P1_verdict": "PASS",
+  "P2_verdict": "NOT_SUPPORTED",
+  "P3_verdict": "NOT_SUPPORTED",
+  "P4_verdict": "NOT_SUPPORTED",
+  "P5_verdict": "kinetic_consistent"
+ },
+ "declared_deviations": {
+  "geometry": "2-D disks vs Campbell's 3-D",
+  "kappa_definition": "d = number-average diameter, rho = 1",
+  "reused_r3_points": "the R3 grid is reused read-only for the partition fit; its own gates/analysis are unchanged (no re-interpretation)"
+ }
+}
