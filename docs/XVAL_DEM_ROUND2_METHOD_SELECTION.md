@@ -144,7 +144,12 @@ t_stop 相对散布 本仓 +0.12% / EPSD2 +0.12% / CDT +0.09%（理论 85.6 ms�
 
 ## ⑥ 失败模式 / 生态摩擦（如实记）
 
-* **宏观臂未跑**：`benchmarks/xval_dem_round2_column_arms.py`（a=1 柱体，三种滚动约定：
+* **宏观臂已补（2026-11-13，见 `docs/XVAL_DEM_ROUND2_COLUMN_ARMS_MACRO.md`）**：三臂实测
+  runout = 2.1060 / 2.4193 / 2.1118（legacy / oss_naive / oss_mapped），`oss_mapped` 复现认证值
+  **+0.27 %**、`oss_naive` 偏离 **+14.87 %** ⇒ 换算律 `mu_r,OSS = 2 mu_r,TD` 在宏观成立；
+  但 `t_reach` +10.85 %（映射不保 `kr`）、粒-壁帽 2.00×，故换算律不能单独用于时间标定。
+  以下为第一轮原始记录（保留不改）：
+* **宏观臂未跑（第一轮）**：`benchmarks/xval_dem_round2_column_arms.py`（a=1 柱体，三种滚动约定：
   legacy / OSS 直填 / OSS+映射）本轮**未执行**，原因是算力预算——`nohup … &` 提交后台后
   被 harness 以进程组为单位回收（TIMEOUT 120 s），列体单算例在 120 s 内跑不完。
   脚本已入仓、参数已冻结，下一轮用集群队列（`run_cluster`）补齐即可。
