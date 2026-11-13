@@ -1,0 +1,69 @@
+{
+  "case": "CASE-DEM-PLANE-SHEAR-MUIDI",
+  "round": 7,
+  "device": "tensordem.mu_i_rheology.simulate_servo_shear (bulk_stress=True, pressure gate on)",
+  "inherits": "round 6 pre-registration (runs/bulk_rheometry/prereg.json)",
+  "common": {
+    "kn": 62500.0,
+    "normal_stress_pa": 62500.0,
+    "mu_contact": 0.5,
+    "mu_rolling": 0.05,
+    "restitution": 0.3,
+    "seed": 5279,
+    "settle_steps": 2500,
+    "min_shear_steps": 2500,
+    "shear_strain": 0.2,
+    "max_recover_steps": 20000,
+    "radius": 0.005,
+    "geometries": {
+      "baseline": {
+        "box_width": 0.12,
+        "box_depth": 0.05,
+        "fill_height": 0.06
+      },
+      "thick": {
+        "box_width": 0.12,
+        "box_depth": 0.08,
+        "fill_height": 0.09
+      }
+    }
+  },
+  "arms": {
+    "A_baseline": {
+      "geom": "baseline",
+      "I": [
+        0.01,
+        0.03,
+        0.1,
+        0.3
+      ],
+      "servo": null
+    },
+    "B_layers": {
+      "geom": "thick",
+      "I": [
+        0.1,
+        0.3
+      ],
+      "servo": null
+    },
+    "C_servo": {
+      "geom": "baseline",
+      "I": [
+        0.3
+      ],
+      "servo": {
+        "servo_stride": 2,
+        "servo_relax": 0.5
+      }
+    }
+  },
+  "hypotheses": {
+    "H1_pressure_balance": "|p_bulk/P_applied - 1| <= 0.30 on every A point (round-6 P1, the bulk estimator is a stress)",
+    "H2_wall_vs_bulk": "|mu_bulk/mu_wall - 1| <= 0.15 on every A point (round-6 P2)",
+    "H3_no_localisation": "|gamma_dot_meas/gamma_dot_imp - 1| <= 0.15 on every A point (round-6 P3)",
+    "H4_layer_convergence": "at I = 0.3 and I = 0.1, |mu_bulk(thick) - mu_bulk(baseline)| <= 0.10*mu_ref -- if false the 10 % band test is a finite-size test, not a rheology test",
+    "H5_servo_bandwidth": "at I = 0.3 the fast servo (stride 2, relax 0.5) cuts recover_steps by >= 5x AND ends with |p_wall/P - 1| <= 0.05"
+  },
+  "falsification": "any A point with |mu_bulk - mu_ref| <= 10 % overturns the R5 verdict 'WITHHELD at I >= 0.1'"
+}
