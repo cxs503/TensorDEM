@@ -77,6 +77,32 @@ def main():
         print("   Known model bias: zeta(e) from linear spring-dashpot theory applied")
         print("   to a Hertzian dashpot; see docs/board-audit-m15296/AUDIT.md.")
 
+    # 3c. Restitution closed loop with the calibrated Hertz convention.
+    #     The legacy mapping is not exact for the Tsuji dashpot, so the request
+    #     was missed (16.5 % at e=0.5).  The calibrated convention inverts the
+    #     universal Hertz curve; the same battery must then return the request.
+    cal = results.get("restitution_calibration")
+    if cal is not None:
+        worst_legacy = cal["max_closure_error_legacy"]
+        worst_cal = cal["max_closure_error_calibrated"]
+        status = "PASS" if worst_cal < TOLERANCE else "FAIL"
+        if status == "FAIL":
+            all_pass = False
+        print(f"\n3c. Restitution closed loop (requested vs delivered, "
+              f"e in {cal['targets']}, v in {cal['speeds_m_per_s']} m/s)")
+        for r in cal["rows"]:
+            print(f"   e_req={r['restitution_requested']} v={r['speed_m_per_s']} m/s: "
+                  f"legacy={r['restitution_legacy_engine']:.4f} "
+                  f"({r['closure_error_legacy']:.2%}) | "
+                  f"calibrated={r['restitution_calibrated_engine']:.4f} "
+                  f"({r['closure_error_calibrated']:.3%})")
+        print(f"   Max closure error: legacy={worst_legacy:.2%} -> "
+              f"calibrated={worst_cal:.3%} [{status}] (threshold: {TOLERANCE:.0%})")
+        print(f"   Velocity spread of e: legacy={cal['velocity_spread_legacy']:.4f} "
+              f"-> calibrated={cal['velocity_spread_calibrated']:.4f}")
+        print("   Convention: contact_damping_model='restitution_calibrated' "
+              "(tensordem.contact_calibration).")
+
     # 4. Velocity independence
     max_err = max(r["restitution_rel_error"] for r in sweep)
     status = "PASS" if max_err < TOLERANCE else "FAIL"
