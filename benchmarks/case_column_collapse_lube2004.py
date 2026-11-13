@@ -59,6 +59,7 @@ import time
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src"))
 
+from tensordem.granular_column.inertial_friction import JOP_2006
 from tensordem.granular_column.axisym import (LUBE2004_DOI, LUBE2004_SOURCE,  # noqa: E402
                                              AxisymCase, lube_2004_emplacement_time,
                                              lube_2004_runout_ratio, verdict,
@@ -227,11 +228,183 @@ def wave4_validation_cases(mu: float, mu_rolling: float) -> list[dict]:
             for a in SWEEP_ASPECTS]
 
 
+# --- round 5 (m17111): rate-dependent mu(I) as the single closing law -------
+# Round 4 left the anchor open with a *rate* reading: at a common rolling
+# resistance the linear branch wants mu ~ 0.51 and the square-root branch
+# mu ~ 0.80 (docs/case_column_collapse_round4_m16862.md), i.e. the demanded
+# friction grows with the aspect ratio, which is what the inertial number of
+# the flow grows with too.  Dry granular friction is known to be rate dependent
+# through mu(I) = mu_s + (mu_2 - mu_s) I/(I_0 + I) (Jop, Forterre & Pouliquen
+# 2006, Nature 441:727-730, doi:10.1038/nature04801; da Cruz et al. 2005 PRE
+# 72:011305).  Round 5 therefore asks, pre-registered before the runs:
+#
+#   H5: with the mu(I_c) closure of tensordem.granular_column.inertial_friction
+#       and the Jop et al. (2006) parameters (mu_s, mu_2, I_0) = (0.36, 0.84,
+#       0.30) -- no parameter fitted to the runout data -- ONE contact law
+#       reproduces the Lube (2004) runout ratio within 15 % at every aspect
+#       ratio a in SWEEP_ASPECTS = {0.5, 1.0, 1.5, 2.0, 3.0} at a fixed rolling
+#       resistance.
+#
+# Controlled comparison: the constant-mu arm at the same mu_rolling (mu = 0.5,
+# mu_r = 0.5, a wave-4 grid point reproduced here as a determinism control)
+# versus the mu(I) arm, everything else identical (discretisation, dt,
+# restitution, duration, energy ledger).  Sensitivity axes pre-declared: the
+# rolling resistance (mu_r = 0.4, the round-1 calibrated value) and the
+# discretisation (12 grains per column radius).  Tolerance 15 % unchanged.
+WAVE5_MUR_PRIMARY = 0.5
+WAVE5_MUR_SECONDARY = 0.4
+WAVE5_RESOLUTION_GPR = 12.0
+WAVE5_RESOLUTION_ASPECTS = (1.0, 3.0)
+
+
+def _law_params() -> dict:
+    return (float(JOP_2006["mu_s"]), float(JOP_2006["mu_2"]),
+            float(JOP_2006["i_0"]))
+
+
+def wave5_constant_cases(mu_rolling: float = WAVE5_MUR_PRIMARY) -> list[dict]:
+    """Constant-friction control arm at the round-5 rolling resistance."""
+    tag = f"mur{mu_rolling:g}"
+    return [{"id": f"w5_const_{tag}_a{a:g}", "phase": "wave5_constant",
+             "note": f"constant-mu control arm: mu = {BASE['mu']:g}, "
+                     f"mu_r = {mu_rolling:g}, a = {a:g}",
+             "params": dict(BASE, aspect_ratio=a, mu=BASE["mu"],
+                            mu_rolling=mu_rolling)}
+            for a in SWEEP_ASPECTS]
+
+
+def wave5_law_cases(mu_rolling: float = WAVE5_MUR_PRIMARY) -> list[dict]:
+    """The pre-registered mu(I_c) arm over the whole aspect-ratio grid."""
+    tag = f"mur{mu_rolling:g}"
+    return [{"id": f"w5_law_{tag}_a{a:g}", "phase": "wave5_law_mu_i",
+             "note": f"mu(I_c) Jop-2006 law {_law_params()}, mu_r = {mu_rolling:g}, "
+                     f"a = {a:g}",
+             "params": dict(BASE, aspect_ratio=a, mu=float(JOP_2006["mu_s"]),
+                            mu_rolling=mu_rolling, mu_inertial=_law_params())}
+            for a in SWEEP_ASPECTS]
+
+
+def wave5_sensitivity_cases() -> list[dict]:
+    """Pre-declared sensitivity axes of the law arm (not used to fit anything)."""
+    out = []
+    mur = WAVE5_MUR_SECONDARY
+    for a in (1.0, 3.0):
+        out.append({"id": f"w5_law_mur{mur:g}_a{a:g}",
+                    "phase": "wave5_law_mu_i_mur_sens",
+                    "note": f"mu(I_c) law at the round-1 rolling resistance "
+                            f"mu_r = {mur:g} (sensitivity axis), a = {a:g}",
+                    "params": dict(BASE, aspect_ratio=a, mu=float(JOP_2006["mu_s"]),
+                                   mu_rolling=mur, mu_inertial=_law_params())})
+    for a in WAVE5_RESOLUTION_ASPECTS:
+        out.append({"id": f"w5_law_gpr{WAVE5_RESOLUTION_GPR:g}_a{a:g}",
+                    "phase": "wave5_law_mu_i_resolution",
+                    "note": f"mu(I_c) law at {WAVE5_RESOLUTION_GPR:g} grains per "
+                            f"column radius (discretisation sensitivity), a = {a:g}",
+                    "params": dict(BASE, aspect_ratio=a, mu=float(JOP_2006["mu_s"]),
+                                   mu_rolling=WAVE5_MUR_PRIMARY,
+                                   grains_per_radius=WAVE5_RESOLUTION_GPR,
+                                   mu_inertial=_law_params())})
+    return out
+
+
+def wave5_cases() -> list[dict]:
+    """Every round-5 case: control arm + law arm + pre-declared sensitivities."""
+    return (wave5_constant_cases() + wave5_law_cases()
+            + wave5_sensitivity_cases())
+
+
+# --- round 5b (m17111): rough-floor boundary condition ----------------------
+# The constant-friction arm of wave 5 leaves a *shape* error: runout is short at
+# a = 0.5 (-4 %) and long at a = 3 (+18 %), i.e. the simulated curve is too
+# steep in the square-root branch.  A friction coefficient alone cannot fix a
+# shape error.  The reference experiment (Lube et al. 2004, JFM 508:175-199,
+# S2) used a **glued** base, whereas our floor is a plane wall whose friction
+# is the grain-grain mu -- effectively a *smoother* base than the experiment,
+# and basal slip controls how far the moving layer travels (Lube et al. 2005
+# JFM 544:1-14; Lajeunesse et al. 2005 Phys. Fluids 17:103302).  Round 5b
+# therefore asks, pre-registered before the runs:
+#
+#   H6: raising the floor friction to mu_wall in {0.8, 1.0} at fixed
+#       (mu, mu_r) = (0.5, 0.5) reduces the runout excess MORE (in percentage
+#       points of runout) at the square-root branch (a = 3) than at the linear
+#       branch (a = 1), i.e. the floor is the missing *shape* lever, so that one
+#       triple (mu, mu_r, mu_wall) brings every aspect ratio within 15 %.
+#
+# Decision rule: probe (mu_wall = 0.8, 1.0) x (a = 1, 3) first; the hypothesis
+# is refuted if the reduction at a = 3 is not larger than at a = 1, or if no
+# mu_wall in {0.8, 1.0} brings BOTH branch representatives into tolerance.  Only
+# a surviving hypothesis justifies the full-aspect confirmation grid below.
+WAVE5B_MU_WALL = (0.8, 1.0)
+WAVE5B_PROBE_ASPECTS = (1.0, 3.0)
+
+
+def wave5b_probe_cases() -> list[dict]:
+    """Pre-registered floor-roughness probe on the two branch representatives."""
+    return [{"id": f"w5b_wall{muw:g}_a{a:g}", "phase": "wave5_floor_roughness",
+             "note": f"rough-floor probe: mu_wall = {muw:g} at fixed "
+                     f"mu = {BASE['mu']:g}, mu_r = {WAVE5_MUR_PRIMARY:g}, a = {a:g}",
+             "params": dict(BASE, aspect_ratio=a, mu_rolling=WAVE5_MUR_PRIMARY,
+                            mu_wall=muw)}
+            for muw in WAVE5B_MU_WALL for a in WAVE5B_PROBE_ASPECTS]
+
+
+def wave5b_confirmation_cases(mu_wall: float) -> list[dict]:
+    """Full-aspect confirmation of a surviving ``mu_wall`` (out-of-sample a)."""
+    return [{"id": f"w5b_confirm_wall{mu_wall:g}_a{a:g}",
+             "phase": "wave5b_confirmation",
+             "note": f"rough-floor confirmation: mu_wall = {mu_wall:g}, "
+                     f"mu = {BASE['mu']:g}, mu_r = {WAVE5_MUR_PRIMARY:g}, a = {a:g}",
+             "params": dict(BASE, aspect_ratio=a, mu_rolling=WAVE5_MUR_PRIMARY,
+                            mu_wall=mu_wall)}
+            for a in SWEEP_ASPECTS]
+
+
+# --- round 5c (m17111): convergence controls of the surviving configuration --
+# The wave-5 law arm showed a runout change of 15 % between 8 and 12 grains per
+# column radius at a = 1, so the discretisation axis is *not* exhausted by the
+# historical value and every claim needs it.  These controls are declared
+# post-hoc (after wave 5 and 5b, before running them) and are labelled as such;
+# they test the winning configuration of the pre-registered wave-5b grid
+# (mu = 0.5, mu_r = 0.5, mu_wall = 0.8) along the two axes that can invalidate a
+# runout verdict: the grain resolution (8 -> 12 grains per column radius) and
+# the time step (dt -> dt/2).
+WAVE5C_CONFIRM_MU_WALL = 0.8
+WAVE5C_RESOLUTION_GPR = 12.0
+
+
+def wave5c_cases() -> list[dict]:
+    """Post-hoc convergence controls of the surviving (mu, mu_r, mu_wall) triple."""
+    params = dict(BASE, mu_rolling=WAVE5_MUR_PRIMARY,
+                  mu_wall=WAVE5C_CONFIRM_MU_WALL)
+    out = []
+    for a in (1.0, 3.0):
+        out.append({"id": f"w5c_gpr{WAVE5C_RESOLUTION_GPR:g}_a{a:g}",
+                    "phase": "wave5c_sensitivity",
+                    "note": f"post-hoc resolution control: {WAVE5C_RESOLUTION_GPR:g} "
+                            f"grains per column radius at mu_wall = "
+                            f"{WAVE5C_CONFIRM_MU_WALL:g}, a = {a:g}",
+                    "params": dict(params, aspect_ratio=a,
+                                   grains_per_radius=WAVE5C_RESOLUTION_GPR)})
+    out.append({"id": "w5c_dt0.5_a1", "phase": "wave5c_sensitivity",
+                "note": "post-hoc time-step control: dt = 0.5 * dt_ref at "
+                        f"mu_wall = {WAVE5C_CONFIRM_MU_WALL:g}, a = 1",
+                "params": dict(params, aspect_ratio=1.0, dt_scale=0.5,
+                               sample_stride=10)})
+    out.append({"id": "w5c_dt0.5_a3", "phase": "wave5c_sensitivity",
+                "note": "post-hoc time-step control: dt = 0.5 * dt_ref at "
+                        f"mu_wall = {WAVE5C_CONFIRM_MU_WALL:g}, a = 3",
+                "params": dict(params, aspect_ratio=3.0, dt_scale=0.5,
+                               sample_stride=10)})
+    return out
+
+
 def all_cases(mu_rolling: float) -> list[dict]:
     """Every pre-declared case: wave 1 (control + calibration), wave 2
     (validation + sensitivity), wave 3 (mu curve grid)."""
     return (wave1_cases() + wave2_cases(mu_rolling) + wave3_cases(mu_rolling)
-            + wave3_control_cases(mu_rolling) + wave4_cases())
+            + wave3_control_cases(mu_rolling) + wave4_cases() + wave5_cases()
+            + wave5b_probe_cases()
+            + wave5b_confirmation_cases(WAVE5B_MU_WALL[0]) + wave5c_cases())
 
 
 def case_path(case_id: str) -> str:
@@ -290,6 +463,10 @@ def _row(res: dict) -> dict:
         "err_emplacement_time": crit["emplacement_time"]["relative_error"],
         "pass_emplacement_time": crit["emplacement_time"]["pass"],
         "stop_reason": res["stop_reason"],
+        "mu_law": c.get("mu_law", "constant"),
+        "mu_inertial": c.get("mu_inertial"),
+        "mu_eff_mean": res.get("inertial", {}).get("mu_eff_mean"),
+        "inertial_number_mean": res.get("inertial", {}).get("inertial_number_mean"),
         "energy_residual": res["energy"]["residual_fraction_of_potential"],
         "wall_clock_s": res.get("wall_clock_s"),
     }
@@ -395,6 +572,15 @@ def main(argv: list[str] | None = None) -> int:
                     help="i/n: run the i-th of n interleaved wave-4 probe cases")
     ap.add_argument("--wave4-validate", nargs=2, type=float, metavar=("MU", "MU_R"),
                     help="check the pre-registered (mu, mu_r) pair on all aspects")
+    ap.add_argument("--wave5", action="store_true",
+                    help="run the round-5 mu(I_c) law grid + control arm")
+    ap.add_argument("--wave5-shard", help="i/n: run the i-th of n wave-5 cases")
+    ap.add_argument("--wave5b", action="store_true",
+                    help="run the round-5b rough-floor probe (mu_wall x a)")
+    ap.add_argument("--wave5b-confirm", type=float, metavar="MU_WALL",
+                    help="confirm a surviving mu_wall on every aspect ratio")
+    ap.add_argument("--wave5c", action="store_true",
+                    help="run the post-hoc convergence controls of the surviving triple")
     ap.add_argument("--collect", action="store_true", help="aggregate + verdicts")
     ap.add_argument("--case", action="append", default=[],
                     help="run one pre-declared case id (wave-1 or wave-2); repeatable")
@@ -458,6 +644,24 @@ def main(argv: list[str] | None = None) -> int:
     if args.wave4_validate:
         mu, mur = args.wave4_validate
         _run_specs(wave4_validation_cases(mu, mur), "wave4-validate", args.progress)
+        return 0
+    if args.wave5:
+        _run_specs(wave5_cases(), "wave5", args.progress)
+        return 0
+    if args.wave5_shard:
+        i, n = (int(x) for x in args.wave5_shard.split("/"))
+        mine = [c for k, c in enumerate(wave5_cases()) if k % n == i]
+        _run_specs(mine, f"wave5 {i}/{n}", args.progress)
+        return 0
+    if args.wave5b:
+        _run_specs(wave5b_probe_cases(), "wave5b", args.progress)
+        return 0
+    if args.wave5c:
+        _run_specs(wave5c_cases(), "wave5c", args.progress)
+        return 0
+    if args.wave5b_confirm is not None:
+        _run_specs(wave5b_confirmation_cases(args.wave5b_confirm), "wave5b-confirm",
+                   args.progress)
         return 0
     if args.shard:
         i, n = (int(x) for x in args.shard.split("/"))
