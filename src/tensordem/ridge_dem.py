@@ -448,6 +448,13 @@ class RidgeAssembly:
         #: standard DEM stress definition (YADE ``stressTensor``, LAMMPS
         #: ``compute stress/atom``) and makes the wall-traction stress auditable.
         virial = torch.zeros((2, 2), dtype=torch.float64)
+        #: wall (plane) contacts are *not* in ``virial``: the internal-only sum
+        #: is the field the production biaxial case has always reported.  The
+        #: boundary term is accumulated separately so the sum
+        #: ``virial + virial_wall`` can be checked against the wall traction
+        #: average (divergence theorem: sum over *all* contacts of
+        #: ``f_i (x) (x_j - x_i)`` = volume integral of the stress).
+        virial_wall = torch.zeros((2, 2), dtype=torch.float64)
         force[:, 1] += self.body_force
         # environmental/global drag damps free particles only; kinematic
         # platen particles are excluded so their reaction stays interpretable
@@ -590,6 +597,12 @@ class RidgeAssembly:
                               * torch.tanh(v_t / m.velocity_regularisation))
                 on_particles = magnitude[:, None] * normal + tangential[:, None] * tangent
                 force.index_add_(0, self._all[hit], on_particles)
+                # branch vector from the particle centre to the wall contact
+                # point (``signed`` is the centre-to-plane distance along the
+                # inward normal), so ``f (x) lever`` has the same convention as
+                # the internal-contact virial above.
+                lever = (-signed[hit])[:, None] * normal
+                virial_wall += torch.einsum("ni,nj->ij", on_particles, lever)
                 on_plane = -on_particles.sum(dim=0)
                 plane_loaded = (plane.stiffness * gap[hit]
                                 - plane.damping * v_n) > 0.0
@@ -640,6 +653,7 @@ class RidgeAssembly:
             "pipe_force": pipe_force,
             "plane_forces": plane_forces,
             "virial": virial,
+            "virial_wall": virial_wall,
             "soil_force": soil_force,
             "contacts": contact_count,
             "pipe_contacts": pipe_contacts,
