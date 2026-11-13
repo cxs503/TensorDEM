@@ -38,6 +38,7 @@ from .ice_bond_viscoelastic import (
 from .buoyancy_wet3d import submerged_fraction_sphere_tensor
 from . import hertz_mindlin
 from . import mindlin_partial_slip
+from .contact_calibration import hertz_damping_ratio_for_restitution
 
 
 # --------------------------------------------------------------------------
@@ -198,7 +199,17 @@ class DEM3DConfig:
     #   platen branches already use, so the pair law is the clipped
     #   F = max(k*delta - c*delta_dot, 0) whose reference solution is
     #   tensordem.restitution.unilateral_restitution(c, k, m_eff).
-    contact_damping_model: str = "restitution"  # "restitution" | "absolute"
+    # "restitution_calibrated" (opt-in): same Tsuji dashpot as "restitution", but
+    #   the damping ratio is taken from the inverse of the *Hertz* restitution
+    #   curve, tensordem.contact_calibration.hertz_damping_ratio_for_restitution,
+    #   instead of the linear spring-dashpot mapping.  The linear mapping is exact
+    #   only for a constant dashpot, so with "restitution" the requested
+    #   coefficient is not delivered in the Hertz branch (e=0.5 -> 0.582,
+    #   e=0.8 -> 0.826); the calibrated mapping delivers it to <0.3 % at every
+    #   impact speed (docs/dem3d_hertz_restitution_closure.md,
+    #   benchmarks/case_pair_collision_hertz).  Hertz only -- the linear penalty
+    #   branch has a constant dashpot, where the legacy mapping is already exact.
+    contact_damping_model: str = "restitution"  # "restitution" | "absolute" | "restitution_calibrated"
     # --- Opt-in tangential constitutive law ---
     # "cundall_strack" (default, bit-for-bit legacy): linear spring
     #   F_t = k_t delta_t saturated at mu F_n, so the whole pre-slip branch is a
@@ -331,9 +342,18 @@ class DEM3DConfig:
                 or self.tangential_stiffness <= 0.0):
             raise ValueError(
                 "tangential_stiffness must be finite and positive, or None")
-        if self.contact_damping_model not in ("restitution", "absolute"):
+        if self.contact_damping_model not in ("restitution", "absolute",
+                                              "restitution_calibrated"):
             raise ValueError(
-                "contact_damping_model must be 'restitution' or 'absolute'")
+                "contact_damping_model must be 'restitution', 'absolute' or "
+                "'restitution_calibrated'")
+        if (self.contact_damping_model == "restitution_calibrated"
+                and self.contact_model != "hertz"):
+            raise ValueError(
+                "contact_damping_model='restitution_calibrated' requires "
+                "contact_model='hertz' (the calibration inverts the Hertz "
+                "restitution curve; the linear branch's constant dashpot already "
+                "follows the exact linear mapping)")
         if self.tangential_model not in ("cundall_strack", "mindlin_partial_slip"):
             raise ValueError(
                 "tangential_model must be 'cundall_strack' or 'mindlin_partial_slip'")
@@ -1393,9 +1413,16 @@ class IceDEM3D:
                     # RK4 integration in tensordem.restitution.
                     gamma_n = cfg.contact_damping
                 elif cfg.restitution_coefficient < 1.0:
-                    ln_e = math.log(cfg.restitution_coefficient)
-                    abs_ln_e = -ln_e
-                    zeta = abs_ln_e / math.sqrt(math.pi ** 2 + abs_ln_e ** 2)
+                    if cfg.contact_damping_model == "restitution_calibrated":
+                        # Hertz-only inverse map (validated + LRU-cached in
+                        # tensordem.contact_calibration): the damping ratio that
+                        # makes the realised restitution equal the request.
+                        zeta = hertz_damping_ratio_for_restitution(
+                            cfg.restitution_coefficient)
+                    else:
+                        ln_e = math.log(cfg.restitution_coefficient)
+                        abs_ln_e = -ln_e
+                        zeta = abs_ln_e / math.sqrt(math.pi ** 2 + abs_ln_e ** 2)
                     # The pinned-pair branch makes m_eff a per-pair tensor;
                     # the all-mobile scalar path keeps math.sqrt bit-for-bit.
                     gamma_n = (2.0 * zeta * torch.sqrt(k_local * m_eff) if hertz

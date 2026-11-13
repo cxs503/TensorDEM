@@ -46,6 +46,10 @@ import torch
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2] / "src"))
 
+from tensordem.contact_calibration import (
+    hertz_damping_ratio_for_restitution,
+    zeta_from_linear_restitution,
+)
 from tensordem.dem3d import (
     DEM3DConfig,
     IceDEM3D,
@@ -66,6 +70,8 @@ PRIMARY_SPEED = 0.5     # m/s, primary benchmark speed
 SPEEDS_SWEEP = [0.25, 0.5, 1.0]  # m/s, for restitution velocity-independence check
 TARGET_E = 0.8          # target restitution coefficient
 DT_FACTOR = 0.4         # timestep as fraction of recommended_dt
+CALIBRATION_TARGETS = [0.5, 0.8]   # requested e values for the closed-loop study
+CALIBRATION_SPEEDS = [0.25, 0.5, 1.0]  # m/s, per-particle
 
 # Exact Hertz contact time coefficient: t_c = C * delta_max / v_rel with
 #   C = 2 * int_0^1 (1 - eta^(5/2))^(-1/2) d eta = (4/5) * B(2/5, 1/2) = 2.943275...
@@ -105,7 +111,7 @@ def analytic_contact_time(speed: float, radius: float, density: float,
 
 
 def reference_rk4(speed: float, rest_target: float, dt: float = 1.0e-8,
-                  max_time: float = 0.01,
+                  max_time: float = 0.01, zeta_override: float | None = None,
                   radius: float = RADIUS, density: float = DENSITY,
                   young_modulus: float = YOUNG_MODULUS,
                   poisson_ratio: float = POISSON_RATIO) -> dict:
@@ -113,6 +119,11 @@ def reference_rk4(speed: float, rest_target: float, dt: float = 1.0e-8,
 
     Uses the correct Hertz force law: F = (4/3) E* sqrt(R*) delta^(3/2).
     Initial closing speed = 2 * speed (two spheres approaching).
+
+    ``zeta`` is taken from ``rest_target`` by the legacy linear map unless
+    ``zeta_override`` is given -- the calibrated convention supplies its own
+    damping ratio, and the reference must integrate *that* dashpot to be a
+    meaningful independent check.
     """
     mass = density * (4.0 / 3.0) * math.pi * radius ** 3
     m_eff = mass / 2.0
@@ -121,14 +132,17 @@ def reference_rk4(speed: float, rest_target: float, dt: float = 1.0e-8,
     k_coef = (4.0 / 3.0) * e_star * math.sqrt(r_eff)
 
     v_rel = 2.0 * speed
-    ln_e = math.log(rest_target) if rest_target < 1.0 else 0.0
-    zeta = abs(ln_e) / math.sqrt(math.pi ** 2 + ln_e ** 2) if rest_target < 1.0 else 0.0
+    if zeta_override is not None:
+        zeta = float(zeta_override)
+    else:
+        ln_e = math.log(rest_target) if rest_target < 1.0 else 0.0
+        zeta = abs(ln_e) / math.sqrt(math.pi ** 2 + ln_e ** 2) if rest_target < 1.0 else 0.0
 
     def accel(overlap: float, rate: float) -> float:
         if overlap <= 0.0:
             return 0.0
         elastic = k_coef * overlap ** 1.5
-        if rest_target < 1.0:
+        if zeta > 0.0:
             gamma = 2.0 * zeta * math.sqrt(m_eff * k_coef * math.sqrt(overlap))
             force = elastic + gamma * rate
         else:
@@ -331,6 +345,88 @@ def run_velocity_sweep() -> list[dict]:
     return rows
 
 
+def run_calibration_study() -> dict:
+    """Closed loop: is the *requested* restitution the one the solver delivers?
+
+    Two conventions are compared at identical physics (Hertz spring + Tsuji
+    dashpot, dt = DT_FACTOR x recommended_dt):
+
+    * ``contact_damping_model="restitution"`` (legacy, default): zeta comes from
+      the linear spring-dashpot map ``|ln e| / sqrt(pi^2 + ln^2 e)``, exact only
+      for a constant dashpot, so the requested e is *not* delivered.
+    * ``contact_damping_model="restitution_calibrated"``: zeta is the inverse of
+      the universal Hertz restitution curve
+      (``tensordem.contact_calibration``), so the request is honoured.
+
+    The legacy bias is also predicted analytically (``delivered_restitution_
+    legacy``) so the table has three independent columns: engine (legacy),
+    engine (calibrated) and the parameter-free similarity curve.
+    """
+    from tensordem.contact_calibration import delivered_restitution_legacy
+
+    rows = []
+    for target in CALIBRATION_TARGETS:
+        for speed in CALIBRATION_SPEEDS:
+            legacy = measure_engine(speed, restitution_coefficient=target)
+            fixed = measure_engine(speed, restitution_coefficient=target,
+                                   contact_damping_model="restitution_calibrated")
+            zeta_cal = hertz_damping_ratio_for_restitution(target)
+            ref = reference_rk4(speed, target)
+            ref_cal = reference_rk4(speed, target, zeta_override=zeta_cal)
+            rows.append({
+                "restitution_requested": target,
+                "speed_m_per_s": speed,
+                "zeta_linear_mapping": zeta_from_linear_restitution(target),
+                "zeta_calibrated": zeta_cal,
+                "restitution_legacy_engine": legacy["restitution"],
+                "restitution_legacy_predicted": delivered_restitution_legacy(target),
+                "closure_error_legacy": abs(legacy["restitution"] - target) / target,
+                "restitution_calibrated_engine": fixed["restitution"],
+                "closure_error_calibrated": abs(fixed["restitution"] - target) / target,
+                "restitution_rk4_reference_legacy_zeta": ref["restitution"],
+                "legacy_vs_reference_rel_error":
+                    abs(legacy["restitution"] - ref["restitution"]) / ref["restitution"],
+                "restitution_rk4_reference_calibrated_zeta": ref_cal["restitution"],
+                "calibrated_vs_reference_rel_error":
+                    abs(fixed["restitution"] - ref_cal["restitution"])
+                    / ref_cal["restitution"],
+                "steps_legacy": legacy["steps"],
+                "steps_calibrated": fixed["steps"],
+                "dt_s": fixed["dt_s"],
+                "wall_time_s": legacy["wall_time_s"] + fixed["wall_time_s"],
+            })
+
+    max_legacy = max(r["closure_error_legacy"] for r in rows)
+    max_calibrated = max(r["closure_error_calibrated"] for r in rows)
+    spread_legacy = max(
+        max(r["restitution_legacy_engine"] for r in rows
+            if r["restitution_requested"] == t)
+        - min(r["restitution_legacy_engine"] for r in rows
+              if r["restitution_requested"] == t)
+        for t in CALIBRATION_TARGETS)
+    spread_calibrated = max(
+        max(r["restitution_calibrated_engine"] for r in rows
+            if r["restitution_requested"] == t)
+        - min(r["restitution_calibrated_engine"] for r in rows
+              if r["restitution_requested"] == t)
+        for t in CALIBRATION_TARGETS)
+    max_ref_calibrated = max(r["calibrated_vs_reference_rel_error"] for r in rows)
+    return {
+        "convention_legacy": "contact_damping_model='restitution' (linear zeta(e) map)",
+        "convention_calibrated": "contact_damping_model='restitution_calibrated'",
+        "targets": CALIBRATION_TARGETS,
+        "speeds_m_per_s": CALIBRATION_SPEEDS,
+        "max_closure_error_legacy": max_legacy,
+        "max_closure_error_calibrated": max_calibrated,
+        "velocity_spread_legacy": spread_legacy,
+        "velocity_spread_calibrated": spread_calibrated,
+        "max_calibrated_vs_reference_rel_error": max_ref_calibrated,
+        "closure_within_tolerance": bool(max_calibrated < 0.03),
+        "tolerance": 0.03,
+        "rows": rows,
+    }
+
+
 def run_convergence_study() -> list[dict]:
     """Timestep convergence: dt_factor = 0.8, 0.4, 0.2 at v=0.5 m/s, e=1."""
     speed = PRIMARY_SPEED
@@ -399,7 +495,23 @@ def main():
         print(f"  v={r['speed_m_per_s']} m/s: e_engine={r['restitution_engine']:.4f}, "
               f"e_rk4={r['restitution_rk4']:.4f}, err={r['restitution_rel_error']:.4%}")
 
-    # 4. Convergence study
+    # 4. Restitution closed loop (requested vs delivered)
+    print("\n--- Restitution closed loop (legacy vs calibrated convention) ---")
+    calibration = run_calibration_study()
+    for r in calibration["rows"]:
+        print(f"  e_req={r['restitution_requested']} v={r['speed_m_per_s']} m/s: "
+              f"legacy={r['restitution_legacy_engine']:.4f} "
+              f"({r['closure_error_legacy']:.2%}) [RK4 "
+              f"{r['restitution_rk4_reference_legacy_zeta']:.4f}], "
+              f"calibrated={r['restitution_calibrated_engine']:.4f} "
+              f"({r['closure_error_calibrated']:.3%}) [RK4 "
+              f"{r['restitution_rk4_reference_calibrated_zeta']:.4f}]")
+    print(f"  max closure error: legacy={calibration['max_closure_error_legacy']:.2%} "
+          f"-> calibrated={calibration['max_closure_error_calibrated']:.3%}")
+    print(f"  max engine-vs-RK4 error at the calibrated dashpot: "
+          f"{calibration['max_calibrated_vs_reference_rel_error']:.3%}")
+
+    # 5. Convergence study
     print("\n--- Timestep convergence (v=0.5 m/s, e=1) ---")
     conv = run_convergence_study()
     for r in conv:
@@ -427,6 +539,7 @@ def main():
         "primary_elastic": elastic,
         "primary_damped": damped,
         "velocity_sweep": sweep,
+        "restitution_calibration": calibration,
         "convergence_study": conv,
     }
 
@@ -448,11 +561,16 @@ def main():
     print(f"Restitution error (damped, vs RK4): {rest_err:.4%}")
     print(f"Max restitution error (velocity sweep): {max_sweep_err:.4%}")
     closure = damped["closure_error_vs_target"]
-    print(f"Restitution closure vs e_target={TARGET_E}: {closure:.4%}")
+    print(f"Restitution closure vs e_target={TARGET_E} (legacy convention): {closure:.4%}")
+    print(f"Restitution closure, calibrated convention: "
+          f"{calibration['max_closure_error_calibrated']:.3%} (max over "
+          f"e in {CALIBRATION_TARGETS}, v in {CALIBRATION_SPEEDS} m/s)")
     print(f"\nPass (<3%): peak_overlap={'PASS' if delta_err < 0.03 else 'FAIL'}, "
           f"contact_time={'PASS' if tc_err < 0.03 else 'FAIL'}, "
           f"restitution_vs_reference={'PASS' if rest_err < 0.03 else 'FAIL'}, "
-          f"restitution_closure={'PASS' if closure < 0.03 else 'FAIL'}")
+          f"restitution_closure_legacy={'PASS' if closure < 0.03 else 'FAIL'}, "
+          f"restitution_closure_calibrated="
+          f"{'PASS' if calibration['max_closure_error_calibrated'] < 0.03 else 'FAIL'}")
 
     return results
 
