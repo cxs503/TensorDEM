@@ -1250,13 +1250,26 @@ class SandpileRun:
             bin_width_factor=cfg.bin_width_factor)
         angle = repose_angle_from_profile(
             profile, edge_exclusion=cfg.edge_exclusion)
-        packing = probe_packing_fraction(pos, cfg.radius)
-        packing["bulk"] = bulk_packing_fraction(pos, cfg.radius, profile)
-        packing["core"] = core_packing_fraction(pos, cfg.radius, profile=profile)
-        try:
-            packing["voronoi"] = voronoi_packing_fraction(pos, cfg.radius)
-        except SandpileProtocolError as exc:      # tiny/degenerate deposits
-            packing["voronoi"] = {"packing_fraction": float("nan"), "error": str(exc)}
+        def _safe(fn):
+            """Measure, or report NaN + reason: a degenerate deposit is a result.
+
+            A negative control that removes the rolling resistance spreads the
+            grains into a flat splat with no mid-height band.  The *angle* of
+            that surface is exactly the quantity under study, so the packing
+            probes must not be able to abort the measurement (they did before
+            m17676: ``probe_packing_fraction`` raised and the run record -- and
+            with it the repose angle -- was lost).
+            """
+            try:
+                return fn()
+            except SandpileProtocolError as exc:  # degenerate/flat deposits
+                return {"packing_fraction": float("nan"), "error": str(exc)}
+
+        packing = _safe(lambda: probe_packing_fraction(pos, cfg.radius))
+        packing["bulk"] = _safe(lambda: bulk_packing_fraction(pos, cfg.radius, profile))
+        packing["core"] = _safe(lambda: core_packing_fraction(
+            pos, cfg.radius, profile=profile))
+        packing["voronoi"] = _safe(lambda: voronoi_packing_fraction(pos, cfg.radius))
         fabric = contact_fabric(self._contacts, n_particles=self.n_poured)
         ke = 0.5 * cfg.mass * float(torch.sum(
             self.velocities[:self.n_poured] ** 2)) + 0.5 * cfg.inertia * float(
