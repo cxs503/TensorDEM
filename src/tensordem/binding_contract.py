@@ -1095,6 +1095,297 @@ def benchmark_physics(n_steps_energy: int = 2000) -> dict[str, Any]:
 
 
 # ---------------------------------------------------------------------------
+# Numeric benchmark: the 3-D frozen surface vs analytic references
+# ---------------------------------------------------------------------------
+# ``IceDEM3D`` is the entry the 3-D binders consume; freezing its *names* is not
+# enough, the numbers have to be anchored too.  Each row below pairs an analytic
+# (or bitwise) reference with the value the frozen surface actually produces, so
+# that a silently broken 3-D binding shows up as an error, not as a green
+# introspection report.
+BENCHMARK_3D_ANCHORS: dict[str, str] = {
+    "impulse_momentum": "m*sum(dv) = n*dt*sum(F_ext) for a momentum-neutral "
+                        "internal force field (Newton's second law; exact for the "
+                        "semi-implicit Euler / velocity-Verlet step)",
+    "symplectic_euler": "semi-implicit Euler closed form x_n - x_0 = a*dt^2*n(n+1)/2; "
+                        "cf. Hairer, Lubich & Wanner, Geometric Numerical Integration "
+                        "(Springer, 2006), Sec. I.1",
+    "continuum": "rigid-body limit 0.5*a*t^2 (first-order consistent in dt)",
+    "hertz_contact": "Hertz, H. (1882), J. reine angew. Math. 92:156-171: "
+                     "F = (4/3)E*sqrt(R*)*delta^1.5, E* = E/(2(1-nu^2)), R* = R/2 "
+                     "for two equal elastic spheres",
+    "energy": "isolated conservative lattice: mechanical energy is a constant of "
+              "motion, so E(t) - E(0) = 0 is the analytic reference",
+    "restart": "restart payload is exact: load_state_dict(state_dict()) must "
+               "reproduce the trajectory bitwise",
+}
+
+
+def isolated_3d_model(**overrides: Any):
+    """Force-free 3-D lattice used by the benchmark rows and the tests.
+
+    No supports, no contact dashpot, no drag, indenter parked at ``tool_gap``,
+    friction off: the only non-momentum-neutral force is the external load the
+    caller passes.  Any other force appearing here would break the analytic
+    references and is therefore a bug, not a modelling choice.
+    """
+    from .dem3d import DEM3DConfig, IceDEM3D
+
+    params: dict[str, Any] = dict(
+        nx=5, ny=4, nz=3, fix_bottom=False, fix_x_edges=False,
+        contact_damping=0.0, drag=0.0, tool_gap=10.0,
+        friction_coefficient=0.0, rolling_resistance_coefficient=0.0,
+    )
+    params.update(overrides)
+    return IceDEM3D(DEM3DConfig(**params))
+
+
+def free_flight_case_3d(dt_factor: float = 1.0, n_steps: int = 200,
+                        load: tuple[float, float, float] = (0.25, -0.05, -0.1),
+                        **overrides: Any) -> dict[str, Any]:
+    """Uniform load on an unconstrained 3-D lattice -> pure kinematics.
+
+    The load is uniform, so every particle gets the same acceleration and the
+    bonds stay at their rest length: the internal force stays exactly zero and
+    the displacement is the closed-form answer for the integrator.  Comparing
+    against the semi-implicit Euler closed form measures the *binding*
+    bookkeeping (dt, clock, per-step load consumption); comparing against the
+    continuum answer ``0.5*a*t^2`` measures the discretisation error, which must
+    shrink at first order as ``dt`` is halved.
+    """
+    import torch
+
+    from .dem3d import DEM3DConfig, IceDEM3D
+
+    params: dict[str, Any] = dict(
+        nx=5, ny=4, nz=3, fix_bottom=False, fix_x_edges=False,
+        contact_damping=0.0, drag=0.0, tool_gap=10.0,
+        friction_coefficient=0.0, rolling_resistance_coefficient=0.0,
+    )
+    params.update(overrides)
+    base_dt = DEM3DConfig(**params).recommended_dt
+    params["dt"] = base_dt * dt_factor
+    model = IceDEM3D(DEM3DConfig(**params))
+    dt = model.dt
+    mass = model.config.mass
+    force = torch.zeros_like(model.positions, dtype=model.positions.dtype)
+    for axis, value in enumerate(load):
+        force[:, axis] = value
+    x0 = model.positions.clone()
+    for _ in range(int(n_steps)):
+        model.step(external_forces=force)
+    dx = (model.positions - x0).mean(dim=0)
+
+    accel = tuple(load[i] / mass for i in range(3))
+    got = tuple(float(dx[i]) for i in range(3))
+    ref_sym = tuple(accel[i] * dt * dt * n_steps * (n_steps + 1) / 2.0 for i in range(3))
+    ref_cont = tuple(0.5 * accel[i] * (n_steps * dt) ** 2 for i in range(3))
+
+    def worst(values: tuple[float, ...], reference: tuple[float, ...]) -> float:
+        errs = [_rel(values[i], reference[i]) for i in range(3) if reference[i] != 0.0]
+        return max(errs) if errs else 0.0
+
+    return {
+        "dt_factor": float(dt_factor),
+        "dt_s": float(dt),
+        "n_steps": int(n_steps),
+        "total_time_s": float(n_steps * dt),
+        "mass_kg": float(mass),
+        "accel_m_s2": list(accel),
+        "got_displacement_m": list(got),
+        "ref_symplectic_m": list(ref_sym),
+        "ref_continuum_m": list(ref_cont),
+        "symplectic_rel_error": worst(got, ref_sym),
+        "continuum_rel_error": worst(got, ref_cont),
+    }
+
+
+def benchmark_physics_3d(n_steps_energy: int = 1000) -> dict[str, Any]:
+    """Numeric ref-vs-got benchmark of the frozen **3-D** binding surface.
+
+    Rows (``IceDEM3D``; every row carries ``ref``, ``got``, ``rel_error``,
+    ``tolerance`` and ``pass``):
+
+    1.  ``impulse_momentum_3d``          m*sum(dv) vs n*dt*sum(F) (tolerance 1e-12)
+    2.  ``loads_not_accumulated_3d``     impulse projection ratio vs 1 (1e-12)
+    3.  ``free_flight_symplectic_3d``    displacement vs the exact integrator form (1e-11)
+    4.  ``free_flight_continuum_3d_dt_x{1,0.5,0.25}`` displacement vs 0.5*a*t^2 (owner 15%)
+    5.  ``free_flight_convergence_order_3d`` first-order consistency of row 4
+    6.  ``energy_drift_conservative_3d`` |E(t)-E(0)|/E(0) over a bonded lattice (2%)
+    7.  ``hertz_{reduced_modulus,effective_radius,normal_force}_3d`` kernel vs Hertz (1e-12)
+    8.  ``clock_n_dt_3d``                native clock vs n*dt (1e-12)
+    9.  ``restart_roundtrip_3d`` / ``restart_continuation_3d`` bitwise restart (0 m)
+    10. ``shape_guard_3d``               (N,2) load is rejected (boolean row)
+    """
+    import copy
+    import math
+
+    import torch
+
+    from .dem3d import (hertz_effective_radius, hertz_normal_force,
+                        hertz_reduced_modulus)
+
+    rows: list[dict[str, Any]] = []
+
+    def row(name: str, metric: str, reference: Any, got: Any,
+            ref_source: str, tolerance: float = BENCHMARK_ACCEPT_REL_ERROR,
+            detail: str = "", error: float | None = None) -> None:
+        err = _rel(got, reference) if error is None else float(error)
+        rows.append({
+            "name": name,
+            "metric": metric,
+            "ref": list(reference) if isinstance(reference, tuple) else reference,
+            "got": list(got) if isinstance(got, tuple) else got,
+            "ref_source": ref_source,
+            "rel_error": err,
+            "tolerance": tolerance,
+            "pass": bool(err <= tolerance),
+            "detail": detail,
+        })
+
+    # 1-2. impulse-momentum identity and non-accumulation -------------------
+    n_impulse = 8
+    model = isolated_3d_model()
+    mass = model.config.mass
+    load = torch.zeros_like(model.positions, dtype=model.positions.dtype)
+    load[:, 2] = -0.2
+    v0 = model.velocities.clone()
+    for _ in range(n_impulse):
+        model.step(external_forces=load)
+    impulse = mass * (model.velocities - v0).sum(dim=0)
+    ref_impulse = n_impulse * model.dt * load.sum(dim=0)
+    row("impulse_momentum_3d", "max component relative error",
+        float(ref_impulse.abs().max()), float(impulse.abs().max()),
+        "analytic n*dt*F (bond/contact forces internal, momentum-neutral)",
+        1e-12, f"n_steps={n_impulse}",
+        error=float((impulse - ref_impulse).abs().max() / ref_impulse.abs().max()))
+    ratio = float((impulse @ ref_impulse) / (ref_impulse @ ref_impulse))
+    row("loads_not_accumulated_3d", "impulse projection ratio", 1.0, ratio,
+        "load applied once per step (accumulation would give 1+2+...+n)",
+        1e-12, f"n_steps={n_impulse}")
+
+    # 3-5. free flight vs the exact integrator and the continuum ------------
+    total_time = 0.01
+    base_dt = isolated_3d_model().dt
+    n_base = max(1, int(round(total_time / base_dt)))
+    flight_dt = free_flight_case_3d(1.0, n_base)
+    flight_half = free_flight_case_3d(0.5, 2 * n_base)
+    flight_quarter = free_flight_case_3d(0.25, 4 * n_base)
+    row("free_flight_symplectic_3d", "max component relative error",
+        max(flight_dt["ref_symplectic_m"]), max(flight_dt["got_displacement_m"]),
+        "semi-implicit Euler closed form a*dt^2*n(n+1)/2", 1e-11,
+        f"t={total_time} s, n={flight_dt['n_steps']}",
+        error=flight_dt["symplectic_rel_error"])
+    for case, factor in ((flight_dt, 1.0), (flight_half, 0.5), (flight_quarter, 0.25)):
+        row(f"free_flight_continuum_3d_dt_x{factor:g}",
+            "max component relative error",
+            max(case["ref_continuum_m"]), max(case["got_displacement_m"]),
+            "continuum 0.5*a*t^2 (rigid-body limit)",
+            BENCHMARK_ACCEPT_REL_ERROR,
+            f"dt={case['dt_s']:.6e} s, n={case['n_steps']}",
+            error=case["continuum_rel_error"])
+    orders = []
+    for coarse, fine in ((flight_dt, flight_half), (flight_half, flight_quarter)):
+        orders.append(math.log(coarse["continuum_rel_error"]
+                               / fine["continuum_rel_error"]) / math.log(2.0))
+    row("free_flight_convergence_order_3d", "observed order p in err ~ dt^p",
+        1.0, sum(orders) / len(orders),
+        "first-order consistency of semi-implicit Euler", 0.05,
+        f"orders={[round(o, 6) for o in orders]}",
+        error=abs(sum(orders) / len(orders) - 1.0))
+
+    # 6. energy drift of a conservative bonded lattice ----------------------
+    lattice = isolated_3d_model()
+    n_particles = len(lattice.positions)
+    lattice.velocities[:, 0] = 0.05 * torch.sin(
+        torch.arange(n_particles, dtype=lattice.positions.dtype)
+        * (2 * math.pi / lattice.config.nx))
+    e0 = float(lattice.energy()["mechanical_energy_J"])
+    worst_drift = 0.0
+    for _ in range(max(1, int(n_steps_energy))):
+        lattice.step()
+        worst_drift = max(worst_drift,
+                          abs(float(lattice.energy()["mechanical_energy_J"]) - e0))
+    row("energy_drift_conservative_3d", "max |E(t)-E(0)| / E(0)", 0.0,
+        worst_drift / e0, "E(0) is the analytic constant of motion", 0.02,
+        f"steps={n_steps_energy}, E(0)={e0:.6e} J", error=worst_drift / e0)
+
+    # 7. Hertz kernel and reduced modulus (3-D path) ------------------------
+    young, nu, radius, overlap = 9.0e9, 0.3, 0.025, 1.0e-4
+    e_star = hertz_reduced_modulus(young, nu)
+    r_eff = hertz_effective_radius(radius)
+    ref_e_star = young / (2.0 * (1.0 - nu * nu))
+    ref_r_eff = radius / 2.0
+    ref_force = (4.0 / 3.0) * ref_e_star * math.sqrt(ref_r_eff) * overlap ** 1.5
+    got_force = float(hertz_normal_force(overlap, e_star, r_eff))
+    row("hertz_reduced_modulus_3d", "relative error", ref_e_star, e_star,
+        "E* = E/(2(1-nu^2)) for equal elastic spheres", 1e-12)
+    row("hertz_effective_radius_3d", "relative error", ref_r_eff, r_eff,
+        "R* = R/2 for equal spheres", 1e-12)
+    row("hertz_normal_force_3d", "relative error", ref_force, got_force,
+        "(4/3)E*sqrt(R*)*delta^1.5 (Hertz 1882)", 1e-12,
+        f"delta={overlap} m, E={young} Pa, nu={nu}")
+
+    # 8. native clock -------------------------------------------------------
+    clock = isolated_3d_model()
+    steps = 37
+    for _ in range(steps):
+        clock.step()
+    row("clock_n_dt_3d", "relative error", steps * clock.dt, clock.time,
+        "analytic n*dt", 1e-12, f"n={steps}")
+
+    # 9. restart round-trip (state_dict / load_state_dict, the 3-D names) ---
+    source = isolated_3d_model()
+    load3 = torch.zeros_like(source.positions, dtype=source.positions.dtype)
+    load3[:, 1] = 0.05
+    for _ in range(7):
+        source.step(external_forces=load3)
+    payload = copy.deepcopy(source.state_dict())
+    restored = isolated_3d_model()
+    restored.load_state_dict(payload)
+    restore_drift = float((restored.positions - source.positions).abs().max())
+    row("restart_roundtrip_3d", "max |dposition| (m)", 0.0, restore_drift,
+        "bitwise identity of state_dict -> load_state_dict", 0.0,
+        f"steps=7, time={source.time:.6e} s")
+    source.step(external_forces=load3)
+    restored.step(external_forces=load3)
+    continue_drift = float((restored.positions - source.positions).abs().max())
+    row("restart_continuation_3d", "max |dposition| after one more step (m)",
+        0.0, continue_drift, "restored solver continues the same trajectory", 0.0,
+        "post-restart step with the same load")
+
+    # 10. shape guard -------------------------------------------------------
+    guard = isolated_3d_model()
+    rejected = 0.0
+    try:
+        guard.step(external_forces=torch.zeros((len(guard.positions), 2),
+                                               dtype=guard.positions.dtype))
+    except ValueError:
+        rejected = 1.0
+    row("shape_guard_3d", "(N,2) load rejected", 1.0, rejected,
+        "contract freezes a (N,3) load surface; a (N,2) load must raise", 0.0,
+        "ValueError expected")
+
+    passed = sum(1 for r in rows if r["pass"])
+    return {
+        "schema": "tensordem.binding-contract.benchmark-3d/1",
+        "entry": "IceDEM3D",
+        "accept_rel_error": BENCHMARK_ACCEPT_REL_ERROR,
+        "rows": rows,
+        "rows_total": len(rows),
+        "rows_passed": passed,
+        "worst_rel_error": max(r["rel_error"] for r in rows),
+        "free_flight_convergence_order": orders,
+        "anchors": BENCHMARK_3D_ANCHORS,
+        "environment": {
+            "dt_s": float(base_dt),
+            "n_steps_energy": int(n_steps_energy),
+            "particle_count": int(n_particles),
+        },
+        "verdict": "MET" if passed == len(rows) else "FAIL",
+    }
+
+
+# ---------------------------------------------------------------------------
 # CLI helper: re-freeze the fingerprint deliberately
 # ---------------------------------------------------------------------------
 def _main(argv: list[str] | None = None) -> int:

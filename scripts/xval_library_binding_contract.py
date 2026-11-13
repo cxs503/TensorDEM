@@ -298,6 +298,9 @@ def main() -> int:
     baseline = _name_only_baseline()
     restart = _clock_and_restart()
     coverage = _public_surface_coverage()
+    # Round 2 (m17960): the 3-D entry of the frozen contract gets its own
+    # numeric anchor, row by row (ref vs got + tolerance + pass).
+    benchmark_3d = bc.benchmark_physics_3d()
 
     impulse_errors = [r["rel_error"] for r in impulse]
     detection_rate = sum(m["detected"] for m in mutations) / len(mutations)
@@ -337,6 +340,15 @@ def main() -> int:
         {"metric": "semantic probe pass rate",
          "reference": "all declared probes", "got": probe_pass,
          "tolerance": 1.0, "met": probe_pass == 1.0},
+        {"metric": "3-D numeric benchmark pass rate (ref vs got rows)",
+         "reference": "all rows within their pre-registered tolerance",
+         "got": benchmark_3d["rows_passed"] / benchmark_3d["rows_total"],
+         "tolerance": 1.0, "met": benchmark_3d["verdict"] == "MET"},
+        {"metric": "3-D worst row relative error",
+         "reference": "0 (exact analytic rows); owner acceptance 0.15",
+         "got": benchmark_3d["worst_rel_error"],
+         "tolerance": OWNER_TOLERANCE,
+         "met": benchmark_3d["worst_rel_error"] < OWNER_TOLERANCE},
         {"metric": "contract conformance (introspection checks matched)",
          "reference": "all frozen checks",
          "got": verify_report["matched"] / verify_report["checks"],
@@ -384,6 +396,7 @@ def main() -> int:
         "accumulation_discriminator": discriminator,
         "clock_and_restart": restart,
         "surface_coverage": coverage,
+        "benchmark_physics_3d": benchmark_3d,
         "verdicts": verdicts,
         "wall_s": time.perf_counter() - t0,
     }
