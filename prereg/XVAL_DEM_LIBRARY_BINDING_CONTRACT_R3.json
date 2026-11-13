@@ -1,0 +1,58 @@
+{
+  "anchor": "XVAL-DEM-LIBRARY-BINDING-FROZEN-CONTRACT",
+  "round": 3,
+  "repo": "TensorDEM",
+  "mission_id": 18534,
+  "context": "Round 1 (PR #1450, closed by owner 2026-11-05) froze the provider surface; it was re-landed on main by m17518/m17960. Round 2 (m18458, branch agent/m18458) added consumer-side coverage but was never merged. Round 3 re-lands the consumer side and closes the accounting limitation round 1 wrote down itself: 'the 3-D public surface is only 40% frozen; unfrozen physics diagnostics can still drift silently'.",
+  "decision": "Adopt surface accounting: every public member of a frozen class must be classified (frozen, or excluded with a documented reason); an unclassified, stale or misclassified member is a breaking finding produced by verify()/verify_entry() themselves.",
+  "alternatives": [
+    "A: freeze the 12 remaining 3-D members as well (would promise stability TensorDEM does not want to promise for case-specific diagnostics, and would grow the pinned surface by 60%)",
+    "B: leave the gap documented (status quo of round 1: a new/renamed 3-D diagnostic drifts silently, no test fails)",
+    "C: classify every public member, freeze the binding surface, exclude diagnostics explicitly with reasons, and gate on unclassified/stale/misclassified (this mission)"
+  ],
+  "hypothesis": "H1: surface accounting turns surface growth into a breaking finding (4/4 controlled mutations detected: member added, ledger entry missing, misclassification, clean control) while the frozen-field checks stay unchanged (42 pre-round-3 introspection checks). H0 (rejected): the round-1/2 check set detects the same growth - measured baseline on the identical mutated class is 0 findings, i.e. detection 0/1.",
+  "metrics": [
+    "classified_ratio = (frozen + excluded) / public members, per frozen class",
+    "unclassified public members (gaps) per frozen class",
+    "surface-accounting detection rate over 4 controlled mutations",
+    "baseline detection rate on the same grown class using only the pre-round-3 checks",
+    "pre-round-3 introspection checks preserved (42) and all matched",
+    "round-1/round-2 numeric rows unchanged (impulse / clock / restart / 3-D benchmark / consumer coverage)"
+  ],
+  "baseline_control": "same grown class (IceDEM subclass with one extra public method) fed to the pre-round-3 check set only (frozen fields, signature kinds, requiredness, annotations, negative assertions)",
+  "thresholds": {
+    "owner_accuracy": "relative error > 0.15 unacceptable",
+    "classified_ratio_min": 1.0,
+    "unclassified_members_max": 0,
+    "surface_detection_rate_min": 1.0,
+    "baseline_detection_rate_max": 0.0,
+    "prereg_introspection_checks_preserved": 42,
+    "impulse_relative_error_max": 1e-12,
+    "clock_relative_error_max": 1e-12,
+    "restart_position_drift_m_max": 0.0
+  },
+  "stopping_rule": "Stop after one scripted run of scripts/xval_library_binding_contract.py; no threshold tuning after inspecting results. If any metric misses its predeclared threshold, report honest-FAIL with the failing stage and do not re-run with relaxed thresholds.",
+  "exclusions": "No physics-accuracy claim: the ledger classifies the surface, it does not validate contact laws. Round-2 consumer coverage is re-landed as-is (the binder source pin is unchanged: sha256:c94b3cd6...46157). Cross-repo CI wiring stays out of scope (needs the consumer repo).",
+  "confounders": [
+    "a fingerprint bump is unavoidable when the contract data changes: FROZEN_FINGERPRINT must be re-pinned in the same commit (and did change, 0cbfed8c... -> 048e4cf9...)",
+    "subclasses add public members on purpose: the production gate therefore audits the canonical frozen class, not the caller's subclass",
+    "a class target cannot show instance state; round 3 fixes the class path of verify_entry (10 bogus breaking findings -> 0) and makes its source fallback walk the MRO"
+  ],
+  "controls": "clean-contract control row (audit of the unmodified contract must be COMPLETE) and the unchanged round-1/2 numeric rows re-measured in the same run",
+  "repitition_rationale": "Classification and mutation detection are exhaustive over the declared surface (20 + 11 public members, 4 mutations), not sampled; the numeric rows are algebraic identities, so the only variability is floating-point reduction order (measured, not assumed).",
+  "environment": {
+    "python": "3.11",
+    "torch": "system torch (see result.json environment block)",
+    "platform": "linux aarch64, single core, no cluster use",
+    "resource_limits": "single core CPU; pytest suite < 60 s; xval script < 30 s"
+  },
+  "analysis_plan": "Aggregate classified_ratio and gap counts per entry; score the account detector against its 4 controlled mutations and against the pre-round-3 baseline; re-run every round-1/2 criterion in the same run so the increment cannot hide a regression; report every miss as a limitation.",
+  "artifacts": [
+    "src/tensordem/binding_contract.py",
+    "tests/test_binding_contract.py",
+    "scripts/xval_library_binding_contract.py",
+    "artifacts/xval_library_binding_contract/result.json",
+    "docs/XVAL_DEM_LIBRARY_BINDING_CONTRACT_R3.md",
+    "prereg/XVAL_DEM_LIBRARY_BINDING_CONTRACT_R3.json"
+  ]
+}
