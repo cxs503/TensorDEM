@@ -1,0 +1,37 @@
+{
+ "impl_files": [
+  "src/tensordem/biaxial_shear_band.py:268 measure_band (Radon focus on local shear-strain field)",
+  "src/tensordem/biaxial_shear_band.py:300 _make_specimen (24x48 servo biaxial cell on RidgeAssembly/RidgeMaterial)",
+  "src/tensordem/shear_band_structure_tensor.py:1 independent structure-tensor operator",
+  "benchmarks/biaxial_shear_band/run_r3_ensemble.py:105 _nearest_snapshot (m17722 defect fix; was start[0] on empty post-peak list)"
+ ],
+ "entry": "benchmarks/biaxial_shear_band/run_r3_ensemble.py:390 main (--only <specimen>); benchmarks/biaxial_shear_band/run_r4_snr_check.py:40 main",
+ "run_artifacts": [
+  "artifacts/biaxial_shear_band/r4_snr_check.json",
+  "artifacts/biaxial_shear_band/r4_snr_check.png",
+  "artifacts/board_audit_m17722/r4_snr_reproduced.json (81/81 numeric keys identical to committed artefact)",
+  "artifacts/board_audit_m17722/r3_anchor_s11_rerun.json (post-fix DEM rerun: radon 52.50 deg, tensor 83.03 deg, 100.7 s)",
+  "git 1d7a0b6e:logs/r3_ensemble.log (primary R3 lines, not present in HEAD/origin-main)"
+ ],
+ "tests": [
+  "tests/test_biaxial_shear_band_r4.py (m17693, 11 passed in 20.7 s)",
+  "tests/test_r3_ensemble_peak_guard.py (m17722, 5 passed in 0.4 s)"
+ ],
+ "integration_callers": [
+  "src/tensordem/biaxial_band_diagnostics.py:47 imports local_shear_strain/measure_band from the case module",
+  "src/tensordem/biaxial_xval.py:13 consumes radon_band_angle for cross-validation",
+  "benchmarks/biaxial_shear_band/run_r4_cumulative_ensemble.py:_run_one calls run_biaxial_shear_band on the main DEM assembly"
+ ],
+ "benchmark": "tensor_benchmark_cases id=59 anchor_slug=CASE-DEM-BIAXIAL-CELL-KNOWN-ANGLE status=passed tolerance '<15%'; ref 60 deg (Desrues & Viggiani 2004 55-60) vs got 53.83 deg (R3 ensemble mean) = 10.3% -> within 15%, NOT within 3%. Audit-order slug CASE-BIAXIAL-SHEAR-BAND has 0 rows in tensor_benchmark_cases (finding F1).",
+ "repro_cmd": "PYTHONPATH=src python benchmarks/biaxial_shear_band/run_r3_ensemble.py --only anchor_s11 --workers 1 -> 52.50 deg radon / 83.03 deg tensor, 100.7 s (matches git 1d7a0b6e:logs/r3_ensemble.log exactly; needs detached run, >120 s shell cap). SNR half: PYTHONPATH=src python benchmarks/biaxial_shear_band/run_r4_snr_check.py -> 81/81 numeric keys identical. Tests: PYTHONPATH=src python -m pytest tests/test_biaxial_shear_band_r4.py tests/test_r3_ensemble_peak_guard.py -q -> 11+5 passed.",
+ "external_anchor": "Desrues & Viggiani 2004, Int. J. Numer. Anal. Methods Geomech. 28:279-321, dense Hostun sand shear band 55-60 deg (midpoint 60), recorded docs/BIAXIAL_SHEAR_BAND.md:30-31. Inherited by m17693, not re-read (its gap 2) -> caps level at L4.",
+ "findings": {
+  "F1_slug_no_benchmark_row": "major",
+  "F2_r3_driver_IndexError_reproducibility": "blocking (fixed in m17722)",
+  "F3_r3_artefacts_absent_from_HEAD": "major",
+  "F4_quick_smoke_measures_nothing": "major",
+  "F5_synthetic_snr_scope": "note",
+  "F6_anchor_inherited": "note"
+ },
+ "audit_doc": "docs/board_audit/m17722/AUDIT.md"
+}
