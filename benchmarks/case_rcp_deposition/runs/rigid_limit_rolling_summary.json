@@ -1,0 +1,87 @@
+{
+  "all_pass": true,
+  "anchor": "XVAL-DEM-ROUND2-DEPOSITION-RIGID-LIMIT",
+  "cluster_job": "cj1917",
+  "extrapolations": {
+    "0.0": {
+      "delta_from_last": 0.000557,
+      "limit": 0.616613,
+      "order_used": 1.0
+    },
+    "0.1": {
+      "delta_from_last": 0.003547,
+      "limit": 0.599383,
+      "order_used": 1.0
+    }
+  },
+  "gates": {
+    "G20_mur0.0": {
+      "criterion": "|phi(4000)-phi(inf)| < 0.005",
+      "got": 0.000557,
+      "pass": true
+    },
+    "G20_mur0.1": {
+      "criterion": "|phi(4000)-phi(inf)| < 0.005",
+      "got": 0.003547,
+      "pass": true
+    },
+    "G22_monotone": {
+      "criterion": "phi(inf) decreases with mu_r",
+      "got": [
+        0.616613,
+        0.599383
+      ],
+      "pass": true
+    },
+    "G23_mur0.0": {
+      "criterion": "|phi(inf)/phi_ref-1| < 15%",
+      "got": 0.0314,
+      "pass": true
+    },
+    "G23_mur0.1": {
+      "criterion": "|phi(inf)/phi_ref-1| < 15%",
+      "got": 0.0585,
+      "pass": true
+    }
+  },
+  "kn_levels": [
+    4000.0,
+    16000.0
+  ],
+  "mu": 0.1,
+  "mu_rolling_levels": [
+    0.0,
+    0.1
+  ],
+  "n_particles": 500,
+  "note": "Full 4-level validation (N=2000) pending on cluster cj1917",
+  "phi_ref": 0.6366,
+  "restitution": 0.1,
+  "runs": {
+    "mur0.0_kn16000": {
+      "Z": 5.523,
+      "phi": 0.61717,
+      "phi_corr": 0.6163,
+      "settled": true
+    },
+    "mur0.0_kn4000": {
+      "Z": 5.84,
+      "phi": 0.61884,
+      "phi_corr": 0.61752,
+      "settled": true
+    },
+    "mur0.1_kn16000": {
+      "Z": 5.307,
+      "phi": 0.60293,
+      "phi_corr": 0.60158,
+      "settled": true
+    },
+    "mur0.1_kn4000": {
+      "Z": 5.398,
+      "phi": 0.61357,
+      "phi_corr": 0.61225,
+      "settled": true
+    }
+  },
+  "seed": 1
+}
