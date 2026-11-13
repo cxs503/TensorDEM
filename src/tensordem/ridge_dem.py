@@ -440,6 +440,14 @@ class RidgeAssembly:
         m = self.material
         count = self.count
         force = torch.zeros_like(self.pos)
+        #: Love-Weber (virial) sum ``sum_c f_ij (x) (x_j - x_i)`` over *internal*
+        #: pair interactions (freeze bonds + unbonded disk contacts), units N m.
+        #: Wall/pipe/soil tractions are external boundaries and are therefore not
+        #: part of it; divide by the material volume to obtain a stress tensor
+        #: that is independent of how the boundary is instrumented.  This is the
+        #: standard DEM stress definition (YADE ``stressTensor``, LAMMPS
+        #: ``compute stress/atom``) and makes the wall-traction stress auditable.
+        virial = torch.zeros((2, 2), dtype=torch.float64)
         force[:, 1] += self.body_force
         # environmental/global drag damps free particles only; kinematic
         # platen particles are excluded so their reaction stays interpretable
@@ -485,6 +493,7 @@ class RidgeAssembly:
                 alive = self.bond_alive
             pair_force = (normal_force[:, None] * normal
                           + shear_force[:, None] * tangent) * alive[:, None].to(torch.float64)
+            virial += torch.einsum("ni,nj->ij", pair_force, delta)
             force.index_add_(0, i, pair_force)
             force.index_add_(0, j, -pair_force)
             if update_memory and dt is not None:
@@ -522,6 +531,7 @@ class RidgeAssembly:
             contact_friction_power += float((-tangential * v_t).sum())
             pair_force = (magnitude[:, None] * normal
                           + tangential[:, None] * tangent)
+            virial += torch.einsum("ni,nj->ij", pair_force, delta[active])
             force.index_add_(0, ai, pair_force)
             force.index_add_(0, aj, -pair_force)
 
@@ -629,6 +639,7 @@ class RidgeAssembly:
             "platen_force": platen_force,
             "pipe_force": pipe_force,
             "plane_forces": plane_forces,
+            "virial": virial,
             "soil_force": soil_force,
             "contacts": contact_count,
             "pipe_contacts": pipe_contacts,
