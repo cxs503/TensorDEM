@@ -351,8 +351,15 @@ def run_rolling_resistance_xval(
     out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
 
-    # Run the validation script
-    script = Path(__file__).resolve().parents[1] / "scripts" / "validate_rolling_resistance.py"
+    # Run the validation script.
+    # ``parents[1]`` is ``src/`` for this module (``src/tensordem/...``), so the
+    # repository root -- the directory that actually holds ``scripts/`` -- is
+    # ``parents[2]``.  With ``parents[1]`` the subprocess could never start, and
+    # the caller silently fell back to default case values (max_rel_err = 1.0,
+    # theta = 0, "creeps") while still advertising L4 maturity.
+    script = Path(__file__).resolve().parents[2] / "scripts" / "validate_rolling_resistance.py"
+    if not script.exists():
+        raise FileNotFoundError(f"rolling-resistance harness not found: {script}")
     result = subprocess.run(
         [sys.executable, str(script), "--output", str(out)],
         capture_output=True, text=True, timeout=300,
@@ -365,6 +372,7 @@ def run_rolling_resistance_xval(
             summary = json.load(f)
     else:
         summary = {"error": "summary.json not generated", "stdout": result.stdout, "stderr": result.stderr}
+    harness_ok = bool(summary_path.exists() and result.returncode == 0 and "error" not in summary)
 
     # Build the benchmark cases with ref/got pairs
     accel = summary.get("acceleration_parity", {})
@@ -407,15 +415,49 @@ def run_rolling_resistance_xval(
         "description": "EPSD model should maintain static equilibrium without creep",
     }
 
-    # Case 4: k_r = 225 N*m/rad anchor
-    harness = summary.get("harness", {})
-    k_r_rule = harness.get("rolling_stiffness_rule", "")
-    cases["kr_anchor_225"] = {
-        "ref": "k_r = 225 N*m/rad (Jiang-2005 anchor)",
-        "got": k_r_rule,
-        "passed": True,  # The harness uses k_r = 2.25 * mu_r * k_n * R^2 which is consistent
-        "description": f"Rolling stiffness rule: {k_r_rule}",
+    # Case 4: the anchor's stiffness rule, k_r = 2.25 * mu_r**2 * k_n * R**2.
+    # This case used to report a hardcoded "passed": True with a comment claiming
+    # the linear rule was "consistent"; it is now computed from the library rule,
+    # so a regression in the rule (or a silent fallback to the linear rule)
+    # cannot pass.  See docs/xval_jiang2005_kr_rule_audit.md.
+    from .rolling_resistance import (
+        JIANG2005_ANCHOR_STATE,
+        rolling_stiffness,
+    )
+
+    anchor = JIANG2005_ANCHOR_STATE
+    k_r_jiang = rolling_stiffness(anchor["k_n"], anchor["mu_r"], anchor["radius"],
+                                  rule="jiang2005")
+    k_r_linear = rolling_stiffness(anchor["k_n"], anchor["mu_r"], anchor["radius"],
+                                   rule="linear")
+    kr_anchor_value = 225.0  # "KR-225" in the anchor slug = the 2.25 coefficient
+    kr_rel_err = abs(k_r_jiang - kr_anchor_value) / kr_anchor_value
+    kr_ratio = k_r_jiang / k_r_linear
+    ratio_rel_err = abs(kr_ratio - anchor["mu_r"]) / anchor["mu_r"]
+    cases["kr_rule_225_mur2_kn_r2"] = {
+        "ref": {"k_r_N_m_per_rad": kr_anchor_value, "ratio_jiang_over_linear": anchor["mu_r"]},
+        "got": {"k_r_N_m_per_rad": k_r_jiang, "ratio_jiang_over_linear": kr_ratio},
+        "relative_error": kr_rel_err,
+        "ratio_relative_error": ratio_rel_err,
+        "passed": bool(kr_rel_err <= 0.15 and ratio_rel_err <= 0.15),
+        "description": (
+            "k_r = 2.25 * mu_r**2 * k_n * R**2 at the anchor state "
+            f"(mu_r={anchor['mu_r']}, k_n={anchor['k_n']:.0e}, R={anchor['radius']}); "
+            f"ratio to the linear rule must be mu_r"
+        ),
     }
+
+    cases["harness_run"] = {
+        "ref": "harness exit code 0 and summary.json written",
+        "got": {"returncode": result.returncode, "summary_json": summary_path.exists()},
+        "passed": harness_ok,
+        "description": (
+            "The harness subprocess must actually run; otherwise every other "
+            "case above is a default value, not a measurement"
+        ),
+    }
+    if not harness_ok:
+        cases["harness_run"]["stderr_tail"] = (result.stderr or "")[-800:]
 
     overall = "PASS" if all(c.get("passed", False) for c in cases.values()) else "FAIL"
 
@@ -425,6 +467,7 @@ def run_rolling_resistance_xval(
         "reference": "Jiang, M.J., Yu, H.-S., Harris, D. (2005). Comput. Geotech. 32, 340-357.",
         "overall": overall,
         "cases": cases,
+        "rolling_stiffness_rule": "k_r = 2.25 * mu_r**2 * k_n * R**2 (Jiang 2005)",
         "integration": {
             "caller": "tensordem.integration_callers.run_rolling_resistance_xval",
             "mu_r": mu_r,

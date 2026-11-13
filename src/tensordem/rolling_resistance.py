@@ -293,6 +293,187 @@ def _deactivate(values: torch.Tensor, inactive: torch.Tensor) -> torch.Tensor:
 
 
 # ===================================================================
+# Rolling-stiffness rules: k_r derived from the contact parameters
+# ===================================================================
+#
+# The EPSD branch above takes ``k_r`` as a free parameter.  What value it should
+# take is a *model* decision, and the two conventions in use differ in the
+# exponent of ``mu_r``:
+#
+#   * ``"jiang2005"`` -- Jiang, Yu & Harris (2005), rolling model:
+#
+#         k_r = 2.25 * mu_r**2 * k_n * R**2
+#
+#     quadratic in the rolling coefficient.  In-repo provenance:
+#     ``docs/GAP_DEM_CLUMP_ROUND2.md`` (literature table, row Jiang 2005) quotes
+#     this rule together with the plastic limit ``mu_r R |F_n|``.
+#
+#   * ``"linear"`` -- the simpler ``k_r = 2.25 * mu_r * k_n * R**2``, which is
+#     what most DEM codes expose as a default and what
+#     ``docs/XVAL-DEM-ROLLING-MODEL-ASSESSMENT-4-MODELS.md`` used.  The two rules
+#     differ by exactly a factor ``mu_r``, so for ``mu_r < 1`` the Jiang rule is
+#     the softer spring.
+#
+# Both rules share the plastic limit ``mu_r * |F_n| * r_eff``, hence the
+# steady-state rolling behaviour (critical angle, steady downhill acceleration)
+# is identical; only the elastic/transient branch differs.  See
+# ``docs/xval_jiang2005_kr_rule_audit.md`` for the cross-validation.
+
+ROLLING_STIFFNESS_RULES = ("linear", "jiang2005")
+
+#: Reference state of the XVAL anchor
+#: ``XVAL-DEM-ELASTIC-PLASTIC-ROLLING-SPRING-KR-225-MUR2-KN-R2``.  The slug
+#: decodes as the *rule* ``k_r = 2.25 * mu_r**2 * k_n * R**2`` ("KR-225" is the
+#: coefficient 2.25, "MUR2-KN-R2" the parameter powers), not as a target
+#: stiffness.  This triple is the documented state at which the rule returns
+#: ``k_r = 225 N*m/rad``, used below as a unit-identity check.
+JIANG2005_ANCHOR_STATE = {"mu_r": 0.2, "k_n": 1.0e6, "radius": 0.05}
+
+
+def rolling_stiffness(
+    k_n: float,
+    mu_r: float,
+    radius: float,
+    *,
+    rule: str = "jiang2005",
+    coefficient: float = 2.25,
+) -> float:
+    """Rolling spring stiffness ``k_r`` from normal stiffness and geometry.
+
+    Args:
+        k_n:         Normal contact stiffness, N/m.
+        mu_r:        Rolling-resistance coefficient (dimensionless, ``>= 0``).
+        radius:      Effective particle radius ``R`` (or ``r_eff``), m.
+        rule:        ``"jiang2005"`` -> ``coefficient * mu_r**2 * k_n * R**2``
+                     (Jiang, Yu & Harris 2005); ``"linear"`` ->
+                     ``coefficient * mu_r * k_n * R**2``.
+        coefficient: Leading constant, 2.25 in both literature rules.
+
+    Returns:
+        Rolling stiffness in N*m/rad.  Exactly ``0.0`` for ``mu_r == 0`` (the
+        rolling mode is then disabled, consistent with
+        :attr:`RollingResistanceConfig.enabled`).
+    """
+    if rule not in ROLLING_STIFFNESS_RULES:
+        raise ValueError(f"rule must be one of {ROLLING_STIFFNESS_RULES}, got {rule!r}")
+    for name, value in (("k_n", k_n), ("radius", radius), ("coefficient", coefficient)):
+        if not math.isfinite(value) or value <= 0.0:
+            raise ValueError(f"{name} must be finite and positive, got {value}")
+    if not math.isfinite(mu_r) or mu_r < 0.0:
+        raise ValueError(f"mu_r must be finite and nonnegative, got {mu_r}")
+    power = 2.0 if rule == "jiang2005" else 1.0
+    return coefficient * (mu_r ** power) * k_n * radius ** 2
+
+
+def rolling_stiffness_table(
+    mu_r_values,
+    *,
+    k_n: float,
+    radius: float,
+    rules=ROLLING_STIFFNESS_RULES,
+    coefficient: float = 2.25,
+) -> list:
+    """Tabulate every stiffness rule over a sweep of ``mu_r``.
+
+    Returns one dict per ``mu_r`` with the rule values and the ratio
+    ``k_r["jiang2005"] / k_r["linear"]``, which is analytically ``mu_r`` (so the
+    ratio column doubles as a check of the implementation).
+    """
+    rows = []
+    for mu_r in mu_r_values:
+        row = {"mu_r": float(mu_r)}
+        for rule in rules:
+            row[f"k_r_{rule}"] = rolling_stiffness(
+                k_n, float(mu_r), radius, rule=rule, coefficient=coefficient
+            )
+        if "k_r_jiang2005" in row and row.get("k_r_linear", 0.0) > 0.0:
+            row["ratio_jiang_over_linear"] = row["k_r_jiang2005"] / row["k_r_linear"]
+        rows.append(row)
+    return rows
+
+
+def rolling_mode_frequency(
+    k_r: float,
+    mass: float,
+    radius: float,
+    *,
+    inertia_factor: float = 0.4,
+) -> float:
+    """Undamped frequency of the elastic rolling mode of a sphere on a plane.
+
+    For a sphere rolling without slip, translation and rotation are coupled
+    (``x = R theta``), so the elastic rolling spring ``M_r = -k_r theta`` gives
+
+        (I + m R^2) theta_ddot = -k_r theta
+        =>  omega_n = sqrt( k_r / (m R^2 (1 + I/(m R^2))) ),
+
+    which for a solid sphere (``I/(mR^2) = 2/5``) is
+    ``sqrt(5 k_r / (7 m R^2))``.  Dropping the ``m R^2`` translation term (i.e.
+    treating the rolling DOF as isolated) over-predicts the frequency by
+    ``sqrt(1 + 1/f) = sqrt(3.5)`` for ``f = 2/5`` -- an error far outside the
+    15 % acceptance band, so the coupling term must be kept.
+
+    Args:
+        k_r:            Rolling stiffness, N*m/rad.
+        mass:           Particle mass, kg.
+        radius:         Particle radius, m.
+        inertia_factor: ``I/(m R^2)``; 0.4 for a solid sphere, 2/3 for a shell.
+
+    Returns:
+        Angular frequency, rad/s.
+    """
+    for name, value in (("k_r", k_r), ("mass", mass), ("radius", radius),
+                        ("inertia_factor", inertia_factor)):
+        if not math.isfinite(value) or value <= 0.0:
+            raise ValueError(f"{name} must be finite and positive, got {value}")
+    return math.sqrt(k_r / (mass * radius ** 2 * (1.0 + inertia_factor)))
+
+
+def rolling_yield_angle(
+    mu_r: float,
+    normal_force: float,
+    r_eff: float,
+    k_r: float,
+) -> float:
+    """Relative rolling angle at which the EPSD contact yields (rad).
+
+    The elastic branch saturates when ``k_r * theta`` reaches the plastic limit
+    ``mu_r |F_n| r_eff``, i.e. ``theta_y = mu_r |F_n| r_eff / k_r``.  Under the
+    quadratic Jiang rule the yield angle is therefore ``1/mu_r`` times larger
+    than under the linear rule at the same ``mu_r``.
+    """
+    if not math.isfinite(mu_r) or mu_r < 0.0:
+        raise ValueError("mu_r must be finite and nonnegative")
+    for name, value in (("normal_force", normal_force), ("r_eff", r_eff)):
+        if not math.isfinite(value) or value < 0.0:
+            raise ValueError(f"{name} must be finite and nonnegative")
+    if not math.isfinite(k_r) or k_r <= 0.0:
+        raise ValueError("k_r must be finite and positive")
+    return mu_r * normal_force * r_eff / k_r
+
+
+def rolling_yield_time(
+    mu_r: float,
+    normal_force: float,
+    r_eff: float,
+    k_r: float,
+    omega_roll: float,
+) -> float:
+    """Time for a contact spun at constant ``omega_roll`` to reach the plastic limit.
+
+    With a constant relative rolling rate the elastic torque grows linearly,
+    ``|M_r(t)| = k_r |omega_roll| t``, until it reaches ``mu_r |F_n| r_eff``:
+
+        t_y = mu_r |F_n| r_eff / (k_r |omega_roll|).
+
+    Combined with :func:`rolling_yield_angle` this is ``theta_y / |omega_roll|``.
+    """
+    if not math.isfinite(omega_roll) or omega_roll == 0.0:
+        raise ValueError("omega_roll must be finite and nonzero")
+    return rolling_yield_angle(mu_r, normal_force, r_eff, k_r) / abs(omega_roll)
+
+
+# ===================================================================
 # Analytical references used for verification
 # ===================================================================
 
