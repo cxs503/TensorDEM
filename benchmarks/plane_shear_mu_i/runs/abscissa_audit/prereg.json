@@ -1,0 +1,26 @@
+{
+  "case": "CASE-DEM-PLANE-SHEAR-MUIDI",
+  "round": 10,
+  "mission": 17694,
+  "kind": "archival re-analysis, zero new simulation (capacity discipline: load15 >= 100)",
+  "inputs": [
+    "benchmarks/plane_shear_mu_i/runs/full_cell/point_{0.01,0.03,0.1,0.3}.json",
+    "benchmarks/plane_shear_mu_i/runs/bulk_rheometry/point_{0.01,0.03,0.1,0.3}.json"
+  ],
+  "written_before": "the re-judgement code ran for the first time",
+  "not_blinded_because": "round-8 docs already quote the error at I_target for mu_full (tail) and mu_full_zz; H2/H3/H4 concern quantities not published anywhere in the repo at pre-registration time",
+  "abscissae_under_test": {
+    "I_target": "imposed platen rate, applied pressure (= the pre-registered abscissa of round 8 P3)",
+    "I_imposed_measP": "imposed platen rate, measured pressure (the artefact field misleadingly named I_measured)",
+    "I_vol": "volume-averaged measured affine strain rate, measured pressure (the pair that matches the volume-averaged ordinate mu_full)",
+    "I_bulk": "volume-averaged measured rate, archived bulk (slab / full-cell) pressure"
+  },
+  "hypotheses": {
+    "H1_abscissa_matters": "max over points |I_vol / I_target - 1| >= 0.10, i.e. the abscissa choice is not cosmetic",
+    "H2_abscissa_explains_the_error": "at I_vol, |mu_full(tail) / mu_ref - 1| <= 10% on >= 3 of 4 points of the full_cell arm",
+    "H3_window_stability": "signed error of mu_full(tail) and mu_full_final have the same sign at all 4 points (the round-8 verdict cannot be an artefact of the 60%-vs-20% window choice)",
+    "H4_gate_restricted": "restricting to points that pass the device's own constant-stress gate (servo_valid), |mu_full / mu_ref - 1| <= 10% at the gate-passing points under at least one abscissa"
+  },
+  "falsification_rule": "a hypothesis that fails is reported as FAIL; the ledger row is not closed on any cell of the matrix unless every gate-passing point is inside the band for that cell",
+  "expected_if_H2_fails": "the abscissa is a real identification defect but not the source of the -27% deficit; round 9's wide cell (cj1584) remains the decisive test"
+}
