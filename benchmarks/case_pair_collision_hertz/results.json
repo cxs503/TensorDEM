@@ -30,7 +30,7 @@
     "restitution": 1.0000003923692513,
     "steps": 1622,
     "dt_s": 1.875419496850487e-06,
-    "wall_time_s": 6.549548650160432
+    "wall_time_s": 8.467514270916581
   },
   "primary_damped": {
     "speed_m_per_s": 0.5,
@@ -47,7 +47,7 @@
     "contact_time_rk4_s": 0.0005526700000001017,
     "steps": 1628,
     "dt_s": 1.875419496850487e-06,
-    "wall_time_s": 6.478861941024661
+    "wall_time_s": 8.591566348448396
   },
   "velocity_sweep": [
     {
@@ -57,7 +57,7 @@
       "restitution_rel_error": 6.33506312212929e-05,
       "closure_error_vs_target": 0.03228531599756376,
       "steps": 3005,
-      "wall_time_s": 10.708344580605626
+      "wall_time_s": 15.618910329416394
     },
     {
       "speed_m_per_s": 0.5,
@@ -66,7 +66,7 @@
       "restitution_rel_error": 9.347876127474889e-05,
       "closure_error_vs_target": 0.03231642369175197,
       "steps": 1628,
-      "wall_time_s": 6.257455490529537
+      "wall_time_s": 8.159222239628434
     },
     {
       "speed_m_per_s": 1.0,
@@ -75,9 +75,145 @@
       "restitution_rel_error": 0.00010648635809935296,
       "closure_error_vs_target": 0.03211002626101106,
       "steps": 923,
-      "wall_time_s": 3.259443448856473
+      "wall_time_s": 4.317095939069986
     }
   ],
+  "restitution_calibration": {
+    "convention_legacy": "contact_damping_model='restitution' (linear zeta(e) map)",
+    "convention_calibrated": "contact_damping_model='restitution_calibrated'",
+    "targets": [
+      0.5,
+      0.8
+    ],
+    "speeds_m_per_s": [
+      0.25,
+      0.5,
+      1.0
+    ],
+    "max_closure_error_legacy": 0.16457408433476717,
+    "max_closure_error_calibrated": 0.0009611660626465124,
+    "velocity_spread_legacy": 0.0003678855632139877,
+    "velocity_spread_calibrated": 0.00042740893355786014,
+    "max_calibrated_vs_reference_rel_error": 0.0009610202503153456,
+    "closure_within_tolerance": true,
+    "tolerance": 0.03,
+    "rows": [
+      {
+        "restitution_requested": 0.5,
+        "speed_m_per_s": 0.25,
+        "zeta_linear_mapping": 0.2154537619662468,
+        "zeta_calibrated": 0.2854070309921849,
+        "restitution_legacy_engine": 0.5822603435974258,
+        "restitution_legacy_predicted": 0.5822790511526968,
+        "closure_error_legacy": 0.1645206871948517,
+        "restitution_calibrated_engine": 0.4999190169669754,
+        "closure_error_calibrated": 0.00016196606604923502,
+        "restitution_rk4_reference_legacy_zeta": 0.5822789537018039,
+        "legacy_vs_reference_rel_error": 3.196080548640665e-05,
+        "restitution_rk4_reference_calibrated_zeta": 0.4999998892287941,
+        "calibrated_vs_reference_rel_error": 0.0001617445594707657,
+        "steps_legacy": 3023,
+        "steps_calibrated": 3032,
+        "dt_s": 1.875419496850487e-06,
+        "wall_time_s": 29.97767261043191
+      },
+      {
+        "restitution_requested": 0.5,
+        "speed_m_per_s": 0.5,
+        "zeta_linear_mapping": 0.2154537619662468,
+        "zeta_calibrated": 0.2854070309921849,
+        "restitution_legacy_engine": 0.5822870421673836,
+        "restitution_legacy_predicted": 0.5822790511526968,
+        "closure_error_legacy": 0.16457408433476717,
+        "restitution_calibrated_engine": 0.4999468259022346,
+        "closure_error_calibrated": 0.00010634819553079211,
+        "restitution_rk4_reference_legacy_zeta": 0.5822789689095802,
+        "legacy_vs_reference_rel_error": 1.386493113173171e-05,
+        "restitution_rk4_reference_calibrated_zeta": 0.49999990651865756,
+        "calibrated_vs_reference_rel_error": 0.00010616125269409556,
+        "steps_legacy": 1643,
+        "steps_calibrated": 1652,
+        "dt_s": 1.875419496850487e-06,
+        "wall_time_s": 14.397185331210494
+      },
+      {
+        "restitution_requested": 0.5,
+        "speed_m_per_s": 1.0,
+        "zeta_linear_mapping": 0.2154537619662468,
+        "zeta_calibrated": 0.2854070309921849,
+        "restitution_legacy_engine": 0.5819191566041696,
+        "restitution_legacy_predicted": 0.5822790511526968,
+        "closure_error_legacy": 0.1638383132083392,
+        "restitution_calibrated_engine": 0.49951941696867674,
+        "closure_error_calibrated": 0.0009611660626465124,
+        "restitution_rk4_reference_legacy_zeta": 0.5822789869415385,
+        "legacy_vs_reference_rel_error": 0.0006179689554982824,
+        "restitution_rk4_reference_calibrated_zeta": 0.4999999270237027,
+        "calibrated_vs_reference_rel_error": 0.0009610202503153456,
+        "steps_legacy": 937,
+        "steps_calibrated": 944,
+        "dt_s": 1.875419496850487e-06,
+        "wall_time_s": 7.7245286498218775
+      },
+      {
+        "restitution_requested": 0.8,
+        "speed_m_per_s": 0.25,
+        "zeta_linear_mapping": 0.07085030019536805,
+        "zeta_calibrated": 0.08313157171777823,
+        "restitution_legacy_engine": 0.825828252798051,
+        "restitution_legacy_predicted": 0.8257759848077897,
+        "closure_error_legacy": 0.03228531599756376,
+        "restitution_calibrated_engine": 0.8000543470029573,
+        "closure_error_calibrated": 6.793375369656962e-05,
+        "restitution_rk4_reference_legacy_zeta": 0.8257759393710445,
+        "legacy_vs_reference_rel_error": 6.33506312212929e-05,
+        "restitution_rk4_reference_calibrated_zeta": 0.7999999482666048,
+        "calibrated_vs_reference_rel_error": 6.799842483784928e-05,
+        "steps_legacy": 3005,
+        "steps_calibrated": 3006,
+        "dt_s": 1.875419496850487e-06,
+        "wall_time_s": 25.243617458269
+      },
+      {
+        "restitution_requested": 0.8,
+        "speed_m_per_s": 0.5,
+        "zeta_linear_mapping": 0.07085030019536805,
+        "zeta_calibrated": 0.08313157171777823,
+        "restitution_legacy_engine": 0.8258531389534016,
+        "restitution_legacy_predicted": 0.8257759848077897,
+        "closure_error_legacy": 0.03231642369175197,
+        "restitution_calibrated_engine": 0.800083672645379,
+        "closure_error_calibrated": 0.00010459080672375887,
+        "restitution_rk4_reference_legacy_zeta": 0.8257759464408378,
+        "legacy_vs_reference_rel_error": 9.347876127474889e-05,
+        "restitution_rk4_reference_calibrated_zeta": 0.7999999563147691,
+        "calibrated_vs_reference_rel_error": 0.00010464541897681822,
+        "steps_legacy": 1628,
+        "steps_calibrated": 1629,
+        "dt_s": 1.875419496850487e-06,
+        "wall_time_s": 12.003724141046405
+      },
+      {
+        "restitution_requested": 0.8,
+        "speed_m_per_s": 1.0,
+        "zeta_linear_mapping": 0.07085030019536805,
+        "zeta_calibrated": 0.08313157171777823,
+        "restitution_legacy_engine": 0.8256880210088089,
+        "restitution_legacy_predicted": 0.8257759848077897,
+        "closure_error_legacy": 0.03211002626101106,
+        "restitution_calibrated_engine": 0.7999000834603412,
+        "closure_error_calibrated": 0.00012489567457349415,
+        "restitution_rk4_reference_legacy_zeta": 0.8257759548828504,
+        "legacy_vs_reference_rel_error": 0.00010648635809935296,
+        "restitution_rk4_reference_calibrated_zeta": 0.7999999659555258,
+        "calibrated_vs_reference_rel_error": 0.00012485312429389323,
+        "steps_legacy": 923,
+        "steps_calibrated": 924,
+        "dt_s": 1.875419496850487e-06,
+        "wall_time_s": 9.369780000299215
+      }
+    ]
+  },
   "convergence_study": [
     {
       "dt_factor": 0.8,
@@ -90,7 +226,7 @@
       "contact_time_ref_s": 0.0005409599609325469,
       "contact_time_rel_error": 0.001551216171636933,
       "restitution": 1.0000005158904002,
-      "wall_time_s": 3.314121600240469
+      "wall_time_s": 4.125171789899468
     },
     {
       "dt_factor": 0.4,
@@ -103,7 +239,7 @@
       "contact_time_ref_s": 0.0005409599609325469,
       "contact_time_rel_error": 0.001551216171636933,
       "restitution": 1.0000003923692513,
-      "wall_time_s": 6.443430420011282
+      "wall_time_s": 6.009088920429349
     },
     {
       "dt_factor": 0.2,
@@ -116,7 +252,7 @@
       "contact_time_ref_s": 0.0005409599609325469,
       "contact_time_rel_error": 0.001551216171636933,
       "restitution": 0.9999999796148052,
-      "wall_time_s": 17.14718034118414
+      "wall_time_s": 11.637837110087276
     }
   ]
 }
