@@ -219,6 +219,16 @@ def repose_case(*, n_bodies: int = 45,
             "source": "ice-rubble angle of repose literature band; provenance in "
                       "docs/H1_BROKEN_ICE_DEM_ROUND2.md section 2",
         },
+        "got": {
+            # the measured side of the L4 ref/got pair (ref = literature band)
+            "angles_deg": angles,
+            "angle_mean_deg": float(np.mean(angles)) if angles else float("nan"),
+            "angle_min_deg": float(np.min(angles)) if angles else float("nan"),
+            "angle_max_deg": float(np.max(angles)) if angles else float("nan"),
+            "n_runs": len(angles),
+            "n_settled": int(sum(settled)),
+            "n_inside_band": int(sum(inside)),
+        },
         "runs": raw["runs"],
         "angles_deg": angles,
         "settled": settled,
@@ -265,6 +275,13 @@ def channel_clearing_case(*, n_floes: int = 24, median_thickness: float = 0.12,
     and not calibrated: it is the value used by the shipped channel study.
     """
     t0 = time.time()
+    # how many steps the declared corridor actually needs: a step budget below
+    # this cannot sweep the corridor, so ``sweep_complete`` would be a budget
+    # artefact instead of a measurement.  Reported (not silently fixed) so a
+    # caller that overrides ``n_steps`` sees the mismatch.
+    steps_for_corridor = (int(math.ceil(corridor / (speed * dt)))
+                          if speed > 0.0 and dt > 0.0 else 0)
+    budget_sufficient = bool(steps_for_corridor > 0 and n_steps >= steps_for_corridor)
     field = build_brash_ice_field(n_floes, box=(0.02, -0.5 * width, length, 0.5 * width),
                                   median_thickness=median_thickness, seed=seed,
                                   ice_density=ice_density, water_density=water_density)
@@ -296,6 +313,14 @@ def channel_clearing_case(*, n_floes: int = 24, median_thickness: float = 0.12,
     advance = float(record["hull_advance"][0])
     resistance = np.asarray(record["resistance"], dtype=float)
     steady = resistance[len(resistance) // 3:] if resistance.size >= 3 else resistance
+    criteria = {
+        "sweep_budget_sufficient": budget_sufficient,
+        "sweep_complete": bool(advance >= corridor),
+        "lane_halved": bool(conc_lane.size > 1
+                            and float(conc_lane[-1]) < float(conc_lane[0]) * 0.5),
+        "mass_conserved": bool(float(record["mass_residual"][0]) < 1e-12),
+        "energy_closed": bool(float(record["energy_residual"][0]) < 0.05),
+    }
     return {
         "case": "channel_clearing",
         "setup": {
@@ -303,6 +328,9 @@ def channel_clearing_case(*, n_floes: int = 24, median_thickness: float = 0.12,
             "hull_speed_m_s": speed, "mu": mu, "kn": kn, "dt_s": dt,
             "n_steps": n_steps, "width_m": width, "length_m": length,
             "corridor_m": corridor, "outlet_margin_m": outlet_margin, "seed": seed,
+            "steps_for_corridor": steps_for_corridor,
+            "sweep_budget_ratio": (float(n_steps) / steps_for_corridor
+                                   if steps_for_corridor else float("nan")),
             "lane_metric": "exact clipped solid volume / (corridor*width*median_thickness)",
             "ice_density": ice_density, "water_density": water_density,
             "initial_field_porosity": float(field.porosity()),
@@ -345,19 +373,22 @@ def channel_clearing_case(*, n_floes: int = 24, median_thickness: float = 0.12,
             "energy_residual": float(record["energy_residual"][0]),
             "safety_clamps": int(record["clamps"][0]),
         },
-        "runtime_s": time.time() - t0,
-        "criteria": {
-            "sweep_complete": bool(advance >= corridor),
-            "lane_halved": bool(conc_lane.size > 1
-                                and float(conc_lane[-1]) < float(conc_lane[0]) * 0.5),
-            "mass_conserved": bool(float(record["mass_residual"][0]) < 1e-12),
-            "energy_closed": bool(float(record["energy_residual"][0]) < 0.05),
+        "got": {
+            # the measured side of the L4 ref/got pair (ref = acceptance criteria)
+            "lane_concentration_initial": l0,
+            "lane_concentration_final": (float(conc_lane[-1]) if conc_lane.size
+                                        else float("nan")),
+            "lane_concentration_ratio": (float(conc_lane[-1]) / l0) if l0 else float("nan"),
+            "lane_concentration_half_time_s": lane_half_time,
+            "hull_advance_m": advance,
+            "resistance_mean_steady_N": (float(steady.mean()) if steady.size
+                                         else float("nan")),
+            "mass_residual": float(record["mass_residual"][0]),
+            "energy_residual": float(record["energy_residual"][0]),
         },
-        "passed": bool(conc_lane.size > 1
-                       and advance >= corridor
-                       and float(conc_lane[-1]) < float(conc_lane[0]) * 0.5
-                       and float(record["mass_residual"][0]) < 1e-12
-                       and float(record["energy_residual"][0]) < 0.05),
+        "runtime_s": time.time() - t0,
+        "criteria": criteria,
+        "passed": bool(all(criteria.values())),
     }
 
 
@@ -384,6 +415,14 @@ def validate(*, cases: Iterable[str] = ("buoyancy", "repose", "channel"),
         if quick:
             ck.setdefault("n_floes", 12)
             ck.setdefault("n_steps", 300)
+            # A smoke run must still *sweep* the swath, otherwise
+            # ``sweep_complete`` is a step-budget artefact and the lane criterion
+            # is never exercised (the pre-fix quick run advanced 0.06 m through a
+            # 1.0 m corridor, i.e. 6 % of the swath, and could never pass).
+            # Scale the corridor to 80 % of the distance the budget covers.
+            reach = (float(ck["n_steps"]) * float(ck.get("dt", 5.0e-4))
+                     * float(ck.get("speed", 0.4)))
+            ck.setdefault("corridor", min(1.0, 0.8 * reach))
         out["cases"]["channel"] = channel_clearing_case(**ck)
     out["runtime_s"] = time.time() - t0
     out["finished"] = time.strftime("%Y-%m-%dT%H:%M:%S")
