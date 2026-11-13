@@ -1,0 +1,128 @@
+{
+  "mission_audited": 17498,
+  "anchor": "CASE-DEM-BIAXIAL-CELL-KNOWN-ANGLE",
+  "repo": "TensorDEM",
+  "auditor_mission": 17626,
+  "worktree": "/root/tp-agent/work/m17498",
+  "provenance": {
+    "artifacts": {
+      "artifacts/biaxial_shear_band/r3_ensemble.json": {
+        "exists": true,
+        "sha256": "43fbc577349dff53c2a7736d49e290837af90618050f770dc85d9531809d2a15",
+        "bytes": 4216
+      },
+      "artifacts/biaxial_shear_band/r3_ensemble.png": {
+        "exists": true,
+        "sha256": "f63866d661626abdf034661d25ee31185ff8ef52d1cfef0ee3e4908a41c6f955",
+        "bytes": 106794
+      },
+      "artifacts/biaxial_shear_band/r3_estimator_audit.json": {
+        "exists": true,
+        "sha256": "e5c5f9f4b6557c6e9bf04c0da95bfaed5ffbe10295edb3f07754f46bf8749604",
+        "bytes": 39218
+      },
+      "artifacts/biaxial_shear_band/r3_estimator_audit.png": {
+        "exists": true,
+        "sha256": "44ee65e15250d6fa35e2e474f74d0cb4ce0eb0e7cec2d67b741a47bdf600c570",
+        "bytes": 146332
+      },
+      "logs/r3_ensemble.log": {
+        "exists": true,
+        "sha256": "5d954cd463efc04f8278d19db65dfdae49f65773200025db72970e73fe0d369e",
+        "bytes": 389
+      }
+    },
+    "raw_field_snapshots_npz": [],
+    "per_specimen_cache_dir": {
+      "path": "artifacts/biaxial_shear_band/r3_cache",
+      "exists": true,
+      "entries": 0
+    },
+    "re_derivable_from_raw_fields": false
+  },
+  "arithmetic": {
+    "log_lines_parsed": 6,
+    "anchor_specimens_in_log": 5,
+    "recomputed_radon": {
+      "n": 5,
+      "mean": 53.831999999999994,
+      "std": 0.8978418568990869,
+      "ci95_half": 1.1146391879994173
+    },
+    "published_radon": {
+      "n": 5,
+      "mean": 53.831999999999994,
+      "std": 0.8978418568990869,
+      "ci95_half": 1.1148179097920143,
+      "rel_error": 0.1028000000000001
+    },
+    "delta_mean_deg": 0.0,
+    "delta_std_deg": 0.0,
+    "delta_ci95_half_deg": -0.00017872179259703636,
+    "recomputed_rel_error": 0.1028000000000001,
+    "per_specimen_log_vs_json_mismatches": [],
+    "recomputed_tensor": {
+      "n": 5,
+      "mean": 66.83,
+      "std": 9.611984706604563,
+      "ci95_half": 11.932942027714706
+    },
+    "specimens_completed_vs_planned": {
+      "log_rows": 6,
+      "declared_completed": 6,
+      "declared_planned": 8,
+      "anchor_members": 5
+    }
+  },
+  "referee": {
+    "case": "CASE-DEM-BIAXIAL-CELL-KNOWN-ANGLE",
+    "registered_row": {
+      "tensor_benchmark_cases.id": 59
+    },
+    "metric": "shear band inclination vs anchor (deg)",
+    "ref_deg": 60.0,
+    "ref_source": "Desrues & Viggiani 2004 IJNAMG 28:279-321 (55-60 deg, midpoint 60)",
+    "got_deg": 53.831999999999994,
+    "abs_error_deg": 6.168000000000006,
+    "rel_error": 0.1028000000000001,
+    "tolerance_rel": 0.15,
+    "within_owner_15pct": true,
+    "within_3pct": false,
+    "vs_literature_lower_bound_55": 0.02123636363636375,
+    "ci95_deg": [
+      52.71736081200058,
+      54.94663918799941
+    ],
+    "ci95_inside_tolerance_band": true
+  },
+  "operator": {
+    "lattice": {
+      "columns": 24,
+      "rows": 48,
+      "particles": 1128,
+      "window_aspect_ptp": 0.566553020272711
+    },
+    "note": "noise-free synthetic band injected into the case lattice, production Radon focus (binning='equal_count')",
+    "rows": [
+      {
+        "angle_true_deg": 45.0,
+        "radon_deg": 45.0,
+        "error_deg": 0.0,
+        "slip_m": 0.02
+      },
+      {
+        "angle_true_deg": 60.0,
+        "radon_deg": 59.0,
+        "error_deg": -1.0,
+        "slip_m": 0.02
+      },
+      {
+        "angle_true_deg": 70.0,
+        "radon_deg": 70.0,
+        "error_deg": 0.0,
+        "slip_m": 0.02
+      }
+    ],
+    "max_abs_error_deg": 1.0
+  }
+}
