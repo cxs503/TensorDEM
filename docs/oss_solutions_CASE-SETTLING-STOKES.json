@@ -1,0 +1,121 @@
+{
+  "feature_slug": "CASE-SETTLING-STOKES",
+  "anchor": "CASE-SETTLING-STOKES",
+  "case_pool_entry": {
+    "id": "SETTLING-STOKES",
+    "reference": "Stokes 1851 analytical terminal velocity",
+    "tolerance_relative": 0.05
+  },
+  "decision": "复用仓内 two_way_coupling 验证面（stokes_terminal.py + settling_transient.py），配指数积分器消除欧拉偏置；不迁移任何外部源码",
+  "transfer_vocabulary": [
+    "adapt",
+    "reference",
+    "reject-as-is"
+  ],
+  "candidates": [
+    {
+      "name": "tensordem/two_way_coupling/stokes_terminal.py",
+      "transfer": "adapt",
+      "role": "主路径：Stokes 末速解析 + Schiller-Naumann 修正 + 前向欧拉积分",
+      "evidence": "benchmarks/case_settling_stokes/run_case.py: relative_error_stokes=1.07%"
+    },
+    {
+      "name": "tensordem/two_way_coupling/settling_transient.py",
+      "transfer": "adapt",
+      "role": "瞬态收敛验证：闭式解 + 指数积分器（消除 dt 偏置）",
+      "evidence": "tests/test_settling_transient_convergence.py: 16 passed"
+    },
+    {
+      "name": "Clift, Grace & Weber 1978 / Crowe et al. 2011 教科书标准做法",
+      "transfer": "reference",
+      "role": "方法谱系锚点：Stokes 公式 + SN 修正 + 弛豫时间解析",
+      "evidence": "docs/CASE_SETTLING_STOKES.md §1"
+    },
+    {
+      "name": "pylbm (~/oss-cache) LBM Navier-Stokes 求解器",
+      "transfer": "reference",
+      "role": "横向参照：LBM 亦可解 Stokes 流，但本任务用 DEM 点颗粒模型",
+      "evidence": "oss-cache/pylbm/demo/examples/scheme/eqpde_d2q9_navier_stokes.py"
+    },
+    {
+      "name": "前轮 m17082 一次性长跑做法",
+      "transfer": "reject-as-is",
+      "role": "fail_stage 未标、failure_reason 未留，不可复现",
+      "evidence": "任务单 failure_reason=未留"
+    }
+  ],
+  "external_anchor": [
+    "Stokes, G.G. (1851) On the Effect of the Internal Friction of Fluids on the Motion of Pendulums, Trans. Cambridge Phil. Soc. 9, 8-106",
+    "Clift, R., Grace, J.R. & Weber, M.E. (1978) Bubbles, Drops, and Particles, Academic Press, §3.1 Stokes regime",
+    "Crowe, C.T., Schwarzkopf, J.D., Sommerfeld, M. & Tsuji, Y. (2011) Multiphase Flows with Droplets and Particles, 2nd ed., CRC Press, §4.2 Drag laws",
+    "Schiller, L. & Naumann, A. (1933) Über die grundlegenden Berechnungen bei der Schwerkraftaufbereitung, Z. Ver. Dtsch. Ing. 77, 318-320",
+    "Maxey, M.R. & Riley, J.J. (1983) Equation of motion for a small rigid sphere in a nonuniform flow, Phys. Fluids 26(4), 883-889"
+  ],
+  "migration_plan": [
+    "契约化算例常量（d=30μm, ρ_p=2500, ρ_f=1000, μ=1e-3, dt=1e-5, t_max=0.05）",
+    "每配置一进程一检查点 artifacts/case_settling_stokes/result.json",
+    "参考解自校核四判据（vs_Stokes<5%, vs_SN<1e-6, Re<0.1, tau_fit<10%）",
+    "聚合器程序化注入报告数字（零手抄）+ 门禁三态 PASS/MISSING/FAIL",
+    "指数积分器作为可选路径（消除欧拉偏置，适用于 dt/tau > 0.05 场景）"
+  ],
+  "measured": {
+    "gate": [
+      {
+        "criterion": "vs_stokes_<5pct",
+        "measured": 0.010725480019610604,
+        "threshold": 0.05,
+        "passed": true
+      },
+      {
+        "criterion": "vs_sn_<1e-6",
+        "measured": 7.447888791222507e-16,
+        "threshold": 1e-6,
+        "passed": true
+      },
+      {
+        "criterion": "stokes_regime_Re<0.1",
+        "measured": 0.0220725,
+        "threshold": 0.1,
+        "passed": true
+      },
+      {
+        "criterion": "tau_fit_vs_analytical_<10pct",
+        "measured": 0.048,
+        "threshold": 0.1,
+        "passed": true
+      }
+    ],
+    "diameter_sweep": [
+      {"diameter_m": 1e-5, "Re": 8.1657e-04, "err_vs_stokes_pct": 0.11},
+      {"diameter_m": 2e-5, "Re": 0.0065, "err_vs_stokes_pct": 0.47},
+      {"diameter_m": 3e-5, "Re": 0.0218, "err_vs_stokes_pct": 1.07},
+      {"diameter_m": 5e-5, "Re": 0.0991, "err_vs_stokes_pct": 2.97},
+      {"diameter_m": 7e-5, "Re": 0.2645, "err_vs_stokes_pct": 5.67},
+      {"diameter_m": 1e-4, "Re": 0.7294, "err_vs_stokes_pct": 10.78}
+    ],
+    "dt_convergence": [
+      {"dt": 2e-5, "err_vs_sn_pct": 0.0},
+      {"dt": 1e-5, "err_vs_sn_pct": 0.0},
+      {"dt": 5e-6, "err_vs_sn_pct": 0.0},
+      {"dt": 2.5e-6, "err_vs_sn_pct": 0.0}
+    ],
+    "overall_passed": true
+  },
+  "artifacts": [
+    "benchmarks/case_settling_stokes/run_case.py",
+    "benchmarks/case_settling_stokes/report.py",
+    "benchmarks/case_settling_stokes/run_all.sh",
+    "src/tensordem/two_way_coupling/stokes_terminal.py",
+    "src/tensordem/two_way_coupling/settling_transient.py",
+    "src/tensordem/two_way_coupling/particle_ode.py",
+    "tests/test_settling_transient_convergence.py",
+    "docs/CASE_SETTLING_STOKES.md",
+    "artifacts/case_settling_stokes/result.json",
+    "artifacts/case_settling_stokes/gates.json",
+    "artifacts/case_settling_stokes/fig_settling_curve.png",
+    "artifacts/case_settling_stokes/fig_diameter_sweep.png",
+    "artifacts/case_settling_stokes/fig_dt_convergence.png"
+  ],
+  "db_write_status": "blocked: no INSERT privilege on oss_solutions for local role; record kept as in-repo JSON for the ingester",
+  "date": "2026-11-13"
+}
