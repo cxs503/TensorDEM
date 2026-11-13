@@ -40,6 +40,7 @@ from __future__ import annotations
 import numpy as np
 
 from ..granular3d_core import Material3D, build_pairs
+from .inertial_friction import InertialFriction
 
 __all__ = [
     "Material3D",
@@ -137,7 +138,53 @@ def _empty_pair_result(n: int) -> dict:
         "f_t": np.zeros((0, 3)),
         "slip_tangential": np.zeros((0, 3)),
         "slip_rolling": np.zeros((0, 3)),
+        "mu_eff_mean": float("nan"),
+        "mu_eff_max": float("nan"),
+        "mu_eff_min": float("nan"),
+        "inertial_number_mean": float("nan"),
+        "inertial_number_max": float("nan"),
     }
+
+
+def _mean_or(values) -> float:
+    if values is None:
+        return float("nan")
+    arr = np.asarray(values, dtype=np.float64)
+    return float(arr.mean()) if arr.size else float("nan")
+
+
+def _max_or(values) -> float:
+    if values is None:
+        return float("nan")
+    arr = np.asarray(values, dtype=np.float64)
+    return float(arr.max()) if arr.size else float("nan")
+
+
+def _min_or(values) -> float:
+    if values is None:
+        return float("nan")
+    arr = np.asarray(values, dtype=np.float64)
+    return float(arr.min()) if arr.size else float("nan")
+
+
+def _contact_friction(mu: float, mu_i: InertialFriction | None,
+                      slip_velocity: np.ndarray, f_n: np.ndarray,
+                      diameter: float, density: float):
+    """Friction coefficient per contact plus its inertial number.
+
+    Returns ``(None, None)`` when friction is switched off, a constant array
+    when ``mu_i is None`` (bit-identical to the historical ``mu*|F_n|`` cap),
+    and the ``mu(I_c)`` array otherwise.
+    """
+    if mu_i is None:
+        if mu <= 0.0:
+            return None, None
+        return np.full(f_n.shape, float(mu)), None
+    if mu_i.mu_2 <= 0.0:
+        return None, None
+    speed = np.sqrt(np.einsum("ij,ij->i", slip_velocity, slip_velocity))
+    i_c = mu_i.inertial_number(speed, f_n, diameter, density)
+    return mu_i.effective_mu(speed, f_n, diameter, density), i_c
 
 
 def pair_contact_forces(pos: np.ndarray, vel: np.ndarray, omega: np.ndarray,
@@ -145,7 +192,8 @@ def pair_contact_forces(pos: np.ndarray, vel: np.ndarray, omega: np.ndarray,
                         state: PairSpringState, mat: Material3D, dt: float,
                         *, update_state: bool = True,
                         contact_mode: str = "one_sided",
-                        box: tuple[float, float] | None = None) -> dict:
+                        box: tuple[float, float] | None = None,
+                        mu_i: InertialFriction | None = None) -> dict:
     """Particle-particle contact forces, torques and dissipation channels.
 
     ``iu < ju`` index the candidate pairs (``|x_j - x_i| < 2 r``).  With
@@ -154,6 +202,12 @@ def pair_contact_forces(pos: np.ndarray, vel: np.ndarray, omega: np.ndarray,
     integrator.  ``box=(Lx, Ly)`` applies the minimum-image convention in the
     two periodic directions (chute flow); default ``None`` is the unwrapped
     (open) geometry and reproduces the previous results bit for bit.
+
+    ``mu_i`` replaces the constant friction coefficient by the rate-dependent
+    :class:`~tensordem.granular_column.inertial_friction.InertialFriction`
+    closure ``mu(I_c)``, evaluated **per contact** from the same contact-point
+    slip velocity the Cundall-Strack spring uses.  ``mu_i=None`` (default) keeps
+    the constant-``mu`` law, so every existing caller is unchanged.
     """
     n = pos.shape[0]
     res = _empty_pair_result(n)
@@ -204,10 +258,11 @@ def pair_contact_forces(pos: np.ndarray, vel: np.ndarray, omega: np.ndarray,
     keys = ia.astype(np.int64) * n + ja
     tang_old, roll_old = state.take(keys)
 
-    if mu > 0.0:
+    mu_eff, i_c = _contact_friction(mu, mu_i, u_t, f_n, 2.0 * r, mat.density)
+    if mu_eff is not None:
         tang = tang_old + u_t * dt
         t_norm = np.sqrt(np.einsum("ij,ij->i", tang, tang))
-        cap = mu * f_n / kt
+        cap = mu_eff * f_n / kt
         scale = np.where(t_norm > cap, cap / np.maximum(t_norm, 1e-30), 1.0)
         tang = tang * scale[:, None]
         f_t = -kt * tang
@@ -278,6 +333,11 @@ def pair_contact_forces(pos: np.ndarray, vel: np.ndarray, omega: np.ndarray,
         "f_t": f_t,
         "slip_tangential": slip_t,
         "slip_rolling": slip_r,
+        "mu_eff_mean": _mean_or(mu_eff),
+        "mu_eff_max": _max_or(mu_eff),
+        "mu_eff_min": _min_or(mu_eff),
+        "inertial_number_mean": _mean_or(i_c),
+        "inertial_number_max": _max_or(i_c),
     })
     return res
 
@@ -288,7 +348,8 @@ def wall_contact_forces(pos: np.ndarray, vel: np.ndarray, omega: np.ndarray,
                         mu_rolling_wall: float = 0.0,
                         state: WallSpringState | None = None,
                         update_state: bool = True,
-                        contact_mode: str = "one_sided") -> dict:
+                        contact_mode: str = "one_sided",
+                        mu_i: InertialFriction | None = None) -> dict:
     """Contact forces against the rigid horizontal plane ``z = floor_z``.
 
     The traction state is per particle (the wall is rigid, so every particle
@@ -309,6 +370,11 @@ def wall_contact_forces(pos: np.ndarray, vel: np.ndarray, omega: np.ndarray,
         "energy_rolling": 0.0,
         "energy_dead": 0.0,
         "release_loss": 0.0,
+        "mu_eff_mean": 0.0,
+        "mu_eff_max": 0.0,
+        "mu_eff_min": 0.0,
+        "inertial_number_mean": 0.0,
+        "inertial_number_max": 0.0,
     }
     mu_w = mat.mu if mu_wall is None else float(mu_wall)
     r = mat.radius
@@ -357,10 +423,12 @@ def wall_contact_forces(pos: np.ndarray, vel: np.ndarray, omega: np.ndarray,
         tang_old = state.tang[idx].copy()
         roll_old = state.roll[idx].copy()
 
-    if mu_w > 0.0:
+    mu_eff_w, i_c_w = _contact_friction(mu_w, mu_i, u_t, f_n, 2.0 * r,
+                                       mat.density)
+    if mu_eff_w is not None:
         tang = tang_old + u_t * dt
         t_norm = np.sqrt(np.einsum("ij,ij->i", tang, tang))
-        cap = mu_w * f_n / kt
+        cap = mu_eff_w * f_n / kt
         scale = np.where(t_norm > cap, cap / np.maximum(t_norm, 1e-30), 1.0)
         tang = tang * scale[:, None]
         f_t = -kt * tang
@@ -422,5 +490,10 @@ def wall_contact_forces(pos: np.ndarray, vel: np.ndarray, omega: np.ndarray,
                                              0.5 * kn * ov * ov
                                              + 0.5 * kt * np.einsum("ij,ij->i", tang, tang),
                                              0.0))),
+        "mu_eff_mean": _mean_or(mu_eff_w),
+        "mu_eff_max": _max_or(mu_eff_w),
+        "mu_eff_min": _min_or(mu_eff_w),
+        "inertial_number_mean": _mean_or(i_c_w),
+        "inertial_number_max": _max_or(i_c_w),
     })
     return out
