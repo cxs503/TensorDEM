@@ -97,6 +97,30 @@ def _late_pairs(snapshots: list[dict], peak_strain: float) -> list[tuple[dict, d
     return list(zip(late[:-1], late[1:]))
 
 
+def _nearest_snapshot(snapshots: list[dict], strain: float) -> dict | None:
+    """Snapshot whose recorded strain is closest to ``strain``.
+
+    ``peak["axial_strain"]`` need not land on the snapshot grid: the peak is
+    detected at the step where the deviator is maximal and threaded torch
+    reductions move its value by ~1e-8, so the exact-equality lookup
+    ``abs(s["strain"] - peak) < 1e-9`` can return an empty list.  Before this
+    helper that empty list reached ``start[0]`` and raised IndexError, aborting
+    the whole specimen *after* the DEM run had finished (reproduced 2026-11-13,
+    anchor_s11, 110.6 s: ``start[0]`` on an empty post-peak list).
+    """
+    if not snapshots:
+        return None
+    return min(snapshots, key=lambda s: abs(float(s["strain"]) - float(strain)))
+
+
+def _cumulative_starts(snapshots: list[dict],
+                       pairs: list[tuple[dict, dict]],
+                       peak_strain: float) -> tuple:
+    """``(label, reference snapshot or None)`` for the cumulative windows."""
+    return (("late_window", pairs[0][0] if pairs else None),
+            ("post_peak", _nearest_snapshot(snapshots, peak_strain)))
+
+
 def _run_one(config: dict) -> dict:
     import torch
     torch.set_num_threads(int(os.environ.get("R3_THREADS", "1")))
@@ -142,9 +166,7 @@ def _run_one(config: dict) -> dict:
     # post-peak record: same operator, 5-6x larger tangential displacement, so a
     # much better signal-to-noise ratio (see run_r3_estimator_audit.py)
     cumulative = {}
-    for label, start in (("late_window", pairs[0][0] if pairs else None),
-                         ("post_peak", [s for s in snapshots
-                                        if abs(s["strain"] - peak_strain) < 1e-9])):
+    for label, start in _cumulative_starts(snapshots, pairs, peak_strain):
         if start is None or not pairs:
             continue
         ref = start if isinstance(start, dict) else start[0]
