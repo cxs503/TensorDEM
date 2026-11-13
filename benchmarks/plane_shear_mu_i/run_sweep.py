@@ -49,6 +49,7 @@ if str(REPO / "src") not in sys.path:
     sys.path.insert(0, str(REPO / "src"))
 
 from tensordem.mu_i_rheology import ServoShearCase, simulate_servo_shear  # noqa: E402
+from reference_law import ref_mu as _ref_mu, ref_phi as _ref_phi  # single source of truth (m17026)
 
 OUT = Path(__file__).resolve().parent / "runs"
 OUT.mkdir(parents=True, exist_ok=True)
@@ -66,8 +67,8 @@ def ref_mu(I: float) -> float:
     return MU_S + (MU_2 - MU_S) / (I_0 / I + 1.0)
 
 
-def ref_phi(I: float) -> float:
-    return PHI_C + (PHI_J - PHI_C) / (I_0 / I + 1.0)
+def ref_phi(I):
+    return _ref_phi(I)
 
 
 # --- device configuration (dense regime, P/kn = 1 as in IN102-N02) --------
