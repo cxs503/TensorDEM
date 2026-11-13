@@ -418,6 +418,15 @@ class ServoShearCase:
     inertial_number: Optional[float] = None
     shear_strain: float = 0.25
     wall_mu: float = 1.5
+    # wall roughness (round 11).  "smooth" = flat platen / flat floor with a
+    # Cundall-Strack tangential spring (all historical behaviour, and the
+    # default, so archived runs stay bit-for-bit reproducible).  "rough" =
+    # a grafted monolayer of spheres of the same radius anchored on the
+    # platen and on the floor, spacing ``rough_spacing`` diameters, moving
+    # rigidly with the wall (da Cruz et al. 2005 drive their cell this way to
+    # suppress wall slip).
+    wall_mode: str = "smooth"
+    rough_spacing: float = 1.05
     # numerics / sampling
     packing_gap: float = 0.02
     jitter: float = 0.01
@@ -528,6 +537,13 @@ class ServoShearCase:
             raise MuIRheologyError("inertial_number must be positive when given")
         if self.shear_rate < 0.0:
             raise MuIRheologyError("shear_rate must be nonnegative")
+        if self.wall_mode not in ("smooth", "rough"):
+            raise MuIRheologyError(
+                f"wall_mode must be 'smooth' or 'rough', got {self.wall_mode!r}")
+        if self.rough_spacing < 1.0:
+            raise MuIRheologyError(
+                "rough_spacing must be >= 1.0 diameters (overlapping grafts "
+                "would pre-stress the wall layer)")
 
 
 def _periodic_pair_list(flat_pos: np.ndarray, n: int, radius: float):
@@ -568,6 +584,81 @@ def _wall_spring(dxi: np.ndarray, v_t: np.ndarray, dt: float, kt: float,
         f_t *= scale[:, None]
         dxi[idx] = -f_t / kt
     return f_t
+
+
+def graft_lattice(box_width: float, box_depth: float, radius: float,
+                  spacing: float = 1.05):
+    """Lattice sites of a grafted monolayer, in ``(x, y)``.
+
+    Returns ``(gx, gy)`` for one wall.  The spacing is ``spacing`` diameters;
+    sites are kept at least one radius away from the confined (y) walls.  The
+    x direction is periodic, so the first and last columns need no margin.
+    """
+    r = radius
+    d = 2.0 * r
+    s = spacing * d
+    xs = np.arange(0.5 * s, box_width - 1e-12, s)
+    ys = np.arange(r, box_depth - r + 1e-12, s)
+    if xs.size == 0:
+        xs = np.array([0.5 * box_width])
+    if ys.size == 0:
+        ys = np.array([0.5 * box_depth])
+    gx, gy = np.meshgrid(xs, ys, indexing="ij")
+    return gx.ravel().copy(), gy.ravel().copy()
+
+
+def _graft_wall_force(pos, vel, gx, gy, gz, gvx, gvz, xi, *, kn, kt, gamma_w,
+                      mu_w, radius, box_width, dt):
+    """Contact forces from one grafted monolayer.
+
+    The graft spheres are held rigidly (infinite mass) and translate with the
+    wall, so only the particle side needs a force.  The normal law is the same
+    Kelvin-Voigt law as the particle-particle contacts
+    (``tensordem.granular3d_core.contact_forces``), with ``n`` taken from the
+    graft centre to the particle centre.  The tangential part keeps the
+    per-particle Cundall-Strack offset ``xi`` (one interface point per
+    particle per wall, saturated at ``mu_w * sum(f_n)``) -- the same
+    regularisation the flat wall uses, so the two wall modes differ only in
+    the *geometry* of the interface (spheres vs plane), not in the friction law.
+
+    Returns ``(force, fn_sum, ftx_sum, n_contacts)`` with ``fn_sum`` the normal
+    load transmitted to the wall (compression positive) and ``ftx_sum`` the x
+    traction on the particles (the rheometric quantity).
+    """
+    force = np.zeros_like(pos)
+    n = pos.shape[0]
+    d = 2.0 * radius
+    ddx = pos[:, 0][None, :] - gx[:, None]
+    ddx -= box_width * np.round(ddx / box_width)
+    ddy = pos[:, 1][None, :] - gy[:, None]
+    ddz1 = pos[:, 2] - gz
+    dist2 = ddx * ddx + ddy * ddy + ddz1[None, :] ** 2
+    hit = (dist2 < d * d) & (dist2 > 1e-30)
+    n_hit = int(hit.sum())
+    if n_hit == 0:
+        mask = np.ones(n, dtype=bool)
+        xi[mask] = 0.0
+        return force, 0.0, 0.0, 0
+    gi, pi = np.nonzero(hit)
+    dist = np.sqrt(dist2[gi, pi])
+    nvec = np.stack([ddx[gi, pi], ddy[gi, pi], ddz1[pi]], axis=1) / dist[:, None]
+    vrel = vel[pi] - np.array([gvx, 0.0, gvz])
+    v_n = (vrel * nvec).sum(axis=1)
+    f_n = np.maximum(kn * (d - dist) - gamma_w * v_n, 0.0)
+    fn_vec = f_n[:, None] * nvec
+    np.add.at(force, pi, fn_vec)
+    fn_part = np.zeros(n)
+    np.add.at(fn_part, pi, f_n)
+    idx = np.nonzero(fn_part > 0.0)[0]
+    ftx_sum = 0.0
+    if mu_w > 0.0 and idx.size:
+        v_t = vel[:, :2].copy()
+        v_t[:, 0] -= gvx
+        f_t = _wall_spring(xi, v_t, dt, kt, fn_part[idx], mu_w, idx)
+        force[idx, :2] += f_t
+        ftx_sum = float(f_t[:, 0].sum())
+    fn_sum = float(np.abs(fn_vec[:, 2]).sum())
+    return force, fn_sum, ftx_sum, n_hit
 
 
 def bulk_virial_stress(pos, vel, pairs, *, z_lo, z_hi,
@@ -845,6 +936,15 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
     state = ContactState()
     xi_floor = np.zeros((n, 2))
     xi_top = np.zeros((n, 2))
+    rough = case.wall_mode == "rough"
+    if rough:
+        graft_top_x, graft_top_y = graft_lattice(W, D, r, case.rough_spacing)
+        graft_bot_x, graft_bot_y = graft_lattice(W, D, r, case.rough_spacing)
+        xi_graft_top = np.zeros((n, 2))
+        xi_graft_bot = np.zeros((n, 2))
+    else:
+        graft_top_x = graft_top_y = graft_bot_x = graft_bot_y = np.zeros(0)
+        xi_graft_top = xi_graft_bot = np.zeros((n, 2))
 
     target_force = case.normal_stress * area
     plate_z = float(pos[:, 2].max() + r)
@@ -860,7 +960,7 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
     base_key = np.arange(n, dtype=np.int64)
 
     def _step_forces(plate_vx_local: float, plate_vz_local: float):
-        nonlocal xi_floor, xi_top
+        nonlocal xi_floor, xi_top, xi_graft_top, xi_graft_bot, graft_top_x
         pos[:, 0] = np.mod(pos[:, 0], W)
         flat_pos = pos[None, :, :] + ghost_shift[:, None, :]
         flat_pos = flat_pos.reshape(-1, 3)
@@ -885,35 +985,57 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
                 f_n = np.maximum(kn * pen[hit] - gamma_w * v_n, 0.0)
                 force[hit, 1] += sign * f_n
 
-        # floor (z = 0): normal + tangential spring
-        pen_b = r - pos[:, 2]
-        hit = pen_b > 0.0
-        if hit.any():
-            idx = np.nonzero(hit)[0]
-            v_n = vel[idx, 2]
-            f_n = np.maximum(kn * pen_b[idx] - gamma_w * v_n, 0.0)
-            force[idx, 2] += f_n
-            if mu_w > 0.0:
-                f_t = _wall_spring(xi_floor, vel[:, :2].copy(), dt, kt, f_n, mu_w, idx)
-                force[idx, :2] += f_t
-
-        # top platen: constant-stress normal + rough tangential spring
-        pen_t = np.minimum(pos[:, 2] + r - plate_z, r)
-        hit = pen_t > 0.0
         fn_sum = 0.0
         ftx_sum = 0.0
-        if hit.any():
-            idx = np.nonzero(hit)[0]
-            v_n = vel[idx, 2] - plate_vz_local
-            f_n = np.maximum(kn * pen_t[idx] - gamma_w * v_n, 0.0)
-            force[idx, 2] -= f_n
-            fn_sum = float(f_n.sum())
-            if mu_w > 0.0:
-                v_t = vel[:, :2].copy()
-                v_t[:, 0] -= plate_vx_local
-                f_t = _wall_spring(xi_top, v_t, dt, kt, f_n, mu_w, idx)
-                force[idx, :2] += f_t
-                ftx_sum = float(f_t[:, 0].sum())
+        if not rough:
+            # floor (z = 0): normal + tangential spring
+            pen_b = r - pos[:, 2]
+            hit = pen_b > 0.0
+            if hit.any():
+                idx = np.nonzero(hit)[0]
+                v_n = vel[idx, 2]
+                f_n = np.maximum(kn * pen_b[idx] - gamma_w * v_n, 0.0)
+                force[idx, 2] += f_n
+                if mu_w > 0.0:
+                    f_t = _wall_spring(xi_floor, vel[:, :2].copy(), dt, kt, f_n, mu_w, idx)
+                    force[idx, :2] += f_t
+
+            # top platen: constant-stress normal + rough tangential spring
+            pen_t = np.minimum(pos[:, 2] + r - plate_z, r)
+            hit = pen_t > 0.0
+            fn_sum = 0.0
+            ftx_sum = 0.0
+            if hit.any():
+                idx = np.nonzero(hit)[0]
+                v_n = vel[idx, 2] - plate_vz_local
+                f_n = np.maximum(kn * pen_t[idx] - gamma_w * v_n, 0.0)
+                force[idx, 2] -= f_n
+                fn_sum = float(f_n.sum())
+                if mu_w > 0.0:
+                    v_t = vel[:, :2].copy()
+                    v_t[:, 0] -= plate_vx_local
+                    f_t = _wall_spring(xi_top, v_t, dt, kt, f_n, mu_w, idx)
+                    force[idx, :2] += f_t
+                    ftx_sum = float(f_t[:, 0].sum())
+        else:
+            # grafted monolayers: rigid spheres riding on the platen / floor
+            graft_top_x = np.mod(graft_top_x + plate_vx_local * dt, W)
+            gz_top = plate_z - r
+            f_tp, fn_top, ftx_top, nc_top = _graft_wall_force(
+                pos, vel, graft_top_x, graft_top_y, gz_top,
+                plate_vx_local, plate_vz_local, xi_graft_top,
+                kn=kn, kt=kt, gamma_w=gamma_w, mu_w=mu_w, radius=r,
+                box_width=W, dt=dt)
+            force += f_tp
+            f_bt, fn_bot, _, nc_bot = _graft_wall_force(
+                pos, vel, graft_bot_x, graft_bot_y, r,
+                0.0, 0.0, xi_graft_bot,
+                kn=kn, kt=kt, gamma_w=gamma_w, mu_w=mu_w, radius=r,
+                box_width=W, dt=dt)
+            force += f_bt
+            fn_sum = fn_top
+            ftx_sum = ftx_top
+            n_wall_contacts = nc_top + nc_bot
 
         if g != 0.0:
             force[:, 2] -= mass * g
