@@ -409,8 +409,211 @@ def check_rolling_spring_maturity(result: Dict[str, Any], required_level: str = 
     }
 
 
+# ---------------------------------------------------------------------------
+# CASE-DEM-BIAXIAL-CELL-KNOWN-ANGLE: platform-side caller + maturity gate
+# ---------------------------------------------------------------------------
+BIAXIAL_REPRO_CMD = (
+    "PYTHONPATH=src python benchmarks/biaxial_shear_band/run_anchor_case.py "
+    "--out-dir artifacts/CASE-DEM-BIAXIAL-CELL-KNOWN-ANGLE"
+)
+
+
+def run_biaxial_shear_band_case(output_dir: str = "runs/biaxial_shear_band_case",
+                                *, quick: bool = False, run_dem: bool = True,
+                                figures: bool = True) -> Dict[str, Any]:
+    """Platform-side invocation of the plane-strain biaxial shear-band anchor.
+
+    This is the L3 integration point: the platform (capability maturity
+    assessment, automated verification pipeline, weekly re-check) calls this
+    function instead of the case internals, and gets a machine-checkable dict
+    with the pre-declared acceptance arithmetic, the known-angle operator table
+    and the paths of the run artefacts it can attach as evidence.
+
+    Args:
+        output_dir: directory for ``run.json`` and the figure.
+        quick: reduced specimen -- smoke only, never a result.
+        run_dem: if False only the (seconds-long) known-angle benchmark runs.
+        figures: render the two-panel figure.
+
+    Returns:
+        ``{'overall': 'PASS'|'FAIL'|'PARTIAL', 'case': ..., 'verdict': ...,
+        'known_angle': ..., 'artifacts': {...}, 'repro_cmd': ..., 'summary': ...}``
+        -- the same payload that is written to ``<output_dir>/run.json``.
+    """
+    import os as _os
+
+    from tensordem.biaxial_anchor_case import repro_command, run_case
+
+    payload = run_case(output_dir=output_dir, quick=quick, run_dem=run_dem,
+                       figure=figures)
+    known_ok = bool(payload["known_angle"]["passed"])
+    dem = payload.get("dem")
+    if dem is None:
+        # known-angle half only: the operator is validated, the case is not run
+        overall = "PARTIAL" if known_ok else "FAIL"
+    elif known_ok and dem["verdict"]["passed"]:
+        overall = "PASS"
+    elif not dem["verdict"]["within_tolerance"]:
+        overall = "FAIL"
+    else:
+        # inside the 15 % tolerance but the band was not resolved/localised
+        overall = "PARTIAL"
+    return {
+        "overall": overall,
+        "case": payload["case"],
+        "verdict": dem["verdict"] if dem else None,
+        "known_angle": {
+            "max_abs_error_deg": payload["known_angle"]["max_abs_error_deg"],
+            "legacy_max_abs_error_deg": payload["known_angle"]["legacy_max_abs_error_deg"],
+            "passed": known_ok,
+            "rows": payload["known_angle"]["rows"],
+        },
+        "anchor": payload["anchor"],
+        "config": payload["config"],
+        "artifacts": payload["artifacts"],
+        "repro_cmd": repro_command(output_dir),
+        "summary": payload["summary"],
+        "payload": payload,
+    }
+
+
+def load_biaxial_case_result(output_dir: str = "artifacts/CASE-DEM-BIAXIAL-CELL-KNOWN-ANGLE"
+                             ) -> Dict[str, Any]:
+    """Re-read a stored case artefact and re-run the acceptance arithmetic.
+
+    Lets the platform re-check a delivery (weekly patrol, maturity gate replay)
+    without paying for the DEM run again: the artefact carries the full band
+    history, so the verdict is recomputed from evidence rather than trusted.
+    """
+    import json as _json
+    import os as _os
+
+    from tensordem.biaxial_anchor_case import CASE_KEY, judge_anchor, repro_command
+
+    run_json = _os.path.join(output_dir, "run.json")
+    with open(run_json) as handle:
+        payload = _json.load(handle)
+    if payload.get("case") != CASE_KEY:
+        raise ValueError(f"not a {CASE_KEY} artefact: {run_json}")
+    dem = payload.get("dem")
+    verdict = None
+    if dem is not None:
+        verdict = judge_anchor({"band": {
+            "angle_deg": dem["band"]["angle_deg"],
+            "resolved": bool(dem["band"].get("late_snapshots", 0) >= 3
+                             and dem["band"].get("angle_std_deg", 99.0) < 10.0),
+            "late_snapshots": dem["band"].get("late_snapshots"),
+            "angle_std_deg": dem["band"].get("angle_std_deg"),
+            "representative": dem["band"].get("representative"),
+        }})
+    known = payload["known_angle"]
+    known_ok = bool(known["passed"])
+    if verdict is None:
+        overall = "PARTIAL" if known_ok else "FAIL"
+    elif known_ok and verdict["passed"]:
+        overall = "PASS"
+    elif not verdict["within_tolerance"]:
+        overall = "FAIL"
+    else:
+        overall = "PARTIAL"
+    return {
+        "overall": overall,
+        "case": payload["case"],
+        "verdict": verdict,
+        "known_angle": {"max_abs_error_deg": known["max_abs_error_deg"],
+                        "legacy_max_abs_error_deg": known["legacy_max_abs_error_deg"],
+                        "passed": known_ok, "rows": known["rows"]},
+        "anchor": payload["anchor"],
+        "config": payload["config"],
+        "artifacts": {"run_json": run_json},
+        "repro_cmd": payload.get("repro_cmd", repro_command(output_dir)),
+        "summary": payload["summary"],
+        "payload": payload,
+    }
+
+
+def check_biaxial_maturity_gate(result: Dict[str, Any],
+                                required_level: str = "L2") -> Dict[str, Any]:
+    """Evaluate the biaxial anchor case against the L2/L3/L4 maturity ladder.
+
+    L2 -- implementation file + runnable entry + run artefact (checked on disk);
+    L3 -- this module is the integration caller *and* it actually returned a
+    machine-checkable verdict;
+    L4 -- a benchmark with a numeric reference-vs-got comparison plus a
+    reproducible command.
+
+    Everything is checked against the artefacts actually present, not against a
+    self-declaration.
+    """
+    import os as _os
+
+    gaps: List[str] = []
+    level = "L0"
+
+    impl = _os.path.join("src", "tensordem", "biaxial_anchor_case.py")
+    core = _os.path.join("src", "tensordem", "biaxial_shear_band.py")
+    entry = _os.path.join("benchmarks", "biaxial_shear_band", "run_anchor_case.py")
+    for path in (core, impl, entry):
+        if not _os.path.exists(path):
+            gaps.append(f"missing implementation/entry file: {path}")
+        elif "placeholder" in open(path).read(4000).lower():
+            gaps.append(f"placeholder implementation: {path}")
+    if not gaps:
+        level = "L1"
+
+    artifacts = result.get("artifacts") or {}
+    run_json = artifacts.get("run_json")
+    if run_json and _os.path.exists(run_json):
+        level = "L2"
+    else:
+        gaps.append(f"run artefact missing: {run_json}")
+
+    if result.get("overall") in ("PASS", "FAIL", "PARTIAL") and result.get("verdict"):
+        if level == "L2":
+            level = "L3"
+    else:
+        gaps.append("integration caller returned no machine-checkable verdict")
+
+    known = result.get("known_angle") or {}
+    if known.get("rows") and result.get("repro_cmd"):
+        if level == "L3":
+            level = "L4"
+    else:
+        gaps.append("benchmark ref-vs-got table or repro_cmd missing")
+
+    order = ["L0", "L1", "L2", "L3", "L4"]
+    return {
+        "requested_level": required_level,
+        "level_achieved": level,
+        "passed": order.index(level) >= order.index(required_level),
+        "gaps": gaps,
+    }
+
+
 if __name__ == "__main__":
     import sys
+
+    if "--biaxial-case" in sys.argv:
+        import argparse
+
+        sys.argv.remove("--biaxial-case")
+        ap = argparse.ArgumentParser(description="biaxial shear-band case caller")
+        ap.add_argument("--quick", action="store_true")
+        ap.add_argument("--no-dem", action="store_true")
+        ap.add_argument("--no-figures", dest="figures", action="store_false")
+        ap.add_argument("--out", default="runs/biaxial_shear_band_case")
+        ns = ap.parse_args()
+        case = run_biaxial_shear_band_case(ns.out, quick=ns.quick,
+                                           run_dem=not ns.no_dem,
+                                           figures=ns.figures)
+        gate = check_biaxial_maturity_gate(case, required_level="L4")
+        print(json.dumps({"overall": case["overall"],
+                          "smoke_only": ns.quick,
+                          "maturity": gate,
+                          "verdict": case["verdict"]}, indent=1, default=float))
+        # a --quick run is a smoke test of the plumbing, never a result
+        ok = gate["passed"] and (case["overall"] == "PASS" or ns.quick)
+        sys.exit(0 if ok else 1)
 
     if "--h1" in sys.argv:
         import argparse
