@@ -55,6 +55,7 @@ import math
 import numpy as np
 
 from ..granular3d_core import Material3D, build_pairs, hcp_positions_in_cylinder
+from .inertial_friction import InertialFriction
 from .kernel import (PairSpringState, WallSpringState, pair_contact_forces,
                      wall_contact_forces)
 
@@ -128,6 +129,14 @@ class AxisymCase:
     density: float = 2500.0
     mu: float = 0.5
     mu_rolling: float = 0.0
+    #: optional ``(mu_s, mu_2, i_0)`` -> rate-dependent ``mu(I_c)`` contact
+    #: friction (:class:`~.inertial_friction.InertialFriction`) instead of the
+    #: constant ``mu``; ``None`` keeps the constant-friction law.
+    mu_inertial: tuple[float, float, float] | None = None
+    #: floor (plane) friction coefficient; ``None`` -> the grain-grain ``mu``.
+    #: Lube et al. (2004) used a *glued* (fully rough) base, which a plane wall
+    #: model only reproduces if ``mu_wall`` is at least the grain friction.
+    mu_wall: float | None = None
     restitution: float = 0.5
     kn: float = 1.0e4
     kt_ratio: float = 0.5
@@ -163,6 +172,15 @@ class AxisymCase:
             raise AxisymError("restitution must lie in [0, 1)")
         if not 0.0 < float(self.t_reach_fraction) <= 1.0:
             raise AxisymError("t_reach_fraction must lie in (0, 1]")
+        if self.mu_wall is not None:
+            wall = float(self.mu_wall)
+            if not math.isfinite(wall) or wall < 0.0:
+                raise AxisymError("mu_wall must be finite and nonnegative")
+        if self.mu_inertial is not None:
+            values = tuple(float(v) for v in self.mu_inertial)
+            if len(values) != 3:
+                raise AxisymError("mu_inertial must be a (mu_s, mu_2, i_0) triple")
+            InertialFriction(*values)  # validates the triple
 
     @property
     def column_radius(self) -> float:
@@ -190,6 +208,11 @@ class AxisymCase:
             "density": float(self.density),
             "mu": float(self.mu),
             "mu_rolling": float(self.mu_rolling),
+            "mu_inertial": (None if self.mu_inertial is None
+                            else [float(v) for v in self.mu_inertial]),
+            "mu_law": ("constant" if self.mu_inertial is None
+                       else "mu(I_c) Jop et al. (2006)"),
+            "mu_wall": (None if self.mu_wall is None else float(self.mu_wall)),
             "restitution": float(self.restitution),
             "kn": float(self.kn),
             "kt_ratio": float(self.kt_ratio),
@@ -241,6 +264,32 @@ def _time_to_reach(time_hist: np.ndarray, front_hist: np.ndarray,
     return float(t0 + w * (t1 - t0))
 
 
+def _inertial_stats(case: AxisymCase, time_hist: np.ndarray, history: dict) -> dict:
+    """Time statistics of the mobilised friction coefficient and ``I_c``.
+
+    Reported for both friction laws so that a constant-friction run and a
+    ``mu(I_c)`` run are directly comparable: for the constant law ``mu_bar`` is
+    the constant ``mu`` and ``I_c`` is still measured (diagnostic only, it does
+    not feed back into the force).
+    """
+    mu = np.asarray(history.get("mu_eff", []), dtype=np.float64)
+    inc = np.asarray(history.get("inertial_number", []), dtype=np.float64)
+    mu = mu[np.isfinite(mu)]
+    inc = inc[np.isfinite(inc)]
+    return {
+        "law": ("constant" if case.mu_inertial is None
+                else "mu(I_c) = mu_s + (mu_2-mu_s) I_c/(i_0+I_c)"),
+        "mu_inertial_params": (None if case.mu_inertial is None
+                               else [float(v) for v in case.mu_inertial]),
+        "mu_eff_mean": float(mu.mean()) if mu.size else float("nan"),
+        "mu_eff_min": float(mu.min()) if mu.size else float("nan"),
+        "mu_eff_max": float(mu.max()) if mu.size else float("nan"),
+        "inertial_number_mean": float(inc.mean()) if inc.size else float("nan"),
+        "inertial_number_max": float(inc.max()) if inc.size else float("nan"),
+        "n_samples": int(mu.size),
+    }
+
+
 def simulate_axisymmetric_column(case: AxisymCase, *, return_positions: bool = True,
                                  max_steps: int | None = None,
                                  progress: bool = False) -> dict:
@@ -250,7 +299,8 @@ def simulate_axisymmetric_column(case: AxisymCase, *, return_positions: bool = T
     mass, inertia = mat.mass, mat.inertia
     dt = float(case.dt) if case.dt else mat.timestep * case.dt_scale
     gravity_vec = np.array([0.0, 0.0, -mat.gravity])
-    mu_wall = mat.mu
+    mu_wall = mat.mu if case.mu_wall is None else float(case.mu_wall)
+    mu_i = None if case.mu_inertial is None else InertialFriction(*case.mu_inertial)
 
     ext0 = radial_extent(pos, mat.radius)
     r_i_measured = ext0["p995"]
@@ -277,7 +327,8 @@ def simulate_axisymmetric_column(case: AxisymCase, *, return_positions: bool = T
               "wall_normal": 0.0, "wall_tangential": 0.0, "wall_rolling": 0.0}
     cutoff = 0.0
     history = {"time": [], "front": [], "front_max": [], "kinetic": [],
-               "potential": [], "contacts": [], "top": []}
+               "potential": [], "contacts": [], "top": [], "mu_eff": [],
+               "inertial_number": []}
     front = ext0["p995"]
     front_max = ext0["max"]
     max_contacts = 0
@@ -288,8 +339,10 @@ def simulate_axisymmetric_column(case: AxisymCase, *, return_positions: bool = T
     for step in range(n_steps):
         iu, ju = build_pairs(pos, mat.radius)
         pred = pair_contact_forces(pos, vel, omega, iu, ju, pair_state, mat, dt,
+                                   mu_i=mu_i,
                                    update_state=False, contact_mode=case.contact_mode)
         pred_wall = wall_contact_forces(pos, vel, omega, mat, dt, mu_wall=mu_wall,
+                                        mu_i=mu_i,
                                         mu_rolling_wall=mat.mu_rolling,
                                         state=wall_state, update_state=False,
                                         contact_mode=case.contact_mode)
@@ -300,8 +353,10 @@ def simulate_axisymmetric_column(case: AxisymCase, *, return_positions: bool = T
         pos += v_half * dt
 
         cur = pair_contact_forces(pos, v_half, w_half, iu, ju, pair_state, mat, dt,
+                                  mu_i=mu_i,
                                   update_state=True, contact_mode=case.contact_mode)
         cur_wall = wall_contact_forces(pos, v_half, w_half, mat, dt, mu_wall=mu_wall,
+                                       mu_i=mu_i,
                                        mu_rolling_wall=mat.mu_rolling,
                                        state=wall_state, update_state=True,
                                        contact_mode=case.contact_mode)
@@ -339,6 +394,24 @@ def simulate_axisymmetric_column(case: AxisymCase, *, return_positions: bool = T
             history["potential"].append(float(mass * mat.gravity * np.sum(pos[:, 2])))
             history["contacts"].append(int(cur["n_contacts"]))
             history["top"].append(float(pos[:, 2].max() + mat.radius))
+            # contact-count-weighted mean of the (possibly rate-dependent)
+            # friction coefficient actually mobilised in this sample
+            n_pair = int(cur["n_contacts"])
+            n_wall = int(cur_wall["n_contacts"])
+            n_tot = n_pair + n_wall
+            if n_tot > 0:
+                mu_bar = (n_pair * float(cur["mu_eff_mean"])
+                          + n_wall * float(cur_wall["mu_eff_mean"])) / n_tot
+                i_pair, i_wall = cur["inertial_number_mean"], cur_wall["inertial_number_mean"]
+                i_bar = sum(float(v) * w for v, w in ((i_pair, n_pair), (i_wall, n_wall))
+                            if math.isfinite(float(v))) / max(
+                                1, sum(n for v, n in ((i_pair, n_pair), (i_wall, n_wall))
+                                       if math.isfinite(float(v))))
+            else:
+                mu_bar = float("nan")
+                i_bar = float("nan")
+            history["mu_eff"].append(mu_bar)
+            history["inertial_number"].append(i_bar)
 
         ke = float(0.5 * mass * np.sum(vel * vel)
                    + 0.5 * inertia * np.sum(omega * omega))
@@ -417,6 +490,7 @@ def simulate_axisymmetric_column(case: AxisymCase, *, return_positions: bool = T
             "dissipated_physical_only": diss_physical,
             "residual_fraction_of_potential": residual,
         },
+        "inertial": _inertial_stats(case, time_hist, history),
         "coordination_max": int(max_contacts),
         "history": {"time": history["time"], "front": history["front"],
                     "front_max": history["front_max"],
