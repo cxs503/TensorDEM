@@ -117,7 +117,18 @@ def main() -> int:
     both = {r["n"] for r in runs if r["mu"] == 0.0} & \
            {r["n"] for r in runs if abs(r["mu"] - 0.1) < 1e-12}
     n_primary = max(both) if both else n_max
-    kn_prod = 4000.0
+    # Production stiffness: the *stiffest* k_n that still carries SEED_MIN seeds
+    # in both friction tiers.  Round 2 escalated it (4000 -> 64000) because the
+    # soft bed was compressed by ~1 % (G5/G6/G9 failed); the rule is read off the
+    # artefacts so the document can never quote a stiffness it has no seeds for.
+    def _seeds_at(kn, mu):
+        return {r["seed"] for r in runs
+                if r["n"] == n_primary and abs(r["mu"] - mu) < 1e-12
+                and abs(r["kn"] - kn) < 1e-9}
+    _prod_cand = [kn for kn in sorted({r["kn"] for r in runs})
+                  if all(len(_seeds_at(kn, mu)) >= SEED_MIN for mu in (0.0, 0.1))]
+    kn_prod = float(_prod_cand[-1]) if _prod_cand else 4000.0
+    kn_prod = float(os.environ.get("RCP_PROD_KN", kn_prod))
 
     def sel(mu, kn=kn_prod, n=None, dt_frac=DT_DEFAULT):
         n = n_primary if n is None else n
@@ -136,13 +147,31 @@ def main() -> int:
 
     frictionless = stat(0.0)
     lowfric = stat(0.1)
-    size0 = {n: stat(0.0, kn_prod, n) for n in sorted({r["n"] for r in runs})}
+    _fs_kn, _fs_best = kn_prod, 1
+    for kn in sorted({r["kn"] for r in runs}):
+        ns = {r["n"] for r in runs
+              if r["mu"] == 0.0 and abs(r["kn"] - kn) < 1e-9
+              and abs(r["dt_frac"] - DT_DEFAULT) < 1e-12}
+        if len(ns) > _fs_best:
+            _fs_kn, _fs_best = kn, len(ns)
+    size0 = {n: stat(0.0, _fs_kn, n) for n in
+             sorted({r["n"] for r in runs if r["mu"] == 0.0
+                     and abs(r["kn"] - _fs_kn) < 1e-9})}
 
     # ---- stiffness convergence ------------------------------------------
     kn_levels = sorted({r["kn"] for r in runs if r["n"] == n_primary})
     stiff = {}
     for mu in (0.0, 0.1):
-        pts = [(kn, stat(mu, kn)[0]) for kn in kn_levels if stat(mu, kn)]
+        # seed-matched ladder: one configuration family, only k_n changes.  A
+        # tier mean per level would fold the (1e-4) seed scatter into a (4e-3)
+        # stiffness step and make the observed order depend on seed coverage.
+        pts = []
+        for kn in kn_levels:
+            hit = [r["phi"] for r in runs
+                   if abs(r["mu"] - mu) < 1e-12 and r["n"] == n_primary
+                   and abs(r["kn"] - kn) < 1e-9 and r["seed"] == 1]
+            if hit:
+                pts.append((kn, float(hit[0])))
         if len(pts) >= 2:
             stiff[mu] = dict(stiffness_limit(pts), points=pts)
 
@@ -171,7 +200,11 @@ def main() -> int:
                   "pass": bool(max(corr) < 0.01)})
     for gid, mu, label in (("G5_stiffness_convergence", 0.0, "mu=0"),
                            ("G6_stiffness_convergence_frictional", 0.1, "mu=0.1")):
-        s, prod = stiff.get(mu), stat(mu)
+        s = stiff.get(mu)
+        hit = [r["phi"] for r in runs
+               if abs(r["mu"] - mu) < 1e-12 and r["n"] == n_primary
+               and abs(r["kn"] - kn_prod) < 1e-9 and r["seed"] == 1]
+        prod = (float(hit[0]), 1, 0.0) if hit else None
         if s and prod:
             d = abs(prod[0] - s["limit"])
             gates.append({"id": gid,
@@ -253,10 +286,16 @@ def main() -> int:
                   "criterion": f"each production tier >= {SEED_MIN} independent seeds",
                   "got": seed_min, "value": seed_min,
                   "pass": bool(seed_min >= SEED_MIN)})
-    ovmax = max(r["ovmax"] for r in runs_all)
+    _prod_runs = [r for r in runs if abs(r["kn"] - kn_prod) < 1e-9
+                  and abs(r["dt_frac"] - DT_DEFAULT) < 1e-12]
+    ovmax = (max(r["ovmax"] for r in _prod_runs) if _prod_runs
+             else max(r["ovmax"] for r in runs_all))
+    ovmax_all = max(r["ovmax"] for r in runs_all)
     gates.append({"id": "G9_residual_overlap",
-                  "criterion": "max overlap/d < 0.01 in the settled state",
-                  "got": ovmax, "value": ovmax, "pass": bool(ovmax < 0.01)})
+                  "criterion": f"max overlap/d < 0.01 in the settled state "
+                               f"(production arm, k_n={kn_prod:g})",
+                  "got": ovmax, "value": ovmax, "pass": bool(ovmax < 0.01),
+                  "all_arms_max": ovmax_all})
     if frictionless and lowfric:
         gate_mu = lowfric[0] <= frictionless[0] + 0.005
         gates.append({"id": "G10_friction_loosens",
@@ -274,7 +313,9 @@ def main() -> int:
 
     # ---- tier statistics -------------------------------------------------
     tier_stats = {}
-    for mu, name in ((0.0, "mu=0"), (0.1, "mu=0.1"), (0.3, "mu=0.3"), (0.5, "mu=0.5")):
+    _mus = sorted({r["mu"] for r in runs})
+    for mu in _mus:
+        name = f"mu={mu:g}"
         rs = sel(mu)
         if not rs:
             continue
@@ -443,8 +484,11 @@ def main() -> int:
     A(f"| stiffness levels | {', '.join(f'{k:g}' for k in kn_levels)} "
       f"(production {kn_prod:g}, k_n -> inf by Richardson) |")
     A("| timestep | dt = t_c/20 (production), t_c/40 (timestep probe) |")
-    A("| friction tiers | mu = 0 (frictionless), 0.1 (low-friction), "
-      "0.3 / 0.5 (trend) |")
+    A("| friction tiers | " + ", ".join(
+        f"mu={mu:g}" for mu in sorted({r["mu"] for r in runs
+                                       if r["n"] == n_primary
+                                       and abs(r["kn"] - kn_prod) < 1e-9}))
+      + " (0 and 0.1 are the ledger tiers; the rest is a sensitivity scan) |")
     A("| seeds | " + ", ".join(
         f"mu={mu:g}: {stat(mu)[1]} seed{'s' if stat(mu)[1] != 1 else ''}"
         for mu in sorted({r["mu"] for r in runs if r["n"] == n_primary
@@ -467,6 +511,13 @@ def main() -> int:
     A("(`tensordem.deposition_packing.stiffness_limit`); the halved-timestep runs")
     A("separate that stiffness systemic from first-order Cundall-Strack integration")
     A("error, which would show up as a `dt` dependence at fixed `k_n`.")
+    A("")
+    A(f"The production stiffness is not pinned: it is the stiffest `k_n` that")
+    A(f"still carries {SEED_MIN} seeds in both friction tiers "
+      f"(`k_n = {kn_prod:g}`), and the hard-sphere limit is quoted next to it.")
+    A("Round 1 used `k_n = 4000`, where the settled overlap (~1.1 %) compressed")
+    A("the bed; that arm is kept in the run set as a softness reference, not as")
+    A("the answer.")
     A("")
     A("Kernel: `src/tensordem/deposition_packing.py` (velocity Verlet, Cundall–")
     A("Strack tangential spring with per-pair history on sorted keys, cKDTree pair")
@@ -494,6 +545,21 @@ def main() -> int:
         A(f"| {k} | {v['n_runs']} ({', '.join(str(s) for s in v['seeds'])}) | "
           f"{v['phi_mean']:.5f} +- {v['phi_std']:.5f} | "
           f"{100 * v['dev_vs_ref']:+.2f} % | {v['Z']:.2f} |")
+    A("")
+    A(f"### 3.0 Friction scan at the production stiffness (k_n = {kn_prod:g})")
+    A("")
+    A("| mu | phi (mean) | seeds | Delta vs mu=0 | in band |")
+    A("|---|---|---|---|---|")
+    _base = tier_stats.get("mu=0")
+    for mu in sorted({r["mu"] for r in runs if r["n"] == n_primary
+                      and abs(r["kn"] - kn_prod) < 1e-9}):
+        row = tier_stats.get(f"mu={mu:g}")
+        if not row:
+            continue
+        d = (row["phi_mean"] - _base["phi_mean"]) if _base else float("nan")
+        A(f"| {mu:g} | {row['phi_mean']:.5f} | {row['n_runs']} | "
+          f"{'n/a' if _base is None else f'{d:+.5f}'} | "
+          f"{'yes' if BAND[0] <= row['phi_mean'] <= BAND[1] else 'no'} |")
     A("")
     if stiff:
         A("### 3.1 Stiffness systemic and hard-sphere limit")
@@ -627,10 +693,9 @@ def main() -> int:
         missing = []
     if missing:
         A(f"* **Pending runs ({len(missing)} of the `plan.json` cases have no JSON in "
-          f"`runs/` yet; cluster job `cj1346` carries the 10 N={max(c['n'] for c in plan)} "
-          f"cases, `cj1347` the two halved-timestep probes).** The numbers in §3 are the "
-          f"largest runs present in the tree; re-running `aggregate.py` after `fetch` "
-          f"promotes them with no code change. Cases not yet in: "
+          f"`runs/` yet).** The numbers in §3 are the runs present in the tree; "
+          f"re-running `aggregate.py` after the missing cases land promotes them with "
+          f"no code change. Cases not yet in: "
           + ", ".join(f"N={c['n']},mu={c['mu']:g},kn={c['kn']:g},seed={c['seed']}"
                       + (f",dt_frac={c['dt_frac']:g}" if 'dt_frac' in c else "")
                       for c in missing) + ".")
