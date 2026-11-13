@@ -1,0 +1,119 @@
+{
+  "anchor": "XVAL-DEM-PERIODIC-SLLOD-CROSSCHECK-AVAILABLE",
+  "subject": "/root/tp-agent/work/m17503",
+  "checks": {
+    "C1_artifacts": {
+      "sizes_bytes": {
+        "results.json": 3561,
+        "tables.json": 1200,
+        "xval_periodic_sllod.png": 93739
+      },
+      "png_magic_ok": true,
+      "all_non_empty": true,
+      "sha256": {
+        "results.json": "8d20172cc06efdbf80aaa689e68c64f8655baf67c026c02519720bdb2d7a74ba",
+        "tables.json": "eebcbb8057b759acf71bea750e42cd995a246e385294ec100c95179e7e246b4b",
+        "xval_periodic_sllod.png": "42a2e98f6686b65fa700ebc908edfd053838843c1214f6e9050bb22236816069"
+      },
+      "subject_worktree_clean": true
+    },
+    "C2_cross_table": {
+      "rows": [
+        {
+          "gamma_dot": 10.0,
+          "tau_over_p_legacy": 0.10822444334959849,
+          "tau_over_p_le": -0.04146591450779702,
+          "rel_diff_pct_recomputed": 360.99615704664745,
+          "rel_diff_pct_in_tables_json": 361.0,
+          "within_15pct": false,
+          "match": true
+        },
+        {
+          "gamma_dot": 20.0,
+          "tau_over_p_legacy": 0.0474065703003783,
+          "tau_over_p_le": -0.07556051996840124,
+          "rel_diff_pct_recomputed": 162.73986775131155,
+          "rel_diff_pct_in_tables_json": 162.7,
+          "within_15pct": false,
+          "match": true
+        },
+        {
+          "gamma_dot": 40.0,
+          "tau_over_p_legacy": 0.07253679224305867,
+          "tau_over_p_le": -0.013074983298155372,
+          "rel_diff_pct_recomputed": 654.7754103310573,
+          "rel_diff_pct_in_tables_json": 654.8,
+          "within_15pct": false,
+          "match": true
+        }
+      ],
+      "all_rows_match": true,
+      "all_fail_15pct": true,
+      "worst_rel_pct": 654.7754103310573,
+      "min_rel_pct": 162.73986775131155
+    },
+    "C3_invariants": {
+      "rows": {
+        "legacy": {
+          "n_contacts": 335,
+          "n_straddle": 13,
+          "straddle_fraction_recomputed": 0.03880597014925373,
+          "straddle_fraction_stored": 0.03880597014925373,
+          "rate_error_recomputed": 9.34317269349166,
+          "rate_error_stored": 9.34317269349166,
+          "frame_invariance_rel": 0.013630587206447452,
+          "match": true
+        },
+        "lees_edwards": {
+          "n_contacts": 338,
+          "n_straddle": 15,
+          "straddle_fraction_recomputed": 0.04437869822485207,
+          "straddle_fraction_stored": 0.04437869822485207,
+          "rate_error_recomputed": 8.824025682643422,
+          "rate_error_stored": 8.824025682643422,
+          "frame_invariance_rel": 0.35684572134930576,
+          "match": true
+        }
+      },
+      "all_rows_match": true,
+      "le_frame_invariance_exceeds_15pct": true
+    },
+    "C4_six_sections": {
+      "present": {
+        "case": true,
+        "method": true,
+        "results": true,
+        "sensitivity": true,
+        "error_verdict": true,
+        "failure_modes": true
+      },
+      "all_present": true,
+      "explicit_3pct_verdict": true,
+      "says_fail_on_15pct": true
+    },
+    "C5_benchmark_registry": {
+      "anchor_slug": "XVAL-DEM-PERIODIC-SLLOD-CROSSCHECK-AVAILABLE",
+      "rows_in_tensor_benchmark_cases": 0,
+      "sql": "SELECT count(*) FROM tensor_benchmark_cases WHERE anchor_slug='XVAL-DEM-PERIODIC-SLLOD-CROSSCHECK-AVAILABLE'",
+      "benchmark_referee_available": false
+    },
+    "C6_criterion": {
+      "criterion": "<15 % relative deviation between the two arms",
+      "got_pct": [
+        360.99615704664745,
+        162.73986775131155,
+        654.7754103310573
+      ],
+      "verdict": "FAIL (all three shear rates)"
+    }
+  },
+  "summary": {
+    "three_piece": {
+      "run_artifacts": "PASS",
+      "benchmark_ref_vs_got": "FAIL — no referee row registered for the anchor; self-declared 15 % bar missed by 163-655 %",
+      "repro_cmd": "PASS — auditor re-ran the shipped code: gamma=10 arm pair reproduced tau/P +0.1082 / -0.0415 and P 3.315 / 1.045e3 Pa; invariants bit-identical"
+    },
+    "tables_match_results": true,
+    "six_sections_complete": true
+  }
+}
