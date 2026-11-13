@@ -1,0 +1,90 @@
+{
+  "case": "XVAL-DEM-REUSE-POLYHEDRON-FLOE3D-PLUS-DRAG-AND-RE",
+  "repo": "TensorDEM",
+  "created": "2026-11-13",
+  "mission_id": 17737,
+  "question": "Does the polyhedron_floe3d DEM correctly reproduce (a) linear hydrodynamic drag decay, (b) spring-dashpot restitution, and (c) their combined effect on a floating polyhedral floe?",
+  "external_anchors": [
+    {"ref": "Stokes 1851 / linear drag ODE", "claim": "v(t) = v0 * exp(-c*t/m) for F = -c*v in quiescent fluid"},
+    {"ref": "Landau & Lifshitz, Mechanics §15", "claim": "spring-dashpot restitution e = exp(-zeta*pi/sqrt(1-zeta^2)) for underdamped oscillator"},
+    {"ref": "Archimedes principle", "claim": "submerged fraction at equilibrium = rho_ice / rho_water"},
+    {"ref": "Maxey & Riley 1983 (simplified)", "claim": "drag + buoyancy + gravity form a damped oscillator for heave motion"}
+  ],
+  "acceptance_criteria": {
+    "A_drag_decay": {
+      "description": "Linear drag decay in quiescent fluid matches analytic exponential",
+      "metric": "relative error of v(t) vs v0*exp(-c*t/m) at t=0.2s",
+      "threshold": 0.03,
+      "unit": "relative error"
+    },
+    "B_restitution": {
+      "description": "Coefficient of restitution matches analytic formula for spring-dashpot",
+      "metric": "relative error of e_measured vs e_analytic(zeta)",
+      "threshold": 0.03,
+      "unit": "relative error"
+    },
+    "C_buoyancy_equilibrium": {
+      "description": "Floating floe settles to Archimedes draft",
+      "metric": "relative error of submerged fraction vs rho_ice/rho_water",
+      "threshold": 0.05,
+      "unit": "relative error"
+    },
+    "D_combined_drag_restitution": {
+      "description": "Impact with drag: peak force and post-impact velocity match coupled analytic prediction",
+      "metric": "relative error of peak force and post-impact velocity",
+      "threshold": 0.15,
+      "unit": "relative error"
+    },
+    "E_convergence": {
+      "description": "All metrics converge with dt refinement",
+      "metric": "error at dt/2 < error at dt for all cases",
+      "threshold": "monotone or within 1.5x",
+      "unit": "qualitative"
+    }
+  },
+  "negative_controls": [
+    "zero drag (c=0) must show no velocity decay in quiescent fluid",
+    "zero damping (zeta=0) must give e=1.0 (elastic impact)",
+    "neutrally buoyant floe (rho_ice=rho_water) must have zero net buoyancy force"
+  ],
+  "thresholds_declared_before_production_runs": {
+    "A_drag_decay_max": 0.03,
+    "B_restitution_max": 0.03,
+    "C_buoyancy_max": 0.05,
+    "D_combined_max": 0.15,
+    "stopping_rule": "if any acceptance criterion fails at the base resolution, stop and file honest-FAIL with fail_stage; do not retune parameters to pass"
+  },
+  "variables": {
+    "controlled": [
+      "polyhedron: hexagonal prism, area=0.25 m2, thickness=0.12 m, density=900 kg/m3",
+      "water density=1025 kg/m3, gravity=9.81 m/s2",
+      "drag coefficient c = 0.7 * 2 * m * omega0 (70% of critical damping for heave)",
+      "contact: kn=5e4 N/m, zeta=0.1, mu=0.3",
+      "time integration: leapfrog (symplectic), fixed dt"
+    ],
+    "changed": [
+      "dt (convergence study: 5e-4, 2.5e-4, 1.25e-4)",
+      "zeta (restitution sweep: 0.05, 0.1, 0.2, 0.4)"
+    ],
+    "confounders_and_nuisances": [
+      "leapfrog is symplectic but only first-order accurate for dissipative systems",
+      "buoyancy force is exact (tetrahedral clipping) but the work ledger uses midpoint velocity",
+      "drag is linear (Stokes-like), not quadratic (Morison); valid for low Re"
+    ]
+  },
+  "environment": {
+    "python": "3.11",
+    "packages": "numpy, matplotlib",
+    "threads": "single-threaded",
+    "compute": "local (single core), total wall clock < 5 min",
+    "raw_data": "artifacts/xval_floe3d_drag_re/results.json + figures"
+  },
+  "analysis_plan": "Per case: compute analytic reference, run simulation, measure metric, compute relative error, mark pass/fail. Aggregate: table ref vs got per metric with error column; convergence table over dt; restitution sweep table. Negative controls executed and required to pass (i.e., show the expected null behavior).",
+  "artifacts": {
+    "run": "artifacts/xval_floe3d_drag_re/results.json",
+    "figure": "artifacts/xval_floe3d_drag_re/fig_validation.png",
+    "report": "docs/XVAL_DEM_REUSE_POLYHEDRON_FLOE3D_PLUS_DRAG_AND_RE.md",
+    "driver": "benchmarks/xval_floe3d_drag_re/run_validation.py",
+    "test": "tests/test_xval_floe3d_drag_re.py"
+  }
+}
