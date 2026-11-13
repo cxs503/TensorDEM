@@ -1,0 +1,386 @@
+{
+  "case": "CASE-DEM-PLANE-SHEAR-MUIDI",
+  "round": 7,
+  "mission": 17026,
+  "defects": {
+    "D1_solid_fraction_was_porosity": "tensordem.mu_i_rheology.simulate_servo_shear sample field 'solid_fraction' = 1 - n*V_p/V_slab (porosity); fixed to n*V_p/V_slab, porosity exposed separately",
+    "D2_phi_reference_sign": "phi(I) reference was rising in I (0.58->0.64); corrected to decreasing 0.64->0.58 (dilatancy), magnitudes unchanged, provenance still unverified"
+  },
+  "reference": {
+    "mu": {
+      "law": "mu_s+(mu_2-mu_s)/(I0/I+1)",
+      "constants": {
+        "mu_s": 0.36,
+        "mu_2": 0.84,
+        "I_0": 0.3
+      },
+      "status": "da Cruz 2005 / GDR MiDi 2004 fit as quoted in rounds 1-5: mu_s=0.36, mu_2=0.84, I0=0.30"
+    },
+    "phi": {
+      "law": "phi_max-(phi_max-phi_min)/(I0/I+1)",
+      "constants": {
+        "phi_max": 0.64,
+        "phi_min": 0.58,
+        "I_0": 0.3
+      },
+      "status": "PROVENANCE-UNVERIFIED magnitudes (0.58, 0.64 inherited from round 1, no in-repo anchor; da Cruz 2005 is a 2D-disk study with phi ~ 0.84 -> 0.79, so these are 3D glass-bead numbers) + VERIFIED monotonicity (decreasing with I, i.e. dilatancy) and limits phi(I->0)=0.64, phi(I->inf)=0.58"
+    }
+  },
+  "arms": {
+    "round1": [
+      {
+        "I": 0.0010069592280999953,
+        "mu": 0.32945187944154625,
+        "mu_ref": 0.3616057450323656,
+        "mu_err_pct": -8.891967573120663,
+        "phi_legacy_porosity": 0.3719948391954814,
+        "phi_solid": 0.6280051608045186,
+        "phi_ref": 0.6397992818709544,
+        "phi_err_pct": -1.8434095505619141,
+        "phi_err_pct_legacy_reading": -41.85757162657902,
+        "normal_stress_pa": 61639.09373952205,
+        "phi_bed": 0.5218150307023655
+      },
+      {
+        "I": 0.0030919454508580584,
+        "mu": 0.3289064973868583,
+        "mu_ref": 0.36489664551858736,
+        "mu_err_pct": -9.863107423358263,
+        "phi_legacy_porosity": 0.381144962147846,
+        "phi_solid": 0.618855037852154,
+        "phi_ref": 0.6393879193101766,
+        "phi_err_pct": -3.211333970803687,
+        "phi_err_pct_legacy_reading": -40.38908921534582,
+        "normal_stress_pa": 58838.132521976986,
+        "phi_bed": 0.5218150307023655
+      },
+      {
+        "I": 0.010847434229938776,
+        "mu": 0.3850229137074961,
+        "mu_ref": 0.376750237759785,
+        "mu_err_pct": 2.1957984676802544,
+        "phi_legacy_porosity": 0.389977435695629,
+        "phi_solid": 0.6100225643043711,
+        "phi_ref": 0.6379062202800269,
+        "phi_err_pct": -4.371121504884446,
+        "phi_err_pct_legacy_reading": -38.86602398634121,
+        "normal_stress_pa": 53116.073861358236,
+        "phi_bed": 0.5218150307023655
+      },
+      {
+        "I": 0.034552263794651636,
+        "mu": 0.4073756765078135,
+        "mu_ref": 0.409573978168065,
+        "mu_err_pct": -0.5367288395820569,
+        "phi_legacy_porosity": 0.39409854659100657,
+        "phi_solid": 0.6059014534089935,
+        "phi_ref": 0.6338032527289919,
+        "phi_err_pct": -4.402280865530505,
+        "phi_err_pct_legacy_reading": -37.82004985078243,
+        "normal_stress_pa": 47116.119358305245,
+        "phi_bed": 0.5218150307023655
+      },
+      {
+        "I": 0.11793312941875463,
+        "mu": 0.4302482418419039,
+        "mu_ref": 0.49544727167173924,
+        "mu_err_pct": -13.159630410283752,
+        "phi_legacy_porosity": 0.36325922780854764,
+        "phi_solid": 0.6367407721914524,
+        "phi_ref": 0.6230690910410326,
+        "phi_err_pct": 2.194248013101885,
+        "phi_err_pct_legacy_reading": -41.698403430411055,
+        "normal_stress_pa": 44937.44451382281,
+        "phi_bed": 0.5218150307023655
+      },
+      {
+        "I": 0.3283239984277493,
+        "mu": 0.4915930657119066,
+        "mu_ref": 0.6108188763116955,
+        "mu_err_pct": -19.519012136577953,
+        "phi_legacy_porosity": 0.36442340840535137,
+        "phi_solid": 0.6355765915946486,
+        "phi_ref": 0.608647640461038,
+        "phi_err_pct": 4.424390951916357,
+        "phi_err_pct_legacy_reading": -40.1257173806986,
+        "normal_stress_pa": 52181.58548811127,
+        "phi_bed": 0.5218150307023655
+      }
+    ],
+    "round2_baseline": [
+      {
+        "I": 0.0010069592280999953,
+        "mu": 0.32945187944154625,
+        "mu_ref": 0.3616057450323656,
+        "mu_err_pct": -8.891967573120663,
+        "phi_legacy_porosity": 0.3719948391954814,
+        "phi_solid": 0.6280051608045186,
+        "phi_ref": 0.6397992818709544,
+        "phi_err_pct": -1.8434095505619141,
+        "phi_err_pct_legacy_reading": -41.85757162657902,
+        "normal_stress_pa": 61639.09373952205,
+        "phi_bed": 0.5218150307023655
+      },
+      {
+        "I": 0.0030919454508580584,
+        "mu": 0.3289064973868583,
+        "mu_ref": 0.36489664551858736,
+        "mu_err_pct": -9.863107423358263,
+        "phi_legacy_porosity": 0.381144962147846,
+        "phi_solid": 0.618855037852154,
+        "phi_ref": 0.6393879193101766,
+        "phi_err_pct": -3.211333970803687,
+        "phi_err_pct_legacy_reading": -40.38908921534582,
+        "normal_stress_pa": 58838.132521976986,
+        "phi_bed": 0.5218150307023655
+      },
+      {
+        "I": 0.010847434229938776,
+        "mu": 0.3850229137074961,
+        "mu_ref": 0.376750237759785,
+        "mu_err_pct": 2.1957984676802544,
+        "phi_legacy_porosity": 0.389977435695629,
+        "phi_solid": 0.6100225643043711,
+        "phi_ref": 0.6379062202800269,
+        "phi_err_pct": -4.371121504884446,
+        "phi_err_pct_legacy_reading": -38.86602398634121,
+        "normal_stress_pa": 53116.073861358236,
+        "phi_bed": 0.5218150307023655
+      },
+      {
+        "I": 0.034552263794651636,
+        "mu": 0.4073756765078135,
+        "mu_ref": 0.409573978168065,
+        "mu_err_pct": -0.5367288395820569,
+        "phi_legacy_porosity": 0.39409854659100657,
+        "phi_solid": 0.6059014534089935,
+        "phi_ref": 0.6338032527289919,
+        "phi_err_pct": -4.402280865530505,
+        "phi_err_pct_legacy_reading": -37.82004985078243,
+        "normal_stress_pa": 47116.119358305245,
+        "phi_bed": 0.5218150307023655
+      },
+      {
+        "I": 0.11793312941875463,
+        "mu": 0.4302482418419039,
+        "mu_ref": 0.49544727167173924,
+        "mu_err_pct": -13.159630410283752,
+        "phi_legacy_porosity": 0.36325922780854764,
+        "phi_solid": 0.6367407721914524,
+        "phi_ref": 0.6230690910410326,
+        "phi_err_pct": 2.194248013101885,
+        "phi_err_pct_legacy_reading": -41.698403430411055,
+        "normal_stress_pa": 44937.44451382281,
+        "phi_bed": 0.5218150307023655
+      },
+      {
+        "I": 0.3283239984277493,
+        "mu": 0.4915930657119066,
+        "mu_ref": 0.6108188763116955,
+        "mu_err_pct": -19.519012136577953,
+        "phi_legacy_porosity": 0.36442340840535137,
+        "phi_solid": 0.6355765915946486,
+        "phi_ref": 0.608647640461038,
+        "phi_err_pct": 4.424390951916357,
+        "phi_err_pct_legacy_reading": -40.1257173806986,
+        "normal_stress_pa": 52181.58548811127,
+        "phi_bed": 0.5218150307023655
+      }
+    ],
+    "round2_stiff": [
+      {
+        "I": 0.0010121345488800068,
+        "mu": 0.3125523229309378,
+        "mu_ref": 0.3616139700952272,
+        "mu_err_pct": -13.567409232383786,
+        "phi_legacy_porosity": 0.3849836945634441,
+        "phi_solid": 0.6150163054365558,
+        "phi_ref": 0.6397982537380966,
+        "phi_err_pct": -3.873400428455276,
+        "phi_err_pct_legacy_reading": -39.82732958176557,
+        "normal_stress_pa": 61010.3502377942,
+        "phi_bed": 0.5162738535790518
+      },
+      {
+        "I": 0.002995508702285246,
+        "mu": 0.3308571349423053,
+        "mu_ref": 0.36474543066085413,
+        "mu_err_pct": -9.290944551971291,
+        "phi_legacy_porosity": 0.37702678626412267,
+        "phi_solid": 0.6229732137358773,
+        "phi_ref": 0.6394068211673932,
+        "phi_err_pct": -2.57013326844282,
+        "phi_err_pct_legacy_reading": -41.03491333173953,
+        "normal_stress_pa": 62687.55849011771,
+        "phi_bed": 0.5162738535790518
+      },
+      {
+        "I": 0.010435617691979107,
+        "mu": 0.2956786192338512,
+        "mu_ref": 0.3761357015969736,
+        "mu_err_pct": -21.390440211211736,
+        "phi_legacy_porosity": 0.3791860891295016,
+        "phi_solid": 0.6208139108704984,
+        "phi_ref": 0.6379830373003783,
+        "phi_err_pct": -2.691157197929739,
+        "phi_err_pct_legacy_reading": -40.56486349009757,
+        "normal_stress_pa": 57390.987378159574,
+        "phi_bed": 0.5162738535790518
+      },
+      {
+        "I": 0.020033106876347354,
+        "mu": 0.3473913715059083,
+        "mu_ref": 0.3900465517286687,
+        "mu_err_pct": -10.935920349433815,
+        "phi_legacy_porosity": 0.39215480094698657,
+        "phi_solid": 0.6078451990530134,
+        "phi_ref": 0.6362441810339164,
+        "phi_err_pct": -4.463535043220956,
+        "phi_err_pct_legacy_reading": -38.36410412277203,
+        "normal_stress_pa": 140160.58801151416,
+        "phi_bed": 0.5162738535790518
+      },
+      {
+        "I": 0.07178900713476256,
+        "mu": 0.37271191862294323,
+        "mu_ref": 0.45268354567620595,
+        "mu_err_pct": -17.666121911677468,
+        "phi_legacy_porosity": 0.3853005894668233,
+        "phi_solid": 0.6146994105331767,
+        "phi_ref": 0.6284145567904743,
+        "phi_err_pct": -2.1824997701112347,
+        "phi_err_pct_legacy_reading": -38.68687710948586,
+        "normal_stress_pa": 121273.00066075606,
+        "phi_bed": 0.5162738535790518
+      },
+      {
+        "I": 0.19745427693054857,
+        "mu": 0.4019174972410559,
+        "mu_ref": 0.5505261595326391,
+        "mu_err_pct": -26.993932934584297,
+        "phi_legacy_porosity": 0.38995890640277775,
+        "phi_solid": 0.6100410935972223,
+        "phi_ref": 0.6161842300584202,
+        "phi_err_pct": -0.996964245679488,
+        "phi_err_pct_legacy_reading": -36.713909999643136,
+        "normal_stress_pa": 144274.45302637652,
+        "phi_bed": 0.5162738535790518
+      }
+    ],
+    "round2_thick": [
+      {
+        "I": 0.0009970623955495798,
+        "mu": 0.27780896657570997,
+        "mu_ref": 0.3615900153511627,
+        "mu_err_pct": -23.170177609602327,
+        "phi_legacy_porosity": 0.4418623683856835,
+        "phi_solid": 0.5581376316143165,
+        "phi_ref": 0.6398012480811047,
+        "phi_err_pct": -12.7639039016748,
+        "phi_err_pct_legacy_reading": -30.93755760700383,
+        "normal_stress_pa": 62868.82495216788,
+        "phi_bed": 0.5772500279572801
+      },
+      {
+        "I": 0.002982232336133913,
+        "mu": 0.24295016469894776,
+        "mu_ref": 0.3647246055001541,
+        "mu_err_pct": -33.38805196162037,
+        "phi_legacy_porosity": 0.4435738349159261,
+        "phi_solid": 0.5564261650840738,
+        "phi_ref": 0.6394094243124807,
+        "phi_err_pct": -12.978110123671371,
+        "phi_err_pct_legacy_reading": -30.62757318710544,
+        "normal_stress_pa": 63246.94852332964,
+        "phi_bed": 0.5772500279572801
+      },
+      {
+        "I": 0.00943383636372218,
+        "mu": 0.27734582205136055,
+        "mu_ref": 0.37463395699642865,
+        "mu_err_pct": -25.968851228826416,
+        "phi_legacy_porosity": 0.43963430398351055,
+        "phi_solid": 0.5603656960164894,
+        "phi_ref": 0.6381707553754464,
+        "phi_err_pct": -12.191887312852966,
+        "phi_err_pct_legacy_reading": -31.11023965288625,
+        "normal_stress_pa": 70226.8744053354,
+        "phi_bed": 0.5772500279572801
+      },
+      {
+        "I": 0.02743795429829045,
+        "mu": 0.19795515905088432,
+        "mu_ref": 0.4002220264642307,
+        "mu_err_pct": -50.538664550843684,
+        "phi_legacy_porosity": 0.4544685966609444,
+        "phi_solid": 0.5455314033390556,
+        "phi_ref": 0.6349722466919712,
+        "phi_err_pct": -14.085787814960026,
+        "phi_err_pct_legacy_reading": -28.427014089418957,
+        "normal_stress_pa": 74716.93875532705,
+        "phi_bed": 0.5772500279572801
+      },
+      {
+        "I": 0.08719006905111887,
+        "mu": 0.3867513561109427,
+        "mu_ref": 0.4680896347550991,
+        "mu_err_pct": -17.376645967969782,
+        "phi_legacy_porosity": 0.4242723840942055,
+        "phi_solid": 0.5757276159057945,
+        "phi_ref": 0.6264887956556126,
+        "phi_err_pct": -8.102488041577372,
+        "phi_err_pct_legacy_reading": -32.277737920243275,
+        "normal_stress_pa": 82214.03700084281,
+        "phi_bed": 0.5772500279572801
+      },
+      {
+        "I": 0.2388120634941357,
+        "mu": 0.5686248840784499,
+        "mu_ref": 0.572745404647817,
+        "mu_err_pct": -0.7194331959591738,
+        "phi_legacy_porosity": 0.39939853476227094,
+        "phi_solid": 0.6006014652377291,
+        "phi_ref": 0.6134068244190228,
+        "phi_err_pct": -2.087580162386049,
+        "phi_err_pct_legacy_reading": -34.88847550065097,
+        "normal_stress_pa": 98630.22056795702,
+        "phi_bed": 0.5772500279572801
+      }
+    ]
+  },
+  "summary": {
+    "round1": {
+      "worst_phi_err_pct": 4.424390951916357,
+      "worst_phi_err_pct_if_mislabeled": 41.85757162657902,
+      "phi_within_10pct": true,
+      "worst_mu_err_pct": 19.519012136577953,
+      "mu_within_10pct": false,
+      "phi_monotone_decreasing": false
+    },
+    "round2_baseline": {
+      "worst_phi_err_pct": 4.424390951916357,
+      "worst_phi_err_pct_if_mislabeled": 41.85757162657902,
+      "phi_within_10pct": true,
+      "worst_mu_err_pct": 19.519012136577953,
+      "mu_within_10pct": false,
+      "phi_monotone_decreasing": false
+    },
+    "round2_stiff": {
+      "worst_phi_err_pct": 4.463535043220956,
+      "worst_phi_err_pct_if_mislabeled": 41.03491333173953,
+      "phi_within_10pct": true,
+      "worst_mu_err_pct": 26.993932934584297,
+      "mu_within_10pct": false,
+      "phi_monotone_decreasing": false
+    },
+    "round2_thick": {
+      "worst_phi_err_pct": 14.085787814960026,
+      "worst_phi_err_pct_if_mislabeled": 34.88847550065097,
+      "phi_within_10pct": false,
+      "worst_mu_err_pct": 50.538664550843684,
+      "mu_within_10pct": false,
+      "phi_monotone_decreasing": false
+    }
+  },
+  "phi_acceptance_verdict": "WITHHELD (reference magnitudes unverified)"
+}
