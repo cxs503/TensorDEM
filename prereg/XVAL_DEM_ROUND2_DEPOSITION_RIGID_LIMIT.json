@@ -1,0 +1,54 @@
+{
+    "anchor": "XVAL-DEM-ROUND2-DEPOSITION-RIGID-LIMIT",
+    "mission_id": 18189,
+    "repo": "TensorDEM",
+    "case_card": "CASE-DEM-RCP-PACKING-FRACTION",
+    "upstream_row": "oss_solutions: TensorDEM|CASE-DEM-RCP-PACKING-FRACTION|round2-deposition-rigid-limit",
+    "date": "2026-11-13",
+    "decision": {
+        "statement": "Is TensorDEM's Richardson-extrapolation rigid-limit method (phi(kn) = phi_inf + A*kn^{-p}) for gravity-deposition RCP consistent with mature OSS approaches within 15%?",
+        "adopt_rule": "If the extrapolated phi_inf agrees with OSS reference values (literature RCP 0.6366 for mu=0, and OSS DEM codes' reported values) within 15%, the method is validated. Otherwise, document the systematic difference.",
+        "threshold": 0.15,
+        "threshold_source": "owner precision standard (XVAL: >15% not acceptable)"
+    },
+    "hypotheses": {
+        "H1": "TensorDEM's Richardson extrapolation with observed order p yields phi_inf within 3% of literature RCP (0.6366) for mu=0.",
+        "H2": "The observed order p for mu=0 is consistent with the theoretical p=1 expected for linear-spring compressibility.",
+        "H3": "The extrapolation self-consistency (leave-one-out prediction) is within 0.002 for both friction tiers.",
+        "H4": "OSS DEM codes (LIGGGHTS, YADE) that use direct high-stiffness simulation (no extrapolation) produce phi values within 5% of TensorDEM's extrapolated phi_inf."
+    },
+    "metrics": {
+        "M1_phi_inf_mu0": "Extrapolated hard-sphere limit phi_inf for mu=0",
+        "M2_phi_inf_mu01": "Extrapolated hard-sphere limit phi_inf for mu=0.1",
+        "M3_order_p_mu0": "Observed convergence order p for mu=0",
+        "M4_order_p_mu01": "Observed convergence order p for mu=0.1",
+        "M5_selfconsistency_mu0": "Leave-one-out prediction error for mu=0",
+        "M6_selfconsistency_mu01": "Leave-one-out prediction error for mu=0.1",
+        "M7_oss_comparison": "TensorDEM phi_inf vs OSS literature values"
+    },
+    "baseline_control": {
+        "analytic": "Literature RCP phi_rcp = 0.6366 (Scott 1960; Bernal & Mason 1960)",
+        "oss_reference": "LIGGGHTS-PUBLIC deposition protocols (direct high-kn, no extrapolation); O'Hern et al. (2003) PRL 88:055503 jamming protocol; Donev et al. (2004) PRL 92:255506 MRJ packings",
+        "negative_control": "Single-level kn=4000 result (no extrapolation) vs extrapolated phi_inf"
+    },
+    "sweeps": {
+        "kn_levels": [4000, 16000, 64000, 256000],
+        "mu_tiers": [0.0, 0.1],
+        "n_particles": 10000,
+        "dt_frac": [0.05, 0.025]
+    },
+    "stopping_rule": "Run each (kn, mu, seed) combination once (deterministic deposition with fixed seed); no point is dropped. A metric that lands inside +/-15% of the reference supports the method; outside, the difference is reported as a systematic.",
+    "environment": {
+        "python": "3.11",
+        "numpy": ">=2.0",
+        "scipy": ">=1.10",
+        "deterministic": true,
+        "runtime_estimate_min": 30
+    },
+    "exclusions": "No cohesive, thermal, or non-spherical contacts. The extrapolation assumes the power-law form phi(kn) = phi_inf + A*kn^{-p} holds; deviations from this form are reported, not forced.",
+    "interpretation_limits": [
+        "The OSS comparison is against literature values and documented OSS code behavior, not against compiled OSS binaries (environment constraint).",
+        "The frictional tier (mu=0.1) reference value is less well-established in literature than the frictionless case; comparison uses the band [0.62, 0.66] and self-consistency.",
+        "The observed order p may differ from p=1 if the contact law or integration scheme introduces additional kn-dependence."
+    ]
+}
