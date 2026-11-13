@@ -6,8 +6,22 @@
 **参考**: Mindlin & Deresiewicz (1953) *J. Appl. Mech.* 20:327, DOI 10.1115/1.4010702;
         Johnson (1985) *Contact Mechanics*, Cambridge Univ. Press, §4.3-4.4（二级来源）
 **判据**: 对标误差 <15%（owner 精度标准）
+**复评**: m18659（PR #1453 关闭后重开）补独立预言机、对照臂判据与 pytest 覆盖，
+审计见 `docs/AUDIT_m17451_XVAL_DEM_INTERFACE_SLIP.md`
 
 ---
+
+## ⓿ 实验设计（预声明，先于结果固定）
+
+| 角色 | 臂 | 预声明判据 | 意义 |
+|---|---|---|---|
+| **target** | 引擎 `unloading="mindlin"`（精确 M&D 反转支） | 逐点偏差 <1e-6·μF_n，循环面积 <1e-3 | 被测对象 |
+| **negative control** | 引擎 `unloading="linear"`（Cundall–Strack 常数 k_t0） | **必须**突破 owner 15 % 闸门，且落在 −23 %±8 % | 若对照臂也"通过"，则量具失效、结论作废 |
+| **independent oracle** | RK4 积分粘着圆律 `c/a=(1−F_t/μF_n)^{1/3}`（不用 `F_t(δ)` 闭式） | 5e-3·μF_n | 打破"闭式对闭式"循环论证 |
+| 重复性 | dt×0.5 / ×1 / ×2（固定每段位移 = δ_s） | 面积误差随 dt 单调、每次加倍约 ×4 | 时间离散无关性的真实检验 |
+
+判定逻辑见 `run_xval.verdict()`：`ALL PASS` 要求**目标通过且对照臂确实失败**，否则报
+`INCONCLUSIVE`（不允许在量具失灵时给绿灯）。---
 
 ## ① 问题与参考出处
 
@@ -117,11 +131,16 @@ contact_tangential.py            ← 求解器引擎
 | unloading='linear' | 2.93e-1 (29.3%) | 1.5365 | **-23.1%** | ❌ |
 
 **关键发现**：
-- `mindlin` 卸载模式与闭式支逐点偏差 2.52e-15（机器精度），循环面积误差 7.7e-6
-- `linear` 卸载模式（LIGGGHTS 风格）逐点偏差 29.3%，循环面积低估 23.1%
-- 这是**预期行为**：linear 卸载是 legacy Cundall-Strack 近似，mindlin 卸载是精确 M&D 支
+- `mindlin`（target）与闭式支逐点偏差 2.52e-15（机器精度），循环面积误差 7.7e-6
+- `linear`（**negative control**）逐点偏差 29.3 %，循环面积低估 **23.07 %** —— 这是**设计上必须发生**的失败：
+  它证明本量具能分辨"精确 M&D 反转"与"常数刚度卸载"；若该臂也通过，本报告全部绿灯作废
+- 两者关系：linear 卸载是 legacy Cundall–Strack 近似（§5 移植取舍的默认值），mindlin 卸载是精确 M&D 支
 
-### 3.3 OSS 实现对标
+### 3.3 OSS 实现对标（**文献声明，未在本 harness 执行**）
+
+> 三个 OSS 码（LIGGGHTS / YADE / MercuryDPM）均**未**在本机安装或运行，下表为文献/文档声明值，
+> 机读工件中标为 `oss_comparison[*].evidence = "documented … NOT executed"`。
+> 本仓**可执行**的对照是 §3.2 的 `linear` 臂（它复现了 LIGGGHTS 风格的 ≈−23 % 能量亏欠）。
 
 | 实现 | 加载支 | 卸载支 | 稳态循环能量误差 | 与 TensorDEM 关系 |
 |---|---|---|---|---|
@@ -135,13 +154,18 @@ contact_tangential.py            ← 求解器引擎
 
 ## ④ 收敛性与参数敏感性
 
-### 4.1 时间步收敛
+### 4.1 时间步收敛（`timestep_convergence()` 机器生成）
 
-| Δt 因子 | 逐点最大偏差 | 说明 |
-|---|---|---|
-| 0.5 | 7.40e-16 | 代数律，Δt 仅影响采样密度 |
-| 1.0 | 3.70e-16 | 基准 |
-| 2.0 | 3.70e-16 | 无速率依赖性（预期） |
+每段位移固定为 δ_s，Δt×0.5/1/2 对应 800/400/200 个增量（真正的离散加密）：
+
+| Δt 因子 | 增量数 | 循环面积相对误差 | 逐点最大偏差 (占 μF_n) |
+|---|---|---|---|
+| 0.5 | 2400 | 1.94e-06 | 1.61e-14 |
+| 1.0 | 1200 | 7.73e-06 | 2.52e-15 |
+| 2.0 | 600 | 3.08e-05 | 3.55e-15 |
+
+面积误差约随 Δt 线性（每次加倍 ≈×4），来源是闭合环的梯形求积；力律本身是代数关系，
+逐点偏差在机器精度（率无关性得到确认）。
 
 ### 4.2 摩擦系数 μ 敏感性
 
@@ -229,19 +253,22 @@ contact_tangential.py            ← 求解器引擎
 | 文件 | 内容 |
 |---|---|
 | `benchmarks/xval_interface_slip_pseudo_steady_state/run_xval.py` | 交叉对标脚本 |
-| `artifacts/xval_interface_slip_pseudo_steady_state/results.json` | 机读结果 |
-| `artifacts/xval_interface_slip_pseudo_steady_state/figures/fig1_loading_curve.png` | 加载曲线对比 |
-| `artifacts/xval_interface_slip_pseudo_steady_state/figures/fig2_hysteresis.png` | 滞回环对比 |
-| `artifacts/xval_interface_slip_pseudo_steady_state/figures/fig3_energy_dissipation.png` | 能量耗散对比 |
-| `artifacts/xval_interface_slip_pseudo_steady_state/figures/fig4_stick_radius.png` | 粘着圆半径演化 |
-| `artifacts/xval_interface_slip_pseudo_steady_state/figures/fig5_parameter_sensitivity.png` | 参数敏感性 |
+| `benchmarks/artifacts/xval_interface_slip_pseudo_steady_state/results.json` | 机读结果（含 `design`/`oracle_ode`/`timestep_convergence`/`verdict`/`environment`） |
+| `benchmarks/artifacts/xval_interface_slip_pseudo_steady_state/figures/fig1_loading_curve.png` | 加载曲线对比 |
+| `benchmarks/artifacts/xval_interface_slip_pseudo_steady_state/figures/fig2_hysteresis.png` | 滞回环对比 |
+| `benchmarks/artifacts/xval_interface_slip_pseudo_steady_state/figures/fig3_energy_dissipation.png` | 能量耗散对比 |
+| `benchmarks/artifacts/xval_interface_slip_pseudo_steady_state/figures/fig4_stick_radius.png` | 粘着圆半径演化 |
+| `benchmarks/artifacts/xval_interface_slip_pseudo_steady_state/figures/fig5_parameter_sensitivity.png` | 参数敏感性 |
+| `tests/test_xval_interface_slip_pseudo_steady_state.py` | 14 个回归用例（含提交工件防漂移闸门） |
+| `docs/AUDIT_m17451_XVAL_DEM_INTERFACE_SLIP.md` | 审计与证据分级 |
 | `docs/XVAL_DEM_INTERFACE_SLIP_PSEUDO_STEADY_STATE.md` | 本报告 |
 
 ### 复现命令
 
 ```bash
 cd <repo>
-PYTHONPATH=src python benchmarks/xval_interface_slip_pseudo_steady_state/run_xval.py
+PYTHONPATH=src python benchmarks/xval_interface_slip_pseudo_steady_state/run_xval.py   # 退出码 0 = ALL PASS
+pytest tests/test_xval_interface_slip_pseudo_steady_state.py -q                         # 14 passed
 ```
 
 ---
@@ -250,7 +277,9 @@ PYTHONPATH=src python benchmarks/xval_interface_slip_pseudo_steady_state/run_xva
 
 | 关键量 | 基准 | TensorDEM (mindlin) | 误差 | <15%? |
 |---|---|---|---|---|
-| 加载支 F_t(δ) | M&D 闭式 | 闭式模块 | **0** | ✅ |
+| 加载支 F_t(δ) | **独立粘着圆 ODE** | 闭式模块 | **1.44e-9** | ✅ |
+| 反转支 F_t(Δ) | **独立粘着圆 ODE** | 闭式模块 | **2.26e-8** | ✅ |
+| 对照臂面积（linear） | exact | 引擎 linear | **−23.07 %**（必须 ≥15 %，量具有效性判据） | 预期失败 ✅ |
 | 反转支 F_t(Δ) | M&D 闭式 | 引擎 mindlin | **2.5e-15** | ✅ |
 | 稳态循环面积 W | 0.8μFnδs | 引擎 mindlin | **7.7e-6** | ✅ |
 | δ_s(μ) 标度 | μ^1 | 闭式模块 | **1.9e-16** | ✅ |
