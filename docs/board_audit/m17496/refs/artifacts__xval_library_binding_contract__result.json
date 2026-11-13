@@ -1,0 +1,721 @@
+{
+  "accumulation_discriminator": {
+    "h1_prediction": 1.0,
+    "h1_supported": true,
+    "measured_ratio": 1.0,
+    "rows": [
+      {
+        "h0_accumulating_ratio": 1.5,
+        "n_steps": 2,
+        "separation_vs_h1": 0.5
+      },
+      {
+        "h0_accumulating_ratio": 2.5,
+        "n_steps": 4,
+        "separation_vs_h1": 1.5
+      },
+      {
+        "h0_accumulating_ratio": 4.5,
+        "n_steps": 8,
+        "separation_vs_h1": 3.5
+      },
+      {
+        "h0_accumulating_ratio": 8.5,
+        "n_steps": 16,
+        "separation_vs_h1": 7.5
+      }
+    ]
+  },
+  "anchor": "XVAL-DEM-LIBRARY-BINDING-FROZEN-CONTRACT",
+  "baseline_comparison": {
+    "control": {
+      "baseline": "presence-only inventory (names exist)",
+      "detected": 1,
+      "missed": [
+        "method_removed",
+        "param_renamed",
+        "param_became_required",
+        "param_kind_widened",
+        "param_added_required",
+        "negative_assertion_violated"
+      ],
+      "rate": 0.14285714285714285,
+      "rows": [
+        {
+          "baseline_detected": true,
+          "key": "state_attribute_removed",
+          "missing_names": [
+            "positions"
+          ]
+        },
+        {
+          "baseline_detected": false,
+          "key": "method_removed",
+          "missing_names": []
+        },
+        {
+          "baseline_detected": false,
+          "key": "param_renamed",
+          "missing_names": []
+        },
+        {
+          "baseline_detected": false,
+          "key": "param_became_required",
+          "missing_names": []
+        },
+        {
+          "baseline_detected": false,
+          "key": "param_kind_widened",
+          "missing_names": []
+        },
+        {
+          "baseline_detected": false,
+          "key": "param_added_required",
+          "missing_names": []
+        },
+        {
+          "baseline_detected": false,
+          "key": "negative_assertion_violated",
+          "missing_names": []
+        }
+      ],
+      "total": 7
+    },
+    "delta_rate": 0.8571428571428572,
+    "treatment": {
+      "detected": 7,
+      "detector": "frozen contract (names + signature kinds + requiredness + annotations + negative assertions)",
+      "rate": 1.0,
+      "total": 7
+    }
+  },
+  "clock_and_restart": {
+    "clock_rel_error": 1.912073901973185e-16,
+    "native_dt_s": 0.0004536235430509879,
+    "restart_continuation_bitwise_equal": true,
+    "restart_continuation_max_position_drift_m": 0.0,
+    "restart_payload_sha256": "c0cd15ce5268b32c1fa76cb843c176048d3d92a7cd92810faf891aa443061aff",
+    "restart_positions_bitwise_equal": true,
+    "restart_schema": "tensordem.restart/1",
+    "step_count": 11,
+    "steps": 10
+  },
+  "environment": {
+    "contract_fingerprint": "sha256:0cbfed8c1172f8412dedfc013e87c79f56f0567ca22d782e0387818f0ee4105d",
+    "contract_schema": "tensordem.binding-contract/1",
+    "contract_version": "1.0.0",
+    "frozen_fingerprint": "sha256:0cbfed8c1172f8412dedfc013e87c79f56f0567ca22d782e0387818f0ee4105d",
+    "frozen_fingerprint_match": true,
+    "platform": "Linux-6.6.52-1.7.lns23.loongarch64-loongarch64-with-glibc2.38",
+    "processor": "loongarch64",
+    "python": "3.11.6",
+    "torch": "2.7.1"
+  },
+  "figures": [
+    "fig_impulse_error.png",
+    "fig_mutation_matrix.png",
+    "fig_coverage.png",
+    "fig_substep_boundary.png"
+  ],
+  "impulse_momentum_sweep": [
+    {
+      "analytic_impulse_Ns": [
+        0.0020413059437294455,
+        -0.0008165223774917782
+      ],
+      "impulse_ratio": 1.0,
+      "load_N_per_particle": [
+        0.25,
+        -0.1
+      ],
+      "measured_momentum_Ns": [
+        0.0020413059437294455,
+        -0.0008165223774917784
+      ],
+      "n_steps": 1,
+      "native_dt_s": 0.0004536235430509879,
+      "particles": 18,
+      "rel_error": 1.0622632788739917e-16,
+      "wall_s": 0.0032346993684768677
+    },
+    {
+      "analytic_impulse_Ns": [
+        0.004082611887458891,
+        -0.0016330447549835563
+      ],
+      "impulse_ratio": 1.0,
+      "load_N_per_particle": [
+        0.25,
+        -0.1
+      ],
+      "measured_momentum_Ns": [
+        0.004082611887458891,
+        -0.0016330447549835567
+      ],
+      "n_steps": 2,
+      "native_dt_s": 0.0004536235430509879,
+      "particles": 18,
+      "rel_error": 1.0622632788739917e-16,
+      "wall_s": 0.005926409736275673
+    },
+    {
+      "analytic_impulse_Ns": [
+        0.008165223774917782,
+        -0.0032660895099671126
+      ],
+      "impulse_ratio": 1.0,
+      "load_N_per_particle": [
+        0.25,
+        -0.1
+      ],
+      "measured_momentum_Ns": [
+        0.008165223774917782,
+        -0.0032660895099671135
+      ],
+      "n_steps": 4,
+      "native_dt_s": 0.0004536235430509879,
+      "particles": 18,
+      "rel_error": 1.0622632788739917e-16,
+      "wall_s": 0.011980459094047546
+    },
+    {
+      "analytic_impulse_Ns": [
+        0.016330447549835564,
+        -0.006532179019934225
+      ],
+      "impulse_ratio": 1.0,
+      "load_N_per_particle": [
+        0.25,
+        -0.1
+      ],
+      "measured_momentum_Ns": [
+        0.016330447549835564,
+        -0.006532179019934227
+      ],
+      "n_steps": 8,
+      "native_dt_s": 0.0004536235430509879,
+      "particles": 18,
+      "rel_error": 1.0622632788739917e-16,
+      "wall_s": 0.02420813962817192
+    },
+    {
+      "analytic_impulse_Ns": [
+        0.03266089509967113,
+        -0.01306435803986845
+      ],
+      "impulse_ratio": 1.0,
+      "load_N_per_particle": [
+        0.25,
+        -0.1
+      ],
+      "measured_momentum_Ns": [
+        0.03266089509967113,
+        -0.01306435803986845
+      ],
+      "n_steps": 16,
+      "native_dt_s": 0.0004536235430509879,
+      "particles": 18,
+      "rel_error": 0.0,
+      "wall_s": 0.0483277402818203
+    },
+    {
+      "analytic_impulse_Ns": [
+        0.06532179019934226,
+        -0.0261287160797369
+      ],
+      "impulse_ratio": 1.0,
+      "load_N_per_particle": [
+        0.25,
+        -0.1
+      ],
+      "measured_momentum_Ns": [
+        0.06532179019934226,
+        -0.026128716079736908
+      ],
+      "n_steps": 32,
+      "native_dt_s": 0.0004536235430509879,
+      "particles": 18,
+      "rel_error": 1.0622632788739917e-16,
+      "wall_s": 0.09625768102705479
+    },
+    {
+      "analytic_impulse_Ns": [
+        0.1306435803986845,
+        -0.0522574321594738
+      ],
+      "impulse_ratio": 1.0000000000000002,
+      "load_N_per_particle": [
+        0.25,
+        -0.1
+      ],
+      "measured_momentum_Ns": [
+        0.13064358039868454,
+        -0.052257432159473836
+      ],
+      "n_steps": 64,
+      "native_dt_s": 0.0004536235430509879,
+      "particles": 18,
+      "rel_error": 2.6556581971849795e-16,
+      "wall_s": 0.19047725945711136
+    },
+    {
+      "analytic_impulse_Ns": [
+        0.261287160797369,
+        -0.1045148643189476
+      ],
+      "impulse_ratio": 1.0000000000000002,
+      "load_N_per_particle": [
+        0.25,
+        -0.1
+      ],
+      "measured_momentum_Ns": [
+        0.2612871607973691,
+        -0.10451486431894765
+      ],
+      "n_steps": 128,
+      "native_dt_s": 0.0004536235430509879,
+      "particles": 18,
+      "rel_error": 2.1245265577479835e-16,
+      "wall_s": 0.4024634603410959
+    }
+  ],
+  "mutation_matrix": [
+    {
+      "breaking_findings": 1,
+      "detected": true,
+      "expect_change": "attribute_removed",
+      "expect_severity": "breaking",
+      "key": "state_attribute_removed",
+      "observed_change": "attribute_removed",
+      "observed_field": "state.positions",
+      "observed_severity": "breaking",
+      "status": "DRIFT"
+    },
+    {
+      "breaking_findings": 1,
+      "detected": true,
+      "expect_change": "method_removed",
+      "expect_severity": "breaking",
+      "key": "method_removed",
+      "observed_change": "method_removed",
+      "observed_field": "methods.exchange_state",
+      "observed_severity": "breaking",
+      "status": "DRIFT"
+    },
+    {
+      "breaking_findings": 1,
+      "detected": true,
+      "expect_change": "param_removed",
+      "expect_severity": "breaking",
+      "key": "param_renamed",
+      "observed_change": "param_removed",
+      "observed_field": "methods.step.external_forces",
+      "observed_severity": "breaking",
+      "status": "DRIFT"
+    },
+    {
+      "breaking_findings": 1,
+      "detected": true,
+      "expect_change": "param_became_required",
+      "expect_severity": "breaking",
+      "key": "param_became_required",
+      "observed_change": "param_became_required",
+      "observed_field": "methods.step.external_forces",
+      "observed_severity": "breaking",
+      "status": "DRIFT"
+    },
+    {
+      "breaking_findings": 0,
+      "detected": true,
+      "expect_change": "param_kind_widened",
+      "expect_severity": "additive",
+      "key": "param_kind_widened",
+      "observed_change": "param_kind_widened",
+      "observed_field": "methods.step.load_time",
+      "observed_severity": "additive",
+      "status": "CONFORMS"
+    },
+    {
+      "breaking_findings": 1,
+      "detected": true,
+      "expect_change": "param_added",
+      "expect_severity": "breaking",
+      "key": "param_added_required",
+      "observed_change": "param_added",
+      "observed_field": "methods.step.external_torque",
+      "observed_severity": "breaking",
+      "status": "DRIFT"
+    },
+    {
+      "breaking_findings": 1,
+      "detected": true,
+      "expect_change": "negative_assertion_violated",
+      "expect_severity": "breaking",
+      "key": "negative_assertion_violated",
+      "observed_change": "negative_assertion_violated",
+      "observed_field": "explicitly_absent.restore",
+      "observed_severity": "breaking",
+      "status": "DRIFT"
+    }
+  ],
+  "reference_practice": {
+    "artifacts": [
+      "docs/adapter-contracts.md",
+      "docs/adapter-inventory.md",
+      "src/tensorphysics/adapters/tensordem.py",
+      "src/tensorphysics/protocols.py",
+      "tests/test_adapter_inventory_meta.py",
+      "tests/test_tensordem_adapter.py"
+    ],
+    "binding": "Solver Protocol + TensorDEMAdapter (2-D IceDEM, substep clock)",
+    "repo": "TensorPhysics"
+  },
+  "round": 1,
+  "schema": "tensordem.xval.library-binding-contract/1",
+  "semantic_probes": [
+    {
+      "detail": "",
+      "error": null,
+      "expected": "ValueError",
+      "got": "ValueError: external_forces must have shape (18, 2)",
+      "name": "rejects_wrong_shape",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "error": null,
+      "expected": "TypeError",
+      "got": "TypeError: external_forces must be a torch.Tensor with shape (N, 2)",
+      "name": "rejects_non_tensor_loads",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "error": null,
+      "expected": "ValueError",
+      "got": "ValueError: external_forces must contain only finite values",
+      "name": "rejects_nonfinite_loads",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "error": null,
+      "expected": "ValueError",
+      "got": "ValueError: load_time must equal current DEM time in seconds",
+      "name": "rejects_stale_load_time",
+      "status": "PASS"
+    },
+    {
+      "detail": "n_steps=1",
+      "error": 1.0622632788739917e-16,
+      "expected": "relative error < 1e-12",
+      "got": "rel_err=1.062e-16",
+      "name": "impulse_momentum_identity",
+      "status": "PASS"
+    },
+    {
+      "detail": "n_steps=1",
+      "error": 0.0,
+      "expected": "impulse ratio 1.0",
+      "got": "ratio=1.000000000000",
+      "name": "loads_not_accumulated",
+      "status": "PASS"
+    },
+    {
+      "detail": "n_steps=4",
+      "error": 1.0622632788739917e-16,
+      "expected": "relative error < 1e-12",
+      "got": "rel_err=1.062e-16",
+      "name": "impulse_momentum_identity",
+      "status": "PASS"
+    },
+    {
+      "detail": "n_steps=4",
+      "error": 0.0,
+      "expected": "impulse ratio 1.0",
+      "got": "ratio=1.000000000000",
+      "name": "loads_not_accumulated",
+      "status": "PASS"
+    },
+    {
+      "detail": "n_steps=16",
+      "error": 0.0,
+      "expected": "relative error < 1e-12",
+      "got": "rel_err=0.000e+00",
+      "name": "impulse_momentum_identity",
+      "status": "PASS"
+    },
+    {
+      "detail": "n_steps=16",
+      "error": 0.0,
+      "expected": "impulse ratio 1.0",
+      "got": "ratio=1.000000000000",
+      "name": "loads_not_accumulated",
+      "status": "PASS"
+    },
+    {
+      "detail": "n_steps=64",
+      "error": 2.6556581971849795e-16,
+      "expected": "relative error < 1e-12",
+      "got": "rel_err=2.656e-16",
+      "name": "impulse_momentum_identity",
+      "status": "PASS"
+    },
+    {
+      "detail": "n_steps=64",
+      "error": 4.440892098500626e-16,
+      "expected": "impulse ratio 1.0",
+      "got": "ratio=1.000000000000",
+      "name": "loads_not_accumulated",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "error": 1.7704387981233192e-16,
+      "expected": "relative error < 1e-12",
+      "got": "rel_err=1.770e-16",
+      "name": "ledger_cross_path",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "error": 0.0,
+      "expected": "time == step_count*dt",
+      "got": "time=0.0022681177152549395 step_count=5",
+      "name": "clock_advances_by_native_dt",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "error": null,
+      "expected": "bitwise identical",
+      "got": "schema=tensordem.restart/1 identical=True",
+      "name": "restart_roundtrip_exact",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "error": null,
+      "expected": "same total force for the same load",
+      "got": "shape=(18, 2)",
+      "name": "forces_matches_step_load",
+      "status": "PASS"
+    },
+    {
+      "detail": "n_steps=8 seed=0",
+      "error": 3.559706984076764e-16,
+      "expected": "relative error < 1e-12",
+      "got": "rel_err=3.560e-16",
+      "name": "impulse_momentum_identity_3d",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "error": 3.3306690738754696e-16,
+      "expected": "impulse ratio 1.0",
+      "got": "ratio=1.000000000000",
+      "name": "loads_not_accumulated_3d",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "error": null,
+      "expected": "ValueError",
+      "got": "ValueError: external_forces must be a tensor of shape (64, 3)",
+      "name": "rejects_wrong_shape_3d",
+      "status": "PASS"
+    }
+  ],
+  "substep_rule": [
+    {
+      "accepted": true,
+      "case": "ratio_1.0",
+      "global_dt_s": 0.00022719562013736916,
+      "n_substeps_accepted": 1,
+      "native_dt_s": 0.00022719562013736916,
+      "ratio": 1.0
+    },
+    {
+      "accepted": true,
+      "case": "ratio_2.0",
+      "global_dt_s": 0.0004543912402747383,
+      "n_substeps_accepted": 2,
+      "native_dt_s": 0.00022719562013736916,
+      "ratio": 2.0
+    },
+    {
+      "accepted": true,
+      "case": "ratio_4.0",
+      "global_dt_s": 0.0009087824805494766,
+      "n_substeps_accepted": 4,
+      "native_dt_s": 0.00022719562013736916,
+      "ratio": 4.0
+    },
+    {
+      "accepted": true,
+      "case": "ratio_16.0",
+      "global_dt_s": 0.0036351299221979065,
+      "n_substeps_accepted": 16,
+      "native_dt_s": 0.00022719562013736916,
+      "ratio": 16.0
+    },
+    {
+      "accepted": false,
+      "case": "ratio_4.000001",
+      "global_dt_s": 0.0009087827077450968,
+      "n_substeps_accepted": null,
+      "native_dt_s": 0.00022719562013736916,
+      "ratio": 4.000001
+    },
+    {
+      "accepted": true,
+      "case": "ratio_4.0000000001",
+      "global_dt_s": 0.0009087824805721962,
+      "n_substeps_accepted": 4,
+      "native_dt_s": 0.00022719562013736916,
+      "ratio": 4.0000000001
+    },
+    {
+      "accepted": false,
+      "case": "ratio_4.5",
+      "global_dt_s": 0.0010223802906181613,
+      "n_substeps_accepted": null,
+      "native_dt_s": 0.00022719562013736916,
+      "ratio": 4.5
+    }
+  ],
+  "surface_coverage": {
+    "IceDEM": {
+      "frozen_count": 11,
+      "frozen_fraction": 1.0,
+      "public_count": 11,
+      "public_members": [
+        "broken_bonds",
+        "diagnostics",
+        "exchange_state",
+        "forces",
+        "fracture_events",
+        "fragments",
+        "from_snapshot",
+        "mechanical_energy",
+        "snapshot",
+        "step",
+        "tool_position"
+      ],
+      "unfrozen_members": []
+    },
+    "IceDEM3D": {
+      "frozen_count": 8,
+      "frozen_fraction": 0.4,
+      "public_count": 20,
+      "public_members": [
+        "body_force_ledger",
+        "body_forces",
+        "bond_creep_reference_force",
+        "bond_law_report",
+        "bond_stored_energy",
+        "broken_bonds",
+        "buoyancy_active",
+        "diagnostics",
+        "energy",
+        "forces",
+        "friction_coefficient_pair",
+        "friction_cone_limit",
+        "lateral_platen_energy",
+        "load_state_dict",
+        "platen_friction_k",
+        "state_dict",
+        "step",
+        "submerged_fraction",
+        "tool_position",
+        "unrelaxed_bond_stiffness"
+      ],
+      "unfrozen_members": [
+        "body_force_ledger",
+        "body_forces",
+        "bond_creep_reference_force",
+        "bond_law_report",
+        "bond_stored_energy",
+        "buoyancy_active",
+        "friction_coefficient_pair",
+        "friction_cone_limit",
+        "lateral_platen_energy",
+        "platen_friction_k",
+        "submerged_fraction",
+        "unrelaxed_bond_stiffness"
+      ]
+    }
+  },
+  "verdicts": [
+    {
+      "got": 2.6556581971849795e-16,
+      "met": true,
+      "metric": "impulse-momentum relative error (max over n_steps)",
+      "reference": "analytic n*dt*F",
+      "tolerance": 0.15
+    },
+    {
+      "got": 3.559706984076764e-16,
+      "met": true,
+      "metric": "3-D impulse-momentum relative error",
+      "reference": "analytic n*dt*F",
+      "tolerance": 0.15
+    },
+    {
+      "got": 1.7704387981233192e-16,
+      "met": true,
+      "metric": "ledger (diagnostics) vs analytic impulse relative error",
+      "reference": "analytic n*dt*F",
+      "tolerance": 0.15
+    },
+    {
+      "got": 1.912073901973185e-16,
+      "met": true,
+      "metric": "native clock vs n*dt relative error",
+      "reference": "analytic n*dt",
+      "tolerance": 0.15
+    },
+    {
+      "got": 0.0,
+      "met": true,
+      "metric": "restart drift (max |\u0394position| after restart+1 step)",
+      "reference": "0 m (bitwise)",
+      "tolerance": 0.0
+    },
+    {
+      "got": 1.0,
+      "met": true,
+      "metric": "drift-detector classification rate over 7 mutation classes",
+      "reference": "7/7 expected classifications",
+      "tolerance": 1.0
+    },
+    {
+      "got": 1.0,
+      "met": true,
+      "metric": "semantic probe pass rate",
+      "reference": "all declared probes",
+      "tolerance": 1.0
+    },
+    {
+      "got": 1.0,
+      "met": true,
+      "metric": "contract conformance (introspection checks matched)",
+      "reference": "all frozen checks",
+      "tolerance": 1.0
+    }
+  ],
+  "verify": {
+    "breaking": 0,
+    "checks": 42,
+    "contract_fingerprint": "sha256:0cbfed8c1172f8412dedfc013e87c79f56f0567ca22d782e0387818f0ee4105d",
+    "contract_schema": "tensordem.binding-contract/1",
+    "contract_version": "1.0.0",
+    "findings": [],
+    "frozen_fingerprint_match": true,
+    "matched": 42,
+    "other": 0,
+    "schema": "tensordem.binding-contract.report/1",
+    "status": "CONFORMS"
+  },
+  "wall_s": 1.6820218805223703
+}
