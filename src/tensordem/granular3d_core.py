@@ -41,6 +41,17 @@ class Material3D:
     kn: float = 1.0e5
     kt_ratio: float = 0.5
     gravity: float = 9.81
+    #: rolling-resistance lever convention (cross-validated against the
+    #: LIGGGHTS EPSD2 model, ``docs/XVAL_DEM_ROUND2_METHOD_SELECTION.md``):
+    #: ``"particle_radius"`` (legacy TensorDEM, lever = r for every contact
+    #: kind) or ``"reduced_radius"`` (LIGGGHTS ``reff``: r for a wall,
+    #: radi*radj/(radi+radj) = r/2 for equal spheres).  Default keeps every
+    #: historical result bit for bit.
+    rolling_lever: str = "particle_radius"
+    #: include the normal (torsion / drilling) part of the relative spin in the
+    #: rolling spring.  LIGGGHTS removes it unless ``torsionTorque`` is on;
+    #: ``True`` (default) is the legacy TensorDEM behaviour.
+    rolling_torsion: bool = True
 
     @property
     def diameter(self) -> float:
@@ -61,6 +72,32 @@ class Material3D:
     @property
     def kr(self) -> float:
         return self.kt * self.radius ** 2
+
+    @property
+    def pair_rolling_reff(self) -> float:
+        """Rolling lever arm of a grain-grain contact under the active convention."""
+        if self.rolling_lever == "particle_radius":
+            return self.radius
+        if self.rolling_lever == "reduced_radius":
+            return 0.5 * self.radius          # radi*radj/(radi+radj), equal spheres
+        raise ValueError(f"unknown rolling_lever {self.rolling_lever!r}")
+
+    @property
+    def wall_rolling_reff(self) -> float:
+        """Rolling lever arm of a grain-wall contact (both conventions: ``r``)."""
+        if self.rolling_lever not in ("particle_radius", "reduced_radius"):
+            raise ValueError(f"unknown rolling_lever {self.rolling_lever!r}")
+        return self.radius
+
+    @property
+    def pair_rolling_kr(self) -> float:
+        """Rolling spring stiffness matching :attr:`pair_rolling_reff` (kt reff^2)."""
+        return self.kt * self.pair_rolling_reff ** 2
+
+    @property
+    def wall_rolling_kr(self) -> float:
+        """Rolling spring stiffness of a wall contact (= ``kt r^2`` = :attr:`kr`)."""
+        return self.kt * self.wall_rolling_reff ** 2
 
     @property
     def zeta(self) -> float:

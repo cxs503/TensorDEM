@@ -217,7 +217,13 @@ def pair_contact_forces(pos: np.ndarray, vel: np.ndarray, omega: np.ndarray,
         return res
 
     r = mat.radius
-    kn, kt, kr = mat.kn, mat.kt, mat.kr
+    kn, kt = mat.kn, mat.kt
+    # rolling-resistance convention (legacy = particle radius, full spin; the
+    # LIGGGHTS EPSD2 convention is opt-in, see
+    # docs/XVAL_DEM_ROUND2_METHOD_SELECTION.md)
+    kr = mat.pair_rolling_kr
+    rolling_reff = mat.pair_rolling_reff
+    rolling_torsion = mat.rolling_torsion
     mu, mu_r, gamma = mat.mu, mat.mu_rolling, mat.gamma_pair
 
     dvec = pos[ju] - pos[iu]
@@ -274,9 +280,11 @@ def pair_contact_forces(pos: np.ndarray, vel: np.ndarray, omega: np.ndarray,
 
     if mu_r > 0.0:
         spin = omega[ja] - omega[ia]
+        if not rolling_torsion:
+            spin = spin - np.einsum("ij,ij->i", spin, nvec)[:, None] * nvec
         roll = roll_old + spin * dt
         r_norm = np.sqrt(np.einsum("ij,ij->i", roll, roll))
-        cap_r = (mu_r * r * f_n) / kr
+        cap_r = (mu_r * rolling_reff * f_n) / kr
         scale_r = np.where(r_norm > cap_r, cap_r / np.maximum(r_norm, 1e-30), 1.0)
         roll = roll * scale_r[:, None]
         torque_r = -kr * roll
@@ -378,7 +386,10 @@ def wall_contact_forces(pos: np.ndarray, vel: np.ndarray, omega: np.ndarray,
     }
     mu_w = mat.mu if mu_wall is None else float(mu_wall)
     r = mat.radius
-    kn, kt, kr = mat.kn, mat.kt, mat.kr
+    kn, kt = mat.kn, mat.kt
+    kr = mat.wall_rolling_kr            # = kt r^2 in every convention
+    rolling_reff = mat.wall_rolling_reff
+    rolling_torsion = mat.rolling_torsion
     gamma = mat.gamma_wall
 
     z = pos[:, 2] - floor_z
@@ -439,13 +450,16 @@ def wall_contact_forces(pos: np.ndarray, vel: np.ndarray, omega: np.ndarray,
         slip_t = np.zeros_like(u_t)
 
     if mu_rolling_wall > 0.0:
-        roll = roll_old + omega_c * dt
+        spin_w = omega_c
+        if not rolling_torsion:
+            spin_w = spin_w - spin_w[:, 2:3] * np.array([[0.0, 0.0, 1.0]])
+        roll = roll_old + spin_w * dt
         r_norm = np.sqrt(np.einsum("ij,ij->i", roll, roll))
-        cap_r = (mu_rolling_wall * r * f_n) / kr
+        cap_r = (mu_rolling_wall * rolling_reff * f_n) / kr
         scale_r = np.where(r_norm > cap_r, cap_r / np.maximum(r_norm, 1e-30), 1.0)
         roll = roll * scale_r[:, None]
         torque_r = -kr * roll
-        slip_r = omega_c * dt - (roll - roll_old)
+        slip_r = spin_w * dt - (roll - roll_old)
     else:
         roll = np.zeros_like(roll_old)
         torque_r = np.zeros_like(roll_old)
