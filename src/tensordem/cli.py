@@ -219,18 +219,20 @@ def _cmd_elastic_limit_shear(args: argparse.Namespace) -> None:
 
 def _cmd_binding_contract(args: argparse.Namespace) -> None:
     """Run the frozen-contract gate, the behavioural probes and the benchmark."""
-    from .binding_contract import (benchmark_physics, fingerprint,
-                                   probe_semantics, verify)
+    from .binding_contract import (benchmark_physics, benchmark_physics_3d,
+                                   fingerprint, probe_semantics, verify)
 
     if args.benchmark_energy_steps < 1:
         sys.exit("--benchmark-energy-steps must be positive")
     benchmark = benchmark_physics(args.benchmark_energy_steps)
+    benchmark_3d = benchmark_physics_3d(args.benchmark_energy_steps_3d)
     report = {
         "schema": "tensordem.binding-contract.cli/1",
         "contract_fingerprint": fingerprint(),
         "verify": verify(),
         "probes": probe_semantics(),
         "benchmark": benchmark,
+        "benchmark_3d": benchmark_3d,
     }
     args.out.mkdir(parents=True, exist_ok=True)
     target = args.out / "binding_contract_cli.json"
@@ -241,9 +243,11 @@ def _cmd_binding_contract(args: argparse.Namespace) -> None:
         f"contract {fingerprint()} verify={report['verify']['status']} "
         f"probes={passed}/{len(probes)} "
         f"benchmark={benchmark['rows_passed']}/{benchmark['rows_total']} "
-        f"worst_rel_error={benchmark['worst_rel_error']:.3e} -> {target}"
+        f"worst_rel_error={benchmark['worst_rel_error']:.3e} "
+        f"benchmark_3d={benchmark_3d['rows_passed']}/{benchmark_3d['rows_total']} "
+        f"worst_3d={benchmark_3d['worst_rel_error']:.3e} -> {target}"
     )
-    if benchmark["verdict"] != "MET":
+    if benchmark["verdict"] != "MET" or benchmark_3d["verdict"] != "MET":
         sys.exit(1)
 
 
@@ -343,7 +347,11 @@ def main(argv: list[str] | None = None) -> None:
     )
     contract_parser.add_argument(
         "--benchmark-energy-steps", type=int, default=2000,
-        help="Steps for the conservative-lattice energy-drift benchmark row",
+        help="Steps for the 2-D conservative-lattice energy-drift benchmark row",
+    )
+    contract_parser.add_argument(
+        "--benchmark-energy-steps-3d", type=int, default=1000,
+        help="Steps for the 3-D conservative-lattice energy-drift benchmark row",
     )
     contract_parser.set_defaults(func=_cmd_binding_contract)
 
