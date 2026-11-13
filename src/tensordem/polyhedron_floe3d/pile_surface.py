@@ -123,24 +123,44 @@ def _segment_bic(n_points: int, sse: float, n_params: int) -> float:
 
 
 def _two_segment_break(radius: np.ndarray, height: np.ndarray, apex: int,
-                       min_segment: int = 3):
+                       min_segment: int = 3,
+                       require_flatter_apron: bool = True,
+                       min_apron_bins: int = 2):
     """Split ``[apex:]`` into flank + apron by BIC (see :func:`_segment_bic`).
 
     The single-segment model (the whole outward profile is one flank) competes
-    with every admissible two-segment break; the winner is returned.  A clean
+    with every *admissible* two-segment break; the winner is returned.  A clean
     cone keeps a single segment (break ``None``), a pile with a foot gets a
     break at the toe.
+
+    Admissibility (``require_flatter_apron``) has two structural parts:
+
+    * an apron is the *flattened* foot of the pile, so the projection's outward
+      descent cannot be steeper than the flank's.  A break that puts the steeper
+      segment outboard is a convexity of one single cone, not an apron; splitting
+      there and reporting the inner (shallower) slope is exactly how a clean
+      40 deg cone used to be reported as 35.10 deg (see
+      ``runs/h1_broken_ice_dem/round3/round3_figures.json``, column
+      ``flank_clean``, and ``fig1_pre_fix_ablation``);
+    * the apron must be resolved by at least ``min_apron_bins`` annuli -- a
+      single annulus is one point, not a segment, so it cannot be shown to be a
+      foot (and it truncates the flank of a clean cone).
+
+    Pass ``False`` to recover the unconstrained (pre-fix) behaviour, i.e. no
+    slope test and a one-annulus apron allowed; the tests use that as baseline.
 
     Returns ``(break_index, sse_flank, sse_apron, bic)`` where ``break_index`` is
     the last flank index (``None`` = no break, whole profile is the flank).
     """
     n = radius.size
     m = n - apex
-    if m < int(min_segment):
+    # a one-annulus "apron" is only reachable when the structural rules are off
+    min_apron = int(min_apron_bins) if require_flatter_apron else 1
+    if m < int(min_segment) + min_apron:
         return None, float("nan"), float("nan"), float("inf")
     best_bic = _segment_bic(m, _sse(radius[apex:], height[apex:]), 2)
     best = (None, _sse(radius[apex:], height[apex:]), float("nan"), best_bic)
-    for k in range(apex + int(min_segment) - 1, n):
+    for k in range(apex + int(min_segment) - 1, n - min_apron):
         flank = slice(apex, k + 1)
         apron = slice(k + 1, n)
         if flank.stop - flank.start < int(min_segment):
@@ -148,6 +168,13 @@ def _two_segment_break(radius: np.ndarray, height: np.ndarray, apex: int,
         sse_flank = _sse(radius[flank], height[flank])
         n_apron = apron.stop - apron.start
         if n_apron >= 2:
+            if require_flatter_apron:
+                flank_slope = _theil_sen_slope(radius[flank], height[flank])
+                apron_slope = _theil_sen_slope(radius[apron], height[apron])
+                if (math.isfinite(flank_slope) and math.isfinite(apron_slope)
+                        and apron_slope < flank_slope):
+                    # steeper outboard segment: not a foot, so not a split
+                    continue
             sse_apron = _sse(radius[apron], height[apron])
             sse, n_params = sse_flank + sse_apron, 4
         elif n_apron == 1:
@@ -164,14 +191,18 @@ def _two_segment_break(radius: np.ndarray, height: np.ndarray, apex: int,
 def fit_flank(radius: Sequence[float], height: Sequence[float],
               count: Sequence[int] | None = None,
               min_flank_bins: int = 3,
-              min_drop: float = 0.0) -> Dict[str, object]:
+              min_drop: float = 0.0,
+              require_flatter_apron: bool = True,
+              min_apron_bins: int = 2) -> Dict[str, object]:
     """Angle of the descending flank of a free-surface profile.
 
     Steps
     -----
     1. Start from the bin with the largest height (the apex of the pile).
     2. Split the outward profile into *flank* and *apron* with the BIC-scored
-       two-segment model (:func:`_two_segment_break`).
+       two-segment model (:func:`_two_segment_break`), admitting only splits
+       whose apron is no steeper than the flank and covers at least
+       ``min_apron_bins`` annuli (``require_flatter_apron``).
     3. Take the Theil-Sen slope of the flank and convert it to degrees.
 
     A flank shorter than ``min_flank_bins`` annuli, one whose slope is not
@@ -205,7 +236,9 @@ def fit_flank(radius: Sequence[float], height: Sequence[float],
         return result
 
     break_index, _flank_sse, _apron_sse, _bic = _two_segment_break(
-        r, h, apex, min_segment=int(min_flank_bins))
+        r, h, apex, min_segment=int(min_flank_bins),
+        require_flatter_apron=bool(require_flatter_apron),
+        min_apron_bins=int(min_apron_bins))
     stop = break_index + 1 if break_index is not None else r.size
     if stop - apex < int(min_flank_bins):
         return result
