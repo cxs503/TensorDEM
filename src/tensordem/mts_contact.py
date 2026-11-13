@@ -468,7 +468,7 @@ class MTSSystem:
     def __init__(self, positions, radii, config: MTSConfig | None = None, *,
                  walls: np.ndarray | None = None,
                  periodic: tuple[float | None, float | None] | None = None,
-                 shear_rate: float = 0.0):
+                 shear_rate: float = 0.0, lees_edwards: bool = False):
         pos = np.asarray(positions, dtype=np.float64)
         rad = np.asarray(radii, dtype=np.float64).reshape(-1)
         if pos.ndim != 2 or pos.shape[1] != 2 or pos.shape[0] != rad.size:
@@ -495,6 +495,13 @@ class MTSSystem:
             self.periodic_x = None if periodic[0] is None else float(periodic[0])
             self.periodic_y = None if periodic[1] is None else float(periodic[1])
         self.shear_rate = float(shear_rate)
+        # ``lees_edwards`` makes the *periodic lattice itself* shear with the
+        # flow (tilt ``strain = shear_rate * t``), i.e. the cell is triclinic.
+        # The legacy arm keeps an orthogonal lattice, so a contact across the
+        # x boundary is evaluated at a displacement that misses the accumulated
+        # tilt and its affine velocity (see docs/XVAL_PERIODIC_SLLOD_*).
+        self.lees_edwards = bool(lees_edwards)
+        self.strain = 0.0
         self.time = 0.0
         self.steps = 0
         self.dt = float(self.config.dt)
@@ -573,16 +580,27 @@ class MTSSystem:
         follows a pair across pair-list rebuilds.
         """
         reach = 2.0 * float(self.radii.max()) + self.config.skin
-        tree = cKDTree(pos)
-        pairs = tree.query_pairs(reach, output_type="ndarray").reshape(-1, 2)
         lx, ly = self.periodic_x, self.periodic_y
+        # In a sheared cell the *search* is done in the co-moving (untilted)
+        # frame s = (x - strain*y, y), where the lattice is orthogonal again --
+        # so the four mirror combinations stay complete and no pair can be found
+        # twice.  The shift vectors handed to ``_forces`` are then the images of
+        # those combinations in the true (tilted) frame.
+        lee = bool(self.lees_edwards and lx is not None and ly is not None
+                   and self.strain != 0.0)
+        pos_search = pos
+        if lee:
+            pos_search = pos.copy()
+            pos_search[:, 0] = np.mod(pos[:, 0] - self.strain * pos[:, 1], lx)
+        tree = cKDTree(pos_search)
+        pairs = tree.query_pairs(reach, output_type="ndarray").reshape(-1, 2)
         near = {}
         if lx is not None:
-            near["x0"] = pos[:, 0] < reach
-            near["x1"] = pos[:, 0] > lx - reach
+            near["x0"] = pos_search[:, 0] < reach
+            near["x1"] = pos_search[:, 0] > lx - reach
         if ly is not None:
-            near["y0"] = pos[:, 1] < reach
-            near["y1"] = pos[:, 1] > ly - reach
+            near["y0"] = pos_search[:, 1] < reach
+            near["y1"] = pos_search[:, 1] > ly - reach
         # ``shift`` is the offset *added to x_j* to reach the image in contact:
         # for a body of the "x1" set (right edge) seen from a body of the "x0"
         # set (left edge) that image lies one period to the *left*, so
@@ -612,8 +630,13 @@ class MTSSystem:
             if not len(a) or not len(b):
                 continue
             # consistent with ``_forces``: l = x_j - x_i + shift
-            d = pos[b][None, :, :] - pos[a][:, None, :] + np.asarray(shift)
-            d = self._minimum_image(d)
+            d = pos_search[b][None, :, :] - pos_search[a][:, None, :] + np.asarray(shift)
+            if lee:  # orthogonal minimum image in the co-moving frame
+                d = d.copy()
+                d[..., 0] -= lx * np.round(d[..., 0] / lx)
+                d[..., 1] -= ly * np.round(d[..., 1] / ly)
+            else:
+                d = self._minimum_image(d)
             ii, jj = np.nonzero(np.linalg.norm(d, axis=2) < reach)
             if len(ii):
                 rows.append(np.column_stack([a[ii], b[jj],
@@ -627,7 +650,10 @@ class MTSSystem:
         for k, (vec, _a, _b) in enumerate(combos, start=1):
             sel = s_idx == k
             if sel.any():
-                shift[sel] = np.asarray(vec, dtype=float)
+                vec = np.asarray(vec, dtype=float)
+                if lee:   # co-moving -> true lattice vector: (sx, sy) -> (sx + strain*sy, sy)
+                    vec = np.array([vec[0] + self.strain * vec[1], vec[1]])
+                shift[sel] = vec
         key = (i * (self.n + 1) + j) * 8 + s_idx
         # a physical interaction is unique: the same body pair *and* image slot
         # must not be counted twice (the direct KD-tree list and the mirror combos
@@ -638,13 +664,38 @@ class MTSSystem:
 
     def _minimum_image(self, d: np.ndarray, *, keep_shift: bool = False):
         out = d
-        if self.periodic_x is not None:
+        px, py = self.periodic_x, self.periodic_y
+        if self.lees_edwards and px is not None and py is not None                 and self.strain != 0.0:
+            # Triclinic (sheared) lattice: the periodic images are generated by
+            # a1 = (Lx, 0) and a2 = (strain*Ly, Ly).  ``u = dx - strain*dy`` is
+            # invariant under a1/a2, so the minimum image is found by scanning
+            # the few y-images that can host it and wrapping x analytically.
+            dd = np.asarray(d, dtype=np.float64)
+            u = dd[..., 0] - self.strain * dd[..., 1]
+            v0 = dd[..., 1]
+            best = None
+            for k in (-2, -1, 0, 1, 2):
+                # each k is a *distinct* lattice point (a2 image): wrapping v back
+                # into the box would collapse all five candidates into one
+                v = v0 + k * py
+                x = u + self.strain * v
+                x = x - px * np.round(x / px)
+                cand = np.stack([x, v], axis=-1)
+                norm2 = np.sum(cand * cand, axis=-1)
+                if best is None:
+                    best, norm2_best = cand, norm2
+                else:
+                    take = norm2 < norm2_best
+                    best = np.where(take[..., None], cand, best)
+                    norm2_best = np.where(take, norm2, norm2_best)
+            return (best, None) if keep_shift else best
+        if px is not None:
             out = out.copy()
-            out[..., 0] -= self.periodic_x * np.round(out[..., 0] / self.periodic_x)
-        if self.periodic_y is not None:
+            out[..., 0] -= px * np.round(out[..., 0] / px)
+        if py is not None:
             if out is d:
                 out = out.copy()
-            out[..., 1] -= self.periodic_y * np.round(out[..., 1] / self.periodic_y)
+            out[..., 1] -= py * np.round(out[..., 1] / py)
         return (out, None) if keep_shift else out
 
     def _slow_pass(self) -> None:
@@ -738,6 +789,16 @@ class MTSSystem:
         v_j = np.where(wall[:, None], 0.0,
                        vel[jc] + ndof_omega[jc][:, None] * _perp(r_j))
         v_rel = v_i - v_j
+        if self.shear_rate and self.lees_edwards:
+            # The SLLOD field u = shear_rate * y is not periodic: the image of
+            # body ``j`` that owns this contact sits at ``y_j + shift_y``, so its
+            # affine velocity is shear_rate*(y_j + shift_y).  ``vel`` above was
+            # built from the wrapped positions and therefore misses
+            # ``shear_rate*shift_y``.  Without this term the shear rate seen by
+            # every contact that straddles the y boundary is wrong by
+            # ``shear_rate*Ly`` (regression: test_lees_edwards_*).
+            v_rel = v_rel - self.shear_rate * s["shift"][:, 1][:, None] * np.array(
+                [1.0, 0.0])[None, :]
         v_n = np.sum(v_rel * n, axis=1)
         v_t = v_rel - v_n[:, None] * n
 
@@ -844,6 +905,9 @@ class MTSSystem:
             "kind": np.where(wall, 2, 0).astype(np.int8),
             "n": n,
             "lever": -r_i,
+            # true centre-to-centre branch vector (image offset included): the
+            # virial of a contact must use the same displacement as its force
+            "branch": l,
             "f": f_on_i,
             "f_on_i": f_on_i,
             "fn": f_n_final,
@@ -939,6 +1003,8 @@ class MTSSystem:
             self.omega *= decay
         self.pos += h * (self.vel + (self._affine_velocity(self.pos)
                                      if self.shear_rate else 0.0))
+        if self.lees_edwards:
+            self.strain += h * self.shear_rate
         self._wrap()
 
     def _substep(self, h: float, *, passes: int, record: bool = True) -> None:
@@ -961,6 +1027,8 @@ class MTSSystem:
         w_half = self.omega + 0.5 * h * (torque * inv_i)
         self.pos += h * (v_half + (self._affine_velocity(self.pos)
                                   if self.shear_rate else 0.0))
+        if self.lees_edwards:
+            self.strain += h * self.shear_rate
         self._wrap()
         # evaluate at the drifted position with the half-step velocity (standard
         # velocity-Verlet for velocity-dependent forces)
@@ -1190,7 +1258,8 @@ def _gas_system(phi: float, n: int, ratio: float, *, n_sub: int | None,
                 mu: float = 0.0, contact_model: str = "linear",
                 kn: float = 1.0e5, zeta: float = 0.4,
                 damping_time: float = 0.0, bidisperse: bool = False,
-                random_positions: bool = False) -> tuple[MTSSystem, float]:
+                random_positions: bool = False,
+                lees_edwards: bool = False) -> tuple[MTSSystem, float]:
     """Doubly periodic packing of ``n`` disks at volume fraction ``phi``.
 
     ``bidisperse``/``random_positions`` make the preparation amorphous: a grid
@@ -1245,7 +1314,7 @@ def _gas_system(phi: float, n: int, ratio: float, *, n_sub: int | None,
                     enforce_gate=enforce_gate)
     system = MTSSystem(pos, (radii_all if radii_all is not None
                              else np.full(n, radius)), cfg, periodic=(box, box),
-                       shear_rate=shear_rate)
+                       shear_rate=shear_rate, lees_edwards=lees_edwards)
     system.vel = (rng.random((n, 2)) - 0.5) * v_scale
     return system, box
 
@@ -1333,8 +1402,13 @@ def pressure_and_shear(system: MTSSystem, area: float | None = None) -> dict:
         return {"pressure": 0.0, "shear": 0.0, "coord": 0.0}
     i = c["i"][:n_pair]
     j = c["j"][:n_pair]
-    branch = system.pos[j] - system.pos[i]
-    branch = system._minimum_image(branch)
+    if "branch" in c and len(c["branch"]) == len(c["i"]):
+        # the branch vector the force was evaluated on (image offset and, for a
+        # sheared lattice, the tilt included)
+        branch = c["branch"][:n_pair]
+    else:
+        branch = system.pos[j] - system.pos[i]
+        branch = system._minimum_image(branch)
     f = c["f_on_i"][:n_pair]
     w = np.einsum("ma,mb->ab", branch, f) / area
     sigma = 0.5 * (w + w.T)
@@ -1354,7 +1428,8 @@ def shear_cell_run(*, phi: float = 0.80, mu: float = 0.5, n: int = 64,
                    young_modulus: float = 1.0e9, poisson_ratio: float = 0.25,
                    density: float = 2000.0, radius: float = 5.0e-3,
                    zeta: float = 0.4, kn: float = 1.0e5,
-                   thermostat_tc: float = 40.0, bidisperse: bool = True) -> dict:
+                   thermostat_tc: float = 40.0, bidisperse: bool = True,
+                   lees_edwards: bool = False) -> dict:
     """Doubly periodic shear cell: macroscopic friction and the dissipation ledger.
 
     Preparation: a jittered periodic packing is relaxed under a dashpot
@@ -1370,6 +1445,7 @@ def shear_cell_run(*, phi: float = 0.80, mu: float = 0.5, n: int = 64,
                               seed=seed, h_target_tc=h_target_tc, radius=radius,
                               density=density, young_modulus=young_modulus,
                               poisson_ratio=poisson_ratio, shear_rate=gamma_dot,
+                              lees_edwards=lees_edwards,
                               mu=mu, contact_model=contact_model, kn=kn,
                               zeta=zeta, bidisperse=bidisperse,
                               random_positions=True,
@@ -1388,7 +1464,8 @@ def shear_cell_run(*, phi: float = 0.80, mu: float = 0.5, n: int = 64,
                       mu_rolling=0.0, scheme="mts",
                       n_sub=max(1, int(round(cfg.n_sub))))
     relax = MTSSystem(system.pos.copy(), system.radii.copy(), rel_cfg,
-                      periodic=(box, box), shear_rate=0.0)
+                      periodic=(box, box), shear_rate=0.0,
+                      lees_edwards=lees_edwards)
     n_relax = max(1, int(round(relax_steps * step_ref / relax.dt)))
     t0 = time.perf_counter()
     relax.step(n_relax)
@@ -1474,6 +1551,10 @@ def shear_cell_run(*, phi: float = 0.80, mu: float = 0.5, n: int = 64,
         "samples": samples,
         "final_pressure": st["pressure"],
         "final_shear": st["shear"],
+        # periodic-lattice information (m17503): a cross-arm comparison has to
+        # know whether the cell sheared with the flow or not
+        "lees_edwards": bool(lees_edwards),
+        "strain_end": float(system.strain),
     }
 
 
