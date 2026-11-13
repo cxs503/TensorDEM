@@ -9,13 +9,16 @@ comparison target has one machine-readable home in the tree.
 Two convergence questions are answered here, not assumed:
 
 * **stiffness** -- a soft-sphere bed is compressible, so the measured volume
-  fraction carries a ``1/k_n`` systemic.  ``k_n`` is scanned over three levels
-  (4000 / 16000 / 64000) for both friction tiers and extrapolated to the
-  hard-sphere limit with :func:`tensordem.deposition_packing.stiffness_limit`;
+  fraction carries a ``1/k_n`` systemic.  ``k_n`` is scanned over four levels
+  (4000 / 16000 / 64000 / 256000) for both friction tiers and extrapolated to
+  the hard-sphere limit with :func:`tensordem.deposition_packing.stiffness_limit`;
   the gate asks whether the *production* ``k_n = 4000`` number is within
   ``0.005`` of that limit (a previous 2-level version of this gate failed for
   the ``mu = 0.1`` tier, which is why the third level and the extrapolation
-  exist);
+  exist).  Three levels fix three parameters, so a three-level fit cannot be
+  checked against itself; the fourth level is used leave-one-out
+  (:func:`tensordem.deposition_packing.extrapolation_selfconsistency`) and
+  ``G17`` asks the three-level model to *predict* it;
 * **timestep** -- the tangential Cundall-Strack history is a first-order update
   in ``dt`` and friction is the tier that failed the stiffness gate, so the
   ``dt`` is halved for both tiers at ``k_n = 4000`` and the two numbers must
@@ -41,9 +44,12 @@ STIFF_GATE = 0.005           # |phi(k_n_production) - phi(k_n -> inf)|
 PROD_N_MIN = 10000           # feature_ledger: "10000 spheres, both friction tiers"
 SEED_MIN = 3                 # the seed claim the document makes must be met
 DT_GATE = 0.002              # |phi(dt/2) - phi(dt)|
+SC_PRED_GATE = 0.002         # |3-level prediction - withheld stiffest level|
+SC_LIMIT_GATE = 0.002        # |limit(3 levels) - limit(all levels)|
 
 sys.path.insert(0, os.path.join(ROOT, "src"))
-from tensordem.deposition_packing import stiffness_limit  # noqa: E402
+from tensordem.deposition_packing import (  # noqa: E402
+    extrapolation_selfconsistency, stiffness_limit)
 
 
 def reference():
@@ -181,15 +187,48 @@ def main() -> int:
                           "criterion": f"|phi(k_n->inf)/phi_ref - 1| < {TOL_REL:.0%} ({label})",
                           "got": s["limit"], "value": abs(dev),
                           "pass": bool(abs(dev) < TOL_REL)})
+    # leave-one-level-out: with >= 4 k_n levels the extrapolation can be asked
+    # to predict a measurement it never saw (three levels fix three parameters,
+    # so a three-level fit has no out-of-sample content at all).
+    selfcheck = {}
+    for mu in (0.0, 0.1):
+        s = stiff.get(mu)
+        if s and s["n_levels"] >= 4:
+            selfcheck[mu] = extrapolation_selfconsistency(s["points"])
+            gates.append({"id": f"G17_extrapolation_selfconsistency_mu{mu:g}",
+                          "criterion": f"3-level fit predicts k_n="
+                                       f"{selfcheck[mu]['points'][-1][0]:g} to "
+                                       f"< {SC_PRED_GATE} and the 4th level moves "
+                                       f"the limit by < {SC_LIMIT_GATE} (mu={mu:g})",
+                          "got": selfcheck[mu]["prediction_error"],
+                          "value": selfcheck[mu]["prediction_error"],
+                          "limit_shift": selfcheck[mu]["limit_shift"],
+                          "pass": bool(selfcheck[mu]["prediction_error"] < SC_PRED_GATE
+                                       and selfcheck[mu]["limit_shift"] < SC_LIMIT_GATE)})
     dt_rows = []
     for mu in (0.0, 0.1):
-        a, b = stat(mu), stat(mu, dt_frac=DT_DEFAULT / 2.0)
-        if a and b:
-            d = abs(a[0] - b[0])
-            dt_rows.append({"mu": mu, "phi": a[0], "phi_halved": b[0], "delta": d,
-                            "dt": sel(mu, dt_frac=DT_DEFAULT / 2.0)[0]["dt"]})
-            gates.append({"id": f"G14_timestep_convergence_mu{mu:g}",
-                          "criterion": f"|phi(dt/2) - phi(dt)| < {DT_GATE} (mu={mu:g})",
+        for kn in sorted({r["kn"] for r in runs_all if r["n"] == n_primary}):
+            base = sel(mu, kn)
+            half = sel(mu, kn, dt_frac=DT_DEFAULT / 2.0)
+            if not (base and half):
+                continue
+            # paired by seed: the halved-dt probe exists for a subset of the
+            # seeds, so comparing a seed *mean* against a single probe would
+            # fold the seed scatter (1e-4) into the temporal error (1e-5).
+            common = sorted({r["seed"] for r in base} & {r["seed"] for r in half})
+            if common:
+                phi_a = float(np.mean([r["phi"] for r in base if r["seed"] in common]))
+                phi_b = float(np.mean([r["phi"] for r in half if r["seed"] in common]))
+            else:
+                common, phi_a, phi_b = [], np.mean([r["phi"] for r in base]), np.mean([r["phi"] for r in half])
+            d = abs(phi_a - phi_b)
+            dt_rows.append({"mu": mu, "kn": kn, "phi": phi_a, "phi_halved": phi_b,
+                            "delta": d, "seeds": common,
+                            "dt": half[0]["dt"]})
+            gates.append({"id": f"G14_timestep_convergence_mu{mu:g}"
+                                + ("" if kn == kn_prod else f"_kn{kn:g}"),
+                          "criterion": f"|phi(dt/2) - phi(dt)| < {DT_GATE} "
+                                       f"(mu={mu:g}, k_n={kn:g}, same seed)",
                           "got": d, "value": d, "pass": bool(d < DT_GATE)})
     sizes = [v[0] for v in size0.values() if v]
     if len(sizes) > 1:
@@ -356,6 +395,9 @@ def main() -> int:
         "n_particles_max": n_max, "n_primary": n_primary,
         "kn_production": kn_prod, "kn_levels": kn_levels,
         "tiers": tier_stats, "gates": gates,
+        "selfcheck": {f"mu={mu:g}": {k: v for k, v in sc.items()
+                                     if k not in ("fit", "full", "points")}
+                      for mu, sc in selfcheck.items()},
         "stiffness": {f"mu={mu:g}": {k: v for k, v in s.items() if k != "points"}
                       for mu, s in stiff.items()},
         "timestep": dt_rows,
@@ -467,14 +509,40 @@ def main() -> int:
               f"{'' if s['order'] is not None else ' (default: non-monotone)'} | "
               f"{s['limit']:.5f} | {abs(prod[0] - s['limit']):.5f} |")
         A("")
+    if selfcheck:
+        A("### 3.1b Is the extrapolation checkable? (leave-one-level-out)")
+        A("")
+        A("| tier | 3-level limit | prediction at withheld level | measured | "
+          "prediction error | all-level limit | limit shift |")
+        A("|---|---|---|---|---|---|---|")
+        for mu, sc in sorted(selfcheck.items()):
+            A(f"| mu={mu:g} | {sc['fit']['limit']:.5f} | {sc['predicted']:.5f} | "
+              f"{sc['measured']:.5f} | {sc['prediction_error']:.5f} | "
+              f"{sc['full']['limit']:.5f} | {sc['limit_shift']:.5f} |")
+        A("")
+        A("Withheld level and observed pair orders:")
+        A("")
+        A("| tier | withheld k_n | adjacent-pair orders p |")
+        A("|---|---|---|")
+        for mu, sc in sorted(selfcheck.items()):
+            A(f"| mu={mu:g} | {sc['points'][-1][0]:g} | "
+              + ", ".join(f"{p['kn'][0]:g}-{p['kn'][1]:g}-{p['kn'][2]:g}: "
+                          + ("n/a" if p["order"] is None else f"{p['order']:.3f}")
+                          for p in sc["pair_orders"]) + " |")
+        A("")
+        A("`p = 1` is what linear-spring compressibility predicts; a drifting or")
+        A("half-integer `p` means the ladder is not a single power law and the")
+        A("intercept inherits the shift column as its error bar.")
+        A("")
     if dt_rows:
         A("### 3.2 Timestep (temporal) convergence")
         A("")
-        A("| tier | phi(dt = t_c/20) | phi(dt = t_c/40) | |Delta| |")
-        A("|---|---|---|---|")
+        A("| tier | k_n | seeds | phi(dt = t_c/20) | phi(dt = t_c/40) | |Delta| |")
+        A("|---|---|---|---|---|---|")
         for row in dt_rows:
-            A(f"| mu={row['mu']:g} | {row['phi']:.5f} | {row['phi_halved']:.5f} | "
-              f"{row['delta']:.5f} |")
+            A(f"| mu={row['mu']:g} | {row['kn']:g} | "
+              f"{', '.join(str(s) for s in row.get('seeds', []))} | "
+              f"{row['phi']:.5f} | {row['phi_halved']:.5f} | {row['delta']:.5f} |")
         A("")
     A("## 4 Figures")
     A("")
@@ -512,10 +580,18 @@ def main() -> int:
           f"phi_inf = {s['limit']:.5f}: **{dev:+.2f} %** -> "
           f"{'<' if abs(dev) < 3 else '>'}3 % "
           f"({'满足' if abs(dev) < 3 else '不满足'}).")
+    for mu, sc in sorted(selfcheck.items()):
+        A(f"* extrapolation self-consistency (mu = {mu:g}): the 3-level fit "
+          f"predicts the withheld k_n = {sc['points'][-1][0]:g} level to "
+          f"**{sc['prediction_error']:.5f}** and admitting it moves the "
+          f"hard-sphere limit by **{sc['limit_shift']:.5f}** -> the intercept is "
+          f"{'reproducible' if sc['prediction_error'] < SC_PRED_GATE and sc['limit_shift'] < SC_LIMIT_GATE else 'NOT reproducible'} "
+          f"at the {SC_PRED_GATE} level.")
     for row in dt_rows:
-        A(f"* timestep (mu = {row['mu']:g}): halving dt moves phi by "
-          f"{row['delta']:.5f} ({'below' if row['delta'] < DT_GATE else 'ABOVE'} "
-          f"the {DT_GATE} gate) -> the stiffness systemic is not "
+        A(f"* timestep (mu = {row['mu']:g}, k_n = {row['kn']:g}): halving dt moves "
+          f"phi by {row['delta']:.5f} "
+          f"({'below' if row['delta'] < DT_GATE else 'ABOVE'} the {DT_GATE} gate) "
+          f"-> the stiffness systemic is not "
           f"{'a disguised' if row['delta'] < DT_GATE else 'explainable as a'} "
           f"timestep error.")
     A("* The reference value is a *poured* experimental packing, so the comparison")
