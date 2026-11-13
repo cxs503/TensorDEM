@@ -33,7 +33,11 @@ class HullProfileCliTests(unittest.TestCase):
             profile = root / "hull.csv"
             profile.write_text("x,y\n0,-0.1\n0,0.2\n", encoding="utf-8")
             output = root / "out"
+            # the flat-argument form was the pre-subcommand CLI; ``main`` parses
+            # subcommands now, so the run has to name ``dem-2d`` explicitly
+            # (this test was left red on main by that refactor)
             main([
+                "dem-2d",
                 "--nx", "5", "--ny", "3", "--steps", "2", "--save-every", "1",
                 "--hull-profile", str(profile), "--hull-start-x", "0.01",
                 "--hull-velocity-x", "0.2", "--speed", "0.2", "--output", str(output),
