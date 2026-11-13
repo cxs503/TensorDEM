@@ -1,0 +1,101 @@
+{
+ "anchor": "XVAL-DEM-RADON-PROJECTION-MEASUREMENT",
+ "repository": "TensorDEM",
+ "round": 1,
+ "frozen_before_runs": true,
+ "frozen_at_utc": "2026-11-13T07:15:00Z",
+ "note": "Everything below (angles, seeds, pixel sizes, deposition, thresholds, stopping rule) is fixed HERE, before the first production run of this round. Nothing may be tuned after inspecting results; a change of estimator needs a new round with a new prereg.",
+ "object_under_test": {
+  "module": "src/tensordem/biaxial_shear_band.py",
+  "function": "radon_band_angle",
+  "role": "production shear-band inclination measurement of CASE-BIAXIAL-SHEAR-BAND (scatter-point Radon / projection focus, eta2 criterion, equal-count bins)",
+  "note": "the anchor name radon_projection_measurement denotes this measurement operator; it is the only place where a band inclination is read out of a particle field in this repository"
+ },
+ "reference_implementation": {
+  "package": "scikit-image",
+  "module": "skimage.transform.radon_transform.radon",
+  "license": "BSD-3-Clause",
+  "local_file": "/usr/lib64/python3.11/site-packages/skimage/transform/radon_transform.py",
+  "sha256": "a821943a3cd1a7d1b992f38d3a25708bdba25b96b172b561dafc4f9c83f91040",
+  "construction": "pad to square of the diagonal (circle=False), rotate about the image centre with the source's exact 3x3 matrix R via a spline warp, sum axis 0 -> one projection per angle",
+  "local_substitution": "skimage C extensions are binary-incompatible with the installed numpy (ValueError: numpy.dtype size changed), so skimage.transform.warp cannot be imported; the same R is applied with scipy.ndimage.affine_transform(order=1). Equivalence is asserted in tests/test_radon_reference.py against closed-form sinograms (centred delta, disc) and the known angle convention.",
+  "measurement_criterion": "projection focus on the sinogram; primary = normalised-projection energy sum(p_hat^2); sensitivity = minimum entropy / peak / raw variance. The transform is OSS, the focus criterion is the classical projection-focus family (same family as our eta2, law of total variance)"
+ },
+ "decision": {
+  "question": "Does TensorDEM's scatter-point radon_band_angle agree with the mature OSS image-domain Radon projection measurement on fields of known inclination, within the owner 15% accuracy standard, and can the OSS route replace or feed back into ours?",
+  "alternatives": [
+   "A: keep the scatter-point estimator unchanged (no interpolation, no raster, angle-independent cost); OSS used only as an external check",
+   "B: replace the scatter-point estimator by the OSS raster+rotate+sum route (needs an isotropic grid and a deposition kernel; introduces splat + spline smoothing)",
+   "C: keep A but import OSS boundary-condition lessons (isotropic sampling, scale-free focus criterion, deposition-width rule)"
+  ],
+  "predeclared_choice_rule": "adopt C by default; adopt B only if the OSS route is at least as accurate on every group AND cheaper; adopt A-with-defect-fix if the XVAL exposes a defect in ours that the OSS route does not have."
+ },
+ "hypothesis": {
+  "H1": "on the case lattice (24x48 spacings, aspect sqrt(3)) and a ridge width of 2 spacings, both estimators recover the injected inclination within 15% relative error at pixel_size <= 0.5 spacings",
+  "H2": "the two routes agree with each other within 15% (the anchor criterion)",
+  "H3": "the OSS route needs a deposition kernel >= 1 particle spacing and pixel_size <= 0.25 spacings; below that it aliases onto the triangular-lattice directions and fails (>15%)",
+  "H0_falsifier": "either estimator or their agreement exceeds 15% relative error on the primary group"
+ },
+ "metrics": {
+  "primary": "relative error of the recovered inclination: |theta_got - theta_true| / theta_true",
+  "xval_agreement": "|theta_ours - theta_ref| / theta_true",
+  "secondary": "absolute error in degrees; per-criterion angles of the reference; convergence of the error with pixel_size and with deposition width; angular-resolution sensitivity"
+ },
+ "acceptance": {
+  "relative_error_max": 0.15,
+  "relative_error_target": 0.03,
+  "basis": "owner accuracy standard (error > 15% unacceptable); 3% = report-level target",
+  "verdicts_required": ["ours vs truth", "reference vs truth", "ours vs reference (XVAL agreement)"]
+ },
+ "case_matrix": {
+  "lattice": {"columns": 24, "rows": 48, "spacing": 1.0, "jitter": 0.03},
+  "angles_deg": [30.0, 40.0, 45.0, 50.0, 55.0, 60.0, 70.0, 80.0],
+  "seeds": [11, 12, 13],
+  "primary_pixel_sizes": [0.5, 0.25],
+  "primary_deposit_sigma_spacings": 1.0,
+  "field": "gaussian_ridge, w = exp(-(s/2 spacings)^2)",
+  "control_angles_deg": [45.0, 60.0, 70.0],
+  "control_lattice": "32x32 (square in physical units), isolates lattice aspect as a confounder",
+  "resolution_angles_deg": [45.0, 70.0],
+  "resolution_pixel_sizes": [0.5, 0.25, 0.125],
+  "deposit_sigma_sweep": [0.0, 0.25, 0.5, 1.0, 1.5],
+  "sensitivity_angles_deg": [45.0, 70.0],
+  "angle_resolution_sweep": [0.5, 1.0, 2.0],
+  "production_angles_deg": [40.0, 45.0, 50.0, 55.0, 60.0, 70.0],
+  "production_field": "finite-width tangential slip band imposed on the lattice (synthetic_band_configuration, slip 4% of height, width 3 spacings), weights = local_shear_strain (k=8) — i.e. the exact strain field measure_band projects"
+ },
+ "reference_settings": {"resolution_deg": 0.5, "resolution_deg_coarse": 1.0,
+                        "deposition": "isotropic Gaussian, sigma = deposit_sigma_spacings * measured particle spacing, truncate 4"},
+ "repetitions": {
+  "primary": "3 independent lattice-jitter seeds per (angle, pixel_size) cell; all other groups are deterministic functions of the seed kept fixed, so they are single-run by design",
+  "rationale": "the only stochastic input is the jitter realisation; the estimator itself has no random component (no sampling, no initialisation). Repeating the sweeps would duplicate identical arithmetic."
+ },
+ "exclusions": {
+  "rule": "a case is excluded only if an estimator raises or returns a non-finite angle; the exclusion count and reason must be reported, and >5% exclusions invalidate the round",
+  "no_post_hoc_angle_exclusion": true
+ },
+ "stopping_rule": "run the whole frozen matrix once; no threshold, seed, angle or pixel-size may be changed afterwards. If the anchor criterion fails, the round is an honest FAIL with the failing group reported.",
+ "environment": {
+  "python": "3.11",
+  "numpy": "as installed (compatible with scipy 1.16.0)",
+  "scipy": "1.16.0",
+  "torch": "used by local_shear_strain only, torch.set_num_threads(1)",
+  "compute": "cluster loong64 node (2 nodes, 128 cores each), one shard per process, no GPU",
+  "commands": "python benchmarks/radon_projection_xval/run_xval.py --shard i N ; --merge",
+  "raw_data": "artifacts/XVAL-DEM-RADON-PROJECTION-MEASUREMENT/shard_*.json -> results.json"
+ },
+ "analysis": {
+  "aggregation": "per group and per (angle, pixel_size) cell: max and mean absolute/relative error; no averaging across groups",
+  "uncertainty": "spread over the 3 seeds reported as min/max of the per-cell error",
+  "outliers": "none removed; the aliasing cases of the deposit sweep are kept and reported as the failure mode they are",
+  "comparison": "absolute and relative error against the injected (known) inclination; agreement between the two estimators on the identical weight field"
+ },
+ "safety_resource_limits": {"wall_clock_budget_s": 1800, "cores": 4,
+                             "no_gpu": true, "memory_gb": 4},
+ "interpretation_limits": [
+  "synthetic weight fields and synthetic slip bands only: no run of the DEM case is repeated here, so nothing is claimed about the physics of a real biaxial test",
+  "the reference measures a *field*, ours measures a *point cloud*; agreement on the same weights does not prove both are unbiased for an arbitrary field",
+  "the OSS transform is reproduced from source with one documented substitution (scipy affine_transform for skimage warp) because the local skimage binary is broken",
+  "relative error uses the injected angle as denominator, so the same absolute error is penalised less at 80 deg than at 30 deg; absolute degrees are reported next to it"
+ ]
+}
