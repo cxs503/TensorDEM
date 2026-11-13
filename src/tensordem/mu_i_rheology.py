@@ -444,6 +444,11 @@ class ServoShearCase:
     bulk_stress: bool = True
     bulk_y_margin: float = 0.2
     bulk_bins: int = 6
+    # cross-validation diagnostic (m17500): also accumulate the *contact-local*
+    # inertial-number proxy I_c = |v_t|/sqrt(f_n/(rho d^2)) and mu(I_c) on the
+    # same samples.  Diagnostic only -- the integration (Coulomb cap at
+    # ``mu``) is untouched, so every historical case is bit-for-bit unchanged.
+    contact_proxy: bool = False
 
     @property
     def mass(self) -> float:
@@ -831,6 +836,7 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
     plate_vx = 0.0
     plate_vz = 0.0
     series: list[dict] = []
+    proxy_series: list[dict] = []
     wall_clock = _time.perf_counter()
 
     ghost_shift = np.array([[0.0, 0.0, 0.0],
@@ -1063,6 +1069,21 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
                             full["sigma_zz"] / (-case.normal_stress)
                             if case.normal_stress > 0 else float("nan")),
                     })
+            if case.contact_proxy:
+                # m17500 cross-validation: the contact gauge of this very state
+                pair = contacts or {}
+                branch = pair.get("branch")
+                if branch is not None and len(branch) > 0:
+                    from .mu_i_contact_proxy import (
+                        contact_proxy_stats, slip_speed_at_contacts)
+                    iu_p = np.asarray(pair["iu"]) % n
+                    ju_p = np.asarray(pair["ju"]) % n
+                    # ``branch`` comes from the ghost-triplicated positions, so
+                    # the normal direction is aliasing-free for the periodic x
+                    slip = slip_speed_at_contacts(vel, omega, iu_p, ju_p,
+                                                  branch, r)
+                    proxy_series.append(contact_proxy_stats(
+                        np.asarray(pair["f_n"]), slip, d, rho))
             series.append(sample)
 
         # constant-stress validity gate: once the requested strain budget is
@@ -1244,6 +1265,10 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
         result["shear_rate_ratio"] = (
             result["shear_rate_measured"] / gamma_dot
             if gamma_dot else float("nan"))
+    if case.contact_proxy:
+        from .mu_i_contact_proxy import aggregate_proxy
+        result["contact_proxy"] = aggregate_proxy(proxy_series)
+        result["contact_proxy_series"] = proxy_series
     if return_series:
         result["series"] = series
     return result
