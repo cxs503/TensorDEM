@@ -1,0 +1,306 @@
+{
+ "anchor": {
+  "citation": "Zhou, Y.C., Wright, B.D., Yang, R.Y., Xu, B.H., Yu, A.B. (1999). Rolling friction in the dynamic simulation of sandpile formation. Physica A 269, 536-553.",
+  "sphere_band_deg": [
+   22.0,
+   25.0
+  ],
+  "sphere_centre_deg": 23.5,
+  "shaped_band_deg": [
+   35.0,
+   45.0
+  ],
+  "anchor_row": "| Zhou et al. (1999) *Physica A* 269:536\u2013553 | lifted-box \u6c99\u5806 repose \u6807\u5b9a\u7b97\u4f8b\uff1b\u7403 22\u201325\u00b0\uff0c\u89d2\u783e/\u692d\u7403 35\u201345\u00b0 | **\u5916\u90e8\u951a**\uff1a\u8d8b\u52bf\u65b9\u5411 + \u7403\u57fa\u7ebf\u5e26\uff08\u6cbf\u7528\u4ed3\u5185 `LIT`\uff09 |",
+  "sources": {
+   "anchor_doc": {
+    "path": "docs/GAP_DEM_CLUMP_ROUND2.md",
+    "sha256": "4767513195d247b0c07b7c9c7f3bdf188ccf8338ebef49bdf93e7ab285aa072b",
+    "regex": "(\\d+(?:\\.\\d+)?)\\s*[\u2013\\-~]\\s*(\\d+(?:\\.\\d+)?)\\s*\u00b0"
+   },
+   "citation_file": {
+    "path": "src/tensordem/protocols/sandpile.py",
+    "sha256": "d5c98856e9771c85c8f8350bca4327e8abd66eb8ed57f70605b7221d9a3f470c",
+    "regex": "Zhou,\\s*Y\\.C\\..*?Physica A\\s*269,\\s*536-553\\."
+   }
+  }
+ },
+ "thresholds": {
+  "TOL_REL": 0.15,
+  "TREND_MARGIN_DEG": 3.0,
+  "R2_MIN": 0.95,
+  "STDERR_MAX_DEG": 1.0,
+  "COORD_WINDOW": [
+   3.0,
+   7.0
+  ]
+ },
+ "cases": {
+  "as_delivered": {
+   "theta_deg": 9.509328802696206,
+   "r2": 0.8846316376952442,
+   "stderr_deg": 0.7734466930333918,
+   "coordination": 2.081,
+   "packing": 0.5638199958039247,
+   "control": "baseline",
+   "role": "protocol-as-delivered",
+   "valid": true,
+   "wall_time_s": 165.4780945777893,
+   "feed": {
+    "pour_rate_grains_s": 4000.0,
+    "pour_duration_s": 1.0,
+    "nozzle_radius_m": 0.05023092266492206,
+    "drop_height_m": 0.04,
+    "release_height_m": 0.15357441686512863,
+    "injection_velocity_m_s": 0.48040082033918635,
+    "k_n_N_m": 6000.0,
+    "settle_time_s": 0.2,
+    "dt_s": 0.00010375966601609111,
+    "base_radius_m": 0.3070338437995546,
+    "heap_height_estimate_m": 0.11357441686512863
+   }
+  },
+  "ctrl_mu_r_zero": {
+   "theta_deg": 4.98890441212377e-07,
+   "r2": 0.007338207376071826,
+   "stderr_deg": 7.824011876292805e-07,
+   "coordination": 0.0,
+   "packing": NaN,
+   "control": "mu_r_zero",
+   "role": "control",
+   "valid": true,
+   "wall_time_s": 168.2814371585846,
+   "feed": {
+    "pour_rate_grains_s": 500.0,
+    "pour_duration_s": 4.0,
+    "nozzle_radius_m": 0.02,
+    "drop_height_m": 0.01,
+    "release_height_m": 0.102207069144349,
+    "injection_velocity_m_s": 0.37878787878787884,
+    "k_n_N_m": 1500.0,
+    "settle_time_s": 2.0,
+    "dt_s": 0.00020751933203218222,
+    "base_radius_m": 0.2478189127989444,
+    "heap_height_estimate_m": 0.09220706914434901
+   }
+  },
+  "ctrl_mu_s_zero": {
+   "theta_deg": 3.115014977631501e-17,
+   "r2": 0.5925925925925926,
+   "stderr_deg": 1.6120314649886495e-17,
+   "coordination": 0.001,
+   "packing": NaN,
+   "control": "mu_s_zero",
+   "role": "control",
+   "valid": true,
+   "wall_time_s": 170.47016501426697,
+   "feed": {
+    "pour_rate_grains_s": 500.0,
+    "pour_duration_s": 4.0,
+    "nozzle_radius_m": 0.02,
+    "drop_height_m": 0.01,
+    "release_height_m": 0.102207069144349,
+    "injection_velocity_m_s": 0.37878787878787884,
+    "k_n_N_m": 1500.0,
+    "settle_time_s": 2.0,
+    "dt_s": 0.00020751933203218222,
+    "base_radius_m": 0.2478189127989444,
+    "heap_height_estimate_m": 0.09220706914434901
+   }
+  },
+  "gentle_anchor": {
+   "theta_deg": 19.052700822678045,
+   "r2": 0.9937884640256162,
+   "stderr_deg": 0.465893376728188,
+   "coordination": 3.856,
+   "packing": 0.5810467492996625,
+   "control": "baseline",
+   "role": "anchor",
+   "valid": true,
+   "wall_time_s": 343.0073308944702,
+   "feed": {
+    "pour_rate_grains_s": 500.0,
+    "pour_duration_s": 4.0,
+    "nozzle_radius_m": 0.02,
+    "drop_height_m": 0.01,
+    "release_height_m": 0.102207069144349,
+    "injection_velocity_m_s": 0.37878787878787884,
+    "k_n_N_m": 1500.0,
+    "settle_time_s": 2.0,
+    "dt_s": 0.00020751933203218222,
+    "base_radius_m": 0.2478189127989444,
+    "heap_height_estimate_m": 0.09220706914434901
+   }
+  },
+  "sens_N1000": {
+   "theta_deg": 15.877235533894563,
+   "r2": 0.9300856331993339,
+   "stderr_deg": 1.4614584948603468,
+   "coordination": 3.252,
+   "packing": 0.6212600644271294,
+   "control": "baseline",
+   "role": "sensitivity",
+   "valid": true,
+   "wall_time_s": 168.20801520347595,
+   "feed": {
+    "pour_rate_grains_s": 500.0,
+    "pour_duration_s": 2.0,
+    "nozzle_radius_m": 0.02,
+    "drop_height_m": 0.01,
+    "release_height_m": 0.08524779401948106,
+    "injection_velocity_m_s": 0.37878787878787884,
+    "k_n_N_m": 1500.0,
+    "settle_time_s": 2.0,
+    "dt_s": 0.00020751933203218222,
+    "base_radius_m": 0.20081999091764793,
+    "heap_height_estimate_m": 0.07524779401948106
+   }
+  },
+  "sens_N4000": {
+   "theta_deg": 18.336573228771947,
+   "r2": 0.9970912225834095,
+   "stderr_deg": 0.27863761493024,
+   "coordination": 3.9575,
+   "packing": 0.6042739925388594,
+   "control": "baseline",
+   "role": "sensitivity",
+   "valid": true,
+   "wall_time_s": 568.9803714752197,
+   "feed": {
+    "pour_rate_grains_s": 1000.0,
+    "pour_duration_s": 4.0,
+    "nozzle_radius_m": 0.02,
+    "drop_height_m": 0.01,
+    "release_height_m": 0.12357441686512863,
+    "injection_velocity_m_s": 0.7575757575757577,
+    "k_n_N_m": 1500.0,
+    "settle_time_s": 2.0,
+    "dt_s": 0.00020751933203218222,
+    "base_radius_m": 0.3070338437995546,
+    "heap_height_estimate_m": 0.11357441686512863
+   }
+  },
+  "sens_dt_half": {
+   "theta_deg": 16.704193742201895,
+   "r2": 0.9956328223056501,
+   "stderr_deg": 0.34822563774933496,
+   "coordination": 3.72,
+   "packing": 0.6228977443109188,
+   "control": "baseline",
+   "role": "sensitivity",
+   "valid": true,
+   "wall_time_s": 673.5892202854156,
+   "feed": {
+    "pour_rate_grains_s": 500.0,
+    "pour_duration_s": 4.0,
+    "nozzle_radius_m": 0.02,
+    "drop_height_m": 0.01,
+    "release_height_m": 0.102207069144349,
+    "injection_velocity_m_s": 0.37878787878787884,
+    "k_n_N_m": 1500.0,
+    "settle_time_s": 2.0,
+    "dt_s": 0.00010375966601609111,
+    "base_radius_m": 0.2478189127989444,
+    "heap_height_estimate_m": 0.09220706914434901
+   }
+  },
+  "sens_settle_0p6": {
+   "theta_deg": 18.928175250380352,
+   "r2": 0.9935308528022946,
+   "stderr_deg": 0.4728778069456693,
+   "coordination": 3.844,
+   "packing": 0.5810487874944907,
+   "control": "baseline",
+   "role": "sensitivity",
+   "valid": true,
+   "wall_time_s": 235.177636384964,
+   "feed": {
+    "pour_rate_grains_s": 500.0,
+    "pour_duration_s": 4.0,
+    "nozzle_radius_m": 0.02,
+    "drop_height_m": 0.01,
+    "release_height_m": 0.102207069144349,
+    "injection_velocity_m_s": 0.37878787878787884,
+    "k_n_N_m": 1500.0,
+    "settle_time_s": 0.6,
+    "dt_s": 0.00020751933203218222,
+    "base_radius_m": 0.2478189127989444,
+    "heap_height_estimate_m": 0.09220706914434901
+   }
+  }
+ },
+ "checks": [
+  {
+   "id": "D1",
+   "pass": false,
+   "detail": "|19.05 - 23.50|/23.50 = 18.92% <= 15%",
+   "metric": {
+    "rel_err": 0.18924677350306193,
+    "theta": 19.052700822678045
+   }
+  },
+  {
+   "id": "D2",
+   "pass": false,
+   "detail": "theta = 19.05 deg inside [22.0, 25.0]"
+  },
+  {
+   "id": "D6",
+   "pass": true,
+   "detail": "r2=0.994 (>= 0.95), stderr=0.466 deg (<= 1.0), Z=3.86 in [3.0, 7.0]"
+  },
+  {
+   "id": "D3",
+   "pass": true,
+   "detail": "theta(baseline) - theta(mu_r=0) = 19.05 deg (>= 3.0) and theta(mu_r=0) = 0.00 <= 20.0"
+  },
+  {
+   "id": "D4",
+   "pass": false,
+   "detail": "|theta(baseline) - theta(mu_s=0)| = 19.05 deg (<= 3.0)"
+  },
+  {
+   "id": "D5",
+   "pass": false,
+   "detail": "spread over ['anchor', 'sens_N1000', 'sens_N4000', 'sens_settle_0p6', 'sens_dt_half'] = 3.18 deg (<= 3.0)",
+   "metric": {
+    "spread": 3.1754652887834816
+   }
+  }
+ ],
+ "all_checks_pass": false,
+ "decision": {
+  "xval_within_15pct": false,
+  "honest_fail_stage": "D1/theta_error_gt_15pct"
+ },
+ "reference": {
+  "citation": "Zhou, Y.C., Wright, B.D., Yang, R.Y., Xu, B.H., Yu, A.B. (1999). Rolling friction in the dynamic simulation of sandpile formation. Physica A 269, 536-553.",
+  "sphere_band_deg": [
+   22.0,
+   25.0
+  ],
+  "sphere_centre_deg": 23.5,
+  "shaped_band_deg": [
+   35.0,
+   45.0
+  ],
+  "anchor_row": "| Zhou et al. (1999) *Physica A* 269:536\u2013553 | lifted-box \u6c99\u5806 repose \u6807\u5b9a\u7b97\u4f8b\uff1b\u7403 22\u201325\u00b0\uff0c\u89d2\u783e/\u692d\u7403 35\u201345\u00b0 | **\u5916\u90e8\u951a**\uff1a\u8d8b\u52bf\u65b9\u5411 + \u7403\u57fa\u7ebf\u5e26\uff08\u6cbf\u7528\u4ed3\u5185 `LIT`\uff09 |",
+  "sources": {
+   "anchor_doc": {
+    "path": "docs/GAP_DEM_CLUMP_ROUND2.md",
+    "sha256": "4767513195d247b0c07b7c9c7f3bdf188ccf8338ebef49bdf93e7ab285aa072b",
+    "regex": "(\\d+(?:\\.\\d+)?)\\s*[\u2013\\-~]\\s*(\\d+(?:\\.\\d+)?)\\s*\u00b0"
+   },
+   "citation_file": {
+    "path": "src/tensordem/protocols/sandpile.py",
+    "sha256": "d5c98856e9771c85c8f8350bca4327e8abd66eb8ed57f70605b7221d9a3f470c",
+    "regex": "Zhou,\\s*Y\\.C\\..*?Physica A\\s*269,\\s*536-553\\."
+   }
+  }
+ },
+ "figures": [
+  "artifacts/XVAL-SANDPILE-ZHOU1999/figures/fig1_profiles.png",
+  "artifacts/XVAL-SANDPILE-ZHOU1999/figures/fig2_theta_vs_band.png",
+  "artifacts/XVAL-SANDPILE-ZHOU1999/figures/fig3_sensitivity.png"
+ ],
+ "report": "docs/XVAL_SANDPILE_ZHOU1999.md"
+}
