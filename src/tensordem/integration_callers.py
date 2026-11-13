@@ -142,6 +142,18 @@ def _merge_repose_shards(paths: List[str]) -> Dict[str, Any]:
     merged["angles_deg"] = angles
     merged["settled"] = [bool(r.get("settled", False)) for r in merged["runs"]]
     merged["inside_literature_band"] = [bool(band[0] <= a <= band[1]) for a in angles]
+    # sharded runs must expose the same L4 ref/got pair as the inline case,
+    # otherwise the gate reports "no numeric 'got' block" for a merge that is
+    # perfectly valid evidence
+    merged["got"] = {
+        "angles_deg": angles,
+        "angle_mean_deg": float(sum(angles) / len(angles)) if angles else float("nan"),
+        "angle_min_deg": float(min(angles)) if angles else float("nan"),
+        "angle_max_deg": float(max(angles)) if angles else float("nan"),
+        "n_runs": len(angles),
+        "n_settled": int(sum(merged["settled"])),
+        "n_inside_band": int(sum(merged["inside_literature_band"])),
+    }
     merged["all_runs_valid"] = bool(merged["runs"]
                                     and all(bool(r.get("valid", False)) for r in merged["runs"]))
     merged["passed"] = bool(merged["all_runs_valid"] and all(merged["inside_literature_band"]))
@@ -201,6 +213,31 @@ def run_h1_broken_ice_dem(
     return result
 
 
+def _pair_keys(block: Any) -> List[str]:
+    """Finite-number keys of a ``ref``/``got`` block (empty if it is not one).
+
+    A list-valued entry (e.g. the per-friction repose angles) counts as a pair
+    when it is a non-empty list of finite numbers.  Booleans are excluded: a
+    verdict flag is not a measured quantity.
+    """
+    import math
+
+    if not isinstance(block, dict):
+        return []
+    keys: List[str] = []
+    for key, value in block.items():
+        if isinstance(value, bool):
+            continue
+        if isinstance(value, (int, float)):
+            if math.isfinite(float(value)):
+                keys.append(key)
+        elif isinstance(value, (list, tuple)) and value:
+            if all(isinstance(v, (int, float)) and not isinstance(v, bool)
+                   and math.isfinite(float(v)) for v in value):
+                keys.append(key)
+    return keys
+
+
 def check_h1_maturity(result: Dict[str, Any], required_level: str = "L4") -> Dict[str, Any]:
     """Machine check of the maturity level of the H1-BROKEN-ICE-DEM capability.
 
@@ -216,6 +253,21 @@ def check_h1_maturity(result: Dict[str, Any], required_level: str = "L4") -> Dic
 
     The check reports gaps instead of asserting them; a failing case (e.g. the
     repose band) is a gap, not a rounded-up pass.
+
+    Two structural defects of the previous version are fixed here (mission
+    m17949, re-open of PR #1387):
+
+    * the L4 clause was ``"ref" not in case or "got" not in case and name !=
+      "repose"``.  ``and`` binds tighter than ``or``, so the ``repose``
+      exemption applied to the ``got`` half only and the case that actually had
+      no ``got`` block -- ``channel`` -- was the one the clause silently
+      demanded; the gate could therefore *never* reach L4 even when every case
+      passed.  Every case now needs a non-empty ``ref`` **and** a non-empty
+      ``got``, with the pairing listed in ``ref_got_pairs`` for audit.
+    * a ``quick`` (smoke) run is not L4 evidence: its corridor is scaled to the
+      smoke step budget, so "the lane was cleared" is proven on a swath that is
+      ~20x shorter than the declared one.  Smoke runs now report their cases
+      honestly but cannot claim L4.
     """
     gaps: List[str] = []
     cases = result.get("cases", {})
@@ -228,18 +280,27 @@ def check_h1_maturity(result: Dict[str, Any], required_level: str = "L4") -> Dic
         for name, case in cases.items():
             if not case.get("passed"):
                 gaps.append(f"case {name}: verdict not PASS")
+    pairs: Dict[str, Dict[str, List[str]]] = {}
     if required_level == "L4":
         if not result.get("repro_cmd"):
             gaps.append("L4: repro_cmd missing")
+        if result.get("quick") or (result.get("integration") or {}).get("quick"):
+            gaps.append("L4: quick (smoke) run is not L4 evidence - rerun with "
+                        "quick=False for the declared corridor")
         for name, case in cases.items():
-            if "ref" not in case or "got" not in case and name != "repose":
-                gaps.append(f"L4: case {name} has no ref/got numeric pair")
+            ref, got = case.get("ref"), case.get("got")
+            pairs[name] = {"ref": _pair_keys(ref), "got": _pair_keys(got)}
+            if not _pair_keys(ref):
+                gaps.append(f"L4: case {name} has no numeric 'ref' block")
+            if not _pair_keys(got):
+                gaps.append(f"L4: case {name} has no numeric 'got' block")
     return {
         "required_level": required_level,
         "level_achieved": required_level if not gaps else ("L1" if cases else "L0"),
         "passed": not gaps,
         "gaps": gaps,
         "cases": {name: bool(case.get("passed")) for name, case in cases.items()},
+        "ref_got_pairs": pairs,
     }
 
 
