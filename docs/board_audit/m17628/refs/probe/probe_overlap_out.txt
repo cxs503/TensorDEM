@@ -1,0 +1,2 @@
+lee=False n_pair=190 P=0.4297 tau=0.2091 tau/P=+0.4866 coord=5.94 ov_max=0.02%rad ov_med=-2.607% n_ov>10%=0 strain=0.000
+lee=True n_pair=189 P=1604 tau=-258.8 tau/P=-0.1613 coord=5.91 ov_max=14.65%rad ov_med=-8.840% n_ov>10%=5 strain=0.241
