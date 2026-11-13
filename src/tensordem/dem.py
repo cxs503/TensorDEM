@@ -5,6 +5,7 @@ import math
 
 import torch
 
+from .binding_contract import assert_entry_conforms
 from .hull_contact import polyline_contact_forces
 
 
@@ -420,7 +421,13 @@ class IceDEM:
         Mass is a physical disk mass (finite extrusion thickness), not mass per
         unit depth. Planar moments use x*Fy-y*Fx, positive counterclockwise.
         No rotational DOFs, bending stiffness or friction are implied.
+
+        This is the platform-facing binding surface, so it is gated by the
+        frozen contract (:mod:`tensordem.binding_contract`): if the surface a
+        binder consumes has drifted, the export fails here instead of feeding a
+        silently wrong coupled run.  The check is cached per class.
         """
+        assert_entry_conforms(self, "IceDEM")
         return dict(schema="tensordem.exchange/1", time_s=self.time, dt_s=self.dt,
                     positions_m=self.positions.tolist(), velocities_m_s=self.velocities.tolist(),
                     masses_kg=[self.config.mass] * len(self.positions),

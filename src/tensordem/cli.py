@@ -185,6 +185,36 @@ def _cmd_elastic_limit_shear(args: argparse.Namespace) -> None:
         sys.exit(f"gates failed: {res['gates']}")
 
 
+def _cmd_binding_contract(args: argparse.Namespace) -> None:
+    """Run the frozen-contract gate, the behavioural probes and the benchmark."""
+    from .binding_contract import (benchmark_physics, fingerprint,
+                                   probe_semantics, verify)
+
+    if args.benchmark_energy_steps < 1:
+        sys.exit("--benchmark-energy-steps must be positive")
+    benchmark = benchmark_physics(args.benchmark_energy_steps)
+    report = {
+        "schema": "tensordem.binding-contract.cli/1",
+        "contract_fingerprint": fingerprint(),
+        "verify": verify(),
+        "probes": probe_semantics(),
+        "benchmark": benchmark,
+    }
+    args.out.mkdir(parents=True, exist_ok=True)
+    target = args.out / "binding_contract_cli.json"
+    target.write_text(json.dumps(report, indent=2, sort_keys=True), encoding="utf-8")
+    probes = report["probes"]
+    passed = sum(1 for item in probes if item["status"] == "PASS")
+    print(
+        f"contract {fingerprint()} verify={report['verify']['status']} "
+        f"probes={passed}/{len(probes)} "
+        f"benchmark={benchmark['rows_passed']}/{benchmark['rows_total']} "
+        f"worst_rel_error={benchmark['worst_rel_error']:.3e} -> {target}"
+    )
+    if benchmark["verdict"] != "MET":
+        sys.exit(1)
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(
         description="TensorDEM: Discrete Element Method solver and verification tools",
@@ -262,6 +292,22 @@ def main(argv: list[str] | None = None) -> None:
     h1_parser.add_argument("--output", type=Path,
                            default=Path("artifacts/h1_broken_ice_dem/cli_report.json"))
     h1_parser.set_defaults(func=_cmd_h1_broken_ice)
+
+    # --- binding-contract subcommand (in-repo caller of the frozen contract) ---
+    contract_parser = subparsers.add_parser(
+        "binding-contract",
+        help="Verify the frozen cross-repository binding contract and run its benchmark",
+    )
+    contract_parser.add_argument(
+        "--out", type=Path,
+        default=Path("artifacts/xval_library_binding_contract"),
+        help="Output directory for the contract report JSON",
+    )
+    contract_parser.add_argument(
+        "--benchmark-energy-steps", type=int, default=2000,
+        help="Steps for the conservative-lattice energy-drift benchmark row",
+    )
+    contract_parser.set_defaults(func=_cmd_binding_contract)
 
     args = parser.parse_args(argv)
     if not hasattr(args, "func"):

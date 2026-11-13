@@ -1799,7 +1799,15 @@ class IceDEM3D:
         return float(0.5 * lat_k * total)
 
     def state_dict(self) -> dict[str, Any]:
-        """Return restart-friendly state (tensors remain on the active device)."""
+        """Return restart-friendly state (tensors remain on the active device).
+
+        The 3-D restart surface is what binders read to resume a coupled run, so
+        it is gated by the frozen contract (:mod:`tensordem.binding_contract`);
+        the verdict is cached per class.
+        """
+        from .binding_contract import assert_entry_conforms
+
+        assert_entry_conforms(self, "IceDEM3D")
         return {
             "dimension": 3, "config": asdict(self.config), "dt": self.dt,
             "time": self.time, "step_count": self.step_count,
