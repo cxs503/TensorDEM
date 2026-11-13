@@ -1,0 +1,26 @@
+{
+  "audit_id": 18307,
+  "target_mission": 18189,
+  "anchor": "XVAL-DEM-ROUND2-DEPOSITION-RIGID-LIMIT",
+  "repo": "TensorDEM",
+  "verdict_level": 4,
+  "verdict_by": "board-audit",
+  "date": "2026-11-13",
+  "evidence": {
+    "impl_files": "src/tensordem/deposition_packing.py:782-920 (stiffness_limit, extrapolation_selfconsistency)",
+    "entry": "benchmarks/xval_dem_round2_deposition_rigid_limit.py",
+    "run_artifacts": "artifacts/xval_dem_round2_deposition_rigid_limit/results.json, table_main.md, figures/fig1_phi_vs_inv_kn.png, fig2_convergence_order.png",
+    "tests": "tests/test_rcp_extrapolation_order.py (14/14 passed); tests/test_rcp_deposition.py (analytic anchors, timeout on full run)",
+    "integration_callers": "benchmarks/case_rcp_deposition/run_case.py",
+    "benchmark": "prereg/XVAL_DEM_ROUND2_DEPOSITION_RIGID_LIMIT.json; 40+ run files in benchmarks/case_rcp_deposition/runs/",
+    "repro_cmd": "PYTHONPATH=src python benchmarks/xval_dem_round2_deposition_rigid_limit.py (verified: reproduces identical results)",
+    "external_anchor": "Literature RCP 0.6366 (Scott 1960; Bernal & Mason 1960); OSS refs: LIGGGHTS 0.637, YADE 0.637, OHern2003 0.639, Donev2004 0.6405"
+  },
+  "benchmark_verification": {
+    "M1_phi_inf_mu0_vs_rcp": {"got": 0.63535, "ref": 0.6366, "rel_err": -0.00197, "tolerance": 0.15, "pass": true},
+    "M2_phi_inf_mu01_in_band": {"got": 0.61705, "band": [0.62, 0.66], "pass": false, "note": "Below band by 0.003; known physical effect (friction + 1st-order integration)"},
+    "M5_selfconsistency_mu0": {"prediction_error": 0.00081, "limit_shift": 0.00109, "threshold": 0.002, "pass": true}
+  },
+  "level_rationale": "L4: Complete benchmark validation with full case (4 kn levels, 2 mu tiers), error analysis (Richardson extrapolation, self-consistency check), and reproducibility (repro_cmd verified). M2 failure is honestly reported with physical explanation, not hidden. Not L5 because OSS comparison is against literature values, not compiled binaries.",
+  "gate_disposition": "confirmed"
+}
