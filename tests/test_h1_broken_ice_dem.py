@@ -72,3 +72,59 @@ def test_channel_clearing_series_is_monotone_in_the_mean():
     assert len(series["time_s"]) == len(series["concentration"])
     head = float(np.mean(series["concentration"][:5]))
     tail = float(np.mean(series["concentration"][-5:]))
+
+
+# --- committed C1/C3 evidence (audit m15029 item 3: run artifacts must be in the tree) ----
+
+import json
+import os
+
+ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+EVIDENCE = os.path.join(ROOT, "runs", "h1_broken_ice_dem", "results_c1c3.json")
+
+
+def _committed_evidence():
+    if not os.path.exists(EVIDENCE):
+        pytest.skip("no committed C1/C3 evidence under runs/h1_broken_ice_dem/")
+    with open(EVIDENCE) as fh:
+        return json.load(fh)
+
+
+def test_committed_buoyancy_evidence_matches_archimedes():
+    """C1 is a real benchmark: the committed numbers must satisfy Archimedes to <5 %."""
+    data = _committed_evidence()
+    case = data["cases"]["buoyancy"]
+    ref, got = case["ref"], case["got"]
+    assert case["passed"] is True
+    pairs = (("submerged_fraction", "submerged_fraction_archimedes", "rel_err_submerged_fraction"),
+             ("draft_m", "draft_archimedes_m", "rel_err_draft"))
+    for got_key, ref_key, err_key in pairs:
+        rel = abs(got[got_key] - ref[ref_key]) / ref[ref_key]
+        assert rel < case["tolerance"], (got_key, rel)
+        # the recorded error must be the one the numbers imply (no hand-typed error)
+        assert case["error"][err_key] == pytest.approx(rel, rel=1e-6)
+    # the equilibrium must also be an energy-closed relaxation, not a frozen snapshot
+    assert got["energy_residual"] < 1e-2
+
+
+def test_committed_channel_evidence_is_self_consistent():
+    """C3: the lane must actually empty, with mass and energy ledgers closed."""
+    data = _committed_evidence()
+    case = data["cases"]["channel"]
+    s, crit = case["summary"], case["criteria"]
+    assert case["passed"] is True
+    assert s["sweep_complete"] is True and s["hull_advance_m"] >= case["setup"]["corridor_m"]
+    assert s["lane_concentration_ratio"] <= 1.0 - case["ref"]["lane_drop_threshold_fraction"]
+    assert abs(s["mass_residual"]) < case["ref"]["mass_residual_tolerance"]
+    assert s["energy_residual"] < case["ref"]["energy_residual_tolerance"]
+    # `passed` must be the AND of the four declared criteria (no over-claim)
+    assert case["passed"] is all(crit.values())
+
+
+def test_committed_evidence_verdicts_are_not_over_claimed():
+    """A case flagged by its own criteria must not be reported as passed."""
+    data = _committed_evidence()
+    for name, case in data["cases"].items():
+        if "criteria" in case:
+            assert case["passed"] is all(case["criteria"].values()), name
+        assert data["passed"][name] is case["passed"], name

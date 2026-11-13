@@ -28,7 +28,11 @@ import pytest
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 RUNS_DIR = os.path.join(ROOT, "runs", "h1_repose")
-DOC = os.path.join(ROOT, "docs", "H1_BROKEN_ICE_DEM_ROUND5_C2.md")
+#: the authoritative rendered report: round 6 supersedes round 5 (whose shard
+#: table honestly says NOT_RUN); fall back when only the older one exists.
+DOC = os.path.join(ROOT, "docs", "H1_BROKEN_ICE_DEM_ROUND6_C2.md")
+if not os.path.exists(DOC):
+    DOC = os.path.join(ROOT, "docs", "H1_BROKEN_ICE_DEM_ROUND5_C2.md")
 
 FRICTION_GRID = (0.2, 0.4, 0.6)
 ENERGY_GATE = 0.05  # study.case3_repose: `valid` requires energy_residual < 0.05
