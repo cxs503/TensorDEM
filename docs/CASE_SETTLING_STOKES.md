@@ -119,17 +119,3 @@ PYTHONPATH=src python benchmarks/case_settling_stokes/run_case.py --out artifact
 ```
 
 **生态摩擦**：无（复用现有 `two_way_coupling` 验证面，未另起炉灶）。
-
-## 7. 瞬态补充验证（2026-11，m16987）
-
-末速门（1.07% vs Stokes）只覆盖稳态：Stokes 区末速是同一阻力律的不动点，对时间
-积分误差**不可见**。本算例报告的弛豫时间误差 4.80%（容差 10%，判 PASS）经分解为
-
-* 前向欧拉离散偏差 `-dt/ln(1-dt/tau) = -3.37%`（**格式**，解析可预测）；
-* Schiller-Naumann vs Stokes 的模型偏差 `-1.43%`（**闭合**，与 dt 无关）；
-
-实测 -4.80% 与预测 -4.80% 闭口（残差 4.3e-5）。指数积分器
-（`tensordem.two_way_coupling.integrate_settling_exponential`）把 τ 误差降到
--1.43% 且与 dt 无关；`dt > 2 tau` 时欧拉发散（65 x v_t）而指数积分稳定。
-瞬态半部分的算例、判据、图与工件见 `docs/CASE_SETTLING_STOKES_TRANSIENT.md`
-与 `benchmarks/case_settling_transient/`。
