@@ -151,6 +151,12 @@ class SandpileConfig:
         backbone:          Mindlin backbone shape (``"mindlin"``/``"linear"``).
         rolling_model:     ``"epsd"`` (default), ``"cdt"`` or ``"viscous"``.
         control:           Control key; ``"baseline"`` enforces the priors.
+        calibration_sweep: Explicitly flagged **calibration** surface point:
+                           ``mu_s``/``mu_r`` are the swept variables and are
+                           exempt from the prior guard.  Such a run is tagged
+                           ``kind="calibration_sweep"`` and can never be
+                           reported as a ``baseline`` validation run.
+                           ``control`` must stay ``"baseline"``.
         sector_count:      Azimuthal sectors for the height field.
         bin_width_factor:  Annulus width in grain radii.
         edge_exclusion:    Outer radial fraction excluded from the fit.
@@ -177,6 +183,7 @@ class SandpileConfig:
     backbone: str = "mindlin"
     rolling_model: str = "epsd"
     control: str = "baseline"
+    calibration_sweep: bool = False
     sector_count: int = 16
     bin_width_factor: float = 2.0
     edge_exclusion: float = 0.02
@@ -195,6 +202,11 @@ class SandpileConfig:
         if self.control not in CONTROL_MUTATIONS:
             raise SandpileProtocolError(
                 f"control must be one of {CONTROL_KEYS}, got {self.control!r}")
+        if self.calibration_sweep and self.control != "baseline":
+            raise SandpileProtocolError(
+                "calibration_sweep=True sweeps mu_s/mu_r on the baseline "
+                f"protocol; control={self.control!r} is a frozen negative "
+                "control and cannot be combined with it")
         if self.tangential_model not in ("mindlin_history", "no_memory"):
             raise SandpileProtocolError(
                 "tangential_model must be 'mindlin_history' or 'no_memory'")
@@ -298,6 +310,8 @@ class SandpileConfig:
 
     @property
     def kind(self) -> str:
+        if self.calibration_sweep:
+            return "calibration_sweep"
         return "baseline" if self.control == "baseline" else "negative_control"
 
     def mindlin_config(self) -> MindlinTangentialConfig:
@@ -343,7 +357,10 @@ class SandpileConfig:
             "priors_match_file": (self.mu_s == PRIORS["mu_s"]
                                   and self.mu_r == PRIORS["mu_r"]),
             "prior_source": PRIOR_SOURCE,
-            "calibration_disabled": True,
+            "calibration_disabled": not self.calibration_sweep,
+            "calibration_sweep": bool(self.calibration_sweep),
+            "prior_guard": ("bypassed:calibration_sweep"
+                            if self.calibration_sweep else "enforced:priors"),
         }
 
 
@@ -353,7 +370,10 @@ def assert_priors(config: SandpileConfig) -> None:
     A ``baseline`` run must use exactly :data:`PRIORS`; a control run must be
     the corresponding :data:`CONTROL_MUTATIONS` applied to the priors.  Anything
     else -- in particular a hand-tuned ``mu_r`` chasing a target repose angle --
-    is refused before a single step is taken.
+    is refused before a single step is taken.  The single exemption is
+    ``calibration_sweep=True`` (the explicitly tagged calibration surface of
+    :mod:`tensordem.protocols.sandpile_calibration`), which frees ``mu_s`` and
+    ``mu_r`` only; the remaining guarded knobs are still checked.
 
     Raises:
         SandpileProtocolError: on any deviation from the whitelist.
@@ -370,6 +390,10 @@ def assert_priors(config: SandpileConfig) -> None:
         "restitution": config.restitution,
     }
     for key, value in expected.items():
+        if config.calibration_sweep and key in ("mu_s", "mu_r"):
+            # The calibration surface sweeps exactly these two coefficients;
+            # every other guarded knob stays frozen (see module docstring).
+            continue
         got = actual[key]
         if isinstance(value, float) and isinstance(got, float):
             same = (value == got) or (math.isinf(value) and math.isinf(got))
