@@ -228,8 +228,16 @@ class PenetrationConfig:
     # self-supporting network (157 contacts at rest).  The denser 2 % variant
     # (phi = 0.654) and the looser 10 % variant (still falling, 0 contacts) are
     # recorded in that script's log.
-    penetration_speed: float = 0.05         # m/s, indenter velocity (kinematic BC)
+    penetration_speed: float = 0.05         # m/s, indenter velocity (kinematic BC), = BASE_SPEED
     penetrate_over_r: float = 1.6
+    # Floor clearance: the reference law is a *semi-infinite* bed result, so the
+    # rigid floor must sit far below the deepest point of the intruder.  The
+    # m15404 case ran with 1.9 R of material under the intruder and measured
+    # alpha = 349 (10x the reference) -- a layer ~4 grains thick squeezed between
+    # a big sphere and a rigid floor is confined compression, not granular drag.
+    # The minimum is reported, not enforced (older cases stay reproducible); with
+    # ``strict`` in :meth:`PenetrationConfig.validate` it becomes an error.
+    min_floor_clearance_over_r: float = 3.0
     fit_from_over_r: float = 0.5
     fit_to_over_r: Optional[float] = None   # default: penetrate_over_r
     smoothing_over_r: float = 0.15          # moving-average window, in units of R
@@ -263,9 +271,26 @@ class PenetrationConfig:
     def fit_to(self) -> float:
         return self.penetrate_over_r if self.fit_to_over_r is None else self.fit_to_over_r
 
-    def validate(self) -> None:
+    @property
+    def floor_clearance_over_r(self) -> float:
+        """Grain material left between the deepest intruder point and the floor."""
+        return self.bed_depth_over_d / self.intruder_radius_over_d - self.penetrate_over_r
+
+    @property
+    def floor_clearance_over_d(self) -> float:
+        return self.floor_clearance_over_r * self.intruder_radius_over_d
+
+    @property
+    def floor_clearance_is_marginal(self) -> bool:
+        return self.floor_clearance_over_r < self.min_floor_clearance_over_r
+
+    def validate(self, strict: bool = False) -> None:
         if self.intruder_radius_over_d < 2.0:
             raise ValueError("R/d < 2 is not a coarse-grained sphere: pick R/d >= 2")
+        if self.floor_clearance_over_r <= 0.0:
+            raise ValueError(
+                "the intruder would reach the floor: bed_depth must exceed "
+                f"penetrate_over_r*R (clearance {self.floor_clearance_over_r:.2f} R)")
         if self.bed_depth < self.penetrate_over_r * self.R + 3.0 * self.d:
             raise ValueError(
                 "bed too shallow: need bed_depth >= penetrate_over_r*R + 3d "
@@ -275,6 +300,12 @@ class PenetrationConfig:
             raise ValueError("wall clearance < 3R: Janssen confinement dominates")
         if self.penetration_speed <= 0.0:
             raise ValueError("penetration_speed must be positive")
+        if strict and self.floor_clearance_is_marginal:
+            raise ValueError(
+                f"floor clearance {self.floor_clearance_over_r:.2f} R < "
+                f"{self.min_floor_clearance_over_r:.2f} R: the drag law describes a "
+                "semi-infinite bed, a thin layer under the intruder measures "
+                "confined compression instead")
 
 
 # ---------------------------------------------------------------------------
@@ -475,7 +506,10 @@ class QuasiStaticPenetration:
                 wall_half_width_over_R=cfg.wall_half_width_over_R,
                 box_width=width, bed_depth=cfg.bed_depth,
                 penetration_depth=float(z_arr[-1]) if len(z_arr) else 0.0,
+                floor_clearance_over_r=cfg.floor_clearance_over_r,
+                floor_clearance_over_d=cfg.floor_clearance_over_d,
                 time_step=dt),
+            protocol_warnings=protocol_warnings(cfg),
             bed=self.bed_info,
             metrics=metrics,
             fit=fit,
@@ -489,6 +523,92 @@ class QuasiStaticPenetration:
 # ---------------------------------------------------------------------------
 # Profile analysis (pure functions: unit-testable without any simulation)
 # ---------------------------------------------------------------------------
+
+def protocol_warnings(cfg: PenetrationConfig) -> List[str]:
+    """Non-fatal flags that make a case's verdict unrepresentative.
+
+    Emitted into every case record so a FAIL can be read against the protocol it
+    was produced with (m15404 lesson: the floor clearance was never recorded and
+    the 10x alpha excess was attributed to coarse-graining for a whole round).
+    """
+    out: List[str] = []
+    if cfg.floor_clearance_is_marginal:
+        out.append(
+            f"floor clearance {cfg.floor_clearance_over_r:.2f} R < "
+            f"{cfg.min_floor_clearance_over_r:.2f} R: the bed under the intruder is "
+            "thin, Eq. (3c)/(3d) assumes a semi-infinite bed")
+    if cfg.intruder_radius_over_d < 10.0:
+        out.append(
+            f"coarse-grained R/d = {cfg.intruder_radius_over_d:.1f} (reference "
+            "experiment R/d ~ 42): the alpha extrapolation to R/d -> inf is not "
+            "established by a single R/d")
+    if cfg.penetration_speed / math.sqrt(G * cfg.R) > 0.05:
+        out.append(
+            "speed ratio v/sqrt(gR) = "
+            f"{cfg.penetration_speed / math.sqrt(G * cfg.R):.3f} > 0.05: the "
+            "inertial (Froude) term of the drag is not negligible")
+    return out
+
+
+def alpha_shape_fit(z: np.ndarray, F: np.ndarray, radius: float, mu: float,
+                    rho_bulk: float, g: float = G):
+    """Scale the *exact* piecewise shape of Eq. (3c)/(3d) to a force profile.
+
+    ``alpha = argmin ||F - alpha mu rho_bulk g shape(z)||`` -- unbiased for a
+    window that straddles ``z = R``, unlike the deep-branch linear form (2.9 %
+    low on ``[0.5R, 1.6R]``, see tests).  Returns ``(alpha, residuals)``.
+    """
+    z = np.asarray(z, dtype=float)
+    F = np.asarray(F, dtype=float)
+    S = mu * rho_bulk * g * brzinski_shape(z, radius)
+    alpha = float(np.dot(S, F) / np.dot(S, S))
+    return alpha, F - alpha * S
+
+
+def alpha_vs_window(z, F, radius: float, mu: float, rho_bulk: float,
+                    smoothing: float, fit_from: float,
+                    n_windows: int = 6, g: float = G) -> List[Dict[str, float]]:
+    """Window-resolved ``alpha``: a ladder of upper fit limits, fixed lower one.
+
+    A profile produced by the reference law returns the *same* alpha for every
+    window.  A profile with a depth-independent excess force (a rigid floor under
+    the intruder, an initial-condition offset, a constant drag of the loading
+    rig) returns an alpha that *grows* with the window: the excess is a larger
+    share of the mean force over a shallower window.  Hence the slope of this
+    ladder is diagnostic of an additive contamination, which the single global
+    fit of :func:`evaluate_profile` cannot separate from the drag law.
+    """
+    z = np.asarray(z, dtype=float)
+    F = np.asarray(F, dtype=float)
+    ok = np.isfinite(z) & np.isfinite(F)
+    z, F = z[ok], F[ok]
+    if len(z) < 5:
+        return []
+    dz = np.abs(np.diff(z))
+    dz_mean = float(np.median(dz)) if len(dz) else 0.0
+    win = max(1, int(round(smoothing / dz_mean))) if dz_mean > 0 else 1
+    Fs = moving_average(F, win)
+    z_max = float(np.max(z))
+    if z_max <= fit_from:
+        return []
+    ladder = np.linspace(fit_from + 0.05 * (z_max - fit_from), z_max, int(n_windows))
+    out: List[Dict[str, float]] = []
+    for z_to in ladder:
+        sel = (z >= fit_from) & (z <= z_to)
+        if np.count_nonzero(sel) < 5:
+            continue
+        alpha, resid = alpha_shape_fit(z[sel], Fs[sel], radius=radius, mu=mu,
+                                       rho_bulk=rho_bulk, g=g)
+        mean_F = float(np.mean(Fs[sel]))
+        out.append(dict(
+            z_to=float(z_to), z_to_over_r=float(z_to / radius),
+            n_samples=int(np.count_nonzero(sel)),
+            alpha=float(alpha),
+            mean_force_N=mean_F,
+            residual_rms_N=float(np.sqrt(np.mean(resid ** 2))),
+        ))
+    return out
+
 
 def moving_average(y: np.ndarray, window: int) -> np.ndarray:
     """Centred boxcar average with edge truncation (no padding artefacts)."""
@@ -552,13 +672,8 @@ def evaluate_profile(z: np.ndarray, F: np.ndarray, radius: float, mu: float,
     zs, Fw = z[sel], Fs[sel]
     a = zs - radius / 3.0
     A = float(np.dot(a, Fw) / np.dot(a, a))               # deep-branch slope
-    # primary estimator: scale the *exact* piecewise shape of Eq. (3c)/(3d),
-    # alpha = argmin ||F - alpha mu rho g shape(z)|| -- unbiased for a window that
-    # straddles z = R, unlike the deep-branch linear form (2.9 % low on
-    # [0.5R, 1.6R], see tests).
-    S = mu * rho_bulk * G * brzinski_shape(zs, radius)
-    alpha_shape = float(np.dot(S, Fw) / np.dot(S, S))
-    resid_shape = Fw - alpha_shape * S
+    alpha_shape, resid_shape = alpha_shape_fit(zs, Fw, radius=radius, mu=mu,
+                                               rho_bulk=rho_bulk)
     resid = Fw - A * a
     mean_F = float(np.mean(Fw))
     cv = float(np.sqrt(np.mean(resid ** 2)) / max(abs(mean_F), 1e-30))
@@ -680,16 +795,26 @@ class TeleportControl(QuasiStaticPenetration):
 # CLI
 # ---------------------------------------------------------------------------
 
+BASE_SPEED = 0.05          # m/s, the production penetration speed
+
+
 def preset(name: str) -> PenetrationConfig:
-    """Named configurations used by the case pool (reproducible by name)."""
+    """Named configurations used by the case pool (reproducible by name).
+
+    ``slow`` / ``rate2x`` are *rate-control* runs: the quasi-staticity of the
+    loading path is demonstrated by halving / doubling the base speed, so the
+    speeds are defined relative to :data:`BASE_SPEED`.  (They used to be 5x and
+    20x the base speed -- a "2x" preset that ran 20x fast would have failed its
+    own rate-independence check while looking like it passed.)
+    """
     table = {
         "base": PenetrationConfig(label="base"),
         "rd2": PenetrationConfig(intruder_radius_over_d=2.0, bed_depth_over_d=7.0,
                                  label="rd2"),
         "rd4": PenetrationConfig(intruder_radius_over_d=4.0, bed_depth_over_d=10.0,
                                  label="rd4"),
-        "slow": PenetrationConfig(penetration_speed=0.25, label="slow"),
-        "rate2x": PenetrationConfig(penetration_speed=1.0, label="rate2x"),
+        "slow": PenetrationConfig(penetration_speed=0.5 * BASE_SPEED, label="slow"),
+        "rate2x": PenetrationConfig(penetration_speed=2.0 * BASE_SPEED, label="rate2x"),
         "damp2000": PenetrationConfig(damping=2000.0, damping_rotational=2000.0,
                                       label="damp2000"),
         "dashpot": PenetrationConfig(restitution=0.4, label="dashpot"),
