@@ -301,8 +301,20 @@ def _make_specimen(material: RidgeMaterial, *, columns: int, rows: int,
                    confining_stress: float, thickness: float = 1.0,
                    jitter: float = 0.03, relax_iterations: int = 60,
                    bond_cutoff: float = 1.2, servo_gain: float = 1.0e-4,
-                   servo_velocity_limit: float = 2.0) -> tuple[RidgeAssembly, dict[str, Any]]:
+                   servo_velocity_limit: float = 2.0,
+                   wall_friction: float | None = None,
+                   ) -> tuple[RidgeAssembly, dict[str, Any]]:
     """Jittered triangular disc lattice in a four-plane servo biaxial cell.
+
+    ``wall_friction`` (default ``None`` = the material value) sets the Coulomb
+    coefficient of all four walls.  It exists because the lateral servo walls of
+    a biaxial cell carry a *vertical shear* traction when they are rough: the
+    axis stress measured from the top platen alone then misses the part of the
+    axial load that the side walls take, which biases ``phi``.  OSS triaxial
+    practice is to make the confining walls frictionless so that the boundary
+    traction is a pure normal stress; ``wall_friction=0.0`` is that setting and
+    is used by the cross-validation A/B experiment
+    (:mod:`tensordem.biaxial_xval`).
 
     The lattice is dense (discs nominally touching) but the positions are
     jittered by ``jitter`` x spacing and overlaps are relaxed, so the specimen
@@ -351,24 +363,27 @@ def _make_specimen(material: RidgeMaterial, *, columns: int, rows: int,
     half_w = 0.5 * width + radius
     half_h = 0.5 * height + radius
     wall_stiffness = 4.0 * material.contact_stiffness
+    friction = (material.friction_coefficient if wall_friction is None
+                else float(wall_friction))
     planes = [
         Plane((1.0, 0.0), (-half_w, 0.0), stiffness=wall_stiffness,
-              damping=material.contact_damping, friction=material.friction_coefficient,
+              damping=material.contact_damping, friction=friction,
               servo_stress=confining_stress, servo_width=height,
               servo_gain=servo_gain, servo_velocity_limit=servo_velocity_limit),
         Plane((-1.0, 0.0), (half_w, 0.0), stiffness=wall_stiffness,
-              damping=material.contact_damping, friction=material.friction_coefficient,
+              damping=material.contact_damping, friction=friction,
               servo_stress=confining_stress, servo_width=height,
               servo_gain=servo_gain, servo_velocity_limit=servo_velocity_limit),
         Plane((0.0, 1.0), (0.0, -half_h), stiffness=wall_stiffness,
-              damping=material.contact_damping, friction=material.friction_coefficient),
+              damping=material.contact_damping, friction=friction),
         Plane((0.0, -1.0), (0.0, half_h), stiffness=wall_stiffness,
-              damping=material.contact_damping, friction=material.friction_coefficient),
+              damping=material.contact_damping, friction=friction),
     ]
     assembly = RidgeAssembly(pos, torch.full((count,), radius, dtype=torch.float64),
                              torch.full((count,), material.particle_mass, dtype=torch.float64),
                              bonds, material, planes=planes, thickness=thickness)
     geometry = {"width": width, "height": height, "particles": count,
+                "wall_friction": float(friction),
                 "bonds": int(bonds.shape[0]), "confining_stress": float(confining_stress),
                 "half_w": half_w, "half_h": half_h, "wall_stiffness": wall_stiffness}
     return assembly, geometry
@@ -389,6 +404,7 @@ def run_biaxial_shear_band(*, confining_stress: float = 100.0e3,
                            k_local: int = 8,
                            servo_gain: float = 1.0e-4,
                            servo_velocity_limit: float = 2.0,
+                           wall_friction: float | None = None,
                            material_overrides: dict[str, Any] | None = None,
                            record_snapshots: bool = False,
                            ) -> dict[str, Any]:
@@ -411,7 +427,8 @@ def run_biaxial_shear_band(*, confining_stress: float = 100.0e3,
     assembly, geometry = _make_specimen(
         material, columns=columns, rows=rows, confining_stress=confining_stress,
         jitter=jitter, servo_gain=servo_gain,
-        servo_velocity_limit=servo_velocity_limit)
+        servo_velocity_limit=servo_velocity_limit,
+        wall_friction=wall_friction)
     dt = material.recommended_dt
     thickness = assembly.thickness
 
@@ -450,8 +467,24 @@ def run_biaxial_shear_band(*, confining_stress: float = 100.0e3,
                          + float(plane_forces[1][0]) / (height * thickness))
         strain = (height0 - height) / height0
         e_lat = (width0 - width) / width0
+        # Internal (Love-Weber) stress over the *material* volume enclosed by the
+        # walls.  The wall-traction stress above is the externally instrumented
+        # measure; the two must agree in a quasi-static cell, so recording both
+        # makes the stress definition auditable (standard DEM practice: YADE
+        # ``stressTensor``, LAMMPS ``compute stress/atom``).
+        volume = max(width * height * thickness, 1e-12)
+        virial = out.get("virial")
+        if virial is not None:
+            sigma_v_internal = -float(virial[1, 1]) / volume
+            sigma_h_internal = -float(virial[0, 0]) / volume
+        else:                                            # pragma: no cover
+            sigma_v_internal = float("nan")
+            sigma_h_internal = float("nan")
         history.append({"axial_strain": strain, "sigma_v": sigma_v,
                         "sigma_h": sigma_h, "deviator": sigma_v - sigma_h,
+                        "sigma_v_internal": sigma_v_internal,
+                        "sigma_h_internal": sigma_h_internal,
+                        "deviator_internal": sigma_v_internal - sigma_h_internal,
                         "volumetric_strain": strain + e_lat})
         if strain + 1e-12 >= next_snapshot:
             next_snapshot += snapshot_strain
@@ -503,6 +536,24 @@ def run_biaxial_shear_band(*, confining_stress: float = 100.0e3,
     slope = float(np.polyfit(eps_a, eps_v, 1)[0]) if eps_a.size >= 5 else 0.0
     psi_deg = math.degrees(math.asin(max(min(-slope, 0.95), -0.95)))
 
+    # same friction angle, but from the internal (Love-Weber) stress
+    sigma1_internal = float(hist["sigma_v_internal"][peak_index])
+    sigma3_internal = float(hist["sigma_h_internal"][peak_index])
+    denom_internal = sigma1_internal + sigma3_internal
+    sin_phi_internal = (max(min((sigma1_internal - sigma3_internal) / denom_internal, 0.95), 0.0)
+                        if denom_internal else 0.0)
+    phi_internal_deg = math.degrees(math.asin(sin_phi_internal))
+    wall_vs_internal = {
+        "sigma_v": sigma1_internal, "sigma_h": sigma3_internal,
+        "sigma_v_relative_difference": ((sigma1_internal - sigma1) / sigma1
+                                        if sigma1 else float("nan")),
+        "sigma_h_relative_difference": ((sigma3_internal - sigma3) / sigma3
+                                        if sigma3 else float("nan")),
+        "friction_angle_internal_deg": phi_internal_deg,
+        "friction_angle_relative_difference": ((phi_internal_deg - phi_deg) / phi_deg
+                                               if phi_deg else float("nan")),
+    }
+
     theory = theory_angles_deg(phi_deg, psi_deg)
     # Representative band: the *late post-peak* window only.  Early snapshots
     # contain a high-eta2 horizontal compaction front driven by the servo
@@ -550,6 +601,7 @@ def run_biaxial_shear_band(*, confining_stress: float = 100.0e3,
                  "late_snapshots": len(post_peak),
                  "representative": clean(best) if best else None,
                  "history": [clean(b) for b in bands]},
+        "stress_definitions": wall_vs_internal,
         "theory": theory,
         "theory_relative_error": {k: (angle - v) / v for k, v in theory.items()},
         "broken_bonds": int(assembly.broken_bonds),
