@@ -87,6 +87,7 @@ __all__ = [
     "simulate_plane_shear",
     "shear_stress_scaling",
     "shear_rate_exponent",
+    "two_term_stress_fit",
     "kappa_of",
     "tau_star_of",
     "inertial_number_of",
@@ -978,3 +979,182 @@ def shear_rate_exponent(points: Sequence[Dict[str, Any]],
             for p in sorted(pts, key=lambda q: q["case"]["shear_rate"])
         ],
     }
+
+# ---------------------------------------------------------------------------
+# elastic + inertial stress partition
+# ---------------------------------------------------------------------------
+def _fit_two_term(kappa: np.ndarray, tau_star: np.ndarray) -> Dict[str, float]:
+    """Least-squares fit of ``tau* = A (kappa + c)`` in log space (1-D search).
+
+    The model is ``tau* = A kappa + B`` with ``c = B / A`` the crossover
+    stiffness.  It has two parameters and an *unconstrained* exponent, so it is
+    directly comparable (same parameter count) to the single power law
+    ``tau* = C kappa^beta`` by information criterion.
+
+    The fit is done in ``ln tau*`` because the measurement error is
+    multiplicative (seed scatter is a few per cent of ``tau*`` at every rung).
+    For fixed ``c`` the optimal ``A`` is closed-form, leaving a 1-D search in
+    ``ln c``: a coarse log grid followed by a golden-section refinement.
+    """
+    lk = np.log(kappa)
+    lt = np.log(tau_star)
+
+    def rss_of(c: float) -> float:
+        m = np.log(kappa + c)
+        r = lt - m
+        a = float(np.mean(r))
+        resid = r - a
+        return float(np.sum(resid * resid))
+
+    lo, hi = math.log(kappa.min() * 1e-6), math.log(kappa.max() * 1e6)
+    grid = np.linspace(lo, hi, 241)
+    vals = [rss_of(math.exp(g)) for g in grid]
+    i = int(np.argmin(vals))
+    a_, b_ = grid[max(i - 1, 0)], grid[min(i + 1, grid.size - 1)]
+    # golden-section refinement inside the bracketing cell
+    gr = (math.sqrt(5.0) - 1.0) / 2.0
+    x1, x2 = b_ - gr * (b_ - a_), a_ + gr * (b_ - a_)
+    f1, f2 = rss_of(math.exp(x1)), rss_of(math.exp(x2))
+    for _ in range(80):
+        if f1 < f2:
+            b_, x2, f2 = x2, x1, f1
+            x1 = b_ - gr * (b_ - a_)
+            f1 = rss_of(math.exp(x1))
+        else:
+            a_, x1, f1 = x1, x2, f2
+            x2 = a_ + gr * (b_ - a_)
+            f2 = rss_of(math.exp(x2))
+    lc = 0.5 * (a_ + b_)
+    c = math.exp(lc)
+    lnA = float(np.mean(lt - np.log(kappa + c)))
+    rss = rss_of(c)
+    return {"A": math.exp(lnA), "B": math.exp(lnA) * c, "kappa_crossover": c,
+            "lnA": lnA, "rss_log": rss}
+
+
+def _fit_single_power(kappa: np.ndarray, tau_star: np.ndarray) -> Dict[str, float]:
+    lk, lt = np.log(kappa), np.log(tau_star)
+    beta, lnC = np.polyfit(lk, lt, 1)
+    resid = lt - (lnC + beta * lk)
+    return {"beta": float(beta), "C": float(math.exp(lnC)),
+            "rss_log": float(np.sum(resid * resid))}
+
+
+def two_term_stress_fit(points: Sequence[Dict[str, Any]], *, min_points: int = 5,
+                        n_boot: int = 400, seed: int = 20261113) -> Dict[str, Any]:
+    """Partition the steady stress into an elastic and an inertial leg.
+
+    Physics.  Campbell (2002) organises sheared granular flow by the
+    dimensionless stiffness ``kappa = k_n / (rho d^3 gamma_dot^2)``.  Two limiting
+    legs contribute to the (shear-rate-normalised) stress:
+
+    * elastic / quasi-static: ``tau*_e = A kappa`` -- the overlap is set by the
+      stiffness at fixed packing, so ``tau ~ k_n`` and the shear rate cancels
+      (``n = 0``, ``beta = 1``);
+    * inertial / Bagnold: ``tau*_i = B`` -- ``tau ~ rho d^2 gamma_dot^2``
+      (``n = 2``, ``beta = 0``).
+
+    Their sum, ``tau* = A kappa + B``, is the simplest two-leg interpolation and
+    it *predicts* the curvature that R3 measured: with
+    ``c = B/A``, ``beta(kappa) = kappa/(kappa + c)`` rises monotonically from 0
+    to 1.  Fitting it to the data therefore does three things a single power law
+    cannot: (i) it returns the elastic coefficient ``A`` that R3 could only read
+    off the stiffest rung, (ii) it returns the crossover stiffness ``c`` where the
+    inertial leg carries half the stress, and (iii) it is a *falsifiable* shape
+    claim, tested here against the single power law by AIC on the same number of
+    parameters.
+
+    The measured ``kinetic_stress_share`` is used as an independent cross-check:
+    if the fitted inertial fraction ``c/(kappa + c)`` is a real inertial
+    (collisional) contribution, it should not be orders of magnitude larger than
+    the kinetic share actually measured at the same point.  A violation does not
+    invalidate the fit, but it re-labels ``B`` as a *rate-dependent contact* term
+    rather than a kinetic one -- a distinction the single power law hides.
+    """
+    pts = [p for p in points if p.get("gates", {}).get("all")]
+    out: Dict[str, Any] = {"n_submitted": len(points), "n_gated": len(pts),
+                           "model": "tau* = A kappa + B  (elastic + inertial)"}
+    if len(pts) < min_points:
+        out["status"] = "refused"
+        out["reason"] = (f"fewer than {min_points} points passed the physics gates:"
+                         " A and B are not separable (honest refusal)")
+        return out
+    # one abscissa per kappa: average tau* over duplicate-kappa points
+    grouped: Dict[float, List[float]] = {}
+    for p in pts:
+        grouped.setdefault(float(p["kappa"]), []).append(float(p["tau_star"]))
+    kap = np.array(sorted(grouped), float)
+    tst = np.array([float(np.mean(grouped[k])) for k in kap], float)
+    out["n_distinct_kappa"] = int(kap.size)
+    if kap.size < min_points:
+        out["status"] = "refused"
+        out["reason"] = "fewer distinct kappa values than the fit requires"
+        return out
+
+    fit = _fit_two_term(kap, tst)
+    sp = _fit_single_power(kap, tst)
+    n = kap.size
+    aic2 = n * math.log(max(fit["rss_log"] / n, 1e-300)) + 2 * 2
+    aic1 = n * math.log(max(sp["rss_log"] / n, 1e-300)) + 2 * 2
+
+    # parametric bootstrap: perturb each tau* by the measured seed scatter and
+    # refit, so the crossover gets an honest interval instead of a point value.
+    sig = float(np.median([abs(float(p.get("tau_star_relative_sigma", float("nan"))))
+                           for p in pts if np.isfinite(
+                               float(p.get("tau_star_relative_sigma", float("nan"))))]
+                          or [float("nan")]))
+    rng = np.random.default_rng(seed)
+    boots = {"A": [], "kappa_crossover": []}
+    if np.isfinite(sig) and sig > 0:
+        for _ in range(int(n_boot)):
+            pert = tst * np.exp(rng.normal(0.0, sig, size=n))
+            f = _fit_two_term(kap, pert)
+            boots["A"].append(f["A"])
+            boots["kappa_crossover"].append(f["kappa_crossover"])
+
+    def ci(vals: Sequence[float]) -> Optional[List[float]]:
+        if len(vals) < 20:
+            return None
+        return [float(np.percentile(vals, 16.0)), float(np.percentile(vals, 84.0))]
+
+    out.update({
+        "status": "ok",
+        "A": fit["A"], "B": fit["B"], "kappa_crossover": fit["kappa_crossover"],
+        "A_ci68": ci(boots["A"]), "kappa_crossover_ci68": ci(boots["kappa_crossover"]),
+        "sigma_used_for_bootstrap": sig if np.isfinite(sig) else None,
+        "kappa_span": [float(kap.min()), float(kap.max())],
+        "decades": float(math.log10(kap.max() / kap.min())),
+        "single_power_law": {"beta": sp["beta"], "C": sp["C"],
+                             "rss_log": sp["rss_log"], "aic": aic1,
+                             "rms_log_residual": math.sqrt(sp["rss_log"] / n)},
+        "two_term": {"rss_log": fit["rss_log"], "aic": aic2,
+                     "rms_log_residual": math.sqrt(fit["rss_log"] / n)},
+        "delta_aic_two_term_minus_power": aic2 - aic1,
+        "preferred_model": "two_term" if aic2 < aic1 else "single_power_law",
+        "elastic_coefficient_at_stiffest": float(tst[-1] / kap[-1]),
+        "points": [
+            {"kappa": float(k), "tau_star": float(t),
+             "model_tau_star": float(fit["A"] * (k + fit["kappa_crossover"])),
+             "model_beta": float(k / (k + fit["kappa_crossover"])),
+             "model_inertial_fraction": float(fit["kappa_crossover"]
+                                              / (k + fit["kappa_crossover"])),
+             "residual_log": float(math.log(t) - math.log(
+                 fit["A"] * (k + fit["kappa_crossover"])))}
+            for k, t in zip(kap, tst)],
+    })
+    # independent cross-check against the measured kinetic/contact split
+    share = []
+    for p in pts:
+        k = float(p["kappa"])
+        f = fit["kappa_crossover"] / (k + fit["kappa_crossover"])
+        ks = float(p.get("kinetic_stress_share", float("nan")))
+        share.append({"tag": p.get("tag"), "kappa": k,
+                      "model_inertial_fraction": float(f),
+                      "measured_kinetic_share": ks if np.isfinite(ks) else None,
+                      "ratio_measured_over_model": (ks / f) if (f > 0 and np.isfinite(ks))
+                      else None})
+    out["kinetic_cross_check"] = sorted(share, key=lambda r: -r["kappa"])
+    worst = [(r["tag"], r["ratio_measured_over_model"]) for r in share
+             if r["ratio_measured_over_model"] is not None]
+    out["kinetic_cross_check_min_ratio"] = (min(r[1] for r in worst) if worst else None)
+    return out
