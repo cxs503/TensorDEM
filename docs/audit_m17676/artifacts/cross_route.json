@@ -1,0 +1,75 @@
+{
+ "doc": {
+  "path": "docs/repose_angle_calibration.md",
+  "documented_mu_r": 0.2
+ },
+ "cases": {
+  "mu_r_0.20": {
+   "mu": 0.5,
+   "mu_r": 0.2,
+   "theta_r_deg": 8.083480053501905,
+   "r2": 0.5703091072974105,
+   "steps": 7530,
+   "dt": 6.64061862502983e-05,
+   "n_particles": 95,
+   "max_speed": 0.18009427674862186,
+   "mean_speed": 0.008904556883536877,
+   "shoulder_radius": 0.004,
+   "toe_radius": 0.108,
+   "apex_z": 0.02729876085625523,
+   "wall_time_s": 29.124584674835205,
+   "case": {
+    "radius": 0.008,
+    "density": 2500.0,
+    "cylinder_radius": 0.035,
+    "fill_height": 0.14,
+    "kn": 60000.0,
+    "kt_ratio": 0.5,
+    "restitution": 0.05,
+    "jitter": 0.002,
+    "packing_gap": 0.02,
+    "hold_time": 0.05,
+    "lift_time": 0.15,
+    "settle_time": 0.3,
+    "seed": 4970,
+    "mu": 0.5
+   }
+  },
+  "mu_r_0.05": {
+   "mu": 0.5,
+   "mu_r": 0.05,
+   "theta_r_deg": 5.186479128572082,
+   "r2": 0.6337739736841477,
+   "steps": 7530,
+   "dt": 6.64061862502983e-05,
+   "n_particles": 95,
+   "max_speed": 0.26233666784464443,
+   "mean_speed": 0.019892516031426045,
+   "shoulder_radius": 0.028,
+   "toe_radius": 0.116,
+   "apex_z": 0.016841467477874874,
+   "wall_time_s": 27.665704250335693,
+   "case": {
+    "radius": 0.008,
+    "density": 2500.0,
+    "cylinder_radius": 0.035,
+    "fill_height": 0.14,
+    "kn": 60000.0,
+    "kt_ratio": 0.5,
+    "restitution": 0.05,
+    "jitter": 0.002,
+    "packing_gap": 0.02,
+    "hold_time": 0.05,
+    "lift_time": 0.15,
+    "settle_time": 0.3,
+    "seed": 4970,
+    "mu": 0.5
+   }
+  }
+ },
+ "documented_node_mu_0.50_mu_r_0.20": {
+  "mu": 0.5,
+  "theta_r_deg": 12.54,
+  "raw": "| 0.50 | 12.54 | 1.99 | 102.7 | 29.5 | 0.84 | 9.0 |"
+ }
+}
