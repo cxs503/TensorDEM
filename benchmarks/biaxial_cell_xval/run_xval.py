@@ -108,6 +108,19 @@ def run_case(*, columns: int, rows: int, confining_stress: float,
     margin = WALL_MARGIN_DIAMETERS * diameter
 
     strains, sig_v, sig_h, sig_v_int, sig_h_int = [], [], [], [], []
+    # stress-definition audit series (added by the R2 verification pass): the
+    # production case reads *one* platen and the *internal-only* virial, so the
+    # two numbers it compares are each biased by a known term.  Recording the
+    # remaining boundary data makes the decomposition auditable:
+    #   sigma_v_top        reaction of the driven platen (production ignores it)
+    #   sigma_v_wall_mean  gravity/load-path-free average of both platens
+    #   sigma_v_full       internal virial *plus* the wall-contact term
+    #   tau_side           vertical shear traction the rough side walls carry
+    #   balance_residual   |sum of face tractions + weight| / (A sigma_v)
+    sig_v_top, sig_v_wall_mean, sig_v_full = [], [], []
+    sig_h_full, tau_side, balance = [], [], []
+    widths, heights = [], []
+    drag_y_series, speed_series, platen_speed_series = [], [], []
     snapshots, windows, snapshot_strains = [], [], []
     snapshots.append(assembly.pos.detach().numpy().copy())
     snapshot_strains.append(0.0)
@@ -135,11 +148,67 @@ def run_case(*, columns: int, rows: int, confining_stress: float,
         virial = out["virial"]
         strain = (height0 - height) / height0
         strains.append(strain)
+        widths.append(width)
+        heights.append(height)
         sig_v.append(-float(plane_forces[2][1]) / (width * thickness))
         sig_h.append(0.5 * (-float(plane_forces[0][0]) / (height * thickness)
                             + float(plane_forces[1][0]) / (height * thickness)))
         sig_v_int.append(-float(virial[1, 1]) / volume)
         sig_h_int.append(-float(virial[0, 0]) / volume)
+        # --- boundary data for the stress-definition decomposition --------
+        # traction exerted by plane ``i`` on the specimen is ``-plane_forces[i]``
+        # over its face area; ``planes`` order is (left, right, bottom, top).
+        area_h = width * thickness
+        area_side = height * thickness
+        # traction exerted by plane ``i`` on the specimen is ``-plane_forces[i]``
+        # over its face area; the compressive normal stress is
+        # ``-(on_plane . inward_normal) / area`` (valid for all four planes
+        # regardless of the sign of their inward normal)
+        normals = ((1.0, 0.0), (-1.0, 0.0), (0.0, 1.0), (0.0, -1.0))
+        areas = (area_side, area_side, area_h, area_h)
+        traction = [(-float(plane_forces[k][0]) / areas[k],
+                     -float(plane_forces[k][1]) / areas[k]) for k in range(4)]
+        # compressive normal stress on the specimen face = traction . inward
+        # normal (checked on both platens: the driven platen pushes down, the
+        # fixed one up, and both must come out positive under compression)
+        sigma_normal = [traction[k][0] * normals[k][0]
+                        + traction[k][1] * normals[k][1] for k in range(4)]
+        t_left = traction[0]
+        t_right = traction[1]
+        t_bottom = traction[2]
+        t_top = traction[3]
+        sigma_v_bottom = sigma_normal[2]
+        sigma_v_top = sigma_normal[3]
+        tau_left = -float(t_left[1])
+        tau_right = -float(t_right[1])
+        tau_side.append(0.5 * (abs(tau_left) + abs(tau_right)))
+        sig_v_top.append(sigma_v_top)
+        sig_v_wall_mean.append(0.5 * (sigma_v_bottom + sigma_v_top))
+        # --- external (non-contact) body forces ---------------------------
+        # the global velocity drag is a *body force*, not a contact force, so it
+        # takes part of the load path and enters the divergence-theorem identity
+        # through its own virial term sum_i f_ext (x) x_i.
+        free_mask = assembly._free.bool()
+        ext_force = torch.zeros_like(assembly.vel)
+        ext_force[:, 1] += assembly.body_force
+        ext_force -= material.drag * assembly.vel * free_mask[:, None]
+        virial_ext = torch.einsum("ni,nj->ij", ext_force, assembly.pos)
+        drag_y_series.append(float(ext_force[:, 1].sum()))
+        platen_speed_series.append(float(strain_rate * height))
+        speed_series.append(float(torch.linalg.vector_norm(
+            assembly.vel[free_mask], dim=1).mean()))
+
+        wall_virial = out.get("virial_wall")
+        full_virial = virial if wall_virial is None else virial + wall_virial
+        full_virial = full_virial + virial_ext
+        sig_v_full.append(-float(full_virial[1, 1]) / volume)
+        sig_h_full.append(-float(full_virial[0, 0]) / volume)
+        # vertical force balance of the whole specimen: four face tractions plus
+        # every body force must sum to the (negligible) momentum change.
+        net = (float(t_bottom[1]) + float(t_top[1])) * area_h \
+            + (float(t_left[1]) + float(t_right[1])) * area_side \
+            + float(ext_force[:, 1].sum())
+        balance.append(abs(net) / max(area_h * abs(sigma_v_bottom), 1e-12))
         if strain + 1e-12 >= next_snapshot:
             next_snapshot += snapshot_strain
             snapshots.append(assembly.pos.detach().numpy().copy())
@@ -148,6 +217,7 @@ def run_case(*, columns: int, rows: int, confining_stress: float,
             windows.append((float(left.point[0]) + margin, float(right.point[0]) - margin,
                             float(bottom.point[1]) + margin, float(top.point[1]) - margin))
     load_s = time.time() - t1
+    weight_total = float(np.sum(assembly.body_force.detach().numpy()))
 
     np.savez_compressed(
         out_npz,
@@ -156,6 +226,14 @@ def run_case(*, columns: int, rows: int, confining_stress: float,
         windows=np.array(windows),
         strains=np.array(strains), sigma_v=np.array(sig_v), sigma_h=np.array(sig_h),
         sigma_v_internal=np.array(sig_v_int), sigma_h_internal=np.array(sig_h_int),
+        sigma_v_top=np.array(sig_v_top),
+        sigma_v_wall_mean=np.array(sig_v_wall_mean),
+        sigma_v_full=np.array(sig_v_full), sigma_h_full=np.array(sig_h_full),
+        tau_side=np.array(tau_side), balance_residual=np.array(balance),
+        widths=np.array(widths), heights=np.array(heights),
+        weight=np.array(weight_total),
+        drag_force_y=np.array(drag_y_series), mean_speed=np.array(speed_series),
+        platen_speed=np.array(platen_speed_series),
         meta=np.array(json.dumps({
             "columns": columns, "rows": rows,
             "particles": int(assembly.pos.shape[0]),
@@ -165,6 +243,7 @@ def run_case(*, columns: int, rows: int, confining_stress: float,
             "strain_rate": strain_rate, "strain_target": strain_target,
             "consolidation_steps": consolidation_steps,
             "dt": float(dt), "width0": width0, "height0": height0,
+            "thickness": float(thickness), "wall_margin_diameters": WALL_MARGIN_DIAMETERS,
             "broken_bonds": int(assembly.broken_bonds),
         })),
     )
@@ -191,6 +270,147 @@ def _late_window(snapshot_strains: np.ndarray, sigma_v: np.ndarray,
     return peak_strain, peak_strain, peak
 
 
+def decompose_stress_definitions(*, strains: np.ndarray, series: dict[str, np.ndarray],
+                                  meta: dict) -> dict:
+    """Attribute the wall-vs-internal stress gap to its three boundary terms.
+
+    The production case compares two numbers that are each biased:
+
+    * ``sigma_v`` reads the **bottom platen only**.  With rough side walls the
+      vertical shear traction ``tau_side`` shunts part of the axial load to the
+      servo walls, so the two platens carry different loads and a one-sided
+      reading is not the specimen-average stress;
+    * ``sigma_v_internal`` is the Love-Weber sum over **internal** contacts,
+      normalised by the full cell volume.  The wall contacts contribute their own
+      ``f (x) l`` term; omitting them biases the average by the boundary-layer
+      fraction of the height.
+
+    The decomposition below is additive and computable from the recorded
+    boundary data:
+
+        gap_old  = sigma_internal - sigma_bottom
+                 = (sigma_wall_mean - sigma_bottom)     # part A: missing platen
+                 + (sigma_full - sigma_internal)        # part B: missing wall term
+                 + (sigma_full - sigma_wall_mean)       # residual (identity check)
+
+    ``residual`` is what the divergence theorem says must vanish in a
+    quasi-static cell, so it doubles as the closure/consistency check.  The
+    predicted platen-to-platen drop is ``(weight/(W H t) + 2 tau_side / W) H``
+    from vertical equilibrium ``d sigma_yy / dy = rho g + 2 tau / W``.
+    """
+    sv_bottom = np.asarray(series["sigma_v_bottom"], dtype=float)
+    # missing optional series -> NaN arrays, so the report says "not recorded"
+    # instead of inventing a value
+    blank = np.full(sv_bottom.shape, np.nan)
+    sv_top = np.asarray(series.get("sigma_v_top", blank), dtype=float)
+    sv_mean = np.asarray(series.get("sigma_v_wall_mean", blank), dtype=float)
+    sv_internal = np.asarray(series["sigma_v_internal"], dtype=float)
+    sv_full = np.asarray(series.get("sigma_v_full", blank), dtype=float)
+    sh_side = np.asarray(series["sigma_h_wall"], dtype=float)
+    sh_internal = np.asarray(series["sigma_h_internal"], dtype=float)
+    sh_full = np.asarray(series.get("sigma_h_full", blank), dtype=float)
+    tau = np.asarray(series.get("tau_side", blank), dtype=float)
+    balance = np.asarray(series.get("balance_residual", blank), dtype=float)
+    width = np.asarray(series.get("widths", blank), dtype=float)
+    height = np.asarray(series.get("heights", blank), dtype=float)
+    thickness = float(meta.get("thickness", 1.0))
+
+    deviator = sv_bottom - sh_side
+    window = max(1, int(round(0.01 * deviator.size)))
+    smooth = np.convolve(deviator, np.ones(window) / window, mode="same")
+    peak = int(np.argmax(smooth))
+
+    def rel(num, den):
+        num = np.asarray(num, dtype=float)
+        den = np.asarray(den, dtype=float)
+        return num / np.where(np.abs(den) > 0.0, den, np.nan)
+
+    # additive split of the *old* production gap (all terms relative to the
+    # one-sided production reading, so they sum exactly):
+    #   gap_old = part_a + part_b + residual
+    gap_old = rel(sv_internal - sv_bottom, sv_bottom)
+    part_a = rel(sv_mean - sv_bottom, sv_bottom)      # missing driven platen
+    part_b = rel(sv_internal - sv_full, sv_bottom)    # missing wall virial term
+    residual = rel(sv_full - sv_mean, sv_bottom)      # closure (must vanish)
+
+    drop_measured = sv_top - sv_bottom
+    weight_density = float(meta.get("weight", 0.0)) / np.maximum(
+        width * height * thickness, 1e-12)
+    drop_predicted = (weight_density + 2.0 * tau / np.maximum(width, 1e-12)) * height
+    drop_rel = rel(drop_measured - drop_predicted, np.maximum(drop_predicted, 1e-12))
+
+    def at_peak(arr):
+        if arr is None:
+            return math.nan
+        value = float(arr[peak])
+        return value if np.isfinite(value) else math.nan
+
+    def mean_rel(arr):
+        if arr is None:
+            return math.nan
+        vals = np.asarray(arr, dtype=float)
+        vals = vals[np.isfinite(vals)]
+        return float(np.mean(vals)) if vals.size else math.nan
+
+    def phi_deg(sv, sh, index):
+        s1, s3 = float(sv[index]), float(sh[index])
+        if not (np.isfinite(s1) and np.isfinite(s3)) or (s1 + s3) <= 0.0:
+            return math.nan
+        return math.degrees(math.asin(max(min((s1 - s3) / (s1 + s3), 0.95), 0.0)))
+
+    phi_bottom = phi_deg(sv_bottom, sh_side, peak)
+    phi_full = phi_deg(sv_full if sv_full is not None else sv_bottom,
+                       sh_full if sh_full is not None else sh_side, peak)
+    closure = math.nan
+    if np.isfinite(at_peak(gap_old)) and abs(at_peak(gap_old)) > 0.0:
+        closure = 1.0 - abs(at_peak(residual)) / abs(at_peak(gap_old))
+
+    return {
+        "peak_index": peak, "peak_strain": float(strains[peak]),
+        "axial": {
+            "sigma_v_bottom": at_peak(sv_bottom), "sigma_v_top": at_peak(sv_top),
+            "sigma_v_wall_mean": at_peak(sv_mean), "sigma_v_internal": at_peak(sv_internal),
+            "sigma_v_full": at_peak(sv_full),
+            "gap_old_internal_vs_bottom": at_peak(gap_old),
+            "part_a_missing_platen": at_peak(part_a),
+            "part_b_missing_wall_virial": at_peak(part_b),
+            "residual_full_vs_mean": at_peak(residual),
+            "closure_fraction": closure,
+            "gap_old_mean": mean_rel(gap_old), "part_a_mean": mean_rel(part_a),
+            "part_b_mean": mean_rel(part_b), "residual_mean": mean_rel(residual),
+            "drop_measured": at_peak(drop_measured),
+            "drop_predicted": at_peak(drop_predicted),
+            "drop_rel_error": at_peak(drop_rel),
+        },
+        "lateral": {
+            "sigma_h_side": at_peak(sh_side), "sigma_h_internal": at_peak(sh_internal),
+            "sigma_h_full": at_peak(sh_full),
+            # sigma_h already averages both side walls, so only the virial term
+            # and the closure remain: gap_old = part_b + residual
+            "gap_old_internal_vs_side": at_peak(rel(sh_internal - sh_side, sh_side)),
+            "part_b_missing_wall_virial": at_peak(rel(sh_internal - sh_full, sh_side)),
+            "residual_full_vs_side": at_peak(rel(sh_full - sh_side, sh_side)),
+            "gap_old_mean": mean_rel(rel(sh_internal - sh_side, sh_side)),
+            "residual_mean": mean_rel(rel(sh_full - sh_side, sh_side)),
+        },
+        "phi": {"bottom_based_deg": phi_bottom, "full_based_deg": phi_full,
+                "rel": (phi_full - phi_bottom) / phi_full
+                if np.isfinite(phi_bottom) and np.isfinite(phi_full) and phi_full else math.nan},
+        "equilibrium": {
+            "balance_residual_mean": mean_rel(balance),
+            "balance_residual_at_peak": at_peak(balance),
+            "drag_force_y_at_peak": at_peak(np.asarray(series.get("drag_force_y", blank))),
+            "mean_speed_at_peak": at_peak(np.asarray(series.get("mean_speed", blank))),
+            "speed_over_platen_speed": at_peak(
+                np.asarray(series.get("mean_speed", blank))
+                / np.maximum(np.asarray(series.get("platen_speed", blank)), 1e-12)),
+        },
+        "tolerance": XVAL_TOLERANCE,
+        "pass_15pct": bool(np.isfinite(at_peak(residual))
+                           and abs(at_peak(residual)) <= XVAL_TOLERANCE),
+    }
+
+
 def analyze_case(npz_path: Path) -> dict:
     data = np.load(npz_path, allow_pickle=False)
     meta = json.loads(str(data["meta"]))
@@ -200,6 +420,18 @@ def analyze_case(npz_path: Path) -> dict:
     snaps = data["snapshots"]
     snap_strains = data["snapshot_strains"]
     windows = data["windows"]
+    optional = ("sigma_v_top", "sigma_v_wall_mean", "sigma_v_full", "sigma_h_full",
+                "tau_side", "balance_residual", "widths", "heights",
+                "drag_force_y", "mean_speed", "platen_speed")
+    series = {"sigma_v_bottom": sig_v, "sigma_h_wall": sig_h,
+              "sigma_v_internal": sig_v_int, "sigma_h_internal": sig_h_int}
+    for key in optional:
+        if key in data.files:
+            series[key] = data[key]
+    stress_definition = decompose_stress_definitions(
+        strains=strains, series=series,
+        meta={**meta, "weight": float(np.sum(data["weight"])) if "weight" in data.files
+              else 0.0})
 
     # --- deviator peak (production smoothing) --------------------------------
     window = max(1, int(round(0.01 * strains.size)))
@@ -324,6 +556,7 @@ def analyze_case(npz_path: Path) -> dict:
                  "phi_internal_deg": float(phi_internal),
                  "volumetric_strain_final": 0.0},
         "stress_audit": stress_audit,
+        "stress_definition": stress_definition,
         "band": {"tail_start_strain": tail_start, "rows": rows,
                  "cumulative": cumulative,
                  "incremental": incremental, "cumulative_stats": cumulative_stats,
