@@ -128,3 +128,117 @@ def test_committed_evidence_verdicts_are_not_over_claimed():
         if "criteria" in case:
             assert case["passed"] is all(case["criteria"].values()), name
         assert data["passed"][name] is case["passed"], name
+
+
+# --- L4 maturity gate + sweep budget (m17949: re-open of PR #1387) -----------
+#
+# Two structural defects are pinned here.  (1) The L4 clause was
+# ``"ref" not in case or "got" not in case and name != "repose"``: ``and`` binds
+# tighter than ``or``, so the disease the clause meant to catch -- a case with no
+# measured value -- was exempted for ``repose`` and silently demanded of
+# ``channel``, which never had a ``got`` block.  The gate therefore could not
+# reach L4 even when every case passed.  (2) ``validate(quick=True)`` gave the
+# smoke run a 1.0 m corridor with a step budget covering 0.06 m, so
+# ``sweep_complete`` was a budget artefact and the lane criterion was never
+# exercised.
+
+from tensordem.integration_callers import check_h1_maturity  # noqa: E402
+from tensordem.polyhedron_floe3d.h1_cases import validate  # noqa: E402
+
+
+def _synthetic_case(name, **overrides):
+    case = {"case": name, "passed": True,
+            "ref": {"target": 0.5}, "got": {"measured": 0.47}}
+    case.update(overrides)
+    return case
+
+
+def _synthetic_result(**overrides):
+    result = {
+        "cases": {"buoyancy": _synthetic_case("buoyancy"),
+                  "channel": _synthetic_case("channel")},
+        "passed": {"buoyancy": True, "channel": True},
+        "integration": {"caller": "synthetic", "quick": False},
+        "repro_cmd": "true",
+    }
+    result.update(overrides)
+    return result
+
+
+def test_maturity_gate_l4_passes_when_every_case_has_ref_and_got():
+    gate = check_h1_maturity(_synthetic_result(), required_level="L4")
+    assert gate["passed"], gate["gaps"]
+    assert gate["level_achieved"] == "L4"
+    assert gate["ref_got_pairs"]["channel"]["got"] == ["measured"]
+    assert gate["ref_got_pairs"]["buoyancy"]["ref"] == ["target"]
+
+
+def test_maturity_gate_flags_a_case_without_measured_values():
+    """The gate must name the case that has no `got`, and no case is exempt."""
+    result = _synthetic_result()
+    del result["cases"]["channel"]["got"]
+    gate = check_h1_maturity(result, required_level="L4")
+    assert not gate["passed"]
+    assert any("channel" in gap and "got" in gap for gap in gate["gaps"])
+
+    # `repose` used to be exempted from the got requirement by the buggy
+    # precedence; without a measured block it is not L4 evidence either
+    result2 = _synthetic_result()
+    result2["cases"]["repose"] = {"case": "repose", "passed": True,
+                                  "ref": {"band_deg": [25.0, 40.0]}}
+    gate2 = check_h1_maturity(result2, required_level="L4")
+    assert any("repose" in gap and "got" in gap for gap in gate2["gaps"])
+
+
+def test_maturity_gate_rejects_quick_smoke_run_as_l4_evidence():
+    """A smoke run clears a corridor scaled to its budget, not the declared one."""
+    gate = check_h1_maturity(_synthetic_result(quick=True), required_level="L4")
+    assert not gate["passed"]
+    assert any("quick" in gap for gap in gate["gaps"])
+    # ... and the same run is reported as a full pass at L3
+    l3 = check_h1_maturity(_synthetic_result(quick=True), required_level="L3")
+    assert l3["passed"], l3["gaps"]
+
+
+def test_maturity_gate_flags_failed_case_and_missing_repro_cmd():
+    result = _synthetic_result()
+    result["cases"]["channel"]["passed"] = False
+    result["repro_cmd"] = ""
+    gate = check_h1_maturity(result, required_level="L4")
+    assert any("channel" in gap and "not PASS" in gap for gap in gate["gaps"])
+    assert any("repro_cmd" in gap for gap in gate["gaps"])
+
+
+def test_channel_case_reports_a_got_block_and_the_sweep_budget():
+    """`got` is the measured side of the L4 pair; the budget is diagnostic."""
+    result = channel_clearing_case(n_floes=6, n_steps=120, width=0.6, length=1.2,
+                                   corridor=0.4)
+    assert result["passed"] is all(result["criteria"].values())  # no over-claim
+    # 120 steps * 5e-4 s * 0.4 m/s = 0.024 m, i.e. 6 % of the 0.4 m corridor
+    assert result["setup"]["steps_for_corridor"] == 2000
+    assert result["setup"]["sweep_budget_ratio"] == pytest.approx(120 / 2000)
+    assert result["criteria"]["sweep_budget_sufficient"] is False
+    assert result["criteria"]["sweep_complete"] is False
+    for key in ("lane_concentration_initial", "lane_concentration_final",
+                "lane_concentration_ratio", "hull_advance_m", "mass_residual",
+                "energy_residual"):
+        assert key in result["got"], key
+
+
+def test_quick_validate_scales_the_corridor_to_the_smoke_budget():
+    """Pre-fix: quick ran 0.06 m through a 1.0 m corridor -> guaranteed FAIL."""
+    result = validate(cases=("channel",), quick=True)
+    case = result["cases"]["channel"]
+    assert case["setup"]["corridor_m"] < 1.0
+    assert case["setup"]["sweep_budget_ratio"] >= 1.0
+    assert case["criteria"]["sweep_complete"] is True
+    assert case["passed"] is True
+    assert result["passed"]["channel"] is True
+
+
+def test_repose_case_exposes_its_ref_got_pair():
+    result = repose_case(n_bodies=12, friction=(0.4,), n_steps=300)
+    assert result["ref"]["band_deg"]
+    assert result["got"]["angles_deg"]
+    assert result["got"]["n_runs"] == 1
+    assert result["got"]["n_settled"] in (0, 1)
