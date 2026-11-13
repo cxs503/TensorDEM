@@ -32,6 +32,9 @@ if str(REPO / "src") not in sys.path:
     sys.path.insert(0, str(REPO / "src"))
 
 HERE = Path(__file__).resolve().parent
+if str(HERE) not in sys.path:
+    sys.path.insert(0, str(HERE))
+from reference_law import ref_mu as _ref_mu, ref_phi as _ref_phi, reference  # noqa: E402
 RUNS = HERE / "runs" / "bulk_rheometry"
 RUNS.mkdir(parents=True, exist_ok=True)
 
@@ -68,7 +71,11 @@ PREREG = {
 
 
 def mu_ref(I: float) -> float:
-    return MU_S + (MU_2 - MU_S) / (I_0 / I + 1.0)
+    return _ref_mu(I)
+
+
+def phi_ref(I: float) -> float:
+    return _ref_phi(I)
 
 
 def run_point(I: float) -> dict:
@@ -94,6 +101,7 @@ def run_point(I: float) -> dict:
         "tau_bulk": res["bulk_shear_pa"],
         "p_bulk_final": res["bulk_pressure_final_pa"],
         "bulk_kinetic_p": res["bulk_kinetic_pressure_pa"],
+        "straddle_fraction": res["bulk_straddle_fraction"],
         "sigma_zz_bulk": res["bulk_sigma_zz_final"],
         "shear_rate_imposed": res["shear_rate_imposed"],
         "shear_rate_measured": res["shear_rate_measured"],
@@ -106,7 +114,15 @@ def run_point(I: float) -> dict:
         "servo_valid": res["servo_valid"],
         "recover_steps": res["recover_steps"],
         "wall_clock_s": res["wall_clock_s"],
+        # solid fraction: slab estimator (fixed in m17026: it used to return
+        # the porosity), plus the bed-height estimator for comparison
+        "phi_slab": res["solid_fraction"],
+        "porosity_slab": res["porosity"],
+        "phi_bed_steady": res["phi_bed_steady"],
+        "phi_bed_final": res["phi_bed_final"],
+        "dilatancy": res["dilatancy"],
         "mu_ref": mu_ref(I),
+        "phi_ref": phi_ref(I),
     }
     row["mu_wall_err_pct"] = 100.0 * (row["mu_wall"] / row["mu_ref"] - 1.0)
     row["mu_bulk_err_pct"] = 100.0 * (row["mu_bulk"] / row["mu_ref"] - 1.0)
@@ -114,6 +130,8 @@ def run_point(I: float) -> dict:
     row["p_balance_rel"] = row["p_bulk"] / P_APPLIED - 1.0
     row["mu_bulk_over_wall"] = (row["mu_bulk"] / row["mu_wall"]
                                 if row["mu_wall"] else float("nan"))
+    row["phi_err_pct"] = 100.0 * (row["phi_slab"] / row["phi_ref"] - 1.0)
+    row["phi_bed_err_pct"] = 100.0 * (row["phi_bed_steady"] / row["phi_ref"] - 1.0)
     row["rate_ratio"] = (row["shear_rate_measured"] / row["shear_rate_imposed"]
                          if row["shear_rate_imposed"] else float("nan"))
     return row
@@ -128,7 +146,7 @@ def write_tables(rows: list[dict]) -> str:
              "|---|---|---|---|---|---|---|---|---|---|"]
     for r in rows:
         lines.append(
-            f"| {r['I_target']:.3g} | {r['I_meas']:.4g} | {r['mu_ref']:.4f} | "
+            f"| {r['I_target']:.3g} | {r['I_measured']:.4g} | {r['mu_ref']:.4f} | "
             f"{r['mu_wall']:.4f} | {r['mu_bulk']:.4f} | {r['mu_wall_err_pct']:+.1f} | "
             f"{r['mu_bulk_err_pct']:+.1f} | {r['p_wall']:.0f} | {r['p_bulk']:.0f} | "
             f"{100 * r['p_balance_rel']:+.1f} |")
@@ -141,15 +159,27 @@ def write_tables(rows: list[dict]) -> str:
             f"{r['shear_rate_measured']:.3f} | {r['rate_ratio']:.3f} | "
             f"{r['profile_r2']:.2f} | {r['I_measured']:.4g} | {r['I_bulk']:.4g} |")
     lines += ["", "## (3) pre-registered verdicts", "",
-              "| point | P1 pressure balance | P2 bulk/wall mu | P3 rate ratio | servo valid | recover steps |",
-              "|---|---|---|---|---|---|"]
+              "| point | P1 pressure balance | P2 bulk/wall mu | P3 rate ratio | servo valid | recover steps | dropped-contact fraction |",
+              "|---|---|---|---|---|---|---|"]
     for r in rows:
         p1 = "pass" if abs(r["p_balance_rel"]) <= 0.30 else "FAIL"
         p2 = "pass" if abs(r["mu_bulk_over_wall"] - 1.0) <= 0.15 else "FAIL"
         p3 = "pass" if abs(r["rate_ratio"] - 1.0) <= 0.15 else "FAIL"
         lines.append(f"| I={r['I_target']:.3g} | {p1} | {p2} | {p3} | "
-                     f"{r['servo_valid']} | {r['recover_steps']} |")
-    lines += ["", "## (4) error against the da Cruz (2005) mu(I) law (10 % band)", "",
+                     f"{r['servo_valid']} | {r['recover_steps']} | "
+                     f"{100 * (r['straddle_fraction'] or 0.0):.1f} % |")
+    lines += ["", "## (4) solid fraction on the same points (corrected slab estimator)", "",
+              "| I_target | phi slab (n*Vp/V) | phi bed (plate height) | phi ref | phi err % (slab) | phi err % (bed) | dilatancy |",
+              "|---|---|---|---|---|---|---|"]
+    for r in rows:
+        lines.append(f"| {r['I_target']:.3g} | {r['phi_slab']:.4f} | "
+                     f"{r['phi_bed_steady']:.4f} | {r['phi_ref']:.4f} | "
+                     f"{r['phi_err_pct']:+.1f} | {r['phi_bed_err_pct']:+.1f} | "
+                     f"{100 * r['dilatancy']:+.2f} % |")
+    lines += ["", "Note: the reference phi band spans only 0.640 -> 0.608 over "
+              "I = 1e-3..0.3 (5 %), so a 10 % gate is not discriminative for "
+              "phi; the phi verdict stays WITHHELD.", ""]
+    lines += ["", "## (5) error against the da Cruz (2005) mu(I) law (10 % band)", "",
               "| I_target | mu ref | mu wall err % | mu bulk err % | mu bulk (final window) err % | verdict |",
               "|---|---|---|---|---|---|"]
     for r in rows:
@@ -193,15 +223,41 @@ def make_figure(rows: list[dict]) -> None:
     plt.close(fig)
 
 
-def main() -> int:
+def _point_file(I: float) -> Path:
+    return RUNS / f"point_{I:.3g}.json"
+
+
+def main(argv: list[str] | None = None) -> int:
+    """Run one point (``--point I``), or assemble the stored points.
+
+    The single-point mode exists because the whole 4-point sweep exceeds the
+    2-minute wall budget of some runners; each point is an independent process
+    writing ``point_<I>.json``, and ``--assemble`` is artifact-only.
+    """
+    argv = list(sys.argv[1:] if argv is None else argv)
     (RUNS / "prereg.json").write_text(json.dumps(PREREG, indent=2))
+    if "--point" in argv:
+        I = float(argv[argv.index("--point") + 1])
+        row = run_point(I)
+        _point_file(I).write_text(json.dumps(row, indent=2))
+        print(f"I={I:.3g} mu_wall={row['mu_wall']:.4f} mu_bulk={row['mu_bulk']:.4f} "
+              f"p_bal={100 * row['p_balance_rel']:+.1f}% "
+              f"phi_slab={row['phi_slab']:.4f} straddle="
+              f"{100 * (row['straddle_fraction'] or 0.0):.1f}%", flush=True)
+        return 0
     rows: list[dict] = []
-    with ProcessPoolExecutor(max_workers=min(4, len(I_TARGETS))) as pool:
-        for row in pool.map(run_point, I_TARGETS):
-            rows.append(row)
-            print(f"I={row['I_target']:.3g} mu_wall={row['mu_wall']:.4f} "
-                  f"mu_bulk={row['mu_bulk']:.4f} p_bal={100*row['p_balance_rel']:+.1f}%",
-                  flush=True)
+    for I in I_TARGETS:
+        if _point_file(I).exists():
+            rows.append(json.loads(_point_file(I).read_text()))
+            continue
+        print(f"I={I:.3g}: point file missing - run "
+              f"`--point {I:.3g}` separately", flush=True)
+        continue
+        row = run_point(I)
+        _point_file(I).write_text(json.dumps(row, indent=2))
+        rows.append(row)
+        print(f"I={I:.3g} mu_wall={row['mu_wall']:.4f} mu_bulk={row['mu_bulk']:.4f} "
+              f"p_bal={100 * row['p_balance_rel']:+.1f}%", flush=True)
     rows.sort(key=lambda r: r["I_target"])
     (RUNS / "result.json").write_text(json.dumps(
         {"case": "CASE-DEM-PLANE-SHEAR-MUIDI", "round": 6,
