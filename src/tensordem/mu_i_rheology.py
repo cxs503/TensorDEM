@@ -731,6 +731,21 @@ def full_cell_virial_stress(pos, vel, pairs, *, box_width, box_depth,
             "shear_rate": slope, "profile_r2": float("nan")}
 
 
+def inertial_number(shear_rate, particle_diameter, pressure, density):
+    """``I = gdot d / sqrt(P / rho_p)`` — the *definition*, in one place.
+
+    ``shear_rate`` is whatever rate the caller means (imposed platen rate or the
+    volume-averaged measured rate), ``pressure`` the normal stress that pairs
+    with it and ``density`` the *grain* density (not the bulk density: the law's
+    ``rho_p`` is the material density of the particles).  Returns ``nan`` when
+    the pressure is not positive, so a lost pressure can never masquerade as a
+    small inertial number.
+    """
+    if not pressure > 0.0:
+        return float("nan")
+    return abs(shear_rate) * particle_diameter / math.sqrt(pressure / density)
+
+
 def shear_rate_profile(pos, vel, *, z_lo, z_hi, y_lo, y_hi, n_bins=6):
     """Least-squares slope ``d<v_x>/dz`` of the slab velocity profile.
 
@@ -1128,7 +1143,11 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
     dilatancy = ((plate_height_steady - plate_height) / plate_height
                  if plate_height > 0.0 else float("nan"))
     p_mean = mean["normal_stress_pa"]
-    i_measured = gamma_dot * d / math.sqrt(p_mean / rho) if p_mean > 0 else float("nan")
+    # round 10 (m17694): ``gamma_dot`` is the *imposed platen* rate, so what the
+    # historic key ``inertial_number`` carries is I at the imposed rate with the
+    # measured pressure -- not a measured I (rounds 6-8 read it as one).  The
+    # value is unchanged; the explicit taxonomy is added below.
+    i_imposed_rate = inertial_number(gamma_dot, d, p_mean, rho)
     # final-window (last 20 % of samples) counterparts: with a drifting servo the
     # 60 % tail average mixes the transient, so the validity verdict is taken on
     # the final window (this is the window the recovery gate settles on).
@@ -1155,7 +1174,7 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
         "shear_stress_pa": mean["shear_stress_pa"],
         "mu_effective": mean["mu"],
         "shear_rate_imposed": gamma_dot,
-        "inertial_number": i_measured,
+        "inertial_number": i_imposed_rate,
         "inertial_number_target": case.inertial_number,
         "coordination_number": mean["coordination"],
         "solid_fraction": mean["solid_fraction"],
@@ -1248,6 +1267,23 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
     if regime is not None:
         result["kappa"] = regime["kappa"]
         result["elastic_limit"] = regime
+    # --- round 10 (m17694): explicit inertial-number taxonomy -----------------
+    # The mu(I) ordinate is a *volume* average (full_cell_virial_stress), so the
+    # abscissa must be the volume-averaged measured rate, not the platen rate.
+    # Nothing above changes: this block only names the two other abscissae.
+    _rate = result.get("shear_rate_measured")
+    result["inertial_number_imposed_rate"] = i_imposed_rate
+    result["inertial_number_measured_rate"] = (
+        inertial_number(_rate, d, p_mean, rho) if _rate is not None else None)
+    if "shear_rate_measured" in arr:
+        _rate_final = float(np.nanmean(arr["shear_rate_measured"][-n_final:]))
+        result["inertial_number_measured_rate_final"] = inertial_number(
+            _rate_final, d, p_final, rho)
+        result["shear_rate_measured_final"] = _rate_final
+    else:
+        result["inertial_number_measured_rate_final"] = None
+        result["shear_rate_measured_final"] = None
+
     if case.bulk_stress and result.get("bulk_mu") is not None:
         mu_b, mu_w = result["bulk_mu"], result["mu_effective"]
         p_b = result["bulk_pressure_pa"]
@@ -1274,7 +1310,7 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
     return result
 
 
-__all__ += ["ServoShearCase", "simulate_servo_shear"]
+__all__ += ["ServoShearCase", "simulate_servo_shear", "inertial_number"]
 
 
 @dataclass(frozen=True)
