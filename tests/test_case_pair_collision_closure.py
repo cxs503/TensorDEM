@@ -14,8 +14,11 @@ Three invariants that the original submission did not pin:
    ~3.2% at e_target=0.8 (16.5% at 0.5).  This pin exists so that the gap
    cannot silently disappear from the benchmark output again.
 
-If the zeta mapping is ever calibrated, test 3 is expected to be rewritten -
-that is the intended failure mode.
+The mapping has since been calibrated (m18120,
+``contact_damping_model="restitution_calibrated"`` + ``tensordem.contact_calibration``),
+but as an *opt-in* convention: the default still misses the request, so pin 3
+stays exactly as written and the calibrated closed loop is pinned separately in
+``tests/test_contact_calibration.py``.
 """
 from __future__ import annotations
 
