@@ -506,8 +506,15 @@ def _figure(results: list[dict], verdict: dict, path: str) -> None:
 
 
 def _run_cached(config: dict, cache_dir: str, resume: bool) -> dict:
-    """Per-specimen runner with JSON cache (module-level: spawn-picklable)."""
-    path = os.path.join(cache_dir, config["name"] + ".json")
+    """Per-specimen runner with JSON cache (module-level: spawn-picklable).
+
+    The cache key carries the quick/full flag: a ``--quick`` smoke run must
+    never be resumable into a full run (same specimen name, different lattice)
+    -- a quick artefact silently reused by ``--resume`` would poison the
+    ensemble with 16 x 32 numbers.
+    """
+    suffix = "_quick" if config.get("quick") else ""
+    path = os.path.join(cache_dir, config["name"] + suffix + ".json")
     if resume and os.path.exists(path):
         with open(path) as handle:
             return json.load(handle)
