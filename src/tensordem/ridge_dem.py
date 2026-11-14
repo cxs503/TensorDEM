@@ -294,6 +294,10 @@ class RidgeAssembly:
         self.soil = soil
         self.mudline = mudline
         self.thickness = float(thickness)
+        #: exponential-moving-average of each plane's servo force (damps the
+        #: oscillation a pure proportional servo shows on a small/noisy
+        #: specimen -- the biaxial friction-angle defect).
+        self._servo_ema: list[float] | None = None
         self.broken_bonds = 0
         self.time = 0.0
         self.driven_velocity = torch.zeros(count, 2, dtype=torch.float64)
@@ -890,12 +894,20 @@ def _specimen_assembly(material: RidgeMaterial, *, columns: int, rows: int,
 
 def _advance_planes(assembly: RidgeAssembly, dt: float) -> None:
     """Move every plane along its normal by ``velocity * dt`` and run servos."""
+    if assembly._servo_ema is None:
+        assembly._servo_ema = [0.0] * len(assembly.planes)
     for index, plane in enumerate(assembly.planes):
         normal = torch.tensor(plane.normal, dtype=torch.float64)
         velocity = plane.velocity
         if plane.servo_stress is not None:
             force = assembly.last_plane_forces[index]
-            measured = -float(force @ normal) / (plane.servo_width * assembly.thickness)
+            # exponential moving average of the wall force: a pure proportional
+            # servo on the *instantaneous* force of a small/noisy specimen
+            # oscillates (measured sigma_3 swung 95->186 kPa in the biaxial
+            # friction case), so the servo is driven by the smoothed force.
+            ema = 0.9 * assembly._servo_ema[index] + 0.1 * float(force @ normal)
+            assembly._servo_ema[index] = ema
+            measured = -ema / (plane.servo_width * assembly.thickness)
             error = measured - plane.servo_stress
             # below the target pressure the wall must push *into* the specimen
             velocity = max(min(-plane.servo_gain * error, plane.servo_velocity_limit),
