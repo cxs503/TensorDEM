@@ -1,0 +1,178 @@
+{
+ "cases_missing": [],
+ "cases_present": [
+  "w5b_confirm_wall0.8_a0.5",
+  "w5b_confirm_wall0.8_a1.5",
+  "w5b_confirm_wall0.8_a2",
+  "w5d_dt0.5_a0.5",
+  "w5d_dt0.5_a1.5",
+  "w5d_fine_a0.5",
+  "w5d_gpr12_a0.5",
+  "w5d_gpr12_a1.5",
+  "w5e_gpr12_a2",
+  "w5e_gpr16_a0.5"
+ ],
+ "csv": "cases_resolution_ladder.csv",
+ "csv_sha256": "b6e437337d1e81540ec841d7be3f47d1c527b4c5e66c332cea42301e08d95bcf",
+ "figures": [
+  "fig_resolution_ladder.png",
+  "fig_deep_and_transitional.png"
+ ],
+ "files": {
+  "cases_resolution_ladder.csv": "b6e437337d1e81540ec841d7be3f47d1c527b4c5e66c332cea42301e08d95bcf",
+  "fig_deep_and_transitional.png": "7235123915359e4ee96178d4de63ad57a49f2a36daa966262a98f87513867445",
+  "fig_resolution_ladder.png": "a47b438407ac28f6886af8fe24c953fdf50a34c4aca23e7d8d9b96280293045f",
+  "w5b_confirm_wall0.8_a0.5.json": "e812487c02529812c93641719206a00dbc6fcef73858f69a109e6ca154e92bee",
+  "w5b_confirm_wall0.8_a1.5.json": "e8d7fd87c43ede7d6a9b7c756623b8b0daf53b2afb43f9cae1c86107790f19d7",
+  "w5b_confirm_wall0.8_a2.json": "d807c453d128597efe5659b9cbbf5cf4a4349ab640fa8c7660ac5261d3ffa687",
+  "w5d_dt0.5_a0.5.json": "64190f54c1265fdde11f7fa72b6f9be8a8cfa84b421e47045c9813b330631c35",
+  "w5d_dt0.5_a1.5.json": "8a463e09c167707d090e8c57623e58eaa4cdfa0480f199a2e332818c57c19050",
+  "w5d_fine_a0.5.json": "585394e12772ce157db84a6c725230b10a6f9f266ed4ae2638e1f55b5369d239",
+  "w5d_gpr12_a0.5.json": "2b2616205e09b48f9516d09a3208ad87bd86bef734713f7584450161e5c094b6",
+  "w5d_gpr12_a1.5.json": "dc03498ce50b75c3c564d32d26f088b23fa03e7e0e31636eddbb35f3587f83db",
+  "w5e_gpr12_a2.json": "72538af8160bb05835b098fc5faaf3681108b619b370b66a90cf8b9dc46462e6",
+  "w5e_gpr16_a0.5.json": "cf5fb2c09467a9004940eba83aa31071573e46869fe60eaf14320e58fbdb88d0"
+ },
+ "reference": "Lube et al. 2004 JFM 508:175-199, doi:10.1017/S0022112004009036",
+ "study": "CASE-COLUMN-COLLAPSE resolution-ladder closure (m20337)",
+ "thresholds": {
+  "ARRIVAL_KEY": "0.95",
+  "BAND_TOL": 0.15,
+  "COMBINED_T_PP": 0.05,
+  "DRIFT_PP": 0.15,
+  "DT_RUNOUT_REL": 0.02,
+  "DT_T_REL": 0.05
+ },
+ "tolerance": 0.15,
+ "verdicts": {
+  "COMBINED": {
+   "checks": [
+    {
+     "check": "|runout err| combined (12 gpr + dt/2), a=0.5",
+     "rule": "value <= BAND_TOL",
+     "value": 0.10094698977638039,
+     "verdict": "pass"
+    },
+    {
+     "check": "|t95 err(combined) - t95 err(12 gpr)|, a=0.5",
+     "rule": "value <= COMBINED_T_PP",
+     "value": 0.015445605742298696,
+     "verdict": "pass"
+    }
+   ],
+   "members": [
+    "w5d_gpr12_a0.5",
+    "w5d_fine_a0.5"
+   ],
+   "missing_members": [],
+   "verdict": "pass"
+  },
+  "DEEP_RES": {
+   "checks": [
+    {
+     "check": "|runout err| at 12 grains/radius, a=2.0",
+     "rule": "value <= BAND_TOL",
+     "value": 0.051671882391798096,
+     "verdict": "pass"
+    },
+    {
+     "check": "|runout err(12) - runout err(8)| at a=2.0",
+     "rule": "value <= DRIFT_PP",
+     "value": 0.005977142353515097,
+     "verdict": "pass"
+    }
+   ],
+   "members": [
+    "w5b_confirm_wall0.8_a2",
+    "w5e_gpr12_a2"
+   ],
+   "missing_members": [],
+   "verdict": "pass"
+  },
+  "DT_TRANS": {
+   "checks": [
+    {
+     "check": "|dt95 / t95| at a=1.5",
+     "rule": "value <= DT_T_REL",
+     "value": 0.022111916444716218,
+     "verdict": "pass"
+    },
+    {
+     "check": "|drunout / runout| at a=1.5",
+     "rule": "value <= DT_RUNOUT_REL",
+     "value": 0.036867400027692954,
+     "verdict": "fail"
+    }
+   ],
+   "members": [
+    "w5b_confirm_wall0.8_a1.5",
+    "w5d_dt0.5_a1.5"
+   ],
+   "missing_members": [],
+   "verdict": "fail"
+  },
+  "R_BAND16": {
+   "checks": [
+    {
+     "check": "|runout err| at 16 grains/radius, a=0.5",
+     "rule": "value <= BAND_TOL",
+     "value": 0.03799493384725672,
+     "verdict": "pass"
+    }
+   ],
+   "members": [
+    "w5e_gpr16_a0.5"
+   ],
+   "missing_members": [],
+   "verdict": "pass"
+  },
+  "R_DRIFT": {
+   "checks": [
+    {
+     "check": "|runout err(16) - runout err(12)|",
+     "rule": "value <= DRIFT_PP",
+     "value": 0.08134631683319149,
+     "verdict": "pass"
+    }
+   ],
+   "members": [
+    "w5d_gpr12_a0.5",
+    "w5e_gpr16_a0.5"
+   ],
+   "missing_members": [],
+   "verdict": "pass"
+  },
+  "T_BAND16": {
+   "checks": [
+    {
+     "check": "|t95 err| at 16 grains/radius, a=0.5",
+     "rule": "value <= BAND_TOL",
+     "value": 0.1979264546939028,
+     "verdict": "fail"
+    }
+   ],
+   "members": [
+    "w5e_gpr16_a0.5"
+   ],
+   "missing_members": [],
+   "verdict": "fail"
+  },
+  "T_TREND": {
+   "checks": [
+    {
+     "check": "|t95 err| strictly decreasing 8->12->16",
+     "rule": "value == 1.0",
+     "value": 0.0,
+     "verdict": "fail"
+    }
+   ],
+   "members": [
+    "w5b_confirm_wall0.8_a0.5",
+    "w5d_gpr12_a0.5",
+    "w5e_gpr16_a0.5"
+   ],
+   "missing_members": [],
+   "verdict": "fail"
+  }
+ }
+}
