@@ -1,0 +1,4 @@
+case_id,grains_per_radius,n_particles,dt,n_steps,stop_reason,aspect_nominal,aspect_measured,runout_ratio,ref_runout_ratio,err_runout,err_runout_nominal,t90,ref_time,err_t90,wall_clock_s
+R_a3_g8,8,5673,0.000482231,3359,at_rest,3,3.08663,4.1193,3.81101,0.0808946,0.0922813,1.14096,1.15701,-0.0138711,88.3186
+R_a3_g12,12,19687,0.00039374,4273,at_rest,3,3.0071,4.35589,3.77456,0.154014,0.155017,1.12846,1.14905,-0.017921,478.907
+SB_a3_g16,16,48923,0.000340989,4331,at_rest,3,3.03958,4.20867,3.7895,0.110611,0.115978,1.08128,1.15502,-0.0638449,1787.4
