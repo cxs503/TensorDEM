@@ -1,0 +1,140 @@
+{
+  "case": "CASE-DEM-PLANE-SHEAR-MUIDI",
+  "round": 14,
+  "kind": "synthesis of R1-R13",
+  "mu_assessment": {
+    "sweep": {
+      "n_points": 6,
+      "errors": [
+        {
+          "I": 0.0010069592280999953,
+          "mu": 0.32945187944154625,
+          "err_pct": -8.891967573120663
+        },
+        {
+          "I": 0.0030919454508580584,
+          "mu": 0.3289064973868583,
+          "err_pct": -9.863107423358263
+        },
+        {
+          "I": 0.010847434229938776,
+          "mu": 0.3850229137074961,
+          "err_pct": 2.1957984676802544
+        },
+        {
+          "I": 0.034552263794651636,
+          "mu": 0.4073756765078135,
+          "err_pct": -0.5367288395820569
+        },
+        {
+          "I": 0.11793312941875463,
+          "mu": 0.4302482418419039,
+          "err_pct": -13.159630410283752
+        },
+        {
+          "I": 0.3283239984277493,
+          "mu": 0.4915930657119066,
+          "err_pct": -19.519012136577953
+        }
+      ],
+      "within_10pct": false,
+      "worst_err_pct": 19.519012136577953
+    },
+    "full_cell": {
+      "n_points": 4,
+      "errors": [
+        {
+          "I": 0.01,
+          "mu": 0.37507703683715266,
+          "err_pct": -0.10834929594731868
+        },
+        {
+          "I": 0.03,
+          "mu": 0.4089754391840835,
+          "err_pct": 1.3227439420026688
+        },
+        {
+          "I": 0.1,
+          "mu": 0.37723688765422286,
+          "err_pct": -21.40898173870357
+        },
+        {
+          "I": 0.3,
+          "mu": 0.43328135919879013,
+          "err_pct": -27.786440133534974
+        }
+      ],
+      "within_10pct": false,
+      "worst_err_pct": 27.786440133534974,
+      "best_point": {
+        "I": 0.01,
+        "mu": 0.37507703683715266,
+        "err_pct": -0.10834929594731868
+      }
+    }
+  },
+  "phi_assessment": {
+    "sweep_phi_values": [
+      0.5218150307023655,
+      0.5218150307023655,
+      0.5218150307023655,
+      0.5218150307023655,
+      0.5218150307023655,
+      0.5218150307023655
+    ],
+    "sweep_dilatancy": "FAIL (phi_bed is constant = initial settled height, not steady-state)",
+    "full_cell_phi_values": [
+      0.6347826689021542,
+      0.6589588146208452,
+      0.6941655858105429,
+      0.7223549486392008
+    ],
+    "full_cell_dilatancy": "FAIL (phi_slab increases with I: compaction artifact from servo wall)",
+    "provenance": {
+      "phi_3d_magnitudes": "PROVENANCE-UNVERIFIED (no in-repo literature anchor; plausible for 3D glass beads)",
+      "phi_2d_magnitudes": "LITERATURE-ANCHORED (da Cruz 2005, Fig. 3, 2D disks: 0.84->0.79)",
+      "sweep_dilatancy_sign": "FAIL",
+      "full_cell_dilatancy_sign": "FAIL (phi_slab increases with I \u2014 servo compaction artifact)",
+      "phi_acceptance_vs_3d": "WITHHELD (reference magnitudes unverified; measured phi systematically 10-15% low in sweep, but full_cell phi_slab shows wrong trend)",
+      "phi_acceptance_vs_2d": "FAIL (measured phi ~0.52-0.72 vs 2D ref ~0.79-0.84; different dimensionality)",
+      "recommendation": "The phi(I) ledger criterion should be re-scoped: (a) anchor the 3D magnitudes to a specific 3D experimental source (e.g., Boyer et al. 2011 PRL 107:198301 for 3D suspensions, or Chialvo et al. 2012 for 3D dry grains); (b) the full-cell phi_slab estimator shows a compaction artifact (phi increasing with I) that must be diagnosed \u2014 likely the servo-controlled top wall pushes particles down at high shear rate."
+    }
+  },
+  "ledger_verdict": {
+    "mu_I_curve": "HONEST FAIL (sweep: worst -19.5%; full_cell: worst -27.8%; only I=0.01 full_cell is within 10%)",
+    "phi_I_curve": "WITHHELD (reference magnitudes unverified; measured phi shows wrong trend in both datasets)",
+    "overall": "FAIL \u2014 the ledger acceptance (<10% on both mu and phi curves) is not met"
+  },
+  "root_causes": [
+    "1. Wall slip: smooth walls underestimate shear stress, especially at high I",
+    "2. Servo compaction: the constant-stress servo pushes the top wall down at high shear rate, artificially increasing phi",
+    "3. phi_bed is the initial settled height, not the steady-state sheared value (sweep data defect)",
+    "4. phi_slab estimator includes wall-affected regions, biasing the solid fraction",
+    "5. The reference phi magnitudes (0.64, 0.58) have no literature anchor",
+    "6. Particle count (N=294) is too small for proper bulk rheometry at high I"
+  ],
+  "recommendations": [
+    "R1: Use rough walls (grafted monolayer) to suppress wall slip \u2014 already attempted in R13 but servo failed at high I",
+    "R2: Fix phi_bed_steady in sweep data \u2014 the steady-state sheared height must be measured, not the initial height",
+    "R3: Diagnose the servo compaction artifact \u2014 the top wall displacement should be tracked and corrected",
+    "R4: Increase particle count (N > 1000) for proper bulk statistics",
+    "R5: Anchor the phi reference to a specific 3D experimental source (Boyer et al. 2011, or Chialvo et al. 2012)",
+    "R6: Re-scope the ledger acceptance: mu(I) <10% is achievable at low I; phi(I) needs a verified reference first"
+  ],
+  "round_history": {
+    "R1": "Initial sweep, mu within 10% at low I, phi defect D1 (porosity vs solid fraction)",
+    "R2": "Phi reference sign fix (D2), phi still unverified",
+    "R3": "Biaxial shear band comparison",
+    "R4": "Premise audit",
+    "R5": "Constant-stress audit, pressure control gate",
+    "R6": "Bulk rheometry introduction",
+    "R7": "Defect fixes (D1, D2), phi_reference_audit",
+    "R8": "Full-cell virial stress estimator, analytic anchor",
+    "R9": "Not archived in runs/",
+    "R10": "Abscissa audit (I_target vs I_vol vs I_bulk)",
+    "R11": "Rough wall mode introduced",
+    "R12": "Multi-seed ensemble (3 seeds)",
+    "R13": "Full-range rough vs smooth comparison, servo failures at high I rough",
+    "R14": "This synthesis \u2014 consolidated verdict, phi provenance audit, path forward"
+  }
+}

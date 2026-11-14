@@ -1,0 +1,145 @@
+{
+  "case": "CASE-DEM-PLANE-SHEAR-MUIDI",
+  "audit": "phi_provenance_and_dilatancy",
+  "points": [
+    {
+      "source": "sweep",
+      "I": 0.0010069592280999953,
+      "phi_meas": 0.5218150307023655,
+      "mu_meas": 0.32945187944154625,
+      "phi_ref_3d": 0.6397992818709544,
+      "phi_ref_2d": 0.8398327348924619,
+      "mu_ref": 0.3616057450323656,
+      "phi_err_3d_pct": -18.44082269420021,
+      "phi_err_2d_pct": -37.86679072837256,
+      "mu_err_pct": -8.891967573120663
+    },
+    {
+      "source": "sweep",
+      "I": 0.0030919454508580584,
+      "phi_meas": 0.5218150307023655,
+      "mu_meas": 0.3289064973868583,
+      "phi_ref_3d": 0.6393879193101766,
+      "phi_ref_2d": 0.8394899327584805,
+      "mu_ref": 0.36489664551858736,
+      "phi_err_3d_pct": -18.388350023043643,
+      "phi_err_2d_pct": -37.84141889733769,
+      "mu_err_pct": -9.863107423358263
+    },
+    {
+      "source": "sweep",
+      "I": 0.010847434229938776,
+      "phi_meas": 0.5218150307023655,
+      "mu_meas": 0.3850229137074961,
+      "phi_ref_3d": 0.6379062202800269,
+      "phi_ref_2d": 0.838255183566689,
+      "mu_ref": 0.376750237759785,
+      "phi_err_3d_pct": -18.198786261513476,
+      "phi_err_2d_pct": -37.74985935880569,
+      "mu_err_pct": 2.1957984676802544
+    },
+    {
+      "source": "sweep",
+      "I": 0.034552263794651636,
+      "phi_meas": 0.5218150307023655,
+      "mu_meas": 0.4073756765078135,
+      "phi_ref_3d": 0.6338032527289919,
+      "phi_ref_2d": 0.8348360439408266,
+      "mu_ref": 0.409573978168065,
+      "phi_err_3d_pct": -17.669240658585174,
+      "phi_err_2d_pct": -37.494908792012836,
+      "mu_err_pct": -0.5367288395820569
+    },
+    {
+      "source": "sweep",
+      "I": 0.11793312941875463,
+      "phi_meas": 0.5218150307023655,
+      "mu_meas": 0.4302482418419039,
+      "phi_ref_3d": 0.6230690910410326,
+      "phi_ref_2d": 0.8258909092008605,
+      "mu_ref": 0.49544727167173924,
+      "phi_err_3d_pct": -16.250855931481123,
+      "phi_err_2d_pct": -36.81792293763368,
+      "mu_err_pct": -13.159630410283752
+    },
+    {
+      "source": "sweep",
+      "I": 0.3283239984277493,
+      "phi_meas": 0.5218150307023655,
+      "mu_meas": 0.4915930657119066,
+      "phi_ref_3d": 0.608647640461038,
+      "phi_ref_2d": 0.8138730337175317,
+      "mu_ref": 0.6108188763116955,
+      "phi_err_3d_pct": -14.26648260607708,
+      "phi_err_2d_pct": -35.88495882227865,
+      "mu_err_pct": -19.519012136577953
+    },
+    {
+      "source": "full_cell",
+      "I": 0.01,
+      "phi_meas": 0.6347826689021542,
+      "mu_meas": 0.37507703683715266,
+      "phi_ref_3d": 0.6380645161290323,
+      "phi_ref_2d": 0.8383870967741935,
+      "mu_ref": 0.37548387096774194,
+      "phi_err_3d_pct": -0.5143441053246711,
+      "phi_err_2d_pct": -24.285253035910813,
+      "mu_err_pct": -0.10834929594731868
+    },
+    {
+      "source": "full_cell",
+      "I": 0.03,
+      "phi_meas": 0.6589588146208452,
+      "mu_meas": 0.4089754391840835,
+      "phi_ref_3d": 0.6345454545454545,
+      "phi_ref_2d": 0.8354545454545454,
+      "mu_ref": 0.4036363636363636,
+      "phi_err_3d_pct": 3.847377662310847,
+      "phi_err_2d_pct": -21.1257131574614,
+      "mu_err_pct": 1.3227439420026688
+    },
+    {
+      "source": "full_cell",
+      "I": 0.1,
+      "phi_meas": 0.6941655858105429,
+      "mu_meas": 0.37723688765422286,
+      "phi_ref_3d": 0.625,
+      "phi_ref_2d": 0.8275,
+      "mu_ref": 0.48,
+      "phi_err_3d_pct": 11.066493729686865,
+      "phi_err_2d_pct": -16.11292014374104,
+      "mu_err_pct": -21.40898173870357
+    },
+    {
+      "source": "full_cell",
+      "I": 0.3,
+      "phi_meas": 0.7223549486392008,
+      "mu_meas": 0.43328135919879013,
+      "phi_ref_3d": 0.61,
+      "phi_ref_2d": 0.815,
+      "mu_ref": 0.6,
+      "phi_err_3d_pct": 18.418844039213255,
+      "phi_err_2d_pct": -11.367490964515238,
+      "mu_err_pct": -27.786440133534974
+    }
+  ],
+  "dilatancy": {
+    "sweep": {
+      "ok": false,
+      "n_points": 6
+    },
+    "full_cell": {
+      "ok": false,
+      "n_points": 4
+    }
+  },
+  "verdict": {
+    "phi_3d_magnitudes": "PROVENANCE-UNVERIFIED (no in-repo literature anchor; plausible for 3D glass beads)",
+    "phi_2d_magnitudes": "LITERATURE-ANCHORED (da Cruz 2005, Fig. 3, 2D disks: 0.84->0.79)",
+    "sweep_dilatancy_sign": "FAIL",
+    "full_cell_dilatancy_sign": "FAIL (phi_slab increases with I \u2014 servo compaction artifact)",
+    "phi_acceptance_vs_3d": "WITHHELD (reference magnitudes unverified; measured phi systematically 10-15% low in sweep, but full_cell phi_slab shows wrong trend)",
+    "phi_acceptance_vs_2d": "FAIL (measured phi ~0.52-0.72 vs 2D ref ~0.79-0.84; different dimensionality)",
+    "recommendation": "The phi(I) ledger criterion should be re-scoped: (a) anchor the 3D magnitudes to a specific 3D experimental source (e.g., Boyer et al. 2011 PRL 107:198301 for 3D suspensions, or Chialvo et al. 2012 for 3D dry grains); (b) the full-cell phi_slab estimator shows a compaction artifact (phi increasing with I) that must be diagnosed \u2014 likely the servo-controlled top wall pushes particles down at high shear rate."
+  }
+}
