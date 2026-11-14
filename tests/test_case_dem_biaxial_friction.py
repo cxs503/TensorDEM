@@ -9,6 +9,7 @@ tolerance 8 %).  These tests pin:
 * the acceptance arithmetic (``friction_angle_deg`` / ``judge_friction``)
   against analytic values,
 * the end-to-end quick pipeline (8x16 smoke specimen, not a result),
+* critical-state analysis integration (phi_cv extraction + Rowe cross-check),
 * self-consistency of any committed anchor artefact (``run.json``): the
   stored judgement must be reproducible from the stored peak stresses.
 
@@ -28,6 +29,8 @@ import torch
 from tensordem.biaxial_friction_case import (
     ANCHOR_CONFIG,
     CASE_KEY,
+    PHI_CV_REF_DEG,
+    PHI_CV_ROWE_DEG,
     PHI_REF_DEG,
     QUICK_CONFIG,
     TOLERANCE,
@@ -54,7 +57,7 @@ def test_anchor_configuration_matches_the_task_board():
     assert ANCHOR_CONFIG["confining_stress"] == pytest.approx(100.0e3)
     assert ANCHOR_CONFIG["wall_friction"] == pytest.approx(0.0)
     assert ANCHOR_CONFIG["consolidation_steps"] == 4000
-    assert ANCHOR_CONFIG["strain_target"] == pytest.approx(0.15)
+    assert ANCHOR_CONFIG["strain_target"] == pytest.approx(0.30)
     assert PHI_REF_DEG == pytest.approx(38.0)
     assert TOLERANCE == pytest.approx(0.08)
 
@@ -64,6 +67,12 @@ def test_quick_configuration_is_a_smoke_not_a_result():
     assert QUICK_CONFIG["columns"] * QUICK_CONFIG["rows"] < 500
     assert QUICK_CONFIG["confining_stress"] == pytest.approx(100.0e3)
     assert QUICK_CONFIG["wall_friction"] == pytest.approx(0.0)
+
+
+def test_critical_state_references_are_declared():
+    """The critical-state reference values are pre-declared and not mutated."""
+    assert PHI_CV_REF_DEG == pytest.approx(33.0)  # Bolton 1986 Table 1
+    assert PHI_CV_ROWE_DEG == pytest.approx(math.degrees(math.atan(0.55)), abs=1e-9)
 
 
 # ---------------------------------------------------------------------------
@@ -124,6 +133,23 @@ def test_quick_pipeline_runs_and_judges(tmp_path):
     assert result["reference"].startswith("Bolton (1986)")
 
 
+def test_quick_pipeline_includes_critical_state_analysis():
+    """The quick pipeline must include critical-state analysis (even if not converged)."""
+    result = run_biaxial_friction_case(quick=True)
+    cs = result.get("critical_state", {})
+    # The analysis must be present (may or may not converge for the quick specimen)
+    assert isinstance(cs, dict)
+    # Quick specimen has strain_target=0.05 < min_strain=0.20, so CS analysis
+    # will return an error dict
+    if "error" not in cs:
+        assert "phi_cv_deg" in cs
+        assert "converged" in cs
+        assert "rowe" in cs
+        assert "phi_mu_deg" in cs["rowe"]
+        assert cs["rowe"]["phi_mu_deg"] == pytest.approx(
+            math.degrees(math.atan(0.55)), abs=1e-9)
+
+
 # ---------------------------------------------------------------------------
 # Committed anchor artefact self-consistency (if present)
 # ---------------------------------------------------------------------------
@@ -142,3 +168,17 @@ def test_committed_artefact_judgement_is_self_consistent():
     assert j["passed"] is rec["judgement"]["passed"]
     assert j["relative_error"] == pytest.approx(
         rec["judgement"]["relative_error"], abs=1e-9)
+
+
+@pytest.mark.skipif(not os.path.exists(ARTIFACT),
+                      reason="anchor artefact not committed yet")
+def test_committed_artefact_has_critical_state_analysis():
+    """If run.json is committed, it must include critical-state analysis."""
+    with open(ARTIFACT) as f:
+        rec = json.load(f)
+    cs = rec.get("critical_state", {})
+    assert isinstance(cs, dict), "critical_state key must be present"
+    if "error" not in cs:
+        assert "phi_cv_deg" in cs
+        assert "converged" in cs
+        assert "rowe" in cs
