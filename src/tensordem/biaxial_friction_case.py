@@ -138,6 +138,18 @@ def run_biaxial_friction_case(*, quick: bool = False,
     phi_peak = float(result["peak"]["friction_angle_deg"])
     phi_internal = float(result["stress_definitions"]["friction_angle_internal_deg"])
 
+    # Keep a downsampled stress path in the artefact so the stress-path figure
+    # and any offline re-judgement work from the committed record alone.
+    hist = result.get("stress_path") or {}
+    if hist and "axial_strain" in hist:
+        n = len(hist["axial_strain"])
+        keep = max(2, min(500, n))
+        idx = np.unique(np.linspace(0, n - 1, keep).round().astype(int))
+        stress_path = {k: [float(v[i]) for i in idx]
+                       for k, v in hist.items()}
+    else:
+        stress_path = {}
+
     judgement = judge_friction(phi_peak)
 
     # Dimensionless numbers
@@ -157,6 +169,7 @@ def run_biaxial_friction_case(*, quick: bool = False,
         "loading": result["loading"],
         "peak": result["peak"],
         "band": {k: v for k, v in result["band"].items() if k != "history"},
+        "stress_path": stress_path,
         "stress_definitions": result["stress_definitions"],
         "theory": result["theory"],
         "friction_angle": {
