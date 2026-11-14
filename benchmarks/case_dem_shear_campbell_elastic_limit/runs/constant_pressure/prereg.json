@@ -1,0 +1,169 @@
+{
+ "case": "CASE-DEM-SHEAR-CAMPBELL-ELASTIC-LIMIT",
+ "round": "R5 (constant-pressure path; owner two-round rule, round 2)",
+ "written_before_any_point": true,
+ "device": "tensordem.mu_i_rheology.simulate_servo_shear",
+ "why_this_device": "Campbell (2002) organised the elastic limit with pressure-controlled shear; R1-R4 used a constant-volume cell and could never dilate. This device is the repository's constant-stress servo shear box.",
+ "base_case": {
+  "radius": 0.005,
+  "density": 2500.0,
+  "mu": 0.5,
+  "mu_rolling": 0.05,
+  "restitution": 0.3,
+  "kt_ratio": 0.5,
+  "box_width": 0.12,
+  "box_depth": 0.05,
+  "fill_height": 0.06,
+  "gravity": 0.0,
+  "normal_stress": 625000.0,
+  "settle_steps": 3000,
+  "min_shear_steps": 2000,
+  "shear_strain": 0.25
+ },
+ "grid": [
+  {
+   "tag": "I0.010",
+   "kn": 62500.0,
+   "inertial_number": 0.01,
+   "seed": 5279,
+   "dt_scale": 1.0,
+   "role": "ladder"
+  },
+  {
+   "tag": "I0.020",
+   "kn": 62500.0,
+   "inertial_number": 0.02,
+   "seed": 5279,
+   "dt_scale": 1.0,
+   "role": "ladder"
+  },
+  {
+   "tag": "I0.040",
+   "kn": 62500.0,
+   "inertial_number": 0.04,
+   "seed": 5279,
+   "dt_scale": 1.0,
+   "role": "ladder"
+  },
+  {
+   "tag": "I0.100",
+   "kn": 62500.0,
+   "inertial_number": 0.1,
+   "seed": 5279,
+   "dt_scale": 1.0,
+   "role": "ladder"
+  },
+  {
+   "tag": "I0.200",
+   "kn": 62500.0,
+   "inertial_number": 0.2,
+   "seed": 5279,
+   "dt_scale": 1.0,
+   "role": "ladder"
+  },
+  {
+   "tag": "I0.400",
+   "kn": 62500.0,
+   "inertial_number": 0.4,
+   "seed": 5279,
+   "dt_scale": 1.0,
+   "role": "ladder"
+  },
+  {
+   "tag": "I0.020_s2",
+   "kn": 62500.0,
+   "inertial_number": 0.02,
+   "seed": 6451,
+   "dt_scale": 1.0,
+   "role": "seed"
+  },
+  {
+   "tag": "I0.200_s2",
+   "kn": 62500.0,
+   "inertial_number": 0.2,
+   "seed": 6451,
+   "dt_scale": 1.0,
+   "role": "seed"
+  },
+  {
+   "tag": "I0.020_dt2",
+   "kn": 62500.0,
+   "inertial_number": 0.02,
+   "seed": 5279,
+   "dt_scale": 0.5,
+   "role": "dt"
+  },
+  {
+   "tag": "I0.200_dt2",
+   "kn": 62500.0,
+   "inertial_number": 0.2,
+   "seed": 5279,
+   "dt_scale": 0.5,
+   "role": "dt"
+  },
+  {
+   "tag": "I0.100_kn2.5e5",
+   "kn": 250000.0,
+   "inertial_number": 0.1,
+   "seed": 5279,
+   "dt_scale": 1.0,
+   "role": "kn"
+  },
+  {
+   "tag": "I0.100_kn1.0e6",
+   "kn": 1000000.0,
+   "inertial_number": 0.1,
+   "seed": 5279,
+   "dt_scale": 1.0,
+   "role": "kn"
+  }
+ ],
+ "gates": {
+  "pressure_control": 0.05,
+  "shear_rate": 0.15,
+  "profile_r2": 0.9,
+  "phi_min": 0.55,
+  "overlap_proxy": 0.1
+ },
+ "rules": {
+  "P2_tolerance_beta": 0.15,
+  "P3_tolerance_factor": 2.0,
+  "P5_seed_spread": 0.15,
+  "P5_dt_change": 0.1,
+  "P1_min_points": 5,
+  "P1_min_decades": 1.5
+ },
+ "observables": {
+  "kappa": "k_n/(rho d^3 gdot^2), gdot = measured bulk shear rate",
+  "tau_star": "tau/(rho d^2 gdot^2), tau = measured bulk shear stress",
+  "inertial_number": "gdot d/sqrt(P/rho), P = measured bulk pressure",
+  "phi": "interior-slab solid fraction (phi_bed_steady)"
+ },
+ "predictions": {
+  "P1_reach": ">= 5 gated points over >= 1.5 decades inside 50..2e5",
+  "P2_exponent": "|beta_CP - beta_CV| <= 0.15 -> kappa is the sole control",
+  "P3_coefficient": "C_CP / C_CV within a factor 2",
+  "P4_concentration": "phi monotone in kappa (higher kappa -> denser)",
+  "P5_resolution": "seed spread <= 15 %, dt/2 change <= 10 %",
+  "P6_collapse": "kn rungs at fixed I land on the rate-ladder curve (diagnostic)"
+ },
+ "known_untestable": {
+  "campbell_numeric_table": "full text closed (paywall) - coefficient leg WITHHELD",
+  "dimension": "this device is 3-D, R1-R4 are 2-D; coefficients are not transferable across dimension and are compared only as declared deviation",
+  "overlap": "the servo device does not return particle overlaps; the small-overlap gate is an analytic proxy 1/(3 kappa I^2), declared as a proxy, not a measurement"
+ },
+ "fit_inputs": {
+  "constant_volume": {
+   "source": "benchmarks/case_dem_shear_campbell_elastic_limit/runs/inertial_branch/analysis.json",
+   "beta": 0.8935424263278949,
+   "C": 0.043014870377645315,
+   "rms_log_residual": 0.10325944041921432
+  }
+ },
+ "sha256": {
+  "benchmarks/case_dem_shear_campbell_elastic_limit/runs/inertial_branch/analysis.json": "d25bcfa8840751e260e548aa1929cec723f46a32da361f2b5e8c310b22b6a590",
+  "benchmarks/case_dem_shear_campbell_elastic_limit/reference_anchors.json": "2d817a4809d977e1bbc64851d0eab60ed493657e5df929063478d542b9ceda22",
+  "benchmarks/case_dem_shear_campbell_elastic_limit/constant_pressure.py": "6984c34108531fd8369c2fdbae9b11cb90457bb24535468cbce1056f75331f73"
+ },
+ "written_at": "2026-11-14T08:51:00"
+}
