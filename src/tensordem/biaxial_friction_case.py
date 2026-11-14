@@ -2,18 +2,24 @@
 
 Measures the peak Mohr-Coulomb friction angle from a plane-strain biaxial
 compression test and compares it against the classical critical-state reference
-for dense sand.
+for dense sand.  Additionally extracts the critical-state (constant-volume)
+friction angle from the post-peak tail of the stress path and cross-checks
+it against the Rowe (1962) stress-dilatancy prediction.
 
 Reference
 ---------
 Bolton (1986) "The strength and dilatancy of sands", *Geotechnique* **36**(1):
 65-78.  Table 2 (p. 72) gives the plane-strain peak friction angle for dense
 Hostun sand as **38 deg** (phi_ps = 38 deg at D_r = 80 %, sigma_3 = 100 kPa).
-This is the canonical reference for dense-sand plane-strain strength.
+Bolton also reports phi_crit ≈ 33 deg for angular quartz sands (Table 1, p. 67).
 
 Acceptance criterion
 --------------------
-Relative error |phi_got - phi_ref| / phi_ref < 8 %.
+Peak friction angle: relative error |phi_got - phi_ref| / phi_ref < 8 %.
+
+Critical-state cross-check (informational, not a gate):
+phi_cv from the stress-path tail should be close to arctan(mu) where mu is
+the interparticle friction coefficient (Rowe 1962 stress-dilatancy theory).
 
 Why wall_friction = 0
 ---------------------
@@ -22,6 +28,15 @@ they are rough, which biases the axial stress measured from the top platen
 alone.  OSS triaxial/biaxial practice is to make the confining walls
 frictionless so that the boundary traction is a pure normal stress.  This case
 uses ``wall_friction=0.0`` for that reason.
+
+Why strain_target = 0.30
+-------------------------
+The critical-state detector (biaxial_critical_state) requires axial strain
+≥ 0.20 (DEFAULT_MIN_STRAIN) to begin its window, plus a tail averaging window.
+A strain_target of 0.30 ensures the post-peak branch is long enough for the
+critical-state friction angle to be extracted.  The peak friction angle is
+measured at the deviator maximum, which typically occurs at eps_a ≈ 0.05–0.10,
+so the longer target does not affect the peak measurement.
 """
 from __future__ import annotations
 
@@ -43,10 +58,17 @@ CASE_KEY = "CASE-DEM-BIAXIAL-FRICTION"
 PHI_REF_DEG = 38.0  # Bolton (1986) Geotechnique 36(1):65-78, Table 2, p.72
 TOLERANCE = 0.08    # 8 % relative
 
+# Critical-state reference (informational, not a gate)
+# Bolton (1986) Table 1, p.67: phi_crit ≈ 33 deg for angular quartz sands.
+# For the DEM model with mu = 0.55, Rowe predicts phi_cv = arctan(0.55) ≈ 28.8 deg.
+PHI_CV_REF_DEG = 33.0  # Bolton (1986) Table 1, p.67 (real sand)
+PHI_CV_ROWE_DEG = math.degrees(math.atan(0.55))  # Rowe prediction for mu=0.55
+
 REF_SOURCE = (
     "Bolton (1986) Geotechnique 36(1):65-78, Table 2, p.72: "
     "dense Hostun sand plane-strain peak friction angle phi_ps = 38 deg "
-    "(D_r = 80 %, sigma_3 = 100 kPa)"
+    "(D_r = 80 %, sigma_3 = 100 kPa); Table 1, p.67: phi_crit ≈ 33 deg "
+    "for angular quartz sands"
 )
 
 # ---------------------------------------------------------------------------
@@ -59,7 +81,7 @@ ANCHOR_CONFIG: dict[str, Any] = {
     "wall_friction": 0.0,          # frictionless lateral walls (OSS practice)
     "consolidation_steps": 4000,
     "strain_rate": 0.05,
-    "strain_target": 0.15,
+    "strain_target": 0.30,         # extended for critical-state analysis
     "snapshot_strain": 0.01,
     "servo_gain": 3.0e-4,
     "servo_velocity_limit": 2.0,
@@ -108,6 +130,55 @@ def judge_friction(phi_got: float, *, phi_ref: float = PHI_REF_DEG,
     }
 
 
+def _extract_critical_state(stress_path: dict[str, Any],
+                            sigma3_target: float,
+                            mu: float = 0.55) -> dict[str, Any]:
+    """Extract critical-state friction angle from the stress-path tail.
+
+    Uses :mod:`tensordem.biaxial_critical_state` for the detection and
+    :func:`rowe_stress_dilatancy` for the Rowe cross-check.  Returns a
+    JSON-serialisable dict; returns an empty dict if the analysis fails.
+    """
+    try:
+        from tensordem.biaxial_critical_state import (
+            critical_state_from_stress_path,
+            rowe_stress_dilatancy,
+        )
+    except ImportError:
+        return {"error": "biaxial_critical_state module not available"}
+
+    try:
+        cs = critical_state_from_stress_path(
+            stress_path, sigma3_target=sigma3_target)
+        rowe = rowe_stress_dilatancy(stress_path, mu=mu)
+        return {
+            "phi_cv_deg": float(cs.phi_cv_deg),
+            "q_cv_Pa": float(cs.q_cv_Pa),
+            "sigma_h_cv_Pa": float(cs.sigma_h_cv_Pa),
+            "d_eps_v_d_eps_a": float(cs.d_eps_v_d_eps_a),
+            "q_drift": float(cs.q_drift),
+            "converged": bool(cs.converged),
+            "flags": {k: bool(v) for k, v in cs.flags.items()},
+            "window": list(cs.window),
+            "peak_phi_deg": float(cs.peak_phi_deg),
+            "peak_strain": float(cs.peak_strain),
+            "rowe": {
+                "mu": float(rowe["mu"]),
+                "phi_mu_deg": float(rowe["phi_mu_deg"]),
+                "phi_cv_predicted_deg": float(rowe["phi_cv_predicted_deg"]),
+                "phi_from_rowe_relation_mean_deg": float(
+                    rowe["phi_from_rowe_relation_mean_deg"]),
+                "measured_minus_rowe_mean": float(
+                    rowe["measured_minus_rowe_mean"]),
+            },
+            "phi_cv_vs_rowe_rel_err": (
+                abs(float(cs.phi_cv_deg) - PHI_CV_ROWE_DEG) / PHI_CV_ROWE_DEG
+                if math.isfinite(cs.phi_cv_deg) else float("nan")),
+        }
+    except (ValueError, RuntimeError) as exc:
+        return {"error": str(exc)}
+
+
 def run_biaxial_friction_case(*, quick: bool = False,
                                **overrides: Any) -> dict[str, Any]:
     """Run the biaxial friction-angle benchmark and return the result dict."""
@@ -152,8 +223,15 @@ def run_biaxial_friction_case(*, quick: bool = False,
 
     judgement = judge_friction(phi_peak)
 
-    # Dimensionless numbers
+    # Critical-state analysis (informational, not a gate)
     sigma3 = float(config["confining_stress"])
+    cs_analysis = _extract_critical_state(
+        hist if hist and "axial_strain" in hist else {},
+        sigma3_target=sigma3,
+        mu=0.55,
+    )
+
+    # Dimensionless numbers
     strain_rate = float(config["strain_rate"])
     diameter = 2.0 * radius
     # Inertial number I = eps_dot * d * sqrt(rho / sigma3)
@@ -179,6 +257,7 @@ def run_biaxial_friction_case(*, quick: bool = False,
             "tolerance": TOLERANCE,
         },
         "judgement": judgement,
+        "critical_state": cs_analysis,
         "dimensionless": {
             "inertial_number": inertial_number,
             "strain_rate_non-dimensional": strain_rate * diameter / math.sqrt(sigma3 / rho),
@@ -199,15 +278,23 @@ def run_biaxial_friction_case(*, quick: bool = False,
 
 
 def render_figure(result: dict[str, Any], out_path: str) -> str:
-    """Generate a two-panel figure: stress path + friction-angle comparison."""
+    """Generate a three-panel figure: stress path + friction angle + critical state."""
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
     hist = result.get("peak", {})
     judgement = result.get("judgement", {})
+    cs = result.get("critical_state", {})
 
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
+    has_cs = bool(cs and "error" not in cs)
+
+    n_panels = 3 if has_cs else 2
+    fig, axes = plt.subplots(1, n_panels, figsize=(4 * n_panels + 4, 5))
+    if n_panels == 2:
+        ax1, ax2 = axes
+    else:
+        ax1, ax2, ax3 = axes
 
     # Panel 1: stress path (deviator vs axial strain)
     stress_path = result.get("stress_path", {})
@@ -218,13 +305,16 @@ def render_figure(result: dict[str, Any], out_path: str) -> str:
         peak_idx = int(np.argmax(dev))
         ax1.axvline(x=float(hist.get("axial_strain", 0)), color="r",
                     linestyle="--", alpha=0.5, label="peak")
+        if has_cs and "window" in cs:
+            lo, hi = cs["window"]
+            ax1.axvspan(lo, hi, alpha=0.10, color="green", label="CS window")
         ax1.set_xlabel("Axial strain [-]")
         ax1.set_ylabel("Deviator stress [kPa]")
         ax1.set_title("Stress path")
-        ax1.legend(loc="upper left", fontsize=8)
+        ax1.legend(loc="upper left", fontsize=7)
         ax1.grid(True, alpha=0.3)
 
-    # Panel 2: friction angle comparison
+    # Panel 2: peak friction angle comparison
     phi_got = judgement.get("got_deg", float("nan"))
     phi_ref = judgement.get("ref_deg", float("nan"))
     rel_err = judgement.get("relative_error", float("nan"))
@@ -236,23 +326,46 @@ def render_figure(result: dict[str, Any], out_path: str) -> str:
 
     bars = ax2.bar(bars_x, bars_h, color=colors, width=0.5, edgecolor="white", linewidth=1.5)
     ax2.set_xticks(bars_x)
-    ax2.set_xticklabels(bars_label, fontsize=10)
+    ax2.set_xticklabels(bars_label, fontsize=9)
     ax2.set_ylabel("Friction angle [deg]")
-    ax2.set_title(f"phi_peak: {phi_got:.1f} deg  (ref {phi_ref:.1f} deg, err {rel_err*100:.1f}%)")
+    ax2.set_title(f"phi_peak: {phi_got:.1f}°  (ref {phi_ref:.1f}°, err {rel_err*100:.1f}%)")
 
     # Tolerance band
     tol_upper = phi_ref * (1 + TOLERANCE)
     tol_lower = phi_ref * (1 - TOLERANCE)
-    ax2.axhspan(tol_lower, tol_upper, alpha=0.15, color="green", label=f"±{TOLERANCE*100:.0f}% tolerance")
-    ax2.legend(loc="upper right", fontsize=8)
+    ax2.axhspan(tol_lower, tol_upper, alpha=0.15, color="green",
+                label=f"±{TOLERANCE*100:.0f}% tolerance")
+    ax2.legend(loc="upper right", fontsize=7)
     ax2.grid(True, alpha=0.3, axis="y")
 
-    # Verdict text
     verdict = "PASS" if judgement.get("passed", False) else "FAIL"
     verdict_color = "green" if verdict == "PASS" else "red"
     ax2.text(0.02, 0.95, f"Verdict: {verdict}", transform=ax2.transAxes,
-             fontsize=12, fontweight="bold", color=verdict_color,
+             fontsize=11, fontweight="bold", color=verdict_color,
              verticalalignment="top")
+
+    # Panel 3: critical-state friction angle (if available)
+    if has_cs:
+        phi_cv = cs.get("phi_cv_deg", float("nan"))
+        phi_rowe = cs.get("rowe", {}).get("phi_cv_predicted_deg", float("nan"))
+        phi_bolton_cv = PHI_CV_REF_DEG
+
+        cs_bars_x = [0, 1, 2]
+        cs_bars_h = [phi_bolton_cv, phi_cv, phi_rowe]
+        cs_labels = ["Bolton 1986\nphi_crit", "TensorDEM\nphi_cv", "Rowe pred.\nphi_cv(mu)"]
+        cs_colors = ["#2196F3", "#FF9800", "#4CAF50"]
+
+        ax3.bar(cs_bars_x, cs_bars_h, color=cs_colors, width=0.5,
+                edgecolor="white", linewidth=1.5)
+        ax3.set_xticks(cs_bars_x)
+        ax3.set_xticklabels(cs_labels, fontsize=8)
+        ax3.set_ylabel("Friction angle [deg]")
+        cs_converged = cs.get("converged", False)
+        cs_title = f"phi_cv: {phi_cv:.1f}°  (Rowe: {phi_rowe:.1f}°)"
+        if not cs_converged:
+            cs_title += "  [NOT CONVERGED]"
+        ax3.set_title(cs_title, fontsize=9)
+        ax3.grid(True, alpha=0.3, axis="y")
 
     plt.tight_layout()
     plt.savefig(out_path, dpi=150, bbox_inches="tight")
@@ -280,9 +393,14 @@ def run_case(*, quick: bool = False, out_dir: str | None = None,
     render_figure(result, fig_path)
 
     verdict = "PASS" if result["judgement"]["passed"] else "FAIL"
-    print(f"[{CASE_KEY}] phi_peak = {result['friction_angle']['phi_peak_wall_deg']:.2f} deg  "
+    phi_peak = result['friction_angle']['phi_peak_wall_deg']
+    phi_cv = result.get("critical_state", {}).get("phi_cv_deg", float("nan"))
+    print(f"[{CASE_KEY}] phi_peak = {phi_peak:.2f} deg  "
           f"(ref {PHI_REF_DEG} deg, err {result['judgement']['relative_error']*100:.1f}%)  "
           f"-> {verdict}")
+    if math.isfinite(phi_cv):
+        print(f"  phi_cv = {phi_cv:.2f} deg  (Rowe pred: {PHI_CV_ROWE_DEG:.2f} deg, "
+              f"Bolton ref: {PHI_CV_REF_DEG:.1f} deg)")
     print(f"  Artefacts: {json_path}, {fig_path}")
     return result
 
