@@ -37,8 +37,19 @@ PHI_MAX, PHI_MIN = 0.64, 0.58
 # backwards-compatible aliases: rounds 1-5 called these PHI_C / PHI_J
 PHI_C, PHI_J = PHI_MIN, PHI_MAX
 
+# Round 13 (m20426): this file is the single source of truth for *this*
+# benchmark, but it is NOT the only triple in the repository:
+# ``tests/test_mu_i_rheology.py`` carries (0.379, 0.641, 0.279) attributed to
+# the same papers.  Neither reading is anchored to an archived copy of the
+# table it cites.  Rather than pick a winner, the disputed box is carried as an
+# explicit envelope in ``reference_provenance.py`` and the ledger verdict is
+# tested against *every* corner of it (see
+# ``runs/provenance_adjudication_tables.md``, round 13).  Do not copy this
+# triple into another module - import ``reference_provenance`` instead.
 MU_REF_STATUS = ("da Cruz 2005 / GDR MiDi 2004 fit as quoted in rounds 1-5: "
-                 "mu_s=0.36, mu_2=0.84, I0=0.30")
+                 "mu_s=0.36, mu_2=0.84, I0=0.30 -- QUOTED, NOT ARCHIVED; a "
+                 "second in-repo triple (0.379, 0.641, 0.279) exists in "
+                 "tests/test_mu_i_rheology.py, see reference_provenance.py")
 PHI_REF_STATUS = (
     "PROVENANCE-UNVERIFIED magnitudes (0.58, 0.64 inherited from round 1, no "
     "in-repo anchor; da Cruz 2005 is a 2D-disk study with phi ~ 0.84 -> 0.79, so "
