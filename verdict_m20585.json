@@ -1,0 +1,69 @@
+{
+  "impl_files": [
+    "benchmarks/m20585_beverloo/analyse.py:211 lines (analysis script, never executed to produce results)",
+    "benchmarks/m20585_beverloo_kn_sensitivity/run_kn_sweep.py:168 lines (kn sensitivity sweep script, never executed)",
+    "docs/CASE-DEM-SILO-BEVERLOO_m20585.md:166 lines (diagnostic report, uncommitted)",
+    "docs/oss_solutions_CASE-DEM-SILO-BEVERLOO.json:92 lines (oss solutions document, uncommitted)"
+  ],
+  "entry": "No entry point was ever executed; the mission's own report states cluster jobs (cj2798, cj2800, cj2811, cj2812) failed due to SSH timeout/queuing",
+  "run_artifacts": [
+    "NONE - no JSON results, no figures, no summary from m20585's own computation",
+    "benchmarks/m20585_beverloo/analyse.py exists but produced no output",
+    "benchmarks/m20585_beverloo_kn_sensitivity/run_kn_sweep.py exists but produced no output",
+    "The mission report (docs/CASE-DEM-SILO-BEVERLOO_m20585.md) explicitly states: '本单集群计算（cj2811, cj2812）因 SSH 超时/排队未产出完整结果'"
+  ],
+  "tests": "NONE specific to m20585; the mission produced no test files",
+  "integration_callers": "NONE - the scripts were never executed, so no integration was demonstrated",
+  "benchmark": {
+    "anchor": "CASE-DEM-SILO-BEVERLOO (Beverloo 1961 Eq.4 p.265)",
+    "ref_kg_s": null,
+    "got_kg_s": null,
+    "rel_pct": null,
+    "verdict": "NO RESULT: m20585 produced no computational results; the report cites m20055's D4 (+25.0% FAIL) and m15259's (-0.4% PASS) from other missions, but these are not m20585's own results",
+    "registered_referee": "NONE: SELECT case_name,metric,tolerance FROM tensor_benchmark_cases WHERE anchor_slug='CASE-DEM-SILO-BEVERLOO' => 0 rows",
+    "note": "The mission's diagnostic hypothesis (kn=1e5 causes +25% error; kn=1e6 converges to Beverloo) is mathematically sound but was never computationally verified by this mission"
+  },
+  "repro_cmd": "Scripts exist but were never executed: (1) PYTHONPATH=src python benchmarks/m20585_beverloo_kn_sensitivity/run_kn_sweep.py - exists, never run; (2) PYTHONPATH=src python benchmarks/m20585_beverloo/analyse.py - exists, never run. No output artifacts exist to verify reproducibility.",
+  "external_anchor": [
+    "Beverloo, W.A., Leniger, H.A. & van de Velde, J. (1961) The flow of granular solids through orifices, Chemical Engineering Science 15(3-4), 260-269. DOI: 10.1016/0009-2509(61)80059-4",
+    "Nedderman, R.M. (1992) Statics and Kinematics of Granular Materials, Cambridge University Press, §5.3",
+    "m20055 CASE-DEM-SILO-BEVERLOO (prior mission, D4 +25.0% FAIL at kn=1e5)",
+    "m15259 hopper kernel Beverloo verification (D/d=5, -0.4% PASS at kn=1e6)"
+  ],
+  "level_reason": "L0 = document output only. The mission produced a diagnostic report (166 lines) and two analysis scripts (211 + 168 lines) but NO computational results. The report's own admission: '本单集群计算因 SSH 超时/排队未产出完整结果'. All numbers in the report are cited from other missions (m20055, m15259), not computed by m20585. L1 is not reached because the mathematical analysis (kn sensitivity hypothesis) was never verified by computation. L2 is not reached because no input→compute→output was demonstrated. The oss_solutions JSON is a document, not a computational artifact.",
+  "findings": {
+    "blocking": [
+      "B1 NO run artifacts: zero JSON results, zero figures, zero summary from m20585's own computation",
+      "B2 NO benchmark results: the report cites m20055 and m15259 results but produced none of its own",
+      "B3 NO reproducibility: scripts exist but were never executed; no output to verify"
+    ],
+    "medium": [
+      "M1 All deliverables are uncommitted (git status shows 4 untracked paths); no commit binds the work",
+      "M2 The diagnostic hypothesis (kn sensitivity) is sound but unverified; the report correctly identifies m20055's +25% error as likely caused by kn=1e5 being too soft, and m15259's -0.4% at kn=1e6 as evidence, but m20585 itself never ran the kn sweep",
+      "M3 The report's section ③ (calculation results) and ④ (comparison table) contain only cited numbers from other missions, explicitly marked as '诚实引用而非手抄' (honest citation, not hand-copied)"
+    ],
+    "low": [
+      "L1 The oss_solutions JSON is well-structured and correctly identifies the transfer vocabulary (adapt/reuse/reference)",
+      "L2 The analyse.py script is well-written and would produce meaningful figures if run with data",
+      "L3 The run_kn_sweep.py script correctly implements the kn sensitivity study design (kn=1e5, 1e6, 1e7)"
+    ],
+    "credit": [
+      "Honest reporting: the mission explicitly admits its cluster jobs failed and does not fabricate results",
+      "Correct diagnostic reasoning: the kn sensitivity hypothesis is consistent with m20055 (+25% at kn=1e5) and m15259 (-0.4% at kn=1e6) evidence",
+      "The oss_solutions document correctly identifies the migration plan (kn=1e6, settled+plug protocol, full case matrix)"
+    ]
+  },
+  "audit_artifacts": [
+    "verdict_m20585.json (this file)",
+    "verdict_m20585.sql (SQL insert)"
+  ],
+  "independence_limitations": "Audited from m20620 worktree; all m20585 deliverables are uncommitted files reviewed by direct file read; no computational re-run was performed because the scripts require DEM simulation infrastructure and the mission's own report states the cluster jobs failed",
+  "checks_not_run": [
+    "run_kn_sweep.py execution: would require DEM simulation (1525+ particles, 70k+ steps per case × 3 kn values); not run due to resource constraints and the mission's own admission of failure",
+    "analyse.py execution: requires input data from run_kn_sweep.py which does not exist",
+    "Beverloo 1961 original data: not re-digitised (no paper, no outbound network)"
+  ],
+  "disposition": "approve at L0 (document output); the mission produced a diagnostic report and analysis scripts but no computational results. The honest-FAIL admission is creditable. Remediation order: execute the kn sensitivity sweep (run_kn_sweep.py) on the compute gate, produce results, and re-submit for L2+ evaluation.",
+  "repo_head_audited": "fb96bd97 Merge #1536 (m20367) via push-merge (m20585 worktree, branch agent/m20585, 4 untracked paths)",
+  "gate_expectation": "confirmed at L0 by JUDGE_SCHEME (evidence pointers are real files); the anchor has no result from this mission, so benchmark status is N/A"
+}
