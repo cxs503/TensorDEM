@@ -913,6 +913,92 @@ def shear_rate_profile(pos, vel, *, z_lo, z_hi, y_lo, y_hi, n_bins=6):
             "intercept": float(intercept)}
 
 
+def phi_from_extent(pos, radius: float, box_width: float, box_depth: float) -> dict:
+    """Reference-free solid fraction of a settled bed.
+
+    ``phi = N V_p / (W D h)`` with ``h`` taken from the *particle-centre*
+    z-extent plus one radius of shell at each end.  This definition has no
+    adjustable wall offset and no centre/shell bookkeeping, so it is the
+    arbiter against which the slab and bed estimators can be checked: any
+    estimator that disagrees with it on the same state is biased, not the
+    other way round.
+
+    Returns ``{"phi": float, "height": float, "n": int}`` with
+    ``height = z_max - z_min + 2 r`` (i.e. the height the bed really
+    occupies, including the shells of the end layers).
+    """
+    import numpy as _np
+
+    z = pos[:, 2]
+    n = int(z.shape[0])
+    if n == 0 or not _np.isfinite(z).all():
+        return {"phi": float("nan"), "height": float("nan"), "n": 0}
+    height = float(z.max() - z.min()) + 2.0 * radius
+    volume_particle = 4.0 / 3.0 * math.pi * radius ** 3
+    if height <= 0.0 or box_width <= 0.0 or box_depth <= 0.0:
+        return {"phi": float("nan"), "height": float("nan"), "n": n}
+    return {"phi": n * volume_particle / (box_width * box_depth * height),
+            "height": height, "n": n}
+
+
+def phi_definitions(pos, radius: float, box_width: float, box_depth: float,
+                    plate_z: float, *, n_slab: int, slab_volume: float) -> dict:
+    """Solid fraction of one state under three *named* definitions.
+
+    Round 15 (m20791) found that the archived benchmark compared two different
+    quantities against one reference number, so the ``phi(I)`` verdict rested
+    on a definitional mix-up.  The three quantities are:
+
+    ``phi_bed``      ``N V_p / (W D plate_z)`` -- the *container-averaged*
+                     solid fraction, i.e. solid volume over the volume of the
+                     sheared gap.  This is the definition used by the mu(I) /
+                     phi(I) literature (N V_p / V_gap) and therefore the only
+                     one comparable with the reference law.
+    ``phi_extent``   ``N V_p / (W D (z_max - z_min + 2 r))`` -- the same
+                     quantity rebuilt from the particle-centre extent instead
+                     of the platen position.  Reference-free; it must agree
+                     with ``phi_bed`` for a settled bed (internal consistency
+                     check on the platen bookkeeping).
+    ``phi_centres``  the centre-counted interior slab density
+                     ``n_slab V_p / V_slab``.  This is a *bulk local* density,
+                     not the container average: near a wall no centre lies
+                     within ``r`` of it, so the centre density exceeds the
+                     container average by a boundary-layer factor that grows as
+                     the bed compacts.  Reporting it as ``phi`` (as rounds 6-14
+                     did under the key ``solid_fraction``) produces an
+                     artificial rise of "phi" with ``I``.
+
+    Returns the three values plus the measured ``slab_over_bed`` ratio, so the
+    boundary-layer discrepancy is *measured on the state* rather than assumed.
+    """
+    import numpy as _np
+
+    z = pos[:, 2]
+    n = int(z.shape[0])
+    volume_particle = 4.0 / 3.0 * math.pi * radius ** 3
+    area = box_width * box_depth
+    out = {"phi_bed": float("nan"), "phi_extent": float("nan"),
+           "phi_centres": float("nan"), "slab_over_bed": float("nan"),
+           "bed_height_extent": float("nan"), "boundary_factor": float("nan")}
+    if n == 0 or not _np.isfinite(z).all():
+        return out
+    solid = n * volume_particle
+    if plate_z > 0.0:
+        out["phi_bed"] = solid / (area * plate_z)
+    height = float(z.max() - z.min()) + 2.0 * radius
+    if height > 0.0:
+        out["phi_extent"] = solid / (area * height)
+        out["bed_height_extent"] = height
+        if plate_z > 0.0:
+            _zc = max(plate_z - 2.0 * radius, 1e-12)
+            out["boundary_factor"] = plate_z / _zc
+    if slab_volume > 0.0 and n_slab > 0:
+        out["phi_centres"] = n_slab * volume_particle / slab_volume
+        if out["phi_bed"] == out["phi_bed"] and out["phi_bed"] > 0.0:
+            out["slab_over_bed"] = out["phi_centres"] / out["phi_bed"]
+    return out
+
+
 def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -> dict:
     """Constant-stress direct shear of a confined sphere packing.
 
@@ -1196,6 +1282,20 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
                 "slab_n_particles": n_bulk,
                 "slab_volume": v_bulk,
             }
+            # round 15 (m20791): the legacy ``solid_fraction`` above divides a
+            # centre-selected count by a centre-only volume, which inflates it
+            # by (H_slab + 2r)/H_slab.  Add the shell-corrected slab value and
+            # the reference-free extent value so phi can be checked on the same
+            # state instead of trusted.  Legacy keys are untouched.
+            _defs = phi_definitions(pos, r, W, D, plate_z, n_slab=n_bulk,
+                                    slab_volume=v_bulk)
+            sample.update({
+                "phi_bed_now": _defs["phi_bed"],
+                "phi_extent": _defs["phi_extent"],
+                "slab_over_bed": _defs["slab_over_bed"],
+                "boundary_layer_factor": _defs["boundary_factor"],
+                "bed_height_extent": _defs["bed_height_extent"],
+            })
             # round 12: the velocity-profile shear rate is a *kinematic*
             # diagnostic, not a stress quantity, so it is sampled in every
             # mode (the expensive virial estimators below stay gated on
@@ -1296,7 +1396,9 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
 
     keys = ["normal_stress_pa", "shear_stress_pa", "mu",
             "coordination", "solid_fraction", "porosity",
-            "shear_rate_measured", "profile_r2"]
+            "shear_rate_measured", "profile_r2",
+            "phi_bed_now", "phi_extent", "slab_over_bed",
+            "boundary_layer_factor", "bed_height_extent"]
     if case.bulk_stress and "bulk_mu" in series[0]:
         keys += ["bulk_pressure_pa", "bulk_shear_pa", "bulk_mu",
                  "bulk_kinetic_pressure_pa", "bulk_sigma_zz",
@@ -1362,6 +1464,21 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
         "plate_height_steady": plate_height_steady,
         "phi_bed_settled": phi_bed_settled,
         "phi_bed_steady": phi_bed_steady,
+        # round 15 (m20791) definitional audit: the *container-averaged*
+        # solid fraction (the definition the reference law uses) alongside the
+        # centre-counted slab density that rounds 6-14 reported as "phi".
+        "phi_container": mean.get("phi_bed_now", float("nan")),
+        "phi_container_final": float(np.nanmean(arr["phi_bed_now"][-n_final:]))
+                               if "phi_bed_now" in arr else float("nan"),
+        "phi_extent": mean.get("phi_extent", float("nan")),
+        "phi_extent_final": float(np.nanmean(arr["phi_extent"][-n_final:]))
+                            if "phi_extent" in arr else float("nan"),
+        "phi_centres_slab": mean["solid_fraction"],
+        "slab_over_bed": mean.get("slab_over_bed", float("nan")),
+        "slab_over_bed_final": float(np.nanmean(arr["slab_over_bed"][-n_final:]))
+                               if "slab_over_bed" in arr else float("nan"),
+        "boundary_layer_factor": mean.get("boundary_layer_factor", float("nan")),
+        "bed_height_extent": mean.get("bed_height_extent", float("nan")),
         "dilatancy": dilatancy,
         "dt": dt,
         "settle_steps": settle_steps,
