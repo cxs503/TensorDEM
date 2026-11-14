@@ -1,0 +1,66 @@
+{
+ "n_cases": 2,
+ "per_aspect": {
+  "0.5": {
+   "n_members": 1,
+   "err_min": -0.12085621159021742,
+   "err_max": -0.12085621159021742,
+   "worst_abs_err": 0.12085621159021742,
+   "worst_member": "d1_j005_s505",
+   "spread": NaN,
+   "phi": [
+    0.6008
+   ],
+   "hex_order": [
+    0.2854
+   ],
+   "hex_order_lattice_control": NaN,
+   "hex_order_ratio_max": NaN,
+   "lattice_control_runout": NaN,
+   "lattice_control_err": NaN,
+   "C_BAND": true,
+   "C_SPREAD": false
+  },
+  "1.0": {
+   "n_members": 1,
+   "err_min": -0.056523827133917126,
+   "err_max": -0.056523827133917126,
+   "worst_abs_err": 0.056523827133917126,
+   "worst_member": "d1_j005_s505",
+   "spread": NaN,
+   "phi": [
+    0.6162
+   ],
+   "hex_order": [
+    0.2776
+   ],
+   "hex_order_lattice_control": NaN,
+   "hex_order_ratio_max": NaN,
+   "lattice_control_runout": NaN,
+   "lattice_control_err": NaN,
+   "C_BAND": true,
+   "C_SPREAD": false
+  }
+ },
+ "verdicts": {
+  "C_PHI": true,
+  "C_EQ": false,
+  "C_DISORDER": true,
+  "C_BAND": true,
+  "C_SPREAD": false
+ },
+ "incomplete": false,
+ "criteria": {
+  "C_PHI": "0.52 <= phi <= 0.68 for every released state",
+  "C_EQ": "at_rest (KE <= 1e-3 J) and max_overlap <= 0.02 r_p",
+  "C_DISORDER": "hex_order <= 0.8 * hex_order(lattice control, same aspect)",
+  "C_BAND": "every member within 15 % of the Lube law evaluated at a_meas",
+  "C_SPREAD": "sigma/mean of r_inf/r_i across members <= 5 % per aspect",
+  "B_LATTICE": "lattice control re-run in this wave (baseline in-run)"
+ },
+ "archive_m20533_worst_abs_err": {},
+ "figures": [
+  "fig_runout_disorder.png",
+  "fig_err_band.png"
+ ]
+}
