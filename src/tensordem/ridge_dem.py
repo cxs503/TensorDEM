@@ -110,6 +110,7 @@ class RidgeMaterial:
     contact_stiffness: float = 1.0e7
     contact_damping: float = 5.0e4
     friction_coefficient: float = 0.55
+    rolling_friction_coefficient: float = 0.0
     pipe_friction_coefficient: float = 0.30
     soil_friction_coefficient: float = 0.50
     bond_stiffness: float = 5.0e6
@@ -129,7 +130,8 @@ class RidgeMaterial:
                      "velocity_regularisation"):
             _finite(name, getattr(self, name), positive=True)
         for name in ("contact_damping", "friction_coefficient",
-                     "pipe_friction_coefficient", "soil_friction_coefficient", "drag"):
+                     "rolling_friction_coefficient", "pipe_friction_coefficient",
+                     "soil_friction_coefficient", "drag"):
             _finite(name, getattr(self, name), nonnegative=True)
         _finite("freeze_bond_fraction", self.freeze_bond_fraction, nonnegative=True)
         if self.freeze_bond_fraction > 1.0:
@@ -535,13 +537,23 @@ class RidgeAssembly:
             v_t = (relative_velocity * tangent).sum(dim=1)
             tangential = (-m.friction_coefficient * magnitude
                           * torch.tanh(v_t / m.velocity_regularisation))
+            # Rolling resistance couple (rotationless surrogate): opposes
+            # relative tangential motion with a force pair that produces the
+            # equivalent torque M_r = mu_r * R * F_n.  In 2D the couple is
+            # realised as equal-and-opposite tangential forces at the contact.
+            rolling_force = torch.zeros_like(tangential)
+            if m.rolling_friction_coefficient > 0.0:
+                rolling_limit = m.rolling_friction_coefficient * magnitude
+                rolling_force = -rolling_limit * torch.tanh(
+                    v_t / m.velocity_regularisation)
             loaded = m.contact_stiffness * overlap[active] \
                 - m.contact_damping * v_n > 0.0
             contact_damping_power += float(
                 (m.contact_damping * v_n ** 2 * loaded).sum())
             contact_friction_power += float((-tangential * v_t).sum())
+            total_tangential = tangential + rolling_force
             pair_force = (magnitude[:, None] * normal
-                          + tangential[:, None] * tangent)
+                          + total_tangential[:, None] * tangent)
             virial += torch.einsum("ni,nj->ij", pair_force, delta[active])
             force.index_add_(0, ai, pair_force)
             force.index_add_(0, aj, -pair_force)
