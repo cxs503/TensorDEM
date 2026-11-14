@@ -1,0 +1,114 @@
+{
+ "round": "m20931",
+ "anchor": "CASE-COLUMN-COLLAPSE",
+ "tolerance": 0.15,
+ "branch": "square-root (a = 3 > 1.7)",
+ "aspect_nominal": 3.0,
+ "rows": [
+  {
+   "case_id": "R_a3_g8",
+   "grains_per_radius": 8.0,
+   "source": "archive m20873 (docs/artifacts/column_collapse_deep_refinement_m20873/cases/R_a3_g8.json)",
+   "n_particles": 5673,
+   "dt": 0.00048223135018603735,
+   "n_steps": 3359,
+   "wall_clock_s": 88.31861807999667,
+   "stop_reason": "at_rest",
+   "aspect_nominal": 3.0,
+   "aspect_measured": 3.0866314544814117,
+   "runout_ratio": 4.119299853460151,
+   "ref_runout_ratio": 3.8110098760894484,
+   "err_runout": 0.08089456269975485,
+   "err_runout_nominal": 0.09228125254884272,
+   "t90": 1.1409593745401092,
+   "ref_time": 1.157008377804527,
+   "err_t90": -0.013871121050023421,
+   "energy_residual": 0.12359847598546427
+  },
+  {
+   "case_id": "R_a3_g12",
+   "grains_per_radius": 12.0,
+   "source": "archive m20873 (docs/artifacts/column_collapse_deep_refinement_m20873/cases/R_a3_g12.json)",
+   "n_particles": 19687,
+   "dt": 0.00039374024864306047,
+   "n_steps": 4273,
+   "wall_clock_s": 478.9074611850083,
+   "stop_reason": "at_rest",
+   "aspect_nominal": 3.0,
+   "aspect_measured": 3.007095454033219,
+   "runout_ratio": 4.355892755212519,
+   "ref_runout_ratio": 3.7745566064373315,
+   "err_runout": 0.15401442060340165,
+   "err_runout_nominal": 0.1550166688242973,
+   "t90": 1.1284595526110037,
+   "ref_time": 1.1490516796283154,
+   "err_t90": -0.017920975516064405,
+   "energy_residual": 0.11570594694751497
+  },
+  {
+   "case_id": "SB_a3_g16",
+   "grains_per_radius": 16.0,
+   "source": "this mission (m20931)",
+   "n_particles": 48923,
+   "dt": 0.00034098905781729174,
+   "n_steps": 4331,
+   "wall_clock_s": 1787.395435560029,
+   "stop_reason": "at_rest",
+   "aspect_nominal": 3.0,
+   "aspect_measured": 3.0395832276585497,
+   "runout_ratio": 4.208665392153482,
+   "ref_runout_ratio": 3.7895040890462752,
+   "err_runout": 0.11061112305401928,
+   "err_runout_nominal": 0.1159775859091492,
+   "t90": 1.081276302338635,
+   "ref_time": 1.1550183033833648,
+   "err_t90": -0.06384487659521873,
+   "energy_residual": 0.10861088603790413
+  }
+ ],
+ "missing": [],
+ "verdict": {
+  "hypothesis": "H1",
+  "verdict": "pass",
+  "tolerance": 0.15,
+  "err_gpr8": 0.08089456269975485,
+  "err_gpr12": 0.15401442060340165,
+  "err_gpr16": 0.11061112305401928,
+  "delta_12": 0.2365929017523678,
+  "delta_23": -0.14722736305903705,
+  "abs_delta_ratio": 0.6222814039160565,
+  "contracting": true,
+  "in_band_at_finest": true,
+  "richardson": {
+   "available": true,
+   "gpr_pair": [
+    12.0,
+    16.0
+   ],
+   "ratio": 1.3333333333333333,
+   "f_finest": 4.208665392153482,
+   "ref": 3.7895040890462752,
+   "f_inf_p1": 3.766983302976371,
+   "err_inf_p1": -0.005942937529742131,
+   "f_inf_p2": 4.0193730682204345,
+   "err_inf_p2": 0.06065938280383585
+  },
+  "reading": "in-band at gpr=16 with contracting increments: the earlier 15.40 % overshoot was discretisation-limited",
+  "energy_residual": [
+   0.12359847598546427,
+   0.11570594694751497,
+   0.10861088603790413
+  ],
+  "energy_flagged": [
+   "R_a3_g8",
+   "R_a3_g12",
+   "SB_a3_g16"
+  ],
+  "stop_reasons": [
+   "at_rest",
+   "at_rest",
+   "at_rest"
+  ]
+ },
+ "prereg": "docs/PREREG_COLUMN_COLLAPSE_SQRT_BRANCH_m20931.md"
+}
