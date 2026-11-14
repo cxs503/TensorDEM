@@ -147,3 +147,12 @@ TENSORPHYSICS_SRC=<checkout> PYTHONPATH=src python -m tensordem.binding_contract
 | `docs/XVAL_DEM_LIBRARY_BINDING_CONTRACT_R3.md` | 本文件 |
 | `prereg/XVAL_DEM_LIBRARY_BINDING_CONTRACT_R3.json` | 预登记 |
 | `artifacts/xval_library_binding_contract/result.json` | 机读全量结果 |
+
+## ⑦ 第 4 轮补正（round 4）
+
+第 3 轮把 payload 从 `sha256:0cbfed8c…` 重钉到 `sha256:048e4cf9…`，但**没有 bump `CONTRACT_VERSION`、
+也没有留发布记录**。第 4 轮把这个洞补上（`diff_contracts` + `CONTRACT_HISTORY`/`check_lineage` +
+消费方 manifest），并把该次未记录的重钉作为缺陷证据留在
+`artifacts/xval_library_binding_contract/manifest_round3_unrecorded.json`；第 3 轮「清点只覆盖成员是否存在、
+不覆盖语义漂移」的局限，由第 4 轮的契约↔契约差分部分承担（元数据层面），
+语义/数值仍由第 1 轮的探针与基准负责。详见 `XVAL_DEM_LIBRARY_BINDING_CONTRACT_R4.md`。
