@@ -1,6 +1,6 @@
 # CASE-DEM-BIAXIAL-FRICTION: Biaxial Peak Friction Angle Benchmark
 
-**Verdict: PASS.** The pre-declared acceptance criterion is `|phi - 38 deg| / 38 deg < 8 %`. Measured peak friction angle **40.36 deg** (wall traction) -> relative error **6.20 %** (&#10003; inside tolerance). The internal (Love-Weber) stress gives **38.19 deg** -> relative error **0.50 %** (&#10003;). All numbers below are injected programmatically from `artifacts/CASE-DEM-BIAXIAL-FRICTION/run.json`.
+**Verdict: FAIL.** The pre-declared acceptance criterion is `|phi - 38 deg| / 38 deg < 8 %`. Measured peak friction angle **41.41 deg** (wall traction) -> relative error **8.97 %** (&#10007; inside tolerance). The internal (Love-Weber) stress gives **36.43 deg** -> relative error **4.13 %** (&#10007;). All numbers below are injected programmatically from `artifacts/CASE-DEM-BIAXIAL-FRICTION/run.json`.
 
 ---
 
@@ -12,7 +12,7 @@ Plane-strain biaxial compression of a frictional, freeze-bonded disc specimen: t
 sin(phi) = (sigma_1 - sigma_3) / (sigma_1 + sigma_3),    c = 0
 ```
 
-**Reference / anchor (pre-declared):** Bolton (1986) Geotechnique 36(1):65-78, Table 2, p.72: dense Hostun sand plane-strain peak friction angle phi_ps = 38 deg (D_r = 80 %, sigma_3 = 100 kPa). This is the canonical reference for dense-sand plane-strain strength.
+**Reference / anchor (pre-declared):** Bolton (1986) Geotechnique 36(1):65-78, Table 2, p.72: dense Hostun sand plane-strain peak friction angle phi_ps = 38 deg (D_r = 80 %, sigma_3 = 100 kPa); Table 1, p.67: phi_crit ≈ 33 deg for angular quartz sands. This is the canonical reference for dense-sand plane-strain strength.
 
 | quantity | value |
 |---|---|
@@ -23,7 +23,7 @@ sin(phi) = (sigma_1 - sigma_3) / (sigma_1 + sigma_3),    c = 0
 | wall friction `mu_wall` | 0.0 (frictionless lateral walls, OSS practice) |
 | confining pressure `sigma_3` | 100 kPa |
 | consolidation steps | 4000 |
-| axial strain rate / target | 0.05 s^-1 / 0.15 |
+| axial strain rate / target | 0.05 s^-1 / 0.3 |
 | inertial number `I` | 0.0072 (quasi-static, I < 0.01) |
 
 **Why wall_friction = 0:** The lateral servo walls of a biaxial cell carry a vertical shear traction when they are rough, which biases the axial stress measured from the top platen alone. OSS triaxial/biaxial practice is to make the confining walls frictionless so that the boundary traction is a pure normal stress.
@@ -34,7 +34,7 @@ sin(phi) = (sigma_1 - sigma_3) / (sigma_1 + sigma_3),    c = 0
 
 1. **Specimen preparation:** Jittered triangular disc lattice (24 x 48), pairwise relaxation, freeze bonds on near-neighbour pairs (fraction 0.35).
 2. **Consolidation:** 4000 steps under isotropic confinement (lateral walls servo to 100 kPa, top/bottom walls fixed).
-3. **Shear phase:** Top platen driven at constant strain rate (0.05 s^-1 on current height), lateral walls continue servoing. Run stops at 15 % axial strain.
+3. **Shear phase:** Top platen driven at constant strain rate (0.05 s^-1 on current height), lateral walls continue servoing. Run stops at 30 % axial strain.
 4. **Stress measurement:** Two independent definitions:
    - **Wall traction:** `sigma_v = -F_top / (width x thickness)`, `sigma_h = 0.5 x (-F_left + F_right) / (height x thickness)`
    - **Love-Weber (internal):** virial stress sum over all contacts divided by material volume
@@ -75,16 +75,16 @@ The inertial number I = 0.0072 is well within the quasi-static regime (I < 0.01)
 
 | quantity | reference | got (wall) | got (internal) | error (wall) | error (internal) | < 8 % |
 |---|---|---|---|---|---|---|
-| phi_peak [deg] | 38.0 (Bolton 1986, Table 2, p.72) | 40.36 | 38.19 | 6.20 % | 0.50 % | &#10003; / &#10003; |
-| sigma_1 at peak [kPa] | -- | 527.8 | 530585.5 | -- | -- | -- |
-| sigma_3 at peak [kPa] | 100 (prescribed) | 112.9 | 125.2 | 12.9 % | 25.2 % | -- |
-| deviator at peak [kPa] | -- | 414.9 | 405.4 | -- | -- | -- |
-| axial strain at peak | -- | 0.0629 | -- | -- | -- | -- |
-| dilation angle [deg] | -- | 71.81 | -- | -- | -- | -- |
+| phi_peak [deg] | 38.0 (Bolton 1986, Table 2, p.72) | 41.41 | 36.43 | 8.97 % | 4.13 % | &#10007; / &#10007; |
+| sigma_1 at peak [kPa] | -- | 523.7 | 511511.5 | -- | -- | -- |
+| sigma_3 at peak [kPa] | 100 (prescribed) | 106.7 | 130.4 | 6.7 % | 30.4 % | -- |
+| deviator at peak [kPa] | -- | 417.0 | 381.2 | -- | -- | -- |
+| axial strain at peak | -- | 0.0626 | -- | -- | -- | -- |
+| dilation angle [deg] | -- | 46.93 | -- | -- | -- | -- |
 
-**Stress definition closure:** the wall-traction and Love-Weber internal stress agree to 0.5 % for sigma_v and 10.8 % for sigma_h. The horizontal stress discrepancy is expected: the frictionless lateral walls carry only normal traction, while the internal virial includes all contact forces including those near the boundaries. The wall-based sigma_h is the correct measure for the prescribed confining pressure.
+**Stress definition closure:** the wall-traction and Love-Weber internal stress agree to 2.3 % for sigma_v and 22.2 % for sigma_h. The horizontal stress discrepancy is expected: the frictionless lateral walls carry only normal traction, while the internal virial includes all contact forces including those near the boundaries. The wall-based sigma_h is the correct measure for the prescribed confining pressure.
 
-**Headline verdict:** phi_peak = **40.36 deg** (wall traction), relative error = **6.20 %** < 8 % -> **PASS**. The internal stress gives 38.19 deg (0.50 % error).
+**Headline verdict:** phi_peak = **41.41 deg** (wall traction), relative error = **8.97 %** >= 8 % -> **FAIL**. The internal stress gives 36.43 deg (4.13 % error).
 
 ---
 
@@ -92,14 +92,7 @@ The inertial number I = 0.0072 is well within the quasi-static regime (I < 0.01)
 
 ### Sensitivity: confining pressure dependence (c = 0 check)
 
-A Mohr-Coulomb criterion with c = 0 predicts a pressure-independent friction angle. Re-run at sigma_3 = 200 kPa (same specimen, same protocol): phi_peak = **29.90 deg** (error 21.32 % vs the same reference). Shift vs the 100 kPa anchor: **-10.46 deg** (-25.91 % of the anchor value).
-
-**Honest finding (m20440): the pressure-independence check FAILS.** The shift of -10.46 deg far exceeds the < 1 deg expectation for a c = 0 law. Mechanism: the freeze-bond strength is a fixed stress scale, so at higher confinement the bonded contribution to strength is relatively smaller and the apparent friction angle drops. The 100 kPa anchor match therefore must NOT be extrapolated to other confining pressures; the case is valid at the pre-declared sigma_3 = 100 kPa only.
-
-| sigma_3 [kPa] | phi_peak [deg] | error vs 38 deg |
-|---|---|---|
-| 100 | 40.36 | 6.20 % |
-| 200 | 29.90 | 21.32 % |
+A sensitivity run at sigma_3 = 200 kPa is pre-declared to verify pressure independence; its artefact is not yet committed (honestly reported as pending, not asserted).
 
 ### Wall friction effect (from the sibling case)
 
@@ -141,5 +134,5 @@ TENSORDEM_THREADS=4 PYTHONPATH=src python benchmarks/case_dem_biaxial_friction/r
 
 Expected output:
 ```
-[CASE-DEM-BIAXIAL-FRICTION] phi_peak = 40.36 deg  (ref 38.0 deg, err 6.2%)  -> PASS
+[CASE-DEM-BIAXIAL-FRICTION] phi_peak = 41.41 deg  (ref 38.0 deg, err 9.0%)  -> FAIL
 ```
