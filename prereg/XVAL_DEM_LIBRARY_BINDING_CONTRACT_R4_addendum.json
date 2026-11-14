@@ -1,0 +1,16 @@
+{
+  "schema": "tensordem.prereg.binding-contract/4-addendum",
+  "anchor": "XVAL-DEM-LIBRARY-BINDING-FROZEN-CONTRACT",
+  "mission": 19466,
+  "round": "4+",
+  "registered_after_first_execution": true,
+  "honest_note": "本附录是事后追加臂，不假装先登记：第一轮执行（13 臂全 MET）之后，为给报告提供一条曲线（而非单点），追加『不累加扫掠』臂。阈值未改：沿用 R4 预登记里已有的 impulse_ratio 容差 1e-12 与 H0 判别量 (n+1)/2；不许因结果放宽任何容差。",
+  "added_arm": {
+    "name": "non_accumulation_sweep",
+    "design": "真 TensorPhysics Simulation 驱动真 IceDEM，1 个 global step，子步数 n ∈ {1,2,4,8,12,16}；每 n 记录外部冲量比 got/ref",
+    "predeclared_threshold": "|ratio - 1| <= 1e-12 for every n (R4 已登记值)",
+    "h0_prediction": "(n+1)/2 = 1.0, 1.5, 2.5, 4.5, 6.5, 8.5",
+    "expectation": "H1: 全部 n 上 ratio=1.0（平坦）；H0: 随 n 线性增长 → 判别性随 n 增大"
+  },
+  "stopping_rule": "一次运行，不重调阈值；任一点越限如实报 FAIL"
+}
