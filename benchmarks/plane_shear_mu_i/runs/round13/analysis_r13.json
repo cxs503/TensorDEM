@@ -1,0 +1,436 @@
+{
+ "reference": {
+  "mu": {
+   "law": "mu_s+(mu_2-mu_s)/(I0/I+1)",
+   "constants": {
+    "mu_s": 0.36,
+    "mu_2": 0.84,
+    "I_0": 0.3
+   },
+   "status": "da Cruz 2005 / GDR MiDi 2004 fit as quoted in rounds 1-5: mu_s=0.36, mu_2=0.84, I0=0.30"
+  },
+  "phi": {
+   "law": "phi_max-(phi_max-phi_min)/(I0/I+1)",
+   "constants": {
+    "phi_max": 0.64,
+    "phi_min": 0.58,
+    "I_0": 0.3
+   },
+   "status": "PROVENANCE-UNVERIFIED magnitudes (0.58, 0.64 inherited from round 1, no in-repo anchor; da Cruz 2005 is a 2D-disk study with phi ~ 0.84 -> 0.79, so these are 3D glass-bead numbers) + VERIFIED monotonicity (decreasing with I, i.e. dilatancy) and limits phi(I->0)=0.64, phi(I->inf)=0.58"
+  }
+ },
+ "n_ok": 6,
+ "n_fail": 2,
+ "fails": [
+  {
+   "wall_mode": "rough",
+   "I_target": 0.1,
+   "seed": 5279,
+   "status": "FAIL",
+   "error": "MuIRheologyError: servo did not reach the target normal stress",
+   "overrides": {
+    "servo_max_step_d": 0.02
+   },
+   "tag": "servo002"
+  },
+  {
+   "wall_mode": "rough",
+   "I_target": 0.3,
+   "seed": 5279,
+   "status": "FAIL",
+   "error": "MuIRheologyError: servo did not reach the target normal stress",
+   "overrides": {
+    "servo_max_step_d": 0.02
+   },
+   "tag": "servo002"
+  }
+ ],
+ "aggregate": {
+  "smooth|0.01": {
+   "n_seeds": 2,
+   "seeds": [
+    5279,
+    6113
+   ],
+   "mu_wall": {
+    "mean": 0.3259876854461172,
+    "sd": 0.07819621148073672,
+    "n": 2
+   },
+   "mu_full": {
+    "mean": 0.41661288120564466,
+    "sd": 0.11798385701406955,
+    "n": 2
+   },
+   "mu_full_zz": {
+    "mean": 0.3223665131200868,
+    "sd": 0.0792131920897016,
+    "n": 2
+   },
+   "mu_bulk": {
+    "mean": 0.3104078534728683,
+    "sd": 0.031731181286123046,
+    "n": 2
+   },
+   "mu_bulk_mid": {
+    "mean": 0.2897273548406418,
+    "sd": 0.016660781582838752,
+    "n": 2
+   },
+   "phi_bed_steady": {
+    "mean": 0.5326068893071145,
+    "sd": 0.0016402722154144568,
+    "n": 2
+   },
+   "gamma_dot_ratio": {
+    "mean": 0.7714325731380275,
+    "sd": 0.1669222164119533,
+    "n": 2
+   },
+   "profile_r2": {
+    "mean": 0.7854649604370589,
+    "sd": 0.07331100760460499,
+    "n": 2
+   },
+   "P_rel_err_final": {
+    "mean": -0.027542875366501962,
+    "sd": 0.03361507589672207,
+    "n": 2
+   },
+   "I_measured_rate": {
+    "mean": 0.008122015030963329,
+    "sd": 0.0016507330081710386,
+    "n": 2
+   },
+   "I_imposed_rate": {
+    "mean": 0.010543806952208077,
+    "sd": 0.00014163599194008233,
+    "n": 2
+   },
+   "mu_wall_final": {
+    "mean": 0.3332809771623234,
+    "sd": 0.08857118308303787,
+    "n": 2
+   },
+   "dilatancy": {
+    "mean": -0.018503362747312437,
+    "sd": 0.0005363274670184483,
+    "n": 2
+   },
+   "n_particles": {
+    "mean": 294.0,
+    "sd": 0.0,
+    "n": 2
+   },
+   "servo_valid": 1
+  },
+  "smooth|0.03": {
+   "n_seeds": 1,
+   "seeds": [
+    5279
+   ],
+   "mu_wall": {
+    "mean": 0.3283095240591871,
+    "sd": 0.0,
+    "n": 1
+   },
+   "mu_full": {
+    "mean": 0.34979177661224486,
+    "sd": 0.0,
+    "n": 1
+   },
+   "mu_full_zz": {
+    "mean": 0.32453336904532837,
+    "sd": 0.0,
+    "n": 1
+   },
+   "mu_bulk": {
+    "mean": 0.3345093922486737,
+    "sd": 0.0,
+    "n": 1
+   },
+   "mu_bulk_mid": {
+    "mean": 0.33944950661046785,
+    "sd": 0.0,
+    "n": 1
+   },
+   "phi_bed_steady": {
+    "mean": 0.539438214215162,
+    "sd": 0.0,
+    "n": 1
+   },
+   "gamma_dot_ratio": {
+    "mean": 1.0261551680520806,
+    "sd": 0.0,
+    "n": 1
+   },
+   "profile_r2": {
+    "mean": 0.890451750481279,
+    "sd": 0.0,
+    "n": 1
+   },
+   "P_rel_err_final": {
+    "mean": -0.0872990466035336,
+    "sd": 0.0,
+    "n": 1
+   },
+   "I_measured_rate": {
+    "mean": 0.032791760802716334,
+    "sd": 0.0,
+    "n": 1
+   },
+   "I_imposed_rate": {
+    "mean": 0.03195594762238925,
+    "sd": 0.0,
+    "n": 1
+   },
+   "mu_wall_final": {
+    "mean": 0.41135084283310364,
+    "sd": 0.0,
+    "n": 1
+   },
+   "dilatancy": {
+    "mean": -0.03266951255657125,
+    "sd": 0.0,
+    "n": 1
+   },
+   "n_particles": {
+    "mean": 294.0,
+    "sd": 0.0,
+    "n": 1
+   },
+   "servo_valid": 0
+  },
+  "smooth|0.1": {
+   "n_seeds": 1,
+   "seeds": [
+    5279
+   ],
+   "mu_wall": {
+    "mean": 0.336242901149921,
+    "sd": 0.0,
+    "n": 1
+   },
+   "mu_full": {
+    "mean": 0.37035174505147805,
+    "sd": 0.0,
+    "n": 1
+   },
+   "mu_full_zz": {
+    "mean": 0.33667975663219474,
+    "sd": 0.0,
+    "n": 1
+   },
+   "mu_bulk": {
+    "mean": 0.32143465650439296,
+    "sd": 0.0,
+    "n": 1
+   },
+   "mu_bulk_mid": {
+    "mean": 0.3356061124663016,
+    "sd": 0.0,
+    "n": 1
+   },
+   "phi_bed_steady": {
+    "mean": 0.5495695820618934,
+    "sd": 0.0,
+    "n": 1
+   },
+   "gamma_dot_ratio": {
+    "mean": 0.6321346157803344,
+    "sd": 0.0,
+    "n": 1
+   },
+   "profile_r2": {
+    "mean": 0.8911161023097046,
+    "sd": 0.0,
+    "n": 1
+   },
+   "P_rel_err_final": {
+    "mean": -0.005686126761742849,
+    "sd": 0.0,
+    "n": 1
+   },
+   "I_measured_rate": {
+    "mean": 0.06765327566169575,
+    "sd": 0.0,
+    "n": 1
+   },
+   "I_imposed_rate": {
+    "mean": 0.1070235262756203,
+    "sd": 0.0,
+    "n": 1
+   },
+   "mu_wall_final": {
+    "mean": 0.3233666122494991,
+    "sd": 0.0,
+    "n": 1
+   },
+   "dilatancy": {
+    "mean": -0.05050234267951566,
+    "sd": 0.0,
+    "n": 1
+   },
+   "n_particles": {
+    "mean": 294.0,
+    "sd": 0.0,
+    "n": 1
+   },
+   "servo_valid": 1
+  },
+  "smooth|0.3": {
+   "n_seeds": 1,
+   "seeds": [
+    5279
+   ],
+   "mu_wall": {
+    "mean": 0.3496728808858072,
+    "sd": 0.0,
+    "n": 1
+   },
+   "mu_full": {
+    "mean": 0.4378653147616026,
+    "sd": 0.0,
+    "n": 1
+   },
+   "mu_full_zz": {
+    "mean": 0.351482154335219,
+    "sd": 0.0,
+    "n": 1
+   },
+   "mu_bulk": {
+    "mean": 0.329924579578703,
+    "sd": 0.0,
+    "n": 1
+   },
+   "mu_bulk_mid": {
+    "mean": 0.3322080745874942,
+    "sd": 0.0,
+    "n": 1
+   },
+   "phi_bed_steady": {
+    "mean": 0.5726913514335257,
+    "sd": 0.0,
+    "n": 1
+   },
+   "gamma_dot_ratio": {
+    "mean": 0.9158651787958182,
+    "sd": 0.0,
+    "n": 1
+   },
+   "profile_r2": {
+    "mean": 0.9688124727818876,
+    "sd": 0.0,
+    "n": 1
+   },
+   "P_rel_err_final": {
+    "mean": -0.007801011553807524,
+    "sd": 0.0,
+    "n": 1
+   },
+   "I_measured_rate": {
+    "mean": 0.27977776546150923,
+    "sd": 0.0,
+    "n": 1
+   },
+   "I_imposed_rate": {
+    "mean": 0.3054792036414811,
+    "sd": 0.0,
+    "n": 1
+   },
+   "mu_wall_final": {
+    "mean": 0.34774189883892964,
+    "sd": 0.0,
+    "n": 1
+   },
+   "dilatancy": {
+    "mean": -0.08883724296483586,
+    "sd": 0.0,
+    "n": 1
+   },
+   "n_particles": {
+    "mean": 294.0,
+    "sd": 0.0,
+    "n": 1
+   },
+   "servo_valid": 1
+  },
+  "rough|0.03": {
+   "n_seeds": 1,
+   "seeds": [
+    7919
+   ],
+   "mu_wall": {
+    "mean": 0.15478350100710037,
+    "sd": 0.0,
+    "n": 1
+   },
+   "mu_full": {
+    "mean": 0.13453193429687343,
+    "sd": 0.0,
+    "n": 1
+   },
+   "mu_full_zz": {
+    "mean": 0.06572825453736682,
+    "sd": 0.0,
+    "n": 1
+   },
+   "mu_bulk": {
+    "mean": 0.2829159521767292,
+    "sd": 0.0,
+    "n": 1
+   },
+   "mu_bulk_mid": {
+    "mean": 0.32528356262117036,
+    "sd": 0.0,
+    "n": 1
+   },
+   "phi_bed_steady": {
+    "mean": 0.48558910092588464,
+    "sd": 0.0,
+    "n": 1
+   },
+   "gamma_dot_ratio": {
+    "mean": 0.48335231729490347,
+    "sd": 0.0,
+    "n": 1
+   },
+   "profile_r2": {
+    "mean": 0.7342363713540454,
+    "sd": 0.0,
+    "n": 1
+   },
+   "P_rel_err_final": {
+    "mean": -0.06275935281023093,
+    "sd": 0.0,
+    "n": 1
+   },
+   "I_measured_rate": {
+    "mean": 0.015243513247105591,
+    "sd": 0.0,
+    "n": 1
+   },
+   "I_imposed_rate": {
+    "mean": 0.03153706458348311,
+    "sd": 0.0,
+    "n": 1
+   },
+   "mu_wall_final": {
+    "mean": 0.17781547837410672,
+    "sd": 0.0,
+    "n": 1
+   },
+   "dilatancy": {
+    "mean": -0.06080245681558413,
+    "sd": 0.0,
+    "n": 1
+   },
+   "n_particles": {
+    "mean": 294.0,
+    "sd": 0.0,
+    "n": 1
+   },
+   "servo_valid": 0
+  }
+ }
+}

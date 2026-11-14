@@ -57,7 +57,7 @@ from tensordem.mu_i_rheology import ServoShearCase, simulate_servo_shear  # noqa
 
 from reference_law import ref_mu  # noqa: E402
 
-OUT = HERE / "runs" / "rough_wall"
+OUT = HERE / "runs" / "round13"
 OUT.mkdir(parents=True, exist_ok=True)
 
 # --- device: identical to benchmarks/plane_shear_mu_i/run_sweep.py baseline --
@@ -73,7 +73,10 @@ SHEAR_STRAIN = 0.2
 SETTLE_STEPS = 2500
 MIN_SHEAR_STEPS = 400
 
-I_TARGETS = (1e-2, 3e-2, 1e-1, 3e-1)
+# Round 13: the ledger acceptance spans I = 1e-3 ... 0.3, so the two lowest
+# targets (1e-3, 3e-3) join the historical four.  Everything else (device,
+# protocol, seeds, reference) is unchanged from rounds 11-12.
+I_TARGETS = (1e-3, 3e-3, 1e-2, 3e-2, 1e-1, 3e-1)
 MODES = ("smooth", "rough")
 SEEDS = (5279, 6113, 7919)
 
