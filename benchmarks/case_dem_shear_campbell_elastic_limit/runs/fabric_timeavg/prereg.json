@@ -1,0 +1,65 @@
+{
+ "case": "CASE-DEM-SHEAR-CAMPBELL-ELASTIC-LIMIT",
+ "round": "R5 (steady-window fabric statistics)",
+ "reference": "Campbell 2002 JFM 465:261 (abstract hashed in reference_anchors.json)",
+ "motivation": "R4 measured a_xy and f_norm on the final snapshot while the stress they explain is a steady-window time average; snapshot coordination deviates from the time average by up to 14.2% (R4 leg B). R4 named this the prime suspect for its systematic +31% dense-end overshoot but did not quantify it. R5 measures the same constants as time averages inside the same window as the stress.",
+ "what_changes": "fabric estimator (snapshot -> steady-window time average); the apparatus, grid, seeds and kappa are unchanged from R4",
+ "grid": {
+  "phi": [
+   0.71,
+   0.76,
+   0.8
+  ],
+  "seeds": [
+   20261112,
+   20261113,
+   20261114
+  ],
+  "kn": 10000.0,
+  "shear_rate": 1.0,
+  "n_particles": 400,
+  "strain_total": 1.4,
+  "strain_average_from": 0.7,
+  "dt_factor": 0.004
+ },
+ "predictions": [
+  {
+   "id": "P1",
+   "statement": "with time-averaged fabric a_xy is concentration independent",
+   "rule": "max/min - 1 of the per-phi mean a_xy over the 3 concentrations <= 0.15",
+   "threshold": 0.15
+  },
+  {
+   "id": "P2",
+   "statement": "with the measured f_norm time average, f_norm is concentration independent",
+   "rule": "max/min - 1 of the per-phi mean f_norm over the 3 concentrations <= 0.15",
+   "threshold": 0.15
+  },
+  {
+   "id": "P3",
+   "statement": "two time-averaged constants predict the independent R2 map out of sample",
+   "rule": "|A_pred/A_meas - 1| <= 0.15 on every gated R2 point with phi >= 0.71",
+   "threshold": 0.15
+  },
+  {
+   "id": "P4",
+   "statement": "the single snapshot is a biased fabric estimator (R4's suspicion, tested as a number rather than a narrative)",
+   "rule": "|a_xy_snapshot/a_xy_timeavg - 1| >= 0.0625 (the seed-noise floor) on at least 5 of the 9 runs",
+   "threshold": 0.0625
+  },
+  {
+   "id": "P5",
+   "statement": "the factored structural identity survives with time-averaged inputs",
+   "rule": "|A_pred_factored/A_normal - 1| <= 0.15 on every run, with every input a steady-window time average",
+   "threshold": 0.15
+  }
+ ],
+ "honesty_rules": [
+  "the R2 map is prediction-only: its points are never refitted or re-run here",
+  "the apparatus is unchanged; if P1-P3 fail the factorisation is reported as FAIL and the time-average hypothesis is recorded as falsified",
+  "seed noise is reported next to every spread so a spread below the noise floor is not read as a resolved physical trend",
+  "one point (phi=0.80, seed 20261112) was inspected while smoke-testing the new simulator option, before this pre-registration was written; the predictions below are structural (ledger tolerance, noise floor) and were not tuned on it"
+ ],
+ "written": "2026-11-14T07:13:51",
+ "script_sha256": "8f667a99db3ac995ae44913227b1a0aeaa488c2e4981700775096cf326e906a6"
+}
