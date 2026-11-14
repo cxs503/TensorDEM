@@ -163,3 +163,37 @@ TensorDEM 外推值 0.63535 与 OSS 参考值（0.637-0.6405）相差 **0.3-0.8%
 **总体判定**：TensorDEM 的 round2-deposition-rigid-limit 方法（Richardson 外推）
 与成熟 OSS 实现**一致**（误差 <1%），方法有效。mu=0.1 档的系统性偏差是物理模型问题，
 不是外推方法问题。
+
+---
+
+## ⑧ Addendum (independent verification, mission 19458)
+
+A verifier pass re-derived every number above from the committed run JSONs and
+found that the **acceptance holds but the precision claim does not**. See
+`docs/AUDIT_XVAL_DEM_ROUND2_DEPOSITION_RIGID_LIMIT_VERIFY.md` and
+`artifacts/xval_dem_round2_deposition_rigid_limit_audit/` for the evidence.
+Three corrections to the text above:
+
+* **E1 `p` column.** `p = 1.007` is the order of the **3-level** sub-ladder
+  (`debt_audit.json`, mixed aggregation: 3-seed mean at kn=4000 with seed 1 at
+  kn=64000). The 4-level fit that yields `phi_inf = 0.63536` has its observed
+  order out of bounds (p ≈ 0.057), so it **falls back to the assumed p = 1.0**;
+  the label "(回退)" attached to 1.007 is self-contradictory. The limit is
+  insensitive to this (the correction is 3.5e-4), but the order is *not
+  measured* at the level where the limit is taken.
+* **"-0.20%" is not an accuracy statement.** The same data on six defensible
+  ladders/aggregations gives -0.022% … -0.250%, and the dominant systematic
+  (density-definition spread 4.1e-3 = 0.64%; N-sweep 2.2e-3) exceeds the claimed
+  deviation by 3×. Correct wording: "consistent with RCP within ≈0.7% protocol
+  systematic".
+* **Coverage.** kn=64000 has 3 seeds (not 1); the controlling tier kn=256000 has
+  1. `debt_audit.json` gate `G16_seed_coverage` reports PASS because it takes the
+  minimum over the *base* tier only — it cannot see the single-seed tier that
+  sets the limit.
+* **E4** varies `dt` only at kn=4000, where the measured difference (2.6e-4) is
+  at the seed-scatter level (1.8e-4): a non-discriminating check, and not
+  applied at the level that matters.
+* **mu=0.1 / M2.** The `[0.62, 0.66]` band is a *frictionless* band; the repo's
+  own friction scan is monotone (μ=0/0.1/0.3/0.5 → 0.6375/0.6246/0.6045/0.5931),
+  so a frictional limit below the frictionless RCP is expected. M2 should be
+  judged by ordering, with precision marked NOT_SUPPORTED.
