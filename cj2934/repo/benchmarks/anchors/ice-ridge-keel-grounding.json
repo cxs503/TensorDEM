@@ -1,0 +1,793 @@
+{
+ "schema": "tensordem.anchor.v1",
+ "anchor_id": "ISO-19906-2019-A8-PRESSURE-AREA",
+ "mission": "paper-exp-ice-ridge-keel-grounding-1-rework1",
+ "mission_id": 18963,
+ "repo": "TensorDEM",
+ "generated_utc": "2026-11-13T19:01:39+00:00",
+ "generator": "scripts/gen_w27_ice_ridge_keel_anchor.py",
+ "environment": {
+  "python": "3.11.6",
+  "numpy": "2.4.6",
+  "platform": "Linux-6.6.52-1.7.lns23.loongarch64-loongarch64-with-glibc2.38"
+ },
+ "standard": {
+  "id": "ISO 19906:2019",
+  "clause": "A.8",
+  "subject": "global ice action: pressure-area law p = p0 (A/A0)^(-n) and the areal exponent n; design pressure values",
+  "title_from_secondary_only": "Arctic offshore structures"
+ },
+ "acquisition_status": "WITHHELD",
+ "status": "WITHHELD",
+ "verbatim_quotes": [],
+ "document_sha256": null,
+ "quote_position": null,
+ "withheld_reason": "The licensed clause text of ISO 19906:2019 A.8 is not present in this environment. The probe below searched every accessible document container by name and by content (bounded, with the EVO-1 blind-review paths pruned), recorded the available extraction toolchain and the publisher endpoints, and found no copy that could be quoted. Mission discipline forbids filling any number from memory or from a secondary transcription, so the anchor is registered WITHHELD and only the operator layer is machine checked.",
+ "acquisition_probe": {
+  "search_roots": [
+   "/root",
+   "/opt",
+   "/srv",
+   "/data",
+   "/mnt",
+   "/usr/share/doc",
+   "/tmp"
+  ],
+  "pruned_dirs": [
+   ".git",
+   "node_modules",
+   "__pycache__",
+   ".venv",
+   "venv",
+   "site-packages",
+   "dist-packages",
+   ".cache",
+   ".mypy_cache",
+   ".pytest_cache",
+   "evo1"
+  ],
+  "files_text_scanned": 40001,
+  "name_hits": [
+   "/root/ship-performance-platform-incoming/ship-performance-platform/docs/w25_iso19906_quantile_reconciliation.md",
+   "/root/ship-performance-platform-incoming/ship-performance-platform/scripts/w22_anchor_iso19906.py",
+   "/root/ship-performance-platform-incoming/ship-performance-platform/scripts/w26_iso19906_availability_probe.py",
+   "/root/ship-performance-platform-incoming/ship-performance-platform/tests/test_iso19906_anchor.py",
+   "/root/ship-performance-platform-incoming/ship-performance-platform/tests/test_w22_ice_rudder_iso19906.py",
+   "/root/ship-performance-platform-incoming/ship-performance-platform/tests/test_w26_iso19906_a8_pressure_area.py",
+   "/root/ship-performance-platform-incoming/ship-performance-platform/src/ice_anchor/iso19906_a8_pressure_area.py",
+   "/root/ship-performance-platform-incoming/ship-performance-platform/benchmarks/anchors/iso19906_anchor.py",
+   "/root/ship-performance-platform-incoming/ship-performance-platform/benchmarks/anchors/iso19906-local-pressure-w22.json",
+   "/root/ship-performance-platform-incoming/ship-performance-platform/papers/artifacts/w25/ice-load-statistics/iso19906_quantile_reconciliation.json",
+   "/root/ship-performance-platform-incoming/ship-performance-platform/papers/artifacts/w25/ice-load-statistics/iso19906_quantile_reconciliation.json.sha256",
+   "/root/tensor-ecosystem/TensorPhysics/src/tensorphysics/ice_plasticity/iso19906.py",
+   "/root/tensor-ecosystem/TensorPlatform/backend/uploads/tensor_reports/12626/fig3_iso19906_comparison.png.png",
+   "/root/tensor-ecosystem/TensorDEM/docs/p54_w2_n07_ice_ridge_grounding_iso19906.md",
+   "/root/tensor-ecosystem/TensorDEM/src/tensordem/ridge_iso19906.py",
+   "/root/tensor-ecosystem/TensorDEM/tests/test_p54_w2_n07_ice_ridge_grounding_iso19906.py",
+   "/root/tensor-ecosystem/TensorDEM/tests/test_ice_crushing_iso19906.py",
+   "/root/tensor-ecosystem/TensorFEM/benchmarks/ice_coupled_6dof/iso19906_comparison.json",
+   "/root/tensor-ecosystem/TensorFEM/src/tensorfem/iso19906_ice_6dof.py",
+   "/root/tensor-ecosystem/TensorFEM/tests/test_iso19906_ice_6dof.py"
+  ],
+  "content_hits": [
+   {
+    "path": "/root/ship-performance-platform-incoming/ship-performance-platform/docs/ICE_RESISTANCE_BENCHMARK_P367SEED_N05.md",
+    "sha256": "af08b13fe8cb6eb6bda0838c91ae268cf0a06a3e1737e05eff04cd0125d32126",
+    "size_bytes": 14209
+   },
+   {
+    "path": "/root/ship-performance-platform-incoming/ship-performance-platform/docs/ICE_TWIN_MATURITY_P299W2N08.md",
+    "sha256": "9a46d3e352ce6a42aa6cb62c0b4c9dd1621c86aa157881aa18573743d62e3d07",
+    "size_bytes": 19194
+   },
+   {
+    "path": "/root/ship-performance-platform-incoming/ship-performance-platform/docs/P316-N04_ice_multicomponent_uq.md",
+    "sha256": "32120f851db6fb32c3f023762801863e8b6e626178bbdaf54b2107c5fa67b233",
+    "size_bytes": 18633
+   },
+   {
+    "path": "/root/ship-performance-platform-incoming/ship-performance-platform/docs/POLARIS_ICE_RISK_ASSESSMENT.md",
+    "sha256": "c07cdab87017b787c6e320c94641359cf37c38f06dc27625c72b245721944516",
+    "size_bytes": 18435
+   },
+   {
+    "path": "/root/ship-performance-platform-incoming/ship-performance-platform/docs/SLAMMING_WHIPPING_REPORT_M7066.md",
+    "sha256": "383df5ebba515fb3cd208603e07443bc5380001e1ca6828d4f78c76019a2b291",
+    "size_bytes": 5227
+   },
+   {
+    "path": "/root/ship-performance-platform-incoming/ship-performance-platform/docs/anchors_ice_load_digital_twin.md",
+    "sha256": "6abd5276238415be00d1fb9a5865944dae4bc4e2dc149413ebbbc8cc3c9eaa91",
+    "size_bytes": 6081
+   },
+   {
+    "path": "/root/ship-performance-platform-incoming/ship-performance-platform/docs/atmospheric_icing_P171W1-N01.md",
+    "sha256": "de99b8f516f7b487ec97e7b87f22cde8dd5dc5afdf4807fab02505aeceed3df8",
+    "size_bytes": 9510
+   },
+   {
+    "path": "/root/ship-performance-platform-incoming/ship-performance-platform/docs/ice_coupled_6dof_anchor_verification.md",
+    "sha256": "c60f6a5d01b562f7d53035faa48c4aebef3ed65afc1a283b1ea60cc1aed87aeb",
+    "size_bytes": 6551
+   },
+   {
+    "path": "/root/ship-performance-platform-incoming/ship-performance-platform/docs/lindqvist_1983_implementation_report.md",
+    "sha256": "d3f9401c205071d473757cafcc19e602b6223961293282b8a442511133032c41",
+    "size_bytes": 9060
+   },
+   {
+    "path": "/root/ship-performance-platform-incoming/ship-performance-platform/docs/m9105_ice_stability_report.md",
+    "sha256": "19c4e1d87eb2c923fd346b060dc3b46c657691080b8600a1305e280f7a5bfd01",
+    "size_bytes": 7585
+   },
+   {
+    "path": "/root/ship-performance-platform-incoming/ship-performance-platform/docs/marine_ice_accretion_w5n03.md",
+    "sha256": "df459b0b8d270ce3950db8853dd6f8569209a1affc063c5621b8d19ef5c9b915",
+    "size_bytes": 9471
+   },
+   {
+    "path": "/root/ship-performance-platform-incoming/ship-performance-platform/docs/p367seed_n06_ice_property_uq.md",
+    "sha256": "613c69ac39a4ebbaed8e7e1f13cc2fee983a069ce8b67c7bce95292b3eb9fcea",
+    "size_bytes": 10777
+   },
+   {
+    "path": "/root/ship-performance-platform-incoming/ship-performance-platform/docs/w25_formation_ice_channel_report.md",
+    "sha256": "c392bb99dba7da660fab396d62f82910a4d2852e1ecba6b8af884f13b267bb12",
+    "size_bytes": 12000
+   },
+   {
+    "path": "/root/ship-performance-platform-incoming/ship-performance-platform/docs/w25_iso19906_quantile_reconciliation.md",
+    "sha256": "94ca35c46568aba02c59a7b0aab3adff9e74b28b7b2dfa59102b603f7405f2ce",
+    "size_bytes": 16561
+   },
+   {
+    "path": "/root/ship-performance-platform-incoming/ship-performance-platform/docs/IN54W1_N09/REPORT.md",
+    "sha256": "7c3412e9c42edd404a0dc8dfbc1997b10b57e375185a80fe388ff32ea541ca94",
+    "size_bytes": 11137
+   },
+   {
+    "path": "/root/ship-performance-platform-incoming/ship-performance-platform/docs/ice_fatigue_psd/REPORT.md",
+    "sha256": "8c85ba921e0a9599feb122a42c8a011780b1c8b237ab628eec4a4210597d3ae6",
+    "size_bytes": 9587
+   },
+   {
+    "path": "/root/ship-performance-platform-incoming/ship-performance-platform/docs/ice_lindqvist/REPORT.md",
+    "sha256": "67f7e13c6b046c84b2dcff6a672e6a46db511639e2154918037ab4b0570055c8",
+    "size_bytes": 17557
+   },
+   {
+    "path": "/root/ship-performance-platform-incoming/ship-performance-platform/docs/ice_ridge_thermo/REPORT.md",
+    "sha256": "cfa0cfbb80fbf6fb4540b986c49fef3ccfc7ec028586c1959b02122a8ab303ab",
+    "size_bytes": 13523
+   },
+   {
+    "path": "/root/ship-performance-platform-incoming/ship-performance-platform/docs/ridge_ice/REPORT.md",
+    "sha256": "b9093fa6dd30c35a2eb10d296056353c0918d1322b8bc1a83d7dff3b1fb8ed50",
+    "size_bytes": 7174
+   },
+   {
+    "path": "/root/ship-performance-platform-incoming/ship-performance-platform/papers/reports/w20_ice_nav_chain2.md",
+    "sha256": "30279f3bc7c2da1a246a360ff0b491ee27164f8281e65b4331498071bff34a5b",
+    "size_bytes": 23185
+   }
+  ],
+  "licensed_container_hits": [],
+  "extraction_tools": {
+   "pdftotext": null,
+   "pdfinfo": null,
+   "mutool": null,
+   "antiword": null,
+   "unzip": "/usr/bin/unzip"
+  },
+  "network": {
+   "https://www.iso.org/standard/65760.html": {
+    "http_code": "403",
+    "returncode": 0
+   },
+   "https://www.iso.org/obp/ui/#iso:std:iso:19906:ed-2:v1:en": {
+    "http_code": "403",
+    "returncode": 0
+   }
+  },
+  "elapsed_s": 94.7,
+  "verdict": "WITHHELD"
+ },
+ "operator_layer": {
+  "module": "src/tensordem/ridge_keel_grounding.py",
+  "module_sha256": "e72746096b08b72bd8fd8246ffe763ee299a7a19d5220ae6af6c9888f6dc040e",
+  "functions": [
+   "pressure_area_pressure",
+   "pressure_area_force",
+   "pressure_area_exponent_from_pair",
+   "pressure_area_operator_checks"
+  ],
+  "checks": {
+   "inputs": {
+    "p0": 1.0,
+    "a0": 1.0,
+    "n": 0.5
+   },
+   "anchor_point": {
+    "p_at_A0": 1.0,
+    "target_p0": 1.0,
+    "abs_err": 0.0
+   },
+   "loglog_slope": {
+    "values": [
+     -0.5,
+     -0.5,
+     -0.5000000000000001,
+     -0.49999999999999994,
+     -0.49999999999999994
+    ],
+    "target": -0.5,
+    "max_abs_err": 1.1102230246251565e-16
+   },
+   "ratio_identity": {
+    "computed": 0.9999999999999999,
+    "target": 1.0,
+    "abs_err": 1.1102230246251565e-16
+   },
+   "composition_identity": {
+    "computed": 0.9999999999999999,
+    "predicted": 1.0,
+    "rel_err": 1.1102230246251565e-16
+   },
+   "force_loglog_slope": {
+    "values": [
+     0.5000000000000001,
+     0.5,
+     0.5,
+     0.5000000000000001,
+     0.5000000000000001
+    ],
+    "target": 0.5,
+    "max_abs_err": 1.1102230246251565e-16
+   },
+   "inversion_roundtrip": {
+    "n_true": 0.5,
+    "n_recovered": 0.5,
+    "rel_err": 0.0
+   },
+   "n_to_zero_limit": {
+    "values": [
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    "target": 1.0,
+    "max_abs_err": 0.0
+   },
+   "scale_in_p0": {
+    "rel_err": 0.0
+   },
+   "dimension_closure": {
+    "p0_unit": "Pa = N/m^2",
+    "A0_unit": "m^2",
+    "n_unit": "dimensionless",
+    "F_unit": "N",
+    "consistent": true
+   },
+   "all_pass": true
+  },
+  "note": "the checks run on arbitrary (p0, A0, n) = (1, 1, 0.5) placeholders declared as dimensionless test values, never as standard values; every identity holds for all (p0, A0, n), so the same function re-runs unchanged on a transcribed anchor"
+ },
+ "secondary_sources": [
+  {
+   "path": "src/tensordem/hull_collision/indentation.py",
+   "sha256": "0a42130c815623f20f8243f94ce9ec53e893b7dd4dff8b5401482588b372d68c",
+   "n_hits": 8,
+   "hits": [
+    {
+     "line": 1,
+     "text": "\"\"\"ISO 19906 pressure-area ice load, pressure-driven indentation and damage geometry.",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 11,
+     "text": "* **ice load** - the ISO 19906 global pressure-area relation",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 51,
+     "text": "* The pressure-area law is applied to the *nominal* contact area of the growing",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 75,
+     "text": "\"iso19906_scaling_exponents\",",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 78,
+     "text": "#: ISO 19906 / Masterson pressure-area exponent family for the global ice",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 98,
+     "text": "\"\"\"ISO 19906 global pressure-area relation ``p = p0*(A/A_ref)**(-alpha)``.\"\"\"",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 464,
+     "text": "def iso19906_scaling_exponents(exponent: float) -> dict:",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 465,
+     "text": "\"\"\"Closed-form scaling exponents implied by the pressure-area exponent.",
+     "counts_as_verbatim_anchor": false
+    }
+   ],
+   "kind": "secondary_code_or_doc_citation",
+   "numbers_extracted": false,
+   "why_rejected": "secondary transcription: it cannot be checked against the clause text, so it is registered but never used as an anchor value"
+  },
+  {
+   "path": "src/tensordem/hull_collision/scenario.py",
+   "sha256": "d96e36f8d471d4586966c778813e70562d86cd52122c75146306a157ac9dcf61",
+   "n_hits": 3,
+   "hits": [
+    {
+     "line": 116,
+     "text": "#: ISO 19906 global pressure-area law: pressure at the reference area of 1 m^2",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 119,
+     "text": "#: exponent is the ISO 19906 / Masterson 0.4-0.6 family (swept 0.40-0.60).",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 130,
+     "text": "\"\"\"The ice-side pressure-area law of the design case.\"\"\"",
+     "counts_as_verbatim_anchor": false
+    }
+   ],
+   "kind": "secondary_code_or_doc_citation",
+   "numbers_extracted": false,
+   "why_rejected": "secondary transcription: it cannot be checked against the clause text, so it is registered but never used as an anchor value"
+  },
+  {
+   "path": "src/tensordem/ice_rubble_pileup_vertical.py",
+   "sha256": "90d86707bfb16ac72269dd302f5a7a99331331d6b898fdd68637173280784e3c",
+   "n_hits": 16,
+   "hits": [
+    {
+     "line": 37,
+     "text": "ISO 19906 reference",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 39,
+     "text": ":func:`iso_19906_reference` re-uses",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 40,
+     "text": ":func:`tensordem.ice_vertical_structure_pileup.iso19906_load` (ISO 19906:2010",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 41,
+     "text": "A.8.2.6 global pressure ``p_G = C_R (h/h_0)^n (w/h)^m`` capped at ``sigma_c``,",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 50,
+     "text": "ISO 19906:2010, Arctic offshore structures, Annex A.8 (global ice pressure).",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 66,
+     "text": "from .ice_vertical_structure_pileup import iso19906_load",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 83,
+     "text": "\"iso_19906_reference\",",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 184,
+     "text": "F_ISO: float                  # N, ISO 19906 3-D load",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 246,
+     "text": "# ISO 19906 reference",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 248,
+     "text": "def iso_19906_reference(cfg: PileupVerticalConfig) -> dict:",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 249,
+     "text": "\"\"\"ISO 19906 load for this configuration plus its per-unit-width form.\"\"\"",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 250,
+     "text": "iso = iso19906_load(cfg.sigma_c, cfg.h, cfg.D, shape=cfg.shape)",
+     "counts_as_verbatim_anchor": false
+    }
+   ],
+   "kind": "secondary_code_or_doc_citation",
+   "numbers_extracted": false,
+   "why_rejected": "secondary transcription: it cannot be checked against the clause text, so it is registered but never used as an anchor value"
+  },
+  {
+   "path": "src/tensordem/ice_crushing_vertical_structure.py",
+   "sha256": "9a18f6ea5a0b928bccf864c04aa7c22886ac2df8ff4208e0a8e035c94f153b13",
+   "n_hits": 23,
+   "hits": [
+    {
+     "line": 1,
+     "text": "\"\"\"Ice-body crushing and accumulation against vertical structures: ISO 19906",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 11,
+     "text": "ISO 19906 \u00a7A.8 reference",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 13,
+     "text": "The ISO 19906 standard gives the nominal ice load on a vertical structure as:",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 36,
+     "text": "ISO 19906:2010.  Petroleum and natural gas industries \u2014 Fixed steel offshore",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 51,
+     "text": "\"ISO19906Config\",",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 52,
+     "text": "\"iso19906_nominal_load\",",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 53,
+     "text": "\"iso19906_load_range\",",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 64,
+     "text": "# ISO 19906 \u00a7A.8 nominal load",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 67,
+     "text": "class ISO19906Config:",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 68,
+     "text": "\"\"\"Configuration for ISO 19906 ice load calculation.\"\"\"",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 92,
+     "text": "def iso19906_nominal_load(cfg: ISO19906Config) -> float:",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 93,
+     "text": "\"\"\"Compute the nominal ice load per ISO 19906 \u00a7A.8: F = C\u00b7\u03c3_c\u00b7h\u00b7D.\"\"\"",
+     "counts_as_verbatim_anchor": false
+    }
+   ],
+   "kind": "secondary_code_or_doc_citation",
+   "numbers_extracted": false,
+   "why_rejected": "secondary transcription: it cannot be checked against the clause text, so it is registered but never used as an anchor value"
+  },
+  {
+   "path": "src/tensordem/ice_pressure_stats.py",
+   "sha256": "3e91822fd87e7dc863d3edc57d8d943097663ee57c8d638f30d9cd5858ecf4e2",
+   "n_hits": 16,
+   "hits": [
+    {
+     "line": 2,
+     "text": "ISO 19906 pressure-area law.",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 14,
+     "text": "``p_d(A) = p_0 (A / A_0) ** (-n)``, the ISO 19906 pressure-area relation",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 15,
+     "text": "(ISO 19906:2019 Annex A; Masterson & Frederking).  ``n`` is small",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 23,
+     "text": "number is produced by the estimators below from a DEM field; the ISO 19906 band",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 42,
+     "text": "``patch_average`` / ``pressure_area_curve``",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 48,
+     "text": "``fit_pressure_area_law``",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 49,
+     "text": "Log-log OLS fit of the ISO 19906 form, returning ``p_0``, ``n`` and the",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 94,
+     "text": "\"fit_pressure_area_law\",",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 215,
+     "text": "# pressure-area",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 259,
+     "text": "def fit_pressure_area_law(",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 293,
+     "text": "n: float  # pressure-area exponent [-]",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 449,
+     "text": "# -- pressure-area ------------------------------------------------",
+     "counts_as_verbatim_anchor": false
+    }
+   ],
+   "kind": "secondary_code_or_doc_citation",
+   "numbers_extracted": false,
+   "why_rejected": "secondary transcription: it cannot be checked against the clause text, so it is registered but never used as an anchor value"
+  },
+  {
+   "path": "src/tensordem/ice_ridge_keel_hull.py",
+   "sha256": "5d909c24da9c01e78148e2c36b8537837b72bd05b4b0ab9a962b482ba2344692",
+   "n_hits": 27,
+   "hits": [
+    {
+     "line": 27,
+     "text": "2. **ISO 19906 ridge load model**",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 28,
+     "text": "The regulatory form (ISO 19906, Annex C) for ridge crushing is::",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 64,
+     "text": "* ISO 19906 model: REAL \u2014 formula from ISO 19906 Annex C, verified against",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 73,
+     "text": "* ISO 19906:2010. *Petroleum and natural gas industries \u2014 Arctic offshore structures*.",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 99,
+     "text": "\"iso19906_source\": \"ISO 19906:2010, Annex C\",",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 100,
+     "text": "\"level_ice_crushing_model\": \"Lindqvist (1989) / ISO 19906 \u00a7A.8\",",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 183,
+     "text": "# 2. ISO 19906 ridge load model",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 187,
+     "text": "class ISO19906RidgeParams:",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 188,
+     "text": "\"\"\"Parameters for the ISO 19906 ridge load model.\"\"\"",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 198,
+     "text": "def iso19906_contact_area(h_k: float, W_k: float, alpha_deg: float,",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 213,
+     "text": "def iso19906_ridge_load(A_contact: float,",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 214,
+     "text": "params: ISO19906RidgeParams = ISO19906RidgeParams()) -> float:",
+     "counts_as_verbatim_anchor": false
+    }
+   ],
+   "kind": "secondary_code_or_doc_citation",
+   "numbers_extracted": false,
+   "why_rejected": "secondary transcription: it cannot be checked against the clause text, so it is registered but never used as an anchor value"
+  },
+  {
+   "path": "benchmarks/ice_crushing_iso19906/REPORT.md",
+   "sha256": "f63954d9e2dfb80ed90b05831d792bd40ec6cd87a7e46e4e384925b74192d4ba",
+   "n_hits": 27,
+   "hits": [
+    {
+     "line": 2,
+     "text": "## ISO 19906 Benchmark and Porosity\u2013Resistance Scaling Law Validation",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 18,
+     "text": "The ISO 19906 standard (Petroleum and natural gas industries \u2014 Fixed steel offshore structures in arctic and cold regions) provides empirical formulas for estimating ice loads on vertical structures. ",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 39,
+     "text": "1. Comparing peak and steady-state loads with ISO 19906 predictions",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 97,
+     "text": "- **Testing:** `pytest` with 15 unit tests covering ISO 19906 formulas, scaling law fitting, and DEM simulation",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 108,
+     "text": "- **ISO 19906 reference** ($F_{\\text{ISO}} = 30.0$ MN) for continuous ice",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 110,
+     "text": "The peak force is in excellent agreement with ISO 19906 (7% error), while the steady-state force is much lower due to the high porosity of the rubble field ($n = 0.92$).",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 112,
+     "text": "### 3.2 ISO 19906 Comparison",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 114,
+     "text": "Table 1 summarizes the comparison between DEM results and ISO 19906 predictions.",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 116,
+     "text": "**Table 1: DEM vs ISO 19906 Load Comparison**",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 126,
+     "text": "- **Peak forces** are in reasonable agreement with ISO 19906 for Cases 1 and 4 (errors < 50%)",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 127,
+     "text": "- **Steady-state forces** are much lower than ISO 19906 because the standard assumes continuous ice, not rubble",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 159,
+     "text": "The peak forces from DEM are in good agreement with ISO 19906 for Cases 1 and 4 (errors < 50%). This is physically reasonable because:",
+     "counts_as_verbatim_anchor": false
+    }
+   ],
+   "kind": "secondary_code_or_doc_citation",
+   "numbers_extracted": false,
+   "why_rejected": "secondary transcription: it cannot be checked against the clause text, so it is registered but never used as an anchor value"
+  },
+  {
+   "path": "benchmarks/anchors/ice-ridge-pipeline-seabed-bearing.json",
+   "sha256": "717935b2c70b2826b78ea7d5c973189638878647e2737cb8256cf49bed3645d0",
+   "n_hits": 29,
+   "hits": [
+    {
+     "line": 5,
+     "text": "\"title\": \"ISO 19906 \u5916\u90e8\u951a\u6838\u9500\u4e0e\u540c\u53e3\u5f84\u6362\u7b97\uff08\u5b9e\u9a8c 1\uff1a\u951a\u6838\u9500\uff09\",",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 40,
+     "text": "\"form_assumption\": \"\u538b\u529b-\u9762\u79ef\u5173\u7cfb\u4ee5\u5e42\u5f8b p(A) = C_R * (A/A_ref)**n \u8868\u8ff0\uff08C_R \u4ee5 Pa \u8ba1\u3001n \u65e0\u91cf\u7eb2\u3001A_ref = 1 m^2\uff09\u3002\u8be5\u51fd\u6570\u5f62\u5f0f\u672c\u8eab\u662f\u5f62\u5f0f\u5047\u8bbe ASSERTION_FORMAL\uff08\u975e\u9010\u5b57\u6765\u6e90\uff09\uff1b\u5176\u662f\u5426\u7b49\u4e8e ISO 19906 Annex A \u7684\u539f\u59cb\u8868\u8ff0\u5c5e C1 \u5f85\u6838\u9879 \u2014\u2014 \u56e0\u6b64\u672c\u5de5\u4ef6\u7684 p(A) \u6570\u503c\u53ea\u4f5c\u6362\u7b97\u94fe\u6f14\u793a\u4e0e\u6838\u5bf9\u5bf9\u7167\uff0c\u4e0d\u4f5c\u8fbe",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 329,
+     "text": "\"anchor_id\": \"iso19906_annexA_pressure_area_power_law\",",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 342,
+     "text": "\"reason\": \"\u5de5\u4f5c\u6811\u5185\u65e0 ISO 19906:2019 \u7684\u8bb8\u53ef\u539f\u6587\u6216\u6570\u5b57\u5316\u526f\u672c\uff08\u89c1 search_log\uff09\uff1b\u672c\u4e3b\u4f53\u65e0\u8be5\u6807\u51c6\u8bbf\u95ee\u6388\u6743\uff08iso.org \u76ee\u5f55\u9875 403\uff09\u3002\u6309\u6eaf\u6e90\u7eaa\u5f8b\u7981\u51ed\u8bb0\u5fc6\u5199\u6570\uff0c\u6545 numeric_values \u7559\u7a7a\uff0c\u4e0d\u4ee5\u4efb\u4f55\u60ef\u4f8b\u503c\u4ee3\u586b\u3002\",",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 345,
+     "text": "\"files_mentioning_iso19906\": 16,",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 368,
+     "text": "\"path\": \"src/tensordem/ridge_iso19906.py\",",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 430,
+     "text": "\"attempted\": \"https://www.iso.org/standard/65712.html (ISO 19906:2019 catalogue page)\",",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 435,
+     "text": "\"standard\": \"ISO 19906:2019 Annex A (pressure-area)\"",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 441,
+     "text": "\"anchor_id\": \"iso19906_clause14_15_global_ice_load\",",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 454,
+     "text": "\"reason\": \"\u5de5\u4f5c\u6811\u5185\u65e0 ISO 19906:2019 \u7684\u8bb8\u53ef\u539f\u6587\u6216\u6570\u5b57\u5316\u526f\u672c\uff08\u89c1 search_log\uff09\uff1b\u672c\u4e3b\u4f53\u65e0\u8be5\u6807\u51c6\u8bbf\u95ee\u6388\u6743\uff08iso.org \u76ee\u5f55\u9875 403\uff09\u3002\u6309\u6eaf\u6e90\u7eaa\u5f8b\u7981\u51ed\u8bb0\u5fc6\u5199\u6570\uff0c\u6545 numeric_values \u7559\u7a7a\uff0c\u4e0d\u4ee5\u4efb\u4f55\u60ef\u4f8b\u503c\u4ee3\u586b\u3002\",",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 457,
+     "text": "\"files_mentioning_iso19906\": 16,",
+     "counts_as_verbatim_anchor": false
+    },
+    {
+     "line": 480,
+     "text": "\"path\": \"src/tensordem/ridge_iso19906.py\",",
+     "counts_as_verbatim_anchor": false
+    }
+   ],
+   "kind": "secondary_code_or_doc_citation",
+   "numbers_extracted": false,
+   "why_rejected": "secondary transcription: it cannot be checked against the clause text, so it is registered but never used as an anchor value"
+  }
+ ],
+ "gate": {
+  "readable_by_next_anchor_gate": true,
+  "required_status_values": [
+   "TRANSCRIBED",
+   "VERIFIED",
+   "OBTAINED"
+  ],
+  "current_status_meets_gate": false,
+  "blocking_items": [
+   "verbatim clause text of ISO 19906:2019 A.8",
+   "page/table number of the quoted clause",
+   "sha256 of the source document"
+  ],
+  "operator_layer_verified": true
+ },
+ "downstream_use": {
+  "artifact": "papers/artifacts/w27/ice-ridge-keel-grounding/ridge_keel_anchor.json",
+  "how_used": "no computed quantity in the W27 artifact depends on an ISO 19906 value; the A.8 law enters only through its operator layer and through the applicability statement (continuous ice, not rubble)"
+ }
+}
