@@ -175,9 +175,28 @@ def synthetic_audit(verbose: bool = True) -> dict:
 # --------------------------------------------------------------------------
 # live: strain-convergence run on the shipped servo-shear device
 # --------------------------------------------------------------------------
+# Round 17 (m21066): the strain request must be a ceiling.  This driver used to
+# pass only ``min_shear_steps``, so at high I the constant-stress recovery gate
+# multiplied the delivered strain by up to ~50x (round 16 table 1: 49.5x at
+# I = 0.3) while the run still reported ``servo_valid=True``.  Two knobs close
+# that, both expressed in *strain* units so they are independent of I, dt and
+# the step floor:
+#
+#   * ``min_shear_steps=0`` -- the old ``ceil(strain/(gdot dt)) + 100`` fudge
+#     made the request a floor again: at I = 0.3 one step of strain is ~1 % of
+#     the request, so +100 steps alone delivered 1.9x the budget.  Strain is
+#     the right currency; let it alone decide the step count.
+#   * ``MAX_RECOVER_STRAIN_RATIO`` -- the recovery phase may spend at most half
+#     of the 5 % classification tolerance, leaving the other half for the
+#     one-step discretisation overshoot of the gate (the ceiling is tested
+#     after the strain increment).
+MAX_RECOVER_STRAIN_RATIO = 0.025
+
+
 def live_run(I_target: float, strain: float = 2.0, wall: str = "smooth",
              seed: int = 5279, kn: float = 6.25e4, pressure: float = 6.25e4,
-             fill_height: float = 0.06) -> dict:
+             fill_height: float = 0.06,
+             max_recover_strain: float | None = None) -> dict:
     from tensordem.mu_i_rheology import ServoShearCase, simulate_servo_shear
 
     probe = ServoShearCase(radius=RADIUS, kn=kn, normal_stress=pressure,
@@ -186,13 +205,23 @@ def live_run(I_target: float, strain: float = 2.0, wall: str = "smooth",
     gamma_dot = probe.inertial_number * math.sqrt(pressure / probe.density) \
         / probe.particle_diameter
     dt = probe.timestep
-    steps = int(math.ceil(strain / (gamma_dot * dt))) + 100
+    strain_steps = int(math.ceil(strain / (gamma_dot * dt)))
+    if max_recover_strain is None:
+        max_recover_strain = MAX_RECOVER_STRAIN_RATIO * strain
+    # Round 17: the sampling stride used to be derived from the *planned*
+    # step floor, so at I = 0.3 (floor 515) it collapsed to 1 and the run
+    # emitted one sample per step over a 20k-step overrun (4.7 MB).  Size the
+    # stride against the worst case the recovery gate can reach instead, so the
+    # series length stays bounded whatever the gate does.
+    worst_steps = strain_steps + 20000
     case = ServoShearCase(
         radius=RADIUS, density=2500.0, mu=0.5, mu_rolling=0.05, restitution=0.3,
         kn=kn, kt_ratio=0.5, box_width=W, box_depth=D, fill_height=fill_height,
         normal_stress=pressure, inertial_number=I_target, seed=seed,
-        settle_steps=2500, min_shear_steps=steps, shear_strain=strain,
-        sample_stride=max(1, steps // 400), bulk_stress=True, wall_mode=wall)
+        settle_steps=2500, min_shear_steps=0, shear_strain=strain,
+        max_recover_strain=max_recover_strain,
+        sample_stride=max(1, worst_steps // 400), bulk_stress=True,
+        wall_mode=wall)
     res = simulate_servo_shear(case, return_series=True)
     series = res.get("series") or []
     if not series:
@@ -236,6 +265,13 @@ def live_run(I_target: float, strain: float = 2.0, wall: str = "smooth",
         "drift_abs": drift_abs, "drift_rel_pct": drift_rel,
         "steady_phi": bool(abs(drift_rel["phi_bed_now"]) < 1.0),
         "steady_mu": bool(abs(drift_rel["full_mu"]) < 3.0),
+        # strain-budget bookkeeping (round 17): carried from the device so a
+        # point can never be quoted without its budget status next to it.
+        "strain_budget_respected": bool(res["strain_budget_respected"]),
+        "strain_budget_status": res["strain_budget_status"],
+        "strain_overrun_ratio": float(res["strain_overrun_ratio"]),
+        "recover_termination": res["recover_termination"],
+        "max_recover_strain": max_recover_strain,
         "series": {k: [float(x) for x in v] for k, v in cols.items()},
     }
     tag = f"I{I_target:g}_{wall}_s{seed}"
