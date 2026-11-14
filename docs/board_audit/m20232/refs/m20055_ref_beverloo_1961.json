@@ -1,0 +1,33 @@
+{
+  "case": "CASE-DEM-SILO-BEVERLOO",
+  "law": "W = C * rho_b * sqrt(g) * (D - k*d)**(5/2)",
+  "quantity": "steady mass flow rate W [kg/s] through a centred circular orifice in a flat-bottom silo",
+  "source": {
+    "authors": "Beverloo, W. A.; Leniger, H. A.; van de Velde, J.",
+    "title": "The flow of granular solids through orifices",
+    "journal": "Chemical Engineering Science",
+    "volume": 15,
+    "issue": "3-4",
+    "pages": "260-269",
+    "year": 1961,
+    "doi": "10.1016/0009-2509(61)80059-4",
+    "equation_location": "correlation W = C rho_b g^(1/2) (D - k d)^(5/2); the coefficient pair for spherical particles is Eq. (4), p. 265"
+  },
+  "coefficients": {
+    "C": 0.58,
+    "k": 1.4,
+    "C_range_spherical": [0.55, 0.60],
+    "k_range_spherical": [1.2, 1.6],
+    "applicability": "spherical particles, flat-bottom (or shallow hopper) silo, smooth walls, D/d >~ 4, free gravity discharge"
+  },
+  "validation_domain": {
+    "D_over_d_min": 4.0,
+    "silo_D_over_D_min": 2.5,
+    "bed_height_over_D_min": 1.5
+  },
+  "provenance": {
+    "retrieved_how": "read from the published correlation as documented in this repository (src/tensordem/silo_discharge.py docstring, benchmarks/beverloo_hopper_m15259.py header and prereg/m15259_beverloo.md, all citing Eq. (4) of the 1961 paper)",
+    "verification_status": "cited, NOT re-digitized: no copy of the 1961 paper and no outbound network in this worktree, so the original table/points could not be re-read programmatically",
+    "friction_note": "zero-hand-copy rule cannot be fully met for the *original table*; the *coefficient pair* is machine-read from this file by the case scripts, and the residual risk is that C/k are quoted values rather than re-digitized observations"
+  }
+}
