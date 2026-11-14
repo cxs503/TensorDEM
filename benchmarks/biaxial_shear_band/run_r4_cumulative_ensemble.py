@@ -505,6 +505,18 @@ def _figure(results: list[dict], verdict: dict, path: str) -> None:
     plt.close(fig)
 
 
+def _run_cached(config: dict, cache_dir: str, resume: bool) -> dict:
+    """Per-specimen runner with JSON cache (module-level: spawn-picklable)."""
+    path = os.path.join(cache_dir, config["name"] + ".json")
+    if resume and os.path.exists(path):
+        with open(path) as handle:
+            return json.load(handle)
+    result = _run_one(config)
+    with open(path, "w") as handle:
+        json.dump(result, handle, default=float)
+    return result
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--workers", type=int, default=1)
@@ -527,32 +539,19 @@ def main(argv=None) -> int:
     configs = _configs(args.quick, args.only_seed)
     results: list[dict] = []
 
-    def _cached(config):
-        path = os.path.join(args.cache, config["name"] + ".json")
-        if args.resume and os.path.exists(path):
-            with open(path) as handle:
-                return json.load(handle)
-        return None
-
-    def _one(config):
-        config = {**config, "quick": bool(args.quick)}
-        cached = _cached(config)
-        if cached is not None:
-            return cached
-        result = _run_one(config)
-        with open(os.path.join(args.cache, config["name"] + ".json"), "w") as handle:
-            json.dump(result, handle, default=float)
-        return result
+    configs = [{**c, "quick": bool(args.quick)} for c in configs]
 
     if args.workers > 1 and len(configs) > 1:
         with mp.get_context("spawn").Pool(min(args.workers, len(configs))) as pool:
-            for result in pool.imap_unordered(_one, configs):
+            for result in pool.imap_unordered(
+                    _run_cached, configs, [args.cache] * len(configs),
+                    [args.resume] * len(configs)):
                 results.append(result)
                 print(f"[done] {result['name']} {result.get('error', '')}", flush=True)
     else:
         for config in configs:
             try:
-                results.append(_one(config))
+                results.append(_run_cached(config, args.cache, args.resume))
             except Exception as exc:                     # pragma: no cover - reported
                 results.append({"name": config["name"], "axis": config["axis"],
                                 "seed": config["seed"],
