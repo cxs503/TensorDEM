@@ -1,0 +1,473 @@
+{
+ "study": "CASE-COLUMN-COLLAPSE realisation axis: admissibility, not jitter",
+ "reference": "Lube et al. 2004 JFM 508:175-199, doi:10.1017/S0022112004009036",
+ "tolerance": 0.15,
+ "thresholds": {
+  "BAND_TOL": 0.15,
+  "SPREAD_TOL": 0.05,
+  "SCALE_TOL": 0.05
+ },
+ "n_cases": 9,
+ "incomplete_aspects": [
+  1.0,
+  2.0
+ ],
+ "geometry_scan": {
+  "scan_seed": 101,
+  "levels": [
+   0.0,
+   0.0025,
+   0.005,
+   0.01,
+   0.02,
+   0.03,
+   0.05,
+   0.1
+  ],
+  "aspects": {
+   "0.5": {
+    "levels": [
+     {
+      "jitter": 0.0,
+      "n_particles": 981,
+      "min_gap": 0.0011755075545338695,
+      "overlap_pairs": 0,
+      "max_overlap": 0.0,
+      "admissible": true,
+      "tol": 0.0
+     },
+     {
+      "jitter": 0.0025,
+      "n_particles": 981,
+      "min_gap": 0.0008061070053371477,
+      "overlap_pairs": 0,
+      "max_overlap": 0.0,
+      "admissible": true,
+      "tol": 0.0
+     },
+     {
+      "jitter": 0.005,
+      "n_particles": 981,
+      "min_gap": 0.00041255938586113455,
+      "overlap_pairs": 0,
+      "max_overlap": 0.0,
+      "admissible": true,
+      "tol": 0.0
+     },
+     {
+      "jitter": 0.01,
+      "n_particles": 981,
+      "min_gap": -0.0003734723789395947,
+      "overlap_pairs": 10,
+      "max_overlap": 0.0003734723789395947,
+      "admissible": false,
+      "tol": 0.0
+     },
+     {
+      "jitter": 0.02,
+      "n_particles": 981,
+      "min_gap": -0.0019410805778399681,
+      "overlap_pairs": 401,
+      "max_overlap": 0.0019410805778399681,
+      "admissible": false,
+      "tol": 0.0
+     },
+     {
+      "jitter": 0.03,
+      "n_particles": 981,
+      "min_gap": -0.0035023364644928,
+      "overlap_pairs": 853,
+      "max_overlap": 0.0035023364644928,
+      "admissible": false,
+      "tol": 0.0
+     },
+     {
+      "jitter": 0.05,
+      "n_particles": 981,
+      "min_gap": -0.006603564702196349,
+      "overlap_pairs": 1420,
+      "max_overlap": 0.006603564702196349,
+      "admissible": false,
+      "tol": 0.0
+     },
+     {
+      "jitter": 0.1,
+      "n_particles": 981,
+      "min_gap": -0.014198996632247184,
+      "overlap_pairs": 1856,
+      "max_overlap": 0.014198996632247184,
+      "admissible": false,
+      "tol": 0.0
+     }
+    ],
+    "jitter_max_admissible": 0.005,
+    "jitter_first_rejecting": 0.01,
+    "rule": "overlap_pairs == 0 (geometry only, no time integration)"
+   },
+   "2": {
+    "levels": [
+     {
+      "jitter": 0.0,
+      "n_particles": 3718,
+      "min_gap": 0.0011755075545338695,
+      "overlap_pairs": 0,
+      "max_overlap": 0.0,
+      "admissible": true,
+      "tol": 0.0
+     },
+     {
+      "jitter": 0.0025,
+      "n_particles": 3718,
+      "min_gap": 0.0007242394700455526,
+      "overlap_pairs": 0,
+      "max_overlap": 0.0,
+      "admissible": true,
+      "tol": 0.0
+     },
+     {
+      "jitter": 0.005,
+      "n_particles": 3718,
+      "min_gap": 0.00024852981205474023,
+      "overlap_pairs": 0,
+      "max_overlap": 0.0,
+      "admissible": true,
+      "tol": 0.0
+     },
+     {
+      "jitter": 0.01,
+      "n_particles": 3718,
+      "min_gap": -0.0007027319907504867,
+      "overlap_pairs": 41,
+      "max_overlap": 0.0007027319907504867,
+      "admissible": false,
+      "tol": 0.0
+     },
+     {
+      "jitter": 0.02,
+      "n_particles": 3718,
+      "min_gap": -0.0026045889983161152,
+      "overlap_pairs": 1607,
+      "max_overlap": 0.0026045889983161152,
+      "admissible": false,
+      "tol": 0.0
+     },
+     {
+      "jitter": 0.03,
+      "n_particles": 3718,
+      "min_gap": -0.0045054810627720085,
+      "overlap_pairs": 3440,
+      "max_overlap": 0.0045054810627720085,
+      "admissible": false,
+      "tol": 0.0
+     },
+     {
+      "jitter": 0.05,
+      "n_particles": 3718,
+      "min_gap": -0.008303944636842059,
+      "overlap_pairs": 5634,
+      "max_overlap": 0.008303944636842059,
+      "admissible": false,
+      "tol": 0.0
+     },
+     {
+      "jitter": 0.1,
+      "n_particles": 3718,
+      "min_gap": -0.017773767472238883,
+      "overlap_pairs": 7419,
+      "max_overlap": 0.017773767472238883,
+      "admissible": false,
+      "tol": 0.0
+     }
+    ],
+    "jitter_max_admissible": 0.005,
+    "jitter_first_rejecting": 0.01,
+    "rule": "overlap_pairs == 0 (geometry only, no time integration)"
+   }
+  }
+ },
+ "verdicts": {
+  "A_ADMISS": {
+   "pass": true,
+   "n": 4,
+   "required_n": 1,
+   "status": "pass",
+   "detail": "members with initial overlaps: 0"
+  },
+  "A_BAND": {
+   "pass": true,
+   "status": "pass",
+   "n": 4,
+   "required_n": 1,
+   "detail": 0.12847461206159083
+  },
+  "A_SPREAD": {
+   "pass": true,
+   "status": "pass",
+   "n": 4,
+   "required_n": 2,
+   "detail": {
+    "mean": 1.4381657919055388,
+    "sigma": 0.024694927867280014,
+    "sigma_rel": 0.01717112728328753
+   }
+  },
+  "A_SCALE": {
+   "pass": false,
+   "status": "fail",
+   "n": 5,
+   "required_n": 2,
+   "detail": 0.10263271408004804
+  },
+  "A_GAP": {
+   "pass": true,
+   "status": "pass",
+   "n": 4,
+   "required_n": 1,
+   "detail": {
+    "jitter_members_with_overlaps": 4,
+    "jitter_members": 4,
+    "fraction": 1.0
+   }
+  }
+ },
+ "m19922_readjudicated": {
+  "H_BAND": {
+   "pass": false,
+   "status": "fail",
+   "n": 5,
+   "required_n": 1,
+   "detail": 0.4488386769656896
+  },
+  "H_SPREAD": {
+   "pass": false,
+   "status": "fail",
+   "n": 4,
+   "required_n": 2,
+   "detail": {
+    "mean": 1.9441102664689192,
+    "sigma": 0.4380381967826617,
+    "sigma_rel": 0.22531551030707173
+   }
+  },
+  "H_JITTER": {
+   "pass": false,
+   "status": "fail",
+   "n": 4,
+   "required_n": 1,
+   "detail": 0.4917986891466619
+  }
+ },
+ "figures": [
+  "docs/artifacts/column_collapse_ensemble_m20259/fig_admissibility_scan.png",
+  "docs/artifacts/column_collapse_ensemble_m20259/fig_runout_vs_jitter.png"
+ ],
+ "rows": [
+  {
+   "wave": "inadmissible",
+   "case": "ens_a0.5_m0_lattice",
+   "member": "m0_lattice",
+   "jitter": 0.0,
+   "seed": 12345,
+   "aspect_nominal": 0.5,
+   "aspect_measured": 0.5497375400976945,
+   "n_particles": 981,
+   "stop_reason": "at_rest",
+   "runout_ratio_p995": 1.573348115774934,
+   "ref_runout_ratio": 1.62,
+   "err_runout": -0.028797459398188896,
+   "t95": 0.6494536800264564,
+   "t99": 0.7210330009993791,
+   "ref_emplacement_time": 0.46923713220346497,
+   "err_t95": 0.3840628446788139,
+   "err_t99": 0.5366068699924058,
+   "peak_front_speed": 0.8381170123634156,
+   "overlap_pairs": 0,
+   "max_overlap": 0.0,
+   "admissible": true
+  },
+  {
+   "wave": "inadmissible",
+   "case": "ens_a0.5_m1_j05_s101",
+   "member": "m1_j05_s101",
+   "jitter": 0.05,
+   "seed": 101,
+   "aspect_nominal": 0.5,
+   "aspect_measured": 0.5554737840921397,
+   "n_particles": 981,
+   "stop_reason": "at_rest",
+   "runout_ratio_p995": 1.567269111266072,
+   "ref_runout_ratio": 1.62,
+   "err_runout": -0.0325499313172396,
+   "t95": 0.4471402149765535,
+   "t99": 0.5640629910255958,
+   "ref_emplacement_time": 0.46923713220346497,
+   "err_t95": -0.04709115223500704,
+   "err_t99": 0.20208515548810735,
+   "peak_front_speed": 0.8687095493918164,
+   "overlap_pairs": 1420,
+   "max_overlap": 0.006603564702196349,
+   "admissible": false
+  },
+  {
+   "wave": "inadmissible",
+   "case": "ens_a0.5_m2_j05_s202",
+   "member": "m2_j05_s202",
+   "jitter": 0.05,
+   "seed": 202,
+   "aspect_nominal": 0.5,
+   "aspect_measured": 0.557153644606896,
+   "n_particles": 981,
+   "stop_reason": "at_rest",
+   "runout_ratio_p995": 1.5630150971133272,
+   "ref_runout_ratio": 1.62,
+   "err_runout": -0.03517586597942768,
+   "t95": 0.47554566212630883,
+   "t99": 0.5453016223670566,
+   "ref_emplacement_time": 0.46923713220346497,
+   "err_t95": 0.013444225722759828,
+   "err_t99": 0.16210245298875758,
+   "peak_front_speed": 0.8770782934414179,
+   "overlap_pairs": 1384,
+   "max_overlap": 0.005542425922236159,
+   "admissible": false
+  },
+  {
+   "wave": "inadmissible",
+   "case": "ens_a0.5_m3_j10_s303",
+   "member": "m3_j10_s303",
+   "jitter": 0.1,
+   "seed": 303,
+   "aspect_nominal": 0.5,
+   "aspect_measured": 0.5643281127974349,
+   "n_particles": 981,
+   "stop_reason": "at_rest",
+   "runout_ratio_p995": 2.29903820081186,
+   "ref_runout_ratio": 1.62,
+   "err_runout": 0.41915938321719737,
+   "t95": 0.5659725881811273,
+   "t99": 0.6386273414096907,
+   "ref_emplacement_time": 0.46923713220346497,
+   "err_t95": 0.2061547335851439,
+   "err_t99": 0.36099063262703757,
+   "peak_front_speed": 1.8350706822133702,
+   "overlap_pairs": 1870,
+   "max_overlap": 0.013561633957945886,
+   "admissible": false
+  },
+  {
+   "wave": "inadmissible",
+   "case": "ens_a0.5_m4_j10_s404",
+   "member": "m4_j10_s404",
+   "jitter": 0.1,
+   "seed": 404,
+   "aspect_nominal": 0.5,
+   "aspect_measured": 0.5639085114115612,
+   "n_particles": 981,
+   "stop_reason": "at_rest",
+   "runout_ratio_p995": 2.347118656684417,
+   "ref_runout_ratio": 1.62,
+   "err_runout": 0.4488386769656896,
+   "t95": 0.6101905734991949,
+   "t99": 0.7207504594322216,
+   "ref_emplacement_time": 0.46923713220346497,
+   "err_t95": 0.3003885064121725,
+   "err_t99": 0.5360047403914712,
+   "peak_front_speed": 1.9511864712509102,
+   "overlap_pairs": 1847,
+   "max_overlap": 0.013479330316685897,
+   "admissible": false
+  },
+  {
+   "wave": "admissible",
+   "case": "adm_a0.5_n1_j0025_s505",
+   "member": "n1_j0025_s505",
+   "jitter": 0.0025,
+   "seed": 505,
+   "aspect_nominal": 0.5,
+   "aspect_measured": 0.5500987242079803,
+   "n_particles": 981,
+   "stop_reason": "at_rest",
+   "runout_ratio_p995": 1.411871128460223,
+   "ref_runout_ratio": 1.62,
+   "err_runout": -0.12847461206159083,
+   "t95": 0.5480460974581122,
+   "t99": 0.6332406055655113,
+   "ref_emplacement_time": 0.46923713220346497,
+   "err_t95": 0.16795125501805974,
+   "err_t99": 0.3495108594494887,
+   "peak_front_speed": 0.7793831844886405,
+   "overlap_pairs": 0,
+   "max_overlap": 0.0,
+   "admissible": true
+  },
+  {
+   "wave": "admissible",
+   "case": "adm_a0.5_n2_j0025_s606",
+   "member": "n2_j0025_s606",
+   "jitter": 0.0025,
+   "seed": 606,
+   "aspect_nominal": 0.5,
+   "aspect_measured": 0.5500679498041963,
+   "n_particles": 981,
+   "stop_reason": "at_rest",
+   "runout_ratio_p995": 1.433197976035571,
+   "ref_runout_ratio": 1.62,
+   "err_runout": -0.11530989133606728,
+   "t95": 0.5147465110930476,
+   "t99": 0.5730932140646923,
+   "ref_emplacement_time": 0.46923713220346497,
+   "err_t95": 0.0969858857415602,
+   "err_t99": 0.22132963214896306,
+   "peak_front_speed": 0.8121362601140731,
+   "overlap_pairs": 0,
+   "max_overlap": 0.0,
+   "admissible": true
+  },
+  {
+   "wave": "admissible",
+   "case": "adm_a0.5_n3_j005_s707",
+   "member": "n3_j005_s707",
+   "jitter": 0.005,
+   "seed": 707,
+   "aspect_nominal": 0.5,
+   "aspect_measured": 0.5506683276269391,
+   "n_particles": 981,
+   "stop_reason": "at_rest",
+   "runout_ratio_p995": 1.4714712862917525,
+   "ref_runout_ratio": 1.62,
+   "err_runout": -0.09168439117793059,
+   "t95": 0.5648995367010623,
+   "t99": 0.660010517123859,
+   "ref_emplacement_time": 0.46923713220346497,
+   "err_t95": 0.20386793357205435,
+   "err_t99": 0.40656071701860386,
+   "peak_front_speed": 0.7046709604956654,
+   "overlap_pairs": 0,
+   "max_overlap": 0.0,
+   "admissible": true
+  },
+  {
+   "wave": "admissible",
+   "case": "adm_a0.5_n4_j005_s808",
+   "member": "n4_j005_s808",
+   "jitter": 0.005,
+   "seed": 808,
+   "aspect_nominal": 0.5,
+   "aspect_measured": 0.5505833110351921,
+   "n_particles": 981,
+   "stop_reason": "at_rest",
+   "runout_ratio_p995": 1.436122776834609,
+   "ref_runout_ratio": 1.62,
+   "err_runout": -0.11350445874406856,
+   "t95": 0.5076134177999827,
+   "t99": 0.5649696996384271,
+   "ref_emplacement_time": 0.46923713220346497,
+   "err_t95": 0.08178441764893729,
+   "err_t99": 0.20401745911585656,
+   "peak_front_speed": 0.9774070548254308,
+   "overlap_pairs": 0,
+   "max_overlap": 0.0,
+   "admissible": true
+  }
+ ]
+}
