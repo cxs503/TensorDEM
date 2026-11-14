@@ -527,12 +527,100 @@ def pair_stress_components(dx: np.ndarray, dy: np.ndarray, fx: np.ndarray,
 # ---------------------------------------------------------------------------
 # simulation
 # ---------------------------------------------------------------------------
+def fabric_sample(x: np.ndarray, y: np.ndarray, r: np.ndarray, lx: float,
+                  ly: float, s: float, i: np.ndarray, j: np.ndarray,
+                  n: int) -> Dict[str, float]:
+    """Instantaneous contact-network fabric of one configuration.
+
+    Contact set: every pair of the neighbour list whose centre distance is below
+    ``r_i + r_j`` (the neighbour skin guarantees this is the complete touching
+    set).  Sign convention follows the virial bookkeeping of this module: the
+    contact normal ``(n_x, n_y)`` points ``i -> j`` while the force is written on
+    ``i``, so the physical fabric anisotropy is ``-<n_x n_y>`` (already flipped in
+    the returned values, matching ``benchmarks/.../ell_coefficient.py``).
+    """
+    ddx, ddy = _min_image(x, y, i, j, lx, ly, s)
+    dist = np.sqrt(ddx * ddx + ddy * ddy)
+    dc = r[i] + r[j]
+    touch = dist < dc
+    nc = int(np.count_nonzero(touch))
+    if nc == 0:
+        return {"n_contacts": 0, "coordination": float("nan"),
+                "mean_overlap_ratio": float("nan"), "max_overlap_ratio": float("nan"),
+                "fabric_xy": float("nan"),
+                "overlap_weighted_fabric_xy": float("nan"),
+                "a_xy": float("nan")}
+    nx = ddx[touch] / dist[touch]
+    ny = ddy[touch] / dist[touch]
+    ov = (dc[touch] - dist[touch]) / dc[touch]
+    ov_w_fabric = -float(np.mean(ov * nx * ny))
+    mean_ov = float(np.mean(ov))
+    return {
+        "n_contacts": nc,
+        "coordination": 2.0 * nc / n,
+        "mean_overlap_ratio": mean_ov,
+        "max_overlap_ratio": float(np.max(ov)),
+        "fabric_xy": -float(np.mean(nx * ny)),
+        "overlap_weighted_fabric_xy": ov_w_fabric,
+        "a_xy": (ov_w_fabric / mean_ov) if mean_ov else float("nan"),
+    }
+
+
+def summarise_fabric(samples: Sequence[Dict[str, float]], strain_from: float,
+                     strain_to: float) -> Dict[str, Any]:
+    """Steady-window aggregate of :func:`fabric_sample` output.
+
+    Per quantity: mean, standard deviation over samples, min and max.  ``f_norm``
+    is the normal-force share of the contact shear virial, formed *per sample*
+    (``tau_normal / (tau_normal + tau_tangential)``) and only then averaged, so
+    the ratio is never taken between averages.  ``virial_split_residual_max``
+    closes the decomposition ``tau_normal + tau_tangential == tau_contact`` sample
+    by sample; it is an identity check, not a fit.
+    """
+    out: Dict[str, Any] = {
+        "n_samples": len(samples),
+        "window": [float(strain_from), float(strain_to)],
+        "source": "steady-window time average of the contact network",
+    }
+    if not samples:
+        return out
+    keys = ("coordination", "mean_overlap_ratio", "max_overlap_ratio",
+            "fabric_xy", "overlap_weighted_fabric_xy", "a_xy",
+            "tau_normal", "tau_tangential", "tau_contact")
+    for k in keys:
+        v = np.asarray([float(smp.get(k, np.nan)) for smp in samples], float)
+        v = v[np.isfinite(v)]
+        if v.size == 0:
+            continue
+        out[k + "_mean"] = float(np.mean(v))
+        out[k + "_std"] = float(np.std(v))
+        out[k + "_min"] = float(np.min(v))
+        out[k + "_max"] = float(np.max(v))
+    fn = np.asarray([smp["tau_normal"] / (smp["tau_normal"] + smp["tau_tangential"])
+                     if (smp["tau_normal"] + smp["tau_tangential"]) else np.nan
+                     for smp in samples], float)
+    fn = fn[np.isfinite(fn)]
+    if fn.size:
+        out["f_norm_mean"] = float(np.mean(fn))
+        out["f_norm_std"] = float(np.std(fn))
+        out["f_norm_min"] = float(np.min(fn))
+        out["f_norm_max"] = float(np.max(fn))
+    split = np.asarray([abs(smp["tau_normal"] + smp["tau_tangential"] - smp["tau_contact"])
+                        / max(abs(smp["tau_contact"]), 1e-30) for smp in samples], float)
+    split = split[np.isfinite(split)]
+    if split.size:
+        out["virial_split_residual_max"] = float(np.max(split))
+    out["n_contacts_mean"] = float(np.mean([smp["n_contacts"] for smp in samples]))
+    return out
+
+
 def simulate_plane_shear(case: ElasticLimitShearCase,
                          cfg: Optional[Dict[str, np.ndarray]] = None,
                          *, verbose: bool = False,
                          trace: Optional[List[Dict[str, Any]]] = None,
                          trace_every: int = 50,
-                         n_steps_override: Optional[int] = None) -> Dict[str, Any]:
+                         n_steps_override: Optional[int] = None,
+                         fabric_statistics: bool = False) -> Dict[str, Any]:
     """Run one Lees-Edwards plane-shear point and return gated diagnostics.
 
     Integrator: velocity-Verlet for the SLLOD equations, i.e. kick-drift-kick
@@ -542,6 +630,15 @@ def simulate_plane_shear(case: ElasticLimitShearCase,
     contact force changes the velocity appreciably in one step, which heats the
     cell and inflates the overlaps (the defect is visible as an audit defect of
     10-100 and was the last blocker before the case reproduced).
+
+    ``fabric_statistics=True`` additionally accumulates the *steady-window time
+    average* of the contact-network fabric (coordination, mean overlap ratio,
+    ``<n_x n_y>`` and the overlap-weighted ``<ov n_x n_y>``) and of the
+    normal/tangential split of the shear virial, and returns it under
+    ``out["fabric"]``.  The final snapshot alone is a biased estimator of these
+    quantities (up to 14 % on the coordination number, R4 leg B), so any closure
+    built on fabric constants has to use the time average.  Off by default: with
+    the flag off the returned numbers are bit-identical to before.
     """
     t0 = time.time()
     lx, ly = case.lx, case.ly
@@ -582,6 +679,8 @@ def simulate_plane_shear(case: ElasticLimitShearCase,
         pp_ = 0.0
         dn_ = 0.0
         dtang_ = 0.0
+        sxy_norm_ = 0.0
+        sxy_tang_ = 0.0
         xi_new = np.zeros(ii.size)
         if np.any(active_):
             ia, ja = ii[active_], jj[active_]
@@ -611,6 +710,10 @@ def simulate_plane_shear(case: ElasticLimitShearCase,
             fy_ = np.bincount(ia, weights=f_iy, minlength=n) + \
                 np.bincount(ja, weights=-f_iy, minlength=n)
             sxy_ = -float(np.sum(f_ix * dya))
+            # exact normal / tangential decomposition of sxy_ above:
+            #   sxy_ = -sum((-fn ux + ft tx) dy) = sum(fn ux dy) - sum(ft tx dy)
+            sxy_norm_ = float(np.sum(fn * ux * dya))
+            sxy_tang_ = -float(np.sum(ft * tx * dya))
             # symmetric off-diagonal (SLLOD work conjugate) and the non-central
             # lever-arm sum: sigma_xy - sigma_yx = sum(dx*fy - dy*fx)/A
             sxy_sym_ = -0.5 * float(np.sum(f_ix * dya + f_iy * dxa))
@@ -620,7 +723,7 @@ def simulate_plane_shear(case: ElasticLimitShearCase,
             if np.any(slip):
                 dtang_ = float(np.sum(cap[slip] * np.abs(v_t[slip])))
         return (fx_, fy_, sxy_, pp_, dn_, dtang_, xi_new, dist_, delta_,
-                sxy_sym_, asym_)
+                sxy_sym_, asym_, sxy_norm_, sxy_tang_)
 
     e_kin0 = 0.5 * float(np.sum(m * (vx * vx + vy * vy)))
     delta0 = r[i] + r[j] - d_build
@@ -645,6 +748,7 @@ def simulate_plane_shear(case: ElasticLimitShearCase,
     tau_contact_s: List[float] = []
     p_kin_s: List[float] = []
     p_contact_s: List[float] = []
+    fab_samples: List[Dict[str, float]] = []
     overlap_max = 0.0
     overlap_sum = 0.0
     overlap_n = 0
@@ -657,8 +761,8 @@ def simulate_plane_shear(case: ElasticLimitShearCase,
     avg_from = case.strain_average_from
     sample_every = max(1, int(round(0.01 / max(gdot * dt, 1e-12))))
 
-    fx, fy, sxy_p, p_pair, dn, dtg, xi_new, dist, delta, sxy_sym, asym = _forces(
-        x, y, s, vx, vy, xi_t, i, j)
+    (fx, fy, sxy_p, p_pair, dn, dtg, xi_new, dist, delta, sxy_sym, asym,
+     sxy_norm, sxy_tang) = _forces(x, y, s, vx, vy, xi_t, i, j)
     xi_t = xi_new
     kin_xy = float(np.sum(m * vx * vy))
     kin_2 = float(np.sum(m * (vx * vx + vy * vy)))
@@ -699,13 +803,13 @@ def simulate_plane_shear(case: ElasticLimitShearCase,
             d_build = np.sqrt(ddx * ddx + ddy * ddy)
             dist = d_build
             rebuilds += 1
-            fx, fy, sxy_p, p_pair, dn, dtg, xi_new, dist, delta, sxy_sym, asym = _forces(
-                x, y, s, vx_h, vy_h, xi_t, i, j)
+            (fx, fy, sxy_p, p_pair, dn, dtg, xi_new, dist, delta, sxy_sym, asym,
+             sxy_norm, sxy_tang) = _forces(x, y, s, vx_h, vy_h, xi_t, i, j)
             xi_t = xi_new
 
         # ---- forces at the new configuration --------------------------------
-        fx, fy, sxy_p2, p_pair2, dn2, dtg2, xi_new, dist, delta, sxy_sym2, asym2 = _forces(
-            x, y, s, vx_h, vy_h, xi_t, i, j)
+        (fx, fy, sxy_p2, p_pair2, dn2, dtg2, xi_new, dist, delta, sxy_sym2, asym2,
+         sxy_norm2, sxy_tang2) = _forces(x, y, s, vx_h, vy_h, xi_t, i, j)
         xi_t = xi_new
         # ---- second half kick ------------------------------------------------
         vx = vx_h + (fx * inv_m - gdot * vy_h) * 0.5 * dt
@@ -774,6 +878,12 @@ def simulate_plane_shear(case: ElasticLimitShearCase,
                 overlap_max = max(overlap_max, float(np.max(ov)))
                 overlap_sum += float(np.sum(ov))
                 overlap_n += int(np.count_nonzero(touch))
+            if fabric_statistics:
+                fab = fabric_sample(x, y, r, lx, ly, s, i, j, n)
+                fab["tau_normal"] = -sxy_norm2 / area
+                fab["tau_tangential"] = -sxy_tang2 / area
+                fab["tau_contact"] = -sxy_p2 / area
+                fab_samples.append(fab)
 
     # ---- diagnostics ---------------------------------------------------------
     dlt_end = delta
@@ -879,6 +989,8 @@ def simulate_plane_shear(case: ElasticLimitShearCase,
         "gates": gates,
         "samples": len(tau_samples),
         "neighbour_rebuilds": rebuilds,
+        "fabric": summarise_fabric(fab_samples, case.strain_average_from,
+                                   case.strain_total) if fabric_statistics else None,
         "final_state": {"x": x, "y": y, "vx": vx, "vy": vy, "s": s},
         "runtime_s": time.time() - t0,
     }
