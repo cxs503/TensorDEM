@@ -1,0 +1,563 @@
+{
+ "study": "CASE-COLUMN-COLLAPSE completion of the admissible ensemble wave",
+ "anchor": "CASE-COLUMN-COLLAPSE",
+ "reference": "Lube et al. 2004 JFM 508:175-199, doi:10.1017/S0022112004009036",
+ "tolerance": 0.15,
+ "thresholds": {
+  "BAND_TOL": 0.15,
+  "SPREAD_TOL": 0.05,
+  "SCALE_TOL": 0.05
+ },
+ "primary_reference_variant": "measured-a (paper-consistent)",
+ "aspects": [
+  "0.5",
+  "1",
+  "2"
+ ],
+ "aspects_complete": [
+  "0.5",
+  "1",
+  "2"
+ ],
+ "incomplete_aspects": [],
+ "n_cases": 15,
+ "n_members": 12,
+ "verdicts": {
+  "0.5": {
+   "n_members": 4,
+   "n_control": 1,
+   "C_ADMISS": {
+    "status": "pass",
+    "n": 4,
+    "required_n": 1,
+    "detail": {
+     "members_with_overlaps": []
+    }
+   },
+   "C_BAND": {
+    "status": "fail",
+    "n": 4,
+    "required_n": 1,
+    "detail": {
+     "worst_abs_err_measured_a": 0.16066089284757246,
+     "worst_signed_err_measured_a": -0.16066089284757246,
+     "worst_abs_err_nominal_a": 0.12847461206159083,
+     "variant_verdict_flips": [
+      "adm_a0.5_n1_j0025_s505"
+     ],
+     "band_tol": 0.15
+    }
+   },
+   "B_ASPECT_BOOK": {
+    "status": "pass",
+    "detail": {
+     "delta_worst_pp": 3.2186280785981625,
+     "n_flips": 1,
+     "flips": [
+      "adm_a0.5_n1_j0025_s505"
+     ],
+     "variant": "primary = measured-a (paper-consistent)"
+    }
+   },
+   "C_SPREAD": {
+    "status": "pass",
+    "n": 4,
+    "required_n": 2,
+    "detail": {
+     "mean": 1.4381657919055388,
+     "sigma": 0.024694927867280014,
+     "sigma_rel": 0.01717112728328753,
+     "tol": 0.05
+    }
+   },
+   "C_SCALE": {
+    "status": "fail",
+    "n": 5,
+    "required_n": 2,
+    "detail": {
+     "max_abs_shift_vs_lattice": 0.10263271408004804,
+     "lattice_runout": 1.573348115774934,
+     "tol": 0.05
+    }
+   },
+   "anchor_within_15pct_all_rows": false,
+   "max_abs_err_measured_a_all_rows": 0.16066089284757246
+  },
+  "1": {
+   "n_members": 4,
+   "n_control": 1,
+   "C_ADMISS": {
+    "status": "pass",
+    "n": 4,
+    "required_n": 1,
+    "detail": {
+     "members_with_overlaps": []
+    }
+   },
+   "C_BAND": {
+    "status": "pass",
+    "n": 4,
+    "required_n": 1,
+    "detail": {
+     "worst_abs_err_measured_a": 0.08131395399303076,
+     "worst_signed_err_measured_a": -0.08131395399303076,
+     "worst_abs_err_nominal_a": 0.04137076963756925,
+     "variant_verdict_flips": [],
+     "band_tol": 0.15
+    }
+   },
+   "B_ASPECT_BOOK": {
+    "status": "pass",
+    "detail": {
+     "delta_worst_pp": 3.9943184355461514,
+     "n_flips": 0,
+     "flips": [],
+     "variant": "primary = measured-a (paper-consistent)"
+    }
+   },
+   "C_SPREAD": {
+    "status": "pass",
+    "n": 4,
+    "required_n": 2,
+    "detail": {
+     "mean": 2.190100731470899,
+     "sigma": 0.05164881594775142,
+     "sigma_rel": 0.02358284950348536,
+     "tol": 0.05
+    }
+   },
+   "C_SCALE": {
+    "status": "fail",
+    "n": 5,
+    "required_n": 2,
+    "detail": {
+     "max_abs_shift_vs_lattice": 0.07555228253418944,
+     "lattice_runout": 2.1060448934214557,
+     "tol": 0.05
+    }
+   },
+   "anchor_within_15pct_all_rows": true,
+   "max_abs_err_measured_a_all_rows": 0.098840428509132
+  },
+  "2": {
+   "n_members": 4,
+   "n_control": 1,
+   "C_ADMISS": {
+    "status": "pass",
+    "n": 4,
+    "required_n": 1,
+    "detail": {
+     "members_with_overlaps": []
+    }
+   },
+   "C_BAND": {
+    "status": "pass",
+    "n": 4,
+    "required_n": 1,
+    "detail": {
+     "worst_abs_err_measured_a": 0.055236160255177635,
+     "worst_signed_err_measured_a": 0.055236160255177635,
+     "worst_abs_err_nominal_a": 0.0607216675734199,
+     "variant_verdict_flips": [],
+     "band_tol": 0.15
+    }
+   },
+   "B_ASPECT_BOOK": {
+    "status": "pass",
+    "detail": {
+     "delta_worst_pp": -0.5485507318242266,
+     "n_flips": 0,
+     "flips": [],
+     "variant": "primary = measured-a (paper-consistent)"
+    }
+   },
+   "C_SPREAD": {
+    "status": "pass",
+    "n": 4,
+    "required_n": 2,
+    "detail": {
+     "mean": 3.4260587080036147,
+     "sigma": 0.03957349298753522,
+     "sigma_rel": 0.01155073405341467,
+     "tol": 0.05
+    }
+   },
+   "C_SCALE": {
+    "status": "pass",
+    "n": 5,
+    "required_n": 2,
+    "detail": {
+     "max_abs_shift_vs_lattice": 0.014261479738856275,
+     "lattice_runout": 3.412197826502325,
+     "tol": 0.05
+    }
+   },
+   "anchor_within_15pct_all_rows": true,
+   "max_abs_err_measured_a_all_rows": 0.055236160255177635
+  }
+ },
+ "worst_abs_err_measured_a": 0.16066089284757246,
+ "worst_abs_err_nominal_a": 0.12847461206159083,
+ "anchor_max_err_pp": 16.066089284757247,
+ "anchor_within_15pct_all_members": false,
+ "lattice_reproducibility": {
+  "by_aspect": {
+   "0.5": 1.573348115774934,
+   "1": 2.1060448934214557,
+   "2": 3.412197826502325
+  },
+  "n_control": 3,
+  "a05_from_archive": true
+ },
+ "rows": [
+  {
+   "wave": "completion",
+   "case": "cmp_a1_m0_lattice",
+   "member": "m0_lattice",
+   "jitter": 0.0,
+   "seed": 12345,
+   "aspect_nominal": 1.0,
+   "aspect_measured": 1.0782571055943022,
+   "n_particles": 1955,
+   "stop_reason": "at_rest",
+   "runout_ratio_p995": 2.1060448934214557,
+   "ref_nominal": 2.24,
+   "ref_measured": 2.3370388109369347,
+   "err_nom": -0.05980138686542169,
+   "err_meas": -0.098840428509132,
+   "verdict_nom": "pass",
+   "verdict_meas": "pass",
+   "flip": false,
+   "overlap_pairs": 0,
+   "max_overlap": 0.0,
+   "admissible": true,
+   "branch": "linear (a<1.7)"
+  },
+  {
+   "wave": "completion",
+   "case": "cmp_a1_n1_j0025_s505",
+   "member": "n1_j0025_s505",
+   "jitter": 0.0025,
+   "seed": 505,
+   "aspect_nominal": 1.0,
+   "aspect_measured": 1.0785419895262751,
+   "n_particles": 1955,
+   "stop_reason": "at_rest",
+   "runout_ratio_p995": 2.147329476011845,
+   "ref_nominal": 2.24,
+   "ref_measured": 2.337392067012581,
+   "err_nom": -0.04137076963756925,
+   "err_meas": -0.08131395399303076,
+   "verdict_nom": "pass",
+   "verdict_meas": "pass",
+   "flip": false,
+   "overlap_pairs": 0,
+   "max_overlap": 0.0,
+   "admissible": true,
+   "branch": "linear (a<1.7)"
+  },
+  {
+   "wave": "completion",
+   "case": "cmp_a1_n2_j0025_s606",
+   "member": "n2_j0025_s606",
+   "jitter": 0.0025,
+   "seed": 606,
+   "aspect_nominal": 1.0,
+   "aspect_measured": 1.0785950926020313,
+   "n_particles": 1955,
+   "stop_reason": "at_rest",
+   "runout_ratio_p995": 2.2651613922389204,
+   "ref_nominal": 2.24,
+   "ref_measured": 2.337457914826519,
+   "err_nom": 0.011232764392375083,
+   "err_meas": -0.03092955048688628,
+   "verdict_nom": "pass",
+   "verdict_meas": "pass",
+   "flip": false,
+   "overlap_pairs": 0,
+   "max_overlap": 0.0,
+   "admissible": true,
+   "branch": "linear (a<1.7)"
+  },
+  {
+   "wave": "completion",
+   "case": "cmp_a1_n3_j005_s707",
+   "member": "n3_j005_s707",
+   "jitter": 0.005,
+   "seed": 707,
+   "aspect_nominal": 1.0,
+   "aspect_measured": 1.0791824165974766,
+   "n_particles": 1955,
+   "stop_reason": "at_rest",
+   "runout_ratio_p995": 2.1709548098694653,
+   "ref_nominal": 2.24,
+   "ref_measured": 2.338186196580871,
+   "err_nom": -0.030823745593988816,
+   "err_meas": -0.07152184328003819,
+   "verdict_nom": "pass",
+   "verdict_meas": "pass",
+   "flip": false,
+   "overlap_pairs": 0,
+   "max_overlap": 0.0,
+   "admissible": true,
+   "branch": "linear (a<1.7)"
+  },
+  {
+   "wave": "completion",
+   "case": "cmp_a1_n4_j005_s808",
+   "member": "n4_j005_s808",
+   "jitter": 0.005,
+   "seed": 808,
+   "aspect_nominal": 1.0,
+   "aspect_measured": 1.0787050365105053,
+   "n_particles": 1955,
+   "stop_reason": "at_rest",
+   "runout_ratio_p995": 2.1769572477633647,
+   "ref_nominal": 2.24,
+   "ref_measured": 2.3375942452730265,
+   "err_nom": -0.028144085819926556,
+   "err_meas": -0.06871893949708952,
+   "verdict_nom": "pass",
+   "verdict_meas": "pass",
+   "flip": false,
+   "overlap_pairs": 0,
+   "max_overlap": 0.0,
+   "admissible": true,
+   "branch": "linear (a<1.7)"
+  },
+  {
+   "wave": "completion",
+   "case": "cmp_a2_m0_lattice",
+   "member": "m0_lattice",
+   "jitter": 0.0,
+   "seed": 12345,
+   "aspect_nominal": 2.0,
+   "aspect_measured": 2.0295923234881967,
+   "n_particles": 3718,
+   "stop_reason": "at_rest",
+   "runout_ratio_p995": 3.412197826502325,
+   "ref_nominal": 3.2627416997969525,
+   "ref_measured": 3.279420178056206,
+   "err_nom": 0.045806913466264865,
+   "err_meas": 0.04048814767152531,
+   "verdict_nom": "pass",
+   "verdict_meas": "pass",
+   "flip": false,
+   "overlap_pairs": 0,
+   "max_overlap": 0.0,
+   "admissible": true,
+   "branch": "sqrt (a>1.7)"
+  },
+  {
+   "wave": "completion",
+   "case": "cmp_a2_n1_j0025_s505",
+   "member": "n1_j0025_s505",
+   "jitter": 0.0025,
+   "seed": 505,
+   "aspect_nominal": 2.0,
+   "aspect_measured": 2.0299018961952884,
+   "n_particles": 3718,
+   "stop_reason": "at_rest",
+   "runout_ratio_p995": 3.4135207124596496,
+   "ref_nominal": 3.2627416997969525,
+   "ref_measured": 3.2795940108405133,
+   "err_nom": 0.04621236571441756,
+   "err_meas": 0.04083636607959673,
+   "verdict_nom": "pass",
+   "verdict_meas": "pass",
+   "flip": false,
+   "overlap_pairs": 0,
+   "max_overlap": 0.0,
+   "admissible": true,
+   "branch": "sqrt (a>1.7)"
+  },
+  {
+   "wave": "completion",
+   "case": "cmp_a2_n2_j0025_s606",
+   "member": "n2_j0025_s606",
+   "jitter": 0.0025,
+   "seed": 606,
+   "aspect_nominal": 2.0,
+   "aspect_measured": 2.0298359490319884,
+   "n_particles": 3718,
+   "stop_reason": "at_rest",
+   "runout_ratio_p995": 3.4541819095313495,
+   "ref_nominal": 3.2627416997969525,
+   "ref_measured": 3.2795569809772007,
+   "err_nom": 0.05867464462366434,
+   "err_meas": 0.05324649931897696,
+   "verdict_nom": "pass",
+   "verdict_meas": "pass",
+   "flip": false,
+   "overlap_pairs": 0,
+   "max_overlap": 0.0,
+   "admissible": true,
+   "branch": "sqrt (a>1.7)"
+  },
+  {
+   "wave": "completion",
+   "case": "cmp_a2_n3_j005_s707",
+   "member": "n3_j005_s707",
+   "jitter": 0.005,
+   "seed": 707,
+   "aspect_nominal": 2.0,
+   "aspect_measured": 2.0300953553862575,
+   "n_particles": 3718,
+   "stop_reason": "at_rest",
+   "runout_ratio_p995": 3.4608608166699577,
+   "ref_nominal": 3.2627416997969525,
+   "ref_measured": 3.2797026362639534,
+   "err_nom": 0.0607216675734199,
+   "err_meas": 0.055236160255177635,
+   "verdict_nom": "pass",
+   "verdict_meas": "pass",
+   "flip": false,
+   "overlap_pairs": 0,
+   "max_overlap": 0.0,
+   "admissible": true,
+   "branch": "sqrt (a>1.7)"
+  },
+  {
+   "wave": "completion",
+   "case": "cmp_a2_n4_j005_s808",
+   "member": "n4_j005_s808",
+   "jitter": 0.005,
+   "seed": 808,
+   "aspect_nominal": 2.0,
+   "aspect_measured": 2.0299090864602025,
+   "n_particles": 3718,
+   "stop_reason": "at_rest",
+   "runout_ratio_p995": 3.375671393353502,
+   "ref_nominal": 3.2627416997969525,
+   "ref_measured": 3.2795980481958042,
+   "err_nom": 0.03461190126192859,
+   "err_meas": 0.029294243912161733,
+   "verdict_nom": "pass",
+   "verdict_meas": "pass",
+   "flip": false,
+   "overlap_pairs": 0,
+   "max_overlap": 0.0,
+   "admissible": true,
+   "branch": "sqrt (a>1.7)"
+  },
+  {
+   "wave": "archive_lattice",
+   "case": "ens_a0.5_m0_lattice",
+   "member": "m0_lattice",
+   "jitter": 0.0,
+   "seed": 12345,
+   "aspect_nominal": 0.5,
+   "aspect_measured": 0.5497375400976945,
+   "n_particles": 981,
+   "stop_reason": "at_rest",
+   "runout_ratio_p995": 1.573348115774934,
+   "ref_nominal": 1.62,
+   "ref_measured": 1.6816745497211412,
+   "err_nom": -0.028797459398188896,
+   "err_meas": -0.06441581337136248,
+   "verdict_nom": "pass",
+   "verdict_meas": "pass",
+   "flip": false,
+   "overlap_pairs": 0,
+   "max_overlap": 0.0,
+   "admissible": true,
+   "branch": "linear (a<1.7)"
+  },
+  {
+   "wave": "archive_admissible",
+   "case": "adm_a0.5_n1_j0025_s505",
+   "member": "n1_j0025_s505",
+   "jitter": 0.0025,
+   "seed": 505,
+   "aspect_nominal": 0.5,
+   "aspect_measured": 0.5500987242079803,
+   "n_particles": 981,
+   "stop_reason": "at_rest",
+   "runout_ratio_p995": 1.411871128460223,
+   "ref_nominal": 1.62,
+   "ref_measured": 1.6821224180178955,
+   "err_nom": -0.12847461206159083,
+   "err_meas": -0.16066089284757246,
+   "verdict_nom": "pass",
+   "verdict_meas": "fail",
+   "flip": true,
+   "overlap_pairs": 0,
+   "max_overlap": 0.0,
+   "admissible": true,
+   "branch": "linear (a<1.7)"
+  },
+  {
+   "wave": "archive_admissible",
+   "case": "adm_a0.5_n2_j0025_s606",
+   "member": "n2_j0025_s606",
+   "jitter": 0.0025,
+   "seed": 606,
+   "aspect_nominal": 0.5,
+   "aspect_measured": 0.5500679498041963,
+   "n_particles": 981,
+   "stop_reason": "at_rest",
+   "runout_ratio_p995": 1.433197976035571,
+   "ref_nominal": 1.62,
+   "ref_measured": 1.6820842577572033,
+   "err_nom": -0.11530989133606728,
+   "err_meas": -0.14796302894688707,
+   "verdict_nom": "pass",
+   "verdict_meas": "pass",
+   "flip": false,
+   "overlap_pairs": 0,
+   "max_overlap": 0.0,
+   "admissible": true,
+   "branch": "linear (a<1.7)"
+  },
+  {
+   "wave": "archive_admissible",
+   "case": "adm_a0.5_n3_j005_s707",
+   "member": "n3_j005_s707",
+   "jitter": 0.005,
+   "seed": 707,
+   "aspect_nominal": 0.5,
+   "aspect_measured": 0.5506683276269391,
+   "n_particles": 981,
+   "stop_reason": "at_rest",
+   "runout_ratio_p995": 1.4714712862917525,
+   "ref_nominal": 1.62,
+   "ref_measured": 1.6828287262574044,
+   "err_nom": -0.09168439117793059,
+   "err_meas": -0.12559652486780926,
+   "verdict_nom": "pass",
+   "verdict_meas": "pass",
+   "flip": false,
+   "overlap_pairs": 0,
+   "max_overlap": 0.0,
+   "admissible": true,
+   "branch": "linear (a<1.7)"
+  },
+  {
+   "wave": "archive_admissible",
+   "case": "adm_a0.5_n4_j005_s808",
+   "member": "n4_j005_s808",
+   "jitter": 0.005,
+   "seed": 808,
+   "aspect_nominal": 0.5,
+   "aspect_measured": 0.5505833110351921,
+   "n_particles": 981,
+   "stop_reason": "at_rest",
+   "runout_ratio_p995": 1.436122776834609,
+   "ref_nominal": 1.62,
+   "ref_measured": 1.6827233056836381,
+   "err_nom": -0.11350445874406856,
+   "err_meas": -0.1465484717636587,
+   "verdict_nom": "pass",
+   "verdict_meas": "pass",
+   "flip": false,
+   "overlap_pairs": 0,
+   "max_overlap": 0.0,
+   "admissible": true,
+   "branch": "linear (a<1.7)"
+  }
+ ],
+ "figures": [
+  "fig_runout_vs_aspect.png",
+  "fig_band_margin.png"
+ ]
+}
