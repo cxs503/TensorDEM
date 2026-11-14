@@ -586,6 +586,37 @@ def _wall_spring(dxi: np.ndarray, v_t: np.ndarray, dt: float, kt: float,
     return f_t
 
 
+def seat_bed_on_grafts(pos, radius: float):
+    """Lift a flat-wall HCP bed so it rests *on* a half-embedded graft monolayer.
+
+    The floor grafts are centred on the wall plane ``z = 0``, so a bulk particle
+    of radius ``r`` can only touch them at centre height ``>= 2 r``; the same
+    holds at the platen.  A bed packed from the plane (flat-wall convention)
+    would therefore start interpenetrating the floor grafts by ``r`` and be
+    pre-stressed before the servo even starts.  Shifting the bed up by ``r``
+    seats the bottom layer on the monolayer without overlap.  Returns a copy;
+    the flat-wall path never calls it, so archived results are unchanged.
+    """
+    import numpy as _np
+
+    seated = _np.array(pos, dtype=float, copy=True)
+    seated[:, 2] += radius
+    return seated
+
+
+def initial_platen_height(pos, radius: float, rough: bool = False) -> float:
+    """Platen height that puts the platen in *geometric contact*, no pre-stress.
+
+    Flat wall: the contact plane is the platen itself, so the platen sits one
+    radius above the top particle centre.  Grafted (rough) wall: the graft
+    spheres are centred on the platen plane, so the bulk can only touch them at
+    centre height ``plate_z - 2 r``; the platen therefore starts one *diameter*
+    above the top layer.
+    """
+    offset = 2.0 * radius if rough else radius
+    return float(pos[:, 2].max() + offset)
+
+
 def graft_lattice(box_width: float, box_depth: float, radius: float,
                   spacing: float = 1.05):
     """Lattice sites of a grafted monolayer, in ``(x, y)``.
@@ -947,7 +978,18 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
         xi_graft_top = xi_graft_bot = np.zeros((n, 2))
 
     target_force = case.normal_stress * area
-    plate_z = float(pos[:, 2].max() + r)
+    # Round 12: the grafted monolayer is a *half-embedded* wall -- its sphere
+    # centres lie on the wall planes (floor z = 0, platen z = plate_z), so a
+    # bulk particle seats one diameter above the plane, not on it.  The
+    # flat-wall initial condition would start the bed pre-overlapped by ~r per
+    # wall, which is what made the round-11 rough runs exhaust the servo
+    # budget.  The bed is therefore lifted by r and the platen placed one
+    # diameter above the top layer; both wall modes then start in geometric
+    # contact, with no pre-stress in the graft contacts.
+    wall_layer_offset = 2.0 * r if rough else r
+    if rough:
+        pos = seat_bed_on_grafts(pos, r)
+    plate_z = initial_platen_height(pos, r, rough)
     plate_vx = 0.0
     plate_vz = 0.0
     series: list[dict] = []
@@ -1020,7 +1062,11 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
         else:
             # grafted monolayers: rigid spheres riding on the platen / floor
             graft_top_x = np.mod(graft_top_x + plate_vx_local * dt, W)
-            gz_top = plate_z - r
+            # graft centres lie *on* the wall plane (floor z = 0, platen
+            # z = plate_z), i.e. the standard half-embedded glued-particle
+            # wall.  Keeping them one radius inside the cell instead lets bulk
+            # particles sink between the grafts and out of the rheometric gap.
+            gz_top = plate_z
             f_tp, fn_top, ftx_top, nc_top = _graft_wall_force(
                 pos, vel, graft_top_x, graft_top_y, gz_top,
                 plate_vx_local, plate_vz_local, xi_graft_top,
@@ -1028,7 +1074,7 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
                 box_width=W, dt=dt)
             force += f_tp
             f_bt, fn_bot, _, nc_bot = _graft_wall_force(
-                pos, vel, graft_bot_x, graft_bot_y, r,
+                pos, vel, graft_bot_x, graft_bot_y, 0.0,
                 0.0, 0.0, xi_graft_bot,
                 kn=kn, kt=kt, gamma_w=gamma_w, mu_w=mu_w, radius=r,
                 box_width=W, dt=dt)
@@ -1051,7 +1097,8 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
         force, torque, fn_sum, _, n_contacts, _ = _step_forces(0.0, plate_vz)
         fn_avg += (fn_sum - fn_avg) * 0.01
         if step % case.servo_stride == 0:
-            n_c = max(1, int(np.count_nonzero(pos[:, 2] + r > plate_z)))
+            n_c = max(1, int(np.count_nonzero(
+                pos[:, 2] + wall_layer_offset > plate_z)))
             delta = case.servo_relax * (fn_avg - target_force) / (kn * n_c)
             delta = max(min(delta, case.servo_max_step_d * d),
                         -case.servo_max_step_d * d)
@@ -1104,7 +1151,8 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
         force, torque, fn_sum, ftx_sum, n_contacts, contacts = _step_forces(plate_vx, plate_vz)
         fn_avg += (fn_sum - fn_avg) * 0.01
         if step % case.servo_stride == 0:
-            n_c = max(1, int(np.count_nonzero(pos[:, 2] + r > plate_z)))
+            n_c = max(1, int(np.count_nonzero(
+                pos[:, 2] + wall_layer_offset > plate_z)))
             delta = case.servo_relax * (fn_avg - target_force) / (kn * n_c)
             delta = max(min(delta, case.servo_max_step_d * d),
                         -case.servo_max_step_d * d)
@@ -1432,7 +1480,8 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
     return result
 
 
-__all__ += ["ServoShearCase", "simulate_servo_shear", "inertial_number"]
+__all__ += ["ServoShearCase", "simulate_servo_shear", "inertial_number",
+            "seat_bed_on_grafts", "initial_platen_height", "graft_lattice"]
 
 
 @dataclass(frozen=True)
