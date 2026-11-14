@@ -50,6 +50,7 @@ SC_LIMIT_GATE = 0.002        # |limit(3 levels) - limit(all levels)|
 sys.path.insert(0, os.path.join(ROOT, "src"))
 from tensordem.deposition_packing import (  # noqa: E402
     extrapolation_selfconsistency, stiffness_limit)
+from tensordem.rcp_references import get_reference  # noqa: E402
 
 
 def reference():
@@ -211,15 +212,41 @@ def main() -> int:
                           "criterion": f"|phi(k_n={kn_prod:g}) - phi(k_n->inf)| "
                                        f"< {STIFF_GATE} ({label})",
                           "got": d, "value": d, "pass": bool(d < STIFF_GATE)})
+    # G12/G13: stiffness limit vs friction-dependent reference
+    # The mu=0 tier is compared against the frictionless RCP reference (0.6366).
+    # The mu=0.1 tier is compared against the mu=0.1 reference (0.6250) from
+    # Pournin et al. (2001), NOT the frictionless reference — comparing a
+    # frictional packing against a frictionless benchmark is a category error.
     for gid, mu, label in (("G12_stiffness_limit_vs_ref", 0.0, "mu=0"),
                            ("G13_stiffness_limit_vs_ref_frictional", 0.1, "mu=0.1")):
         s = stiff.get(mu)
         if s:
-            dev = s["limit"] / phi_ref - 1.0
+            ref_mu = get_reference(mu)
+            dev = s["limit"] / ref_mu.phi_rcp - 1.0
             gates.append({"id": gid,
-                          "criterion": f"|phi(k_n->inf)/phi_ref - 1| < {TOL_REL:.0%} ({label})",
+                          "criterion": f"|phi(k_n->inf)/phi_ref(mu={mu:g}) - 1| "
+                                       f"< {TOL_REL:.0%} ({label}, "
+                                       f"phi_ref={ref_mu.phi_rcp})",
                           "got": s["limit"], "value": abs(dev),
-                          "pass": bool(abs(dev) < TOL_REL)})
+                          "pass": bool(abs(dev) < TOL_REL),
+                          "phi_ref": ref_mu.phi_rcp,
+                          "phi_ref_source": ref_mu.source})
+    # G18: friction-dependent reference comparison for the production value
+    # (not just the extrapolated limit) — this is the gate that directly
+    # answers the ledger acceptance question for each tier.
+    for gid, mu, label in (("G18_production_vs_friction_ref", 0.0, "mu=0"),
+                           ("G18b_production_vs_friction_ref", 0.1, "mu=0.1")):
+        s = stat(mu)
+        if s:
+            ref_mu = get_reference(mu)
+            dev = s[0] / ref_mu.phi_rcp - 1.0
+            gates.append({"id": gid,
+                          "criterion": f"|phi_prod(mu={mu:g})/phi_ref(mu={mu:g}) - 1| "
+                                       f"< {TOL_REL:.0%} (phi_ref={ref_mu.phi_rcp})",
+                          "got": s[0], "value": abs(dev),
+                          "pass": bool(abs(dev) < TOL_REL),
+                          "phi_ref": ref_mu.phi_rcp,
+                          "phi_ref_source": ref_mu.source})
     # leave-one-level-out: with >= 4 k_n levels the extrapolation can be asked
     # to predict a measurement it never saw (three levels fix three parameters,
     # so a three-level fit has no out-of-sample content at all).
@@ -627,23 +654,30 @@ def main() -> int:
     A("")
     A("## 6 Error judgement")
     A("")
+    # Use friction-dependent references for error calculation
+    ref_mu0 = get_reference(0.0)
+    ref_mu01 = get_reference(0.1)
     if frictionless and lowfric:
-        d0 = 100 * (frictionless[0] / phi_ref - 1)
-        d1 = 100 * (lowfric[0] / phi_ref - 1)
+        d0 = 100 * (frictionless[0] / ref_mu0.phi_rcp - 1)
+        d1 = 100 * (lowfric[0] / ref_mu01.phi_rcp - 1)
         A(f"* frictionless tier (k_n = {kn_prod:g}, N = {n_primary}, "
           f"{frictionless[1]} seeds): phi = {frictionless[0]:.5f} +- "
-          f"{frictionless[2]:.5f} vs reference {phi_ref}: **{d0:+.2f} %** -> "
+          f"{frictionless[2]:.5f} vs reference {ref_mu0.phi_rcp} "
+          f"({ref_mu0.source[:40]}...): **{d0:+.2f} %** -> "
           f"{'<' if abs(d0) < 3 else '>'}3 % "
           f"({'满足' if abs(d0) < 3 else '不满足'}).")
         A(f"* low-friction tier (mu = 0.1): phi = {lowfric[0]:.5f} +- "
-          f"{lowfric[2]:.5f}: **{d1:+.2f} %** -> "
+          f"{lowfric[2]:.5f} vs reference {ref_mu01.phi_rcp} "
+          f"({ref_mu01.source[:40]}...): **{d1:+.2f} %** -> "
           f"{'<' if abs(d1) < 3 else '>'}3 % "
           f"({'满足' if abs(d1) < 3 else '不满足'}).")
     for mu, s in sorted(stiff.items()):
-        dev = 100 * (s["limit"] / phi_ref - 1)
+        ref_mu = get_reference(mu)
+        dev = 100 * (s["limit"] / ref_mu.phi_rcp - 1)
         A(f"* hard-sphere limit (mu = {mu:g}, Richardson over "
           f"{s['n_levels']} k_n levels, p = {s['order_used']:.2f}): "
-          f"phi_inf = {s['limit']:.5f}: **{dev:+.2f} %** -> "
+          f"phi_inf = {s['limit']:.5f} vs reference {ref_mu.phi_rcp}: "
+          f"**{dev:+.2f} %** -> "
           f"{'<' if abs(dev) < 3 else '>'}3 % "
           f"({'满足' if abs(dev) < 3 else '不满足'}).")
     for mu, sc in sorted(selfcheck.items()):
