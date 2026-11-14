@@ -1,0 +1,93 @@
+{
+ "sealed_utc": "2026-11-14T08:05:32Z",
+ "repo": "TensorDEM",
+ "mission_id": 19906,
+ "branch": "agent/m19906",
+ "declared_artifact_path": "papers/artifacts/w28/ice-ridge-keel-grounding/dual_convergence.json",
+ "delivered_files": [
+  {
+   "path": "papers/artifacts/w28/ice-ridge-keel-grounding/dual_convergence.json",
+   "sha256": "c346a353441e0265c56526b823e10392538a38734a86db5cd3562e3f53eca361",
+   "git_blob_sha1": "88224fff110cadbbdcfc4a2c46418bd2cf19f6cd",
+   "bytes": 180777
+  },
+  {
+   "path": "papers/artifacts/w28/ice-ridge-keel-grounding/fig1_keel_law.png",
+   "sha256": "b6a61e65c6915a58b0f74975f7f1e6568b896e0a6566904f94f9ce84dff69add",
+   "git_blob_sha1": "2939a843016ebc9d0d9772c4a367041677efc891",
+   "bytes": 72071
+  },
+  {
+   "path": "papers/artifacts/w28/ice-ridge-keel-grounding/fig2_dem_particle_axis.png",
+   "sha256": "807d127b8adc1ed722de3362ee503c056f9b378ad38492a7ca4a0fa3b421f133",
+   "git_blob_sha1": "f940abc92d5711aa8ad4512a635970f646f4e26e",
+   "bytes": 82377
+  },
+  {
+   "path": "papers/artifacts/w28/ice-ridge-keel-grounding/fig3_kerr_reconciliation.png",
+   "sha256": "edf761df3a51fc9066c3fe91272292fc0d8f59bd029a1286773b798779b30fa7",
+   "git_blob_sha1": "c0bafe8f1a0f66f7e30e6cb551b391252389f844",
+   "bytes": 31073
+  },
+  {
+   "path": "scripts/run_w28_dual_convergence.py",
+   "sha256": "b09f27641a855bcfb9fa363f4dd19aaad2656e97252dbe657539684b6c2d22ac",
+   "git_blob_sha1": "957172e6e998fee99086932d3ec8a5d8bf26f513",
+   "bytes": 40941
+  },
+  {
+   "path": "scripts/figures_w28_dual_convergence.py",
+   "sha256": "6724237ff040501cd6648d548cdba59c6890f682058b9691f0b9acac1dca24e6",
+   "git_blob_sha1": "1c5215ba7f525aae6e62cb8256c9fbd31628fd37",
+   "bytes": 6881
+  },
+  {
+   "path": "scripts/seal_w28_artifact.py",
+   "sha256": "ce302b0ec8e22440ffda14886b191b63ef53e520bba6aa28a49de1a513cee859",
+   "git_blob_sha1": "5b76d2c402cb3a812fea87a28d9f73e836f267d8",
+   "bytes": 3426
+  },
+  {
+   "path": "src/tensordem/keel_grounding_coupled.py",
+   "sha256": "2747549c98d4a942ece3f0c8ed795455436e0a8715aa8a878ca0956d715c91d2",
+   "git_blob_sha1": "418fbcd646220ee468e077dacdd212fb512b94ad",
+   "bytes": 26117
+  },
+  {
+   "path": "src/tensordem/keel_foundation_dem.py",
+   "sha256": "b19dc873ea34a5c8d328dbc840a055a2649b8f75b3291eb43f84ba5433102fe7",
+   "git_blob_sha1": "077a6c106ce1a4304ff8c37771191d7d5138835f",
+   "bytes": 21301
+  },
+  {
+   "path": "tests/test_w28_dual_convergence.py",
+   "sha256": "ab230a6fd478452ebf8006e854052ba05cf4af5a6f49a693ddfd42161cc551aa",
+   "git_blob_sha1": "2134a17120397c69aee2c2cde061ffc481447f5d",
+   "bytes": 5989
+  },
+  {
+   "path": "docs/ice_ridge_keel_grounding_dual_convergence.md",
+   "sha256": "46e025dc828854ef2bab615dc63a4ac570fc5d4ed47a7c2c4033f6b4998e99d9",
+   "git_blob_sha1": "6ceed1a2e10d667e5001b4028f6d15ec664c5db6",
+   "bytes": 8539
+  },
+  {
+   "path": "publish_w28_report.py",
+   "sha256": "3af5ec891388ec11273a895b36e4c5f0fc9531738b2ebc4b9843529b0df3e663",
+   "git_blob_sha1": "00f79fe137cb5a48c89ace18313bb3d54e398da8",
+   "bytes": 20514
+  }
+ ],
+ "recovered_from_ref": {
+  "files": [
+   "src/tensordem/ridge_keel_grounding.py",
+   "src/tensordem/keel_foundation_dem.py",
+   "benchmarks/anchors/ice-ridge-keel-grounding.json",
+   "papers/artifacts/w27/ice-ridge-keel-grounding/ridge_keel_anchor.json"
+  ],
+  "ref": "agent/m18963",
+  "commit": "594c334e",
+  "note": "the W27 mission branch (m18963) was never merged into main; the W27 sources and artifact were recovered from that ref so that this study runs from main.  W27 numbers quoted in this artifact come from the recovered ridge_keel_anchor.json (particle GCI 0.3959, mesh GCI 0.000769)"
+ },
+ "check": "delivered artifact sits on the main work tree at the declared path; W27 sources recovered from agent/m18963 (594c334e)"
+}

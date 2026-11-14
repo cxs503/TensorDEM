@@ -1,0 +1,1134 @@
+{
+ "artifact": "papers/artifacts/w27/ice-ridge-keel-grounding/ridge_keel_anchor.json",
+ "mission": "paper-exp-ice-ridge-keel-grounding-1-rework1",
+ "mission_id": 18963,
+ "repo": "TensorDEM",
+ "runner": "native",
+ "generated_utc": "2026-11-13T19:32:31+00:00",
+ "generator": "scripts/run_w27_ridge_keel_grounding.py",
+ "environment": {
+  "python": "3.11.6",
+  "numpy": "2.4.6",
+  "platform": "Linux-6.6.52-1.7.lns23.loongarch64-loongarch64-with-glibc2.38",
+  "nproc": 128
+ },
+ "configuration": {
+  "keel_height_m": 2.0,
+  "cell_ratio": 8.0,
+  "solid_fraction": 0.62,
+  "w0_fraction_of_height": 0.004,
+  "w0_m": 0.008,
+  "particle_counts": [
+   25000,
+   50000,
+   100000
+  ],
+  "footing_width_factors": [
+   0.5,
+   1.0,
+   2.0
+  ],
+  "increments": 6,
+  "steps_per_increment": 300,
+  "kerr_sets": {
+   "soft_shear_layer": {
+    "ei": 80000000.0,
+    "k_upper": 10000000.0,
+    "k_lower": 40000000.0,
+    "shear": 100000000.0
+   },
+   "balanced": {
+    "ei": 100000000.0,
+    "k_upper": 20000000.0,
+    "k_lower": 80000000.0,
+    "shear": 400000000.0
+   },
+   "stiff_thin_layer": {
+    "ei": 200000000.0,
+    "k_upper": 50000000.0,
+    "k_lower": 200000000.0,
+    "shear": 2000000000.0
+   }
+  }
+ },
+ "A_kerr_beam_verification": {
+  "cases": [
+   {
+    "name": "soft_shear_layer",
+    "foundation": {
+     "k_upper_N_per_m3": 10000000.0,
+     "k_lower_N_per_m3": 40000000.0,
+     "shear_N_per_m": 100000000.0,
+     "k_series_N_per_m3": 8000000.0,
+     "c_m2": 2.0,
+     "g2_N_per_m": 20000000.0,
+     "sqrt_c_m": 1.4142135623730951
+    },
+    "ei_N_m2": 80000000.0,
+    "patch_half_width_m": 2.0,
+    "line_load_N_per_m": 100000.0,
+    "w_centre_analytic_m": 0.00833030371046299,
+    "w_centre_fem_m": 0.008330343099895983,
+    "max_rel_dev_deflection_absx_le_5a": 4.728451009968926e-06,
+    "max_rel_dev_reaction_absx_le_5a": 0.6648349784157663,
+    "reaction_analytic_N_per_m": 409999.0612125316,
+    "reaction_exact_N_per_m": 400000.0,
+    "reaction_fem_N_per_m": 400000.00032057567,
+    "applied_total_N_per_m": 400000.0,
+    "lambda_right": [
+     [
+      -0.6805773887134825,
+      -0.0
+     ],
+     [
+      -0.41651035946040194,
+      -0.39379394428033565
+     ],
+     [
+      -0.41651035946040194,
+      0.39379394428033565
+     ]
+    ]
+   },
+   {
+    "name": "balanced",
+    "foundation": {
+     "k_upper_N_per_m3": 20000000.0,
+     "k_lower_N_per_m3": 80000000.0,
+     "shear_N_per_m": 400000000.0,
+     "k_series_N_per_m3": 16000000.0,
+     "c_m2": 4.0,
+     "g2_N_per_m": 80000000.0,
+     "sqrt_c_m": 2.0
+    },
+    "ei_N_m2": 100000000.0,
+    "patch_half_width_m": 2.0,
+    "line_load_N_per_m": 100000.0,
+    "w_centre_analytic_m": 0.004436306892359286,
+    "w_centre_fem_m": 0.004436349214079791,
+    "max_rel_dev_deflection_absx_le_5a": 9.539854102009818e-06,
+    "max_rel_dev_reaction_absx_le_5a": 0.6577996828261795,
+    "reaction_analytic_N_per_m": 409999.848280124,
+    "reaction_exact_N_per_m": 400000.0,
+    "reaction_fem_N_per_m": 399999.9995303317,
+    "applied_total_N_per_m": 400000.0,
+    "lambda_right": [
+     [
+      -0.4785606708568996,
+      -0.45661830473177245
+     ],
+     [
+      -0.4785606708568996,
+      0.45661830473177245
+     ],
+     [
+      -0.4571213417137993,
+      -0.0
+     ]
+    ]
+   },
+   {
+    "name": "stiff_thin_layer",
+    "foundation": {
+     "k_upper_N_per_m3": 50000000.0,
+     "k_lower_N_per_m3": 200000000.0,
+     "shear_N_per_m": 2000000000.0,
+     "k_series_N_per_m3": 40000000.0,
+     "c_m2": 8.0,
+     "g2_N_per_m": 400000000.0,
+     "sqrt_c_m": 2.8284271247461903
+    },
+    "ei_N_m2": 200000000.0,
+    "patch_half_width_m": 2.0,
+    "line_load_N_per_m": 100000.0,
+    "w_centre_analytic_m": 0.0018001340975992326,
+    "w_centre_fem_m": 0.0018001597598546332,
+    "max_rel_dev_deflection_absx_le_5a": 1.4255746521755467e-05,
+    "max_rel_dev_reaction_absx_le_5a": 0.655274633932443,
+    "reaction_analytic_N_per_m": 410000.32603209803,
+    "reaction_exact_N_per_m": 400000.0,
+    "reaction_fem_N_per_m": 399999.9999809266,
+    "applied_total_N_per_m": 400000.0,
+    "lambda_right": [
+     [
+      -0.5047666107593264,
+      -0.4927262893378662
+     ],
+     [
+      -0.5047666107593264,
+      0.4927262893378662
+     ],
+     [
+      -0.31777307899570556,
+      -0.0
+     ]
+    ]
+   }
+  ],
+  "mesh_refinement": [
+   {
+    "n_elements": 75,
+    "w_centre_m": 0.004446991994301146,
+    "max_deflection_m": 0.004446991994301146
+   },
+   {
+    "n_elements": 150,
+    "w_centre_m": 0.004439022101293465,
+    "max_deflection_m": 0.004439022101293465
+   },
+   {
+    "n_elements": 300,
+    "w_centre_m": 0.004436984473207026,
+    "max_deflection_m": 0.004436984473207026
+   },
+   {
+    "n_elements": 600,
+    "w_centre_m": 0.004436476212362705,
+    "max_deflection_m": 0.004436476212362705
+   }
+  ],
+  "mesh_gci": {
+   "fine": 0.004446991994301146,
+   "medium": 0.004439022101293465,
+   "coarse": 0.004436984473207026,
+   "r": 2.0,
+   "observed_order_p": 1.9676696059878025,
+   "gci_fine_rel": 0.0007694856718687933,
+   "relative_change_fine_medium": 0.0017921986407653384
+  },
+  "max_rel_dev_all_cases": 1.4255746521755467e-05
+ },
+ "B_bonded_keel_dem": {
+  "summary": [
+   {
+    "n_particles_requested": 25000,
+    "n_particles": 24960,
+    "n_bonds": 59901,
+    "coordination": 4.799759615384615,
+    "spacing_m": 0.038444982626156074,
+    "wall_time_s": 96.57221031188965,
+    "k_subgrade_N_per_m3": 1606802913.2459693,
+    "k_subgrade_small_strain_N_per_m3": 3061296019.706735,
+    "G_skeleton_Pa": 4650669658.5445385,
+    "resistance_N_per_m": {
+     "0.5": 21136296.34079505,
+     "1": 34200584.66075971,
+     "2": 65265522.71069045
+    },
+    "n_footing_particles": {
+     "0.5": 54,
+     "1": 107,
+     "2": 213
+    }
+   },
+   {
+    "n_particles_requested": 50000,
+    "n_particles": 50065,
+    "n_bonds": 121094,
+    "coordination": 4.837471287326475,
+    "spacing_m": 0.027184707917553962,
+    "wall_time_s": 198.43130040168762,
+    "k_subgrade_N_per_m3": 2300212950.751634,
+    "k_subgrade_small_strain_N_per_m3": 4356189977.687082,
+    "G_skeleton_Pa": 6604853717.032319,
+    "resistance_N_per_m": {
+     "0.5": 25630384.076228026,
+     "1": 46900688.678430215,
+     "2": 88844013.19961232
+    },
+    "n_footing_particles": {
+     "0.5": 76,
+     "1": 150,
+     "2": 302
+    }
+   },
+   {
+    "n_particles_requested": 100000,
+    "n_particles": 99720,
+    "n_bonds": 240423,
+    "coordination": 4.821961492178099,
+    "spacing_m": 0.019222491313078037,
+    "wall_time_s": 449.31694650650024,
+    "k_subgrade_N_per_m3": 3766389908.255057,
+    "k_subgrade_small_strain_N_per_m3": 7079519282.991416,
+    "G_skeleton_Pa": 10848782961.27619,
+    "resistance_N_per_m": {
+     "0.5": 40339261.49333275,
+     "1": 74432405.71744865,
+     "2": 143402487.64047876
+    },
+    "n_footing_particles": {
+     "0.5": 108,
+     "1": 213,
+     "2": 423
+    }
+   }
+  ],
+  "full": [
+   {
+    "n_particles_requested": 25000,
+    "confined": {
+     "test": "confined_compression",
+     "settlements_m": [
+      0.0013333333333333333,
+      0.0026666666666666666,
+      0.004,
+      0.005333333333333333,
+      0.006666666666666667,
+      0.008
+     ],
+     "pressures_Pa": [
+      4081728.026275647,
+      6954670.677108031,
+      9298792.330727011,
+      11327668.317196036,
+      13140629.27974939,
+      14793747.447915444
+     ],
+     "k_subgrade_small_strain_N_per_m3": 3061296019.706735,
+     "k_subgrade_N_per_m3": 1606802913.2459693,
+     "relax": {
+      "increments": 6,
+      "steps_per_increment": 300,
+      "residual_final": 46627.66128352487,
+      "residual_history": [
+       23237.820676682182,
+       33576.246756221284,
+       38879.26162872327,
+       42060.83710899556,
+       44656.62893018292,
+       46627.66128352487
+      ]
+     },
+     "sample": {
+      "n_particles": 24960,
+      "n_bonds": 59901,
+      "coordination": 4.799759615384615,
+      "length_m": 16.0,
+      "height_m": 2.0,
+      "spacing_m": 0.038444982626156074,
+      "mean_radius_m": 0.01590310712192301,
+      "solid_fraction": 0.62,
+      "kPa_per_bond": 871039.2393262255,
+      "seed": 7,
+      "ice_young_Pa": 1000000000.0,
+      "cutoff": 1.06,
+      "jitter": 0.12,
+      "cell_ratio": 8.0
+     }
+    },
+    "shear": {
+     "test": "simple_shear",
+     "gammas": [
+      0.0006666666666666666,
+      0.0013333333333333333,
+      0.002,
+      0.0026666666666666666,
+      0.0033333333333333335,
+      0.004
+     ],
+     "taus_Pa": [
+      3100446.439029692,
+      5288650.107022356,
+      7073412.2004414145,
+      8618824.945694065,
+      10001233.897961425,
+      11263290.571256902
+     ],
+     "G_skeleton_Pa": 4650669658.5445385,
+     "G_skeleton_fit_Pa": 2421316490.5373955,
+     "G_foundation_shear_N_per_m": 9301339317.089077,
+     "sample": {
+      "n_particles": 24960,
+      "n_bonds": 59901,
+      "coordination": 4.799759615384615,
+      "length_m": 16.0,
+      "height_m": 2.0,
+      "spacing_m": 0.038444982626156074,
+      "mean_radius_m": 0.01590310712192301,
+      "solid_fraction": 0.62,
+      "kPa_per_bond": 871039.2393262255,
+      "seed": 7,
+      "ice_young_Pa": 1000000000.0,
+      "cutoff": 1.06,
+      "jitter": 0.12,
+      "cell_ratio": 8.0
+     }
+    },
+    "footings": {
+     "0.5": {
+      "test": "footing",
+      "footing_width_m": 1.0,
+      "settlements_m": [
+       0.0013333333333333333,
+       0.0026666666666666666,
+       0.004,
+       0.005333333333333333,
+       0.006666666666666667,
+       0.008
+      ],
+      "resistance_N_per_m": [
+       5346384.7970512705,
+       9335076.420129534,
+       12724615.573643956,
+       15754580.639568467,
+       18537250.14356595,
+       21136296.34079505
+      ],
+      "secant_stiffness_N_per_m2": 4009788597.788453,
+      "n_footing_particles": 54,
+      "sample": {
+       "n_particles": 24960,
+       "n_bonds": 59901,
+       "coordination": 4.799759615384615,
+       "length_m": 16.0,
+       "height_m": 2.0,
+       "spacing_m": 0.038444982626156074,
+       "mean_radius_m": 0.01590310712192301,
+       "solid_fraction": 0.62,
+       "kPa_per_bond": 871039.2393262255,
+       "seed": 7,
+       "ice_young_Pa": 1000000000.0,
+       "cutoff": 1.06,
+       "jitter": 0.12,
+       "cell_ratio": 8.0
+      }
+     },
+     "1": {
+      "test": "footing",
+      "footing_width_m": 2.0,
+      "settlements_m": [
+       0.0013333333333333333,
+       0.0026666666666666666,
+       0.004,
+       0.005333333333333333,
+       0.006666666666666667,
+       0.008
+      ],
+      "resistance_N_per_m": [
+       8967067.049807006,
+       15495055.244580189,
+       20949864.85087432,
+       25765629.06783176,
+       30144660.782941617,
+       34200584.66075971
+      ],
+      "secant_stiffness_N_per_m2": 6725300287.355255,
+      "n_footing_particles": 107,
+      "sample": {
+       "n_particles": 24960,
+       "n_bonds": 59901,
+       "coordination": 4.799759615384615,
+       "length_m": 16.0,
+       "height_m": 2.0,
+       "spacing_m": 0.038444982626156074,
+       "mean_radius_m": 0.01590310712192301,
+       "solid_fraction": 0.62,
+       "kPa_per_bond": 871039.2393262255,
+       "seed": 7,
+       "ice_young_Pa": 1000000000.0,
+       "cutoff": 1.06,
+       "jitter": 0.12,
+       "cell_ratio": 8.0
+      }
+     },
+     "2": {
+      "test": "footing",
+      "footing_width_m": 4.0,
+      "settlements_m": [
+       0.0013333333333333333,
+       0.0026666666666666666,
+       0.004,
+       0.005333333333333333,
+       0.006666666666666667,
+       0.008
+      ],
+      "resistance_N_per_m": [
+       17466564.255681414,
+       29971390.42284173,
+       40342710.43265709,
+       49446557.49090947,
+       57679930.23535555,
+       65265522.71069045
+      ],
+      "secant_stiffness_N_per_m2": 13099923191.76106,
+      "n_footing_particles": 213,
+      "sample": {
+       "n_particles": 24960,
+       "n_bonds": 59901,
+       "coordination": 4.799759615384615,
+       "length_m": 16.0,
+       "height_m": 2.0,
+       "spacing_m": 0.038444982626156074,
+       "mean_radius_m": 0.01590310712192301,
+       "solid_fraction": 0.62,
+       "kPa_per_bond": 871039.2393262255,
+       "seed": 7,
+       "ice_young_Pa": 1000000000.0,
+       "cutoff": 1.06,
+       "jitter": 0.12,
+       "cell_ratio": 8.0
+      }
+     }
+    }
+   },
+   {
+    "n_particles_requested": 50000,
+    "confined": {
+     "test": "confined_compression",
+     "settlements_m": [
+      0.0013333333333333333,
+      0.0026666666666666666,
+      0.004,
+      0.005333333333333333,
+      0.006666666666666667,
+      0.008
+     ],
+     "pressures_Pa": [
+      5808253.303582776,
+      9921733.905446667,
+      13278039.967191702,
+      16181947.34871152,
+      18776688.56212946,
+      21143006.30859367
+     ],
+     "k_subgrade_small_strain_N_per_m3": 4356189977.687082,
+     "k_subgrade_N_per_m3": 2300212950.751634,
+     "relax": {
+      "increments": 6,
+      "steps_per_increment": 300,
+      "residual_final": 44952.47929863076,
+      "residual_history": [
+       24491.80039932324,
+       32090.37657719593,
+       36393.72729209438,
+       40240.48966909537,
+       42939.863879353055,
+       44952.47929863076
+      ]
+     },
+     "sample": {
+      "n_particles": 50065,
+      "n_bonds": 121094,
+      "coordination": 4.837471287326475,
+      "length_m": 16.0,
+      "height_m": 2.0,
+      "spacing_m": 0.027184707917553962,
+      "mean_radius_m": 0.011241606671672667,
+      "solid_fraction": 0.62,
+      "kPa_per_bond": 871516.3949591102,
+      "seed": 7,
+      "ice_young_Pa": 1000000000.0,
+      "cutoff": 1.06,
+      "jitter": 0.12,
+      "cell_ratio": 8.0
+     }
+    },
+    "shear": {
+     "test": "simple_shear",
+     "gammas": [
+      0.0006666666666666666,
+      0.0013333333333333333,
+      0.002,
+      0.0026666666666666666,
+      0.0033333333333333335,
+      0.004
+     ],
+     "taus_Pa": [
+      4403235.811354879,
+      7523250.802595294,
+      10070393.466217024,
+      12276031.535126915,
+      14248754.896806464,
+      16049579.278423026
+     ],
+     "G_skeleton_Pa": 6604853717.032319,
+     "G_skeleton_fit_Pa": 3454880043.7236047,
+     "G_foundation_shear_N_per_m": 13209707434.064638,
+     "sample": {
+      "n_particles": 50065,
+      "n_bonds": 121094,
+      "coordination": 4.837471287326475,
+      "length_m": 16.0,
+      "height_m": 2.0,
+      "spacing_m": 0.027184707917553962,
+      "mean_radius_m": 0.011241606671672667,
+      "solid_fraction": 0.62,
+      "kPa_per_bond": 871516.3949591102,
+      "seed": 7,
+      "ice_young_Pa": 1000000000.0,
+      "cutoff": 1.06,
+      "jitter": 0.12,
+      "cell_ratio": 8.0
+     }
+    },
+    "footings": {
+     "0.5": {
+      "test": "footing",
+      "footing_width_m": 1.0,
+      "settlements_m": [
+       0.0013333333333333333,
+       0.0026666666666666666,
+       0.004,
+       0.005333333333333333,
+       0.006666666666666667,
+       0.008
+      ],
+      "resistance_N_per_m": [
+       6568402.198183335,
+       11396562.552617792,
+       15486793.690120567,
+       19141244.96095019,
+       22496996.64847978,
+       25630384.076228026
+      ],
+      "secant_stiffness_N_per_m2": 4926301648.637502,
+      "n_footing_particles": 76,
+      "sample": {
+       "n_particles": 50065,
+       "n_bonds": 121094,
+       "coordination": 4.837471287326475,
+       "length_m": 16.0,
+       "height_m": 2.0,
+       "spacing_m": 0.027184707917553962,
+       "mean_radius_m": 0.011241606671672667,
+       "solid_fraction": 0.62,
+       "kPa_per_bond": 871516.3949591102,
+       "seed": 7,
+       "ice_young_Pa": 1000000000.0,
+       "cutoff": 1.06,
+       "jitter": 0.12,
+       "cell_ratio": 8.0
+      }
+     },
+     "1": {
+      "test": "footing",
+      "footing_width_m": 2.0,
+      "settlements_m": [
+       0.0013333333333333333,
+       0.0026666666666666666,
+       0.004,
+       0.005333333333333333,
+       0.006666666666666667,
+       0.008
+      ],
+      "resistance_N_per_m": [
+       12471745.663324,
+       21435481.047765233,
+       28885129.927833907,
+       35442841.31632584,
+       41395103.031193845,
+       46900688.678430215
+      ],
+      "secant_stiffness_N_per_m2": 9353809247.493,
+      "n_footing_particles": 150,
+      "sample": {
+       "n_particles": 50065,
+       "n_bonds": 121094,
+       "coordination": 4.837471287326475,
+       "length_m": 16.0,
+       "height_m": 2.0,
+       "spacing_m": 0.027184707917553962,
+       "mean_radius_m": 0.011241606671672667,
+       "solid_fraction": 0.62,
+       "kPa_per_bond": 871516.3949591102,
+       "seed": 7,
+       "ice_young_Pa": 1000000000.0,
+       "cutoff": 1.06,
+       "jitter": 0.12,
+       "cell_ratio": 8.0
+      }
+     },
+     "2": {
+      "test": "footing",
+      "footing_width_m": 4.0,
+      "settlements_m": [
+       0.0013333333333333333,
+       0.0026666666666666666,
+       0.004,
+       0.005333333333333333,
+       0.006666666666666667,
+       0.008
+      ],
+      "resistance_N_per_m": [
+       23958206.371708,
+       41058416.02953259,
+       55159556.66175659,
+       67489667.3173038,
+       78613366.0811368,
+       88844013.19961232
+      ],
+      "secant_stiffness_N_per_m2": 17968654778.781,
+      "n_footing_particles": 302,
+      "sample": {
+       "n_particles": 50065,
+       "n_bonds": 121094,
+       "coordination": 4.837471287326475,
+       "length_m": 16.0,
+       "height_m": 2.0,
+       "spacing_m": 0.027184707917553962,
+       "mean_radius_m": 0.011241606671672667,
+       "solid_fraction": 0.62,
+       "kPa_per_bond": 871516.3949591102,
+       "seed": 7,
+       "ice_young_Pa": 1000000000.0,
+       "cutoff": 1.06,
+       "jitter": 0.12,
+       "cell_ratio": 8.0
+      }
+     }
+    }
+   },
+   {
+    "n_particles_requested": 100000,
+    "confined": {
+     "test": "confined_compression",
+     "settlements_m": [
+      0.0013333333333333333,
+      0.0026666666666666666,
+      0.004,
+      0.005333333333333333,
+      0.006666666666666667,
+      0.008
+     ],
+     "pressures_Pa": [
+      9439359.043988554,
+      16147617.48458123,
+      21638163.277457595,
+      26398453.679284956,
+      30658561.467839647,
+      34548625.09902227
+     ],
+     "k_subgrade_small_strain_N_per_m3": 7079519282.991416,
+     "k_subgrade_N_per_m3": 3766389908.255057,
+     "relax": {
+      "increments": 6,
+      "steps_per_increment": 300,
+      "residual_final": 65654.94040436854,
+      "residual_history": [
+       37721.280257614795,
+       52369.3868015917,
+       58815.25169257659,
+       62175.025208275736,
+       64230.59704449045,
+       65654.94040436854
+      ]
+     },
+     "sample": {
+      "n_particles": 99720,
+      "n_bonds": 240423,
+      "coordination": 4.821961492178099,
+      "length_m": 16.0,
+      "height_m": 2.0,
+      "spacing_m": 0.019222491313078037,
+      "mean_radius_m": 0.00794654586505871,
+      "solid_fraction": 0.62,
+      "kPa_per_bond": 870680.7503965829,
+      "seed": 7,
+      "ice_young_Pa": 1000000000.0,
+      "cutoff": 1.06,
+      "jitter": 0.12,
+      "cell_ratio": 8.0
+     }
+    },
+    "shear": {
+     "test": "simple_shear",
+     "gammas": [
+      0.0006666666666666666,
+      0.0013333333333333333,
+      0.002,
+      0.0026666666666666666,
+      0.0033333333333333335,
+      0.004
+     ],
+     "taus_Pa": [
+      7232521.974184126,
+      12378933.029350689,
+      16595289.62333191,
+      20254452.250509184,
+      23531908.08402628,
+      26526780.023398735
+     ],
+     "G_skeleton_Pa": 10848782961.27619,
+     "G_skeleton_fit_Pa": 5725259058.740445,
+     "G_foundation_shear_N_per_m": 21697565922.55238,
+     "sample": {
+      "n_particles": 99720,
+      "n_bonds": 240423,
+      "coordination": 4.821961492178099,
+      "length_m": 16.0,
+      "height_m": 2.0,
+      "spacing_m": 0.019222491313078037,
+      "mean_radius_m": 0.00794654586505871,
+      "solid_fraction": 0.62,
+      "kPa_per_bond": 870680.7503965829,
+      "seed": 7,
+      "ice_young_Pa": 1000000000.0,
+      "cutoff": 1.06,
+      "jitter": 0.12,
+      "cell_ratio": 8.0
+     }
+    },
+    "footings": {
+     "0.5": {
+      "test": "footing",
+      "footing_width_m": 1.0,
+      "settlements_m": [
+       0.0013333333333333333,
+       0.0026666666666666666,
+       0.004,
+       0.005333333333333333,
+       0.006666666666666667,
+       0.008
+      ],
+      "resistance_N_per_m": [
+       10624156.234166259,
+       18331371.632312175,
+       24768505.587366454,
+       30440753.196879037,
+       35585689.809303544,
+       40339261.49333275
+      ],
+      "secant_stiffness_N_per_m2": 7968117175.624695,
+      "n_footing_particles": 108,
+      "sample": {
+       "n_particles": 99720,
+       "n_bonds": 240423,
+       "coordination": 4.821961492178099,
+       "length_m": 16.0,
+       "height_m": 2.0,
+       "spacing_m": 0.019222491313078037,
+       "mean_radius_m": 0.00794654586505871,
+       "solid_fraction": 0.62,
+       "kPa_per_bond": 870680.7503965829,
+       "seed": 7,
+       "ice_young_Pa": 1000000000.0,
+       "cutoff": 1.06,
+       "jitter": 0.12,
+       "cell_ratio": 8.0
+      }
+     },
+     "1": {
+      "test": "footing",
+      "footing_width_m": 2.0,
+      "settlements_m": [
+       0.0013333333333333333,
+       0.0026666666666666666,
+       0.004,
+       0.005333333333333333,
+       0.006666666666666667,
+       0.008
+      ],
+      "resistance_N_per_m": [
+       19587725.393210776,
+       33848741.82780972,
+       45748436.68583137,
+       56216838.04851278,
+       65694174.125191435,
+       74432405.71744865
+      ],
+      "secant_stiffness_N_per_m2": 14690794044.908083,
+      "n_footing_particles": 213,
+      "sample": {
+       "n_particles": 99720,
+       "n_bonds": 240423,
+       "coordination": 4.821961492178099,
+       "length_m": 16.0,
+       "height_m": 2.0,
+       "spacing_m": 0.019222491313078037,
+       "mean_radius_m": 0.00794654586505871,
+       "solid_fraction": 0.62,
+       "kPa_per_bond": 870680.7503965829,
+       "seed": 7,
+       "ice_young_Pa": 1000000000.0,
+       "cutoff": 1.06,
+       "jitter": 0.12,
+       "cell_ratio": 8.0
+      }
+     },
+     "2": {
+      "test": "footing",
+      "footing_width_m": 4.0,
+      "settlements_m": [
+       0.0013333333333333333,
+       0.0026666666666666666,
+       0.004,
+       0.005333333333333333,
+       0.006666666666666667,
+       0.008
+      ],
+      "resistance_N_per_m": [
+       38677970.03641161,
+       66403327.11807804,
+       89235736.60887314,
+       109129413.35382214,
+       127010072.24817862,
+       143402487.64047876
+      ],
+      "secant_stiffness_N_per_m2": 29008477527.308712,
+      "n_footing_particles": 423,
+      "sample": {
+       "n_particles": 99720,
+       "n_bonds": 240423,
+       "coordination": 4.821961492178099,
+       "length_m": 16.0,
+       "height_m": 2.0,
+       "spacing_m": 0.019222491313078037,
+       "mean_radius_m": 0.00794654586505871,
+       "solid_fraction": 0.62,
+       "kPa_per_bond": 870680.7503965829,
+       "seed": 7,
+       "ice_young_Pa": 1000000000.0,
+       "cutoff": 1.06,
+       "jitter": 0.12,
+       "cell_ratio": 8.0
+      }
+     }
+    }
+   }
+  ],
+  "relaxation_adequacy": {
+   "resistance_vs_steps": {
+    "150": 46692177.16589363,
+    "300": 34200584.66075971,
+    "600": 25390834.81056283
+   },
+   "rel_change_300_to_600": 0.3469657423997709
+  }
+ },
+ "C_keel_to_kerr_reduction": {
+  "k_subgrade_N_per_m3": 4318578137.377784,
+  "confined_pressure_settlement": {
+   "settlements_m": [
+    0.0013333333333333333,
+    0.0026666666666666666,
+    0.004,
+    0.005333333333333333,
+    0.006666666666666667,
+    0.008
+   ],
+   "pressures_Pa": [
+    9439359.043988554,
+    16147617.48458123,
+    21638163.277457595,
+    26398453.679284956,
+    30658561.467839647,
+    34548625.09902227
+   ]
+  },
+  "identified_sqrt_G2K_N_per_m": 361914774.6444051,
+  "identified_G2_N_per_m": 30329960.449770223,
+  "kerr_foundation": {
+   "k_upper_N_per_m3": 8637156274.755568,
+   "k_lower_N_per_m3": 8637156274.755568,
+   "shear_N_per_m": 60659920.89954045,
+   "k_series_N_per_m3": 4318578137.377784,
+   "c_m2": 0.0035115678685145204,
+   "g2_N_per_m": 30329960.449770223,
+   "sqrt_c_m": 0.05925848351514339
+  },
+  "foundation_note": "homogeneous-layer reduction k_u = k_l = 2K, so G = 2 G2 and c = G/(k_u+k_l) = G/(4K); the k_u/k_l split is NOT identifiable from a footing test because R = K w0 b + 2 w0 sqrt(G2 K) does not depend on c",
+  "footing_predictions": {
+   "0.5": {
+    "footing_width_m": 1.0,
+    "dem_N_per_m": 40339261.49333275,
+    "kerr_N_per_m": 40339261.49333275,
+    "rel_dev": 0.0,
+    "role": "identification"
+   },
+   "1": {
+    "footing_width_m": 2.0,
+    "dem_N_per_m": 74432405.71744865,
+    "kerr_N_per_m": 74887886.59235501,
+    "rel_dev": 0.0061193894046015765,
+    "role": "validation"
+   },
+   "2": {
+    "footing_width_m": 4.0,
+    "dem_N_per_m": 143402487.64047876,
+    "kerr_N_per_m": 143985136.79039955,
+    "rel_dev": 0.004063033769550347,
+    "role": "validation"
+   }
+  },
+  "linear_structure": {
+   "slope_N_per_m2": 34373070.4651153,
+   "intercept_N_per_m": 5854220.531817678,
+   "slope_over_K_w0": 0.994918621699017,
+   "intercept_over_2w0_sqrtG2K": 1.01098050942547,
+   "max_rel_residual_vs_linear": 0.001171219184291305,
+   "n_widths": 3
+  },
+  "footing_selfcheck": {
+   "law_inside_rel_err": 2.1565490885872273e-16,
+   "law_outside_rel_err": 2.1565490885872273e-16,
+   "edge_jump_rel_err": 0.0,
+   "integral_rel_err": 1.83498447387847e-08,
+   "integral_N_per_m": 74887887.9665361,
+   "closed_form_N_per_m": 74887886.59235501,
+   "all_pass": true
+  }
+ },
+ "particle_gci": {
+  "fine": 74432405.71744865,
+  "medium": 46900688.678430215,
+  "coarse": 34200584.66075971,
+  "r": 2.0,
+  "observed_order_p": 1.116254274494158,
+  "gci_fine_rel": 0.3959133505738992,
+  "relative_change_fine_medium": 0.36988885114812803,
+  "levels_particles_fine_to_coarse": [
+   100000,
+   50000,
+   25000
+  ]
+ },
+ "criteria": [
+  {
+   "id": "C1",
+   "criterion": "verbatim ISO 19906:2019 A.8 clause registered with matching sha256, or honest WITHHELD + operator-layer checks",
+   "verdict": "WITHHELD",
+   "pass": null,
+   "detail": "primary standard text not present in this environment; operator layer machine-checked all_pass=True (see anchor file)"
+  },
+  {
+   "id": "C2",
+   "criterion": "Kerr analytic deflection vs independent FEM < 3% (max relative deviation, |x| <= 5a)",
+   "verdict": "PASS",
+   "pass": true,
+   "value": 1.4255746521755467e-05
+  },
+  {
+   "id": "C3",
+   "criterion": "bonded keel vs Kerr analytic resistance < 15% at the predeclared validation footing width b = 1.0 H_k (Kerr layer identified from the confined test + one narrow footing b = 0.5 H_k)",
+   "verdict": "PASS",
+   "pass": true,
+   "value": 0.0061193894046015765,
+   "identification_width_m": 1.0,
+   "validation_width_m": 2.0,
+   "secondary_validation_rel_dev": {
+    "2": 0.004063033769550347
+   }
+  },
+  {
+   "id": "C4",
+   "criterion": "particle-count (50k/100k) and mesh refinement GCI < 5%",
+   "verdict": "FAIL",
+   "pass": false,
+   "particle_gci": {
+    "fine": 74432405.71744865,
+    "medium": 46900688.678430215,
+    "coarse": 34200584.66075971,
+    "r": 2.0,
+    "observed_order_p": 1.116254274494158,
+    "gci_fine_rel": 0.3959133505738992,
+    "relative_change_fine_medium": 0.36988885114812803,
+    "levels_particles_fine_to_coarse": [
+     100000,
+     50000,
+     25000
+    ]
+   },
+   "mesh_gci": {
+    "fine": 0.004446991994301146,
+    "medium": 0.004439022101293465,
+    "coarse": 0.004436984473207026,
+    "r": 2.0,
+    "observed_order_p": 1.9676696059878025,
+    "gci_fine_rel": 0.0007694856718687933,
+    "relative_change_fine_medium": 0.0017921986407653384
+   }
+  }
+ ],
+ "iso_19906_operator_layer": {
+  "inputs": {
+   "p0": 1.0,
+   "a0": 1.0,
+   "n": 0.5
+  },
+  "anchor_point": {
+   "p_at_A0": 1.0,
+   "target_p0": 1.0,
+   "abs_err": 0.0
+  },
+  "loglog_slope": {
+   "values": [
+    -0.5,
+    -0.5,
+    -0.5000000000000001,
+    -0.49999999999999994,
+    -0.49999999999999994
+   ],
+   "target": -0.5,
+   "max_abs_err": 1.1102230246251565e-16
+  },
+  "ratio_identity": {
+   "computed": 0.9999999999999999,
+   "target": 1.0,
+   "abs_err": 1.1102230246251565e-16
+  },
+  "composition_identity": {
+   "computed": 0.9999999999999999,
+   "predicted": 1.0,
+   "rel_err": 1.1102230246251565e-16
+  },
+  "force_loglog_slope": {
+   "values": [
+    0.5000000000000001,
+    0.5,
+    0.5,
+    0.5000000000000001,
+    0.5000000000000001
+   ],
+   "target": 0.5,
+   "max_abs_err": 1.1102230246251565e-16
+  },
+  "inversion_roundtrip": {
+   "n_true": 0.5,
+   "n_recovered": 0.5,
+   "rel_err": 0.0
+  },
+  "n_to_zero_limit": {
+   "values": [
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "target": 1.0,
+   "max_abs_err": 0.0
+  },
+  "scale_in_p0": {
+   "rel_err": 0.0
+  },
+  "dimension_closure": {
+   "p0_unit": "Pa = N/m^2",
+   "A0_unit": "m^2",
+   "n_unit": "dimensionless",
+   "F_unit": "N",
+   "consistent": true
+  },
+  "all_pass": true
+ },
+ "wall_time_s": 2.715585470199585,
+ "provenance": {
+  "command": "PYTHONPATH=src python scripts/run_w27_ridge_keel_grounding.py",
+  "inputs": {
+   "source_modules": {
+    "src/tensordem/ridge_keel_grounding.py": "5dc28748bc1b40c5365548cb247bda4e4c4a43cd230e89eeeaddab69f34281e7",
+    "src/tensordem/keel_foundation_dem.py": "163ee316ce27a916b55cf510fc57fdb535ddb00bc649d8aacb0c9ea778e7f6fe"
+   }
+  },
+  "seeds": {
+   "dem": 7
+  }
+ },
+ "limitations": [
+  "The keel is idealised as a bonded lattice with frozen topology (small-strain regime, strain ~4e-3); bond breakage, contact creation and block rotation are not represented.",
+  "Plane strain, periodic lateral boundaries, unit thickness; the specimen is a representative patch, not a full 3-D ridge.",
+  "The Kerr reduction fixes k_u = k_l = 2K because a footing test cannot separate the two Winkler moduli (R depends on K and G2 only).",
+  "The bonded-lattice bulk shear modulus (from the simple-shear test) is stiff relative to the footing edge term; the shear parameter used for the prediction is the one identified from the narrow footing, not the bulk shear test.",
+  "ISO 19906:2019 A.8 values are WITHHELD: no clause text is available in this environment, so no standard number enters any computation."
+ ]
+}
