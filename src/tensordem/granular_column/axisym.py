@@ -307,9 +307,23 @@ def _inertial_stats(case: AxisymCase, time_hist: np.ndarray, history: dict) -> d
 
 def simulate_axisymmetric_column(case: AxisymCase, *, return_positions: bool = True,
                                  max_steps: int | None = None,
-                                 progress: bool = False) -> dict:
-    """Integrate one axisymmetric collapse and return runout, kinematics, ledger."""
-    pos, mat = build_axisymmetric_column(case)
+                                 progress: bool = False,
+                                 initial_positions: np.ndarray | None = None) -> dict:
+    """Integrate one axisymmetric collapse and return runout, kinematics, ledger.
+
+    ``initial_positions`` replaces the HCP lattice by a prepared packing (e.g. a
+    pluviated deposit, :mod:`tensordem.granular_column.pluviation`); every other
+    part of the protocol -- contact law, floor, material, timing, metrics -- is
+    unchanged, so a deposited column and a lattice column are compared like for
+    like.  ``None`` (default) keeps the historical HCP path bit for bit.
+    """
+    if initial_positions is None:
+        pos, mat = build_axisymmetric_column(case)
+    else:
+        pos = np.array(initial_positions, dtype=np.float64, copy=True)
+        if pos.ndim != 2 or pos.shape[1] != 3 or pos.shape[0] < 1:
+            raise AxisymError("initial_positions must be an (N, 3) array")
+        mat = case.material()
     n = pos.shape[0]
     mass, inertia = mat.mass, mat.inertia
     dt = float(case.dt) if case.dt else mat.timestep * case.dt_scale
