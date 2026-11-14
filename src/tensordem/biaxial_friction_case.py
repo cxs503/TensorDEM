@@ -99,7 +99,7 @@ QUICK_CONFIG: dict[str, Any] = {
     "strain_target": 0.05,
     "snapshot_strain": 0.01,
     "servo_gain": 3.0e-4,
-    "servo_velocity_limit": 2.0,
+    "servo_velocity_limit": 0.5,
     "radius": 0.75,
     "freeze_bond_fraction": 0.35,
 }
