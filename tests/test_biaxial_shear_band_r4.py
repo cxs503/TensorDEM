@@ -209,3 +209,31 @@ def test_run_cached_is_spawn_picklable():
 
     assert pickle.dumps(r4._run_cached) is not None
     assert r4._run_cached.__module__ == r4.__name__
+
+
+def test_cache_key_separates_quick_from_full(tmp_path):
+    """A --quick smoke run must not be resumable into a full run (m20774)."""
+    import importlib
+
+    mod = importlib.import_module("benchmarks.biaxial_shear_band.run_r4_cumulative_ensemble")
+    importlib.reload(mod)
+    cfg_full = {"name": "anchor_s53", "axis": "anchor", "seed": 53,
+                "confining_stress": 100.0e3, "quick": False}
+    cfg_quick = {**cfg_full, "quick": True}
+    # Write a quick artefact under the quick key; the full key must stay empty.
+    import json as _json
+    (tmp_path / "anchor_s53_quick.json").write_text(_json.dumps({"name": "anchor_s53"}))
+    # _run_cached with resume=True on the full config must NOT return the quick file.
+    # We only check the path logic by monkeypatching _run_one to a sentinel.
+    sentinel = {"name": "anchor_s53", "sentinel": True}
+    orig = mod._run_one
+    mod._run_one = lambda config: sentinel
+    try:
+        got = mod._run_cached(cfg_full, str(tmp_path), resume=True)
+    finally:
+        mod._run_one = orig
+    assert got is sentinel, "full run must not reuse the quick cache entry"
+    assert (tmp_path / "anchor_s53.json").exists()
+    # And the quick config must read back its own entry.
+    got_q = mod._run_cached(cfg_quick, str(tmp_path), resume=True)
+    assert got_q == {"name": "anchor_s53"}
