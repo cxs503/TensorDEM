@@ -3,6 +3,17 @@
 **Mission:** m17413 | **Anchor:** XVAL-DEM-ELASTIC-PLASTIC-ROLLING-SPRING-KR-225-MU
 **Date:** 2026-11-13 | **Status:** ✅ PASS (both rules < 15% error)
 
+> **ERRATUM (m20524, 2026-11-14):** the oscillation-frequency formula in §2.2
+> (`ω_s = √((1 + 1/f) · k_r / m)`) was dimensionally inconsistent (units of
+> m/s, not 1/s) and the absolute frequencies in §3.3 were therefore unusable
+> (under-predicted by a factor `1/(R·√4.9) ≈ 45.2` at this harness's
+> `R = 0.01 m`).  Corrected to `ω_s = √(k_r / (m R² (1 + f)))` =
+> `√(5 k_r / (7 m R²))` for a solid sphere; §3.3 now carries the corrected
+> values (regenerated from the patched
+> `scripts/xval_jiang2005_rolling_spring.py`).  The ratio conclusions
+> (`∝ √μ_r`) and all steady-state results are unaffected.  Flagged in
+> `docs/xval_jiang2005_kr_rule_audit.md` §5.3 (m18522); closed here.
+
 ## 1. Problem & Reference
 
 **Reference:** Jiang, M.J., Yu, H.-S., Harris, D. (2005). A novel discrete model for granular material incorporating rolling resistance. *Computers and Geotechnics* 32, 340-357. doi:10.1016/j.compgeo.2005.06.001
@@ -32,7 +43,7 @@ Single solid sphere on inclined plane, integrated with:
 
 - **Steady-state rolling acceleration:** `a = g(sin θ - μ_r cos θ) / (1 + I/mR²)` where `I/mR² = 2/5`
 - **Static threshold:** `θ_c = arctan(μ_r)`
-- **Oscillation frequency:** `ω_s = √((1 + 1/f) · k_r / m)` where `f = 2/5`
+- **Oscillation frequency:** `ω_s = √(k_r / (m R² (1 + f)))` where `f = I/(mR²) = 2/5` (solid sphere), i.e. `ω_s = √(5 k_r / (7 m R²))` — the no-slip coupling `x = Rθ` makes the effective inertia `I + mR²`
 
 ### 2.3 Four Studies
 
@@ -66,13 +77,17 @@ Both rules give identical steady-state acceleration (errors < 0.01%), as expecte
 
 | μ_r | TensorDEM freq (Hz) | Jiang-2005 freq (Hz) | Ratio | √μ_r |
 |---|---|---|---|---|
-| 0.05 | 2.30 | 0.51 | 0.22 | 0.22 |
-| 0.10 | 3.25 | 1.03 | 0.32 | 0.32 |
-| 0.20 | 4.60 | 2.06 | 0.45 | 0.45 |
-| 0.30 | 5.63 | 3.09 | 0.55 | 0.55 |
-| 0.50 | 7.27 | 5.14 | 0.71 | 0.71 |
+| 0.05 | 103.92 | 23.24 | 0.2236 | 0.2236 |
+| 0.10 | 146.96 | 46.47 | 0.3162 | 0.3162 |
+| 0.20 | 207.83 | 92.95 | 0.4472 | 0.4472 |
+| 0.30 | 254.54 | 139.42 | 0.5477 | 0.5477 |
+| 0.50 | 328.61 | 232.36 | 0.7071 | 0.7071 |
 
 The frequency ratio matches `√(μ_r)` as expected from `ω_s ∝ √(k_r)` and `k_r_jg / k_r_td = μ_r`.
+Values are the analytic closed form `√(k_r/(mR²(1+f)))` evaluated at the harness
+parameters (`k_n = 2×10⁴ N/m`, `R = 0.01 m`, `ρ = 900 kg/m³`); the pre-erratum
+table (2.30/0.51 … 7.27/5.14 Hz) came from the superseded formula and is
+retired, not merely rescaled.
 
 ### 3.4 Torque Buildup (μ_r = 0.2, ω = 1.0 rad/s)
 
@@ -120,7 +135,7 @@ Both rules correctly identify the static/rolling transition at `θ_c = arctan(μ
 |---|---|---|---|
 | Steady-state acceleration | < 0.01% | < 0.01% | ✅ Both pass |
 | Static threshold | Within grid resolution | Within grid resolution | ✅ Both pass |
-| Oscillation frequency | Analytic match | Analytic match | ✅ Both pass |
+| Oscillation frequency (corrected, m20524) | Closed form `√(k_r/(mR²(1+f)))` | Closed form `√(k_r/(mR²(1+f)))` | ✅ Both pass (identical by construction; ratio `√μ_r` to <0.01%) |
 | Torque buildup | Consistent with k_r | Consistent with k_r | ✅ Both pass |
 
 **Conclusion:** Both parameterizations are physically correct. The choice depends on whether transient dynamics fidelity (TensorDEM, stiffer spring) or computational efficiency (Jiang-2005, softer spring) is prioritized.
