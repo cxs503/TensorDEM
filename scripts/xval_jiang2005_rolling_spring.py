@@ -139,9 +139,15 @@ def study_acceleration_parity(mu_r_values: Sequence[float]) -> list[dict[str, An
 def study_transient_dynamics(mu_r_values: Sequence[float]) -> list[dict[str, Any]]:
     """Compare transient oscillation characteristics.
 
-    The rolling spring stiffness k_r sets the oscillation frequency:
-        omega_s = sqrt((1 + 1/f) * k_r / m)
-    where f = I/(mR^2) = 2/5 for a solid sphere.
+    The rolling spring stiffness k_r sets the oscillation frequency.  For a
+    sphere rolling without slip, translation and rotation are coupled
+    (x = R theta), so the elastic rolling spring M_r = -k_r theta gives
+        (I + m R^2) theta_ddot = -k_r theta
+        =>  omega_s = sqrt( k_r / (m R^2 (1 + f)) )
+    where f = I/(mR^2) = 2/5 for a solid sphere, i.e. sqrt(5 k_r / (7 m R^2)).
+    (The earlier note used sqrt((1+1/f) k_r / m), which is dimensionally
+    inconsistent -- it has units of m/s, not 1/s -- and is superseded here;
+    see docs/xval_jiang2005_kr_rule_audit.md section 5.3.)
 
     Jiang-2005's softer spring (mu_r^2 vs mu_r) gives lower frequency and
     smaller oscillation amplitude.
@@ -171,7 +177,7 @@ def study_transient_dynamics(mu_r_values: Sequence[float]) -> list[dict[str, Any
 
             # Analytic oscillation frequency
             k_r_val = config.k_r
-            omega_s_analytic = math.sqrt((1 + 1/f_inertia) * k_r_val / mass)
+            omega_s_analytic = math.sqrt(k_r_val / (mass * RADIUS ** 2 * (1.0 + f_inertia)))
             freq_analytic_hz = omega_s_analytic / (2 * math.pi)
 
             # Period of oscillation
