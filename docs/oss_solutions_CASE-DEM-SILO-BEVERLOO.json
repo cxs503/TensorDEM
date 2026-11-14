@@ -1,0 +1,92 @@
+{
+  "feature_slug": "CASE-DEM-SILO-BEVERLOO",
+  "anchor": "CASE-DEM-SILO-BEVERLOO",
+  "case_pool_entry": {
+    "id": "DEM-SILO-BEVERLOO",
+    "reference": "Beverloo et al. 1961, Chem. Eng. Sci. 15, 260-269",
+    "tolerance_relative": 0.10
+  },
+  "decision": "复用仓内 tensordem.silo_discharge（REAL 3-D DEM）+ verification.granular.hopper_discharge（vectorized kernel）；关键改进：接触刚度 kn 从 1e5 提至 1e6（m15259 验证值），消除软颗粒导致的 +25% 流率高估",
+  "transfer_vocabulary": [
+    "adapt",
+    "reference",
+    "reuse"
+  ],
+  "candidates": [
+    {
+      "name": "tensordem/silo_discharge.py",
+      "transfer": "adapt",
+      "role": "主路径：平底料仓 DEM 卸料，含 settle+plug 协议与 steady_rate 分析",
+      "evidence": "benchmarks/m20055_beverloo/run_case.py: D4 算例 +25% 误差（kn=1e5 偏软）"
+    },
+    {
+      "name": "verification/granular/hopper_discharge/kernel.py",
+      "transfer": "reuse",
+      "role": "备选路径：向量化 hopper 内核，m15259 用 kn=1e6 达到 -0.4% 误差",
+      "evidence": "benchmarks/beverloo_hopper_m15259.py: case C 误差 -0.4%"
+    },
+    {
+      "name": "benchmarks/m20055_beverloo/ref_beverloo_1961.json",
+      "transfer": "reference",
+      "role": "机器可读 Beverloo 系数（C=0.58, k=1.4），零手抄",
+      "evidence": "Beverloo et al. 1961, Eq.(4) p.265"
+    },
+    {
+      "name": "Beverloo et al. 1961 文献标准做法",
+      "transfer": "reference",
+      "role": "方法谱系锚点：W = C·ρ_b·√g·(D-kd)^(5/2)，球状颗粒 C∈[0.55,0.60], k∈[1.2,1.6]",
+      "evidence": "DOI: 10.1016/0009-2509(61)80059-4"
+    },
+    {
+      "name": "Nedderman 1992 教科书 Granular Material 第 5 章",
+      "transfer": "reference",
+      "role": "料仓流动理论综述：Beverloo 律的适用范围与修正",
+      "evidence": "Nedderman, R.M. (1992) Statics and Kinematics of Granular Materials, Cambridge Univ. Press, §5.3"
+    },
+    {
+      "name": "前轮 m20055 实现",
+      "transfer": "adapt",
+      "role": "已有完整算例矩阵（D4/D5/D6/μ 扫描/dt 收敛），但 kn=1e5 导致 +25% 系统误差",
+      "evidence": "docs/CASE-DEM-SILO-BEVERLOO_m20055.md: D4 +25.0% FAIL"
+    },
+    {
+      "name": "前轮 m20562",
+      "transfer": "reject-as-is",
+      "role": "honest-FAIL，fail_stage 未标、failure_reason 未留",
+      "evidence": "任务榜记录"
+    }
+  ],
+  "external_anchor": [
+    "Beverloo, W.A., Leniger, H.A. & van de Velde, J. (1961) The flow of granular solids through orifices, Chemical Engineering Science 15(3-4), 260-269. DOI: 10.1016/0009-2509(61)80059-4",
+    "Nedderman, R.M. (1992) Statics and Kinematics of Granular Materials, Cambridge University Press, §5.3 Silo discharge",
+    "Janssen, H.A. (1895) Versuche über Getreidedruck in Silozellen, Zeitschrift des Vereines Deutscher Ingenieure 39, 1045-1049",
+    "Zhang, Q. et al. (2020) DEM study of granular flow through an orifice, Powder Technology 360, 1085-1096",
+    "Mankoc, C. et al. (2007) The flow rate of granular materials through an orifice, Granular Matter 9, 419-425"
+  ],
+  "migration_plan": [
+    "将 silo_discharge 默认 kn 从 1e5 提至 1e6（m15259 验证值），或至少在 Beverloo 算例中显式指定 kn=1e6",
+    "保持 m20055 的 settled+plug 协议（无序床+孔口堵塞压实）",
+    "运行完整算例矩阵 D4/D5/D6 + μ 扫描 + dt 收敛",
+    "稳态流率用质量分位 0.2-0.8 区间测量（剔除启动瞬态与尾部抽空）",
+    "程序化注入报告数字（零手抄），误差判据 <10%",
+    "生成流律图（log-log W vs D-kd）与误差条形图"
+  ],
+  "measured": {
+    "gate": [],
+    "overall_passed": false,
+    "note": "集群计算中（cj2798, cj2800）；本地快速测试确认 kn=1e5 导致 +160% 误差（小算例），kn 提升是核心修复"
+  },
+  "artifacts": [
+    "benchmarks/m20055_beverloo/run_case.py",
+    "benchmarks/m20055_beverloo/analyse.py",
+    "benchmarks/m20055_beverloo/ref_beverloo_1961.json",
+    "benchmarks/m20055_beverloo/render_doc.py",
+    "benchmarks/beverloo_hopper_m15259.py",
+    "src/tensordem/silo_discharge.py",
+    "src/verification/granular/hopper_discharge/kernel.py",
+    "docs/CASE-DEM-SILO-BEVERLOO_m20055.md",
+    "benchmarks/m20585_beverloo_kn_sensitivity/run_kn_sweep.py"
+  ],
+  "db_write_status": "blocked: no INSERT privilege on oss_solutions for local role; record kept as in-repo JSON for the ingester",
+  "date": "2026-11-14"
+}
