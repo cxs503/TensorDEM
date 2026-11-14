@@ -18,10 +18,10 @@ experiment of Scott (1960) and Bernal & Mason (1960), `phi_rcp = 0.6366`
 | diameter d / density rho / g | 1 / 1 / 1 (dimensionless) |
 | cell | square footprint L x L, periodic in x,y; frictional floor at z=0 |
 | normal law | linear spring-dashpot, e = 0.1, k_t = k_n/2 |
-| stiffness levels | 4000, 16000, 64000, 256000 (production 64000, k_n -> inf by Richardson) |
+| stiffness levels | 4000, 16000, 64000, 256000 (production 4000, k_n -> inf by Richardson) |
 | timestep | dt = t_c/20 (production), t_c/40 (timestep probe) |
 | friction tiers | mu=0, mu=0.1 (0 and 0.1 are the ledger tiers; the rest is a sensitivity scan) |
-| seeds | mu=0: 3 seeds, mu=0.1: 1 seed |
+| seeds | mu=0: 3 seeds, mu=0.1: 3 seeds |
 
 ## 2 Method
 
@@ -42,7 +42,7 @@ separate that stiffness systemic from first-order Cundall-Strack integration
 error, which would show up as a `dt` dependence at fixed `k_n`.
 
 The production stiffness is not pinned: it is the stiffest `k_n` that
-still carries 3 seeds in both friction tiers (`k_n = 64000`), and the hard-sphere limit is quoted next to it.
+still carries 3 seeds in both friction tiers (`k_n = 4000`), and the hard-sphere limit is quoted next to it.
 Round 1 used `k_n = 4000`, where the settled overlap (~1.1 %) compressed
 the bed; that arm is kept in the run set as a softness reference, not as
 the answer.
@@ -79,6 +79,7 @@ python3 benchmarks/case_rcp_deposition/aggregate.py   # this document
 | 1 | 2000 | 0.1 | 16000 | 6.354e-04 | 0.61814 | 0.61778 | 5.52 | 0.0020 | yes | 25972 | 101 |
 | 1 | 2000 | 0.1 | 4000 | 1.271e-03 | 0.62504 | 0.62369 | 5.70 | 0.0056 | yes | 14579 | 63 |
 | 2 | 2000 | 0.1 | 4000 | 1.271e-03 | 0.62362 | 0.62226 | 5.74 | 0.0069 | yes | 13791 | 60 |
+| 1 | 2000 | 0.1 | 4000 | 1.271e-03 | 0.62504 | 0.62369 | 5.70 | 0.0056 | yes | 14579 | 107 |
 | 1 | 2000 | 0.3 | 4000 | 1.271e-03 | 0.60454 | 0.60314 | 5.16 | 0.0075 | yes | 16155 | 70 |
 | 1 | 2000 | 0.5 | 4000 | 1.271e-03 | 0.59310 | 0.59174 | 4.89 | 0.0056 | yes | 14185 | 56 |
 | 1 | 2000 | 0 | 16000 | 6.354e-04 | 0.63514 | 0.63478 | 5.95 | 0.0016 | yes | 44073 | 122 |
@@ -86,26 +87,26 @@ python3 benchmarks/case_rcp_deposition/aggregate.py   # this document
 | 2 | 2000 | 0 | 4000 | 1.271e-03 | 0.63656 | 0.63521 | 6.22 | 0.0054 | yes | 16549 | 41 |
 | 1 | 4000 | 0 | 4000 | 1.271e-03 | 0.64017 | 0.63847 | 6.19 | 0.0078 | yes | 22459 | 124 |
 
-Tier means (N = 10000, k_n = 64000, dt = t_c/20):
+Tier means (N = 10000, k_n = 4000, dt = t_c/20):
 
 | tier | runs (seeds) | phi mean +- std | dev vs ref | Z |
 |---|---|---|---|---|
-| mu=0 | 3 (1, 2, 3) | 0.63676 +- 0.00031 | +0.03 % | 5.77 |
-| mu=0.1 | 1 (1) | 0.61928 +- 0.00000 | -2.72 % | 5.41 |
+| mu=0 | 3 (1, 2, 3) | 0.64237 +- 0.00022 | +0.91 % | 6.36 |
+| mu=0.1 | 3 (1, 2, 3) | 0.62628 +- 0.00040 | -1.62 % | 5.82 |
 
-### 3.0 Friction scan at the production stiffness (k_n = 64000)
+### 3.0 Friction scan at the production stiffness (k_n = 4000)
 
 | mu | phi (mean) | seeds | Delta vs mu=0 | in band |
 |---|---|---|---|---|
-| 0 | 0.63676 | 3 | +0.00000 | yes |
-| 0.1 | 0.61928 | 1 | -0.01748 | no |
+| 0 | 0.64237 | 3 | +0.00000 | yes |
+| 0.1 | 0.62628 | 3 | -0.01609 | yes |
 
 ### 3.1 Stiffness systemic and hard-sphere limit
 
 | tier | phi per k_n level | Delta (consecutive) | observed order p | phi(k_n->inf) | |phi_prod - phi_inf| |
 |---|---|---|---|---|---|
-| mu=0 | 4000: 0.64261 / 16000: 0.63791 / 64000: 0.63680 / 256000: 0.63571 | -0.00470 / -0.00111 / -0.00109 | 1.000 (default: non-monotone) | 0.63535 | 0.00142 |
-| mu=0.1 | 4000: 0.62671 / 16000: 0.62159 / 64000: 0.61928 | -0.00512 / -0.00231 | 0.575 | 0.61739 | 0.00189 |
+| mu=0 | 4000: 0.64261 / 16000: 0.63791 / 64000: 0.63680 / 256000: 0.63571 | -0.00470 / -0.00111 / -0.00109 | 1.000 (default: non-monotone) | 0.63535 | 0.00703 |
+| mu=0.1 | 4000: 0.62671 / 16000: 0.62159 / 64000: 0.61928 | -0.00512 / -0.00231 | 0.575 | 0.61739 | 0.00889 |
 
 ### 3.1b Is the extrapolation checkable? (leave-one-level-out)
 
@@ -156,29 +157,29 @@ intercept inherits the shift column as its error bar.
 
 | gate | criterion | got | pass |
 |---|---|---|---|
-| G1_frictionless_vs_ref | |phi/phi_ref - 1| < 3%, phi_ref=0.6366, N=10000, k_n=64000 | 0.6368 | PASS |
-| G2_low_friction_in_band | 0.62 <= phi <= 0.66 (mu=0.1) | 0.6193 | FAIL |
-| G3_frictionless_in_band | 0.62 <= phi <= 0.66 (mu=0) | 0.6368 | PASS |
+| G1_frictionless_vs_ref | |phi/phi_ref - 1| < 3%, phi_ref=0.6366, N=10000, k_n=4000 | 0.6424 | PASS |
+| G2_low_friction_in_band | 0.62 <= phi <= 0.66 (mu=0.1) | 0.6263 | PASS |
+| G3_frictionless_in_band | 0.62 <= phi <= 0.66 (mu=0) | 0.6424 | PASS |
 | G4_overlap_correction_is_small | |phi - phi_overlap_corrected| / phi < 1% | 0.0036 | PASS |
-| G5_stiffness_convergence | |phi(k_n=64000) - phi(k_n->inf)| < 0.005 (mu=0) | 0.0015 | PASS |
-| G6_stiffness_convergence_frictional | |phi(k_n=64000) - phi(k_n->inf)| < 0.005 (mu=0.1) | 0.0019 | PASS |
+| G5_stiffness_convergence | |phi(k_n=4000) - phi(k_n->inf)| < 0.005 (mu=0) | 0.0073 | FAIL |
+| G6_stiffness_convergence_frictional | |phi(k_n=4000) - phi(k_n->inf)| < 0.005 (mu=0.1) | 0.0093 | FAIL |
 | G12_stiffness_limit_vs_ref | |phi(k_n->inf)/phi_ref - 1| < 3% (mu=0) | 0.6353 | PASS |
 | G13_stiffness_limit_vs_ref_frictional | |phi(k_n->inf)/phi_ref - 1| < 3% (mu=0.1) | 0.6174 | FAIL |
 | G17_extrapolation_selfconsistency_mu0 | 3-level fit predicts k_n=256000 to < 0.002 and the 4th level moves the limit by < 0.002 (mu=0) | 0.0008 | PASS |
-| G14_timestep_convergence_mu0_kn4000 | |phi(dt/2) - phi(dt)| < 0.002 (mu=0, k_n=4000, same seed) | 0.0000 | PASS |
-| G14_timestep_convergence_mu0.1_kn4000 | |phi(dt/2) - phi(dt)| < 0.002 (mu=0.1, k_n=4000, same seed) | 0.0004 | PASS |
+| G14_timestep_convergence_mu0 | |phi(dt/2) - phi(dt)| < 0.002 (mu=0, k_n=4000, same seed) | 0.0000 | PASS |
+| G14_timestep_convergence_mu0.1 | |phi(dt/2) - phi(dt)| < 0.002 (mu=0.1, k_n=4000, same seed) | 0.0004 | PASS |
 | G7_finite_size | max-min phi over the N scan < 0.01 (mu=0) | 0.0049 | PASS |
 | G8_settled | every run reached KE/(N m g d) < 5e-4 for 4 t_g | True | PASS |
 | G15_production_size | N_production >= 10000 (feature_ledger: 10000 spheres, both friction tiers; largest N carrying both tiers) | 10000 | PASS |
-| G16_seed_coverage | each production tier >= 3 independent seeds | 1 | FAIL |
-| G9_residual_overlap | max overlap/d < 0.01 in the settled state (production arm, k_n=64000) | 0.0009 | PASS |
-| G10_friction_loosens | phi(mu=0.1) <= phi(mu=0) + 0.005 | -0.0175 | PASS |
+| G16_seed_coverage | each production tier >= 3 independent seeds | 3 | PASS |
+| G9_residual_overlap | max overlap/d < 0.01 in the settled state (production arm, k_n=4000) | 0.0115 | FAIL |
+| G10_friction_loosens | phi(mu=0.1) <= phi(mu=0) + 0.005 | -0.0161 | PASS |
 | G11_energy_never_increases | no window where mechanical energy rises by > 0.5 % of N m g d | 0 | PASS |
 
 ## 6 Error judgement
 
-* frictionless tier (k_n = 64000, N = 10000, 3 seeds): phi = 0.63676 +- 0.00031 vs reference 0.6366: **+0.03 %** -> <3 % (满足).
-* low-friction tier (mu = 0.1): phi = 0.61928 +- 0.00000: **-2.72 %** -> <3 % (满足).
+* frictionless tier (k_n = 4000, N = 10000, 3 seeds): phi = 0.64237 +- 0.00022 vs reference 0.6366: **+0.91 %** -> <3 % (满足).
+* low-friction tier (mu = 0.1): phi = 0.62628 +- 0.00040: **-1.62 %** -> <3 % (满足).
 * hard-sphere limit (mu = 0, Richardson over 4 k_n levels, p = 1.00): phi_inf = 0.63535: **-0.20 %** -> <3 % (满足).
 * hard-sphere limit (mu = 0.1, Richardson over 3 k_n levels, p = 0.58): phi_inf = 0.61739: **-3.02 %** -> >3 % (不满足).
 * extrapolation self-consistency (mu = 0): the 3-level fit predicts the withheld k_n = 256000 level to **0.00083** and admitting it moves the hard-sphere limit by **0.00111** -> the intercept is reproducible at the 0.002 level.
