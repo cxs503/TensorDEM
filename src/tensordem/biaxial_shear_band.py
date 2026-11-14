@@ -405,10 +405,26 @@ def run_biaxial_shear_band(*, confining_stress: float = 100.0e3,
                            servo_gain: float = 1.0e-4,
                            servo_velocity_limit: float = 2.0,
                            wall_friction: float | None = None,
+                           lateral_control: str = "servo",
                            material_overrides: dict[str, Any] | None = None,
                            record_snapshots: bool = False,
                            ) -> dict[str, Any]:
-    """Run one constant-confining-pressure biaxial test and measure its band.
+    """Run one biaxial test (constant pressure or constant volume) and measure its band.
+
+    ``lateral_control`` selects the lateral boundary condition of the shear
+    phase:
+
+    ``"servo"``  (legacy) the lateral walls servo to ``confining_stress``.
+    ``"isochoric"``  the servo is released after consolidation and both lateral
+        walls are driven kinematically so that ``width * height`` stays at its
+        consolidation value (``v_lateral = -0.5 * strain_rate * width``).  This
+        is the standard constant-volume critical-state test in the DEM
+        literature (e.g. Wood 1990; Thornton 2000): it removes the servo from
+        the measurement loop entirely, so the stress path cannot be corrupted
+        by servo rate limits, and the critical state is approached as a stress
+        *ratio* plateau ``q / p`` rather than as a fixed confining pressure.
+        The lateral stress then becomes an output (measured from the wall
+        forces), not a prescribed value.
 
     ``strain_rate`` (1/s) is applied on the *current* height, so the axial
     strain rate is constant; the implied inertial number is reported so the
@@ -421,6 +437,9 @@ def run_biaxial_shear_band(*, confining_stress: float = 100.0e3,
     default because the snapshots are not JSON-serialisable and are ~0.5 MB
     each.
     """
+    if lateral_control not in ("servo", "isochoric"):
+        raise ValueError(
+            f"lateral_control must be 'servo' or 'isochoric', got {lateral_control!r}")
     overrides = dict(material_overrides or {})
     overrides.setdefault("particle_radius", float(radius))
     material = RidgeMaterial(**overrides)
@@ -454,19 +473,33 @@ def run_biaxial_shear_band(*, confining_stress: float = 100.0e3,
     for _step in range(max_steps):
         left, right, bottom, top = assembly.planes
         height = float(top.point[1] - bottom.point[1])
-        # The lateral servo reads its pressure as force / (servo_width * thickness),
-        # so ``servo_width`` must track the *current* specimen height.  Leaving it
-        # at the value set at specimen build time makes the servo regulate the
-        # initial-height-referenced stress, and the true confining pressure then
-        # drifts as 1/(1 - eps_axial): at eps_axial = 0.33 the specimen sits under
-        # 1.49 sigma_3 instead of sigma_3 (defect found in m20304, case
-        # CASE-DEM-BIAXIAL-FRICTION: measured 174 kPa against a 100 kPa target).
-        for _lateral in (0, 1):
-            plane = assembly.planes[_lateral]
-            if (plane.servo_stress is not None
-                    and abs(plane.servo_width - height) > 1e-12):
-                assembly.planes[_lateral] = replace(
-                    plane, servo_width=max(height, 1e-9))
+        width_now = float(right.point[0] - left.point[0])
+        if lateral_control == "servo":
+            # The lateral servo reads its pressure as force / (servo_width * thickness),
+            # so ``servo_width`` must track the *current* specimen height.  Leaving it
+            # at the value set at specimen build time makes the servo regulate the
+            # initial-height-referenced stress, and the true confining pressure then
+            # drifts as 1/(1 - eps_axial): at eps_axial = 0.33 the specimen sits under
+            # 1.49 sigma_3 instead of sigma_3 (defect found in m20304, case
+            # CASE-DEM-BIAXIAL-FRICTION: measured 174 kPa against a 100 kPa target).
+            for _lateral in (0, 1):
+                plane = assembly.planes[_lateral]
+                if (plane.servo_stress is not None
+                        and abs(plane.servo_width - height) > 1e-12):
+                    assembly.planes[_lateral] = replace(
+                        plane, servo_width=max(height, 1e-9))
+        else:
+            # isochoric shear: volume-preserving lateral walls.
+            #   V = W * H = const  ->  dW/dt = W * strain_rate  (H shrinks at
+            #   strain_rate * H, so the walls must open to compensate).
+            # Both lateral normals point *into* the specimen, so an outward
+            # motion is a negative normal velocity of magnitude dW/dt / 2.
+            v_lateral = -0.5 * float(strain_rate) * width_now
+            for _lateral in (0, 1):
+                plane = assembly.planes[_lateral]
+                if plane.servo_stress is not None:
+                    plane = replace(plane, servo_stress=None)
+                assembly.planes[_lateral] = replace(plane, velocity=v_lateral)
         assembly.planes[3] = replace(top, velocity=float(strain_rate * height))
         out = assembly.step(dt)
         assembly.last_plane_forces = out["plane_forces"]
@@ -493,12 +526,25 @@ def run_biaxial_shear_band(*, confining_stress: float = 100.0e3,
         else:                                            # pragma: no cover
             sigma_v_internal = float("nan")
             sigma_h_internal = float("nan")
+        # Finite-strain (logarithmic) measure of the same increments.  The
+        # small-strain sum ``eps_a + eps_lat`` is only an isochoric indicator to
+        # first order: at eps_a = 0.3 an exactly volume-preserving cell reports
+        # eps_v(small) = -0.13, which would fail an isochoric gate for a purely
+        # kinematic reason.  ``ln(H0/H) + ln(W0/W)`` is identically zero when
+        # ``W * H = W0 * H0``, so the critical-state gate must be evaluated on
+        # this measure for the constant-volume test.
+        axial_log = math.log(height0 / max(height, 1e-12))
+        lateral_log = math.log(width0 / max(width, 1e-12))
         history.append({"axial_strain": strain, "sigma_v": sigma_v,
                         "sigma_h": sigma_h, "deviator": sigma_v - sigma_h,
                         "sigma_v_internal": sigma_v_internal,
                         "sigma_h_internal": sigma_h_internal,
                         "deviator_internal": sigma_v_internal - sigma_h_internal,
-                        "volumetric_strain": strain + e_lat})
+                        "volumetric_strain": strain + e_lat,
+                        "axial_strain_log": axial_log,
+                        "volumetric_strain_log": axial_log + lateral_log,
+                        "mean_stress": 0.5 * (sigma_v + sigma_h),
+                        "stress_ratio": (sigma_v - sigma_h) / max(0.5 * (sigma_v + sigma_h), 1e-12)})
         if strain + 1e-12 >= next_snapshot:
             next_snapshot += snapshot_strain
             window = (float(left.point[0]) + wall_margin_diameters * diameter,
@@ -619,7 +665,10 @@ def run_biaxial_shear_band(*, confining_stress: float = 100.0e3,
         "theory_relative_error": {k: (angle - v) / v for k, v in theory.items()},
         "broken_bonds": int(assembly.broken_bonds),
         "stress_path": hist,
-        "note": ("plane-strain biaxial, constant confining pressure, "
-                 "top platen displacement driven; gravity neglected"),
+        "note": ("plane-strain biaxial, "
+                 + ("constant confining pressure (servo walls)" if lateral_control == "servo"
+                    else "constant volume (kinematic volume-preserving walls)")
+                 + ", top platen displacement driven; gravity neglected"),
+        "lateral_control": lateral_control,
         "snapshots": snapshots,
     }

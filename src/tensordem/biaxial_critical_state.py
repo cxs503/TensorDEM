@@ -126,6 +126,8 @@ class CriticalStateResult:
     thresholds: dict[str, float] = field(default_factory=dict)
     peak_phi_deg: float = float("nan")
     peak_strain: float = float("nan")
+    strain_measure: str = "small"
+    boundary_control: str = "servo"
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -146,6 +148,8 @@ class CriticalStateResult:
             "thresholds": dict(self.thresholds),
             "peak_phi_deg": self.peak_phi_deg,
             "peak_strain": self.peak_strain,
+            "strain_measure": self.strain_measure,
+            "boundary_control": self.boundary_control,
         }
 
 
@@ -153,6 +157,8 @@ def critical_state_from_stress_path(
     stress_path: dict[str, Sequence[float]],
     *,
     sigma3_target: float | None = None,
+    strain_measure: str = "small",
+    boundary_control: str = "servo",
     min_strain: float = DEFAULT_MIN_STRAIN,
     window_fraction: float = DEFAULT_WINDOW_FRACTION,
     vol_tolerance: float = DEFAULT_VOL_TOLERANCE,
@@ -168,12 +174,40 @@ def critical_state_from_stress_path(
     state is taken as the **last** ``window_fraction`` of the record above
     ``min_strain`` -- a declared rule fixed before the run, so the window is not
     chosen to fit the data.
+
+    ``strain_measure`` selects the strain measure used for the isochoric gate:
+
+    ``"small"``  ``eps_a + eps_lat`` (engineering strain, first-order only);
+    ``"log"``    ``ln(H0/H) + ln(W0/W)``, which is *identically* zero for an
+        exactly volume-preserving cell.  Required for the constant-volume test:
+        at ``eps_a = 0.3`` a perfectly isochoric cell reports
+        ``eps_v(small) = -0.13``, which would fail the gate for a purely
+        kinematic reason.
+
+    ``boundary_control`` records which lateral boundary condition produced the
+    path.  With ``"isochoric"`` the lateral stress is an *output*, so the
+    ``servo_on_target`` gate (which assumes a prescribed ``sigma_3``) is not
+    applicable and is replaced by ``lateral_walls_loaded`` (the walls must
+    still carry compression, ``sigma_h > 0``, in the window).
     """
-    eps = np.asarray(stress_path["axial_strain"], dtype=float)
+    if strain_measure not in ("small", "log"):
+        raise ValueError(f"strain_measure must be 'small' or 'log', got {strain_measure!r}")
+    if boundary_control not in ("servo", "isochoric"):
+        raise ValueError(
+            f"boundary_control must be 'servo' or 'isochoric', got {boundary_control!r}")
+    if strain_measure == "log":
+        for key in ("axial_strain_log", "volumetric_strain_log"):
+            if key not in stress_path:
+                raise ValueError(
+                    f"strain_measure='log' needs {key!r} in the stress path")
+        eps = np.asarray(stress_path["axial_strain_log"], dtype=float)
+        ev = np.asarray(stress_path["volumetric_strain_log"], dtype=float)
+    else:
+        eps = np.asarray(stress_path["axial_strain"], dtype=float)
+        ev = np.asarray(stress_path["volumetric_strain"], dtype=float)
     sv = np.asarray(stress_path["sigma_v"], dtype=float)
     sh = np.asarray(stress_path["sigma_h"], dtype=float)
     q = np.asarray(stress_path.get("deviator", sv - sh), dtype=float)
-    ev = np.asarray(stress_path["volumetric_strain"], dtype=float)
     if eps.size < 10:
         raise ValueError("stress path too short for a critical-state window")
 
@@ -203,13 +237,18 @@ def critical_state_from_stress_path(
     servo = (abs(sigma3_meas - sigma3_target) / sigma3_target
              if sigma3_target else float("nan"))
 
+    if boundary_control == "isochoric":
+        closure_name = "lateral_walls_loaded"
+        closure_ok = bool(sigma3_meas > 0.0)
+    else:
+        closure_name = "servo_on_target"
+        closure_ok = bool(not np.isfinite(servo) or servo <= servo_tolerance)
     flags = {
         "isochoric": bool(abs(primary["d_eps_v_d_eps_a"]) <= vol_tolerance),
         "deviator_stationary": bool(primary["q_drift"] <= deviator_tolerance),
         "window_independent": bool(
             np.isfinite(spread) and spread <= window_spread_tolerance),
-        "servo_on_target": bool(
-            not np.isfinite(servo) or servo <= servo_tolerance),
+        closure_name: closure_ok,
     }
     # peak for reference (not the benchmark quantity)
     peak_mask = eps >= min_strain * 0.0
@@ -238,6 +277,8 @@ def critical_state_from_stress_path(
         },
         peak_phi_deg=float(phi[peak_index]),
         peak_strain=float(eps[peak_index]),
+        strain_measure=strain_measure,
+        boundary_control=boundary_control,
     )
 
 
