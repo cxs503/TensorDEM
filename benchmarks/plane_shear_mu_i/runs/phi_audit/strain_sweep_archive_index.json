@@ -1,0 +1,42 @@
+{
+ "jobs": [
+  "cj2950",
+  "cj2951",
+  "cj2952",
+  "cj2953",
+  "cj2954",
+  "cj2955"
+ ],
+ "points": [
+  {
+   "I_target": 0.001,
+   "file": "I0.001_smooth_s5279.json",
+   "strain_achieved": 2.0046678714774533
+  },
+  {
+   "I_target": 0.003,
+   "file": "I0.003_smooth_s5279.json",
+   "strain_achieved": 2.0116763004343623
+  },
+  {
+   "I_target": 0.01,
+   "file": "I0.01_smooth_s5279.json",
+   "strain_achieved": 2.0481972880230725
+  },
+  {
+   "I_target": 0.03,
+   "file": "I0.03_smooth_s5279.json",
+   "strain_achieved": 2.855291824451307
+  },
+  {
+   "I_target": 0.1,
+   "file": "I0.1_smooth_s5279.json",
+   "strain_achieved": 6.2561480497474555
+  },
+  {
+   "I_target": 0.3,
+   "file": "I0.3_smooth_s5279.json",
+   "strain_achieved": 98.9297614906877
+  }
+ ]
+}
