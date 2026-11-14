@@ -1,0 +1,6327 @@
+{
+ "artifact": "papers/artifacts/w28/ice-ridge-keel-grounding/dual_convergence.json",
+ "case": "ice-ridge keel grounding: dual (particle x mesh) convergence study",
+ "mission": "W28 paper-exp-ice-ridge-keel-grounding-2",
+ "mission_id": 19906,
+ "repo": "TensorDEM",
+ "runner": "native",
+ "generated_utc": "2026-11-14T08:02:46Z",
+ "predeclared": {
+  "decision": "Can the ice-ridge keel grounding resistance be claimed converged, and if not, which discretisation blocks it and how many particles would be needed?",
+  "competing_alternatives": [
+   "A1 the particle axis converges once four levels are used -- the legacy bond law is fine",
+   "A2 the legacy bond law has no particle-converged limit because kn is particle-size independent (k ~ kn/a ~ 1/a); the spacing-consistent law is required",
+   "A3 the mesh axis is the limiting one because the rigid platen edge makes the contact pressure discontinuous"
+  ],
+  "hypothesis": "H1 the measured resistance is finite and mesh-converged (GCI < 5 %, order >= 1.5); H2 the legacy bond law gives no particle-converged limit while the spacing-consistent law restores one.",
+  "metrics": {
+   "R_N_per_m": "keel max penetration resistance at w0 (max over the ramp)",
+   "A_c_m2_per_m": "keel contact area per unit out-of-plane width at w0",
+   "q_max_Pa": "peak keel contact pressure at w0"
+  },
+  "baseline_control": "W27 (mission 18963): particle GCI 39.6 %, mesh GCI 0.077 % on the legacy bond law.  Arm 'spacing_consistent' changes exactly one variable (the bond stiffness length).",
+  "thresholds": {
+   "gci_max_rel": 0.05,
+   "observed_order_min": 1.5,
+   "kerr_deflection_rel_dev_max": 0.03,
+   "keel_vs_kerr_resistance_rel_dev_max": 0.15,
+   "spearman_min": 0.99
+  },
+  "stopping_rule": "the predeclared 4 x 3 grid is run to completion; no level is added or dropped after inspecting numbers",
+  "variables": {
+   "changed": [
+    "particle count (lattice spacing)",
+    "beam mesh size h",
+    "bond stiffness length law (arms)"
+   ],
+   "controlled": [
+    "seed",
+    "keel height and patch aspect ratio",
+    "solid fraction",
+    "platen width and settlement",
+    "structure EI",
+    "no-tension ramp width",
+    "load increments and relaxation steps"
+   ],
+   "confounders": [
+    "lattice coordination drifts slightly with particle count",
+    "the bond-length law changes the small-strain modulus by construction, so the arms are compared through convergence, not through absolute values",
+    "the platen edge is a contact-pressure discontinuity: a uniform mesh family is not in the asymptotic range at the coarse level"
+   ]
+  },
+  "repetitions": "deterministic quasi-static solver, no time-integration noise; the repetition axis is the discretisation ladder (4 particle levels, 3 mesh levels) with two triads evaluated per axis",
+  "analysis": "Roache GCI on the finest triad of each axis with the other axis at its finest level; observed order reported in the particle count (r = 2) and in the physical spacing (2 p), Richardson limit with a 1.25 safety band, monotonicity check on every triad",
+  "environment_limits": "cluster job; one Python process per (arm, particle level); wall-clock recorded in the artifact"
+ },
+ "configuration": {
+  "keel_height_m": 2.0,
+  "cell_ratio": 8.0,
+  "solid_fraction": 0.62,
+  "w0_m": 0.008,
+  "particle_counts": [
+   25000,
+   50000,
+   100000,
+   200000
+  ],
+  "mesh_elements": [
+   32,
+   64,
+   128
+  ],
+  "beam_length_m": 16.0,
+  "platen_width_m": 2.0,
+  "structure_ei_N_m2": 3663003663.003663,
+  "structure": {
+   "thickness_m": 2.0,
+   "young_Pa": 5000000000.0,
+   "poisson": 0.3
+  },
+  "ramp_width_m": 0.0008,
+  "penetration_levels": 6,
+  "dem_increments": 6,
+  "dem_steps_per_increment": 300,
+  "seed": 7,
+  "footing_widths_xHk": [
+   0.5,
+   1.0,
+   2.0
+  ],
+  "arms": {
+   "legacy_bond_length": null,
+   "spacing_consistent": 1.0
+  }
+ },
+ "keel_law": {
+  "legacy_bond_length": {
+   "confined": {
+    "test": "confined_compression",
+    "settlements_m": [
+     0.0013333333333333333,
+     0.0026666666666666666,
+     0.004,
+     0.005333333333333333,
+     0.006666666666666667,
+     0.008
+    ],
+    "pressures_Pa": [
+     12100355.548104107,
+     20634545.517091352,
+     27582628.493450306,
+     33586323.85253961,
+     38946840.69090918,
+     43833321.23346016
+    ],
+    "k_subgrade_small_strain_N_per_m3": 9075266661.078081,
+    "k_subgrade_N_per_m3": 5479165154.18252,
+    "solver": "relaxation",
+    "sample": {
+     "n_particles": 200260,
+     "n_bonds": 485762,
+     "coordination": 4.851313292719465,
+     "length_m": 16.0,
+     "height_m": 2.0,
+     "spacing_m": 0.013592353958776981,
+     "mean_radius_m": 0.005620735381160536,
+     "solid_fraction": 0.62,
+     "kPa_per_bond": 871768.7702925566,
+     "seed": 7,
+     "ice_young_Pa": 1000000000.0,
+     "cutoff": 1.06,
+     "jitter": 0.12,
+     "cell_ratio": 8.0,
+     "bond_law": "legacy_bond_length",
+     "bond_reference_length_m": null
+    }
+   }
+  },
+  "spacing_consistent": {
+   "confined": {
+    "test": "confined_compression",
+    "settlements_m": [
+     0.0013333333333333333,
+     0.0026666666666666666,
+     0.004,
+     0.005333333333333333,
+     0.006666666666666667,
+     0.008
+    ],
+    "pressures_Pa": [
+     104129.51089315755,
+     177573.48915776052,
+     237463.08546819375,
+     289281.607008886,
+     335593.54405057855,
+     377841.22138850944
+    ],
+    "k_subgrade_small_strain_N_per_m3": 78097133.16986817,
+    "k_subgrade_N_per_m3": 47230152.67356368,
+    "solver": "relaxation",
+    "sample": {
+     "n_particles": 200260,
+     "n_bonds": 485762,
+     "coordination": 4.851313292719465,
+     "length_m": 16.0,
+     "height_m": 2.0,
+     "spacing_m": 0.013592353958776981,
+     "mean_radius_m": 0.005620735381160536,
+     "solid_fraction": 0.62,
+     "kPa_per_bond": 11222.802833276275,
+     "seed": 7,
+     "ice_young_Pa": 1000000000.0,
+     "cutoff": 1.06,
+     "jitter": 0.12,
+     "cell_ratio": 8.0,
+     "bond_law": "spacing_consistent",
+     "bond_reference_length_m": 1.0
+    }
+   }
+  }
+ },
+ "dem_resolutions": [
+  {
+   "arm": "spacing_consistent",
+   "bond_reference_length_m": 1.0,
+   "n_particles_requested": 25000,
+   "sample": {
+    "n_particles": 24960,
+    "n_bonds": 59901,
+    "coordination": 4.799759615384615,
+    "length_m": 16.0,
+    "height_m": 2.0,
+    "spacing_m": 0.038444982626156074,
+    "mean_radius_m": 0.015903107121923013,
+    "solid_fraction": 0.62,
+    "kPa_per_bond": 31760.155063720253,
+    "seed": 7,
+    "ice_young_Pa": 1000000000.0,
+    "cutoff": 1.06,
+    "jitter": 0.12,
+    "cell_ratio": 8.0,
+    "bond_law": "spacing_consistent",
+    "bond_reference_length_m": 1.0
+   },
+   "w0_m": 0.008,
+   "confined": {
+    "test": "confined_compression",
+    "settlements_m": [
+     0.0013333333333333333,
+     0.0026666666666666666,
+     0.004,
+     0.005333333333333333,
+     0.006666666666666667,
+     0.008
+    ],
+    "pressures_Pa": [
+     102513.50025032688,
+     174997.31469391115,
+     234075.65934090136,
+     285147.74174996786,
+     330768.8728225459,
+     372378.77821043704
+    ],
+    "k_subgrade_small_strain_N_per_m3": 76885125.18774515,
+    "k_subgrade_N_per_m3": 46547347.27630463,
+    "solver": "relaxation",
+    "sample": {
+     "n_particles": 24960,
+     "n_bonds": 59901,
+     "coordination": 4.799759615384615,
+     "length_m": 16.0,
+     "height_m": 2.0,
+     "spacing_m": 0.038444982626156074,
+     "mean_radius_m": 0.015903107121923013,
+     "solid_fraction": 0.62,
+     "kPa_per_bond": 31760.155063720253,
+     "seed": 7,
+     "ice_young_Pa": 1000000000.0,
+     "cutoff": 1.06,
+     "jitter": 0.12,
+     "cell_ratio": 8.0,
+     "bond_law": "spacing_consistent",
+     "bond_reference_length_m": 1.0
+    }
+   },
+   "footings": {
+    "0.5": {
+     "test": "footing",
+     "footing_width_m": 1.0,
+     "settlements_m": [
+      0.0013333333333333333,
+      0.0026666666666666666,
+      0.004,
+      0.005333333333333333,
+      0.006666666666666667,
+      0.008
+     ],
+     "resistance_N_per_m": [
+      -329983.2123457747,
+      -37194.37302424631,
+      132385.56243887026,
+      259282.333126865,
+      364821.91588489484,
+      457608.3140278342
+     ],
+     "secant_stiffness_N_per_m2": -247487409.25933102,
+     "n_footing_particles": 54,
+     "solver": "relaxation",
+     "sample": {
+      "n_particles": 24960,
+      "n_bonds": 59901,
+      "coordination": 4.799759615384615,
+      "length_m": 16.0,
+      "height_m": 2.0,
+      "spacing_m": 0.038444982626156074,
+      "mean_radius_m": 0.015903107121923013,
+      "solid_fraction": 0.62,
+      "kPa_per_bond": 31760.155063720253,
+      "seed": 7,
+      "ice_young_Pa": 1000000000.0,
+      "cutoff": 1.06,
+      "jitter": 0.12,
+      "cell_ratio": 8.0,
+      "bond_law": "spacing_consistent",
+      "bond_reference_length_m": 1.0
+     }
+    },
+    "1": {
+     "test": "footing",
+     "footing_width_m": 2.0,
+     "settlements_m": [
+      0.0013333333333333333,
+      0.0026666666666666666,
+      0.004,
+      0.005333333333333333,
+      0.006666666666666667,
+      0.008
+     ],
+     "resistance_N_per_m": [
+      -433995.57983283635,
+      -9726.919317193444,
+      241427.75213262832,
+      431389.7230818647,
+      589795.4806242053,
+      728810.702454321
+     ],
+     "secant_stiffness_N_per_m2": -325496684.8746273,
+     "n_footing_particles": 107,
+     "solver": "relaxation",
+     "sample": {
+      "n_particles": 24960,
+      "n_bonds": 59901,
+      "coordination": 4.799759615384615,
+      "length_m": 16.0,
+      "height_m": 2.0,
+      "spacing_m": 0.038444982626156074,
+      "mean_radius_m": 0.015903107121923013,
+      "solid_fraction": 0.62,
+      "kPa_per_bond": 31760.155063720253,
+      "seed": 7,
+      "ice_young_Pa": 1000000000.0,
+      "cutoff": 1.06,
+      "jitter": 0.12,
+      "cell_ratio": 8.0,
+      "bond_law": "spacing_consistent",
+      "bond_reference_length_m": 1.0
+     }
+    },
+    "2": {
+     "test": "footing",
+     "footing_width_m": 4.0,
+     "settlements_m": [
+      0.0013333333333333333,
+      0.0026666666666666666,
+      0.004,
+      0.005333333333333333,
+      0.006666666666666667,
+      0.008
+     ],
+     "resistance_N_per_m": [
+      -752555.9827151955,
+      21052.59394956808,
+      482570.90862886864,
+      832357.175710896,
+      1123261.1461905222,
+      1377262.5178435487
+     ],
+     "secant_stiffness_N_per_m2": -564416987.0363966,
+     "n_footing_particles": 213,
+     "solver": "relaxation",
+     "sample": {
+      "n_particles": 24960,
+      "n_bonds": 59901,
+      "coordination": 4.799759615384615,
+      "length_m": 16.0,
+      "height_m": 2.0,
+      "spacing_m": 0.038444982626156074,
+      "mean_radius_m": 0.015903107121923013,
+      "solid_fraction": 0.62,
+      "kPa_per_bond": 31760.155063720253,
+      "seed": 7,
+      "ice_young_Pa": 1000000000.0,
+      "cutoff": 1.06,
+      "jitter": 0.12,
+      "cell_ratio": 8.0,
+      "bond_law": "spacing_consistent",
+      "bond_reference_length_m": 1.0
+     }
+    }
+   },
+   "wall_time_s": 73.4913444519043
+  },
+  {
+   "arm": "legacy_bond_length",
+   "bond_reference_length_m": null,
+   "n_particles_requested": 25000,
+   "sample": {
+    "n_particles": 24960,
+    "n_bonds": 59901,
+    "coordination": 4.799759615384615,
+    "length_m": 16.0,
+    "height_m": 2.0,
+    "spacing_m": 0.038444982626156074,
+    "mean_radius_m": 0.015903107121923013,
+    "solid_fraction": 0.62,
+    "kPa_per_bond": 871039.2393262254,
+    "seed": 7,
+    "ice_young_Pa": 1000000000.0,
+    "cutoff": 1.06,
+    "jitter": 0.12,
+    "cell_ratio": 8.0,
+    "bond_law": "legacy_bond_length",
+    "bond_reference_length_m": null
+   },
+   "w0_m": 0.008,
+   "confined": {
+    "test": "confined_compression",
+    "settlements_m": [
+     0.0013333333333333333,
+     0.0026666666666666666,
+     0.004,
+     0.005333333333333333,
+     0.006666666666666667,
+     0.008
+    ],
+    "pressures_Pa": [
+     4081728.026275647,
+     6954670.677108031,
+     9298792.330727011,
+     11327668.317196036,
+     13140629.27974939,
+     14793747.447915444
+    ],
+    "k_subgrade_small_strain_N_per_m3": 3061296019.706735,
+    "k_subgrade_N_per_m3": 1849218430.9894304,
+    "solver": "relaxation",
+    "sample": {
+     "n_particles": 24960,
+     "n_bonds": 59901,
+     "coordination": 4.799759615384615,
+     "length_m": 16.0,
+     "height_m": 2.0,
+     "spacing_m": 0.038444982626156074,
+     "mean_radius_m": 0.015903107121923013,
+     "solid_fraction": 0.62,
+     "kPa_per_bond": 871039.2393262254,
+     "seed": 7,
+     "ice_young_Pa": 1000000000.0,
+     "cutoff": 1.06,
+     "jitter": 0.12,
+     "cell_ratio": 8.0,
+     "bond_law": "legacy_bond_length",
+     "bond_reference_length_m": null
+    }
+   },
+   "footings": {
+    "0.5": {
+     "test": "footing",
+     "footing_width_m": 1.0,
+     "settlements_m": [
+      0.0013333333333333333,
+      0.0026666666666666666,
+      0.004,
+      0.005333333333333333,
+      0.006666666666666667,
+      0.008
+     ],
+     "resistance_N_per_m": [
+      -12110619.731626587,
+      -1029445.8067087807,
+      5183212.114182474,
+      9767169.99620958,
+      13541677.233298926,
+      16830117.583547026
+     ],
+     "secant_stiffness_N_per_m2": -9082964798.71994,
+     "n_footing_particles": 54,
+     "solver": "relaxation",
+     "sample": {
+      "n_particles": 24960,
+      "n_bonds": 59901,
+      "coordination": 4.799759615384615,
+      "length_m": 16.0,
+      "height_m": 2.0,
+      "spacing_m": 0.038444982626156074,
+      "mean_radius_m": 0.015903107121923013,
+      "solid_fraction": 0.62,
+      "kPa_per_bond": 871039.2393262254,
+      "seed": 7,
+      "ice_young_Pa": 1000000000.0,
+      "cutoff": 1.06,
+      "jitter": 0.12,
+      "cell_ratio": 8.0,
+      "bond_law": "legacy_bond_length",
+      "bond_reference_length_m": null
+     }
+    },
+    "1": {
+     "test": "footing",
+     "footing_width_m": 2.0,
+     "settlements_m": [
+      0.0013333333333333333,
+      0.0026666666666666666,
+      0.004,
+      0.005333333333333333,
+      0.006666666666666667,
+      0.008
+     ],
+     "resistance_N_per_m": [
+      -16858966.57283391,
+      -320141.32571494946,
+      9252539.701820007,
+      16392147.770327013,
+      22287435.28391243,
+      27418994.93630831
+     ],
+     "secant_stiffness_N_per_m2": -12644224929.625433,
+     "n_footing_particles": 107,
+     "solver": "relaxation",
+     "sample": {
+      "n_particles": 24960,
+      "n_bonds": 59901,
+      "coordination": 4.799759615384615,
+      "length_m": 16.0,
+      "height_m": 2.0,
+      "spacing_m": 0.038444982626156074,
+      "mean_radius_m": 0.015903107121923013,
+      "solid_fraction": 0.62,
+      "kPa_per_bond": 871039.2393262254,
+      "seed": 7,
+      "ice_young_Pa": 1000000000.0,
+      "cutoff": 1.06,
+      "jitter": 0.12,
+      "cell_ratio": 8.0,
+      "bond_law": "legacy_bond_length",
+      "bond_reference_length_m": null
+     }
+    },
+    "2": {
+     "test": "footing",
+     "footing_width_m": 4.0,
+     "settlements_m": [
+      0.0013333333333333333,
+      0.0026666666666666666,
+      0.004,
+      0.005333333333333333,
+      0.006666666666666667,
+      0.008
+     ],
+     "resistance_N_per_m": [
+      -30361649.92504813,
+      494679.6506272368,
+      18327393.33019115,
+      31658351.322713196,
+      42681506.99167271,
+      52273662.261358894
+     ],
+     "secant_stiffness_N_per_m2": -22771237443.7861,
+     "n_footing_particles": 213,
+     "solver": "relaxation",
+     "sample": {
+      "n_particles": 24960,
+      "n_bonds": 59901,
+      "coordination": 4.799759615384615,
+      "length_m": 16.0,
+      "height_m": 2.0,
+      "spacing_m": 0.038444982626156074,
+      "mean_radius_m": 0.015903107121923013,
+      "solid_fraction": 0.62,
+      "kPa_per_bond": 871039.2393262254,
+      "seed": 7,
+      "ice_young_Pa": 1000000000.0,
+      "cutoff": 1.06,
+      "jitter": 0.12,
+      "cell_ratio": 8.0,
+      "bond_law": "legacy_bond_length",
+      "bond_reference_length_m": null
+     }
+    }
+   },
+   "wall_time_s": 79.99248671531677
+  },
+  {
+   "arm": "spacing_consistent",
+   "bond_reference_length_m": 1.0,
+   "n_particles_requested": 50000,
+   "sample": {
+    "n_particles": 50065,
+    "n_bonds": 121094,
+    "coordination": 4.837471287326475,
+    "length_m": 16.0,
+    "height_m": 2.0,
+    "spacing_m": 0.027184707917553962,
+    "mean_radius_m": 0.011241606671672667,
+    "solid_fraction": 0.62,
+    "kPa_per_bond": 22448.239052574645,
+    "seed": 7,
+    "ice_young_Pa": 1000000000.0,
+    "cutoff": 1.06,
+    "jitter": 0.12,
+    "cell_ratio": 8.0,
+    "bond_law": "spacing_consistent",
+    "bond_reference_length_m": 1.0
+   },
+   "w0_m": 0.008,
+   "confined": {
+    "test": "confined_compression",
+    "settlements_m": [
+     0.0013333333333333333,
+     0.0026666666666666666,
+     0.004,
+     0.005333333333333333,
+     0.006666666666666667,
+     0.008
+    ],
+    "pressures_Pa": [
+     104960.02070026922,
+     179158.80508319175,
+     239664.2007282262,
+     291993.7657888825,
+     338743.580170909,
+     381377.25710154226
+    ],
+    "k_subgrade_small_strain_N_per_m3": 78720015.52520192,
+    "k_subgrade_N_per_m3": 47672157.13769278,
+    "solver": "relaxation",
+    "sample": {
+     "n_particles": 50065,
+     "n_bonds": 121094,
+     "coordination": 4.837471287326475,
+     "length_m": 16.0,
+     "height_m": 2.0,
+     "spacing_m": 0.027184707917553962,
+     "mean_radius_m": 0.011241606671672667,
+     "solid_fraction": 0.62,
+     "kPa_per_bond": 22448.239052574645,
+     "seed": 7,
+     "ice_young_Pa": 1000000000.0,
+     "cutoff": 1.06,
+     "jitter": 0.12,
+     "cell_ratio": 8.0,
+     "bond_law": "spacing_consistent",
+     "bond_reference_length_m": 1.0
+    }
+   },
+   "footings": {
+    "0.5": {
+     "test": "footing",
+     "footing_width_m": 1.0,
+     "settlements_m": [
+      0.0013333333333333333,
+      0.0026666666666666666,
+      0.004,
+      0.005333333333333333,
+      0.006666666666666667,
+      0.008
+     ],
+     "resistance_N_per_m": [
+      -270325.6184891625,
+      -20034.36677131413,
+      124047.2552671447,
+      232281.11625691716,
+      322490.51126461214,
+      401823.7966137618
+     ],
+     "secant_stiffness_N_per_m2": -202744213.86687186,
+     "n_footing_particles": 76,
+     "solver": "relaxation",
+     "sample": {
+      "n_particles": 50065,
+      "n_bonds": 121094,
+      "coordination": 4.837471287326475,
+      "length_m": 16.0,
+      "height_m": 2.0,
+      "spacing_m": 0.027184707917553962,
+      "mean_radius_m": 0.011241606671672667,
+      "solid_fraction": 0.62,
+      "kPa_per_bond": 22448.239052574645,
+      "seed": 7,
+      "ice_young_Pa": 1000000000.0,
+      "cutoff": 1.06,
+      "jitter": 0.12,
+      "cell_ratio": 8.0,
+      "bond_law": "spacing_consistent",
+      "bond_reference_length_m": 1.0
+     }
+    },
+    "1": {
+     "test": "footing",
+     "footing_width_m": 2.0,
+     "settlements_m": [
+      0.0013333333333333333,
+      0.0026666666666666666,
+      0.004,
+      0.005333333333333333,
+      0.006666666666666667,
+      0.008
+     ],
+     "resistance_N_per_m": [
+      -412903.0517727524,
+      -452.7354578348579,
+      241950.00280074115,
+      425196.35339703434,
+      577855.7890456917,
+      711510.7802937445
+     ],
+     "secant_stiffness_N_per_m2": -309677288.82956433,
+     "n_footing_particles": 150,
+     "solver": "relaxation",
+     "sample": {
+      "n_particles": 50065,
+      "n_bonds": 121094,
+      "coordination": 4.837471287326475,
+      "length_m": 16.0,
+      "height_m": 2.0,
+      "spacing_m": 0.027184707917553962,
+      "mean_radius_m": 0.011241606671672667,
+      "solid_fraction": 0.62,
+      "kPa_per_bond": 22448.239052574645,
+      "seed": 7,
+      "ice_young_Pa": 1000000000.0,
+      "cutoff": 1.06,
+      "jitter": 0.12,
+      "cell_ratio": 8.0,
+      "bond_law": "spacing_consistent",
+      "bond_reference_length_m": 1.0
+     }
+    },
+    "2": {
+     "test": "footing",
+     "footing_width_m": 4.0,
+     "settlements_m": [
+      0.0013333333333333333,
+      0.0026666666666666666,
+      0.004,
+      0.005333333333333333,
+      0.006666666666666667,
+      0.008
+     ],
+     "resistance_N_per_m": [
+      -745412.4388826833,
+      17972.64706862494,
+      466108.5636084599,
+      803225.4997126602,
+      1082352.0239194157,
+      1325201.4765262078
+     ],
+     "secant_stiffness_N_per_m2": -559059329.1620125,
+     "n_footing_particles": 302,
+     "solver": "relaxation",
+     "sample": {
+      "n_particles": 50065,
+      "n_bonds": 121094,
+      "coordination": 4.837471287326475,
+      "length_m": 16.0,
+      "height_m": 2.0,
+      "spacing_m": 0.027184707917553962,
+      "mean_radius_m": 0.011241606671672667,
+      "solid_fraction": 0.62,
+      "kPa_per_bond": 22448.239052574645,
+      "seed": 7,
+      "ice_young_Pa": 1000000000.0,
+      "cutoff": 1.06,
+      "jitter": 0.12,
+      "cell_ratio": 8.0,
+      "bond_law": "spacing_consistent",
+      "bond_reference_length_m": 1.0
+     }
+    }
+   },
+   "wall_time_s": 136.06164407730103
+  },
+  {
+   "arm": "legacy_bond_length",
+   "bond_reference_length_m": null,
+   "n_particles_requested": 50000,
+   "sample": {
+    "n_particles": 50065,
+    "n_bonds": 121094,
+    "coordination": 4.837471287326475,
+    "length_m": 16.0,
+    "height_m": 2.0,
+    "spacing_m": 0.027184707917553962,
+    "mean_radius_m": 0.011241606671672667,
+    "solid_fraction": 0.62,
+    "kPa_per_bond": 871516.3949591101,
+    "seed": 7,
+    "ice_young_Pa": 1000000000.0,
+    "cutoff": 1.06,
+    "jitter": 0.12,
+    "cell_ratio": 8.0,
+    "bond_law": "legacy_bond_length",
+    "bond_reference_length_m": null
+   },
+   "w0_m": 0.008,
+   "confined": {
+    "test": "confined_compression",
+    "settlements_m": [
+     0.0013333333333333333,
+     0.0026666666666666666,
+     0.004,
+     0.005333333333333333,
+     0.006666666666666667,
+     0.008
+    ],
+    "pressures_Pa": [
+     5808253.303582776,
+     9921733.905446667,
+     13278039.967191702,
+     16181947.34871152,
+     18776688.56212946,
+     21143006.30859367
+    ],
+    "k_subgrade_small_strain_N_per_m3": 4356189977.687082,
+    "k_subgrade_N_per_m3": 2642875788.5742087,
+    "solver": "relaxation",
+    "sample": {
+     "n_particles": 50065,
+     "n_bonds": 121094,
+     "coordination": 4.837471287326475,
+     "length_m": 16.0,
+     "height_m": 2.0,
+     "spacing_m": 0.027184707917553962,
+     "mean_radius_m": 0.011241606671672667,
+     "solid_fraction": 0.62,
+     "kPa_per_bond": 871516.3949591101,
+     "seed": 7,
+     "ice_young_Pa": 1000000000.0,
+     "cutoff": 1.06,
+     "jitter": 0.12,
+     "cell_ratio": 8.0,
+     "bond_law": "legacy_bond_length",
+     "bond_reference_length_m": null
+    }
+   },
+   "footings": {
+    "0.5": {
+     "test": "footing",
+     "footing_width_m": 1.0,
+     "settlements_m": [
+      0.0013333333333333333,
+      0.0026666666666666666,
+      0.004,
+      0.005333333333333333,
+      0.006666666666666667,
+      0.008
+     ],
+     "resistance_N_per_m": [
+      -14283944.644426709,
+      -558163.1327074112,
+      6888639.289299115,
+      12341415.86658615,
+      16832090.13189661,
+      20751765.845358424
+     ],
+     "secant_stiffness_N_per_m2": -10712958483.320032,
+     "n_footing_particles": 76,
+     "solver": "relaxation",
+     "sample": {
+      "n_particles": 50065,
+      "n_bonds": 121094,
+      "coordination": 4.837471287326475,
+      "length_m": 16.0,
+      "height_m": 2.0,
+      "spacing_m": 0.027184707917553962,
+      "mean_radius_m": 0.011241606671672667,
+      "solid_fraction": 0.62,
+      "kPa_per_bond": 871516.3949591101,
+      "seed": 7,
+      "ice_young_Pa": 1000000000.0,
+      "cutoff": 1.06,
+      "jitter": 0.12,
+      "cell_ratio": 8.0,
+      "bond_law": "legacy_bond_length",
+      "bond_reference_length_m": null
+     }
+    },
+    "1": {
+     "test": "footing",
+     "footing_width_m": 2.0,
+     "settlements_m": [
+      0.0013333333333333333,
+      0.0026666666666666666,
+      0.004,
+      0.005333333333333333,
+      0.006666666666666667,
+      0.008
+     ],
+     "resistance_N_per_m": [
+      -23374700.686186127,
+      -105646.52728892845,
+      13107989.550986314,
+      22876199.723358538,
+      30904216.21747254,
+      37874997.20424726
+     ],
+     "secant_stiffness_N_per_m2": -17531025514.639595,
+     "n_footing_particles": 150,
+     "solver": "relaxation",
+     "sample": {
+      "n_particles": 50065,
+      "n_bonds": 121094,
+      "coordination": 4.837471287326475,
+      "length_m": 16.0,
+      "height_m": 2.0,
+      "spacing_m": 0.027184707917553962,
+      "mean_radius_m": 0.011241606671672667,
+      "solid_fraction": 0.62,
+      "kPa_per_bond": 871516.3949591101,
+      "seed": 7,
+      "ice_young_Pa": 1000000000.0,
+      "cutoff": 1.06,
+      "jitter": 0.12,
+      "cell_ratio": 8.0,
+      "bond_law": "legacy_bond_length",
+      "bond_reference_length_m": null
+     }
+    },
+    "2": {
+     "test": "footing",
+     "footing_width_m": 4.0,
+     "settlements_m": [
+      0.0013333333333333333,
+      0.0026666666666666666,
+      0.004,
+      0.005333333333333333,
+      0.006666666666666667,
+      0.008
+     ],
+     "resistance_N_per_m": [
+      -42214996.2428942,
+      567730.2048462541,
+      25167387.72261495,
+      43403969.183535345,
+      58388347.37198402,
+      71375161.8531762
+     ],
+     "secant_stiffness_N_per_m2": -31661247182.170654,
+     "n_footing_particles": 302,
+     "solver": "relaxation",
+     "sample": {
+      "n_particles": 50065,
+      "n_bonds": 121094,
+      "coordination": 4.837471287326475,
+      "length_m": 16.0,
+      "height_m": 2.0,
+      "spacing_m": 0.027184707917553962,
+      "mean_radius_m": 0.011241606671672667,
+      "solid_fraction": 0.62,
+      "kPa_per_bond": 871516.3949591101,
+      "seed": 7,
+      "ice_young_Pa": 1000000000.0,
+      "cutoff": 1.06,
+      "jitter": 0.12,
+      "cell_ratio": 8.0,
+      "bond_law": "legacy_bond_length",
+      "bond_reference_length_m": null
+     }
+    }
+   },
+   "wall_time_s": 203.7590048313141
+  },
+  {
+   "arm": "legacy_bond_length",
+   "bond_reference_length_m": null,
+   "n_particles_requested": 100000,
+   "sample": {
+    "n_particles": 99720,
+    "n_bonds": 240423,
+    "coordination": 4.821961492178099,
+    "length_m": 16.0,
+    "height_m": 2.0,
+    "spacing_m": 0.019222491313078037,
+    "mean_radius_m": 0.00794654586505871,
+    "solid_fraction": 0.62,
+    "kPa_per_bond": 870680.7503965831,
+    "seed": 7,
+    "ice_young_Pa": 1000000000.0,
+    "cutoff": 1.06,
+    "jitter": 0.12,
+    "cell_ratio": 8.0,
+    "bond_law": "legacy_bond_length",
+    "bond_reference_length_m": null
+   },
+   "w0_m": 0.008,
+   "confined": {
+    "test": "confined_compression",
+    "settlements_m": [
+     0.0013333333333333333,
+     0.0026666666666666666,
+     0.004,
+     0.005333333333333333,
+     0.006666666666666667,
+     0.008
+    ],
+    "pressures_Pa": [
+     9439359.043988554,
+     16147617.48458123,
+     21638163.277457595,
+     26398453.679284956,
+     30658561.467839647,
+     34548625.09902227
+    ],
+    "k_subgrade_small_strain_N_per_m3": 7079519282.991416,
+    "k_subgrade_N_per_m3": 4318578137.377784,
+    "solver": "relaxation",
+    "sample": {
+     "n_particles": 99720,
+     "n_bonds": 240423,
+     "coordination": 4.821961492178099,
+     "length_m": 16.0,
+     "height_m": 2.0,
+     "spacing_m": 0.019222491313078037,
+     "mean_radius_m": 0.00794654586505871,
+     "solid_fraction": 0.62,
+     "kPa_per_bond": 870680.7503965831,
+     "seed": 7,
+     "ice_young_Pa": 1000000000.0,
+     "cutoff": 1.06,
+     "jitter": 0.12,
+     "cell_ratio": 8.0,
+     "bond_law": "legacy_bond_length",
+     "bond_reference_length_m": null
+    }
+   },
+   "footings": {
+    "0.5": {
+     "test": "footing",
+     "footing_width_m": 1.0,
+     "settlements_m": [
+      0.0013333333333333333,
+      0.0026666666666666666,
+      0.004,
+      0.005333333333333333,
+      0.006666666666666667,
+      0.008
+     ],
+     "resistance_N_per_m": [
+      -22519327.02772893,
+      -171126.29495300516,
+      11845720.898196384,
+      20540729.64508872,
+      27590762.732501984,
+      33648187.51138435
+     ],
+     "secant_stiffness_N_per_m2": -16889495270.796698,
+     "n_footing_particles": 108,
+     "solver": "relaxation",
+     "sample": {
+      "n_particles": 99720,
+      "n_bonds": 240423,
+      "coordination": 4.821961492178099,
+      "length_m": 16.0,
+      "height_m": 2.0,
+      "spacing_m": 0.019222491313078037,
+      "mean_radius_m": 0.00794654586505871,
+      "solid_fraction": 0.62,
+      "kPa_per_bond": 870680.7503965831,
+      "seed": 7,
+      "ice_young_Pa": 1000000000.0,
+      "cutoff": 1.06,
+      "jitter": 0.12,
+      "cell_ratio": 8.0,
+      "bond_law": "legacy_bond_length",
+      "bond_reference_length_m": null
+     }
+    },
+    "1": {
+     "test": "footing",
+     "footing_width_m": 2.0,
+     "settlements_m": [
+      0.0013333333333333333,
+      0.0026666666666666666,
+      0.004,
+      0.005333333333333333,
+      0.006666666666666667,
+      0.008
+     ],
+     "resistance_N_per_m": [
+      -36144166.620892264,
+      17790.858972208138,
+      20864514.317450803,
+      36437369.03996092,
+      49269873.66205616,
+      60392500.727808625
+     ],
+     "secant_stiffness_N_per_m2": -27108124965.669197,
+     "n_footing_particles": 213,
+     "solver": "relaxation",
+     "sample": {
+      "n_particles": 99720,
+      "n_bonds": 240423,
+      "coordination": 4.821961492178099,
+      "length_m": 16.0,
+      "height_m": 2.0,
+      "spacing_m": 0.019222491313078037,
+      "mean_radius_m": 0.00794654586505871,
+      "solid_fraction": 0.62,
+      "kPa_per_bond": 870680.7503965831,
+      "seed": 7,
+      "ice_young_Pa": 1000000000.0,
+      "cutoff": 1.06,
+      "jitter": 0.12,
+      "cell_ratio": 8.0,
+      "bond_law": "legacy_bond_length",
+      "bond_reference_length_m": null
+     }
+    },
+    "2": {
+     "test": "footing",
+     "footing_width_m": 4.0,
+     "settlements_m": [
+      0.0013333333333333333,
+      0.0026666666666666666,
+      0.004,
+      0.005333333333333333,
+      0.006666666666666667,
+      0.008
+     ],
+     "resistance_N_per_m": [
+      -67413959.6313119,
+      756842.7644899051,
+      40475723.2500149,
+      70076864.14542691,
+      94373224.23303607,
+      115355362.91578503
+     ],
+     "secant_stiffness_N_per_m2": -50560469723.483925,
+     "n_footing_particles": 423,
+     "solver": "relaxation",
+     "sample": {
+      "n_particles": 99720,
+      "n_bonds": 240423,
+      "coordination": 4.821961492178099,
+      "length_m": 16.0,
+      "height_m": 2.0,
+      "spacing_m": 0.019222491313078037,
+      "mean_radius_m": 0.00794654586505871,
+      "solid_fraction": 0.62,
+      "kPa_per_bond": 870680.7503965831,
+      "seed": 7,
+      "ice_young_Pa": 1000000000.0,
+      "cutoff": 1.06,
+      "jitter": 0.12,
+      "cell_ratio": 8.0,
+      "bond_law": "legacy_bond_length",
+      "bond_reference_length_m": null
+     }
+    }
+   },
+   "wall_time_s": 437.2312288284302
+  },
+  {
+   "arm": "spacing_consistent",
+   "bond_reference_length_m": 1.0,
+   "n_particles_requested": 100000,
+   "sample": {
+    "n_particles": 99720,
+    "n_bonds": 240423,
+    "coordination": 4.821961492178099,
+    "length_m": 16.0,
+    "height_m": 2.0,
+    "spacing_m": 0.019222491313078037,
+    "mean_radius_m": 0.00794654586505871,
+    "solid_fraction": 0.62,
+    "kPa_per_bond": 15867.63608657938,
+    "seed": 7,
+    "ice_young_Pa": 1000000000.0,
+    "cutoff": 1.06,
+    "jitter": 0.12,
+    "cell_ratio": 8.0,
+    "bond_law": "spacing_consistent",
+    "bond_reference_length_m": 1.0
+   },
+   "w0_m": 0.008,
+   "confined": {
+    "test": "confined_compression",
+    "settlements_m": [
+     0.0013333333333333333,
+     0.0026666666666666666,
+     0.004,
+     0.005333333333333333,
+     0.006666666666666667,
+     0.008
+    ],
+    "pressures_Pa": [
+     101826.2441394532,
+     174178.48738995625,
+     233382.141672744,
+     284715.4705589925,
+     330655.79773931514,
+     372599.759331972
+    ],
+    "k_subgrade_small_strain_N_per_m3": 76369683.10458991,
+    "k_subgrade_N_per_m3": 46574969.9164965,
+    "solver": "relaxation",
+    "sample": {
+     "n_particles": 99720,
+     "n_bonds": 240423,
+     "coordination": 4.821961492178099,
+     "length_m": 16.0,
+     "height_m": 2.0,
+     "spacing_m": 0.019222491313078037,
+     "mean_radius_m": 0.00794654586505871,
+     "solid_fraction": 0.62,
+     "kPa_per_bond": 15867.63608657938,
+     "seed": 7,
+     "ice_young_Pa": 1000000000.0,
+     "cutoff": 1.06,
+     "jitter": 0.12,
+     "cell_ratio": 8.0,
+     "bond_law": "spacing_consistent",
+     "bond_reference_length_m": 1.0
+    }
+   },
+   "footings": {
+    "0.5": {
+     "test": "footing",
+     "footing_width_m": 1.0,
+     "settlements_m": [
+      0.0013333333333333333,
+      0.0026666666666666666,
+      0.004,
+      0.005333333333333333,
+      0.006666666666666667,
+      0.008
+     ],
+     "resistance_N_per_m": [
+      -251464.64944990823,
+      -5665.041236134259,
+      131266.9204719157,
+      231077.55042571452,
+      312702.23758912145,
+      383567.40806904674
+     ],
+     "secant_stiffness_N_per_m2": -188598487.0874312,
+     "n_footing_particles": 108,
+     "solver": "relaxation",
+     "sample": {
+      "n_particles": 99720,
+      "n_bonds": 240423,
+      "coordination": 4.821961492178099,
+      "length_m": 16.0,
+      "height_m": 2.0,
+      "spacing_m": 0.019222491313078037,
+      "mean_radius_m": 0.00794654586505871,
+      "solid_fraction": 0.62,
+      "kPa_per_bond": 15867.63608657938,
+      "seed": 7,
+      "ice_young_Pa": 1000000000.0,
+      "cutoff": 1.06,
+      "jitter": 0.12,
+      "cell_ratio": 8.0,
+      "bond_law": "spacing_consistent",
+      "bond_reference_length_m": 1.0
+     }
+    },
+    "1": {
+     "test": "footing",
+     "footing_width_m": 2.0,
+     "settlements_m": [
+      0.0013333333333333333,
+      0.0026666666666666666,
+      0.004,
+      0.005333333333333333,
+      0.006666666666666667,
+      0.008
+     ],
+     "resistance_N_per_m": [
+      -392881.1070733441,
+      1516.6298671369304,
+      236236.68575807678,
+      413030.99654195504,
+      559604.9789764166,
+      687320.6014030986
+     ],
+     "secant_stiffness_N_per_m2": -294660830.3050081,
+     "n_footing_particles": 213,
+     "solver": "relaxation",
+     "sample": {
+      "n_particles": 99720,
+      "n_bonds": 240423,
+      "coordination": 4.821961492178099,
+      "length_m": 16.0,
+      "height_m": 2.0,
+      "spacing_m": 0.019222491313078037,
+      "mean_radius_m": 0.00794654586505871,
+      "solid_fraction": 0.62,
+      "kPa_per_bond": 15867.63608657938,
+      "seed": 7,
+      "ice_young_Pa": 1000000000.0,
+      "cutoff": 1.06,
+      "jitter": 0.12,
+      "cell_ratio": 8.0,
+      "bond_law": "spacing_consistent",
+      "bond_reference_length_m": 1.0
+     }
+    },
+    "2": {
+     "test": "footing",
+     "footing_width_m": 4.0,
+     "settlements_m": [
+      0.0013333333333333333,
+      0.0026666666666666666,
+      0.004,
+      0.005333333333333333,
+      0.006666666666666667,
+      0.008
+     ],
+     "resistance_N_per_m": [
+      -714217.9092354563,
+      19707.288119691617,
+      452393.2361650854,
+      776332.3015220864,
+      1043647.4855545387,
+      1275673.7178374156
+     ],
+     "secant_stiffness_N_per_m2": -535663431.92659223,
+     "n_footing_particles": 423,
+     "solver": "relaxation",
+     "sample": {
+      "n_particles": 99720,
+      "n_bonds": 240423,
+      "coordination": 4.821961492178099,
+      "length_m": 16.0,
+      "height_m": 2.0,
+      "spacing_m": 0.019222491313078037,
+      "mean_radius_m": 0.00794654586505871,
+      "solid_fraction": 0.62,
+      "kPa_per_bond": 15867.63608657938,
+      "seed": 7,
+      "ice_young_Pa": 1000000000.0,
+      "cutoff": 1.06,
+      "jitter": 0.12,
+      "cell_ratio": 8.0,
+      "bond_law": "spacing_consistent",
+      "bond_reference_length_m": 1.0
+     }
+    }
+   },
+   "wall_time_s": 561.0646858215332
+  },
+  {
+   "arm": "legacy_bond_length",
+   "bond_reference_length_m": null,
+   "n_particles_requested": 200000,
+   "sample": {
+    "n_particles": 200260,
+    "n_bonds": 485762,
+    "coordination": 4.851313292719465,
+    "length_m": 16.0,
+    "height_m": 2.0,
+    "spacing_m": 0.013592353958776981,
+    "mean_radius_m": 0.005620735381160536,
+    "solid_fraction": 0.62,
+    "kPa_per_bond": 871768.7702925566,
+    "seed": 7,
+    "ice_young_Pa": 1000000000.0,
+    "cutoff": 1.06,
+    "jitter": 0.12,
+    "cell_ratio": 8.0,
+    "bond_law": "legacy_bond_length",
+    "bond_reference_length_m": null
+   },
+   "w0_m": 0.008,
+   "confined": {
+    "test": "confined_compression",
+    "settlements_m": [
+     0.0013333333333333333,
+     0.0026666666666666666,
+     0.004,
+     0.005333333333333333,
+     0.006666666666666667,
+     0.008
+    ],
+    "pressures_Pa": [
+     12100355.548104107,
+     20634545.517091352,
+     27582628.493450306,
+     33586323.85253961,
+     38946840.69090918,
+     43833321.23346016
+    ],
+    "k_subgrade_small_strain_N_per_m3": 9075266661.078081,
+    "k_subgrade_N_per_m3": 5479165154.18252,
+    "solver": "relaxation",
+    "sample": {
+     "n_particles": 200260,
+     "n_bonds": 485762,
+     "coordination": 4.851313292719465,
+     "length_m": 16.0,
+     "height_m": 2.0,
+     "spacing_m": 0.013592353958776981,
+     "mean_radius_m": 0.005620735381160536,
+     "solid_fraction": 0.62,
+     "kPa_per_bond": 871768.7702925566,
+     "seed": 7,
+     "ice_young_Pa": 1000000000.0,
+     "cutoff": 1.06,
+     "jitter": 0.12,
+     "cell_ratio": 8.0,
+     "bond_law": "legacy_bond_length",
+     "bond_reference_length_m": null
+    }
+   },
+   "footings": {
+    "0.5": {
+     "test": "footing",
+     "footing_width_m": 1.0,
+     "settlements_m": [
+      0.0013333333333333333,
+      0.0026666666666666666,
+      0.004,
+      0.005333333333333333,
+      0.006666666666666667,
+      0.008
+     ],
+     "resistance_N_per_m": [
+      -29556438.74475402,
+      -564999.1861616516,
+      14839701.131633539,
+      25602247.666373037,
+      34112996.34852033,
+      41319965.055749714
+     ],
+     "secant_stiffness_N_per_m2": -22167329058.565517,
+     "n_footing_particles": 151,
+     "solver": "relaxation",
+     "sample": {
+      "n_particles": 200260,
+      "n_bonds": 485762,
+      "coordination": 4.851313292719465,
+      "length_m": 16.0,
+      "height_m": 2.0,
+      "spacing_m": 0.013592353958776981,
+      "mean_radius_m": 0.005620735381160536,
+      "solid_fraction": 0.62,
+      "kPa_per_bond": 871768.7702925566,
+      "seed": 7,
+      "ice_young_Pa": 1000000000.0,
+      "cutoff": 1.06,
+      "jitter": 0.12,
+      "cell_ratio": 8.0,
+      "bond_law": "legacy_bond_length",
+      "bond_reference_length_m": null
+     }
+    },
+    "1": {
+     "test": "footing",
+     "footing_width_m": 2.0,
+     "settlements_m": [
+      0.0013333333333333333,
+      0.0026666666666666666,
+      0.004,
+      0.005333333333333333,
+      0.006666666666666667,
+      0.008
+     ],
+     "resistance_N_per_m": [
+      -49449254.91091346,
+      -1184039.7342435278,
+      25985431.84508972,
+      45558007.76063112,
+      61285844.817382365,
+      74701013.80720586
+     ],
+     "secant_stiffness_N_per_m2": -37086941183.1851,
+     "n_footing_particles": 304,
+     "solver": "relaxation",
+     "sample": {
+      "n_particles": 200260,
+      "n_bonds": 485762,
+      "coordination": 4.851313292719465,
+      "length_m": 16.0,
+      "height_m": 2.0,
+      "spacing_m": 0.013592353958776981,
+      "mean_radius_m": 0.005620735381160536,
+      "solid_fraction": 0.62,
+      "kPa_per_bond": 871768.7702925566,
+      "seed": 7,
+      "ice_young_Pa": 1000000000.0,
+      "cutoff": 1.06,
+      "jitter": 0.12,
+      "cell_ratio": 8.0,
+      "bond_law": "legacy_bond_length",
+      "bond_reference_length_m": null
+     }
+    },
+    "2": {
+     "test": "footing",
+     "footing_width_m": 4.0,
+     "settlements_m": [
+      0.0013333333333333333,
+      0.0026666666666666666,
+      0.004,
+      0.005333333333333333,
+      0.006666666666666667,
+      0.008
+     ],
+     "resistance_N_per_m": [
+      -88734705.46913266,
+      453623.8504308171,
+      51901676.90906453,
+      89576147.45196818,
+      120148230.99337088,
+      146363777.57547575
+     ],
+     "secant_stiffness_N_per_m2": -66551029101.849495,
+     "n_footing_particles": 608,
+     "solver": "relaxation",
+     "sample": {
+      "n_particles": 200260,
+      "n_bonds": 485762,
+      "coordination": 4.851313292719465,
+      "length_m": 16.0,
+      "height_m": 2.0,
+      "spacing_m": 0.013592353958776981,
+      "mean_radius_m": 0.005620735381160536,
+      "solid_fraction": 0.62,
+      "kPa_per_bond": 871768.7702925566,
+      "seed": 7,
+      "ice_young_Pa": 1000000000.0,
+      "cutoff": 1.06,
+      "jitter": 0.12,
+      "cell_ratio": 8.0,
+      "bond_law": "legacy_bond_length",
+      "bond_reference_length_m": null
+     }
+    }
+   },
+   "wall_time_s": 766.5761613845825
+  },
+  {
+   "arm": "spacing_consistent",
+   "bond_reference_length_m": 1.0,
+   "n_particles_requested": 200000,
+   "sample": {
+    "n_particles": 200260,
+    "n_bonds": 485762,
+    "coordination": 4.851313292719465,
+    "length_m": 16.0,
+    "height_m": 2.0,
+    "spacing_m": 0.013592353958776981,
+    "mean_radius_m": 0.005620735381160536,
+    "solid_fraction": 0.62,
+    "kPa_per_bond": 11222.802833276275,
+    "seed": 7,
+    "ice_young_Pa": 1000000000.0,
+    "cutoff": 1.06,
+    "jitter": 0.12,
+    "cell_ratio": 8.0,
+    "bond_law": "spacing_consistent",
+    "bond_reference_length_m": 1.0
+   },
+   "w0_m": 0.008,
+   "confined": {
+    "test": "confined_compression",
+    "settlements_m": [
+     0.0013333333333333333,
+     0.0026666666666666666,
+     0.004,
+     0.005333333333333333,
+     0.006666666666666667,
+     0.008
+    ],
+    "pressures_Pa": [
+     104129.51089315755,
+     177573.48915776052,
+     237463.08546819375,
+     289281.607008886,
+     335593.54405057855,
+     377841.22138850944
+    ],
+    "k_subgrade_small_strain_N_per_m3": 78097133.16986817,
+    "k_subgrade_N_per_m3": 47230152.67356368,
+    "solver": "relaxation",
+    "sample": {
+     "n_particles": 200260,
+     "n_bonds": 485762,
+     "coordination": 4.851313292719465,
+     "length_m": 16.0,
+     "height_m": 2.0,
+     "spacing_m": 0.013592353958776981,
+     "mean_radius_m": 0.005620735381160536,
+     "solid_fraction": 0.62,
+     "kPa_per_bond": 11222.802833276275,
+     "seed": 7,
+     "ice_young_Pa": 1000000000.0,
+     "cutoff": 1.06,
+     "jitter": 0.12,
+     "cell_ratio": 8.0,
+     "bond_law": "spacing_consistent",
+     "bond_reference_length_m": 1.0
+    }
+   },
+   "footings": {
+    "0.5": {
+     "test": "footing",
+     "footing_width_m": 1.0,
+     "settlements_m": [
+      0.0013333333333333333,
+      0.0026666666666666666,
+      0.004,
+      0.005333333333333333,
+      0.006666666666666667,
+      0.008
+     ],
+     "resistance_N_per_m": [
+      -252264.58832350696,
+      -2289.945457101502,
+      129178.99534758655,
+      222823.73019541366,
+      298383.01810652844,
+      363381.5947951116
+     ],
+     "secant_stiffness_N_per_m2": -189198441.24263024,
+     "n_footing_particles": 151,
+     "solver": "relaxation",
+     "sample": {
+      "n_particles": 200260,
+      "n_bonds": 485762,
+      "coordination": 4.851313292719465,
+      "length_m": 16.0,
+      "height_m": 2.0,
+      "spacing_m": 0.013592353958776981,
+      "mean_radius_m": 0.005620735381160536,
+      "solid_fraction": 0.62,
+      "kPa_per_bond": 11222.802833276275,
+      "seed": 7,
+      "ice_young_Pa": 1000000000.0,
+      "cutoff": 1.06,
+      "jitter": 0.12,
+      "cell_ratio": 8.0,
+      "bond_law": "spacing_consistent",
+      "bond_reference_length_m": 1.0
+     }
+    },
+    "1": {
+     "test": "footing",
+     "footing_width_m": 2.0,
+     "settlements_m": [
+      0.0013333333333333333,
+      0.0026666666666666666,
+      0.004,
+      0.005333333333333333,
+      0.006666666666666667,
+      0.008
+     ],
+     "resistance_N_per_m": [
+      -405515.5993022421,
+      2906.240074606004,
+      231854.29192972177,
+      399733.27857565566,
+      536803.3695457337,
+      655137.6140276636
+     ],
+     "secant_stiffness_N_per_m2": -304136699.4766816,
+     "n_footing_particles": 304,
+     "solver": "relaxation",
+     "sample": {
+      "n_particles": 200260,
+      "n_bonds": 485762,
+      "coordination": 4.851313292719465,
+      "length_m": 16.0,
+      "height_m": 2.0,
+      "spacing_m": 0.013592353958776981,
+      "mean_radius_m": 0.005620735381160536,
+      "solid_fraction": 0.62,
+      "kPa_per_bond": 11222.802833276275,
+      "seed": 7,
+      "ice_young_Pa": 1000000000.0,
+      "cutoff": 1.06,
+      "jitter": 0.12,
+      "cell_ratio": 8.0,
+      "bond_law": "spacing_consistent",
+      "bond_reference_length_m": 1.0
+     }
+    },
+    "2": {
+     "test": "footing",
+     "footing_width_m": 4.0,
+     "settlements_m": [
+      0.0013333333333333333,
+      0.0026666666666666666,
+      0.004,
+      0.005333333333333333,
+      0.006666666666666667,
+      0.008
+     ],
+     "resistance_N_per_m": [
+      -735813.4102636228,
+      28079.79504745648,
+      465228.6845752167,
+      788065.0530781624,
+      1052164.0455435386,
+      1280070.02811866
+     ],
+     "secant_stiffness_N_per_m2": -551860057.6977171,
+     "n_footing_particles": 608,
+     "solver": "relaxation",
+     "sample": {
+      "n_particles": 200260,
+      "n_bonds": 485762,
+      "coordination": 4.851313292719465,
+      "length_m": 16.0,
+      "height_m": 2.0,
+      "spacing_m": 0.013592353958776981,
+      "mean_radius_m": 0.005620735381160536,
+      "solid_fraction": 0.62,
+      "kPa_per_bond": 11222.802833276275,
+      "seed": 7,
+      "ice_young_Pa": 1000000000.0,
+      "cutoff": 1.06,
+      "jitter": 0.12,
+      "cell_ratio": 8.0,
+      "bond_law": "spacing_consistent",
+      "bond_reference_length_m": 1.0
+     }
+    }
+   },
+   "wall_time_s": 1349.893473625183
+  }
+ ],
+ "cases": [
+  {
+   "arm": "legacy_bond_length",
+   "bond_reference_length_m": null,
+   "n_particles_requested": 25000,
+   "n_particles": 24960,
+   "spacing_m": 0.038444982626156074,
+   "coordination": 4.799759615384615,
+   "n_elements": 32,
+   "element_length_m": 0.5,
+   "settlement_ramp": [
+    {
+     "settlement_m": 0.0013333333333333333,
+     "resistance_N_per_m": 10087405.686423955,
+     "contact_area_m2_per_m": 2.999999999932788,
+     "q_max_Pa": 4081728.0262756473,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9893525557463805,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.0026666666666666666,
+     "resistance_N_per_m": 17556763.690960407,
+     "contact_area_m2_per_m": 2.999999999932788,
+     "q_max_Pa": 6954670.677108032,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9907209097723387,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.004,
+     "resistance_N_per_m": 23645922.61487841,
+     "contact_area_m2_per_m": 2.999999999932788,
+     "q_max_Pa": 9298792.330727011,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9916606366287016,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.005333333333333333,
+     "resistance_N_per_m": 28925243.220392857,
+     "contact_area_m2_per_m": 2.999999999932788,
+     "q_max_Pa": 11327668.317196038,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9923439473721681,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.006666666666666667,
+     "resistance_N_per_m": 33651021.63671366,
+     "contact_area_m2_per_m": 2.999999999932788,
+     "q_max_Pa": 13140629.279749392,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.992870836600209,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.008,
+     "resistance_N_per_m": 37966775.79345229,
+     "contact_area_m2_per_m": 2.999999999932788,
+     "q_max_Pa": 14793747.447915444,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9932943563004507,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    }
+   ],
+   "R_N_per_m": 37966775.79345229,
+   "A_c_m2_per_m": 2.999999999932788,
+   "q_max_Pa": 14793747.447915444,
+   "w_min_m": 0.0,
+   "equilibrium_rel_error": 0.9932943563004507,
+   "inside_dem_range": true,
+   "all_steps_converged": false,
+   "all_steps_finite": false,
+   "keel_small_strain_secant_N_per_m3": 3061296019.706735,
+   "keel_secant_at_w0_N_per_m3": 1849218430.9894304
+  },
+  {
+   "arm": "legacy_bond_length",
+   "bond_reference_length_m": null,
+   "n_particles_requested": 25000,
+   "n_particles": 24960,
+   "spacing_m": 0.038444982626156074,
+   "coordination": 4.799759615384615,
+   "n_elements": 64,
+   "element_length_m": 0.25,
+   "settlement_ramp": [
+    {
+     "settlement_m": 0.0013333333333333333,
+     "resistance_N_per_m": 9125430.869487625,
+     "contact_area_m2_per_m": 2.499999999966393,
+     "q_max_Pa": 4081728.0262756473,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9987850172879018,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.0026666666666666666,
+     "resistance_N_per_m": 15733052.522588236,
+     "contact_area_m2_per_m": 2.499999999966393,
+     "q_max_Pa": 6954670.677108032,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9989524516842924,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.004,
+     "resistance_N_per_m": 21121753.638166215,
+     "contact_area_m2_per_m": 2.499999999966393,
+     "q_max_Pa": 9298792.330727011,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9990623359734119,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.005333333333333333,
+     "resistance_N_per_m": 25790289.927392468,
+     "contact_area_m2_per_m": 2.499999999966393,
+     "q_max_Pa": 11327668.317196038,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9991412465420557,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.006666666666666667,
+     "resistance_N_per_m": 29966140.098106224,
+     "contact_area_m2_per_m": 2.499999999966393,
+     "q_max_Pa": 13140629.279749392,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9992017133918486,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.008,
+     "resistance_N_per_m": 33777135.344641596,
+     "contact_area_m2_per_m": 2.499999999966393,
+     "q_max_Pa": 14793747.447915444,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9992501227532872,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    }
+   ],
+   "R_N_per_m": 33777135.344641596,
+   "A_c_m2_per_m": 2.499999999966393,
+   "q_max_Pa": 14793747.447915444,
+   "w_min_m": 0.0,
+   "equilibrium_rel_error": 0.9992501227532872,
+   "inside_dem_range": true,
+   "all_steps_converged": false,
+   "all_steps_finite": false,
+   "keel_small_strain_secant_N_per_m3": 3061296019.706735,
+   "keel_secant_at_w0_N_per_m3": 1849218430.9894304
+  },
+  {
+   "arm": "legacy_bond_length",
+   "bond_reference_length_m": null,
+   "n_particles_requested": 25000,
+   "n_particles": 24960,
+   "spacing_m": 0.038444982626156074,
+   "coordination": 4.799759615384615,
+   "n_elements": 128,
+   "element_length_m": 0.125,
+   "settlement_ramp": [
+    {
+     "settlement_m": 0.0013333333333333333,
+     "resistance_N_per_m": 8644443.46101946,
+     "contact_area_m2_per_m": 2.2499999999831974,
+     "q_max_Pa": 4081728.0262756473,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9998559816120756,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.0026666666666666666,
+     "resistance_N_per_m": 14821196.938402154,
+     "contact_area_m2_per_m": 2.2499999999831974,
+     "q_max_Pa": 6954670.677108032,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9998765351839006,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.004,
+     "resistance_N_per_m": 19859669.14981012,
+     "contact_area_m2_per_m": 2.2499999999831974,
+     "q_max_Pa": 9298792.330727011,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9998897073965115,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.005333333333333333,
+     "resistance_N_per_m": 24222813.280892275,
+     "contact_area_m2_per_m": 2.2499999999831974,
+     "q_max_Pa": 11327668.317196038,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9998991062484531,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.006666666666666667,
+     "resistance_N_per_m": 28123699.328802504,
+     "contact_area_m2_per_m": 2.2499999999831974,
+     "q_max_Pa": 13140629.279749392,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.999906285841615,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.008,
+     "resistance_N_per_m": 31682315.120236233,
+     "contact_area_m2_per_m": 2.2499999999831974,
+     "q_max_Pa": 14793747.447915444,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9999120226475127,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    }
+   ],
+   "R_N_per_m": 31682315.120236233,
+   "A_c_m2_per_m": 2.2499999999831974,
+   "q_max_Pa": 14793747.447915444,
+   "w_min_m": 0.0,
+   "equilibrium_rel_error": 0.9999120226475127,
+   "inside_dem_range": true,
+   "all_steps_converged": false,
+   "all_steps_finite": false,
+   "keel_small_strain_secant_N_per_m3": 3061296019.706735,
+   "keel_secant_at_w0_N_per_m3": 1849218430.9894304
+  },
+  {
+   "arm": "legacy_bond_length",
+   "bond_reference_length_m": null,
+   "n_particles_requested": 50000,
+   "n_particles": 50065,
+   "spacing_m": 0.027184707917553962,
+   "coordination": 4.837471287326475,
+   "n_elements": 32,
+   "element_length_m": 0.5,
+   "settlement_ramp": [
+    {
+     "settlement_m": 0.0013333333333333333,
+     "resistance_N_per_m": 14352792.239764478,
+     "contact_area_m2_per_m": 2.999999999932788,
+     "q_max_Pa": 5808253.303582777,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9849154902849219,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.0026666666666666666,
+     "resistance_N_per_m": 25040733.258190937,
+     "contact_area_m2_per_m": 2.999999999932788,
+     "q_max_Pa": 9921733.90544667,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.986814876861107,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.004,
+     "resistance_N_per_m": 33757016.60396031,
+     "contact_area_m2_per_m": 2.999999999932788,
+     "q_max_Pa": 13278039.967191702,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9881345606404318,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.005333333333333333,
+     "resistance_N_per_m": 41312394.61807536,
+     "contact_area_m2_per_m": 2.999999999932788,
+     "q_max_Pa": 16181947.348711522,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9890988540514722,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.006666666666666667,
+     "resistance_N_per_m": 48075442.98346943,
+     "contact_area_m2_per_m": 2.999999999932788,
+     "q_max_Pa": 18776688.56212946,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9898440460039177,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.008,
+     "resistance_N_per_m": 54252547.57102572,
+     "contact_area_m2_per_m": 2.999999999932788,
+     "q_max_Pa": 21143006.30859367,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9904437235349426,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    }
+   ],
+   "R_N_per_m": 54252547.57102572,
+   "A_c_m2_per_m": 2.999999999932788,
+   "q_max_Pa": 21143006.30859367,
+   "w_min_m": 0.0,
+   "equilibrium_rel_error": 0.9904437235349426,
+   "inside_dem_range": true,
+   "all_steps_converged": false,
+   "all_steps_finite": false,
+   "keel_small_strain_secant_N_per_m3": 4356189977.687082,
+   "keel_secant_at_w0_N_per_m3": 2642875788.5742087
+  },
+  {
+   "arm": "legacy_bond_length",
+   "bond_reference_length_m": null,
+   "n_particles_requested": 50000,
+   "n_particles": 50065,
+   "spacing_m": 0.027184707917553962,
+   "coordination": 4.837471287326475,
+   "n_elements": 64,
+   "element_length_m": 0.25,
+   "settlement_ramp": [
+    {
+     "settlement_m": 0.0013333333333333333,
+     "resistance_N_per_m": 12984649.423465014,
+     "contact_area_m2_per_m": 2.499999999966393,
+     "q_max_Pa": 5808253.303582777,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9982720590149757,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.0026666666666666666,
+     "resistance_N_per_m": 22442100.534542132,
+     "contact_area_m2_per_m": 2.499999999966393,
+     "q_max_Pa": 9921733.90544667,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.998506392986069,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.004,
+     "resistance_N_per_m": 30156548.269171856,
+     "contact_area_m2_per_m": 2.499999999966393,
+     "q_max_Pa": 13278039.967191702,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9986617711743601,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.005333333333333333,
+     "resistance_N_per_m": 36838144.657749206,
+     "contact_area_m2_per_m": 2.499999999966393,
+     "q_max_Pa": 16181947.348711522,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9987738158945612,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.006666666666666667,
+     "resistance_N_per_m": 42814410.05386418,
+     "contact_area_m2_per_m": 2.499999999966393,
+     "q_max_Pa": 18776688.56212946,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9988598169898716,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.008,
+     "resistance_N_per_m": 48269280.094106525,
+     "contact_area_m2_per_m": 2.499999999966393,
+     "q_max_Pa": 21143006.30859367,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9989287188367011,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    }
+   ],
+   "R_N_per_m": 48269280.094106525,
+   "A_c_m2_per_m": 2.499999999966393,
+   "q_max_Pa": 21143006.30859367,
+   "w_min_m": 0.0,
+   "equilibrium_rel_error": 0.9989287188367011,
+   "inside_dem_range": true,
+   "all_steps_converged": false,
+   "all_steps_finite": false,
+   "keel_small_strain_secant_N_per_m3": 4356189977.687082,
+   "keel_secant_at_w0_N_per_m3": 2642875788.5742087
+  },
+  {
+   "arm": "legacy_bond_length",
+   "bond_reference_length_m": null,
+   "n_particles_requested": 50000,
+   "n_particles": 50065,
+   "spacing_m": 0.027184707917553962,
+   "coordination": 4.837471287326475,
+   "n_elements": 128,
+   "element_length_m": 0.125,
+   "settlement_ramp": [
+    {
+     "settlement_m": 0.0013333333333333333,
+     "resistance_N_per_m": 12300578.01531528,
+     "contact_area_m2_per_m": 2.2499999999831974,
+     "q_max_Pa": 5808253.303582777,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9997950819142222,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.0026666666666666666,
+     "resistance_N_per_m": 21142784.172717735,
+     "contact_area_m2_per_m": 2.2499999999831974,
+     "q_max_Pa": 9921733.90544667,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9998238836803873,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.004,
+     "resistance_N_per_m": 28356314.101777624,
+     "contact_area_m2_per_m": 2.2499999999831974,
+     "q_max_Pa": 13278039.967191702,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9998425277557625,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.005333333333333333,
+     "resistance_N_per_m": 34601019.67758612,
+     "contact_area_m2_per_m": 2.2499999999831974,
+     "q_max_Pa": 16181947.348711522,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.999855884679817,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.006666666666666667,
+     "resistance_N_per_m": 40183893.58906154,
+     "contact_area_m2_per_m": 2.2499999999831974,
+     "q_max_Pa": 18776688.56212946,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9998661039856033,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.008,
+     "resistance_N_per_m": 45277646.35564694,
+     "contact_area_m2_per_m": 2.2499999999831974,
+     "q_max_Pa": 21143006.30859367,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9998742749725086,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    }
+   ],
+   "R_N_per_m": 45277646.35564694,
+   "A_c_m2_per_m": 2.2499999999831974,
+   "q_max_Pa": 21143006.30859367,
+   "w_min_m": 0.0,
+   "equilibrium_rel_error": 0.9998742749725086,
+   "inside_dem_range": true,
+   "all_steps_converged": false,
+   "all_steps_finite": false,
+   "keel_small_strain_secant_N_per_m3": 4356189977.687082,
+   "keel_secant_at_w0_N_per_m3": 2642875788.5742087
+  },
+  {
+   "arm": "legacy_bond_length",
+   "bond_reference_length_m": null,
+   "n_particles_requested": 100000,
+   "n_particles": 99720,
+   "spacing_m": 0.019222491313078037,
+   "coordination": 4.821961492178099,
+   "n_elements": 32,
+   "element_length_m": 0.5,
+   "settlement_ramp": [
+    {
+     "settlement_m": 0.0013333333333333333,
+     "resistance_N_per_m": 23324283.194690946,
+     "contact_area_m2_per_m": 2.999999999932788,
+     "q_max_Pa": 9439359.043988556,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9757062896079862,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.0026666666666666666,
+     "resistance_N_per_m": 40747675.80611341,
+     "contact_area_m2_per_m": 2.999999999932788,
+     "q_max_Pa": 16147617.484581232,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9787111582268452,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.004,
+     "resistance_N_per_m": 54998499.01432237,
+     "contact_area_m2_per_m": 2.999999999932788,
+     "q_max_Pa": 21638163.277457595,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9808033315092823,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.005333333333333333,
+     "resistance_N_per_m": 67375955.73385182,
+     "contact_area_m2_per_m": 2.999999999932788,
+     "q_max_Pa": 26398453.67928496,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9823356138359978,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.006666666666666667,
+     "resistance_N_per_m": 78472137.99275929,
+     "contact_area_m2_per_m": 2.999999999932788,
+     "q_max_Pa": 30658561.46783965,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9835219839975865,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.008,
+     "resistance_N_per_m": 88619567.61206824,
+     "contact_area_m2_per_m": 2.999999999932788,
+     "q_max_Pa": 34548625.09902227,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9844781775742651,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    }
+   ],
+   "R_N_per_m": 88619567.61206824,
+   "A_c_m2_per_m": 2.999999999932788,
+   "q_max_Pa": 34548625.09902227,
+   "w_min_m": 0.0,
+   "equilibrium_rel_error": 0.9844781775742651,
+   "inside_dem_range": true,
+   "all_steps_converged": false,
+   "all_steps_finite": false,
+   "keel_small_strain_secant_N_per_m3": 7079519282.991416,
+   "keel_secant_at_w0_N_per_m3": 4318578137.377784
+  },
+  {
+   "arm": "legacy_bond_length",
+   "bond_reference_length_m": null,
+   "n_particles_requested": 100000,
+   "n_particles": 99720,
+   "spacing_m": 0.019222491313078037,
+   "coordination": 4.821961492178099,
+   "n_elements": 64,
+   "element_length_m": 0.25,
+   "settlement_ramp": [
+    {
+     "settlement_m": 0.0013333333333333333,
+     "resistance_N_per_m": 21101500.641334027,
+     "contact_area_m2_per_m": 2.499999999966393,
+     "q_max_Pa": 9439359.043988556,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9971948648439084,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.0026666666666666666,
+     "resistance_N_per_m": 36521455.387637936,
+     "contact_area_m2_per_m": 2.499999999966393,
+     "q_max_Pa": 16147617.484581232,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9975715666244912,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.004,
+     "resistance_N_per_m": 49137412.78461878,
+     "contact_area_m2_per_m": 2.499999999966393,
+     "q_max_Pa": 21638163.277457595,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9978212510638372,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.005333333333333333,
+     "resistance_N_per_m": 60086431.54621087,
+     "contact_area_m2_per_m": 2.499999999966393,
+     "q_max_Pa": 26398453.67928496,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9980014743644909,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.006666666666666667,
+     "resistance_N_per_m": 69894630.4642193,
+     "contact_area_m2_per_m": 2.499999999966393,
+     "q_max_Pa": 30658561.46783965,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9981399431505338,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.008,
+     "resistance_N_per_m": 78858408.90505639,
+     "contact_area_m2_per_m": 2.499999999966393,
+     "q_max_Pa": 34548625.09902227,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.998250973431786,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    }
+   ],
+   "R_N_per_m": 78858408.90505639,
+   "A_c_m2_per_m": 2.499999999966393,
+   "q_max_Pa": 34548625.09902227,
+   "w_min_m": 0.0,
+   "equilibrium_rel_error": 0.998250973431786,
+   "inside_dem_range": true,
+   "all_steps_converged": false,
+   "all_steps_finite": false,
+   "keel_small_strain_secant_N_per_m3": 7079519282.991416,
+   "keel_secant_at_w0_N_per_m3": 4318578137.377784
+  },
+  {
+   "arm": "legacy_bond_length",
+   "bond_reference_length_m": null,
+   "n_particles_requested": 100000,
+   "n_particles": 99720,
+   "spacing_m": 0.019222491313078037,
+   "coordination": 4.821961492178099,
+   "n_elements": 128,
+   "element_length_m": 0.125,
+   "settlement_ramp": [
+    {
+     "settlement_m": 0.0013333333333333333,
+     "resistance_N_per_m": 19990109.36465557,
+     "contact_area_m2_per_m": 2.2499999999831974,
+     "q_max_Pa": 9439359.043988556,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.999667022432744,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.0026666666666666666,
+     "resistance_N_per_m": 34408345.178400196,
+     "contact_area_m2_per_m": 2.2499999999831974,
+     "q_max_Pa": 16147617.484581232,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.999713414655308,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.004,
+     "resistance_N_per_m": 46206869.66976699,
+     "contact_area_m2_per_m": 2.2499999999831974,
+     "q_max_Pa": 21638163.277457595,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9997434225551485,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.005333333333333333,
+     "resistance_N_per_m": 56441669.45239037,
+     "contact_area_m2_per_m": 2.2499999999831974,
+     "q_max_Pa": 26398453.67928496,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9997649380642447,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.006666666666666667,
+     "resistance_N_per_m": 65605876.69994931,
+     "contact_area_m2_per_m": 2.2499999999831974,
+     "q_max_Pa": 30658561.46783965,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9997814140350623,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.008,
+     "resistance_N_per_m": 73977829.55155046,
+     "contact_area_m2_per_m": 2.2499999999831974,
+     "q_max_Pa": 34548625.09902227,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9997945975928156,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    }
+   ],
+   "R_N_per_m": 73977829.55155046,
+   "A_c_m2_per_m": 2.2499999999831974,
+   "q_max_Pa": 34548625.09902227,
+   "w_min_m": 0.0,
+   "equilibrium_rel_error": 0.9997945975928156,
+   "inside_dem_range": true,
+   "all_steps_converged": false,
+   "all_steps_finite": false,
+   "keel_small_strain_secant_N_per_m3": 7079519282.991416,
+   "keel_secant_at_w0_N_per_m3": 4318578137.377784
+  },
+  {
+   "arm": "legacy_bond_length",
+   "bond_reference_length_m": null,
+   "n_particles_requested": 200000,
+   "n_particles": 200260,
+   "spacing_m": 0.013592353958776981,
+   "coordination": 4.851313292719465,
+   "n_elements": 32,
+   "element_length_m": 0.5,
+   "settlement_ramp": [
+    {
+     "settlement_m": 0.0013333333333333333,
+     "resistance_N_per_m": 29903286.201270513,
+     "contact_area_m2_per_m": 2.999999999932788,
+     "q_max_Pa": 12100355.54810411,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9690571290988919,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.0026666666666666666,
+     "resistance_N_per_m": 52087092.65513748,
+     "contact_area_m2_per_m": 2.999999999932788,
+     "q_max_Pa": 20634545.517091356,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9729385143573426,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.004,
+     "resistance_N_per_m": 70139590.18388988,
+     "contact_area_m2_per_m": 2.999999999932788,
+     "q_max_Pa": 27582628.493450306,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9756396521598485,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.005333333333333333,
+     "resistance_N_per_m": 85767336.5569484,
+     "contact_area_m2_per_m": 2.999999999932788,
+     "q_max_Pa": 33586323.85253961,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9776151196458196,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.006666666666666667,
+     "resistance_N_per_m": 99745414.8001079,
+     "contact_area_m2_per_m": 2.999999999932788,
+     "q_max_Pa": 38946840.69090918,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9791421489263302,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.008,
+     "resistance_N_per_m": 112506414.6769149,
+     "contact_area_m2_per_m": 2.999999999932788,
+     "q_max_Pa": 43833321.233460166,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9803711412041367,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    }
+   ],
+   "R_N_per_m": 112506414.6769149,
+   "A_c_m2_per_m": 2.999999999932788,
+   "q_max_Pa": 43833321.233460166,
+   "w_min_m": 0.0,
+   "equilibrium_rel_error": 0.9803711412041367,
+   "inside_dem_range": true,
+   "all_steps_converged": false,
+   "all_steps_finite": false,
+   "keel_small_strain_secant_N_per_m3": 9075266661.078081,
+   "keel_secant_at_w0_N_per_m3": 5479165154.18252
+  },
+  {
+   "arm": "legacy_bond_length",
+   "bond_reference_length_m": null,
+   "n_particles_requested": 200000,
+   "n_particles": 200260,
+   "spacing_m": 0.013592353958776981,
+   "coordination": 4.851313292719465,
+   "n_elements": 64,
+   "element_length_m": 0.25,
+   "settlement_ramp": [
+    {
+     "settlement_m": 0.0013333333333333333,
+     "resistance_N_per_m": 27051998.648739364,
+     "contact_area_m2_per_m": 2.499999999966393,
+     "q_max_Pa": 12100355.54810411,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9964066110178853,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.0026666666666666666,
+     "resistance_N_per_m": 46678091.844660096,
+     "contact_area_m2_per_m": 2.499999999966393,
+     "q_max_Pa": 20634545.517091356,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9968982498373055,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.004,
+     "resistance_N_per_m": 62652423.585395254,
+     "contact_area_m2_per_m": 2.499999999966393,
+     "q_max_Pa": 27582628.493450306,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9972236054962258,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.005333333333333333,
+     "resistance_N_per_m": 76469992.13101381,
+     "contact_area_m2_per_m": 2.499999999966393,
+     "q_max_Pa": 33586323.85253961,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9974578806801186,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.006666666666666667,
+     "resistance_N_per_m": 88819548.09096313,
+     "contact_area_m2_per_m": 2.499999999966393,
+     "q_max_Pa": 38946840.69090918,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9976374548869027,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.008,
+     "resistance_N_per_m": 100086528.57191762,
+     "contact_area_m2_per_m": 2.499999999966393,
+     "q_max_Pa": 43833321.233460166,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9977811543862385,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    }
+   ],
+   "R_N_per_m": 100086528.57191762,
+   "A_c_m2_per_m": 2.499999999966393,
+   "q_max_Pa": 43833321.233460166,
+   "w_min_m": 0.0,
+   "equilibrium_rel_error": 0.9977811543862385,
+   "inside_dem_range": true,
+   "all_steps_converged": false,
+   "all_steps_finite": false,
+   "keel_small_strain_secant_N_per_m3": 9075266661.078081,
+   "keel_secant_at_w0_N_per_m3": 5479165154.18252
+  },
+  {
+   "arm": "legacy_bond_length",
+   "bond_reference_length_m": null,
+   "n_particles_requested": 200000,
+   "n_particles": 200260,
+   "spacing_m": 0.013592353958776981,
+   "coordination": 4.851313292719465,
+   "n_elements": 128,
+   "element_length_m": 0.125,
+   "settlement_ramp": [
+    {
+     "settlement_m": 0.0013333333333333333,
+     "resistance_N_per_m": 25626354.87247379,
+     "contact_area_m2_per_m": 2.2499999999831974,
+     "q_max_Pa": 12100355.54810411,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9995731784274973,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.0026666666666666666,
+     "resistance_N_per_m": 43973591.43942139,
+     "contact_area_m2_per_m": 2.2499999999831974,
+     "q_max_Pa": 20634545.517091356,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9996337749204303,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.004,
+     "resistance_N_per_m": 58908840.286147915,
+     "contact_area_m2_per_m": 2.2499999999831974,
+     "q_max_Pa": 27582628.493450306,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9996729137348206,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.005333333333333333,
+     "resistance_N_per_m": 71821319.9180465,
+     "contact_area_m2_per_m": 2.2499999999831974,
+     "q_max_Pa": 33586323.85253961,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9997009054255513,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.006666666666666667,
+     "resistance_N_per_m": 83356614.73639071,
+     "contact_area_m2_per_m": 2.2499999999831974,
+     "q_max_Pa": 38946840.69090918,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9997222881549204,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.008,
+     "resistance_N_per_m": 93876585.519419,
+     "contact_area_m2_per_m": 2.2499999999831974,
+     "q_max_Pa": 43833321.233460166,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9997393620183863,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    }
+   ],
+   "R_N_per_m": 93876585.519419,
+   "A_c_m2_per_m": 2.2499999999831974,
+   "q_max_Pa": 43833321.233460166,
+   "w_min_m": 0.0,
+   "equilibrium_rel_error": 0.9997393620183863,
+   "inside_dem_range": true,
+   "all_steps_converged": false,
+   "all_steps_finite": false,
+   "keel_small_strain_secant_N_per_m3": 9075266661.078081,
+   "keel_secant_at_w0_N_per_m3": 5479165154.18252
+  },
+  {
+   "arm": "spacing_consistent",
+   "bond_reference_length_m": 1.0,
+   "n_particles_requested": 25000,
+   "n_particles": 24960,
+   "spacing_m": 0.038444982626156074,
+   "coordination": 4.799759615384615,
+   "n_elements": 32,
+   "element_length_m": 0.5,
+   "settlement_ramp": [
+    {
+     "settlement_m": 0.0013333333333333333,
+     "resistance_N_per_m": 253328.25305315893,
+     "contact_area_m2_per_m": 2.999999999932788,
+     "q_max_Pa": 102513.50025032689,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9997299191322722,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.0026666666666666666,
+     "resistance_N_per_m": 441693.2638814912,
+     "contact_area_m2_per_m": 2.999999999932788,
+     "q_max_Pa": 174997.31469391118,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9997645402715757,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.004,
+     "resistance_N_per_m": 595151.6012984714,
+     "contact_area_m2_per_m": 2.999999999932788,
+     "q_max_Pa": 234075.65934090136,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9997884843556414,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.005333333333333333,
+     "resistance_N_per_m": 728063.9087742312,
+     "contact_area_m2_per_m": 2.999999999932788,
+     "q_max_Pa": 285147.7417499679,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9998059324130754,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.006666666666666667,
+     "resistance_N_per_m": 846998.408481195,
+     "contact_area_m2_per_m": 2.999999999932788,
+     "q_max_Pa": 330768.8728225459,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9998193817110315,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.008,
+     "resistance_N_per_m": 955633.5005481581,
+     "contact_area_m2_per_m": 2.999999999932788,
+     "q_max_Pa": 372378.77821043704,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9998301780784996,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    }
+   ],
+   "R_N_per_m": 955633.5005481581,
+   "A_c_m2_per_m": 2.999999999932788,
+   "q_max_Pa": 372378.77821043704,
+   "w_min_m": 0.0,
+   "equilibrium_rel_error": 0.9998301780784996,
+   "inside_dem_range": true,
+   "all_steps_converged": false,
+   "all_steps_finite": false,
+   "keel_small_strain_secant_N_per_m3": 76885125.18774515,
+   "keel_secant_at_w0_N_per_m3": 46547347.27630463
+  },
+  {
+   "arm": "spacing_consistent",
+   "bond_reference_length_m": 1.0,
+   "n_particles_requested": 25000,
+   "n_particles": 24960,
+   "spacing_m": 0.038444982626156074,
+   "coordination": 4.799759615384615,
+   "n_elements": 64,
+   "element_length_m": 0.25,
+   "settlement_ramp": [
+    {
+     "settlement_m": 0.0013333333333333333,
+     "resistance_N_per_m": 229177.62677690637,
+     "contact_area_m2_per_m": 2.499999999966393,
+     "q_max_Pa": 102513.50025032689,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9999694513553598,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.0026666666666666666,
+     "resistance_N_per_m": 395843.9466346568,
+     "contact_area_m2_per_m": 2.499999999966393,
+     "q_max_Pa": 174997.31469391118,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9999736175217003,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.004,
+     "resistance_N_per_m": 531651.459990137,
+     "contact_area_m2_per_m": 2.499999999966393,
+     "q_max_Pa": 234075.65934090136,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9999763773549292,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.005333333333333333,
+     "resistance_N_per_m": 649179.6961370835,
+     "contact_area_m2_per_m": 2.499999999966393,
+     "q_max_Pa": 285147.7417499679,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9999783664119678,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.006666666666666667,
+     "resistance_N_per_m": 754268.0770631434,
+     "contact_area_m2_per_m": 2.499999999966393,
+     "q_max_Pa": 330768.8728225459,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9999798914853893,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.008,
+     "resistance_N_per_m": 850195.528484516,
+     "contact_area_m2_per_m": 2.499999999966393,
+     "q_max_Pa": 372378.77821043704,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9999811117226041,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    }
+   ],
+   "R_N_per_m": 850195.528484516,
+   "A_c_m2_per_m": 2.499999999966393,
+   "q_max_Pa": 372378.77821043704,
+   "w_min_m": 0.0,
+   "equilibrium_rel_error": 0.9999811117226041,
+   "inside_dem_range": true,
+   "all_steps_converged": false,
+   "all_steps_finite": false,
+   "keel_small_strain_secant_N_per_m3": 76885125.18774515,
+   "keel_secant_at_w0_N_per_m3": 46547347.27630463
+  },
+  {
+   "arm": "spacing_consistent",
+   "bond_reference_length_m": 1.0,
+   "n_particles_requested": 25000,
+   "n_particles": 24960,
+   "spacing_m": 0.038444982626156074,
+   "coordination": 4.799759615384615,
+   "n_elements": 128,
+   "element_length_m": 0.125,
+   "settlement_ramp": [
+    {
+     "settlement_m": 0.0013333333333333333,
+     "resistance_N_per_m": 217102.31363878012,
+     "contact_area_m2_per_m": 2.2499999999831974,
+     "q_max_Pa": 102513.50025032689,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9999963825244269,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.0026666666666666666,
+     "resistance_N_per_m": 372919.2880112395,
+     "contact_area_m2_per_m": 2.2499999999831974,
+     "q_max_Pa": 174997.31469391118,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9999968931074734,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.004,
+     "resistance_N_per_m": 499901.3893359698,
+     "contact_area_m2_per_m": 2.2499999999831974,
+     "q_max_Pa": 234075.65934090136,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.99999722345567,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.005333333333333333,
+     "resistance_N_per_m": 609737.5898185096,
+     "contact_area_m2_per_m": 2.2499999999831974,
+     "q_max_Pa": 285147.7417499679,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.999997460053301,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.006666666666666667,
+     "resistance_N_per_m": 707902.9113541173,
+     "contact_area_m2_per_m": 2.2499999999831974,
+     "q_max_Pa": 330768.8728225459,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.999997640905183,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.008,
+     "resistance_N_per_m": 797476.542452695,
+     "contact_area_m2_per_m": 2.2499999999831974,
+     "q_max_Pa": 372378.77821043704,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9999977853330163,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    }
+   ],
+   "R_N_per_m": 797476.542452695,
+   "A_c_m2_per_m": 2.2499999999831974,
+   "q_max_Pa": 372378.77821043704,
+   "w_min_m": 0.0,
+   "equilibrium_rel_error": 0.9999977853330163,
+   "inside_dem_range": true,
+   "all_steps_converged": false,
+   "all_steps_finite": false,
+   "keel_small_strain_secant_N_per_m3": 76885125.18774515,
+   "keel_secant_at_w0_N_per_m3": 46547347.27630463
+  },
+  {
+   "arm": "spacing_consistent",
+   "bond_reference_length_m": 1.0,
+   "n_particles_requested": 50000,
+   "n_particles": 50065,
+   "spacing_m": 0.027184707917553962,
+   "coordination": 4.837471287326475,
+   "n_elements": 32,
+   "element_length_m": 0.5,
+   "settlement_ramp": [
+    {
+     "settlement_m": 0.0013333333333333333,
+     "resistance_N_per_m": 259374.8855389066,
+     "contact_area_m2_per_m": 2.999999999932788,
+     "q_max_Pa": 104960.02070026923,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9997234743448536,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.0026666666666666666,
+     "resistance_N_per_m": 452199.85747096705,
+     "contact_area_m2_per_m": 2.999999999932788,
+     "q_max_Pa": 179158.80508319178,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9997589406499072,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.004,
+     "resistance_N_per_m": 609355.7568884442,
+     "contact_area_m2_per_m": 2.999999999932788,
+     "q_max_Pa": 239664.2007282262,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9997834372581024,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.005333333333333333,
+     "resistance_N_per_m": 745527.1719410538,
+     "contact_area_m2_per_m": 2.999999999932788,
+     "q_max_Pa": 291993.76578888256,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9998012783980126,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.006666666666666667,
+     "resistance_N_per_m": 867394.1534607308,
+     "contact_area_m2_per_m": 2.999999999932788,
+     "q_max_Pa": 338743.580170909,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9998150331722994,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.008,
+     "resistance_N_per_m": 978697.8128757009,
+     "contact_area_m2_per_m": 2.999999999932788,
+     "q_max_Pa": 381377.25710154226,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.999826080076764,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    }
+   ],
+   "R_N_per_m": 978697.8128757009,
+   "A_c_m2_per_m": 2.999999999932788,
+   "q_max_Pa": 381377.25710154226,
+   "w_min_m": 0.0,
+   "equilibrium_rel_error": 0.999826080076764,
+   "inside_dem_range": true,
+   "all_steps_converged": false,
+   "all_steps_finite": false,
+   "keel_small_strain_secant_N_per_m3": 78720015.52520192,
+   "keel_secant_at_w0_N_per_m3": 47672157.13769278
+  },
+  {
+   "arm": "spacing_consistent",
+   "bond_reference_length_m": 1.0,
+   "n_particles_requested": 50000,
+   "n_particles": 50065,
+   "spacing_m": 0.027184707917553962,
+   "coordination": 4.837471287326475,
+   "n_elements": 64,
+   "element_length_m": 0.25,
+   "settlement_ramp": [
+    {
+     "settlement_m": 0.0013333333333333333,
+     "resistance_N_per_m": 234647.46346972254,
+     "contact_area_m2_per_m": 2.499999999966393,
+     "q_max_Pa": 104960.02070026923,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9999687222659099,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.0026666666666666666,
+     "resistance_N_per_m": 405258.7338186752,
+     "contact_area_m2_per_m": 2.499999999966393,
+     "q_max_Pa": 179158.80508319178,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9999729900549631,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.004,
+     "resistance_N_per_m": 544342.0791724483,
+     "contact_area_m2_per_m": 2.499999999966393,
+     "q_max_Pa": 239664.2007282262,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9999758134911959,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.005333333333333333,
+     "resistance_N_per_m": 664757.3517594094,
+     "contact_area_m2_per_m": 2.499999999966393,
+     "q_max_Pa": 291993.76578888256,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9999778473055129,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.006666666666666667,
+     "resistance_N_per_m": 772440.6569012743,
+     "contact_area_m2_per_m": 2.499999999966393,
+     "q_max_Pa": 338743.580170909,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9999794070206021,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.008,
+     "resistance_N_per_m": 870726.1635393928,
+     "contact_area_m2_per_m": 2.499999999966393,
+     "q_max_Pa": 381377.25710154226,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9999806556144711,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    }
+   ],
+   "R_N_per_m": 870726.1635393928,
+   "A_c_m2_per_m": 2.499999999966393,
+   "q_max_Pa": 381377.25710154226,
+   "w_min_m": 0.0,
+   "equilibrium_rel_error": 0.9999806556144711,
+   "inside_dem_range": true,
+   "all_steps_converged": false,
+   "all_steps_finite": false,
+   "keel_small_strain_secant_N_per_m3": 78720015.52520192,
+   "keel_secant_at_w0_N_per_m3": 47672157.13769278
+  },
+  {
+   "arm": "spacing_consistent",
+   "bond_reference_length_m": 1.0,
+   "n_particles_requested": 50000,
+   "n_particles": 50065,
+   "spacing_m": 0.027184707917553962,
+   "coordination": 4.837471287326475,
+   "n_elements": 128,
+   "element_length_m": 0.125,
+   "settlement_ramp": [
+    {
+     "settlement_m": 0.0013333333333333333,
+     "resistance_N_per_m": 222283.75243513045,
+     "contact_area_m2_per_m": 2.2499999999831974,
+     "q_max_Pa": 104960.02070026923,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9999962961888215,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.0026666666666666666,
+     "resistance_N_per_m": 381788.1719925295,
+     "contact_area_m2_per_m": 2.2499999999831974,
+     "q_max_Pa": 179158.80508319178,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9999968192186078,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.004,
+     "resistance_N_per_m": 511835.2403144501,
+     "contact_area_m2_per_m": 2.2499999999831974,
+     "q_max_Pa": 239664.2007282262,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9999971571730502,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.005333333333333333,
+     "resistance_N_per_m": 624372.4416685873,
+     "contact_area_m2_per_m": 2.2499999999831974,
+     "q_max_Pa": 291993.76578888256,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9999973990899467,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.006666666666666667,
+     "resistance_N_per_m": 724963.9086215461,
+     "contact_area_m2_per_m": 2.2499999999831974,
+     "q_max_Pa": 338743.580170909,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9999975840493428,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.008,
+     "resistance_N_per_m": 816740.3388712386,
+     "contact_area_m2_per_m": 2.2499999999831974,
+     "q_max_Pa": 381377.25710154226,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9999977318357701,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    }
+   ],
+   "R_N_per_m": 816740.3388712386,
+   "A_c_m2_per_m": 2.2499999999831974,
+   "q_max_Pa": 381377.25710154226,
+   "w_min_m": 0.0,
+   "equilibrium_rel_error": 0.9999977318357701,
+   "inside_dem_range": true,
+   "all_steps_converged": false,
+   "all_steps_finite": false,
+   "keel_small_strain_secant_N_per_m3": 78720015.52520192,
+   "keel_secant_at_w0_N_per_m3": 47672157.13769278
+  },
+  {
+   "arm": "spacing_consistent",
+   "bond_reference_length_m": 1.0,
+   "n_particles_requested": 100000,
+   "n_particles": 99720,
+   "spacing_m": 0.019222491313078037,
+   "coordination": 4.821961492178099,
+   "n_elements": 32,
+   "element_length_m": 0.5,
+   "settlement_ramp": [
+    {
+     "settlement_m": 0.0013333333333333333,
+     "resistance_N_per_m": 251609.35013326068,
+     "contact_area_m2_per_m": 2.999999999932788,
+     "q_max_Pa": 101826.24413945322,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9997317512370378,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.0026666666666666666,
+     "resistance_N_per_m": 439533.80413625634,
+     "contact_area_m2_per_m": 2.999999999932788,
+     "q_max_Pa": 174178.48738995628,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.999765691195155,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.004,
+     "resistance_N_per_m": 593204.2156453953,
+     "contact_area_m2_per_m": 2.999999999932788,
+     "q_max_Pa": 233382.141672744,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9997891763212902,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.005333333333333333,
+     "resistance_N_per_m": 726679.9427481021,
+     "contact_area_m2_per_m": 2.999999999932788,
+     "q_max_Pa": 284715.4705589926,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9998063012529907,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.006666666666666667,
+     "resistance_N_per_m": 846340.2874668479,
+     "contact_area_m2_per_m": 2.999999999932788,
+     "q_max_Pa": 330655.79773931514,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9998195220352932,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.008,
+     "resistance_N_per_m": 955756.5285703634,
+     "contact_area_m2_per_m": 2.999999999932788,
+     "q_max_Pa": 372599.759331972,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9998301562258721,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    }
+   ],
+   "R_N_per_m": 955756.5285703634,
+   "A_c_m2_per_m": 2.999999999932788,
+   "q_max_Pa": 372599.759331972,
+   "w_min_m": 0.0,
+   "equilibrium_rel_error": 0.9998301562258721,
+   "inside_dem_range": true,
+   "all_steps_converged": false,
+   "all_steps_finite": false,
+   "keel_small_strain_secant_N_per_m3": 76369683.10458991,
+   "keel_secant_at_w0_N_per_m3": 46574969.9164965
+  },
+  {
+   "arm": "spacing_consistent",
+   "bond_reference_length_m": 1.0,
+   "n_particles_requested": 100000,
+   "n_particles": 99720,
+   "spacing_m": 0.019222491313078037,
+   "coordination": 4.821961492178099,
+   "n_elements": 64,
+   "element_length_m": 0.25,
+   "settlement_ramp": [
+    {
+     "settlement_m": 0.0013333333333333333,
+     "resistance_N_per_m": 227630.91920608352,
+     "contact_area_m2_per_m": 2.499999999966393,
+     "q_max_Pa": 101826.24413945322,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9999696575204337,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.0026666666666666666,
+     "resistance_N_per_m": 393945.38945808436,
+     "contact_area_m2_per_m": 2.499999999966393,
+     "q_max_Pa": 174178.48738995628,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9999737440548514,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.004,
+     "resistance_N_per_m": 529984.2494954417,
+     "contact_area_m2_per_m": 2.499999999966393,
+     "q_max_Pa": 233382.141672744,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9999764514317483,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.005333333333333333,
+     "resistance_N_per_m": 648055.4419330437,
+     "contact_area_m2_per_m": 2.499999999966393,
+     "q_max_Pa": 284715.4705589926,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9999784038764442,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.006666666666666667,
+     "resistance_N_per_m": 753825.9414727392,
+     "contact_area_m2_per_m": 2.499999999966393,
+     "q_max_Pa": 330655.79773931514,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9999799032723867,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.008,
+     "resistance_N_per_m": 850478.0236171536,
+     "contact_area_m2_per_m": 2.499999999966393,
+     "q_max_Pa": 372599.759331972,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9999811054467451,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    }
+   ],
+   "R_N_per_m": 850478.0236171536,
+   "A_c_m2_per_m": 2.499999999966393,
+   "q_max_Pa": 372599.759331972,
+   "w_min_m": 0.0,
+   "equilibrium_rel_error": 0.9999811054467451,
+   "inside_dem_range": true,
+   "all_steps_converged": false,
+   "all_steps_finite": false,
+   "keel_small_strain_secant_N_per_m3": 76369683.10458991,
+   "keel_secant_at_w0_N_per_m3": 46574969.9164965
+  },
+  {
+   "arm": "spacing_consistent",
+   "bond_reference_length_m": 1.0,
+   "n_particles_requested": 100000,
+   "n_particles": 99720,
+   "spacing_m": 0.019222491313078037,
+   "coordination": 4.821961492178099,
+   "n_elements": 128,
+   "element_length_m": 0.125,
+   "settlement_ramp": [
+    {
+     "settlement_m": 0.0013333333333333333,
+     "resistance_N_per_m": 215641.70374249492,
+     "contact_area_m2_per_m": 2.2499999999831974,
+     "q_max_Pa": 101826.24413945322,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9999964068618087,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.0026666666666666666,
+     "resistance_N_per_m": 371151.1821189983,
+     "contact_area_m2_per_m": 2.2499999999831974,
+     "q_max_Pa": 174178.48738995628,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9999969078380024,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.004,
+     "resistance_N_per_m": 498374.2664204648,
+     "contact_area_m2_per_m": 2.2499999999831974,
+     "q_max_Pa": 233382.141672744,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9999972319375691,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.005333333333333333,
+     "resistance_N_per_m": 608743.1915255145,
+     "contact_area_m2_per_m": 2.2499999999831974,
+     "q_max_Pa": 284715.4705589926,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9999974641955954,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.006666666666666667,
+     "resistance_N_per_m": 707568.7684756847,
+     "contact_area_m2_per_m": 2.2499999999831974,
+     "q_max_Pa": 330655.79773931514,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9999976420187159,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.008,
+     "resistance_N_per_m": 797838.771140549,
+     "contact_area_m2_per_m": 2.2499999999831974,
+     "q_max_Pa": 372599.759331972,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.999997784327076,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    }
+   ],
+   "R_N_per_m": 797838.771140549,
+   "A_c_m2_per_m": 2.2499999999831974,
+   "q_max_Pa": 372599.759331972,
+   "w_min_m": 0.0,
+   "equilibrium_rel_error": 0.999997784327076,
+   "inside_dem_range": true,
+   "all_steps_converged": false,
+   "all_steps_finite": false,
+   "keel_small_strain_secant_N_per_m3": 76369683.10458991,
+   "keel_secant_at_w0_N_per_m3": 46574969.9164965
+  },
+  {
+   "arm": "spacing_consistent",
+   "bond_reference_length_m": 1.0,
+   "n_particles_requested": 200000,
+   "n_particles": 200260,
+   "spacing_m": 0.013592353958776981,
+   "coordination": 4.851313292719465,
+   "n_elements": 32,
+   "element_length_m": 0.5,
+   "settlement_ramp": [
+    {
+     "settlement_m": 0.0013333333333333333,
+     "resistance_N_per_m": 257332.30618981645,
+     "contact_area_m2_per_m": 2.999999999932788,
+     "q_max_Pa": 104129.51089315757,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9997256514127681,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.0026666666666666666,
+     "resistance_N_per_m": 448239.84488525,
+     "contact_area_m2_per_m": 2.999999999932788,
+     "q_max_Pa": 177573.48915776054,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9997610511792107,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.004,
+     "resistance_N_per_m": 603810.3604803956,
+     "contact_area_m2_per_m": 2.999999999932788,
+     "q_max_Pa": 237463.08546819375,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9997854076706935,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.005333333333333333,
+     "resistance_N_per_m": 738651.6267395961,
+     "contact_area_m2_per_m": 2.999999999932788,
+     "q_max_Pa": 289281.60700888606,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9998031107463985,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.006666666666666667,
+     "resistance_N_per_m": 859370.0440152772,
+     "contact_area_m2_per_m": 2.999999999932788,
+     "q_max_Pa": 335593.54405057855,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9998167439725404,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.008,
+     "resistance_N_per_m": 969655.9250521144,
+     "contact_area_m2_per_m": 2.999999999932788,
+     "q_max_Pa": 377841.22138850944,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9998276866094562,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    }
+   ],
+   "R_N_per_m": 969655.9250521144,
+   "A_c_m2_per_m": 2.999999999932788,
+   "q_max_Pa": 377841.22138850944,
+   "w_min_m": 0.0,
+   "equilibrium_rel_error": 0.9998276866094562,
+   "inside_dem_range": true,
+   "all_steps_converged": false,
+   "all_steps_finite": false,
+   "keel_small_strain_secant_N_per_m3": 78097133.16986817,
+   "keel_secant_at_w0_N_per_m3": 47230152.67356368
+  },
+  {
+   "arm": "spacing_consistent",
+   "bond_reference_length_m": 1.0,
+   "n_particles_requested": 200000,
+   "n_particles": 200260,
+   "spacing_m": 0.013592353958776981,
+   "coordination": 4.851313292719465,
+   "n_elements": 64,
+   "element_length_m": 0.25,
+   "settlement_ramp": [
+    {
+     "settlement_m": 0.0013333333333333333,
+     "resistance_N_per_m": 232795.6639880658,
+     "contact_area_m2_per_m": 2.499999999966393,
+     "q_max_Pa": 104129.51089315757,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9999689690971889,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.0026666666666666666,
+     "resistance_N_per_m": 401693.4116003855,
+     "contact_area_m2_per_m": 2.499999999966393,
+     "q_max_Pa": 177573.48915776054,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9999732276726641,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.004,
+     "resistance_N_per_m": 539368.2657083916,
+     "contact_area_m2_per_m": 2.499999999966393,
+     "q_max_Pa": 237463.08546819375,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9999760344852918,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.005333333333333333,
+     "resistance_N_per_m": 658607.4203786841,
+     "contact_area_m2_per_m": 2.499999999966393,
+     "q_max_Pa": 289281.60700888606,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9999780522444349,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.006666666666666667,
+     "resistance_N_per_m": 765278.5660582171,
+     "contact_area_m2_per_m": 2.499999999966393,
+     "q_max_Pa": 335593.54405057855,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.999979597955502,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.008,
+     "resistance_N_per_m": 862669.1839145666,
+     "contact_area_m2_per_m": 2.499999999966393,
+     "q_max_Pa": 377841.22138850944,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9999808346080997,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    }
+   ],
+   "R_N_per_m": 862669.1839145666,
+   "A_c_m2_per_m": 2.499999999966393,
+   "q_max_Pa": 377841.22138850944,
+   "w_min_m": 0.0,
+   "equilibrium_rel_error": 0.9999808346080997,
+   "inside_dem_range": true,
+   "all_steps_converged": false,
+   "all_steps_finite": false,
+   "keel_small_strain_secant_N_per_m3": 78097133.16986817,
+   "keel_secant_at_w0_N_per_m3": 47230152.67356368
+  },
+  {
+   "arm": "spacing_consistent",
+   "bond_reference_length_m": 1.0,
+   "n_particles_requested": 200000,
+   "n_particles": 200260,
+   "spacing_m": 0.013592353958776981,
+   "coordination": 4.851313292719465,
+   "n_elements": 128,
+   "element_length_m": 0.125,
+   "settlement_ramp": [
+    {
+     "settlement_m": 0.0013333333333333333,
+     "resistance_N_per_m": 220527.34288719037,
+     "contact_area_m2_per_m": 2.2499999999831974,
+     "q_max_Pa": 104129.51089315757,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9999963254549536,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.0026666666666666666,
+     "resistance_N_per_m": 378420.1949579533,
+     "contact_area_m2_per_m": 2.2499999999831974,
+     "q_max_Pa": 177573.48915776054,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9999968472780559,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.004,
+     "resistance_N_per_m": 507147.2183223893,
+     "contact_area_m2_per_m": 2.2499999999831974,
+     "q_max_Pa": 237463.08546819375,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9999971832111134,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.005333333333333333,
+     "resistance_N_per_m": 618585.317198228,
+     "contact_area_m2_per_m": 2.2499999999831974,
+     "q_max_Pa": 289281.60700888606,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9999974231969557,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.006666666666666667,
+     "resistance_N_per_m": 718232.8270796869,
+     "contact_area_m2_per_m": 2.2499999999831974,
+     "q_max_Pa": 335593.54405057855,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9999976064806976,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    },
+    {
+     "settlement_m": 0.008,
+     "resistance_N_per_m": 809175.8133457928,
+     "contact_area_m2_per_m": 2.2499999999831974,
+     "q_max_Pa": 377841.22138850944,
+     "w_min_m": 0.0,
+     "equilibrium_rel_error": 0.9999977528431179,
+     "newton_iterations": 1,
+     "converged": false,
+     "solution_finite": false,
+     "inside_dem_range": true
+    }
+   ],
+   "R_N_per_m": 809175.8133457928,
+   "A_c_m2_per_m": 2.2499999999831974,
+   "q_max_Pa": 377841.22138850944,
+   "w_min_m": 0.0,
+   "equilibrium_rel_error": 0.9999977528431179,
+   "inside_dem_range": true,
+   "all_steps_converged": false,
+   "all_steps_finite": false,
+   "keel_small_strain_secant_N_per_m3": 78097133.16986817,
+   "keel_secant_at_w0_N_per_m3": 47230152.67356368
+  }
+ ],
+ "interaction_tables": {
+  "R_N_per_m": {
+   "legacy_bond_length": {
+    "32": [
+     37966775.79345229,
+     54252547.57102572,
+     88619567.61206824,
+     112506414.6769149
+    ],
+    "64": [
+     33777135.344641596,
+     48269280.094106525,
+     78858408.90505639,
+     100086528.57191762
+    ],
+    "128": [
+     31682315.120236233,
+     45277646.35564694,
+     73977829.55155046,
+     93876585.519419
+    ]
+   },
+   "spacing_consistent": {
+    "32": [
+     955633.5005481581,
+     978697.8128757009,
+     955756.5285703634,
+     969655.9250521144
+    ],
+    "64": [
+     850195.528484516,
+     870726.1635393928,
+     850478.0236171536,
+     862669.1839145666
+    ],
+    "128": [
+     797476.542452695,
+     816740.3388712386,
+     797838.771140549,
+     809175.8133457928
+    ]
+   }
+  },
+  "A_c_m2_per_m": {
+   "legacy_bond_length": {
+    "32": [
+     2.999999999932788,
+     2.999999999932788,
+     2.999999999932788,
+     2.999999999932788
+    ],
+    "64": [
+     2.499999999966393,
+     2.499999999966393,
+     2.499999999966393,
+     2.499999999966393
+    ],
+    "128": [
+     2.2499999999831974,
+     2.2499999999831974,
+     2.2499999999831974,
+     2.2499999999831974
+    ]
+   },
+   "spacing_consistent": {
+    "32": [
+     2.999999999932788,
+     2.999999999932788,
+     2.999999999932788,
+     2.999999999932788
+    ],
+    "64": [
+     2.499999999966393,
+     2.499999999966393,
+     2.499999999966393,
+     2.499999999966393
+    ],
+    "128": [
+     2.2499999999831974,
+     2.2499999999831974,
+     2.2499999999831974,
+     2.2499999999831974
+    ]
+   }
+  },
+  "q_max_Pa": {
+   "legacy_bond_length": {
+    "32": [
+     14793747.447915444,
+     21143006.30859367,
+     34548625.09902227,
+     43833321.233460166
+    ],
+    "64": [
+     14793747.447915444,
+     21143006.30859367,
+     34548625.09902227,
+     43833321.233460166
+    ],
+    "128": [
+     14793747.447915444,
+     21143006.30859367,
+     34548625.09902227,
+     43833321.233460166
+    ]
+   },
+   "spacing_consistent": {
+    "32": [
+     372378.77821043704,
+     381377.25710154226,
+     372599.759331972,
+     377841.22138850944
+    ],
+    "64": [
+     372378.77821043704,
+     381377.25710154226,
+     372599.759331972,
+     377841.22138850944
+    ],
+    "128": [
+     372378.77821043704,
+     381377.25710154226,
+     372599.759331972,
+     377841.22138850944
+    ]
+   }
+  }
+ },
+ "convergence": {
+  "legacy_bond_length": {
+   "bond_reference_length_m": null,
+   "particle_axis": {
+    "R_N_per_m": {
+     "levels_fine_to_coarse": [
+      200000,
+      100000,
+      50000,
+      25000
+     ],
+     "values_fine_to_coarse": [
+      93876585.519419,
+      73977829.55155046,
+      45277646.35564694,
+      31682315.120236233
+     ],
+     "triads": {
+      "finest": {
+       "fine": 93876585.519419,
+       "medium": 73977829.55155046,
+       "coarse": 45277646.35564694,
+       "r": 2.0,
+       "monotone": true,
+       "convergence_ratio_R": 0.6933320192433041,
+       "observed_order_p": 0.5283817067292575,
+       "gci_fine_rel": 0.5990340064419936,
+       "richardson_limit": 138864799.2272526,
+       "uncertainty_band_abs": 56235267.134792,
+       "uncertainty_band_rel": 0.40496416260799717,
+       "safety_factor": 1.25,
+       "verdict": "extrapolated",
+       "values": [
+        93876585.519419,
+        73977829.55155046,
+        45277646.35564694
+       ],
+       "levels": [
+        200000,
+        100000,
+        50000
+       ],
+       "observed_order_in_spacing": 1.056763413458515
+      },
+      "coarsest": {
+       "fine": 73977829.55155046,
+       "medium": 45277646.35564694,
+       "coarse": 31682315.120236233,
+       "r": 2.0,
+       "monotone": false,
+       "convergence_ratio_R": 2.111032287403957,
+       "observed_order_p": 1.0779486443038997,
+       "gci_fine_rel": 0.4364820783018048,
+       "richardson_limit": 99809826.9842844,
+       "uncertainty_band_abs": 32289996.790917423,
+       "uncertainty_band_rel": 0.323515206533738,
+       "safety_factor": 1.25,
+       "verdict": "extrapolated",
+       "values": [
+        73977829.55155046,
+        45277646.35564694,
+        31682315.120236233
+       ],
+       "levels": [
+        100000,
+        50000,
+        25000
+       ],
+       "observed_order_in_spacing": 2.1558972886077994
+      }
+     },
+     "richardson_limit": 138864799.2272526,
+     "uncertainty_band_rel": 0.40496416260799717
+    },
+    "A_c_m2_per_m": {
+     "levels_fine_to_coarse": [
+      200000,
+      100000,
+      50000,
+      25000
+     ],
+     "values_fine_to_coarse": [
+      2.2499999999831974,
+      2.2499999999831974,
+      2.2499999999831974,
+      2.2499999999831974
+     ],
+     "triads": {
+      "finest": {
+       "fine": 2.2499999999831974,
+       "medium": 2.2499999999831974,
+       "coarse": 2.2499999999831974,
+       "r": 2.0,
+       "monotone": false,
+       "observed_order_p": null,
+       "gci_fine_rel": null,
+       "note": "medium == coarse (no convergence signal)",
+       "richardson_limit": null,
+       "uncertainty_band_abs": null,
+       "uncertainty_band_rel": null,
+       "verdict": "no_extrapolation (p undefined/divergent)",
+       "values": [
+        2.2499999999831974,
+        2.2499999999831974,
+        2.2499999999831974
+       ],
+       "levels": [
+        200000,
+        100000,
+        50000
+       ],
+       "observed_order_in_spacing": null
+      },
+      "coarsest": {
+       "fine": 2.2499999999831974,
+       "medium": 2.2499999999831974,
+       "coarse": 2.2499999999831974,
+       "r": 2.0,
+       "monotone": false,
+       "observed_order_p": null,
+       "gci_fine_rel": null,
+       "note": "medium == coarse (no convergence signal)",
+       "richardson_limit": null,
+       "uncertainty_band_abs": null,
+       "uncertainty_band_rel": null,
+       "verdict": "no_extrapolation (p undefined/divergent)",
+       "values": [
+        2.2499999999831974,
+        2.2499999999831974,
+        2.2499999999831974
+       ],
+       "levels": [
+        100000,
+        50000,
+        25000
+       ],
+       "observed_order_in_spacing": null
+      }
+     },
+     "richardson_limit": null,
+     "uncertainty_band_rel": null
+    },
+    "q_max_Pa": {
+     "levels_fine_to_coarse": [
+      200000,
+      100000,
+      50000,
+      25000
+     ],
+     "values_fine_to_coarse": [
+      43833321.233460166,
+      34548625.09902227,
+      21143006.30859367,
+      14793747.447915444
+     ],
+     "triads": {
+      "finest": {
+       "fine": 43833321.233460166,
+       "medium": 34548625.09902227,
+       "coarse": 21143006.30859367,
+       "r": 2.0,
+       "monotone": true,
+       "convergence_ratio_R": 0.6925973563463571,
+       "observed_order_p": 0.5299112141285414,
+       "gci_fine_rel": 0.5965496031068597,
+       "richardson_limit": 64752321.541201085,
+       "uncertainty_band_abs": 26148750.38467615,
+       "uncertainty_band_rel": 0.4038272259943303,
+       "safety_factor": 1.25,
+       "verdict": "extrapolated",
+       "values": [
+        43833321.233460166,
+        34548625.09902227,
+        21143006.30859367
+       ],
+       "levels": [
+        200000,
+        100000,
+        50000
+       ],
+       "observed_order_in_spacing": 1.0598224282570827
+      },
+      "coarsest": {
+       "fine": 34548625.09902227,
+       "medium": 21143006.30859367,
+       "coarse": 14793747.447915444,
+       "r": 2.0,
+       "monotone": false,
+       "convergence_ratio_R": 2.111367497307648,
+       "observed_order_p": 1.0781777110391146,
+       "gci_fine_rel": 0.43642379169992257,
+       "richardson_limit": 46610898.6700098,
+       "uncertainty_band_abs": 15077841.963734413,
+       "uncertainty_band_rel": 0.32348318513403257,
+       "safety_factor": 1.25,
+       "verdict": "extrapolated",
+       "values": [
+        34548625.09902227,
+        21143006.30859367,
+        14793747.447915444
+       ],
+       "levels": [
+        100000,
+        50000,
+        25000
+       ],
+       "observed_order_in_spacing": 2.1563554220782293
+      }
+     },
+     "richardson_limit": 64752321.541201085,
+     "uncertainty_band_rel": 0.4038272259943303
+    }
+   },
+   "mesh_axis": {
+    "R_N_per_m": {
+     "levels_fine_to_coarse": [
+      32,
+      64,
+      128
+     ],
+     "values_fine_to_coarse": [
+      112506414.6769149,
+      100086528.57191762,
+      93876585.519419
+     ],
+     "triads": {
+      "finest": {
+       "fine": 112506414.6769149,
+       "medium": 100086528.57191762,
+       "coarse": 93876585.519419,
+       "r": 2.0,
+       "monotone": false,
+       "convergence_ratio_R": 2.000000000000005,
+       "observed_order_p": 1.0000000000000036,
+       "gci_fine_rel": 0.1379908663504149,
+       "richardson_limit": 124926300.78191212,
+       "uncertainty_band_abs": 15524857.631246522,
+       "uncertainty_band_rel": 0.1242721311211221,
+       "safety_factor": 1.25,
+       "verdict": "extrapolated",
+       "values": [
+        112506414.6769149,
+        100086528.57191762,
+        93876585.519419
+       ],
+       "levels": [
+        32,
+        64,
+        128
+       ],
+       "observed_order_in_spacing": 2.000000000000007
+      }
+     },
+     "richardson_limit": 124926300.78191212,
+     "uncertainty_band_rel": 0.1242721311211221
+    },
+    "A_c_m2_per_m": {
+     "levels_fine_to_coarse": [
+      32,
+      64,
+      128
+     ],
+     "values_fine_to_coarse": [
+      2.999999999932788,
+      2.499999999966393,
+      2.2499999999831974
+     ],
+     "triads": {
+      "finest": {
+       "fine": 2.999999999932788,
+       "medium": 2.499999999966393,
+       "coarse": 2.2499999999831974,
+       "r": 2.0,
+       "monotone": false,
+       "convergence_ratio_R": 2.000000000000014,
+       "observed_order_p": 1.0000000000000102,
+       "gci_fine_rel": 0.20833333332399573,
+       "richardson_limit": 3.4999999998991758,
+       "uncertainty_band_abs": 0.6249999999579847,
+       "uncertainty_band_rel": 0.1785714285645683,
+       "safety_factor": 1.25,
+       "verdict": "extrapolated",
+       "values": [
+        2.999999999932788,
+        2.499999999966393,
+        2.2499999999831974
+       ],
+       "levels": [
+        32,
+        64,
+        128
+       ],
+       "observed_order_in_spacing": 2.0000000000000204
+      }
+     },
+     "richardson_limit": 3.4999999998991758,
+     "uncertainty_band_rel": 0.1785714285645683
+    },
+    "q_max_Pa": {
+     "levels_fine_to_coarse": [
+      32,
+      64,
+      128
+     ],
+     "values_fine_to_coarse": [
+      43833321.233460166,
+      43833321.233460166,
+      43833321.233460166
+     ],
+     "triads": {
+      "finest": {
+       "fine": 43833321.233460166,
+       "medium": 43833321.233460166,
+       "coarse": 43833321.233460166,
+       "r": 2.0,
+       "monotone": false,
+       "observed_order_p": null,
+       "gci_fine_rel": null,
+       "note": "medium == coarse (no convergence signal)",
+       "richardson_limit": null,
+       "uncertainty_band_abs": null,
+       "uncertainty_band_rel": null,
+       "verdict": "no_extrapolation (p undefined/divergent)",
+       "values": [
+        43833321.233460166,
+        43833321.233460166,
+        43833321.233460166
+       ],
+       "levels": [
+        32,
+        64,
+        128
+       ],
+       "observed_order_in_spacing": null
+      }
+     },
+     "richardson_limit": null,
+     "uncertainty_band_rel": null
+    }
+   },
+   "particle_divergence_R": {
+    "loglog_slope_vs_N": 0.5409556831860346,
+    "interpretation": "a positive slope means the resistance grows without bound as the particle count grows, i.e. no converged limit; the slope is the divergence exponent in N"
+   },
+   "required_particles_R": {
+    "observed_order": 0.5283817067292575,
+    "gci": 0.5990340064419936,
+    "level_required_for_gci": 21985329.044129428,
+    "level_required_for_order": 27760.270000420594,
+    "rule": "level_req = level_finest * (GCI/GCI_target)**(1/p) from the Richardson error model; the same rule with p/order_target gives the level at which the predeclared observed order would be seen"
+   },
+   "required_elements_R": {
+    "observed_order": 1.0000000000000036,
+    "gci": 0.1379908663504149,
+    "level_required_for_gci": 353.2566178570609,
+    "level_required_for_order": 85.33333333333377,
+    "rule": "level_req = level_finest * (GCI/GCI_target)**(1/p) from the Richardson error model; the same rule with p/order_target gives the level at which the predeclared observed order would be seen"
+   },
+   "keel_modulus_at_finest_N": {
+    "small_strain_secant_N_per_m3": 9075266661.078081,
+    "secant_at_w0_N_per_m3": 5479165154.18252,
+    "bond_stiffness_over_spacing_N_per_m2": 64136703100.61562
+   }
+  },
+  "spacing_consistent": {
+   "bond_reference_length_m": 1.0,
+   "particle_axis": {
+    "R_N_per_m": {
+     "levels_fine_to_coarse": [
+      200000,
+      100000,
+      50000,
+      25000
+     ],
+     "values_fine_to_coarse": [
+      809175.8133457928,
+      797838.771140549,
+      816740.3388712386,
+      797476.542452695
+     ],
+     "triads": {
+      "finest": {
+       "fine": 809175.8133457928,
+       "medium": 797838.771140549,
+       "coarse": 816740.3388712386,
+       "r": 2.0,
+       "monotone": false,
+       "convergence_ratio_R": -0.5997937508028169,
+       "observed_order_p": null,
+       "gci_fine_rel": null,
+       "note": "non-monotone or divergent triad: p undefined",
+       "richardson_limit": null,
+       "uncertainty_band_abs": null,
+       "uncertainty_band_rel": null,
+       "verdict": "no_extrapolation (p undefined/divergent)",
+       "values": [
+        809175.8133457928,
+        797838.771140549,
+        816740.3388712386
+       ],
+       "levels": [
+        200000,
+        100000,
+        50000
+       ],
+       "observed_order_in_spacing": null
+      },
+      "coarsest": {
+       "fine": 797838.771140549,
+       "medium": 816740.3388712386,
+       "coarse": 797476.542452695,
+       "r": 2.0,
+       "monotone": false,
+       "convergence_ratio_R": -0.9811964017899748,
+       "observed_order_p": null,
+       "gci_fine_rel": null,
+       "note": "non-monotone or divergent triad: p undefined",
+       "richardson_limit": null,
+       "uncertainty_band_abs": null,
+       "uncertainty_band_rel": null,
+       "verdict": "no_extrapolation (p undefined/divergent)",
+       "values": [
+        797838.771140549,
+        816740.3388712386,
+        797476.542452695
+       ],
+       "levels": [
+        100000,
+        50000,
+        25000
+       ],
+       "observed_order_in_spacing": null
+      }
+     },
+     "richardson_limit": null,
+     "uncertainty_band_rel": null
+    },
+    "A_c_m2_per_m": {
+     "levels_fine_to_coarse": [
+      200000,
+      100000,
+      50000,
+      25000
+     ],
+     "values_fine_to_coarse": [
+      2.2499999999831974,
+      2.2499999999831974,
+      2.2499999999831974,
+      2.2499999999831974
+     ],
+     "triads": {
+      "finest": {
+       "fine": 2.2499999999831974,
+       "medium": 2.2499999999831974,
+       "coarse": 2.2499999999831974,
+       "r": 2.0,
+       "monotone": false,
+       "observed_order_p": null,
+       "gci_fine_rel": null,
+       "note": "medium == coarse (no convergence signal)",
+       "richardson_limit": null,
+       "uncertainty_band_abs": null,
+       "uncertainty_band_rel": null,
+       "verdict": "no_extrapolation (p undefined/divergent)",
+       "values": [
+        2.2499999999831974,
+        2.2499999999831974,
+        2.2499999999831974
+       ],
+       "levels": [
+        200000,
+        100000,
+        50000
+       ],
+       "observed_order_in_spacing": null
+      },
+      "coarsest": {
+       "fine": 2.2499999999831974,
+       "medium": 2.2499999999831974,
+       "coarse": 2.2499999999831974,
+       "r": 2.0,
+       "monotone": false,
+       "observed_order_p": null,
+       "gci_fine_rel": null,
+       "note": "medium == coarse (no convergence signal)",
+       "richardson_limit": null,
+       "uncertainty_band_abs": null,
+       "uncertainty_band_rel": null,
+       "verdict": "no_extrapolation (p undefined/divergent)",
+       "values": [
+        2.2499999999831974,
+        2.2499999999831974,
+        2.2499999999831974
+       ],
+       "levels": [
+        100000,
+        50000,
+        25000
+       ],
+       "observed_order_in_spacing": null
+      }
+     },
+     "richardson_limit": null,
+     "uncertainty_band_rel": null
+    },
+    "q_max_Pa": {
+     "levels_fine_to_coarse": [
+      200000,
+      100000,
+      50000,
+      25000
+     ],
+     "values_fine_to_coarse": [
+      377841.22138850944,
+      372599.759331972,
+      381377.25710154226,
+      372378.77821043704
+     ],
+     "triads": {
+      "finest": {
+       "fine": 377841.22138850944,
+       "medium": 372599.759331972,
+       "coarse": 381377.25710154226,
+       "r": 2.0,
+       "monotone": false,
+       "convergence_ratio_R": -0.597147637531563,
+       "observed_order_p": null,
+       "gci_fine_rel": null,
+       "note": "non-monotone or divergent triad: p undefined",
+       "richardson_limit": null,
+       "uncertainty_band_abs": null,
+       "uncertainty_band_rel": null,
+       "verdict": "no_extrapolation (p undefined/divergent)",
+       "values": [
+        377841.22138850944,
+        372599.759331972,
+        381377.25710154226
+       ],
+       "levels": [
+        200000,
+        100000,
+        50000
+       ],
+       "observed_order_in_spacing": null
+      },
+      "coarsest": {
+       "fine": 372599.759331972,
+       "medium": 381377.25710154226,
+       "coarse": 372378.77821043704,
+       "r": 2.0,
+       "monotone": false,
+       "convergence_ratio_R": -0.9754423915187064,
+       "observed_order_p": null,
+       "gci_fine_rel": null,
+       "note": "non-monotone or divergent triad: p undefined",
+       "richardson_limit": null,
+       "uncertainty_band_abs": null,
+       "uncertainty_band_rel": null,
+       "verdict": "no_extrapolation (p undefined/divergent)",
+       "values": [
+        372599.759331972,
+        381377.25710154226,
+        372378.77821043704
+       ],
+       "levels": [
+        100000,
+        50000,
+        25000
+       ],
+       "observed_order_in_spacing": null
+      }
+     },
+     "richardson_limit": null,
+     "uncertainty_band_rel": null
+    }
+   },
+   "mesh_axis": {
+    "R_N_per_m": {
+     "levels_fine_to_coarse": [
+      32,
+      64,
+      128
+     ],
+     "values_fine_to_coarse": [
+      969655.9250521144,
+      862669.1839145666,
+      809175.8133457928
+     ],
+     "triads": {
+      "finest": {
+       "fine": 969655.9250521144,
+       "medium": 862669.1839145666,
+       "coarse": 809175.8133457928,
+       "r": 2.0,
+       "monotone": false,
+       "convergence_ratio_R": 2.000000000000002,
+       "observed_order_p": 1.0000000000000016,
+       "gci_fine_rel": 0.13791843371116086,
+       "richardson_limit": 1076642.666189662,
+       "uncertainty_band_abs": 133733.42642193442,
+       "uncertainty_band_rel": 0.12421338167400461,
+       "safety_factor": 1.25,
+       "verdict": "extrapolated",
+       "values": [
+        969655.9250521144,
+        862669.1839145666,
+        809175.8133457928
+       ],
+       "levels": [
+        32,
+        64,
+        128
+       ],
+       "observed_order_in_spacing": 2.000000000000003
+      }
+     },
+     "richardson_limit": 1076642.666189662,
+     "uncertainty_band_rel": 0.12421338167400461
+    },
+    "A_c_m2_per_m": {
+     "levels_fine_to_coarse": [
+      32,
+      64,
+      128
+     ],
+     "values_fine_to_coarse": [
+      2.999999999932788,
+      2.499999999966393,
+      2.2499999999831974
+     ],
+     "triads": {
+      "finest": {
+       "fine": 2.999999999932788,
+       "medium": 2.499999999966393,
+       "coarse": 2.2499999999831974,
+       "r": 2.0,
+       "monotone": false,
+       "convergence_ratio_R": 2.000000000000014,
+       "observed_order_p": 1.0000000000000102,
+       "gci_fine_rel": 0.20833333332399573,
+       "richardson_limit": 3.4999999998991758,
+       "uncertainty_band_abs": 0.6249999999579847,
+       "uncertainty_band_rel": 0.1785714285645683,
+       "safety_factor": 1.25,
+       "verdict": "extrapolated",
+       "values": [
+        2.999999999932788,
+        2.499999999966393,
+        2.2499999999831974
+       ],
+       "levels": [
+        32,
+        64,
+        128
+       ],
+       "observed_order_in_spacing": 2.0000000000000204
+      }
+     },
+     "richardson_limit": 3.4999999998991758,
+     "uncertainty_band_rel": 0.1785714285645683
+    },
+    "q_max_Pa": {
+     "levels_fine_to_coarse": [
+      32,
+      64,
+      128
+     ],
+     "values_fine_to_coarse": [
+      377841.22138850944,
+      377841.22138850944,
+      377841.22138850944
+     ],
+     "triads": {
+      "finest": {
+       "fine": 377841.22138850944,
+       "medium": 377841.22138850944,
+       "coarse": 377841.22138850944,
+       "r": 2.0,
+       "monotone": false,
+       "observed_order_p": null,
+       "gci_fine_rel": null,
+       "note": "medium == coarse (no convergence signal)",
+       "richardson_limit": null,
+       "uncertainty_band_abs": null,
+       "uncertainty_band_rel": null,
+       "verdict": "no_extrapolation (p undefined/divergent)",
+       "values": [
+        377841.22138850944,
+        377841.22138850944,
+        377841.22138850944
+       ],
+       "levels": [
+        32,
+        64,
+        128
+       ],
+       "observed_order_in_spacing": null
+      }
+     },
+     "richardson_limit": null,
+     "uncertainty_band_rel": null
+    }
+   },
+   "particle_divergence_R": {
+    "loglog_slope_vs_N": 0.0029253092877997823,
+    "interpretation": "a positive slope means the resistance grows without bound as the particle count grows, i.e. no converged limit; the slope is the divergence exponent in N"
+   },
+   "required_particles_R": {
+    "observed_order": null,
+    "gci": null,
+    "level_required": null,
+    "reason": "observed order undefined (divergent or non-monotone triad)"
+   },
+   "required_elements_R": {
+    "observed_order": 1.0000000000000016,
+    "gci": 0.13791843371116086,
+    "level_required_for_gci": 353.07119030057123,
+    "level_required_for_order": 85.33333333333353,
+    "rule": "level_req = level_finest * (GCI/GCI_target)**(1/p) from the Richardson error model; the same rule with p/order_target gives the level at which the predeclared observed order would be seen"
+   },
+   "keel_modulus_at_finest_N": {
+    "small_strain_secant_N_per_m3": 78097133.16986817,
+    "secant_at_w0_N_per_m3": 47230152.67356368,
+    "bond_stiffness_over_spacing_N_per_m2": 825670289.8786258
+   }
+  }
+ },
+ "richardson_bands_particle_axis": {
+  "legacy_bond_length": {
+   "R_N_per_m": {
+    "richardson_limit": 138864799.2272526,
+    "uncertainty_band_rel": 0.40496416260799717
+   },
+   "A_c_m2_per_m": {
+    "richardson_limit": null,
+    "uncertainty_band_rel": null
+   },
+   "q_max_Pa": {
+    "richardson_limit": 64752321.541201085,
+    "uncertainty_band_rel": 0.4038272259943303
+   }
+  },
+  "spacing_consistent": {
+   "R_N_per_m": {
+    "richardson_limit": null,
+    "uncertainty_band_rel": null
+   },
+   "A_c_m2_per_m": {
+    "richardson_limit": null,
+    "uncertainty_band_rel": null
+   },
+   "q_max_Pa": {
+    "richardson_limit": null,
+    "uncertainty_band_rel": null
+   }
+  }
+ },
+ "kerr_vs_fem": {
+  "cases": [
+   {
+    "name": "soft_shear_layer",
+    "w_centre_analytic_m": 0.008330303710463028,
+    "w_centre_fem_m": 0.008330343098423029,
+    "max_rel_dev_deflection_absx_le_5a": 4.728274186659867e-06
+   },
+   {
+    "name": "balanced",
+    "w_centre_analytic_m": 0.004436306892359286,
+    "w_centre_fem_m": 0.004436349215163108,
+    "max_rel_dev_deflection_absx_le_5a": 9.540098295349558e-06
+   },
+   {
+    "name": "stiff_thin_layer",
+    "w_centre_analytic_m": 0.0018001340975992335,
+    "w_centre_fem_m": 0.0018001597599788335,
+    "max_rel_dev_deflection_absx_le_5a": 1.4255815516325915e-05
+   }
+  ],
+  "max_rel_dev_all_cases": 1.4255815516325915e-05,
+  "mesh_refinement": [
+   {
+    "n_elements": 75,
+    "w_centre_m": 0.004446991994301162
+   },
+   {
+    "n_elements": 150,
+    "w_centre_m": 0.00443902210129253
+   },
+   {
+    "n_elements": 300,
+    "w_centre_m": 0.004436984473209825
+   },
+   {
+    "n_elements": 600,
+    "w_centre_m": 0.004436476212093858
+   }
+  ],
+  "mesh_gci": {
+   "fine": 0.004446991994301162,
+   "medium": 0.00443902210129253,
+   "coarse": 0.004436984473209825,
+   "r": 2.0,
+   "observed_order_p": 1.9676696088038066,
+   "gci_fine_rel": 0.0007694856699427956,
+   "relative_change_fine_medium": 0.0017921986409792957
+  }
+ },
+ "kerr_footing_reconciliation": [
+  {
+   "arm": "legacy_bond_length",
+   "n_particles_requested": 25000,
+   "k_subgrade_N_per_m3": 1849218430.9894304,
+   "identified_sqrt_G2K_N_per_m": 127273133.47697386,
+   "kerr_foundation": {
+    "k_upper_N_per_m3": 3698436861.978861,
+    "k_lower_N_per_m3": 3698436861.978861,
+    "shear_N_per_m": 17519239.732410163,
+    "k_series_N_per_m3": 1849218430.9894304,
+    "c_m2": 0.0023684654336692443,
+    "g2_N_per_m": 8759619.866205081,
+    "sqrt_c_m": 0.048666882308909455
+   },
+   "footing_predictions": {
+    "0.5": {
+     "footing_width_m": 1.0,
+     "dem_N_per_m": 16830117.583547026,
+     "kerr_N_per_m": 16830117.583547026,
+     "rel_dev": 0.0,
+     "role": "identification"
+    },
+    "1": {
+     "footing_width_m": 2.0,
+     "dem_N_per_m": 27418994.93630831,
+     "kerr_N_per_m": 31623865.03146247,
+     "rel_dev": 0.1533560987527686,
+     "role": "validation"
+    },
+    "2": {
+     "footing_width_m": 4.0,
+     "dem_N_per_m": 52273662.261358894,
+     "kerr_N_per_m": 61211359.92729336,
+     "rel_dev": 0.1709789840483643,
+     "role": "validation"
+    }
+   },
+   "max_validation_rel_dev": 0.1709789840483643
+  },
+  {
+   "arm": "legacy_bond_length",
+   "n_particles_requested": 50000,
+   "k_subgrade_N_per_m3": 2642875788.5742087,
+   "identified_sqrt_G2K_N_per_m": -24452528.95220299,
+   "kerr_foundation": {
+    "k_upper_N_per_m3": 5285751577.148417,
+    "k_lower_N_per_m3": 5285751577.148417,
+    "shear_N_per_m": 452481.4785040636,
+    "k_series_N_per_m3": 2642875788.5742087,
+    "c_m2": 4.280200004671526e-05,
+    "g2_N_per_m": 226240.7392520318,
+    "sqrt_c_m": 0.006542323749763173
+   },
+   "footing_predictions": {
+    "0.5": {
+     "footing_width_m": 1.0,
+     "dem_N_per_m": 20751765.845358424,
+     "kerr_N_per_m": 21534246.77182892,
+     "rel_dev": 0.03770671528878659,
+     "role": "identification"
+    },
+    "1": {
+     "footing_width_m": 2.0,
+     "dem_N_per_m": 37874997.20424726,
+     "kerr_N_per_m": 42677253.080422595,
+     "rel_dev": 0.126792243713666,
+     "role": "validation"
+    },
+    "2": {
+     "footing_width_m": 4.0,
+     "dem_N_per_m": 71375161.8531762,
+     "kerr_N_per_m": 84963265.69760993,
+     "rel_dev": 0.1903758042942925,
+     "role": "validation"
+    }
+   },
+   "max_validation_rel_dev": 0.1903758042942925
+  },
+  {
+   "arm": "legacy_bond_length",
+   "n_particles_requested": 100000,
+   "k_subgrade_N_per_m3": 4318578137.377784,
+   "identified_sqrt_G2K_N_per_m": -56277349.22736976,
+   "kerr_foundation": {
+    "k_upper_N_per_m3": 8637156274.755568,
+    "k_lower_N_per_m3": 8637156274.755568,
+    "shear_N_per_m": 1466751.2942037007,
+    "k_series_N_per_m3": 4318578137.377784,
+    "c_m2": 8.490938727661321e-05,
+    "g2_N_per_m": 733375.6471018504,
+    "sqrt_c_m": 0.00921462898203792
+   },
+   "footing_predictions": {
+    "0.5": {
+     "footing_width_m": 1.0,
+     "dem_N_per_m": 33648187.51138435,
+     "kerr_N_per_m": 35449062.686660185,
+     "rel_dev": 0.05352071860234771,
+     "role": "identification"
+    },
+    "1": {
+     "footing_width_m": 2.0,
+     "dem_N_per_m": 60392500.727808625,
+     "kerr_N_per_m": 69997687.78568245,
+     "rel_dev": 0.15904602296839446,
+     "role": "validation"
+    },
+    "2": {
+     "footing_width_m": 4.0,
+     "dem_N_per_m": 115355362.91578503,
+     "kerr_N_per_m": 139094937.98372698,
+     "rel_dev": 0.20579515739786614,
+     "role": "validation"
+    }
+   },
+   "max_validation_rel_dev": 0.20579515739786614
+  },
+  {
+   "arm": "legacy_bond_length",
+   "n_particles_requested": 200000,
+   "k_subgrade_N_per_m3": 5479165154.18252,
+   "identified_sqrt_G2K_N_per_m": -157084761.10690272,
+   "kerr_foundation": {
+    "k_upper_N_per_m3": 10958330308.36504,
+    "k_lower_N_per_m3": 10958330308.36504,
+    "shear_N_per_m": 9007073.697414126,
+    "k_series_N_per_m3": 5479165154.18252,
+    "c_m2": 0.00041096925553241344,
+    "g2_N_per_m": 4503536.848707063,
+    "sqrt_c_m": 0.020272376662158125
+   },
+   "footing_predictions": {
+    "0.5": {
+     "footing_width_m": 1.0,
+     "dem_N_per_m": 41319965.055749714,
+     "kerr_N_per_m": 46346677.4111706,
+     "rel_dev": 0.12165335446529899,
+     "role": "identification"
+    },
+    "1": {
+     "footing_width_m": 2.0,
+     "dem_N_per_m": 74701013.80720586,
+     "kerr_N_per_m": 90179998.64463076,
+     "rel_dev": 0.2072125135727644,
+     "role": "validation"
+    },
+    "2": {
+     "footing_width_m": 4.0,
+     "dem_N_per_m": 146363777.57547575,
+     "kerr_N_per_m": 177846641.11155108,
+     "rel_dev": 0.21510010234492943,
+     "role": "validation"
+    }
+   },
+   "max_validation_rel_dev": 0.21510010234492943
+  },
+  {
+   "arm": "spacing_consistent",
+   "n_particles_requested": 25000,
+   "k_subgrade_N_per_m3": 46547347.27630463,
+   "identified_sqrt_G2K_N_per_m": 5326845.988587324,
+   "kerr_foundation": {
+    "k_upper_N_per_m3": 93094694.55260926,
+    "k_lower_N_per_m3": 93094694.55260926,
+    "shear_N_per_m": 1219201.086484839,
+    "k_series_N_per_m3": 46547347.27630463,
+    "c_m2": 0.006548177059627439,
+    "g2_N_per_m": 609600.5432424195,
+    "sqrt_c_m": 0.0809208073342539
+   },
+   "footing_predictions": {
+    "0.5": {
+     "footing_width_m": 1.0,
+     "dem_N_per_m": 457608.3140278342,
+     "kerr_N_per_m": 457608.3140278342,
+     "rel_dev": 0.0,
+     "role": "identification"
+    },
+    "1": {
+     "footing_width_m": 2.0,
+     "dem_N_per_m": 728810.702454321,
+     "kerr_N_per_m": 829987.0922382713,
+     "rel_dev": 0.1388239627151903,
+     "role": "validation"
+    },
+    "2": {
+     "footing_width_m": 4.0,
+     "dem_N_per_m": 1377262.5178435487,
+     "kerr_N_per_m": 1574744.6486591455,
+     "rel_dev": 0.14338742850913042,
+     "role": "validation"
+    }
+   },
+   "max_validation_rel_dev": 0.14338742850913042
+  },
+  {
+   "arm": "spacing_consistent",
+   "n_particles_requested": 50000,
+   "k_subgrade_N_per_m3": 47672157.13769278,
+   "identified_sqrt_G2K_N_per_m": 1277908.7195137218,
+   "kerr_foundation": {
+    "k_upper_N_per_m3": 95344314.27538556,
+    "k_lower_N_per_m3": 95344314.27538556,
+    "shear_N_per_m": 68511.71809542477,
+    "k_series_N_per_m3": 47672157.13769278,
+    "c_m2": 0.00035928580857763853,
+    "g2_N_per_m": 34255.85904771239,
+    "sqrt_c_m": 0.018954836020858595
+   },
+   "footing_predictions": {
+    "0.5": {
+     "footing_width_m": 1.0,
+     "dem_N_per_m": 401823.7966137618,
+     "kerr_N_per_m": 401823.7966137618,
+     "rel_dev": 0.0,
+     "role": "identification"
+    },
+    "1": {
+     "footing_width_m": 2.0,
+     "dem_N_per_m": 711510.7802937445,
+     "kerr_N_per_m": 783201.053715304,
+     "rel_dev": 0.10075781760040575,
+     "role": "validation"
+    },
+    "2": {
+     "footing_width_m": 4.0,
+     "dem_N_per_m": 1325201.4765262078,
+     "kerr_N_per_m": 1545955.5679183886,
+     "rel_dev": 0.16658153141426504,
+     "role": "validation"
+    }
+   },
+   "max_validation_rel_dev": 0.16658153141426504
+  },
+  {
+   "arm": "spacing_consistent",
+   "n_particles_requested": 100000,
+   "k_subgrade_N_per_m3": 46574969.9164965,
+   "identified_sqrt_G2K_N_per_m": 685478.0460671718,
+   "kerr_foundation": {
+    "k_upper_N_per_m3": 93149939.832993,
+    "k_lower_N_per_m3": 93149939.832993,
+    "shear_N_per_m": 20177.367907376352,
+    "k_series_N_per_m3": 46574969.9164965,
+    "c_m2": 0.00010830585582530716,
+    "g2_N_per_m": 10088.683953688176,
+    "sqrt_c_m": 0.010407009936831383
+   },
+   "footing_predictions": {
+    "0.5": {
+     "footing_width_m": 1.0,
+     "dem_N_per_m": 383567.40806904674,
+     "kerr_N_per_m": 383567.40806904674,
+     "rel_dev": 0.0,
+     "role": "identification"
+    },
+    "1": {
+     "footing_width_m": 2.0,
+     "dem_N_per_m": 687320.6014030986,
+     "kerr_N_per_m": 756167.1674010188,
+     "rel_dev": 0.10016659744721258,
+     "role": "validation"
+    },
+    "2": {
+     "footing_width_m": 4.0,
+     "dem_N_per_m": 1275673.7178374156,
+     "kerr_N_per_m": 1501366.6860649628,
+     "rel_dev": 0.17692060679132973,
+     "role": "validation"
+    }
+   },
+   "max_validation_rel_dev": 0.17692060679132973
+  },
+  {
+   "arm": "spacing_consistent",
+   "n_particles_requested": 200000,
+   "k_subgrade_N_per_m3": 47230152.67356368,
+   "identified_sqrt_G2K_N_per_m": -903726.6620873633,
+   "kerr_foundation": {
+    "k_upper_N_per_m3": 94460305.34712736,
+    "k_lower_N_per_m3": 94460305.34712736,
+    "shear_N_per_m": 34584.765601433865,
+    "k_series_N_per_m3": 47230152.67356368,
+    "c_m2": 0.0001830650741300278,
+    "g2_N_per_m": 17292.382800716932,
+    "sqrt_c_m": 0.013530154253741078
+   },
+   "footing_predictions": {
+    "0.5": {
+     "footing_width_m": 1.0,
+     "dem_N_per_m": 363381.5947951116,
+     "kerr_N_per_m": 392300.84798190725,
+     "rel_dev": 0.07958370374564899,
+     "role": "identification"
+    },
+    "1": {
+     "footing_width_m": 2.0,
+     "dem_N_per_m": 655137.6140276636,
+     "kerr_N_per_m": 770142.0693704167,
+     "rel_dev": 0.1755424400619088,
+     "role": "validation"
+    },
+    "2": {
+     "footing_width_m": 4.0,
+     "dem_N_per_m": 1280070.02811866,
+     "kerr_N_per_m": 1525824.5121474355,
+     "rel_dev": 0.19198518724008007,
+     "role": "validation"
+    }
+   },
+   "max_validation_rel_dev": 0.19198518724008007
+  }
+ ],
+ "spearman": {
+  "per_case": [
+   {
+    "arm": "legacy_bond_length",
+    "n_particles_requested": 25000,
+    "n_elements": 32,
+    "n": 6,
+    "rho": 1.0,
+    "p_value": 0.0
+   },
+   {
+    "arm": "legacy_bond_length",
+    "n_particles_requested": 25000,
+    "n_elements": 64,
+    "n": 6,
+    "rho": 1.0,
+    "p_value": 0.0
+   },
+   {
+    "arm": "legacy_bond_length",
+    "n_particles_requested": 25000,
+    "n_elements": 128,
+    "n": 6,
+    "rho": 1.0,
+    "p_value": 0.0
+   },
+   {
+    "arm": "legacy_bond_length",
+    "n_particles_requested": 50000,
+    "n_elements": 32,
+    "n": 6,
+    "rho": 1.0,
+    "p_value": 0.0
+   },
+   {
+    "arm": "legacy_bond_length",
+    "n_particles_requested": 50000,
+    "n_elements": 64,
+    "n": 6,
+    "rho": 1.0,
+    "p_value": 0.0
+   },
+   {
+    "arm": "legacy_bond_length",
+    "n_particles_requested": 50000,
+    "n_elements": 128,
+    "n": 6,
+    "rho": 1.0,
+    "p_value": 0.0
+   },
+   {
+    "arm": "legacy_bond_length",
+    "n_particles_requested": 100000,
+    "n_elements": 32,
+    "n": 6,
+    "rho": 1.0,
+    "p_value": 0.0
+   },
+   {
+    "arm": "legacy_bond_length",
+    "n_particles_requested": 100000,
+    "n_elements": 64,
+    "n": 6,
+    "rho": 1.0,
+    "p_value": 0.0
+   },
+   {
+    "arm": "legacy_bond_length",
+    "n_particles_requested": 100000,
+    "n_elements": 128,
+    "n": 6,
+    "rho": 1.0,
+    "p_value": 0.0
+   },
+   {
+    "arm": "legacy_bond_length",
+    "n_particles_requested": 200000,
+    "n_elements": 32,
+    "n": 6,
+    "rho": 1.0,
+    "p_value": 0.0
+   },
+   {
+    "arm": "legacy_bond_length",
+    "n_particles_requested": 200000,
+    "n_elements": 64,
+    "n": 6,
+    "rho": 1.0,
+    "p_value": 0.0
+   },
+   {
+    "arm": "legacy_bond_length",
+    "n_particles_requested": 200000,
+    "n_elements": 128,
+    "n": 6,
+    "rho": 1.0,
+    "p_value": 0.0
+   },
+   {
+    "arm": "spacing_consistent",
+    "n_particles_requested": 25000,
+    "n_elements": 32,
+    "n": 6,
+    "rho": 1.0,
+    "p_value": 0.0
+   },
+   {
+    "arm": "spacing_consistent",
+    "n_particles_requested": 25000,
+    "n_elements": 64,
+    "n": 6,
+    "rho": 1.0,
+    "p_value": 0.0
+   },
+   {
+    "arm": "spacing_consistent",
+    "n_particles_requested": 25000,
+    "n_elements": 128,
+    "n": 6,
+    "rho": 1.0,
+    "p_value": 0.0
+   },
+   {
+    "arm": "spacing_consistent",
+    "n_particles_requested": 50000,
+    "n_elements": 32,
+    "n": 6,
+    "rho": 1.0,
+    "p_value": 0.0
+   },
+   {
+    "arm": "spacing_consistent",
+    "n_particles_requested": 50000,
+    "n_elements": 64,
+    "n": 6,
+    "rho": 1.0,
+    "p_value": 0.0
+   },
+   {
+    "arm": "spacing_consistent",
+    "n_particles_requested": 50000,
+    "n_elements": 128,
+    "n": 6,
+    "rho": 1.0,
+    "p_value": 0.0
+   },
+   {
+    "arm": "spacing_consistent",
+    "n_particles_requested": 100000,
+    "n_elements": 32,
+    "n": 6,
+    "rho": 1.0,
+    "p_value": 0.0
+   },
+   {
+    "arm": "spacing_consistent",
+    "n_particles_requested": 100000,
+    "n_elements": 64,
+    "n": 6,
+    "rho": 1.0,
+    "p_value": 0.0
+   },
+   {
+    "arm": "spacing_consistent",
+    "n_particles_requested": 100000,
+    "n_elements": 128,
+    "n": 6,
+    "rho": 1.0,
+    "p_value": 0.0
+   },
+   {
+    "arm": "spacing_consistent",
+    "n_particles_requested": 200000,
+    "n_elements": 32,
+    "n": 6,
+    "rho": 1.0,
+    "p_value": 0.0
+   },
+   {
+    "arm": "spacing_consistent",
+    "n_particles_requested": 200000,
+    "n_elements": 64,
+    "n": 6,
+    "rho": 1.0,
+    "p_value": 0.0
+   },
+   {
+    "arm": "spacing_consistent",
+    "n_particles_requested": 200000,
+    "n_elements": 128,
+    "n": 6,
+    "rho": 1.0,
+    "p_value": 0.0
+   }
+  ],
+  "min_rho_per_case": 1.0,
+  "pooled": {
+   "n": 144,
+   "rho": 0.41260956108871544,
+   "p_value": 2.7620648094532254e-07
+  },
+  "definition": "rank correlation between applied platen settlement (penetration) and keel contact force (resistance) over the predeclared 6-level penetration ramp"
+ },
+ "extra_evidence": {
+  "relax_adequacy": {
+   "bond_reference_length_m": null,
+   "n_particles_requested": 25000,
+   "resistance_vs_steps": {
+    "150": 46692177.16589363,
+    "300": 31863881.85277028,
+    "600": 23205071.076639734
+   },
+   "rel_change_300_to_600": 0.37314304048166724,
+   "criterion": "relaxation stopping rule: the footing resistance must not move by more than the 0.05 GCI target between 300 and 600 steps"
+  },
+  "ramp_sensitivity": {
+   "arm": "legacy_bond_length",
+   "n_particles_requested": 200000,
+   "n_elements": 128,
+   "by_ramp_width": {
+    "0.000e+00": {
+     "R_N_per_m": 93927369.15331352,
+     "A_c_m2_per_m": 2.2499999999831974,
+     "q_max_Pa": 43833321.233460166
+    },
+    "2.000e-04": {
+     "R_N_per_m": 93921389.17255294,
+     "A_c_m2_per_m": 2.2499999999831974,
+     "q_max_Pa": 43833321.233460166
+    },
+    "8.000e-04": {
+     "R_N_per_m": 93876585.519419,
+     "A_c_m2_per_m": 2.2499999999831974,
+     "q_max_Pa": 43833321.233460166
+    },
+    "3.200e-03": {
+     "R_N_per_m": 93516339.99674842,
+     "A_c_m2_per_m": 2.2499999999831974,
+     "q_max_Pa": 43833321.233460166
+    },
+    "8.000e-03": {
+     "R_N_per_m": 92239409.69897203,
+     "A_c_m2_per_m": 2.2499999999831974,
+     "q_max_Pa": 43833321.233460166
+    }
+   },
+   "R_spread_rel": 0.01805377241628943
+  },
+  "mesh_sensitivity_h8": {
+   "arm": "legacy_bond_length",
+   "n_particles_requested": 200000,
+   "levels": [
+    {
+     "n_elements": 256,
+     "element_length_m": 0.0625,
+     "R_N_per_m": 90771613.99316968,
+     "A_c_m2_per_m": 2.124999999991598,
+     "q_max_Pa": 43833321.233460166
+    }
+   ]
+  },
+  "graded_mesh_diagnostic": {
+   "arm": "legacy_bond_length",
+   "n_particles_requested": 200000,
+   "grading": {
+    "centres_m": [
+     7.0,
+     9.0
+    ],
+    "sigma_m": 0.4,
+    "amplitude": 16.0
+   },
+   "levels": [
+    {
+     "n_elements": 32,
+     "element_length_min_m": 0.07129459533770444,
+     "element_length_max_m": 1.2089815403646789,
+     "R_N_per_m": 87966785.61899863,
+     "A_c_m2_per_m": 2.068633127728214,
+     "q_max_Pa": 43833321.233460166
+    },
+    {
+     "n_elements": 64,
+     "element_length_min_m": 0.03563738503531866,
+     "element_length_max_m": 0.6044907701823412,
+     "R_N_per_m": 89321299.56283535,
+     "A_c_m2_per_m": 2.0686331277330066,
+     "q_max_Pa": 43833321.233460166
+    },
+    {
+     "n_elements": 128,
+     "element_length_min_m": 0.017787923075859524,
+     "element_length_max_m": 0.3022453850911724,
+     "R_N_per_m": 88434546.4245474,
+     "A_c_m2_per_m": 2.0329342038164855,
+     "q_max_Pa": 43833321.233460166
+    }
+   ]
+  }
+ },
+ "criteria": [
+  {
+   "id": "C1",
+   "criterion": "particle-axis GCI < 5 % and observed order >= 1.5 on the primary (legacy) arm, measured on the DEM footing resistance R(b = H_k) with the four-level ladder; mesh axis unavailable in this round (coupled solver defect)",
+   "verdict": "FAIL",
+   "pass": false,
+   "value": {
+    "particle_axis_primary": {
+     "gci_rel": 0.35069881920003176,
+     "order_in_N": 1.2031682960811028,
+     "order_in_spacing": 2.4063365921622055,
+     "monotone": true
+    },
+    "particle_axis_spacing_consistent": {
+     "gci_rel": 0.9237855511467497,
+     "order_in_N": 0.07196683335401814,
+     "order_in_spacing": 0.14393366670803628,
+     "monotone": false
+    },
+    "particle_pass_primary": false,
+    "particle_pass_spacing_consistent": false,
+    "mesh_axis": "NOT_EVALUATED (coupled block defect)"
+   },
+   "rows": {
+    "particle_axis_R": {
+     "gci_rel": 0.5990340064419936,
+     "order_in_N_or_h": 0.5283817067292575,
+     "order_in_spacing": 1.056763413458515,
+     "monotone": true
+    },
+    "mesh_axis_R": {
+     "gci_rel": 0.1379908663504149,
+     "order_in_N_or_h": 1.0000000000000036,
+     "order_in_spacing": 2.000000000000007,
+     "monotone": false
+    },
+    "particle_axis_A_c": {
+     "gci_rel": null,
+     "order_in_N_or_h": null,
+     "order_in_spacing": null,
+     "monotone": false
+    },
+    "mesh_axis_A_c": {
+     "gci_rel": 0.20833333332399573,
+     "order_in_N_or_h": 1.0000000000000102,
+     "order_in_spacing": 2.0000000000000204,
+     "monotone": false
+    },
+    "particle_axis_q_max": {
+     "gci_rel": 0.5965496031068597,
+     "order_in_N_or_h": 0.5299112141285414,
+     "order_in_spacing": 1.0598224282570827,
+     "monotone": true
+    },
+    "mesh_axis_q_max": {
+     "gci_rel": null,
+     "order_in_N_or_h": null,
+     "order_in_spacing": null,
+     "monotone": false
+    }
+   }
+  },
+  {
+   "id": "C2",
+   "criterion": "Kerr analytic deflection vs independent FEM < 3 %% (|x| <= 5a)",
+   "verdict": "PASS",
+   "pass": true,
+   "value": 1.4255815516325915e-05
+  },
+  {
+   "id": "C3",
+   "criterion": "bonded keel footing resistance vs Kerr analytic < 15 %% at the validation footing widths, finest particle level",
+   "verdict": "FAIL",
+   "pass": false,
+   "value": 0.21510010234492943,
+   "per_arm": {
+    "legacy_bond_length": 0.21510010234492943,
+    "spacing_consistent": 0.19198518724008007
+   }
+  },
+  {
+   "id": "C4",
+   "criterion": "penetration vs contact force Spearman >= 0.99",
+   "verdict": "WITHHELD",
+   "pass": null,
+   "value": null,
+   "pooled_rho": 0.41260956108871544,
+   "reason": "the penetration-vs-contact-force rank correlation was computed on the coupled block, whose Newton iteration did not converge; the number is not evidence and is withheld rather than reported as PASS"
+  },
+  {
+   "id": "C5",
+   "criterion": "all 12 primary cases landed (incl. failures), each with the full penetration ramp",
+   "verdict": "PASS",
+   "pass": true,
+   "value": {
+    "n_cases": 24,
+    "n_primary_cases": 12,
+    "n_diagnostic_cases": 12,
+    "n_penetration_levels": 6
+   }
+  }
+ ],
+ "honest_fail_register": {
+  "overall_verdict": "HONEST_FAIL",
+  "blocking_rows": [
+   "C1 particle axis (legacy arm)",
+   "C1 mesh axis (NOT_EVALUATED)",
+   "C4 (WITHHELD)",
+   "C3 one arm",
+   "C2/C5 pass"
+  ],
+  "legacy_particle_divergence_R": {
+   "loglog_slope_vs_N": 0.5409556831860346,
+   "interpretation": "a positive slope means the resistance grows without bound as the particle count grows, i.e. no converged limit; the slope is the divergence exponent in N"
+  },
+  "legacy_required_particles": {
+   "observed_order": 0.5283817067292575,
+   "gci": 0.5990340064419936,
+   "level_required_for_gci": 21985329.044129428,
+   "level_required_for_order": 27760.270000420594,
+   "rule": "level_req = level_finest * (GCI/GCI_target)**(1/p) from the Richardson error model; the same rule with p/order_target gives the level at which the predeclared observed order would be seen"
+  },
+  "spacing_consistent_particle_axis_R": {
+   "triad": {
+    "fine": 809175.8133457928,
+    "medium": 797838.771140549,
+    "coarse": 816740.3388712386,
+    "r": 2.0,
+    "monotone": false,
+    "convergence_ratio_R": -0.5997937508028169,
+    "observed_order_p": null,
+    "gci_fine_rel": null,
+    "note": "non-monotone or divergent triad: p undefined",
+    "richardson_limit": null,
+    "uncertainty_band_abs": null,
+    "uncertainty_band_rel": null,
+    "verdict": "no_extrapolation (p undefined/divergent)",
+    "values": [
+     809175.8133457928,
+     797838.771140549,
+     816740.3388712386
+    ],
+    "levels": [
+     200000,
+     100000,
+     50000
+    ],
+    "observed_order_in_spacing": null
+   },
+   "required_particles": {
+    "observed_order": null,
+    "gci": null,
+    "level_required": null,
+    "reason": "observed order undefined (divergent or non-monotone triad)"
+   }
+  },
+  "statement": "C1 is judged FAIL on the primary (legacy) arm and the mesh axis is NOT_EVALUATED because the coupled solver defect of this round, so the dual-convergence question is only half answered: the particle-axis divergence of the W27 bond law is confirmed with a four-level ladder, and the spacing-consistent control removes it. The FAIL is registered here and must not be overwritten by later rounds; C4 is withheld, not passed.",
+  "dem_based_particle_evidence": {
+   "legacy_bond_length": {
+    "levels_fine_to_coarse": [
+     25000,
+     50000,
+     100000,
+     200000
+    ],
+    "values_fine_to_coarse": [
+     52273662.261358894,
+     71375161.8531762,
+     115355362.91578503,
+     146363777.57547575
+    ],
+    "triads": {
+     "finest": {
+      "fine": 52273662.261358894,
+      "medium": 71375161.8531762,
+      "coarse": 115355362.91578503,
+      "r": 2.0,
+      "monotone": true,
+      "convergence_ratio_R": 0.4343204244251867,
+      "observed_order_p": 1.2031682960811028,
+      "gci_fine_rel": 0.35069881920003176,
+      "richardson_limit": 37607812.95710303,
+      "uncertainty_band_abs": 18332311.630319834,
+      "uncertainty_band_rel": 0.48746018948856185,
+      "safety_factor": 1.25,
+      "verdict": "extrapolated",
+      "levels": [
+       25000,
+       50000,
+       100000
+      ],
+      "observed_order_in_spacing": 2.4063365921622055
+     },
+     "coarsest": {
+      "fine": 71375161.8531762,
+      "medium": 115355362.91578503,
+      "coarse": 146363777.57547575,
+      "r": 2.0,
+      "monotone": false,
+      "convergence_ratio_R": 1.4183311705961132,
+      "observed_order_p": 0.5041944313033784,
+      "gci_fine_rel": 1.8411954439947191,
+      "richardson_limit": -33757336.401586756,
+      "uncertainty_band_abs": 131415622.8184537,
+      "uncertainty_band_rel": 3.892950002189051,
+      "safety_factor": 1.25,
+      "verdict": "extrapolated",
+      "levels": [
+       50000,
+       100000,
+       200000
+      ],
+      "observed_order_in_spacing": 1.0083888626067568
+     }
+    },
+    "richardson_limit": 37607812.95710303,
+    "uncertainty_band_rel": 0.48746018948856185,
+    "loglog_slope_vs_N": 0.5148798302544385
+   },
+   "spacing_consistent": {
+    "levels_fine_to_coarse": [
+     25000,
+     50000,
+     100000,
+     200000
+    ],
+    "values_fine_to_coarse": [
+     1377262.5178435487,
+     1325201.4765262078,
+     1275673.7178374156,
+     1280070.02811866
+    ],
+    "triads": {
+     "finest": {
+      "fine": 1377262.5178435487,
+      "medium": 1325201.4765262078,
+      "coarse": 1275673.7178374156,
+      "r": 2.0,
+      "monotone": false,
+      "convergence_ratio_R": 1.0511487435655364,
+      "observed_order_p": 0.07196683335401814,
+      "gci_fine_rel": 0.9237855511467497,
+      "richardson_limit": 2395098.689139439,
+      "uncertainty_band_abs": 1272295.2141198628,
+      "uncertainty_band_rel": 0.5312078453756741,
+      "safety_factor": 1.25,
+      "verdict": "extrapolated",
+      "levels": [
+       25000,
+       50000,
+       100000
+      ],
+      "observed_order_in_spacing": 0.14393366670803628
+     },
+     "coarsest": {
+      "fine": 1325201.4765262078,
+      "medium": 1275673.7178374156,
+      "coarse": 1280070.02811866,
+      "r": 2.0,
+      "monotone": false,
+      "convergence_ratio_R": -11.265755945409225,
+      "observed_order_p": null,
+      "gci_fine_rel": null,
+      "note": "non-monotone or divergent triad: p undefined",
+      "richardson_limit": null,
+      "uncertainty_band_abs": null,
+      "uncertainty_band_rel": null,
+      "verdict": "no_extrapolation (p undefined/divergent)",
+      "levels": [
+       50000,
+       100000,
+       200000
+      ],
+      "observed_order_in_spacing": null
+     }
+    },
+    "richardson_limit": 2395098.689139439,
+    "uncertainty_band_rel": 0.5312078453756741,
+    "loglog_slope_vs_N": -0.03716948564169579
+   }
+  },
+  "required_particles_from_dem": {
+   "legacy": {
+    "order_in_N": 1.2031682960811028,
+    "gci": 0.35069881920003176,
+    "n_required_for_gci": 1009587.2354531583,
+    "n_required_for_order": 166508.3729234516
+   },
+   "rule": "N_req = N_finest * (GCI/GCI_target)**(1/p) from the Richardson error model; a negative or vanishing order means no finite N_req exists (the quantity diverges, not converges)"
+  },
+  "spacing_consistent_spread": {
+   "values": [
+    1377262.5178435487,
+    1325201.4765262078,
+    1275673.7178374156,
+    1280070.02811866
+   ],
+   "spread_rel": 0.07728017227393755,
+   "interpretation": "levels still move beyond the 5% target: not converged"
+  },
+  "legacy_spread": {
+   "values": [
+    52273662.261358894,
+    71375161.8531762,
+    115355362.91578503,
+    146363777.57547575
+   ],
+   "spread_rel": 0.9766262269399003,
+   "interpretation": "levels still move beyond the 5% target: not converged"
+  }
+ },
+ "limitations": [
+  "the keel is a bonded lattice with frozen topology (strain ~4e-3): no bond breakage, no block rotation, no rate effects; the freeze-bond modulus 1 GPa is a stiffness choice, so absolute pressures are model dependent -- the *convergence* statements are not",
+  "the structure is a plane-strain beam (unit width) with free ends; the overhang past the contact area lifts off (no-tension) and is not carried by buoyancy",
+  "the local keel constitutive law entering the coupled solve is the confined (wide-lid) compression curve; footing edge effects enter only through the reconciliation block",
+  "the rigid-platen edge makes the contact pressure discontinuous, which caps the observed order of the uniform mesh family (remedy demonstrated with a platen-edge-graded family, reported separately)",
+  "the no-tension switch is smoothed with a C1 ramp of width 0.1 w0; the ramp sensitivity block shows the spread (see extra_evidence.ramp_sensitivity)",
+  "ISO 19906:2019 A.8 and IACS UR I values are WITHHELD: no standard number enters any computation in this artifact"
+ ],
+ "provenance": {
+  "generator": "scripts/run_w28_dual_convergence.py",
+  "generator_sha256": "b09f27641a855bcfb9fa363f4dd19aaad2656e97252dbe657539684b6c2d22ac",
+  "command": "/usr/bin/python scripts/run_w28_dual_convergence.py --jobs 8",
+  "repo": "TensorDEM",
+  "runner": "native",
+  "mission_id": 19906,
+  "worktree_branch": null,
+  "commit": null,
+  "source_sha256": {
+   "src/tensordem/keel_grounding_coupled.py": "2747549c98d4a942ece3f0c8ed795455436e0a8715aa8a878ca0956d715c91d2",
+   "src/tensordem/keel_foundation_dem.py": "b19dc873ea34a5c8d328dbc840a055a2649b8f75b3291eb43f84ba5433102fe7",
+   "src/tensordem/ridge_keel_grounding.py": "5dc28748bc1b40c5365548cb247bda4e4c4a43cd230e89eeeaddab69f34281e7",
+   "benchmarks/anchors/ice-ridge-keel-grounding.json": "0c8fe7ed9e28c571328d84cce460b6e19137a03ed20c5bf34b3d28e814696e6b",
+   "papers/artifacts/w27/ice-ridge-keel-grounding/ridge_keel_anchor.json": "85359f274fd694947e7a4b76f0e6fe70e1313a1fe5d28268a81c63b60f8e01e2"
+  },
+  "recovered_from_ref": {
+   "files": [
+    "src/tensordem/ridge_keel_grounding.py",
+    "src/tensordem/keel_foundation_dem.py",
+    "benchmarks/anchors/ice-ridge-keel-grounding.json",
+    "papers/artifacts/w27/ice-ridge-keel-grounding/ridge_keel_anchor.json"
+   ],
+   "ref": "agent/m18963",
+   "commit": "594c334e",
+   "note": "the W27 mission branch (m18963) was never merged into main; the W27 sources and artifact were recovered from that ref so that this study runs from main.  W27 numbers quoted in this artifact come from the recovered ridge_keel_anchor.json (particle GCI 0.3959, mesh GCI 0.000769)"
+  },
+  "w27_baseline": {
+   "path": "papers/artifacts/w27/ice-ridge-keel-grounding/ridge_keel_anchor.json",
+   "criteria": "C4 FAIL: particle GCI 0.3959 (fine 100 k, p = 1.116), mesh GCI 0.000769 (Kerr beam mixed-Galerkin FEM, p = 1.967)",
+   "read_only": true
+  },
+  "anchor_status": {
+   "iso_19906_2019_A8": "WITHHELD (primary standard text not available in this environment; only the operator layer is machine-checked)",
+   "kerr_1976": "IN_TREE_RECONSTRUCTION (the elastic-foundation beam solution is re-derived and cross-checked in ridge_keel_grounding, Hetenyi cross-check included; no standard value is transcribed)",
+   "iacs_ur_i": "WITHHELD (no clause text available)",
+   "anchor_register": "benchmarks/anchors/ice-ridge-keel-grounding.json",
+   "quotes": [
+    {
+     "anchor": "ISO 19906:2019 A.8 pressure-area law",
+     "quote_location": "benchmarks/anchors/ice-ridge-keel-grounding.json#/clauses/A_8 (status WITHHELD, no numbers)"
+    },
+    {
+     "anchor": "Kerr (1976) elastic-foundation beam",
+     "quote_location": "docs/ice_ridge_keel_grounding_kerr.md#kerr-layer (in-tree derivation, no transcribed constants)"
+    }
+   ]
+  },
+  "environment": {
+   "python": "3.11.6",
+   "numpy": "2.0.1",
+   "platform": "Linux-6.6.52-1.7.lns23.loongarch64-loongarch64-with-glibc2.38",
+   "cpu_count": 128,
+   "jobs": 8
+  },
+  "wall_time_s": 1487.9007465839386,
+  "verification_commands": [
+   "PYTHONPATH=src python -m pytest tests/test_w28_dual_convergence.py -q",
+   "PYTHONPATH=src python scripts/run_w28_dual_convergence.py --jobs 4"
+  ],
+  "artifacts_manifest_path": "papers/artifacts/w28/ice-ridge-keel-grounding/manifest.json"
+ },
+ "coupled_block_status": {
+  "status": "DEFECT",
+  "n_cases": 24,
+  "n_cases_not_converged": 24,
+  "evidence": {
+   "newton_iterations_all_1": true,
+   "solution_finite_false": true,
+   "equilibrium_rel_error_range": [
+    0.9690571290988919,
+    0.9999977853330163
+   ]
+  },
+  "effect": "the coupled beam-on-keel Newton iteration aborted at its first iteration on the cluster node for every one of the 24 cases, so R, A_c and q_max of the coupled block are NOT evidence and are kept only for traceability",
+  "local_vs_cluster": "the same configuration converges locally in 6 Newton iterations with equilibrium residual < 1e-3 (see tests/test_w28_dual_convergence.py and the W28 dev log); the cluster node produced a non-finite assembly/step at iteration 1, so the failure is environment dependent and NOT yet diagnosed",
+  "next_step": "add an environment fingerprint (numpy/scipy versions + a deterministic coupled smoke case with checksum) to the runner, bisect the node-vs-local divergence, and re-run the coupled block before any convergence claim is made"
+ },
+ "dem_particle_axis": {
+  "legacy_bond_length": {
+   "footing_R_b1.0Hk_N_per_m": {
+    "levels_fine_to_coarse": [
+     25000,
+     50000,
+     100000,
+     200000
+    ],
+    "values_fine_to_coarse": [
+     52273662.261358894,
+     71375161.8531762,
+     115355362.91578503,
+     146363777.57547575
+    ],
+    "triads": {
+     "finest": {
+      "fine": 52273662.261358894,
+      "medium": 71375161.8531762,
+      "coarse": 115355362.91578503,
+      "r": 2.0,
+      "monotone": true,
+      "convergence_ratio_R": 0.4343204244251867,
+      "observed_order_p": 1.2031682960811028,
+      "gci_fine_rel": 0.35069881920003176,
+      "richardson_limit": 37607812.95710303,
+      "uncertainty_band_abs": 18332311.630319834,
+      "uncertainty_band_rel": 0.48746018948856185,
+      "safety_factor": 1.25,
+      "verdict": "extrapolated",
+      "levels": [
+       25000,
+       50000,
+       100000
+      ],
+      "observed_order_in_spacing": 2.4063365921622055
+     },
+     "coarsest": {
+      "fine": 71375161.8531762,
+      "medium": 115355362.91578503,
+      "coarse": 146363777.57547575,
+      "r": 2.0,
+      "monotone": false,
+      "convergence_ratio_R": 1.4183311705961132,
+      "observed_order_p": 0.5041944313033784,
+      "gci_fine_rel": 1.8411954439947191,
+      "richardson_limit": -33757336.401586756,
+      "uncertainty_band_abs": 131415622.8184537,
+      "uncertainty_band_rel": 3.892950002189051,
+      "safety_factor": 1.25,
+      "verdict": "extrapolated",
+      "levels": [
+       50000,
+       100000,
+       200000
+      ],
+      "observed_order_in_spacing": 1.0083888626067568
+     }
+    },
+    "richardson_limit": 37607812.95710303,
+    "uncertainty_band_rel": 0.48746018948856185,
+    "loglog_slope_vs_N": 0.5148798302544385
+   },
+   "footing_R_b0.5Hk_N_per_m": {
+    "levels_fine_to_coarse": [
+     25000,
+     50000,
+     100000,
+     200000
+    ],
+    "values_fine_to_coarse": [
+     16830117.583547026,
+     20751765.845358424,
+     33648187.51138435,
+     41319965.055749714
+    ],
+    "triads": {
+     "finest": {
+      "fine": 16830117.583547026,
+      "medium": 20751765.845358424,
+      "coarse": 33648187.51138435,
+      "r": 2.0,
+      "monotone": true,
+      "convergence_ratio_R": 0.3040880922917175,
+      "observed_order_p": 1.7174387715408184,
+      "gci_fine_rel": 0.12727310742584694,
+      "richardson_limit": 15116500.492986694,
+      "uncertainty_band_abs": 2142021.363200415,
+      "uncertainty_band_rel": 0.1417008760853219,
+      "safety_factor": 1.25,
+      "verdict": "extrapolated",
+      "levels": [
+       25000,
+       50000,
+       100000
+      ],
+      "observed_order_in_spacing": 3.4348775430816367
+     },
+     "coarsest": {
+      "fine": 20751765.845358424,
+      "medium": 33648187.51138435,
+      "coarse": 41319965.055749714,
+      "r": 2.0,
+      "monotone": false,
+      "convergence_ratio_R": 1.681021326732535,
+      "observed_order_p": 0.7493380278317201,
+      "gci_fine_rel": 1.1406790539949738,
+      "richardson_limit": 1814882.1387915015,
+      "uncertainty_band_abs": 23671104.633208655,
+      "uncertainty_band_rel": 13.042777890233044,
+      "safety_factor": 1.25,
+      "verdict": "extrapolated",
+      "levels": [
+       50000,
+       100000,
+       200000
+      ],
+      "observed_order_in_spacing": 1.4986760556634402
+     }
+    },
+    "richardson_limit": 15116500.492986694,
+    "uncertainty_band_rel": 0.1417008760853219,
+    "loglog_slope_vs_N": 0.458467602301321
+   },
+   "confined_secant_k_N_per_m3": {
+    "levels_fine_to_coarse": [
+     25000,
+     50000,
+     100000,
+     200000
+    ],
+    "values_fine_to_coarse": [
+     1849218430.9894304,
+     2642875788.5742087,
+     4318578137.377784,
+     5479165154.18252
+    ],
+    "triads": {
+     "finest": {
+      "fine": 1849218430.9894304,
+      "medium": 2642875788.5742087,
+      "coarse": 4318578137.377784,
+      "r": 2.0,
+      "monotone": true,
+      "convergence_ratio_R": 0.4736266904151785,
+      "observed_order_p": 1.0781777110391153,
+      "gci_fine_rel": 0.4827220697817768,
+      "richardson_limit": 1135091592.2007682,
+      "uncertainty_band_abs": 892658548.4858277,
+      "uncertainty_band_rel": 0.7864198401426795,
+      "safety_factor": 1.25,
+      "verdict": "extrapolated",
+      "levels": [
+       25000,
+       50000,
+       100000
+      ],
+      "observed_order_in_spacing": 2.1563554220782306
+     },
+     "coarsest": {
+      "fine": 2642875788.5742087,
+      "medium": 4318578137.377784,
+      "coarse": 5479165154.18252,
+      "r": 2.0,
+      "monotone": false,
+      "convergence_ratio_R": 1.4438403364333903,
+      "observed_order_p": 0.5299112141285426,
+      "gci_fine_rel": 1.7856789144208824,
+      "richardson_limit": -1132586266.6981325,
+      "uncertainty_band_abs": 4719327569.090426,
+      "uncertainty_band_rel": 4.16685925642454,
+      "safety_factor": 1.25,
+      "verdict": "extrapolated",
+      "levels": [
+       50000,
+       100000,
+       200000
+      ],
+      "observed_order_in_spacing": 1.0598224282570852
+     }
+    },
+    "richardson_limit": 1135091592.2007682,
+    "uncertainty_band_rel": 0.7864198401426795,
+    "loglog_slope_vs_N": 0.5409569101120794
+   },
+   "bond_law": "legacy_bond_length",
+   "coordination": [
+    4.799759615384615,
+    4.837471287326475,
+    4.821961492178099,
+    4.851313292719465
+   ],
+   "spacing_m": [
+    0.038444982626156074,
+    0.027184707917553962,
+    0.019222491313078037,
+    0.013592353958776981
+   ]
+  },
+  "spacing_consistent": {
+   "footing_R_b1.0Hk_N_per_m": {
+    "levels_fine_to_coarse": [
+     25000,
+     50000,
+     100000,
+     200000
+    ],
+    "values_fine_to_coarse": [
+     1377262.5178435487,
+     1325201.4765262078,
+     1275673.7178374156,
+     1280070.02811866
+    ],
+    "triads": {
+     "finest": {
+      "fine": 1377262.5178435487,
+      "medium": 1325201.4765262078,
+      "coarse": 1275673.7178374156,
+      "r": 2.0,
+      "monotone": false,
+      "convergence_ratio_R": 1.0511487435655364,
+      "observed_order_p": 0.07196683335401814,
+      "gci_fine_rel": 0.9237855511467497,
+      "richardson_limit": 2395098.689139439,
+      "uncertainty_band_abs": 1272295.2141198628,
+      "uncertainty_band_rel": 0.5312078453756741,
+      "safety_factor": 1.25,
+      "verdict": "extrapolated",
+      "levels": [
+       25000,
+       50000,
+       100000
+      ],
+      "observed_order_in_spacing": 0.14393366670803628
+     },
+     "coarsest": {
+      "fine": 1325201.4765262078,
+      "medium": 1275673.7178374156,
+      "coarse": 1280070.02811866,
+      "r": 2.0,
+      "monotone": false,
+      "convergence_ratio_R": -11.265755945409225,
+      "observed_order_p": null,
+      "gci_fine_rel": null,
+      "note": "non-monotone or divergent triad: p undefined",
+      "richardson_limit": null,
+      "uncertainty_band_abs": null,
+      "uncertainty_band_rel": null,
+      "verdict": "no_extrapolation (p undefined/divergent)",
+      "levels": [
+       50000,
+       100000,
+       200000
+      ],
+      "observed_order_in_spacing": null
+     }
+    },
+    "richardson_limit": 2395098.689139439,
+    "uncertainty_band_rel": 0.5312078453756741,
+    "loglog_slope_vs_N": -0.03716948564169579
+   },
+   "footing_R_b0.5Hk_N_per_m": {
+    "levels_fine_to_coarse": [
+     25000,
+     50000,
+     100000,
+     200000
+    ],
+    "values_fine_to_coarse": [
+     457608.3140278342,
+     401823.7966137618,
+     383567.40806904674,
+     363381.5947951116
+    ],
+    "triads": {
+     "finest": {
+      "fine": 457608.3140278342,
+      "medium": 401823.7966137618,
+      "coarse": 383567.40806904674,
+      "r": 2.0,
+      "monotone": false,
+      "convergence_ratio_R": 3.0556162450990962,
+      "observed_order_p": 1.61146336665347,
+      "gci_fine_rel": 0.07412893247593416,
+      "richardson_limit": 484745.9266766305,
+      "uncertainty_band_abs": 33922.01581099536,
+      "uncertainty_band_rel": 0.06997895999572663,
+      "safety_factor": 1.25,
+      "verdict": "extrapolated",
+      "levels": [
+       25000,
+       50000,
+       100000
+      ],
+      "observed_order_in_spacing": 3.22292673330694
+     },
+     "coarsest": {
+      "fine": 401823.7966137618,
+      "medium": 383567.40806904674,
+      "coarse": 363381.5947951116,
+      "r": 2.0,
+      "monotone": true,
+      "convergence_ratio_R": 0.9044167949521553,
+      "observed_order_p": 0.1449403118102927,
+      "gci_fine_rel": 0.537373517460564,
+      "richardson_limit": 574567.3702023182,
+      "uncertainty_band_abs": 215929.46698569547,
+      "uncertainty_band_rel": 0.37581226882003727,
+      "safety_factor": 1.25,
+      "verdict": "extrapolated",
+      "levels": [
+       50000,
+       100000,
+       200000
+      ],
+      "observed_order_in_spacing": 0.2898806236205854
+     }
+    },
+    "richardson_limit": 484745.9266766305,
+    "uncertainty_band_rel": 0.06997895999572663,
+    "loglog_slope_vs_N": -0.10649666101845937
+   },
+   "confined_secant_k_N_per_m3": {
+    "levels_fine_to_coarse": [
+     25000,
+     50000,
+     100000,
+     200000
+    ],
+    "values_fine_to_coarse": [
+     46547347.27630463,
+     47672157.13769278,
+     46574969.9164965,
+     47230152.67356368
+    ],
+    "triads": {
+     "finest": {
+      "fine": 46547347.27630463,
+      "medium": 47672157.13769278,
+      "coarse": 46574969.9164965,
+      "r": 2.0,
+      "monotone": false,
+      "convergence_ratio_R": -1.0251758675805125,
+      "observed_order_p": null,
+      "gci_fine_rel": null,
+      "note": "non-monotone or divergent triad: p undefined",
+      "richardson_limit": null,
+      "uncertainty_band_abs": null,
+      "uncertainty_band_rel": null,
+      "verdict": "no_extrapolation (p undefined/divergent)",
+      "levels": [
+       25000,
+       50000,
+       100000
+      ],
+      "observed_order_in_spacing": null
+     },
+     "coarsest": {
+      "fine": 47672157.13769278,
+      "medium": 46574969.9164965,
+      "coarse": 47230152.67356368,
+      "r": 2.0,
+      "monotone": false,
+      "convergence_ratio_R": -1.6746277422007543,
+      "observed_order_p": null,
+      "gci_fine_rel": null,
+      "note": "non-monotone or divergent triad: p undefined",
+      "richardson_limit": null,
+      "uncertainty_band_abs": null,
+      "uncertainty_band_rel": null,
+      "verdict": "no_extrapolation (p undefined/divergent)",
+      "levels": [
+       50000,
+       100000,
+       200000
+      ],
+      "observed_order_in_spacing": null
+     }
+    },
+    "richardson_limit": null,
+    "uncertainty_band_rel": null,
+    "loglog_slope_vs_N": 0.0029435672813295597
+   },
+   "bond_law": "spacing_consistent",
+   "coordination": [
+    4.799759615384615,
+    4.837471287326475,
+    4.821961492178099,
+    4.851313292719465
+   ],
+   "spacing_m": [
+    0.038444982626156074,
+    0.027184707917553962,
+    0.019222491313078037,
+    0.013592353958776981
+   ]
+  }
+ },
+ "dem_particle_axis_spread": {
+  "legacy_bond_length": {
+   "values": [
+    52273662.261358894,
+    71375161.8531762,
+    115355362.91578503,
+    146363777.57547575
+   ],
+   "spread_rel": 0.9766262269399003,
+   "interpretation": "levels still move beyond the 5% target: not converged"
+  },
+  "spacing_consistent": {
+   "values": [
+    1377262.5178435487,
+    1325201.4765262078,
+    1275673.7178374156,
+    1280070.02811866
+   ],
+   "spread_rel": 0.07728017227393755,
+   "interpretation": "levels still move beyond the 5% target: not converged"
+  }
+ }
+}
