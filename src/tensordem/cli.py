@@ -362,3 +362,7 @@ def main(argv: list[str] | None = None) -> None:
     status = args.func(args)
     if isinstance(status, int) and status != 0:
         raise SystemExit(status)
+
+
+if __name__ == "__main__":  # module entry parity with ``python -m tensordem``
+    main()
