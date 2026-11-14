@@ -453,6 +453,45 @@ def wave5d_cases() -> list[dict]:
     return out
 
 
+# --- wave 5e (m20337): resolution-ladder closure of the anchor's judged laws -
+# Debt being closed (read off the archive, not invented):
+#   * m17917 §5-3: the declared cases ``w5d_fine_a0.5`` (12 grains/radius AND
+#     dt/2 at a = 0.5) and ``w5d_dt0.5_a1.5`` (dt/2 at a = 1.5) were never run,
+#     so the *combined* control and the transitional time-step control are both
+#     missing from the record;
+#   * m17917 §5-2: at a = 0.5 the runout error moved -2.9 % -> -11.9 % when the
+#     grain resolution went 8 -> 12 grains/radius, i.e. the 15 % verdict has only
+#     ~3 pp of margin at the shallow end and there is no third rung of the ladder;
+#   * the resolution axis has never been controlled at a = 2.0 (w5c controls sit
+#     at a = 1 and 3, m17917's at a = 0.5 and 1.5), although a = 2.0 is a
+#     validated point of the closing arm (w5b_confirm_wall0.8_a2).
+# Every case below reuses the *frozen* closing triple
+# (mu, mu_r, mu_wall) = (0.5, 0.5, 0.8) and changes exactly one discretisation
+# knob, so the two laws cannot be traded against each other.
+WAVE5E_MU_WALL = WAVE5D_MU_WALL
+WAVE5E_LADDER_GPR = 16.0
+
+
+def wave5e_cases() -> list[dict]:
+    """Resolution-ladder closure: third rung at a = 0.5 and the missing a = 2 control."""
+    params = dict(BASE, mu_rolling=WAVE5_MUR_PRIMARY, mu_wall=WAVE5E_MU_WALL)
+    out = [
+        {"id": f"w5e_gpr{WAVE5E_LADDER_GPR:g}_a0.5",
+         "phase": "wave5e_resolution_ladder",
+         "note": f"third rung of the shallow resolution ladder: "
+                 f"{WAVE5E_LADDER_GPR:g} grains per column radius at a = 0.5",
+         "params": dict(params, aspect_ratio=0.5,
+                        grains_per_radius=WAVE5E_LADDER_GPR)},
+        {"id": "w5e_gpr12_a2",
+         "phase": "wave5e_resolution_ladder",
+         "note": "deep-branch resolution control (never run): 12 grains per column "
+                 "radius at a = 2.0",
+         "params": dict(params, aspect_ratio=2.0,
+                        grains_per_radius=WAVE5D_RESOLUTION_GPR)},
+    ]
+    return out
+
+
 def all_cases(mu_rolling: float) -> list[dict]:
     """Every pre-declared case: wave 1 (control + calibration), wave 2
     (validation + sensitivity), wave 3 (mu curve grid)."""
@@ -460,7 +499,7 @@ def all_cases(mu_rolling: float) -> list[dict]:
             + wave3_control_cases(mu_rolling) + wave4_cases() + wave5_cases()
             + wave5b_probe_cases()
             + wave5b_confirmation_cases(WAVE5B_MU_WALL[0]) + wave5c_cases()
-            + wave5d_cases())
+            + wave5d_cases() + wave5e_cases())
 
 
 def case_path(case_id: str) -> str:
@@ -641,6 +680,10 @@ def main(argv: list[str] | None = None) -> int:
                     help="run the shallow-branch convergence controls (m17917)")
     ap.add_argument("--wave5d-shard",
                     help="i/n: run the i-th of n wave-5d convergence controls")
+    ap.add_argument("--wave5e", action="store_true",
+                    help="run the resolution-ladder closure cases (m20337)")
+    ap.add_argument("--wave5e-shard",
+                    help="i/n: run the i-th of n wave-5e resolution-ladder cases")
     ap.add_argument("--collect", action="store_true", help="aggregate + verdicts")
     ap.add_argument("--case", action="append", default=[],
                     help="run one pre-declared case id (wave-1 or wave-2); repeatable")
@@ -726,6 +769,14 @@ def main(argv: list[str] | None = None) -> int:
         i, n = (int(x) for x in args.wave5d_shard.split("/"))
         mine = [c for k, c in enumerate(wave5d_cases()) if k % n == i]
         _run_specs(mine, f"wave5d {i}/{n}", args.progress)
+        return 0
+    if args.wave5e:
+        _run_specs(wave5e_cases(), "wave5e", args.progress)
+        return 0
+    if args.wave5e_shard:
+        i, n = (int(x) for x in args.wave5e_shard.split("/"))
+        mine = [c for k, c in enumerate(wave5e_cases()) if k % n == i]
+        _run_specs(mine, f"wave5e {i}/{n}", args.progress)
         return 0
     if args.wave5b_confirm is not None:
         _run_specs(wave5b_confirmation_cases(args.wave5b_confirm), "wave5b-confirm",
