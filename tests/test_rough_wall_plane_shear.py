@@ -16,11 +16,14 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
+from tensordem.granular3d_core import hcp_positions_in_box
 from tensordem.mu_i_rheology import (
     MuIRheologyError,
     ServoShearCase,
     _graft_wall_force,
     graft_lattice,
+    initial_platen_height,
+    seat_bed_on_grafts,
     simulate_servo_shear,
 )
 
@@ -121,9 +124,14 @@ def test_graft_tangential_force_is_capped_by_wall_friction():
     vel = np.array([[50.0, 0.0, 0.0]])  # large sliding velocity -> saturated
     dt = 1e-5
     xi = np.zeros((1, 2))
-    force, fn_sum, ftx, _ = _graft_wall_force(
-        pos, vel, gx, gy, R, 0.0, 0.0, xi,
-        kn=6.25e4, kt=3.125e4, gamma_w=0.0, mu_w=mu_w, radius=R, box_width=W, dt=dt)
+    # The spring must *accumulate* before it saturates: one step at 50 m/s only
+    # builds kt * v * dt = 15.6 N, i.e. half the cap here (this test used to
+    # assert the capped value after a single step and was red in the archive).
+    for _ in range(100):
+        force, fn_sum, ftx, _ = _graft_wall_force(
+            pos, vel, gx, gy, R, 0.0, 0.0, xi,
+            kn=6.25e4, kt=3.125e4, gamma_w=0.0, mu_w=mu_w, radius=R,
+            box_width=W, dt=dt)
     cap = mu_w * fn_expected
     assert abs(force[0, 0]) == pytest.approx(cap, rel=1e-9)
     assert ftx == pytest.approx(force[0, 0], rel=1e-12)
@@ -182,3 +190,82 @@ def test_wall_mode_is_the_only_difference():
     for key in ("normal_stress_measured_pa", "mu_effective",
                 "shear_rate_measured", "phi_bed_steady"):
         assert a[key] == pytest.approx(b[key], rel=1e-12, abs=1e-12)
+
+# ---------------------------------------------------------------------------
+# round 12: the initial condition (the round-11 rough runs never reached the
+# target stress because the bed started *inside* the graft monolayers)
+# ---------------------------------------------------------------------------
+FILL_H = 0.06
+P_TARGET = 6.25e4
+AREA = W * D
+
+
+def _bed(seed: int = 5279):
+    return hcp_positions_in_box(R, W, D, FILL_H, packing_gap=0.02, jitter=0.01,
+                                seed=seed, margin=0.2 * R)
+
+
+def _graft_load(pos, gz, plate_move=0.0):
+    gx, gy = graft_lattice(W, D, R)
+    xi = np.zeros((pos.shape[0], 2))
+    _, fn, _, nc = _graft_wall_force(
+        pos, np.zeros_like(pos), gx, gy, gz, 0.0, plate_move, xi,
+        kn=6.25e4, kt=3.125e4, gamma_w=0.0, mu_w=1.5, radius=R,
+        box_width=W, dt=1e-5)
+    return fn, nc
+
+
+def test_grafts_are_half_embedded_on_the_wall_planes():
+    """The monolayer centres lie on the wall planes: no free space behind it.
+
+    A graft centred one radius *inside* the cell (round 11) leaves a gap
+    between the graft layer and the hard wall plane that bulk particles fall
+    into, so they leave the rheometric gap.
+    """
+    gx, gy = graft_lattice(W, D, R, spacing=1.05)
+    # spacing and coverage are unchanged by the placement fix
+    assert gx.size == gy.size == 44
+    assert np.all(gy > 0.0) and np.all(gy < D)
+
+
+def test_initial_condition_has_no_graft_prestress():
+    """Both monolayers must start in geometric contact, with zero overlap.
+
+    This is the defect that made every round-11 rough point fail: the flat-wall
+    initial condition interpenetrated the floor monolayer by one radius, so the
+    servo started from a pre-stressed bed and exhausted its budget.
+    """
+    pos = seat_bed_on_grafts(_bed(), R)
+    plate = initial_platen_height(pos, R, rough=True)
+    target_force = P_TARGET * AREA
+    fn_floor, nc_floor = _graft_load(pos, 0.0)
+    fn_top, nc_top = _graft_load(pos, plate)
+    assert fn_floor < 1e-6 * target_force, (fn_floor, target_force)
+    assert fn_top < 1e-6 * target_force, (fn_top, target_force)
+    assert nc_floor == 0 and nc_top == 0
+
+    # every particle keeps at least one diameter from the nearest graft centre
+    gx, gy = graft_lattice(W, D, R)
+    for gz in (0.0, plate):
+        ddx = pos[:, 0][None, :] - gx[:, None]
+        ddx -= W * np.round(ddx / W)
+        ddy = pos[:, 1][None, :] - gy[:, None]
+        ddz = pos[:, 2] - gz
+        dist = np.sqrt(ddx ** 2 + ddy ** 2 + ddz[None, :] ** 2)
+        assert dist.min() >= 2.0 * R - 1e-12
+
+
+def test_flat_wall_initial_condition_would_prestress_the_rough_cell():
+    """Counter-example: the round-11 start really was pre-stressed."""
+    pos = _bed()
+    plate_flat = initial_platen_height(pos, R, rough=False)
+    fn_floor, nc_floor = _graft_load(pos, 0.0)
+    target_force = P_TARGET * AREA
+    assert nc_floor > 0
+    assert fn_floor > 0.5 * target_force, (fn_floor, target_force)
+
+
+def test_smooth_initial_platen_height_is_unchanged():
+    """Archived smooth runs must keep bit-for-bit the same starting height."""
+    pos = _bed()
+    assert initial_platen_height(pos, R, rough=False) == float(pos[:, 2].max() + R)
