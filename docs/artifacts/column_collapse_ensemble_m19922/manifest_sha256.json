@@ -1,4 +1,8 @@
 {
- "docs/artifacts/column_collapse_ensemble_m19922/cases_ensemble.csv": "745aa5351aac7ab02ef64ba8ad908873a76e511b3240709d9e403ef9bdd8d7b1",
- "docs/artifacts/column_collapse_ensemble_m19922/summary.json": "f788e92f0eb29c4be101a95240e3dad73d4ab8c72aca4592cf6fd0b5851e92e6"
+ "docs/artifacts/column_collapse_ensemble_m19922/cases_ensemble.csv": "aef5d650b1abee3d6c5bd34df72df34fad611c05b5018d38bc5d09f093743e92",
+ "docs/artifacts/column_collapse_ensemble_m19922/fig_jitter_axis.png": "930dddfe3318b49753acdc176f41b2ff4d7930ca9a570e1e54df28165ffe45d4",
+ "docs/artifacts/column_collapse_ensemble_m19922/fig_runout_ensemble.png": "7d5a9b912b118e0f50c0eb7d77b189907daba099c6577699d3ecb77887cc022c",
+ "docs/artifacts/column_collapse_ensemble_m19922/fig_runout_error_ensemble.png": "f38ec3fe4629015f1672349dce091e4d56e54437ea68d06b95c53cddebfbf000",
+ "docs/artifacts/column_collapse_ensemble_m19922/fig_time_error_ensemble.png": "3a2f1984ae4142a68c2d9426631be649afb43185e05050de0caf433e8b0f71c3",
+ "docs/artifacts/column_collapse_ensemble_m19922/summary.json": "de9cccaffe627c0967df0d8b34b9d367e2fa83103dbc02ce908ba97e251e2613"
 }
