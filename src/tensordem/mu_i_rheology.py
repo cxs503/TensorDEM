@@ -43,6 +43,30 @@ class MuIRheologyError(ValueError):
     """Base class for μ(I) rheology errors."""
 
 
+def strain_budget_status(strain_achieved: float, strain_requested: float,
+                         tol: float = 0.05) -> dict:
+    """Classify a delivered strain against the requested strain budget.
+
+    Round 17 (m21066).  ``simulate_servo_shear`` reports ``shear_steps``, which
+    is a *floor* (``max(min_shear_steps, ceil(strain/(gdot dt)))``) and the
+    constant-stress recovery gate may then keep shearing well past the request.
+    Before this helper, a run sheared ~33x past its own request could still
+    report ``servo_valid=True`` with no field saying the strain budget was
+    broken.  This is the one place that decides whether a delivered strain
+    honours the request, so the device, the drivers and the audits cannot
+    disagree about it.
+    """
+    if not (strain_requested > 0.0):
+        return {"strain_budget_respected": False,
+                "strain_budget_status": "undefined",
+                "strain_overrun_ratio": float("nan")}
+    ratio = strain_achieved / strain_requested
+    ok = strain_achieved <= (1.0 + tol) * strain_requested
+    return {"strain_budget_respected": bool(ok),
+            "strain_budget_status": "respected" if ok else "violated",
+            "strain_overrun_ratio": ratio}
+
+
 @dataclass(frozen=True)
 class MuICase:
     radius: float = 0.005
@@ -447,6 +471,21 @@ class ServoShearCase:
     pressure_control_tol: float = 0.05
     pressure_recover_window: int = 200
     max_recover_steps: int = 20000
+    # Strain-unit ceiling on the recovery phase (round 17, m21066).  The
+    # recovery gate below may keep shearing after the requested strain budget
+    # is spent; ``max_recover_steps`` bounds that in *steps*, which is not a
+    # bound on the delivered strain: at I = 0.3 the step floor is ~5e2, so a
+    # 20000-step allowance is a ~50x strain overrun (see round 16).  A strain
+    # request must be a ceiling, so the allowance is expressed in strain units
+    # -- independent of I, dt and the step floor.  ``None`` keeps the
+    # historical step-only behaviour bit-for-bit (every archived run stays
+    # reproducible); set it to bound the overrun.  Runs that hit the cap are
+    # flagged ``strain_budget_respected=False`` and
+    # ``recover_termination="max_recover_strain"`` in the result.
+    max_recover_strain: Optional[float] = None
+    # tolerance used only to *classify* a delivered strain as respecting the
+    # request (``strain_achieved <= (1+tol) * shear_strain``).  Diagnostic.
+    strain_budget_tol: float = 0.05
     # bulk rheometry (round 6): the wall traction mu = tau_wall/p_wall is a
     # boundary quantity; this slab Virial estimate gives the interior stress so
     # the two can be compared on the same point.
@@ -1228,6 +1267,10 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
     warmup = int(0.4 * shear_steps)
     strain = 0.0
     max_shear_steps = shear_steps + max(0, int(case.max_recover_steps))
+    # strain ceiling on the recovery phase (None -> historical behaviour)
+    recover_strain_cap = (float("inf") if case.max_recover_strain is None
+                          else case.shear_strain + max(0.0, case.max_recover_strain))
+    recover_termination = "not_entered"
     recover_streak = 0
     step = -1
     while step + 1 < max_shear_steps:
@@ -1387,9 +1430,20 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
             else:
                 recover_streak = 0
             if recover_streak >= case.pressure_recover_window:
+                recover_termination = "pressure_recovered"
+                break
+            if strain >= recover_strain_cap:
+                # the strain request is a ceiling: stop here and let the
+                # result declare that the point is not a constant-stress
+                # measurement, instead of silently over-shearing it.
+                recover_termination = "max_recover_strain"
                 break
 
     shear_steps_executed = step + 1
+    if recover_termination == "not_entered":
+        recover_termination = ("max_recover_steps"
+                               if shear_steps_executed >= max_shear_steps
+                               else "completed_before_budget")
     wall_clock = _time.perf_counter() - wall_clock
     if not series:
         raise MuIRheologyError("no samples collected in the shear phase")
@@ -1438,6 +1492,8 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
     phi_bed_final = (n * volume_particle / (W * D * plate_height_final)
                      if plate_height_final > 0.0 else float("nan"))
 
+    budget = strain_budget_status(strain, case.shear_strain,
+                                  case.strain_budget_tol)
     result = {
         "device": "servo_shear_cell",
         "bulk_stress_enabled": bool(case.bulk_stress),
@@ -1484,6 +1540,15 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
         "settle_steps": settle_steps,
         "shear_steps": shear_steps,
         "shear_strain_achieved": strain,
+        # strain-budget bookkeeping (round 17, m21066): a strain *request* used
+        # to be a floor -- the recovery gate could multiply the delivered
+        # strain by ~50 at high I without saying so.  These fields make the
+        # overrun a first-class, machine-checkable property of every run.
+        "shear_strain_requested": case.shear_strain,
+        "strain_budget_tol": case.strain_budget_tol,
+        **budget,
+        "recover_termination": recover_termination,
+        "max_recover_strain": case.max_recover_strain,
         "n_samples": len(series),
         "shear_steps_executed": shear_steps_executed,
         "recover_steps": shear_steps_executed - shear_steps,
