@@ -27,6 +27,7 @@ import numpy as np
 
 HERE = Path(__file__).resolve().parent
 RUNS = HERE / "runs" / "rough_wall"
+RUNS_R12 = HERE / "runs" / "round12"
 OUT = HERE / "runs" / "round12"
 OUT.mkdir(parents=True, exist_ok=True)
 
@@ -43,8 +44,17 @@ BAND = 0.10  # acceptance band of the ledger row
 
 
 def load_records(paths=None):
+    """Load every JSONL record, round-12 re-runs superseding round-11 ones.
+
+    The round-12 sweep re-runs the whole 24-point plan (same protocol, same
+    seeds -> deterministic), so a (mode, I, seed) point that exists in both
+    ``runs/rough_wall/`` (round 11) and ``runs/round12/`` is kept once, from
+    the newer file.  FAIL records are kept as-is for the honest-FAIL table.
+    """
+    if paths is None:
+        paths = sorted(RUNS.glob("*.jsonl")) + sorted(RUNS_R12.glob("*.jsonl"))
     recs = []
-    for path in sorted(paths or RUNS.glob("*.jsonl")):
+    for path in sorted(paths):
         for line in path.read_text().splitlines():
             line = line.strip()
             if not line:
@@ -52,7 +62,14 @@ def load_records(paths=None):
             rec = json.loads(line)
             rec["_file"] = path.name
             recs.append(rec)
-    return recs
+    latest = {}
+    for rec in recs:
+        if rec.get("status") == "FAIL":
+            continue
+        key = (rec.get("wall_mode"), rec.get("I_target"), rec.get("seed"))
+        latest[key] = rec
+    fails = [r for r in recs if r.get("status") == "FAIL"]
+    return list(latest.values()) + fails
 
 
 def _num(value):
@@ -82,8 +99,12 @@ def aggregate(recs):
                       "I_imposed_rate", "mu_wall_final", "dilatancy",
                       "n_particles"):
             vals = [v for v in (_num(r.get(extra)) for r in items) if v is not None]
-            entry[extra] = (float(np.mean(vals)) if vals else None,
-                            float(np.std(vals, ddof=1)) if len(vals) > 1 else 0.0)
+            if vals:
+                entry[extra] = {"mean": float(np.mean(vals)),
+                                "sd": float(np.std(vals, ddof=1)) if len(vals) > 1 else 0.0,
+                                "n": len(vals)}
+            else:
+                entry[extra] = None
         entry["servo_valid"] = sum(bool(r.get("servo_valid")) for r in items)
         agg[key] = entry
     return agg
@@ -134,10 +155,10 @@ def tables(agg, fails):
             e = agg.get((m, I))
             if not e:
                 continue
-            pr = e["P_rel_err_final"][0]
-            rr = e["gamma_dot_ratio"][0]
-            r2 = e["profile_r2"][0]
-            im = e["I_measured_rate"][0]
+            pr = e["P_rel_err_final"]["mean"] if e.get("P_rel_err_final") else None
+            rr = e["gamma_dot_ratio"]["mean"] if e.get("gamma_dot_ratio") else None
+            r2 = e["profile_r2"]["mean"] if e.get("profile_r2") else None
+            im = e["I_measured_rate"]["mean"] if e.get("I_measured_rate") else None
             lines.append(
                 f"| {I:g} | {m} | {e['n_seeds']} | {e['servo_valid']}/{e['n_seeds']} | "
                 f"{(f'{100 * pr:+.1f}%' if pr is not None else 'n/a')} | "
