@@ -65,6 +65,19 @@ class SiloCase:
     discharge_time: float = 1.2      # total discharge duration
     window: float = 0.2              # flow-rate window length
     n_windows: int = 5               # >= 5 windows for the steady mean
+    #: initial bed construction.  ``"hcp"`` keeps the legacy HCP crystal column
+    #: (m5481); ``"settled"`` drops the same lattice with the large
+    #: ``settle_loose_gap`` clearance (non-touching), plugs the orifice and lets
+    #: it settle under gravity for ``settle_time`` -- the disordered bed a real
+    #: silo has, and the prerequisite for a *steady* discharge (m6296 found the
+    #: crystal bed arches over the orifice after a start-up burst).
+    packing: str = "hcp"
+    #: close the orifice during ``settle_time`` (used with ``packing="settled"``)
+    plug_during_settle: bool = False
+    #: loose-lattice clearance in particle radii for ``packing="settled"``
+    settle_loose_gap: float = 0.5
+    #: mass quantiles of the discharge stream that define the steady window
+    steady_quantiles: tuple = (0.2, 0.8)
 
     @property
     def diameter(self) -> float:
@@ -108,15 +121,25 @@ class SiloCase:
             raise SiloError("orifice must be at least 3 particle diameters")
         if self.n_windows < 5:
             raise SiloError("need at least 5 flow-rate windows")
+        if self.packing not in ("hcp", "settled"):
+            raise SiloError("packing must be 'hcp' or 'settled'")
+        if not (isinstance(self.settle_loose_gap, (int, float))
+                and math.isfinite(self.settle_loose_gap)
+                and self.settle_loose_gap > 0.0):
+            raise SiloError("settle_loose_gap must be finite and positive")
+        q = tuple(self.steady_quantiles)
+        if len(q) != 2 or not (0.0 <= q[0] < q[1] <= 1.0):
+            raise SiloError("steady_quantiles must be (lo, hi) with 0 <= lo < hi <= 1")
 
 
 def _initial_packing(case: SiloCase) -> np.ndarray:
+    gap = case.packing_gap if case.packing == "hcp" else case.settle_loose_gap
     return hcp_positions_in_cylinder(
         case.radius, case.silo_radius, case.fill_height,
-        packing_gap=case.packing_gap, jitter=case.jitter, seed=case.seed)
+        packing_gap=gap, jitter=case.jitter, seed=case.seed)
 
 
-def _plate_forces(pos, vel, mat, case, f):
+def _plate_forces(pos, vel, mat, case, f, closed: bool = False):
     """Forces from the flat bottom plate with a centred circular hole.
 
     The plate is solid where ``radial > a`` and ``-t < z < 0`` (``a`` = orifice
@@ -161,27 +184,32 @@ def _plate_forces(pos, vel, mat, case, f):
         nz_ = np.where(better, n_z, nz_)
 
     zero = np.zeros(n_p)
-    # 1. top face (z = 0, radial >= a) pushes +z.  Gated to ``z >= 0``:
-    #    a centre below the plate top is not "resting" on it, and without the
-    #    gate a particle one radius *under* the plate would read a penetration
-    #    of ``r + |z|`` (~15 mm -> 1.5 kN) and be launched upwards.
-    consider(np.where((radial >= a) & (z >= 0.0), r - z, -1.0),
-             zero, zero, np.ones(n_p))
-    # 2. underside (z = -t, radial >= a) pushes -z: only material outside the
-    #    aperture is solid below the plate; inside the aperture it is a hole,
-    #    so a particle emerging from the hole touches the rim, not a face.
-    consider(np.where((radial >= a) & (z <= -t), r + z + t, -1.0),
-             zero, zero, -np.ones(n_p))
-    # 3. edge cylinder (a, -t < z < 0): pushes away from the solid wall
-    in_slab = (z <= 0.0) & (z >= -t)
-    consider(np.where(in_slab, r - np.abs(dr), -1.0),
-             np.sign(dr) * er_x, np.sign(dr) * er_y, zero)
-    # 4./5. sharp rim circles at z = 0 and z = -t
-    for z_rim in (0.0, -t):
-        dz = z - z_rim
-        d_rim = np.sqrt(dr * dr + dz * dz)
-        safe = np.maximum(d_rim, eps)
-        consider(r - d_rim, dr * er_x / safe, dr * er_y / safe, dz / safe)
+    if closed:
+        # plugged bottom: a single full flat plate over the whole
+        # cross-section -- no aperture, no edge cylinder, no rim circles.
+        consider(np.where(z >= 0.0, r - z, -1.0), zero, zero, np.ones(n_p))
+    else:
+        # 1. top face (z = 0, radial >= a) pushes +z.  Gated to ``z >= 0``:
+        #    a centre below the plate top is not "resting" on it, and without the
+        #    gate a particle one radius *under* the plate would read a penetration
+        #    of ``r + |z|`` (~15 mm -> 1.5 kN) and be launched upwards.
+        consider(np.where((radial >= a) & (z >= 0.0), r - z, -1.0),
+                 zero, zero, np.ones(n_p))
+        # 2. underside (z = -t, radial >= a) pushes -z: only material outside the
+        #    aperture is solid below the plate; inside the aperture it is a hole,
+        #    so a particle emerging from the hole touches the rim, not a face.
+        consider(np.where((radial >= a) & (z <= -t), r + z + t, -1.0),
+                 zero, zero, -np.ones(n_p))
+        # 3. edge cylinder (a, -t < z < 0): pushes away from the solid wall
+        in_slab = (z <= 0.0) & (z >= -t)
+        consider(np.where(in_slab, r - np.abs(dr), -1.0),
+                 np.sign(dr) * er_x, np.sign(dr) * er_y, zero)
+        # 4./5. sharp rim circles at z = 0 and z = -t
+        for z_rim in (0.0, -t):
+            dz = z - z_rim
+            d_rim = np.sqrt(dr * dr + dz * dz)
+            safe = np.maximum(d_rim, eps)
+            consider(r - d_rim, dr * er_x / safe, dr * er_y / safe, dz / safe)
 
     hit = pen > 0.0
     if not hit.any():
@@ -229,6 +257,63 @@ def _side_wall(pos, vel, mat, case, f):
             f[idx, 1] += ft[:, 1]
 
 
+def steady_rate(dis_t, dis_n, mass: float, window: float, n_windows: int,
+                quantiles=(0.2, 0.8)) -> dict:
+    """Steady discharge rate from the cumulative ``(n_discharged, t)`` record.
+
+    A batch silo has a start-up transient (the bed accelerates, the first
+    particles are still establishing the cavity) and a tail (the bed runs
+    empty).  The Beverloo law is a *steady* flow law, so the rate is taken over
+    the middle of the discharge stream: the mass quantiles ``quantiles`` of the
+    total discharged count define the steady interval, which is then cut into
+    ``n_windows`` sub-windows so that the window-to-window scatter (a
+    steadiness *check*, not an agreement check) is measurable.
+
+    Returns ``W`` (kg/s), the interval, the sub-window rates and their CV.
+    """
+    dis_t = np.asarray(dis_t, dtype=np.float64)
+    dis_n = np.asarray(dis_n, dtype=np.float64)
+    out = {
+        "steady_flow_rate_kg_s": 0.0,
+        "steady_interval_s": [0.0, 0.0],
+        "steady_rate_windows_kg_s": [],
+        "steady_rate_cv": float("nan"),
+        "n_discharged_total": int(dis_n[-1]) if dis_n.size else 0,
+        "steady_n_lo": 0.0,
+        "steady_n_hi": 0.0,
+    }
+    if dis_n.size < 2 or dis_n[-1] < 4:
+        return out
+    lo_q, hi_q = quantiles
+    n_lo, n_hi = lo_q * dis_n[-1], hi_q * dis_n[-1]
+    t_lo = float(np.interp(n_lo, dis_n, dis_t))
+    t_hi = float(np.interp(n_hi, dis_n, dis_t))
+    span = t_hi - t_lo
+    if span <= 0.0:
+        return out
+    W = (n_hi - n_lo) * mass / span
+    rates = []
+    for i in range(n_windows):
+        ta = t_lo + span * i / n_windows
+        tb = t_lo + span * (i + 1) / n_windows
+        na = float(np.interp(ta, dis_t, dis_n))
+        nb = float(np.interp(tb, dis_t, dis_n))
+        rates.append((nb - na) * mass / (tb - ta))
+    rates = np.asarray(rates)
+    mean = float(rates.mean())
+    cv = float(rates.std(ddof=1) / mean) if mean > 0.0 else float("inf")
+    out.update({
+        "steady_flow_rate_kg_s": float(W),
+        "steady_interval_s": [t_lo, t_hi],
+        "steady_rate_windows_kg_s": [float(x) for x in rates],
+        "steady_rate_cv": cv,
+        "steady_n_lo": float(n_lo),
+        "steady_n_hi": float(n_hi),
+        "steady_window_s": float(span),
+    })
+    return out
+
+
 def simulate_silo(case: SiloCase, *, return_history: bool = False) -> dict:
     """Run the silo discharge and measure the steady mass flow rate.
 
@@ -264,7 +349,21 @@ def simulate_silo(case: SiloCase, *, return_history: bool = False) -> dict:
     win_step = [int(round(e / dt)) for e in win_edges]
 
     step_of_win = 0
+    # discharge-event record: cumulative count vs time (steady-state estimator)
+    dis_t: list[float] = []
+    dis_n: list[int] = []
+    # settled-bed snapshot, taken the moment the orifice is opened
+    bed_height = 0.0
+    n_bed = 0
+    bed_step = 0
     for step in range(n_steps):
+        t_now = step * dt
+        closed = bool(case.plug_during_settle and t_now < t_settle)
+        if case.plug_during_settle and bed_step == 0 and t_now >= t_settle:
+            bed_step = step
+            z_alive = pos[alive, 2]
+            n_bed = int(alive.sum())
+            bed_height = float(z_alive.max() + r) if z_alive.size else 0.0
         # active = alive particles still in the domain (the discharge stream
         # below the plate is excluded: it does not feed back into the silo)
         active = alive & (pos[:, 2] > discharge_z - 4.0 * r)
@@ -278,7 +377,7 @@ def simulate_silo(case: SiloCase, *, return_history: bool = False) -> dict:
         f, tq = contact_forces(pa, va, oa, iu, ju, state, mat, dt,
                               state_keys=gi * n0 + gj)
 
-        _plate_forces(pa, va, mat, case, f)
+        _plate_forces(pa, va, mat, case, f, closed=closed)
         _side_wall(pa, va, mat, case, f)
         f[:, 2] -= mass * case.gravity
 
@@ -295,6 +394,8 @@ def simulate_silo(case: SiloCase, *, return_history: bool = False) -> dict:
         if below.any():
             discharged_mass += mass * int(below.sum())
             alive[below] = False
+            dis_t.append(t_now)
+            dis_n.append(int((~alive).sum()))
 
         # sample the window edges
         if step_of_win < len(win_step) and step >= win_step[step_of_win]:
@@ -311,9 +412,21 @@ def simulate_silo(case: SiloCase, *, return_history: bool = False) -> dict:
     W_mean = float(rates.mean())
     W_std = float(rates.std(ddof=1)) if len(rates) > 1 else 0.0
 
-    # bulk density from the initial packing
+    # bulk density from the initial packing (geometric, legacy definition)
     bulk_volume = math.pi * case.silo_radius ** 2 * case.fill_height
     rho_b = mass * n0 / bulk_volume
+    # bulk density of the bed actually in the silo when the orifice opens.
+    # Beverloo's rho_b is the *bed* density, so this is the one the comparison
+    # must use for a settled bed.
+    if n_bed > 0 and bed_height > 0.0:
+        bed_volume = math.pi * case.silo_radius ** 2 * bed_height
+        rho_b_bed = mass * n_bed / bed_volume
+    else:
+        bed_volume = bulk_volume
+        rho_b_bed = rho_b
+
+    steady = steady_rate(dis_t, dis_n, mass, case.window, case.n_windows,
+                         case.steady_quantiles)
 
     out = {
         "n_initial": n0,
@@ -324,6 +437,23 @@ def simulate_silo(case: SiloCase, *, return_history: bool = False) -> dict:
         "flow_rate_windows_kg_s": [float(x) for x in rates],
         "bulk_density_kg_m3": rho_b,
         "packing_fraction": rho_b / case.density,
+        "bed_height_m": bed_height,
+        "n_bed": n_bed,
+        "bulk_density_bed_kg_m3": rho_b_bed,
+        "packing_fraction_bed": rho_b_bed / case.density,
+        "steady_flow_rate_kg_s": steady["steady_flow_rate_kg_s"],
+        "steady_interval_s": steady["steady_interval_s"],
+        "steady_rate_windows_kg_s": steady["steady_rate_windows_kg_s"],
+        "steady_rate_cv": steady["steady_rate_cv"],
+        "steady_n_lo": steady["steady_n_lo"],
+        "steady_n_hi": steady["steady_n_hi"],
+        "steady_window_s": steady.get("steady_window_s", 0.0),
+        "n_discharged_total": steady["n_discharged_total"],
+        "discharge_time_s": [float(x) for x in dis_t],
+        "discharge_cumulative_n": [int(x) for x in dis_n],
+        "packing": case.packing,
+        "plug_during_settle": bool(case.plug_during_settle),
+        "settle_loose_gap": case.settle_loose_gap,
         "dt": dt,
         "steps": n_steps,
         "orifice_diameter": case.orifice_diameter,
@@ -388,5 +518,5 @@ def beverloo_prediction(W_C: float, k: float, D: float, d: float,
 
 __all__ = [
     "SiloError", "SiloCase", "simulate_silo", "beverloo_fit",
-    "beverloo_prediction",
+    "beverloo_prediction", "steady_rate",
 ]
