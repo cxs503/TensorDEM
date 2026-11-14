@@ -163,8 +163,10 @@ intercept inherits the shift column as its error bar.
 | G4_overlap_correction_is_small | |phi - phi_overlap_corrected| / phi < 1% | 0.0036 | PASS |
 | G5_stiffness_convergence | |phi(k_n=4000) - phi(k_n->inf)| < 0.005 (mu=0) | 0.0073 | FAIL |
 | G6_stiffness_convergence_frictional | |phi(k_n=4000) - phi(k_n->inf)| < 0.005 (mu=0.1) | 0.0093 | FAIL |
-| G12_stiffness_limit_vs_ref | |phi(k_n->inf)/phi_ref - 1| < 3% (mu=0) | 0.6353 | PASS |
-| G13_stiffness_limit_vs_ref_frictional | |phi(k_n->inf)/phi_ref - 1| < 3% (mu=0.1) | 0.6174 | FAIL |
+| G12_stiffness_limit_vs_ref | |phi(k_n->inf)/phi_ref(mu=0) - 1| < 3% (mu=0, phi_ref=0.6366) | 0.6353 | PASS |
+| G13_stiffness_limit_vs_ref_frictional | |phi(k_n->inf)/phi_ref(mu=0.1) - 1| < 3% (mu=0.1, phi_ref=0.625) | 0.6174 | PASS |
+| G18_production_vs_friction_ref | |phi_prod(mu=0)/phi_ref(mu=0) - 1| < 3% (phi_ref=0.6366) | 0.6424 | PASS |
+| G18b_production_vs_friction_ref | |phi_prod(mu=0.1)/phi_ref(mu=0.1) - 1| < 3% (phi_ref=0.625) | 0.6263 | PASS |
 | G17_extrapolation_selfconsistency_mu0 | 3-level fit predicts k_n=256000 to < 0.002 and the 4th level moves the limit by < 0.002 (mu=0) | 0.0008 | PASS |
 | G14_timestep_convergence_mu0 | |phi(dt/2) - phi(dt)| < 0.002 (mu=0, k_n=4000, same seed) | 0.0000 | PASS |
 | G14_timestep_convergence_mu0.1 | |phi(dt/2) - phi(dt)| < 0.002 (mu=0.1, k_n=4000, same seed) | 0.0004 | PASS |
@@ -178,10 +180,10 @@ intercept inherits the shift column as its error bar.
 
 ## 6 Error judgement
 
-* frictionless tier (k_n = 4000, N = 10000, 3 seeds): phi = 0.64237 +- 0.00022 vs reference 0.6366: **+0.91 %** -> <3 % (满足).
-* low-friction tier (mu = 0.1): phi = 0.62628 +- 0.00040: **-1.62 %** -> <3 % (满足).
-* hard-sphere limit (mu = 0, Richardson over 4 k_n levels, p = 1.00): phi_inf = 0.63535: **-0.20 %** -> <3 % (满足).
-* hard-sphere limit (mu = 0.1, Richardson over 3 k_n levels, p = 0.58): phi_inf = 0.61739: **-3.02 %** -> >3 % (不满足).
+* frictionless tier (k_n = 4000, N = 10000, 3 seeds): phi = 0.64237 +- 0.00022 vs reference 0.6366 (Scott & Kilgour (1969); Bernal & Mason (...): **+0.91 %** -> <3 % (满足).
+* low-friction tier (mu = 0.1): phi = 0.62628 +- 0.00040 vs reference 0.625 (Pournin et al. (2001) PRE; interpolated ...): **+0.20 %** -> <3 % (满足).
+* hard-sphere limit (mu = 0, Richardson over 4 k_n levels, p = 1.00): phi_inf = 0.63535 vs reference 0.6366: **-0.20 %** -> <3 % (满足).
+* hard-sphere limit (mu = 0.1, Richardson over 3 k_n levels, p = 0.58): phi_inf = 0.61739 vs reference 0.625: **-1.22 %** -> <3 % (满足).
 * extrapolation self-consistency (mu = 0): the 3-level fit predicts the withheld k_n = 256000 level to **0.00083** and admitting it moves the hard-sphere limit by **0.00111** -> the intercept is reproducible at the 0.002 level.
 * timestep (mu = 0, k_n = 4000): halving dt moves phi by 0.00002 (below the 0.002 gate) -> the stiffness systemic is not a disguised timestep error.
 * timestep (mu = 0.1, k_n = 4000): halving dt moves phi by 0.00038 (below the 0.002 gate) -> the stiffness systemic is not a disguised timestep error.
