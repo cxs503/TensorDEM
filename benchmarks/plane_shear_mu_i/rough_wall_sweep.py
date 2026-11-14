@@ -1,4 +1,4 @@
-"""Round 11 of CASE-DEM-PLANE-SHEAR-MUIDI: smooth vs rough walls (wall slip).
+"""Rounds 11-12 of CASE-DEM-PLANE-SHEAR-MUIDI: smooth vs rough walls (wall slip).
 
 The case has spent ten rounds on the same device and the same question -- why is
 the measured ``mu`` 20-27 % below da Cruz et al. (2005)?  Round 10
@@ -11,6 +11,13 @@ the sample with a flat, frictionally-limited platen, and round 8 measured
 
 da Cruz et al. drive their cell with **rough walls** precisely to remove this
 degree of freedom.
+
+Round 12 fixes the *initial condition* of the rough mode: the graft monolayer
+is a half-embedded wall (sphere centres on the wall planes), the bed is seated
+on it, and the platen starts one diameter above the top layer -- round 11 used
+the flat-wall initial condition, so the rough runs started pre-overlapped and
+every point died with 'servo did not reach the target normal stress'.  Round 12
+also runs three seeds per point.
 
 This script runs the *same* device (``ServoShearCase``), the same protocol, the
 same seeds and the same reference law, with only ``wall_mode`` switched:
@@ -68,7 +75,7 @@ MIN_SHEAR_STEPS = 400
 
 I_TARGETS = (1e-2, 3e-2, 1e-1, 3e-1)
 MODES = ("smooth", "rough")
-SEEDS = (5279,)
+SEEDS = (5279, 6113, 7919)
 
 PLAN = [(mode, I, seed) for mode in MODES for I in I_TARGETS for seed in SEEDS]
 
