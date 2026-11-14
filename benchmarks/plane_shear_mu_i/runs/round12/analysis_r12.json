@@ -1,0 +1,340 @@
+{
+  "n_records": 6,
+  "n_failed": 2,
+  "modes": [
+    "smooth"
+  ],
+  "I_targets": [
+    0.01,
+    0.03,
+    0.1,
+    0.3
+  ],
+  "reference": {
+    "law": "mu_s + (mu_2 - mu_s)/(I0/I+1)",
+    "mu_s": 0.36,
+    "mu_2": 0.84,
+    "I0": 0.3,
+    "status": "constants as quoted in rounds 1-5"
+  },
+  "acceptance_band_pct": 10.0,
+  "aggregate": {
+    "smooth|0.01": {
+      "n_seeds": 1,
+      "seeds": [
+        5279
+      ],
+      "mu_wall": {
+        "mean": 0.38128075684724355,
+        "sd": 0.0,
+        "n": 1
+      },
+      "mu_full": {
+        "mean": 0.5000400665708372,
+        "sd": 0.0,
+        "n": 1
+      },
+      "mu_full_zz": {
+        "mean": 0.3783786984061474,
+        "sd": 0.0,
+        "n": 1
+      },
+      "mu_bulk": {
+        "mean": 0.3328451869353456,
+        "sd": 0.0,
+        "n": 1
+      },
+      "mu_bulk_mid": {
+        "mean": 0.3015083064777351,
+        "sd": 0.0,
+        "n": 1
+      },
+      "phi_bed_steady": {
+        "mean": 0.5314470417006031,
+        "sd": 0.0,
+        "n": 1
+      },
+      "phi_bed_final": null,
+      "gamma_dot_ratio": {
+        "mean": 0.8894644042936081,
+        "sd": 0.0,
+        "n": 1
+      },
+      "profile_r2": {
+        "mean": 0.8373036710498937,
+        "sd": 0.0,
+        "n": 1
+      },
+      "P_rel_err_final": {
+        "mean": -0.0037734272498293198,
+        "sd": 0.0,
+        "n": 1
+      },
+      "I_measured_rate": {
+        "mean": 0.009289259534969539,
+        "sd": 0.0,
+        "n": 1
+      },
+      "I_imposed_rate": {
+        "mean": 0.010443655181847162,
+        "sd": 0.0,
+        "n": 1
+      },
+      "mu_wall_final": {
+        "mean": 0.3959102613380547,
+        "sd": 0.0,
+        "n": 1
+      },
+      "dilatancy": {
+        "mean": -0.01812412195844709,
+        "sd": 0.0,
+        "n": 1
+      },
+      "n_particles": {
+        "mean": 294.0,
+        "sd": 0.0,
+        "n": 1
+      },
+      "servo_valid": 1
+    },
+    "smooth|0.03": {
+      "n_seeds": 1,
+      "seeds": [
+        5279
+      ],
+      "mu_wall": {
+        "mean": 0.3283095240591871,
+        "sd": 0.0,
+        "n": 1
+      },
+      "mu_full": {
+        "mean": 0.34979177661224486,
+        "sd": 0.0,
+        "n": 1
+      },
+      "mu_full_zz": {
+        "mean": 0.32453336904532837,
+        "sd": 0.0,
+        "n": 1
+      },
+      "mu_bulk": {
+        "mean": 0.3345093922486737,
+        "sd": 0.0,
+        "n": 1
+      },
+      "mu_bulk_mid": {
+        "mean": 0.33944950661046785,
+        "sd": 0.0,
+        "n": 1
+      },
+      "phi_bed_steady": {
+        "mean": 0.539438214215162,
+        "sd": 0.0,
+        "n": 1
+      },
+      "phi_bed_final": null,
+      "gamma_dot_ratio": {
+        "mean": 1.0261551680520806,
+        "sd": 0.0,
+        "n": 1
+      },
+      "profile_r2": {
+        "mean": 0.890451750481279,
+        "sd": 0.0,
+        "n": 1
+      },
+      "P_rel_err_final": {
+        "mean": -0.0872990466035336,
+        "sd": 0.0,
+        "n": 1
+      },
+      "I_measured_rate": {
+        "mean": 0.032791760802716334,
+        "sd": 0.0,
+        "n": 1
+      },
+      "I_imposed_rate": {
+        "mean": 0.03195594762238925,
+        "sd": 0.0,
+        "n": 1
+      },
+      "mu_wall_final": {
+        "mean": 0.41135084283310364,
+        "sd": 0.0,
+        "n": 1
+      },
+      "dilatancy": {
+        "mean": -0.03266951255657125,
+        "sd": 0.0,
+        "n": 1
+      },
+      "n_particles": {
+        "mean": 294.0,
+        "sd": 0.0,
+        "n": 1
+      },
+      "servo_valid": 0
+    },
+    "smooth|0.1": {
+      "n_seeds": 1,
+      "seeds": [
+        5279
+      ],
+      "mu_wall": {
+        "mean": 0.336242901149921,
+        "sd": 0.0,
+        "n": 1
+      },
+      "mu_full": {
+        "mean": 0.37035174505147805,
+        "sd": 0.0,
+        "n": 1
+      },
+      "mu_full_zz": {
+        "mean": 0.33667975663219474,
+        "sd": 0.0,
+        "n": 1
+      },
+      "mu_bulk": {
+        "mean": 0.32143465650439296,
+        "sd": 0.0,
+        "n": 1
+      },
+      "mu_bulk_mid": {
+        "mean": 0.3356061124663016,
+        "sd": 0.0,
+        "n": 1
+      },
+      "phi_bed_steady": {
+        "mean": 0.5495695820618934,
+        "sd": 0.0,
+        "n": 1
+      },
+      "phi_bed_final": null,
+      "gamma_dot_ratio": {
+        "mean": 0.6321346157803344,
+        "sd": 0.0,
+        "n": 1
+      },
+      "profile_r2": {
+        "mean": 0.8911161023097046,
+        "sd": 0.0,
+        "n": 1
+      },
+      "P_rel_err_final": {
+        "mean": -0.005686126761742849,
+        "sd": 0.0,
+        "n": 1
+      },
+      "I_measured_rate": {
+        "mean": 0.06765327566169575,
+        "sd": 0.0,
+        "n": 1
+      },
+      "I_imposed_rate": {
+        "mean": 0.1070235262756203,
+        "sd": 0.0,
+        "n": 1
+      },
+      "mu_wall_final": {
+        "mean": 0.3233666122494991,
+        "sd": 0.0,
+        "n": 1
+      },
+      "dilatancy": {
+        "mean": -0.05050234267951566,
+        "sd": 0.0,
+        "n": 1
+      },
+      "n_particles": {
+        "mean": 294.0,
+        "sd": 0.0,
+        "n": 1
+      },
+      "servo_valid": 1
+    },
+    "smooth|0.3": {
+      "n_seeds": 1,
+      "seeds": [
+        5279
+      ],
+      "mu_wall": {
+        "mean": 0.3496728808858072,
+        "sd": 0.0,
+        "n": 1
+      },
+      "mu_full": {
+        "mean": 0.4378653147616025,
+        "sd": 0.0,
+        "n": 1
+      },
+      "mu_full_zz": {
+        "mean": 0.351482154335219,
+        "sd": 0.0,
+        "n": 1
+      },
+      "mu_bulk": {
+        "mean": 0.329924579578703,
+        "sd": 0.0,
+        "n": 1
+      },
+      "mu_bulk_mid": {
+        "mean": 0.33220807458749413,
+        "sd": 0.0,
+        "n": 1
+      },
+      "phi_bed_steady": {
+        "mean": 0.5726913514335257,
+        "sd": 0.0,
+        "n": 1
+      },
+      "phi_bed_final": null,
+      "gamma_dot_ratio": {
+        "mean": 0.9158651787958183,
+        "sd": 0.0,
+        "n": 1
+      },
+      "profile_r2": {
+        "mean": 0.9688124727818876,
+        "sd": 0.0,
+        "n": 1
+      },
+      "P_rel_err_final": {
+        "mean": -0.007801011553807524,
+        "sd": 0.0,
+        "n": 1
+      },
+      "I_measured_rate": {
+        "mean": 0.2797777654615093,
+        "sd": 0.0,
+        "n": 1
+      },
+      "I_imposed_rate": {
+        "mean": 0.3054792036414811,
+        "sd": 0.0,
+        "n": 1
+      },
+      "mu_wall_final": {
+        "mean": 0.34774189883892964,
+        "sd": 0.0,
+        "n": 1
+      },
+      "dilatancy": {
+        "mean": -0.08883724296483586,
+        "sd": 0.0,
+        "n": 1
+      },
+      "n_particles": {
+        "mean": 294.0,
+        "sd": 0.0,
+        "n": 1
+      },
+      "servo_valid": 1
+    }
+  },
+  "figures": [
+    "fig_mu_vs_I.png",
+    "fig_phi_vs_I.png",
+    "fig_estimator_bias.png"
+  ]
+}
