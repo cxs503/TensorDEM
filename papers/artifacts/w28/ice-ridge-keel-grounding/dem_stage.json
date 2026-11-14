@@ -1,0 +1,1540 @@
+{
+ "written_utc": "2026-11-14T08:00:28Z",
+ "configuration": {
+  "particle_counts": [
+   25000,
+   50000,
+   100000,
+   200000
+  ],
+  "arms": {
+   "legacy_bond_length": null,
+   "spacing_consistent": 1.0
+  },
+  "increments": 6,
+  "steps_per_increment": 300,
+  "seed": 7
+ },
+ "dem_resolutions": [
+  {
+   "arm": "spacing_consistent",
+   "bond_reference_length_m": 1.0,
+   "n_particles_requested": 25000,
+   "sample": {
+    "n_particles": 24960,
+    "n_bonds": 59901,
+    "coordination": 4.799759615384615,
+    "length_m": 16.0,
+    "height_m": 2.0,
+    "spacing_m": 0.038444982626156074,
+    "mean_radius_m": 0.015903107121923013,
+    "solid_fraction": 0.62,
+    "kPa_per_bond": 31760.155063720253,
+    "seed": 7,
+    "ice_young_Pa": 1000000000.0,
+    "cutoff": 1.06,
+    "jitter": 0.12,
+    "cell_ratio": 8.0,
+    "bond_law": "spacing_consistent",
+    "bond_reference_length_m": 1.0
+   },
+   "w0_m": 0.008,
+   "confined": {
+    "test": "confined_compression",
+    "settlements_m": [
+     0.0013333333333333333,
+     0.0026666666666666666,
+     0.004,
+     0.005333333333333333,
+     0.006666666666666667,
+     0.008
+    ],
+    "pressures_Pa": [
+     102513.50025032688,
+     174997.31469391115,
+     234075.65934090136,
+     285147.74174996786,
+     330768.8728225459,
+     372378.77821043704
+    ],
+    "k_subgrade_small_strain_N_per_m3": 76885125.18774515,
+    "k_subgrade_N_per_m3": 46547347.27630463,
+    "solver": "relaxation",
+    "sample": {
+     "n_particles": 24960,
+     "n_bonds": 59901,
+     "coordination": 4.799759615384615,
+     "length_m": 16.0,
+     "height_m": 2.0,
+     "spacing_m": 0.038444982626156074,
+     "mean_radius_m": 0.015903107121923013,
+     "solid_fraction": 0.62,
+     "kPa_per_bond": 31760.155063720253,
+     "seed": 7,
+     "ice_young_Pa": 1000000000.0,
+     "cutoff": 1.06,
+     "jitter": 0.12,
+     "cell_ratio": 8.0,
+     "bond_law": "spacing_consistent",
+     "bond_reference_length_m": 1.0
+    }
+   },
+   "footings": {
+    "0.5": {
+     "test": "footing",
+     "footing_width_m": 1.0,
+     "settlements_m": [
+      0.0013333333333333333,
+      0.0026666666666666666,
+      0.004,
+      0.005333333333333333,
+      0.006666666666666667,
+      0.008
+     ],
+     "resistance_N_per_m": [
+      -329983.2123457747,
+      -37194.37302424631,
+      132385.56243887026,
+      259282.333126865,
+      364821.91588489484,
+      457608.3140278342
+     ],
+     "secant_stiffness_N_per_m2": -247487409.25933102,
+     "n_footing_particles": 54,
+     "solver": "relaxation",
+     "sample": {
+      "n_particles": 24960,
+      "n_bonds": 59901,
+      "coordination": 4.799759615384615,
+      "length_m": 16.0,
+      "height_m": 2.0,
+      "spacing_m": 0.038444982626156074,
+      "mean_radius_m": 0.015903107121923013,
+      "solid_fraction": 0.62,
+      "kPa_per_bond": 31760.155063720253,
+      "seed": 7,
+      "ice_young_Pa": 1000000000.0,
+      "cutoff": 1.06,
+      "jitter": 0.12,
+      "cell_ratio": 8.0,
+      "bond_law": "spacing_consistent",
+      "bond_reference_length_m": 1.0
+     }
+    },
+    "1": {
+     "test": "footing",
+     "footing_width_m": 2.0,
+     "settlements_m": [
+      0.0013333333333333333,
+      0.0026666666666666666,
+      0.004,
+      0.005333333333333333,
+      0.006666666666666667,
+      0.008
+     ],
+     "resistance_N_per_m": [
+      -433995.57983283635,
+      -9726.919317193444,
+      241427.75213262832,
+      431389.7230818647,
+      589795.4806242053,
+      728810.702454321
+     ],
+     "secant_stiffness_N_per_m2": -325496684.8746273,
+     "n_footing_particles": 107,
+     "solver": "relaxation",
+     "sample": {
+      "n_particles": 24960,
+      "n_bonds": 59901,
+      "coordination": 4.799759615384615,
+      "length_m": 16.0,
+      "height_m": 2.0,
+      "spacing_m": 0.038444982626156074,
+      "mean_radius_m": 0.015903107121923013,
+      "solid_fraction": 0.62,
+      "kPa_per_bond": 31760.155063720253,
+      "seed": 7,
+      "ice_young_Pa": 1000000000.0,
+      "cutoff": 1.06,
+      "jitter": 0.12,
+      "cell_ratio": 8.0,
+      "bond_law": "spacing_consistent",
+      "bond_reference_length_m": 1.0
+     }
+    },
+    "2": {
+     "test": "footing",
+     "footing_width_m": 4.0,
+     "settlements_m": [
+      0.0013333333333333333,
+      0.0026666666666666666,
+      0.004,
+      0.005333333333333333,
+      0.006666666666666667,
+      0.008
+     ],
+     "resistance_N_per_m": [
+      -752555.9827151955,
+      21052.59394956808,
+      482570.90862886864,
+      832357.175710896,
+      1123261.1461905222,
+      1377262.5178435487
+     ],
+     "secant_stiffness_N_per_m2": -564416987.0363966,
+     "n_footing_particles": 213,
+     "solver": "relaxation",
+     "sample": {
+      "n_particles": 24960,
+      "n_bonds": 59901,
+      "coordination": 4.799759615384615,
+      "length_m": 16.0,
+      "height_m": 2.0,
+      "spacing_m": 0.038444982626156074,
+      "mean_radius_m": 0.015903107121923013,
+      "solid_fraction": 0.62,
+      "kPa_per_bond": 31760.155063720253,
+      "seed": 7,
+      "ice_young_Pa": 1000000000.0,
+      "cutoff": 1.06,
+      "jitter": 0.12,
+      "cell_ratio": 8.0,
+      "bond_law": "spacing_consistent",
+      "bond_reference_length_m": 1.0
+     }
+    }
+   },
+   "wall_time_s": 73.4913444519043
+  },
+  {
+   "arm": "legacy_bond_length",
+   "bond_reference_length_m": null,
+   "n_particles_requested": 25000,
+   "sample": {
+    "n_particles": 24960,
+    "n_bonds": 59901,
+    "coordination": 4.799759615384615,
+    "length_m": 16.0,
+    "height_m": 2.0,
+    "spacing_m": 0.038444982626156074,
+    "mean_radius_m": 0.015903107121923013,
+    "solid_fraction": 0.62,
+    "kPa_per_bond": 871039.2393262254,
+    "seed": 7,
+    "ice_young_Pa": 1000000000.0,
+    "cutoff": 1.06,
+    "jitter": 0.12,
+    "cell_ratio": 8.0,
+    "bond_law": "legacy_bond_length",
+    "bond_reference_length_m": null
+   },
+   "w0_m": 0.008,
+   "confined": {
+    "test": "confined_compression",
+    "settlements_m": [
+     0.0013333333333333333,
+     0.0026666666666666666,
+     0.004,
+     0.005333333333333333,
+     0.006666666666666667,
+     0.008
+    ],
+    "pressures_Pa": [
+     4081728.026275647,
+     6954670.677108031,
+     9298792.330727011,
+     11327668.317196036,
+     13140629.27974939,
+     14793747.447915444
+    ],
+    "k_subgrade_small_strain_N_per_m3": 3061296019.706735,
+    "k_subgrade_N_per_m3": 1849218430.9894304,
+    "solver": "relaxation",
+    "sample": {
+     "n_particles": 24960,
+     "n_bonds": 59901,
+     "coordination": 4.799759615384615,
+     "length_m": 16.0,
+     "height_m": 2.0,
+     "spacing_m": 0.038444982626156074,
+     "mean_radius_m": 0.015903107121923013,
+     "solid_fraction": 0.62,
+     "kPa_per_bond": 871039.2393262254,
+     "seed": 7,
+     "ice_young_Pa": 1000000000.0,
+     "cutoff": 1.06,
+     "jitter": 0.12,
+     "cell_ratio": 8.0,
+     "bond_law": "legacy_bond_length",
+     "bond_reference_length_m": null
+    }
+   },
+   "footings": {
+    "0.5": {
+     "test": "footing",
+     "footing_width_m": 1.0,
+     "settlements_m": [
+      0.0013333333333333333,
+      0.0026666666666666666,
+      0.004,
+      0.005333333333333333,
+      0.006666666666666667,
+      0.008
+     ],
+     "resistance_N_per_m": [
+      -12110619.731626587,
+      -1029445.8067087807,
+      5183212.114182474,
+      9767169.99620958,
+      13541677.233298926,
+      16830117.583547026
+     ],
+     "secant_stiffness_N_per_m2": -9082964798.71994,
+     "n_footing_particles": 54,
+     "solver": "relaxation",
+     "sample": {
+      "n_particles": 24960,
+      "n_bonds": 59901,
+      "coordination": 4.799759615384615,
+      "length_m": 16.0,
+      "height_m": 2.0,
+      "spacing_m": 0.038444982626156074,
+      "mean_radius_m": 0.015903107121923013,
+      "solid_fraction": 0.62,
+      "kPa_per_bond": 871039.2393262254,
+      "seed": 7,
+      "ice_young_Pa": 1000000000.0,
+      "cutoff": 1.06,
+      "jitter": 0.12,
+      "cell_ratio": 8.0,
+      "bond_law": "legacy_bond_length",
+      "bond_reference_length_m": null
+     }
+    },
+    "1": {
+     "test": "footing",
+     "footing_width_m": 2.0,
+     "settlements_m": [
+      0.0013333333333333333,
+      0.0026666666666666666,
+      0.004,
+      0.005333333333333333,
+      0.006666666666666667,
+      0.008
+     ],
+     "resistance_N_per_m": [
+      -16858966.57283391,
+      -320141.32571494946,
+      9252539.701820007,
+      16392147.770327013,
+      22287435.28391243,
+      27418994.93630831
+     ],
+     "secant_stiffness_N_per_m2": -12644224929.625433,
+     "n_footing_particles": 107,
+     "solver": "relaxation",
+     "sample": {
+      "n_particles": 24960,
+      "n_bonds": 59901,
+      "coordination": 4.799759615384615,
+      "length_m": 16.0,
+      "height_m": 2.0,
+      "spacing_m": 0.038444982626156074,
+      "mean_radius_m": 0.015903107121923013,
+      "solid_fraction": 0.62,
+      "kPa_per_bond": 871039.2393262254,
+      "seed": 7,
+      "ice_young_Pa": 1000000000.0,
+      "cutoff": 1.06,
+      "jitter": 0.12,
+      "cell_ratio": 8.0,
+      "bond_law": "legacy_bond_length",
+      "bond_reference_length_m": null
+     }
+    },
+    "2": {
+     "test": "footing",
+     "footing_width_m": 4.0,
+     "settlements_m": [
+      0.0013333333333333333,
+      0.0026666666666666666,
+      0.004,
+      0.005333333333333333,
+      0.006666666666666667,
+      0.008
+     ],
+     "resistance_N_per_m": [
+      -30361649.92504813,
+      494679.6506272368,
+      18327393.33019115,
+      31658351.322713196,
+      42681506.99167271,
+      52273662.261358894
+     ],
+     "secant_stiffness_N_per_m2": -22771237443.7861,
+     "n_footing_particles": 213,
+     "solver": "relaxation",
+     "sample": {
+      "n_particles": 24960,
+      "n_bonds": 59901,
+      "coordination": 4.799759615384615,
+      "length_m": 16.0,
+      "height_m": 2.0,
+      "spacing_m": 0.038444982626156074,
+      "mean_radius_m": 0.015903107121923013,
+      "solid_fraction": 0.62,
+      "kPa_per_bond": 871039.2393262254,
+      "seed": 7,
+      "ice_young_Pa": 1000000000.0,
+      "cutoff": 1.06,
+      "jitter": 0.12,
+      "cell_ratio": 8.0,
+      "bond_law": "legacy_bond_length",
+      "bond_reference_length_m": null
+     }
+    }
+   },
+   "wall_time_s": 79.99248671531677
+  },
+  {
+   "arm": "spacing_consistent",
+   "bond_reference_length_m": 1.0,
+   "n_particles_requested": 50000,
+   "sample": {
+    "n_particles": 50065,
+    "n_bonds": 121094,
+    "coordination": 4.837471287326475,
+    "length_m": 16.0,
+    "height_m": 2.0,
+    "spacing_m": 0.027184707917553962,
+    "mean_radius_m": 0.011241606671672667,
+    "solid_fraction": 0.62,
+    "kPa_per_bond": 22448.239052574645,
+    "seed": 7,
+    "ice_young_Pa": 1000000000.0,
+    "cutoff": 1.06,
+    "jitter": 0.12,
+    "cell_ratio": 8.0,
+    "bond_law": "spacing_consistent",
+    "bond_reference_length_m": 1.0
+   },
+   "w0_m": 0.008,
+   "confined": {
+    "test": "confined_compression",
+    "settlements_m": [
+     0.0013333333333333333,
+     0.0026666666666666666,
+     0.004,
+     0.005333333333333333,
+     0.006666666666666667,
+     0.008
+    ],
+    "pressures_Pa": [
+     104960.02070026922,
+     179158.80508319175,
+     239664.2007282262,
+     291993.7657888825,
+     338743.580170909,
+     381377.25710154226
+    ],
+    "k_subgrade_small_strain_N_per_m3": 78720015.52520192,
+    "k_subgrade_N_per_m3": 47672157.13769278,
+    "solver": "relaxation",
+    "sample": {
+     "n_particles": 50065,
+     "n_bonds": 121094,
+     "coordination": 4.837471287326475,
+     "length_m": 16.0,
+     "height_m": 2.0,
+     "spacing_m": 0.027184707917553962,
+     "mean_radius_m": 0.011241606671672667,
+     "solid_fraction": 0.62,
+     "kPa_per_bond": 22448.239052574645,
+     "seed": 7,
+     "ice_young_Pa": 1000000000.0,
+     "cutoff": 1.06,
+     "jitter": 0.12,
+     "cell_ratio": 8.0,
+     "bond_law": "spacing_consistent",
+     "bond_reference_length_m": 1.0
+    }
+   },
+   "footings": {
+    "0.5": {
+     "test": "footing",
+     "footing_width_m": 1.0,
+     "settlements_m": [
+      0.0013333333333333333,
+      0.0026666666666666666,
+      0.004,
+      0.005333333333333333,
+      0.006666666666666667,
+      0.008
+     ],
+     "resistance_N_per_m": [
+      -270325.6184891625,
+      -20034.36677131413,
+      124047.2552671447,
+      232281.11625691716,
+      322490.51126461214,
+      401823.7966137618
+     ],
+     "secant_stiffness_N_per_m2": -202744213.86687186,
+     "n_footing_particles": 76,
+     "solver": "relaxation",
+     "sample": {
+      "n_particles": 50065,
+      "n_bonds": 121094,
+      "coordination": 4.837471287326475,
+      "length_m": 16.0,
+      "height_m": 2.0,
+      "spacing_m": 0.027184707917553962,
+      "mean_radius_m": 0.011241606671672667,
+      "solid_fraction": 0.62,
+      "kPa_per_bond": 22448.239052574645,
+      "seed": 7,
+      "ice_young_Pa": 1000000000.0,
+      "cutoff": 1.06,
+      "jitter": 0.12,
+      "cell_ratio": 8.0,
+      "bond_law": "spacing_consistent",
+      "bond_reference_length_m": 1.0
+     }
+    },
+    "1": {
+     "test": "footing",
+     "footing_width_m": 2.0,
+     "settlements_m": [
+      0.0013333333333333333,
+      0.0026666666666666666,
+      0.004,
+      0.005333333333333333,
+      0.006666666666666667,
+      0.008
+     ],
+     "resistance_N_per_m": [
+      -412903.0517727524,
+      -452.7354578348579,
+      241950.00280074115,
+      425196.35339703434,
+      577855.7890456917,
+      711510.7802937445
+     ],
+     "secant_stiffness_N_per_m2": -309677288.82956433,
+     "n_footing_particles": 150,
+     "solver": "relaxation",
+     "sample": {
+      "n_particles": 50065,
+      "n_bonds": 121094,
+      "coordination": 4.837471287326475,
+      "length_m": 16.0,
+      "height_m": 2.0,
+      "spacing_m": 0.027184707917553962,
+      "mean_radius_m": 0.011241606671672667,
+      "solid_fraction": 0.62,
+      "kPa_per_bond": 22448.239052574645,
+      "seed": 7,
+      "ice_young_Pa": 1000000000.0,
+      "cutoff": 1.06,
+      "jitter": 0.12,
+      "cell_ratio": 8.0,
+      "bond_law": "spacing_consistent",
+      "bond_reference_length_m": 1.0
+     }
+    },
+    "2": {
+     "test": "footing",
+     "footing_width_m": 4.0,
+     "settlements_m": [
+      0.0013333333333333333,
+      0.0026666666666666666,
+      0.004,
+      0.005333333333333333,
+      0.006666666666666667,
+      0.008
+     ],
+     "resistance_N_per_m": [
+      -745412.4388826833,
+      17972.64706862494,
+      466108.5636084599,
+      803225.4997126602,
+      1082352.0239194157,
+      1325201.4765262078
+     ],
+     "secant_stiffness_N_per_m2": -559059329.1620125,
+     "n_footing_particles": 302,
+     "solver": "relaxation",
+     "sample": {
+      "n_particles": 50065,
+      "n_bonds": 121094,
+      "coordination": 4.837471287326475,
+      "length_m": 16.0,
+      "height_m": 2.0,
+      "spacing_m": 0.027184707917553962,
+      "mean_radius_m": 0.011241606671672667,
+      "solid_fraction": 0.62,
+      "kPa_per_bond": 22448.239052574645,
+      "seed": 7,
+      "ice_young_Pa": 1000000000.0,
+      "cutoff": 1.06,
+      "jitter": 0.12,
+      "cell_ratio": 8.0,
+      "bond_law": "spacing_consistent",
+      "bond_reference_length_m": 1.0
+     }
+    }
+   },
+   "wall_time_s": 136.06164407730103
+  },
+  {
+   "arm": "legacy_bond_length",
+   "bond_reference_length_m": null,
+   "n_particles_requested": 50000,
+   "sample": {
+    "n_particles": 50065,
+    "n_bonds": 121094,
+    "coordination": 4.837471287326475,
+    "length_m": 16.0,
+    "height_m": 2.0,
+    "spacing_m": 0.027184707917553962,
+    "mean_radius_m": 0.011241606671672667,
+    "solid_fraction": 0.62,
+    "kPa_per_bond": 871516.3949591101,
+    "seed": 7,
+    "ice_young_Pa": 1000000000.0,
+    "cutoff": 1.06,
+    "jitter": 0.12,
+    "cell_ratio": 8.0,
+    "bond_law": "legacy_bond_length",
+    "bond_reference_length_m": null
+   },
+   "w0_m": 0.008,
+   "confined": {
+    "test": "confined_compression",
+    "settlements_m": [
+     0.0013333333333333333,
+     0.0026666666666666666,
+     0.004,
+     0.005333333333333333,
+     0.006666666666666667,
+     0.008
+    ],
+    "pressures_Pa": [
+     5808253.303582776,
+     9921733.905446667,
+     13278039.967191702,
+     16181947.34871152,
+     18776688.56212946,
+     21143006.30859367
+    ],
+    "k_subgrade_small_strain_N_per_m3": 4356189977.687082,
+    "k_subgrade_N_per_m3": 2642875788.5742087,
+    "solver": "relaxation",
+    "sample": {
+     "n_particles": 50065,
+     "n_bonds": 121094,
+     "coordination": 4.837471287326475,
+     "length_m": 16.0,
+     "height_m": 2.0,
+     "spacing_m": 0.027184707917553962,
+     "mean_radius_m": 0.011241606671672667,
+     "solid_fraction": 0.62,
+     "kPa_per_bond": 871516.3949591101,
+     "seed": 7,
+     "ice_young_Pa": 1000000000.0,
+     "cutoff": 1.06,
+     "jitter": 0.12,
+     "cell_ratio": 8.0,
+     "bond_law": "legacy_bond_length",
+     "bond_reference_length_m": null
+    }
+   },
+   "footings": {
+    "0.5": {
+     "test": "footing",
+     "footing_width_m": 1.0,
+     "settlements_m": [
+      0.0013333333333333333,
+      0.0026666666666666666,
+      0.004,
+      0.005333333333333333,
+      0.006666666666666667,
+      0.008
+     ],
+     "resistance_N_per_m": [
+      -14283944.644426709,
+      -558163.1327074112,
+      6888639.289299115,
+      12341415.86658615,
+      16832090.13189661,
+      20751765.845358424
+     ],
+     "secant_stiffness_N_per_m2": -10712958483.320032,
+     "n_footing_particles": 76,
+     "solver": "relaxation",
+     "sample": {
+      "n_particles": 50065,
+      "n_bonds": 121094,
+      "coordination": 4.837471287326475,
+      "length_m": 16.0,
+      "height_m": 2.0,
+      "spacing_m": 0.027184707917553962,
+      "mean_radius_m": 0.011241606671672667,
+      "solid_fraction": 0.62,
+      "kPa_per_bond": 871516.3949591101,
+      "seed": 7,
+      "ice_young_Pa": 1000000000.0,
+      "cutoff": 1.06,
+      "jitter": 0.12,
+      "cell_ratio": 8.0,
+      "bond_law": "legacy_bond_length",
+      "bond_reference_length_m": null
+     }
+    },
+    "1": {
+     "test": "footing",
+     "footing_width_m": 2.0,
+     "settlements_m": [
+      0.0013333333333333333,
+      0.0026666666666666666,
+      0.004,
+      0.005333333333333333,
+      0.006666666666666667,
+      0.008
+     ],
+     "resistance_N_per_m": [
+      -23374700.686186127,
+      -105646.52728892845,
+      13107989.550986314,
+      22876199.723358538,
+      30904216.21747254,
+      37874997.20424726
+     ],
+     "secant_stiffness_N_per_m2": -17531025514.639595,
+     "n_footing_particles": 150,
+     "solver": "relaxation",
+     "sample": {
+      "n_particles": 50065,
+      "n_bonds": 121094,
+      "coordination": 4.837471287326475,
+      "length_m": 16.0,
+      "height_m": 2.0,
+      "spacing_m": 0.027184707917553962,
+      "mean_radius_m": 0.011241606671672667,
+      "solid_fraction": 0.62,
+      "kPa_per_bond": 871516.3949591101,
+      "seed": 7,
+      "ice_young_Pa": 1000000000.0,
+      "cutoff": 1.06,
+      "jitter": 0.12,
+      "cell_ratio": 8.0,
+      "bond_law": "legacy_bond_length",
+      "bond_reference_length_m": null
+     }
+    },
+    "2": {
+     "test": "footing",
+     "footing_width_m": 4.0,
+     "settlements_m": [
+      0.0013333333333333333,
+      0.0026666666666666666,
+      0.004,
+      0.005333333333333333,
+      0.006666666666666667,
+      0.008
+     ],
+     "resistance_N_per_m": [
+      -42214996.2428942,
+      567730.2048462541,
+      25167387.72261495,
+      43403969.183535345,
+      58388347.37198402,
+      71375161.8531762
+     ],
+     "secant_stiffness_N_per_m2": -31661247182.170654,
+     "n_footing_particles": 302,
+     "solver": "relaxation",
+     "sample": {
+      "n_particles": 50065,
+      "n_bonds": 121094,
+      "coordination": 4.837471287326475,
+      "length_m": 16.0,
+      "height_m": 2.0,
+      "spacing_m": 0.027184707917553962,
+      "mean_radius_m": 0.011241606671672667,
+      "solid_fraction": 0.62,
+      "kPa_per_bond": 871516.3949591101,
+      "seed": 7,
+      "ice_young_Pa": 1000000000.0,
+      "cutoff": 1.06,
+      "jitter": 0.12,
+      "cell_ratio": 8.0,
+      "bond_law": "legacy_bond_length",
+      "bond_reference_length_m": null
+     }
+    }
+   },
+   "wall_time_s": 203.7590048313141
+  },
+  {
+   "arm": "legacy_bond_length",
+   "bond_reference_length_m": null,
+   "n_particles_requested": 100000,
+   "sample": {
+    "n_particles": 99720,
+    "n_bonds": 240423,
+    "coordination": 4.821961492178099,
+    "length_m": 16.0,
+    "height_m": 2.0,
+    "spacing_m": 0.019222491313078037,
+    "mean_radius_m": 0.00794654586505871,
+    "solid_fraction": 0.62,
+    "kPa_per_bond": 870680.7503965831,
+    "seed": 7,
+    "ice_young_Pa": 1000000000.0,
+    "cutoff": 1.06,
+    "jitter": 0.12,
+    "cell_ratio": 8.0,
+    "bond_law": "legacy_bond_length",
+    "bond_reference_length_m": null
+   },
+   "w0_m": 0.008,
+   "confined": {
+    "test": "confined_compression",
+    "settlements_m": [
+     0.0013333333333333333,
+     0.0026666666666666666,
+     0.004,
+     0.005333333333333333,
+     0.006666666666666667,
+     0.008
+    ],
+    "pressures_Pa": [
+     9439359.043988554,
+     16147617.48458123,
+     21638163.277457595,
+     26398453.679284956,
+     30658561.467839647,
+     34548625.09902227
+    ],
+    "k_subgrade_small_strain_N_per_m3": 7079519282.991416,
+    "k_subgrade_N_per_m3": 4318578137.377784,
+    "solver": "relaxation",
+    "sample": {
+     "n_particles": 99720,
+     "n_bonds": 240423,
+     "coordination": 4.821961492178099,
+     "length_m": 16.0,
+     "height_m": 2.0,
+     "spacing_m": 0.019222491313078037,
+     "mean_radius_m": 0.00794654586505871,
+     "solid_fraction": 0.62,
+     "kPa_per_bond": 870680.7503965831,
+     "seed": 7,
+     "ice_young_Pa": 1000000000.0,
+     "cutoff": 1.06,
+     "jitter": 0.12,
+     "cell_ratio": 8.0,
+     "bond_law": "legacy_bond_length",
+     "bond_reference_length_m": null
+    }
+   },
+   "footings": {
+    "0.5": {
+     "test": "footing",
+     "footing_width_m": 1.0,
+     "settlements_m": [
+      0.0013333333333333333,
+      0.0026666666666666666,
+      0.004,
+      0.005333333333333333,
+      0.006666666666666667,
+      0.008
+     ],
+     "resistance_N_per_m": [
+      -22519327.02772893,
+      -171126.29495300516,
+      11845720.898196384,
+      20540729.64508872,
+      27590762.732501984,
+      33648187.51138435
+     ],
+     "secant_stiffness_N_per_m2": -16889495270.796698,
+     "n_footing_particles": 108,
+     "solver": "relaxation",
+     "sample": {
+      "n_particles": 99720,
+      "n_bonds": 240423,
+      "coordination": 4.821961492178099,
+      "length_m": 16.0,
+      "height_m": 2.0,
+      "spacing_m": 0.019222491313078037,
+      "mean_radius_m": 0.00794654586505871,
+      "solid_fraction": 0.62,
+      "kPa_per_bond": 870680.7503965831,
+      "seed": 7,
+      "ice_young_Pa": 1000000000.0,
+      "cutoff": 1.06,
+      "jitter": 0.12,
+      "cell_ratio": 8.0,
+      "bond_law": "legacy_bond_length",
+      "bond_reference_length_m": null
+     }
+    },
+    "1": {
+     "test": "footing",
+     "footing_width_m": 2.0,
+     "settlements_m": [
+      0.0013333333333333333,
+      0.0026666666666666666,
+      0.004,
+      0.005333333333333333,
+      0.006666666666666667,
+      0.008
+     ],
+     "resistance_N_per_m": [
+      -36144166.620892264,
+      17790.858972208138,
+      20864514.317450803,
+      36437369.03996092,
+      49269873.66205616,
+      60392500.727808625
+     ],
+     "secant_stiffness_N_per_m2": -27108124965.669197,
+     "n_footing_particles": 213,
+     "solver": "relaxation",
+     "sample": {
+      "n_particles": 99720,
+      "n_bonds": 240423,
+      "coordination": 4.821961492178099,
+      "length_m": 16.0,
+      "height_m": 2.0,
+      "spacing_m": 0.019222491313078037,
+      "mean_radius_m": 0.00794654586505871,
+      "solid_fraction": 0.62,
+      "kPa_per_bond": 870680.7503965831,
+      "seed": 7,
+      "ice_young_Pa": 1000000000.0,
+      "cutoff": 1.06,
+      "jitter": 0.12,
+      "cell_ratio": 8.0,
+      "bond_law": "legacy_bond_length",
+      "bond_reference_length_m": null
+     }
+    },
+    "2": {
+     "test": "footing",
+     "footing_width_m": 4.0,
+     "settlements_m": [
+      0.0013333333333333333,
+      0.0026666666666666666,
+      0.004,
+      0.005333333333333333,
+      0.006666666666666667,
+      0.008
+     ],
+     "resistance_N_per_m": [
+      -67413959.6313119,
+      756842.7644899051,
+      40475723.2500149,
+      70076864.14542691,
+      94373224.23303607,
+      115355362.91578503
+     ],
+     "secant_stiffness_N_per_m2": -50560469723.483925,
+     "n_footing_particles": 423,
+     "solver": "relaxation",
+     "sample": {
+      "n_particles": 99720,
+      "n_bonds": 240423,
+      "coordination": 4.821961492178099,
+      "length_m": 16.0,
+      "height_m": 2.0,
+      "spacing_m": 0.019222491313078037,
+      "mean_radius_m": 0.00794654586505871,
+      "solid_fraction": 0.62,
+      "kPa_per_bond": 870680.7503965831,
+      "seed": 7,
+      "ice_young_Pa": 1000000000.0,
+      "cutoff": 1.06,
+      "jitter": 0.12,
+      "cell_ratio": 8.0,
+      "bond_law": "legacy_bond_length",
+      "bond_reference_length_m": null
+     }
+    }
+   },
+   "wall_time_s": 437.2312288284302
+  },
+  {
+   "arm": "spacing_consistent",
+   "bond_reference_length_m": 1.0,
+   "n_particles_requested": 100000,
+   "sample": {
+    "n_particles": 99720,
+    "n_bonds": 240423,
+    "coordination": 4.821961492178099,
+    "length_m": 16.0,
+    "height_m": 2.0,
+    "spacing_m": 0.019222491313078037,
+    "mean_radius_m": 0.00794654586505871,
+    "solid_fraction": 0.62,
+    "kPa_per_bond": 15867.63608657938,
+    "seed": 7,
+    "ice_young_Pa": 1000000000.0,
+    "cutoff": 1.06,
+    "jitter": 0.12,
+    "cell_ratio": 8.0,
+    "bond_law": "spacing_consistent",
+    "bond_reference_length_m": 1.0
+   },
+   "w0_m": 0.008,
+   "confined": {
+    "test": "confined_compression",
+    "settlements_m": [
+     0.0013333333333333333,
+     0.0026666666666666666,
+     0.004,
+     0.005333333333333333,
+     0.006666666666666667,
+     0.008
+    ],
+    "pressures_Pa": [
+     101826.2441394532,
+     174178.48738995625,
+     233382.141672744,
+     284715.4705589925,
+     330655.79773931514,
+     372599.759331972
+    ],
+    "k_subgrade_small_strain_N_per_m3": 76369683.10458991,
+    "k_subgrade_N_per_m3": 46574969.9164965,
+    "solver": "relaxation",
+    "sample": {
+     "n_particles": 99720,
+     "n_bonds": 240423,
+     "coordination": 4.821961492178099,
+     "length_m": 16.0,
+     "height_m": 2.0,
+     "spacing_m": 0.019222491313078037,
+     "mean_radius_m": 0.00794654586505871,
+     "solid_fraction": 0.62,
+     "kPa_per_bond": 15867.63608657938,
+     "seed": 7,
+     "ice_young_Pa": 1000000000.0,
+     "cutoff": 1.06,
+     "jitter": 0.12,
+     "cell_ratio": 8.0,
+     "bond_law": "spacing_consistent",
+     "bond_reference_length_m": 1.0
+    }
+   },
+   "footings": {
+    "0.5": {
+     "test": "footing",
+     "footing_width_m": 1.0,
+     "settlements_m": [
+      0.0013333333333333333,
+      0.0026666666666666666,
+      0.004,
+      0.005333333333333333,
+      0.006666666666666667,
+      0.008
+     ],
+     "resistance_N_per_m": [
+      -251464.64944990823,
+      -5665.041236134259,
+      131266.9204719157,
+      231077.55042571452,
+      312702.23758912145,
+      383567.40806904674
+     ],
+     "secant_stiffness_N_per_m2": -188598487.0874312,
+     "n_footing_particles": 108,
+     "solver": "relaxation",
+     "sample": {
+      "n_particles": 99720,
+      "n_bonds": 240423,
+      "coordination": 4.821961492178099,
+      "length_m": 16.0,
+      "height_m": 2.0,
+      "spacing_m": 0.019222491313078037,
+      "mean_radius_m": 0.00794654586505871,
+      "solid_fraction": 0.62,
+      "kPa_per_bond": 15867.63608657938,
+      "seed": 7,
+      "ice_young_Pa": 1000000000.0,
+      "cutoff": 1.06,
+      "jitter": 0.12,
+      "cell_ratio": 8.0,
+      "bond_law": "spacing_consistent",
+      "bond_reference_length_m": 1.0
+     }
+    },
+    "1": {
+     "test": "footing",
+     "footing_width_m": 2.0,
+     "settlements_m": [
+      0.0013333333333333333,
+      0.0026666666666666666,
+      0.004,
+      0.005333333333333333,
+      0.006666666666666667,
+      0.008
+     ],
+     "resistance_N_per_m": [
+      -392881.1070733441,
+      1516.6298671369304,
+      236236.68575807678,
+      413030.99654195504,
+      559604.9789764166,
+      687320.6014030986
+     ],
+     "secant_stiffness_N_per_m2": -294660830.3050081,
+     "n_footing_particles": 213,
+     "solver": "relaxation",
+     "sample": {
+      "n_particles": 99720,
+      "n_bonds": 240423,
+      "coordination": 4.821961492178099,
+      "length_m": 16.0,
+      "height_m": 2.0,
+      "spacing_m": 0.019222491313078037,
+      "mean_radius_m": 0.00794654586505871,
+      "solid_fraction": 0.62,
+      "kPa_per_bond": 15867.63608657938,
+      "seed": 7,
+      "ice_young_Pa": 1000000000.0,
+      "cutoff": 1.06,
+      "jitter": 0.12,
+      "cell_ratio": 8.0,
+      "bond_law": "spacing_consistent",
+      "bond_reference_length_m": 1.0
+     }
+    },
+    "2": {
+     "test": "footing",
+     "footing_width_m": 4.0,
+     "settlements_m": [
+      0.0013333333333333333,
+      0.0026666666666666666,
+      0.004,
+      0.005333333333333333,
+      0.006666666666666667,
+      0.008
+     ],
+     "resistance_N_per_m": [
+      -714217.9092354563,
+      19707.288119691617,
+      452393.2361650854,
+      776332.3015220864,
+      1043647.4855545387,
+      1275673.7178374156
+     ],
+     "secant_stiffness_N_per_m2": -535663431.92659223,
+     "n_footing_particles": 423,
+     "solver": "relaxation",
+     "sample": {
+      "n_particles": 99720,
+      "n_bonds": 240423,
+      "coordination": 4.821961492178099,
+      "length_m": 16.0,
+      "height_m": 2.0,
+      "spacing_m": 0.019222491313078037,
+      "mean_radius_m": 0.00794654586505871,
+      "solid_fraction": 0.62,
+      "kPa_per_bond": 15867.63608657938,
+      "seed": 7,
+      "ice_young_Pa": 1000000000.0,
+      "cutoff": 1.06,
+      "jitter": 0.12,
+      "cell_ratio": 8.0,
+      "bond_law": "spacing_consistent",
+      "bond_reference_length_m": 1.0
+     }
+    }
+   },
+   "wall_time_s": 561.0646858215332
+  },
+  {
+   "arm": "legacy_bond_length",
+   "bond_reference_length_m": null,
+   "n_particles_requested": 200000,
+   "sample": {
+    "n_particles": 200260,
+    "n_bonds": 485762,
+    "coordination": 4.851313292719465,
+    "length_m": 16.0,
+    "height_m": 2.0,
+    "spacing_m": 0.013592353958776981,
+    "mean_radius_m": 0.005620735381160536,
+    "solid_fraction": 0.62,
+    "kPa_per_bond": 871768.7702925566,
+    "seed": 7,
+    "ice_young_Pa": 1000000000.0,
+    "cutoff": 1.06,
+    "jitter": 0.12,
+    "cell_ratio": 8.0,
+    "bond_law": "legacy_bond_length",
+    "bond_reference_length_m": null
+   },
+   "w0_m": 0.008,
+   "confined": {
+    "test": "confined_compression",
+    "settlements_m": [
+     0.0013333333333333333,
+     0.0026666666666666666,
+     0.004,
+     0.005333333333333333,
+     0.006666666666666667,
+     0.008
+    ],
+    "pressures_Pa": [
+     12100355.548104107,
+     20634545.517091352,
+     27582628.493450306,
+     33586323.85253961,
+     38946840.69090918,
+     43833321.23346016
+    ],
+    "k_subgrade_small_strain_N_per_m3": 9075266661.078081,
+    "k_subgrade_N_per_m3": 5479165154.18252,
+    "solver": "relaxation",
+    "sample": {
+     "n_particles": 200260,
+     "n_bonds": 485762,
+     "coordination": 4.851313292719465,
+     "length_m": 16.0,
+     "height_m": 2.0,
+     "spacing_m": 0.013592353958776981,
+     "mean_radius_m": 0.005620735381160536,
+     "solid_fraction": 0.62,
+     "kPa_per_bond": 871768.7702925566,
+     "seed": 7,
+     "ice_young_Pa": 1000000000.0,
+     "cutoff": 1.06,
+     "jitter": 0.12,
+     "cell_ratio": 8.0,
+     "bond_law": "legacy_bond_length",
+     "bond_reference_length_m": null
+    }
+   },
+   "footings": {
+    "0.5": {
+     "test": "footing",
+     "footing_width_m": 1.0,
+     "settlements_m": [
+      0.0013333333333333333,
+      0.0026666666666666666,
+      0.004,
+      0.005333333333333333,
+      0.006666666666666667,
+      0.008
+     ],
+     "resistance_N_per_m": [
+      -29556438.74475402,
+      -564999.1861616516,
+      14839701.131633539,
+      25602247.666373037,
+      34112996.34852033,
+      41319965.055749714
+     ],
+     "secant_stiffness_N_per_m2": -22167329058.565517,
+     "n_footing_particles": 151,
+     "solver": "relaxation",
+     "sample": {
+      "n_particles": 200260,
+      "n_bonds": 485762,
+      "coordination": 4.851313292719465,
+      "length_m": 16.0,
+      "height_m": 2.0,
+      "spacing_m": 0.013592353958776981,
+      "mean_radius_m": 0.005620735381160536,
+      "solid_fraction": 0.62,
+      "kPa_per_bond": 871768.7702925566,
+      "seed": 7,
+      "ice_young_Pa": 1000000000.0,
+      "cutoff": 1.06,
+      "jitter": 0.12,
+      "cell_ratio": 8.0,
+      "bond_law": "legacy_bond_length",
+      "bond_reference_length_m": null
+     }
+    },
+    "1": {
+     "test": "footing",
+     "footing_width_m": 2.0,
+     "settlements_m": [
+      0.0013333333333333333,
+      0.0026666666666666666,
+      0.004,
+      0.005333333333333333,
+      0.006666666666666667,
+      0.008
+     ],
+     "resistance_N_per_m": [
+      -49449254.91091346,
+      -1184039.7342435278,
+      25985431.84508972,
+      45558007.76063112,
+      61285844.817382365,
+      74701013.80720586
+     ],
+     "secant_stiffness_N_per_m2": -37086941183.1851,
+     "n_footing_particles": 304,
+     "solver": "relaxation",
+     "sample": {
+      "n_particles": 200260,
+      "n_bonds": 485762,
+      "coordination": 4.851313292719465,
+      "length_m": 16.0,
+      "height_m": 2.0,
+      "spacing_m": 0.013592353958776981,
+      "mean_radius_m": 0.005620735381160536,
+      "solid_fraction": 0.62,
+      "kPa_per_bond": 871768.7702925566,
+      "seed": 7,
+      "ice_young_Pa": 1000000000.0,
+      "cutoff": 1.06,
+      "jitter": 0.12,
+      "cell_ratio": 8.0,
+      "bond_law": "legacy_bond_length",
+      "bond_reference_length_m": null
+     }
+    },
+    "2": {
+     "test": "footing",
+     "footing_width_m": 4.0,
+     "settlements_m": [
+      0.0013333333333333333,
+      0.0026666666666666666,
+      0.004,
+      0.005333333333333333,
+      0.006666666666666667,
+      0.008
+     ],
+     "resistance_N_per_m": [
+      -88734705.46913266,
+      453623.8504308171,
+      51901676.90906453,
+      89576147.45196818,
+      120148230.99337088,
+      146363777.57547575
+     ],
+     "secant_stiffness_N_per_m2": -66551029101.849495,
+     "n_footing_particles": 608,
+     "solver": "relaxation",
+     "sample": {
+      "n_particles": 200260,
+      "n_bonds": 485762,
+      "coordination": 4.851313292719465,
+      "length_m": 16.0,
+      "height_m": 2.0,
+      "spacing_m": 0.013592353958776981,
+      "mean_radius_m": 0.005620735381160536,
+      "solid_fraction": 0.62,
+      "kPa_per_bond": 871768.7702925566,
+      "seed": 7,
+      "ice_young_Pa": 1000000000.0,
+      "cutoff": 1.06,
+      "jitter": 0.12,
+      "cell_ratio": 8.0,
+      "bond_law": "legacy_bond_length",
+      "bond_reference_length_m": null
+     }
+    }
+   },
+   "wall_time_s": 766.5761613845825
+  },
+  {
+   "arm": "spacing_consistent",
+   "bond_reference_length_m": 1.0,
+   "n_particles_requested": 200000,
+   "sample": {
+    "n_particles": 200260,
+    "n_bonds": 485762,
+    "coordination": 4.851313292719465,
+    "length_m": 16.0,
+    "height_m": 2.0,
+    "spacing_m": 0.013592353958776981,
+    "mean_radius_m": 0.005620735381160536,
+    "solid_fraction": 0.62,
+    "kPa_per_bond": 11222.802833276275,
+    "seed": 7,
+    "ice_young_Pa": 1000000000.0,
+    "cutoff": 1.06,
+    "jitter": 0.12,
+    "cell_ratio": 8.0,
+    "bond_law": "spacing_consistent",
+    "bond_reference_length_m": 1.0
+   },
+   "w0_m": 0.008,
+   "confined": {
+    "test": "confined_compression",
+    "settlements_m": [
+     0.0013333333333333333,
+     0.0026666666666666666,
+     0.004,
+     0.005333333333333333,
+     0.006666666666666667,
+     0.008
+    ],
+    "pressures_Pa": [
+     104129.51089315755,
+     177573.48915776052,
+     237463.08546819375,
+     289281.607008886,
+     335593.54405057855,
+     377841.22138850944
+    ],
+    "k_subgrade_small_strain_N_per_m3": 78097133.16986817,
+    "k_subgrade_N_per_m3": 47230152.67356368,
+    "solver": "relaxation",
+    "sample": {
+     "n_particles": 200260,
+     "n_bonds": 485762,
+     "coordination": 4.851313292719465,
+     "length_m": 16.0,
+     "height_m": 2.0,
+     "spacing_m": 0.013592353958776981,
+     "mean_radius_m": 0.005620735381160536,
+     "solid_fraction": 0.62,
+     "kPa_per_bond": 11222.802833276275,
+     "seed": 7,
+     "ice_young_Pa": 1000000000.0,
+     "cutoff": 1.06,
+     "jitter": 0.12,
+     "cell_ratio": 8.0,
+     "bond_law": "spacing_consistent",
+     "bond_reference_length_m": 1.0
+    }
+   },
+   "footings": {
+    "0.5": {
+     "test": "footing",
+     "footing_width_m": 1.0,
+     "settlements_m": [
+      0.0013333333333333333,
+      0.0026666666666666666,
+      0.004,
+      0.005333333333333333,
+      0.006666666666666667,
+      0.008
+     ],
+     "resistance_N_per_m": [
+      -252264.58832350696,
+      -2289.945457101502,
+      129178.99534758655,
+      222823.73019541366,
+      298383.01810652844,
+      363381.5947951116
+     ],
+     "secant_stiffness_N_per_m2": -189198441.24263024,
+     "n_footing_particles": 151,
+     "solver": "relaxation",
+     "sample": {
+      "n_particles": 200260,
+      "n_bonds": 485762,
+      "coordination": 4.851313292719465,
+      "length_m": 16.0,
+      "height_m": 2.0,
+      "spacing_m": 0.013592353958776981,
+      "mean_radius_m": 0.005620735381160536,
+      "solid_fraction": 0.62,
+      "kPa_per_bond": 11222.802833276275,
+      "seed": 7,
+      "ice_young_Pa": 1000000000.0,
+      "cutoff": 1.06,
+      "jitter": 0.12,
+      "cell_ratio": 8.0,
+      "bond_law": "spacing_consistent",
+      "bond_reference_length_m": 1.0
+     }
+    },
+    "1": {
+     "test": "footing",
+     "footing_width_m": 2.0,
+     "settlements_m": [
+      0.0013333333333333333,
+      0.0026666666666666666,
+      0.004,
+      0.005333333333333333,
+      0.006666666666666667,
+      0.008
+     ],
+     "resistance_N_per_m": [
+      -405515.5993022421,
+      2906.240074606004,
+      231854.29192972177,
+      399733.27857565566,
+      536803.3695457337,
+      655137.6140276636
+     ],
+     "secant_stiffness_N_per_m2": -304136699.4766816,
+     "n_footing_particles": 304,
+     "solver": "relaxation",
+     "sample": {
+      "n_particles": 200260,
+      "n_bonds": 485762,
+      "coordination": 4.851313292719465,
+      "length_m": 16.0,
+      "height_m": 2.0,
+      "spacing_m": 0.013592353958776981,
+      "mean_radius_m": 0.005620735381160536,
+      "solid_fraction": 0.62,
+      "kPa_per_bond": 11222.802833276275,
+      "seed": 7,
+      "ice_young_Pa": 1000000000.0,
+      "cutoff": 1.06,
+      "jitter": 0.12,
+      "cell_ratio": 8.0,
+      "bond_law": "spacing_consistent",
+      "bond_reference_length_m": 1.0
+     }
+    },
+    "2": {
+     "test": "footing",
+     "footing_width_m": 4.0,
+     "settlements_m": [
+      0.0013333333333333333,
+      0.0026666666666666666,
+      0.004,
+      0.005333333333333333,
+      0.006666666666666667,
+      0.008
+     ],
+     "resistance_N_per_m": [
+      -735813.4102636228,
+      28079.79504745648,
+      465228.6845752167,
+      788065.0530781624,
+      1052164.0455435386,
+      1280070.02811866
+     ],
+     "secant_stiffness_N_per_m2": -551860057.6977171,
+     "n_footing_particles": 608,
+     "solver": "relaxation",
+     "sample": {
+      "n_particles": 200260,
+      "n_bonds": 485762,
+      "coordination": 4.851313292719465,
+      "length_m": 16.0,
+      "height_m": 2.0,
+      "spacing_m": 0.013592353958776981,
+      "mean_radius_m": 0.005620735381160536,
+      "solid_fraction": 0.62,
+      "kPa_per_bond": 11222.802833276275,
+      "seed": 7,
+      "ice_young_Pa": 1000000000.0,
+      "cutoff": 1.06,
+      "jitter": 0.12,
+      "cell_ratio": 8.0,
+      "bond_law": "spacing_consistent",
+      "bond_reference_length_m": 1.0
+     }
+    }
+   },
+   "wall_time_s": 1349.893473625183
+  }
+ ]
+}
