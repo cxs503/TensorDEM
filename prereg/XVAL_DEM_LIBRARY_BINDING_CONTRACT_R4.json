@@ -1,0 +1,54 @@
+{
+  "schema": "tensordem.prereg.binding-contract/4",
+  "anchor": "XVAL-DEM-LIBRARY-BINDING-FROZEN-CONTRACT",
+  "mission": 19466,
+  "repo": "TensorDEM",
+  "round": 4,
+  "registered_before_run": true,
+  "round_question": "The frozen contract (round 1-3) is a declarative surface + fingerprint + introspection + 19 behavioural probes, all executed on the *supplier* side. No upstream consumer was ever executed against the real IceDEM object: TensorPhysics' own tests/test_tensordem_adapter.py binds its adapter to a FakeIceDEM. Does the real consumer (tensorphysics.adapters.tensordem.TensorDEMAdapter + tensorphysics.Simulation) honour and observe the frozen clock / substep / load-stamp / no-restore semantics when it drives the real tensordem.IceDEM?",
+  "decision": "Keep 'declarative contract + supplier-side probes' as the whole binding mechanism (A) versus add an executed consumer-side binding cross-check that runs the real TensorPhysics adapter against the real IceDEM and, on drift, classifies it (C).",
+  "alternatives": {
+    "A": "status quo: contract + introspection + supplier probes only; consumer side verified by FakeIceDEM unit tests in the other repo",
+    "B": "consumer side re-verified by a hand-written stub that copies the adapter logic into TensorDEM (no real cross-repo code path)",
+    "C": "execute the real TensorPhysics Simulation/TensorDEMAdapter against the real IceDEM, compare every observed number against the contract's declared value, and include controlled drift variants to prove the cross-check is not vacuous"
+  },
+  "hypothesis": {
+    "H1": "real consumer and real supplier agree with the contract on substep count, load_time stamping, load non-accumulation, clock advance and the no-restore claim; the executed numbers match the contract-declared values to machine precision",
+    "H0": "the consumer re-sends accumulated loads (a naive accumulator), so the measured external impulse would be n(n+1)/2 dt F instead of n dt F"
+  },
+  "metrics": [
+    "substep_count_rel_error",
+    "load_time_stamp_max_abs_deviation_s",
+    "external_impulse_rel_error",
+    "impulse_ratio_got_over_ref",
+    "h0_separation_pp = |ratio_H0 - ratio_got| / ratio_H0",
+    "clock_rel_error",
+    "adapt_reject_boundary_pass",
+    "drift_detection_rate"
+  ],
+  "baseline_control": "unmutated real IceDEM driven by the real adapter = control arm; three controlled drift variants (accumulating supplier, non-integer global dt, stale native clock) = treatment arms; FakeIceDEM unit test in TensorPhysics = pre-existing baseline for consumer coverage",
+  "thresholds_predeclared": {
+    "substep_count": "exact equality (rel error 0)",
+    "load_time_stamp": "max abs deviation <= 1e-12 s (structural: adapter uses the same k*dt formula as the reference)",
+    "external_impulse": "rel error <= 1e-12 (structural identity, owner line 15% is 14 orders away)",
+    "impulse_ratio": "|ratio - 1| <= 1e-12",
+    "h0_separation": ">= 0.15 (owner tolerance); expected ~0.846",
+    "clock": "rel error <= 1e-12",
+    "adapt_reject_boundary": "ratio+1e-10 accepted, ratio+1e-6 rejected, ratio 4.5 rejected (3/3)",
+    "drift_detection": "3/3 controlled variants classified, control arm clean"
+  },
+  "owner_acceptance": 0.15,
+  "stopping_rule": "single run; no threshold revised after seeing results. Any arm outside its predeclared tolerance is reported as FAIL (honest), not re-tuned.",
+  "environment": {
+    "interpreter": "python3.11",
+    "supplier": "tensordem from this worktree src/ (frozen fingerprint pinned by FROZEN_FINGERPRINT test)",
+    "consumer": "/root/tensor-ecosystem/TensorPhysics/src (tensorphysics) resolved via TENSORPHYSICS_SRC or default sibling path; if absent the arm is reported WITHHELD, never faked",
+    "hardware": "1 core, no GPU; whole run expected < 60 s",
+    "seeds": "no stochastic path in these arms (deterministic lattice, damping 0, drag 0)"
+  },
+  "confounders_and_controls": [
+    "internal bond/contact forces are momentum-neutral by construction -> momentum claims use the model ledger (external_impulse_Ns) rather than net particle momentum",
+    "gravity is active -> impulse comparisons use the external load tensor actually handed in, not total force",
+    "float accumulation order differs between reference (k*dt) and adapter (context.time + i*dt) -> tolerance 1e-12 s predeclared, not exact bit equality"
+  ]
+}
