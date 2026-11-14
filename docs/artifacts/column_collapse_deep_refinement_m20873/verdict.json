@@ -1,0 +1,233 @@
+{
+ "round": "m20873",
+ "anchor": "CASE-COLUMN-COLLAPSE",
+ "tolerance": 0.15,
+ "rows": [
+  {
+   "case_id": "R_a1_g8",
+   "aspect_nominal": 1.0,
+   "aspect_measured": 1.0782571055943022,
+   "grains_per_radius": 8.0,
+   "grain_diameter": 0.06,
+   "kn": 60000.0,
+   "n_particles": 1955,
+   "dt": 0.00048223135018603735,
+   "n_steps": 2663,
+   "stop_reason": "at_rest",
+   "runout_ratio": 2.106047163976525,
+   "ref_runout_ratio": 2.3370388109369347,
+   "err_runout": -0.09883945695698718,
+   "t95": 0.6683726513578381,
+   "ref_time": 0.6838412262574917,
+   "err_t95": -0.02262012628912357,
+   "err_runout_nominal": -0.0598003732247657,
+   "overlap_pairs": null,
+   "wall_clock_s": 33.253737690043636,
+   "protocol_sha256": "132539c2212bd33d8bc941713feaef2beb1a9056276d78001fabce9ca05bc51a",
+   "source": "this mission (m20873), freshly integrated"
+  },
+  {
+   "case_id": "R_a1_g12",
+   "aspect_nominal": 1.0,
+   "aspect_measured": 0.9884775364686476,
+   "grains_per_radius": 12.0,
+   "grain_diameter": 0.04,
+   "kn": 26666.66666666667,
+   "n_particles": 6412,
+   "dt": 0.00039374024864306047,
+   "n_steps": 2887,
+   "stop_reason": "at_rest",
+   "runout_ratio": 2.0781657377119505,
+   "ref_runout_ratio": 2.225712145221123,
+   "err_runout": -0.0662917744444054,
+   "t95": 0.6736895654282721,
+   "ref_time": 0.6587935780367367,
+   "err_t95": 0.022611008801765767,
+   "err_runout_nominal": -0.07224743852145078,
+   "overlap_pairs": null,
+   "wall_clock_s": 108.05382799002109,
+   "protocol_sha256": "39dadd9818dd8cc47838a6cf1a4b8420121738b64288259b4c925403584f29f3",
+   "source": "this mission (m20873), freshly integrated"
+  },
+  {
+   "case_id": "R_a1_g16",
+   "aspect_nominal": 1.0,
+   "aspect_measured": 1.002774662942104,
+   "grains_per_radius": 16.0,
+   "grain_diameter": 0.03,
+   "kn": 15000.0,
+   "n_particles": 16030,
+   "dt": 0.00034098905781729174,
+   "n_steps": 3320,
+   "stop_reason": "at_rest",
+   "runout_ratio": 2.0409797007848707,
+   "ref_runout_ratio": 2.243440582048209,
+   "err_runout": -0.0902457069215072,
+   "t95": 0.6584498706451843,
+   "ref_time": 0.6634123053950187,
+   "err_t95": -0.0074801668728161005,
+   "err_runout_nominal": -0.0888483478638971,
+   "overlap_pairs": null,
+   "wall_clock_s": 438.25862780958414,
+   "protocol_sha256": "734582ee9d03ca3e98d14aa8e87160f90683cd249a3fafb32aba127ca838c9a6",
+   "source": "this mission (m20873), freshly integrated"
+  },
+  {
+   "case_id": "R_a3_g8",
+   "aspect_nominal": 3.0,
+   "aspect_measured": 3.0866314544814117,
+   "grains_per_radius": 8.0,
+   "grain_diameter": 0.06,
+   "kn": 60000.0,
+   "n_particles": 5673,
+   "dt": 0.00048223135018603735,
+   "n_steps": 3359,
+   "stop_reason": "at_rest",
+   "runout_ratio": 4.119299853460151,
+   "ref_runout_ratio": 3.8110098760894484,
+   "err_runout": 0.08089456269975485,
+   "t95": 1.1409593745401092,
+   "ref_time": 1.157008377804527,
+   "err_t95": -0.013871121050023421,
+   "err_runout_nominal": 0.09228125254884272,
+   "overlap_pairs": null,
+   "wall_clock_s": 88.31861807999667,
+   "protocol_sha256": "a1cc3a06d58158a0ad74015ea4706f160677f31d47106f413d326e059061cb80",
+   "source": "this mission (m20873), freshly integrated"
+  },
+  {
+   "case_id": "R_a3_g12",
+   "aspect_nominal": 3.0,
+   "aspect_measured": 3.007095454033219,
+   "grains_per_radius": 12.0,
+   "grain_diameter": 0.04,
+   "kn": 26666.66666666667,
+   "n_particles": 19687,
+   "dt": 0.00039374024864306047,
+   "n_steps": 4273,
+   "stop_reason": "at_rest",
+   "runout_ratio": 4.355892755212519,
+   "ref_runout_ratio": 3.7745566064373315,
+   "err_runout": 0.15401442060340165,
+   "t95": 1.1284595526110037,
+   "ref_time": 1.1490516796283154,
+   "err_t95": -0.017920975516064405,
+   "err_runout_nominal": 0.1550166688242973,
+   "overlap_pairs": null,
+   "wall_clock_s": 478.9074611850083,
+   "protocol_sha256": "09b1f56b6a043ff0c88e5066dbda85d5dc124d7ce5538a507006bddc75c59175",
+   "source": "this mission (m20873), freshly integrated"
+  },
+  {
+   "case_id": "w5b_confirm_wall0.8_a2",
+   "aspect_nominal": 2.0,
+   "aspect_measured": 2.0295923234881967,
+   "grains_per_radius": 8.0,
+   "grain_diameter": NaN,
+   "kn": NaN,
+   "n_particles": 3718,
+   "dt": 0.00048223135018603735,
+   "n_steps": 3037,
+   "stop_reason": "at_rest",
+   "runout_ratio": 3.41183183358124,
+   "ref_runout_ratio": 3.279420178056206,
+   "err_runout": 0.04037654473527018,
+   "t95": 1.0591429589598476,
+   "ref_time": 0.945391679071266,
+   "err_t95": 0.12032185432426122,
+   "archive_convention": "nominal aspect (re-evaluated here at measured)",
+   "overlap_pairs": null,
+   "wall_clock_s": 60.520556970033795,
+   "protocol_sha256": "d807c453d128597efe5659b9cbbf5cf4a4349ab640fa8c7660ac5261d3ffa687",
+   "source": "archived m20337 ladder CSV (machine-read)"
+  },
+  {
+   "case_id": "w5e_gpr12_a2",
+   "aspect_nominal": 2.0,
+   "aspect_measured": 2.0325902524503223,
+   "grains_per_radius": 12.0,
+   "grain_diameter": NaN,
+   "kn": NaN,
+   "n_particles": 13275,
+   "dt": 0.00048223135018603735,
+   "n_steps": 3614,
+   "stop_reason": "at_rest",
+   "runout_ratio": 3.431333705183676,
+   "ref_runout_ratio": 3.281103032805144,
+   "err_runout": 0.04578663665130136,
+   "t95": 1.3104044954104361,
+   "ref_time": 0.9460896446732413,
+   "err_t95": 0.3850743455320465,
+   "archive_convention": "nominal aspect (re-evaluated here at measured)",
+   "overlap_pairs": null,
+   "wall_clock_s": 349.6964522099588,
+   "protocol_sha256": "72538af8160bb05835b098fc5faaf3681108b619b370b66a90cf8b9dc46462e6",
+   "source": "archived m20337 ladder CSV (machine-read)"
+  }
+ ],
+ "missing": [],
+ "verdicts": {
+  "P1_A1_G16_BAND": {
+   "value": 0.0902457069215072,
+   "threshold": 0.15,
+   "result": "pass"
+  },
+  "P2_A1_DRIFT": {
+   "value_pp": 2.39539324771018,
+   "threshold_pp": 5.0,
+   "result": "pass"
+  },
+  "P3_A3_G12_BAND": {
+   "value": 0.15401442060340165,
+   "threshold": 0.15,
+   "result": "fail"
+  },
+  "P4_A3_DRIFT": {
+   "value_pp": 7.311985790364679,
+   "threshold_pp": 15.0,
+   "result": "pass"
+  },
+  "P5_TIME_A3_BAND": {
+   "value": 0.017920975516064405,
+   "threshold": 0.15,
+   "result": "pass"
+  },
+  "P6_DEEP_FAMILY": {
+   "n_points": 4,
+   "worst": 0.15401442060340165,
+   "threshold": 0.15,
+   "result": "fail"
+  },
+  "P7_INTEGRITY": {
+   "cases": {
+    "R_a1_g8": {
+     "stop_reason": "at_rest",
+     "overlap_pairs": null,
+     "ok_stop": true
+    },
+    "R_a1_g12": {
+     "stop_reason": "at_rest",
+     "overlap_pairs": null,
+     "ok_stop": true
+    },
+    "R_a1_g16": {
+     "stop_reason": "at_rest",
+     "overlap_pairs": null,
+     "ok_stop": true
+    },
+    "R_a3_g8": {
+     "stop_reason": "at_rest",
+     "overlap_pairs": null,
+     "ok_stop": true
+    },
+    "R_a3_g12": {
+     "stop_reason": "at_rest",
+     "overlap_pairs": null,
+     "ok_stop": true
+    }
+   },
+   "overlap_clause": "not_run (protocol archives no overlap count)",
+   "result": "pass"
+  }
+ }
+}
