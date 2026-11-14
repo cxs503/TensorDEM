@@ -37,6 +37,17 @@ of that contract, so the contract lives here:
   accounting*: every public member of a frozen class must be classified
   (frozen, or excluded with a reason), so the surface cannot grow or shrink
   without an explicit decision in the same commit.
+* :func:`diff_contracts` / :data:`CHANGE_SEVERITY` -- contract-to-contract
+  severity diff.  ``verify`` compares the frozen data against the live classes,
+  so contract-only metadata (units, declared shapes, clock rules, capabilities,
+  negative assertions) can be rewritten without a single finding; this is the
+  detector for that class.
+* :data:`CONTRACT_HISTORY` / :func:`check_lineage` / :func:`export_manifest` /
+  :func:`check_consumer_manifest` -- *lineage*: the frozen payload itself may
+  only move through a recorded release whose bump covers the derived change
+  classes, and a binder's pinned manifest can be diffed offline (round 4; round
+  3 had already moved the payload from ``0cbfed8c`` to ``048e4cf9`` while the
+  declared version stayed ``1.0.0``).
 
 Importing this module never imports torch; the declarative part is pure Python
 so that binders can validate a manifest without the solver installed.
@@ -53,7 +64,7 @@ from pathlib import Path
 from typing import Any, Mapping
 
 CONTRACT_SCHEMA = "tensordem.binding-contract/1"
-CONTRACT_VERSION = "1.0.0"
+CONTRACT_VERSION = "1.1.0"
 
 #: Severities used by :func:`verify`, ordered from harmless to fatal.
 SEVERITY_ORDER = ("doc", "additive", "narrowing", "breaking")
@@ -318,7 +329,7 @@ def fingerprint(contract: Mapping[str, Any] | None = None) -> str:
 #: Pin of the frozen surface.  Regenerate deliberately with
 #: ``python -m tensordem.binding_contract --print-fingerprint`` and update this
 #: constant in the same commit that changes the contract.
-FROZEN_FINGERPRINT = "sha256:048e4cf9b3a1257eca0fa5178b64102bc3c291899566e6c9b90020b3e05195cd"
+FROZEN_FINGERPRINT = "sha256:7249bd99abd5b5fe1af5e484a3bfb44b05db3adc4b2b80a946fd5199f42d0482"
 
 
 class BindingContractError(RuntimeError):
@@ -1944,6 +1955,678 @@ def benchmark_physics_3d(n_steps_energy: int = 1000) -> dict[str, Any]:
 
 
 # ---------------------------------------------------------------------------
+# Contract lineage: a freeze is only a contract if it is versioned
+# ---------------------------------------------------------------------------
+# Rounds 1-3 froze *names, signatures, units and semantics* and detected drift
+# between the frozen data and the live classes.  What they did not cover is the
+# other half of "frozen": the frozen data itself may be edited, and the only
+# defence was prose ("update the pin in the same commit").  Round 3 shows the
+# hole is real -- the payload moved from ``sha256:0cbfed8c...`` to
+# ``sha256:048e4cf9...`` while ``CONTRACT_VERSION`` stayed ``1.0.0`` and no
+# record of the change existed.  Round 4 closes it:
+#
+# * :func:`diff_contracts` -- contract-to-contract severity diff (pure data, no
+#   solver, no torch).  This is the *only* place where contract-only metadata
+#   (units, shapes, clock rules, capability names) is checked: :func:`verify`
+#   compares data against live code, so a silently retyped unit was invisible.
+# * :data:`CHANGE_SEVERITY` -- the closed vocabulary of change classes and the
+#   severity each class carries, so "how bad was this edit" is not a judgement
+#   call made after the fact.
+# * :data:`CONTRACT_HISTORY` + :func:`check_lineage` -- an append-only release
+#   chain (version -> fingerprint -> declared change classes -> bump).  The
+#   chain tail must equal the pinned fingerprint *and* the declared version,
+#   and the declared bump must cover the declared changes.
+# * :func:`export_manifest` / :func:`check_consumer_manifest` -- the binder-side
+#   artefact: a pinned manifest can be diffed against the provider's contract
+#   offline, which is what a consumer (``TensorPhysics``) needs in its own CI.
+
+LINEAGE_SCHEMA = "tensordem.binding-contract.lineage/1"
+MANIFEST_SCHEMA = "tensordem.binding-contract.manifest/1"
+
+#: Bump classes, weakest first.  ``initial`` is only legal for the first entry.
+BUMP_ORDER = ("initial", "patch", "minor", "major")
+
+#: Closed vocabulary of change classes emitted by :func:`diff_contracts`, with
+#: the severity each class carries.  ``units``/``shape``/``type``/``returns``
+#: changes are ``breaking`` on purpose: a binder that keeps calling correctly
+#: still gets wrong physics if a unit or a return tuple silently moves.
+CHANGE_SEVERITY: dict[str, str] = {
+    # contract level
+    "initial_freeze": "doc",
+    "schema_changed": "breaking",
+    "units_changed": "breaking",
+    "frozen_entries_changed": "breaking",
+    "contract_metadata_changed": "doc",
+    "lineage_version_bump": "doc",
+    # entry level
+    "entry_added": "additive",
+    "entry_removed": "breaking",
+    "module_changed": "breaking",
+    "role_changed": "doc",
+    # state / properties
+    "attribute_added": "additive",
+    "attribute_removed": "breaking",
+    "attribute_type_changed": "breaking",
+    "attribute_shape_changed": "breaking",
+    "attribute_units_changed": "breaking",
+    "attribute_dtype_changed": "breaking",
+    "attribute_note_changed": "doc",
+    # methods
+    "method_added": "additive",
+    "method_removed": "breaking",
+    "method_returns_changed": "breaking",
+    "method_kind_changed": "breaking",
+    "method_post_changed": "narrowing",
+    "method_note_changed": "doc",
+    # method parameters
+    "param_added_required": "breaking",
+    "param_added_optional": "additive",
+    "param_removed": "breaking",
+    "param_became_required": "breaking",
+    "param_became_optional": "additive",
+    "param_kind_widened": "additive",
+    "param_kind_narrowed": "narrowing",
+    "param_kind_changed": "breaking",
+    "param_annotation_changed": "breaking",
+    "param_shape_changed": "breaking",
+    "param_units_changed": "breaking",
+    "param_semantics_changed": "narrowing",
+    # clock / capabilities / negative assertions
+    "clock_rule_changed": "breaking",
+    "capability_added": "additive",
+    "capability_removed": "breaking",
+    "capability_changed": "narrowing",
+    "negative_assertion_added": "narrowing",
+    "negative_assertion_removed": "additive",
+    # surface ledger
+    "surface_ledger_member_added": "additive",
+    "surface_ledger_member_removed": "breaking",
+    "surface_ledger_disposition_tightened": "breaking",
+    "surface_ledger_disposition_relaxed": "additive",
+    "surface_ledger_reason_changed": "doc",
+    # anything the differ does not model explicitly
+    "metadata_changed": "doc",
+}
+
+#: Severity -> weakest bump that may carry it.
+SEVERITY_BUMP = {"doc": "patch", "additive": "minor", "narrowing": "minor",
+                 "breaking": "major"}
+
+#: Call styles a parameter kind accepts; used to tell widening from narrowing.
+_KIND_STYLES = {
+    "positional_only": frozenset({"positional"}),
+    "positional_or_keyword": frozenset({"positional", "keyword"}),
+    "var_positional": frozenset({"positional"}),
+    "keyword_only": frozenset({"keyword"}),
+    "var_keyword": frozenset({"keyword"}),
+}
+
+#: Append-only release chain.  ``changes`` is the *derived* change-class list
+#: from :func:`diff_contracts` against the previously recorded payload (see
+#: ``artifacts/xval_library_binding_contract/manifest_v1.0.0.json``), never a
+#: hand-written summary: :func:`record_history_entry` recomputes it and refuses
+#: to under-declare the bump.
+CONTRACT_HISTORY: list[dict[str, Any]] = [
+    {
+        "version": "1.0.0",
+        "fingerprint": "sha256:0cbfed8c1172f8412dedfc013e87c79f56f0567ca22d782e0387818f0ee4105d",
+        "bump": "initial",
+        "changes": ["initial_freeze"],
+        "reason": "round 1/2: declarative 2-D/3-D surface, fingerprint pin, "
+                  "behavioural probes, mutation matrix",
+    },
+    {
+        "version": "1.1.0",
+        "fingerprint": "sha256:7249bd99abd5b5fe1af5e484a3bfb44b05db3adc4b2b80a946fd5199f42d0482",
+        "bump": "minor",
+        "changes": ["surface_ledger_member_added"],
+        "reason": "round 3 added the per-member surface ledger to the payload but "
+                  "left CONTRACT_VERSION at 1.0.0; round 4 records the deferred "
+                  "minor bump together with the lineage/manifest machinery",
+    },
+]
+
+
+def _add_finding(findings: list[dict[str, Any]], entry: str, field: str,
+                 change: str) -> None:
+    findings.append({"entry": entry, "field": field, "change": change,
+                     "severity": CHANGE_SEVERITY[change]})
+
+
+def _diff_member_metadata(findings: list[dict[str, Any]], entry: str, prefix: str,
+                          old: Mapping[str, Any], new: Mapping[str, Any],
+                          *, kind: str) -> None:
+    """Diff the metadata of a state attribute, property or parameter."""
+    attribute = kind == "attribute"
+    for key in sorted(set(old) | set(new)):
+        if old.get(key) == new.get(key):
+            continue
+        if key in ("type", "dtype"):
+            change = f"attribute_{key}_changed" if attribute else "param_annotation_changed"
+        elif key == "shape":
+            change = "attribute_shape_changed" if attribute else "param_shape_changed"
+        elif key == "units":
+            change = "attribute_units_changed" if attribute else "param_units_changed"
+        elif key == "semantics":
+            change = "param_semantics_changed"
+        elif key in ("note", "reason"):
+            change = "attribute_note_changed" if attribute else "param_semantics_changed"
+        else:
+            change = "attribute_note_changed" if attribute else "metadata_changed"
+        _add_finding(findings, entry, f"{prefix}.{key}", change)
+
+
+def _diff_params(findings: list[dict[str, Any]], entry: str, method: str,
+                 old: Mapping[str, Any], new: Mapping[str, Any]) -> None:
+    old_params, new_params = old or {}, new or {}
+    for name in sorted(set(old_params) | set(new_params)):
+        field = f"methods.{method}.{name}"
+        before, after = old_params.get(name), new_params.get(name)
+        if before is None:
+            required = bool(after.get("required", True))
+            _add_finding(findings, entry, field,
+                         "param_added_required" if required else "param_added_optional")
+            continue
+        if after is None:
+            _add_finding(findings, entry, field, "param_removed")
+            continue
+        old_required = bool(before.get("required", True))
+        new_required = bool(after.get("required", True))
+        if old_required != new_required:
+            _add_finding(findings, entry, field,
+                         "param_became_required" if new_required else "param_became_optional")
+        old_kind, new_kind = before.get("kind"), after.get("kind")
+        if old_kind != new_kind:
+            old_styles = _KIND_STYLES.get(str(old_kind))
+            new_styles = _KIND_STYLES.get(str(new_kind))
+            if old_styles is not None and new_styles is not None and old_styles < new_styles:
+                change = "param_kind_widened"
+            elif old_styles is not None and new_styles is not None and new_styles < old_styles:
+                change = "param_kind_narrowed"
+            else:
+                change = "param_kind_changed"
+            _add_finding(findings, entry, field, change)
+        rest_old = {k: v for k, v in before.items() if k not in ("kind", "required")}
+        rest_new = {k: v for k, v in after.items() if k not in ("kind", "required")}
+        _diff_member_metadata(findings, entry, field, rest_old, rest_new, kind="param")
+
+
+def _diff_surface_ledger(findings: list[dict[str, Any]], entry: str,
+                         old: Mapping[str, Any], new: Mapping[str, Any]) -> None:
+    old_led, new_led = old or {}, new or {}
+    for name in sorted(set(old_led) | set(new_led)):
+        field = f"surface_ledger.{name}"
+        before, after = old_led.get(name), new_led.get(name)
+        if before is None:
+            _add_finding(findings, entry, field, "surface_ledger_member_added")
+            continue
+        if after is None:
+            _add_finding(findings, entry, field, "surface_ledger_member_removed")
+            continue
+        if before.get("disposition") != after.get("disposition"):
+            change = ("surface_ledger_disposition_tightened"
+                      if after.get("disposition") == "excluded"
+                      else "surface_ledger_disposition_relaxed")
+            _add_finding(findings, entry, field, change)
+        if before.get("reason") != after.get("reason"):
+            _add_finding(findings, entry, f"{field}.reason", "surface_ledger_reason_changed")
+
+
+def _diff_entry(findings: list[dict[str, Any]], name: str,
+                old: Mapping[str, Any], new: Mapping[str, Any]) -> None:
+    for key in sorted(set(old) | set(new)):
+        before, after = old.get(key), new.get(key)
+        if before == after:
+            continue
+        if key == "module":
+            _add_finding(findings, name, key, "module_changed")
+        elif key == "role":
+            _add_finding(findings, name, key, "role_changed")
+        elif key in ("state", "properties"):
+            prefix = key
+            for member in sorted(set(before or {}) | set(after or {})):
+                member_field = f"{prefix}.{member}"
+                if member not in (before or {}):
+                    _add_finding(findings, name, member_field, "attribute_added")
+                elif member not in (after or {}):
+                    _add_finding(findings, name, member_field, "attribute_removed")
+                else:
+                    _diff_member_metadata(findings, name, member_field,
+                                          before[member], after[member], kind="attribute")
+        elif key == "methods":
+            for method in sorted(set(before or {}) | set(after or {})):
+                mfield = f"methods.{method}"
+                if method not in (before or {}):
+                    _add_finding(findings, name, mfield, "method_added")
+                    continue
+                if method not in (after or {}):
+                    _add_finding(findings, name, mfield, "method_removed")
+                    continue
+                m_old, m_new = before[method], after[method]
+                for mkey in sorted(set(m_old) | set(m_new)):
+                    if mkey == "params" or m_old.get(mkey) == m_new.get(mkey):
+                        continue
+                    if mkey == "returns":
+                        _add_finding(findings, name, f"{mfield}.returns", "method_returns_changed")
+                    elif mkey == "post":
+                        _add_finding(findings, name, f"{mfield}.post", "method_post_changed")
+                    elif mkey == "note":
+                        _add_finding(findings, name, f"{mfield}.note", "method_note_changed")
+                    elif mkey == "kind_classmethod":
+                        _add_finding(findings, name, f"{mfield}.kind", "method_kind_changed")
+                    else:
+                        _add_finding(findings, name, f"{mfield}.{mkey}", "metadata_changed")
+                _diff_params(findings, name, method, m_old.get("params"), m_new.get("params"))
+        elif key == "clock":
+            for ckey in sorted(set(before or {}) | set(after or {})):
+                if (before or {}).get(ckey) != (after or {}).get(ckey):
+                    _add_finding(findings, name, f"clock.{ckey}", "clock_rule_changed")
+        elif key == "capabilities":
+            for ckey in sorted(set(before or {}) | set(after or {})):
+                if ckey not in (before or {}):
+                    _add_finding(findings, name, f"capabilities.{ckey}", "capability_added")
+                elif ckey not in (after or {}):
+                    _add_finding(findings, name, f"capabilities.{ckey}", "capability_removed")
+                else:
+                    _add_finding(findings, name, f"capabilities.{ckey}", "capability_changed")
+        elif key == "explicitly_absent":
+            old_set, new_set = set(before or ()), set(after or ())
+            for gone in sorted(old_set - new_set):
+                _add_finding(findings, name, f"explicitly_absent.{gone}",
+                             "negative_assertion_removed")
+            for added in sorted(new_set - old_set):
+                _add_finding(findings, name, f"explicitly_absent.{added}",
+                             "negative_assertion_added")
+        elif key == "surface_ledger":
+            _diff_surface_ledger(findings, name, before, after)
+        else:
+            _add_finding(findings, name, key, "metadata_changed")
+
+
+def diff_contracts(old: Mapping[str, Any], new: Mapping[str, Any]) -> list[dict[str, Any]]:
+    """Severity-classify every difference between two contract payloads.
+
+    ``contract_version`` is *not* diffed here: it is the lineage bookkeeping
+    checked by :func:`check_lineage` (otherwise every bump would surface as a
+    spurious change in every consumer diff).
+    """
+    findings: list[dict[str, Any]] = []
+    for key in ("schema", "units", "frozen_entries"):
+        if old.get(key) == new.get(key):
+            continue
+        _add_finding(findings, "<contract>", key,
+                     "frozen_entries_changed" if key == "frozen_entries"
+                     else f"{key}_changed")
+    old_entries = old.get("entries", {}) or {}
+    new_entries = new.get("entries", {}) or {}
+    for name in sorted(set(old_entries) | set(new_entries)):
+        if name not in old_entries:
+            _add_finding(findings, name, "<entry>", "entry_added")
+        elif name not in new_entries:
+            _add_finding(findings, name, "<entry>", "entry_removed")
+        else:
+            _diff_entry(findings, name, old_entries[name], new_entries[name])
+    return findings
+
+
+def summarise_findings(findings: list[Mapping[str, Any]]) -> dict[str, Any]:
+    """Counts by severity plus the sorted change classes that were observed."""
+    by_severity = {sev: 0 for sev in ("doc", "additive", "narrowing", "breaking")}
+    for finding in findings:
+        by_severity[finding["severity"]] = by_severity.get(finding["severity"], 0) + 1
+    return {
+        "findings": len(findings),
+        "by_severity": by_severity,
+        "change_classes": sorted({finding["change"] for finding in findings}),
+    }
+
+
+def required_bump(findings: list[Mapping[str, Any]]) -> str | None:
+    """Weakest semver bump that honestly carries *findings* (``None`` if no change)."""
+    worst: str | None = None
+    for finding in findings:
+        candidate = SEVERITY_BUMP[finding["severity"]]
+        if worst is None or BUMP_ORDER.index(candidate) > BUMP_ORDER.index(worst):
+            worst = candidate
+    return worst
+
+
+def _bump_covers(declared: str, required: str | None) -> bool:
+    if required is None:
+        return True
+    if declared not in BUMP_ORDER or required not in BUMP_ORDER:
+        return False
+    return BUMP_ORDER.index(declared) >= BUMP_ORDER.index(required)
+
+
+def _semver(value: Any) -> tuple[int, int, int] | None:
+    try:
+        major, minor, patch = str(value).split(".")
+        return int(major), int(minor), int(patch)
+    except (ValueError, AttributeError):
+        return None
+
+
+def export_manifest(contract: Mapping[str, Any] | None = None) -> dict[str, Any]:
+    """The artefact a binder pins: payload + version + fingerprint, one JSON file."""
+    payload = BINDING_CONTRACT if contract is None else contract
+    return {
+        "schema": MANIFEST_SCHEMA,
+        "contract_version": payload.get("contract_version"),
+        "fingerprint": fingerprint(payload),
+        "payload": payload,
+    }
+
+
+def write_manifest(path: str | Path, contract: Mapping[str, Any] | None = None) -> Path:
+    """Write :func:`export_manifest` as pretty JSON."""
+    target = Path(path)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(json.dumps(export_manifest(contract), indent=2, sort_keys=True) + "\n",
+                      encoding="utf-8")
+    return target
+
+
+def check_lineage(history: list[Mapping[str, Any]] | None = None, *,
+                  contract: Mapping[str, Any] | None = None) -> dict[str, Any]:
+    """Verify the release chain: version discipline, re-freeze discipline, bumps."""
+    payload = BINDING_CONTRACT if contract is None else contract
+    chain = list(CONTRACT_HISTORY if history is None else history)
+    findings: list[dict[str, Any]] = []
+
+    def add(index: int | None, version: Any, change: str,
+            severity: str = "breaking", detail: str = "") -> None:
+        findings.append({"index": index, "version": version, "change": change,
+                         "severity": severity, "detail": detail})
+
+    if not chain:
+        add(None, None, "history_empty", detail="no release has ever been recorded")
+        return {"schema": LINEAGE_SCHEMA, "status": "DRIFT", "entries": 0,
+                "checks": 1, "matched": 0, "breaking": 1, "findings": findings}
+
+    checks = 0
+    required_keys = ("version", "fingerprint", "bump", "changes", "reason")
+    seen_versions: dict[str, int] = {}
+    seen_fingerprints: dict[str, int] = {}
+    previous_semver: tuple[int, int, int] | None = None
+    for index, entry in enumerate(chain):
+        missing = [key for key in required_keys if not entry.get(key)]
+        checks += 1
+        if missing:
+            add(index, entry.get("version"), "history_entry_malformed",
+                detail=f"missing/empty: {', '.join(missing)}")
+            continue
+        version, fp = entry["version"], entry["fingerprint"]
+        checks += 1
+        if _semver(version) is None:
+            add(index, version, "history_version_malformed")
+        checks += 1
+        if not (fp.startswith("sha256:") and len(fp) == 71):
+            add(index, version, "history_fingerprint_malformed", detail=str(fp))
+        checks += 1
+        if version in seen_versions:
+            add(index, version, "history_duplicate_version",
+                detail=f"first seen at index {seen_versions[version]}")
+        checks += 1
+        if fp in seen_fingerprints:
+            add(index, version, "history_duplicate_fingerprint",
+                detail=f"first seen at index {seen_fingerprints[fp]}")
+        seen_versions.setdefault(version, index)
+        seen_fingerprints.setdefault(fp, index)
+        semver = _semver(version)
+        checks += 1
+        if semver is not None and previous_semver is not None and semver <= previous_semver:
+            add(index, version, "history_version_not_increasing",
+                detail=f"previous was {previous_semver}")
+        if semver is not None:
+            previous_semver = semver
+        checks += 1
+        if entry.get("bump") not in BUMP_ORDER:
+            add(index, version, "history_bump_unknown", detail=str(entry.get("bump")))
+        checks += 1
+        if index > 0 and entry.get("bump") == "initial":
+            add(index, version, "history_bump_unknown",
+                detail="'initial' is only legal for the first entry")
+        unknown = [c for c in entry["changes"] if c not in CHANGE_SEVERITY]
+        checks += 1
+        if unknown:
+            add(index, version, "history_unknown_change_class", detail=", ".join(unknown))
+        if index == 0:
+            checks += 1
+            if list(entry["changes"]) != ["initial_freeze"]:
+                add(index, version, "history_unknown_change_class",
+                    detail="the first entry must be exactly ['initial_freeze']")
+        implied: str | None = None
+        for change in entry["changes"]:
+            if change not in CHANGE_SEVERITY:
+                continue
+            candidate = SEVERITY_BUMP[CHANGE_SEVERITY[change]]
+            if implied is None or BUMP_ORDER.index(candidate) > BUMP_ORDER.index(implied):
+                implied = candidate
+        declared = str(entry.get("bump"))
+        checks += 1
+        if index == 0 and declared == "initial":
+            pass  # the first freeze has no predecessor, so nothing to cover
+        elif not _bump_covers(declared, implied):
+            add(index, version, "history_bump_understated",
+                detail=f"declared {declared} but the changes imply {implied}")
+        elif declared in BUMP_ORDER and implied is not None \
+                and BUMP_ORDER.index(declared) > BUMP_ORDER.index(implied):
+            checks += 1
+            add(index, version, "history_bump_overstated", "doc",
+                detail=f"declared {declared} but the changes only imply {implied}")
+
+    tail = chain[-1]
+    checks += 2
+    if tail.get("version") != payload.get("contract_version"):
+        add(len(chain) - 1, tail.get("version"), "history_version_not_bumped",
+            detail=f"the payload declares {payload.get('contract_version')}")
+    if tail.get("fingerprint") != fingerprint(payload):
+        add(len(chain) - 1, tail.get("version"), "history_fingerprint_unrecorded",
+            detail=f"the payload hashes to {fingerprint(payload)}")
+    breaking = [f for f in findings if f["severity"] == "breaking"]
+    return {
+        "schema": LINEAGE_SCHEMA,
+        "status": "DRIFT" if breaking else "CONFORMS",
+        "entries": len(chain),
+        "checks": checks,
+        "matched": checks - len(findings),
+        "findings": findings,
+        "breaking": len(breaking),
+        "overstated": sum(1 for f in findings if f["severity"] == "doc"),
+        "current_version": payload.get("contract_version"),
+        "current_fingerprint": fingerprint(payload),
+        "recorded_fingerprints": [entry.get("fingerprint") for entry in chain],
+    }
+
+
+def record_history_entry(previous_manifest: Mapping[str, Any], *, version: str,
+                         reason: str, bump: str | None = None,
+                         contract: Mapping[str, Any] | None = None) -> dict[str, Any]:
+    """Derive the history entry for a re-freeze, refusing to under-declare the bump.
+
+    ``previous_manifest`` is an :func:`export_manifest` payload (the artefact the
+    consumer had pinned).  The change classes and the bump are computed from
+    :func:`diff_contracts` -- a human cannot quietly type ``patch`` for an edit
+    that removed a frozen parameter.
+    """
+    payload = BINDING_CONTRACT if contract is None else contract
+    findings = diff_contracts(previous_manifest["payload"], payload)
+    implied = required_bump(findings)
+    declared = bump or implied or "patch"
+    if not _bump_covers(declared, implied):
+        raise BindingContractError({
+            "status": "UNDERSTATED_BUMP",
+            "findings": findings,
+            "required_bump": implied,
+            "declared_bump": declared,
+        })
+    return {
+        "version": version,
+        "fingerprint": fingerprint(payload),
+        "bump": declared,
+        "changes": sorted({f["change"] for f in findings}) or ["lineage_version_bump"],
+        "reason": reason,
+    }
+
+
+def check_consumer_manifest(manifest: Mapping[str, Any], *,
+                            contract: Mapping[str, Any] | None = None,
+                            history: list[Mapping[str, Any]] | None = None) -> dict[str, Any]:
+    """Diff a binder's pinned manifest against the current contract, offline."""
+    payload = BINDING_CONTRACT if contract is None else contract
+    chain = list(CONTRACT_HISTORY if history is None else history)
+    findings: list[dict[str, Any]] = []
+    checks = 0
+
+    def add(change: str, field: str = "<manifest>", detail: str = "") -> None:
+        findings.append({"entry": "<manifest>", "field": field, "change": change,
+                         "severity": "breaking", "detail": detail})
+
+    checks += 1
+    if manifest.get("schema") != MANIFEST_SCHEMA:
+        add("manifest_schema_unknown", detail=str(manifest.get("schema")))
+        return {"schema": LINEAGE_SCHEMA, "status": "DRIFT", "checks": checks,
+                "matched": 0, "findings": findings, "breaking": len(findings),
+                "required_bump": "major", "change_classes": ["manifest_schema_unknown"]}
+    pinned = manifest.get("payload") or {}
+    checks += 1
+    if manifest.get("fingerprint") != fingerprint(pinned):
+        add("manifest_payload_tampered",
+            detail=f"declared {manifest.get('fingerprint')}, the payload hashes to "
+                   f"{fingerprint(pinned)}")
+    checks += 1
+    if manifest.get("contract_version") != pinned.get("contract_version"):
+        add("manifest_version_mismatch",
+            detail=f"{manifest.get('contract_version')} vs {pinned.get('contract_version')}")
+    checks += 1
+    if manifest.get("fingerprint") not in {e.get("fingerprint") for e in chain}:
+        add("manifest_version_not_in_history",
+            detail=f"{manifest.get('fingerprint')} is not a recorded release")
+    checks += 1
+    if manifest.get("contract_version") not in {e.get("version") for e in chain}:
+        add("manifest_version_not_in_history",
+            detail=f"version {manifest.get('contract_version')} is not recorded")
+
+    drift = diff_contracts(pinned, payload)
+    findings.extend(drift)
+    summary = summarise_findings(drift)
+    breaking = [f for f in findings if f["severity"] == "breaking"]
+    if breaking:
+        status = "DRIFT"
+    elif summary["by_severity"]["narrowing"] or summary["by_severity"]["additive"]:
+        status = "COMPATIBLE_ADDITIVE"
+    else:
+        status = "CONFORMS"
+    total = checks + len(drift)
+    return {
+        "schema": LINEAGE_SCHEMA,
+        "status": status,
+        "pinned_version": manifest.get("contract_version"),
+        "pinned_fingerprint": manifest.get("fingerprint"),
+        "current_version": payload.get("contract_version"),
+        "current_fingerprint": fingerprint(payload),
+        "checks": total,
+        "matched": total - len(findings),
+        "findings": findings,
+        "breaking": len(breaking),
+        "required_bump": required_bump(drift),
+        "change_classes": summary["change_classes"],
+        "by_severity": summary["by_severity"],
+    }
+
+
+def lineage_matrix() -> list[dict[str, Any]]:
+    """Controlled lineage/mutations: every hole must be detected, not assumed.
+
+    Each row feeds :func:`check_lineage` or :func:`check_consumer_manifest` a
+    deliberately broken chain/manifest and records whether the expected finding
+    appeared, plus clean controls that must stay silent.
+    """
+    baseline = [dict(entry) for entry in CONTRACT_HISTORY]
+    current_payload = json.loads(canonical_payload())
+    other_payload = json.loads(canonical_payload())
+    other_payload["contract_version"] = "0.9.0"
+    other_payload["entries"]["IceDEM"]["state"]["dt"]["units"] = "ms"
+    rows: list[dict[str, Any]] = []
+
+    def mutate(fn):
+        chain = [dict(entry) for entry in baseline]
+        fn(chain)
+        report = check_lineage(chain)
+        return report, sorted({f["change"] for f in report["findings"]})
+
+    def no_bump(chain):
+        chain[-1]["version"] = chain[-2]["version"]
+
+    def no_repin(chain):
+        chain[-1]["fingerprint"] = chain[-2]["fingerprint"]
+
+    def understated(chain):
+        chain[-1]["bump"] = "patch"
+        chain[-1]["changes"] = ["entry_removed"]
+
+    def missing_reason(chain):
+        chain[-1]["reason"] = ""
+
+    def unknown_class(chain):
+        chain[-1]["changes"] = ["surface_ledger_member_added", "made_up_change"]
+
+    for key, fn, expected in (
+        ("version_not_bumped", no_bump, "history_version_not_bumped"),
+        ("refreeze_without_record", no_repin, "history_fingerprint_unrecorded"),
+        ("bump_understated", understated, "history_bump_understated"),
+        ("reason_missing", missing_reason, "history_entry_malformed"),
+        ("unknown_change_class", unknown_class, "history_unknown_change_class"),
+    ):
+        report, observed = mutate(fn)
+        rows.append({"kind": "lineage", "key": key, "expect_change": expected,
+                     "observed": observed, "detected": expected in observed,
+                     "status": report["status"]})
+
+    clean = check_lineage()
+    rows.append({"kind": "lineage", "key": "clean_control", "expect_change": None,
+                 "observed": [f["change"] for f in clean["findings"]],
+                 "detected": clean["status"] == "CONFORMS", "status": clean["status"]})
+
+    tampered = export_manifest()
+    tampered["fingerprint"] = fingerprint(other_payload)
+    report = check_consumer_manifest(tampered)
+    rows.append({"kind": "manifest", "key": "payload_tampered",
+                 "expect_change": "manifest_payload_tampered",
+                 "observed": sorted({f["change"] for f in report["findings"]}),
+                 "detected": any(f["change"] == "manifest_payload_tampered"
+                                 for f in report["findings"]),
+                 "status": report["status"]})
+
+    unrecorded = export_manifest(other_payload)
+    report = check_consumer_manifest(unrecorded)
+    rows.append({"kind": "manifest", "key": "unrecorded_release",
+                 "expect_change": "manifest_version_not_in_history",
+                 "observed": sorted({f["change"] for f in report["findings"]}),
+                 "detected": any(f["change"] == "manifest_version_not_in_history"
+                                 for f in report["findings"]),
+                 "status": report["status"]})
+
+    units = json.loads(canonical_payload())
+    units["entries"]["IceDEM"]["state"]["dt"]["units"] = "ms"
+    units_manifest = export_manifest(units)
+    units_manifest["contract_version"] = CONTRACT_VERSION
+    report = check_consumer_manifest(units_manifest)
+    rows.append({"kind": "manifest", "key": "unit_retuned_same_names",
+                 "expect_change": "attribute_units_changed",
+                 "observed": sorted({f["change"] for f in report["findings"]}),
+                 "detected": any(f["change"] == "attribute_units_changed"
+                                 for f in report["findings"]),
+                 "status": report["status"]})
+
+    current = check_consumer_manifest(export_manifest())
+    rows.append({"kind": "manifest", "key": "clean_control", "expect_change": None,
+                 "observed": [f["change"] for f in current["findings"]],
+                 "detected": current["status"] == "CONFORMS", "status": current["status"]})
+    return rows
+
+# ---------------------------------------------------------------------------
 # CLI helper: re-freeze the fingerprint deliberately
 # ---------------------------------------------------------------------------
 def _main(argv: list[str] | None = None) -> int:
@@ -1965,6 +2648,19 @@ def _main(argv: list[str] | None = None) -> int:
     parser.add_argument("--consumer-coverage", action="store_true",
                         help="check the binder-consumed surface against the frozen "
                              "contract (uses the pinned surface when no checkout)")
+    parser.add_argument("--lineage", action="store_true",
+                        help="verify the release chain (version/fingerprint/bump discipline)")
+    parser.add_argument("--export-manifest", type=str, nargs="?",
+                        const="binding_contract_manifest.json", default=None,
+                        help="write the pinned manifest a binder consumes")
+    parser.add_argument("--check-manifest", type=str, default=None,
+                        help="diff a binder's pinned manifest against this contract")
+    parser.add_argument("--record-history", type=str, default=None,
+                        help="derive the history entry for a re-freeze from the "
+                             "previous manifest (refuses to under-declare the bump)")
+    parser.add_argument("--record-version", type=str, default=None,
+                        help="version for --record-history (default: this payload's)")
+    parser.add_argument("--record-reason", type=str, default="")
     parser.add_argument("--out", type=str, default=None,
                         help="write the chosen reports as JSON to this directory")
     args = parser.parse_args(argv)
@@ -1991,6 +2687,26 @@ def _main(argv: list[str] | None = None) -> int:
         payload["consumer_coverage"] = consumer_coverage(
             live_consumer_surface() or CONSUMER_SURFACE_PIN)
         print(json.dumps(payload["consumer_coverage"], indent=2, sort_keys=True))
+    if args.lineage:
+        payload["lineage"] = check_lineage()
+        print(json.dumps(payload["lineage"], indent=2, sort_keys=True))
+    if args.export_manifest:
+        path = write_manifest(args.export_manifest)
+        payload["manifest_path"] = str(path)
+        print(f"manifest -> {path}")
+    if args.check_manifest:
+        manifest = json.loads(Path(args.check_manifest).read_text(encoding="utf-8"))
+        payload["check_manifest"] = check_consumer_manifest(manifest)
+        print(json.dumps(payload["check_manifest"], indent=2, sort_keys=True))
+    if args.record_history:
+        previous = json.loads(Path(args.record_history).read_text(encoding="utf-8"))
+        entry = record_history_entry(
+            previous,
+            version=args.record_version or BINDING_CONTRACT["contract_version"],
+            reason=args.record_reason,
+        )
+        payload["history_entry"] = entry
+        print(json.dumps(entry, indent=2, sort_keys=True))
     if args.out:
         from pathlib import Path as _Path
         outdir = _Path(args.out)
