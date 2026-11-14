@@ -303,6 +303,7 @@ def _make_specimen(material: RidgeMaterial, *, columns: int, rows: int,
                    bond_cutoff: float = 1.2, servo_gain: float = 1.0e-4,
                    servo_velocity_limit: float = 2.0,
                    wall_friction: float | None = None,
+                   axial_servo: bool = False,
                    ) -> tuple[RidgeAssembly, dict[str, Any]]:
     """Jittered triangular disc lattice in a four-plane servo biaxial cell.
 
@@ -365,6 +366,19 @@ def _make_specimen(material: RidgeMaterial, *, columns: int, rows: int,
     wall_stiffness = 4.0 * material.contact_stiffness
     friction = (material.friction_coefficient if wall_friction is None
                 else float(wall_friction))
+    # ``axial_servo`` turns the top and bottom platens into pressure-controlled
+    # boundaries of width ``width`` for the consolidation phase.  Without it
+    # (legacy default) the platens are *position* fixed and the specimen is only
+    # laterally pressurised, so the end-of-consolidation state is a K0 state
+    # (measured sigma_v / sigma_h ~ 0.35 at 100 kPa), not the isotropic state the
+    # biaxial/triaxial test definition assumes.  See
+    # ``docs/CASE-DEM-BIAXIAL-FRICTION_STRESS_CHAIN_AUDIT.md``.
+    axial_servo_kwargs: dict[str, Any] = {}
+    if axial_servo:
+        axial_servo_kwargs = dict(servo_stress=confining_stress,
+                                  servo_width=width,
+                                  servo_gain=servo_gain,
+                                  servo_velocity_limit=servo_velocity_limit)
     planes = [
         Plane((1.0, 0.0), (-half_w, 0.0), stiffness=wall_stiffness,
               damping=material.contact_damping, friction=friction,
@@ -375,15 +389,18 @@ def _make_specimen(material: RidgeMaterial, *, columns: int, rows: int,
               servo_stress=confining_stress, servo_width=height,
               servo_gain=servo_gain, servo_velocity_limit=servo_velocity_limit),
         Plane((0.0, 1.0), (0.0, -half_h), stiffness=wall_stiffness,
-              damping=material.contact_damping, friction=friction),
+              damping=material.contact_damping, friction=friction,
+              **axial_servo_kwargs),
         Plane((0.0, -1.0), (0.0, half_h), stiffness=wall_stiffness,
-              damping=material.contact_damping, friction=friction),
+              damping=material.contact_damping, friction=friction,
+              **axial_servo_kwargs),
     ]
     assembly = RidgeAssembly(pos, torch.full((count,), radius, dtype=torch.float64),
                              torch.full((count,), material.particle_mass, dtype=torch.float64),
                              bonds, material, planes=planes, thickness=thickness)
     geometry = {"width": width, "height": height, "particles": count,
                 "wall_friction": float(friction),
+                "axial_servo": bool(axial_servo),
                 "bonds": int(bonds.shape[0]), "confining_stress": float(confining_stress),
                 "half_w": half_w, "half_h": half_h, "wall_stiffness": wall_stiffness}
     return assembly, geometry
@@ -406,6 +423,7 @@ def run_biaxial_shear_band(*, confining_stress: float = 100.0e3,
                            servo_velocity_limit: float = 2.0,
                            wall_friction: float | None = None,
                            lateral_control: str = "servo",
+                           axial_servo: bool = False,
                            material_overrides: dict[str, Any] | None = None,
                            record_snapshots: bool = False,
                            ) -> dict[str, Any]:
@@ -447,11 +465,23 @@ def run_biaxial_shear_band(*, confining_stress: float = 100.0e3,
         material, columns=columns, rows=rows, confining_stress=confining_stress,
         jitter=jitter, servo_gain=servo_gain,
         servo_velocity_limit=servo_velocity_limit,
-        wall_friction=wall_friction)
+        wall_friction=wall_friction, axial_servo=axial_servo)
     dt = material.recommended_dt
     thickness = assembly.thickness
 
     for _ in range(int(consolidation_steps)):
+        if axial_servo:
+            # The platen servo reads force / (servo_width * thickness); keep the
+            # width reference current so the prescribed axial stress is the true
+            # stress during consolidation (same defect class as the lateral servo
+            # stale servo_width fixed in m20304).
+            _l, _r, _b, _t = assembly.planes
+            _w = max(float(_r.point[0] - _l.point[0]), 1e-9)
+            for _k in (2, 3):
+                _plane = assembly.planes[_k]
+                if (_plane.servo_stress is not None
+                        and abs(_plane.servo_width - _w) > 1e-12):
+                    assembly.planes[_k] = replace(_plane, servo_width=_w)
         out = assembly.step(dt)
         assembly.last_plane_forces = out["plane_forces"]
         _advance_planes(assembly, dt)
@@ -459,6 +489,50 @@ def run_biaxial_shear_band(*, confining_stress: float = 100.0e3,
     left, right, bottom, top = assembly.planes
     width0 = float(right.point[0] - left.point[0])
     height0 = float(top.point[1] - bottom.point[1])
+
+    # End-of-consolidation stress state.  Recorded *before* any release of the
+    # axial servo so that an under-pressurised (K0-like) consolidation is
+    # visible in the output record instead of being silently assumed isotropic.
+    # With ``axial_servo=False`` (legacy) the platens are position fixed and only
+    # the lateral walls are pressure controlled, so sigma_v < sigma_h is the
+    # expected outcome of the boundary conditions, not a numerical error.
+    _pf: Any = assembly.last_plane_forces
+    _sv_cons = -float(_pf[2][1]) / (width0 * thickness)
+    _sh_cons = 0.5 * (-float(_pf[0][0]) / (height0 * thickness)
+                      + float(_pf[1][0]) / (height0 * thickness))
+    _virial_cons = out.get("virial")
+    _vol_cons = max(width0 * height0 * thickness, 1e-12)
+    _svi_cons = (-float(_virial_cons[1, 1]) / _vol_cons
+                 if _virial_cons is not None else float("nan"))
+    _shi_cons = (-float(_virial_cons[0, 0]) / _vol_cons
+                 if _virial_cons is not None else float("nan"))
+    consolidation_state = {
+        "sigma_v": _sv_cons,
+        "sigma_h": _sh_cons,
+        "sigma_v_over_sigma_h": (_sv_cons / _sh_cons) if _sh_cons else float("nan"),
+        "sigma_v_internal": _svi_cons,
+        "sigma_h_internal": _shi_cons,
+        # Stress-chain consistency at rest: the externally instrumented wall
+        # traction and the Love-Weber virial must agree in a quasi-static cell.
+        "sigma_v_relative_difference": ((_svi_cons - _sv_cons) / _sv_cons
+                                        if _sv_cons else float("nan")),
+        "sigma_h_relative_difference": ((_shi_cons - _sh_cons) / _sh_cons
+                                        if _sh_cons else float("nan")),
+        "platen_asymmetry": (
+            (float(_pf[3][1]) / (width0 * thickness) - _sv_cons)
+            / (0.5 * (float(_pf[3][1]) / (width0 * thickness) + _sv_cons))
+            if _sv_cons else float("nan")),
+        "target": float(confining_stress),
+        "axial_servo": bool(axial_servo),
+        "isotropic_within_10pct": bool(
+            _sh_cons and abs(_sv_cons / _sh_cons - 1.0) <= 0.10),
+    }
+    if axial_servo:
+        # The shear phase is displacement controlled on the top platen, so the
+        # axial pressure servo must be released (a servo would fight the platen).
+        for _k in (2, 3):
+            _plane = assembly.planes[_k]
+            assembly.planes[_k] = replace(_plane, servo_stress=None, velocity=0.0)
     prev = assembly.pos.detach().numpy().copy()
     reference = prev.copy()
     snapshots: list[dict[str, Any]] = []
@@ -509,6 +583,15 @@ def run_biaxial_shear_band(*, confining_stress: float = 100.0e3,
         width = float(right.point[0] - left.point[0])
         height = float(top.point[1] - bottom.point[1])
         sigma_v = -float(plane_forces[2][1]) / (width * thickness)
+        # Both platens are recorded: in a *static* cell they carry the same axial
+        # load, so their difference is a direct equilibrium/balance diagnostic.
+        # The legacy headline ``sigma_v`` (bottom platen) is kept unchanged so
+        # previously published records remain reproducible.
+        sigma_v_bottom = sigma_v
+        sigma_v_top = float(plane_forces[3][1]) / (width * thickness)
+        sigma_v_mean = 0.5 * (sigma_v_bottom + sigma_v_top)
+        platen_asymmetry = ((sigma_v_top - sigma_v_bottom) / sigma_v_mean
+                            if sigma_v_mean else float("nan"))
         sigma_h = 0.5 * (-float(plane_forces[0][0]) / (height * thickness)
                          + float(plane_forces[1][0]) / (height * thickness))
         strain = (height0 - height) / height0
@@ -536,6 +619,9 @@ def run_biaxial_shear_band(*, confining_stress: float = 100.0e3,
         axial_log = math.log(height0 / max(height, 1e-12))
         lateral_log = math.log(width0 / max(width, 1e-12))
         history.append({"axial_strain": strain, "sigma_v": sigma_v,
+                        "sigma_v_top": sigma_v_top,
+                        "sigma_v_mean": sigma_v_mean,
+                        "platen_asymmetry": platen_asymmetry,
                         "sigma_h": sigma_h, "deviator": sigma_v - sigma_h,
                         "sigma_v_internal": sigma_v_internal,
                         "sigma_h_internal": sigma_h_internal,
@@ -670,5 +756,6 @@ def run_biaxial_shear_band(*, confining_stress: float = 100.0e3,
                     else "constant volume (kinematic volume-preserving walls)")
                  + ", top platen displacement driven; gravity neglected"),
         "lateral_control": lateral_control,
+        "consolidation_state": consolidation_state,
         "snapshots": snapshots,
     }

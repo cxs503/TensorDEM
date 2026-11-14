@@ -1,0 +1,161 @@
+{
+ "case_key": "CASE-DEM-BIAXIAL-FRICTION",
+ "audit": "biaxial stress-chain (consolidation isotropy + boundary/virial consistency)",
+ "environment": {
+  "python": "3.11.6",
+  "platform": "Linux-6.6.52-1.7.lns23.loongarch64-loongarch64-with-glibc2.38",
+  "machine": "loongarch64",
+  "torch_threads": 4
+ },
+ "runs": [
+  {
+   "tag": "legacy (platens position-fixed)",
+   "axial_servo": false,
+   "config": {
+    "columns": 12,
+    "rows": 24,
+    "confining_stress": 100000.0,
+    "consolidation_steps": 2000,
+    "strain_rate": 0.02,
+    "strain_target": 0.06,
+    "wall_friction": 0.0,
+    "freeze_bond_fraction": 0.35
+   },
+   "consolidation_state": {
+    "sigma_v": 37749.80734184035,
+    "sigma_h": 95197.5979801383,
+    "sigma_v_over_sigma_h": 0.396541594985583,
+    "sigma_v_internal": 32822.55640597204,
+    "sigma_h_internal": 87159.0067201404,
+    "sigma_v_relative_difference": -0.13052386973130706,
+    "sigma_h_relative_difference": -0.0844411143826868,
+    "platen_asymmetry": -0.17749245826322302,
+    "target": 100000.0,
+    "axial_servo": false,
+    "isotropic_within_10pct": false
+   },
+   "peak": {
+    "friction_angle_deg": 28.845289166141075,
+    "deviator": 189356.2771545722,
+    "axial_strain": 0.026785247918314083,
+    "sigma_v": 290924.14361937257,
+    "sigma_h": 101567.86646480038,
+    "dilation_angle_deg": 71.80512766123321
+   },
+   "stress_definitions": {
+    "friction_angle_internal_deg": 27.84372770408406,
+    "sigma_v_relative_difference": -0.04453154196650865,
+    "sigma_h_relative_difference": -0.005812170106909969,
+    "friction_angle_relative_difference": -0.03472183815833123
+   },
+   "specimen": {
+    "columns": 12,
+    "rows": 24,
+    "particles": 276,
+    "bonds": 286,
+    "radius": 0.75,
+    "jitter": 0.03,
+    "width0": 17.84771224660532,
+    "height0": 31.377876430563134,
+    "dt": 0.000497077533935517
+   },
+   "loading": {
+    "axial_strain_rate": 0.02,
+    "final_axial_strain": 0.05833614901814826,
+    "steps": 6046,
+    "inertial_number": 0.002872803508769787
+   },
+   "elapsed_s": 52.0,
+   "stress_chain": {
+    "phi_wall_minus_internal_deg": 1.0015614620570155,
+    "abs_phi_gap_deg": 1.0015614620570155,
+    "consistent_within_2deg": true,
+    "consistent_within_0p1_rel": true
+   }
+  },
+  {
+   "tag": "axial_servo=True",
+   "axial_servo": true,
+   "config": {
+    "columns": 12,
+    "rows": 24,
+    "confining_stress": 100000.0,
+    "consolidation_steps": 2000,
+    "strain_rate": 0.02,
+    "strain_target": 0.06,
+    "wall_friction": 0.0,
+    "freeze_bond_fraction": 0.35
+   },
+   "consolidation_state": {
+    "sigma_v": 100056.25669955417,
+    "sigma_h": 95998.45259242033,
+    "sigma_v_over_sigma_h": 1.0422694741170675,
+    "sigma_v_internal": 95472.55804208145,
+    "sigma_h_internal": 86812.19406791148,
+    "sigma_v_relative_difference": -0.045811214697312815,
+    "sigma_h_relative_difference": -0.09569173540234927,
+    "platen_asymmetry": 0.00025280608522721337,
+    "target": 100000.0,
+    "axial_servo": true,
+    "isotropic_within_10pct": true
+   },
+   "peak": {
+    "friction_angle_deg": 29.1473238392523,
+    "deviator": 191956.54486588697,
+    "axial_strain": 0.019267670499906995,
+    "sigma_v": 293035.8851187019,
+    "sigma_h": 101079.34025281492,
+    "dilation_angle_deg": 71.80512766123321
+   },
+   "stress_definitions": {
+    "friction_angle_internal_deg": 28.070492735959924,
+    "sigma_v_relative_difference": -0.05629677681731842,
+    "sigma_h_relative_difference": -0.015012747785332285,
+    "friction_angle_relative_difference": -0.03694442444291314
+   },
+   "specimen": {
+    "columns": 12,
+    "rows": 24,
+    "particles": 276,
+    "bonds": 286,
+    "radius": 0.75,
+    "jitter": 0.03,
+    "width0": 17.886791059776463,
+    "height0": 31.181847176619407,
+    "dt": 0.000497077533935517
+   },
+   "loading": {
+    "axial_strain_rate": 0.02,
+    "final_axial_strain": 0.05833614901815009,
+    "steps": 6046,
+    "inertial_number": 0.002872803508769787
+   },
+   "elapsed_s": 52.2,
+   "stress_chain": {
+    "phi_wall_minus_internal_deg": 1.0768311032923776,
+    "abs_phi_gap_deg": 1.0768311032923776,
+    "consistent_within_2deg": true,
+    "consistent_within_0p1_rel": true
+   }
+  }
+ ],
+ "questions": {
+  "Q1_consolidation_isotropy": {
+   "legacy_K": 0.396541594985583,
+   "axial_servo_K": 1.0422694741170675,
+   "legacy_isotropic_within_10pct": false,
+   "axial_servo_isotropic_within_10pct": true
+  },
+  "Q2_stress_definition": {
+   "abs_phi_gap_deg": [
+    1.0015614620570155,
+    1.0768311032923776
+   ],
+   "consistent_within_2deg": [
+    true,
+    true
+   ]
+  }
+ },
+ "repro_cmd": "PYTHONPATH=src python benchmarks/case_dem_biaxial_friction/stress_chain_audit.py --columns 12 --rows 24 --consolidation-steps 2000 --strain-target 0.060"
+}
