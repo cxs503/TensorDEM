@@ -38,6 +38,12 @@ JITTER_TOL = 0.05      # H_JITTER: lattice -> 10 % disorder changes runout < 5 %
 SIGN_ASPECT = 0.5      # H_SIGN:   shallow column, time law must stay out of band
 SIGN_FLOOR = 0.15      #           and on the late side for every member
 
+#: Minimum membership before an *ensemble* statistic may be adjudicated.
+#: A one-member "ensemble" has no scatter to estimate: its sigma is
+#: undefined, not zero, and a NaN must never be read as a pass (m20259).
+MIN_JITTER_MEMBERS = 2
+MIN_MEMBERS = 2
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RUN_DIR = os.path.join(ROOT, "runs", "case_column_collapse_ensemble_m19922")
 CASE_DIR = os.path.join(RUN_DIR, "cases")
@@ -121,12 +127,18 @@ def load_rows(case_dir: str = CASE_DIR) -> list[dict]:
 
 
 def _mean_sigma(values: list[float]) -> tuple[float, float]:
+    """Sample mean and (unbiased) sample sigma; sigma is NaN for n < 2.
+
+    A single realisation has no scatter to estimate.  Returning 0.0 there used
+    to make a one-member "ensemble" report a 0 % spread and pass H_SPREAD,
+    i.e. an unmeasured quantity was reported as a measured zero (m20259).
+    """
     vals = [v for v in values if math.isfinite(v)]
     if not vals:
         return float("nan"), float("nan")
     m = sum(vals) / len(vals)
     if len(vals) < 2:
-        return m, 0.0
+        return m, float("nan")
     var = sum((v - m) ** 2 for v in vals) / (len(vals) - 1)
     return m, math.sqrt(var)
 
@@ -146,6 +158,8 @@ def summarize(rows: list[dict], band: float = BAND_TOL,
         spread_rel = (sigma / mean) if math.isfinite(mean) and mean else float("nan")
         per_aspect = {
             "n_members": len(grp),
+            "n_jitter": len(jit),
+            "n_control": len(control),
             "runout_mean": mean,
             "runout_sigma": sigma,
             "runout_sigma_rel": spread_rel,
@@ -156,7 +170,11 @@ def summarize(rows: list[dict], band: float = BAND_TOL,
             "err_worst_abs": max(abs(e) for e in errs),
             "n_in_band": sum(1 for e in errs if abs(e) <= band),
             "all_in_band": all(abs(e) <= band for e in errs),
-            "spread_ok": math.isfinite(spread_rel) and spread_rel <= spread_tol,
+            # None (not False) when the scatter itself is undefined: "not
+            # measurable" and "measured too wide" are different statements.
+            "spread_ok": (None if not math.isfinite(spread_rel)
+                          else bool(spread_rel <= spread_tol)),
+            "spread_testable": len(jit) >= MIN_JITTER_MEMBERS,
             "t99_errors": [r["err_t99"] for r in grp],
             "t95_errors": [r["err_t95"] for r in grp],
             "t90_errors": [r["err_t90"] for r in grp],
@@ -226,35 +244,88 @@ def repro_check(rows: list[dict], archive_csv: str = ARCHIVE_CSV,
                          "delta": delta, "match": match}
     return {"available": True, "archive_csv": os.path.relpath(archive_csv, ROOT),
             "archive_sha256": archive_sha, "tolerance": tol,
-            "per_aspect": per_aspect, "used": used,
+            "per_aspect": per_aspect, "used": used, "n_checked": len(used),
             "all_match": ok_all if used else None}
 
 
+def _cell(passed, n: int, need: int, detail) -> dict:
+    """One adjudication cell: True / False / None(=insufficient evidence)."""
+    if n < need:
+        return {"pass": None, "status": "insufficient", "n": n,
+                "required_n": need, "detail": detail}
+    if passed is None:
+        return {"pass": None, "status": "insufficient", "n": n,
+                "required_n": need, "detail": detail}
+    ok = bool(passed)
+    return {"pass": ok, "status": "pass" if ok else "fail", "n": n,
+            "required_n": need, "detail": detail}
+
+
+def _combine(cells: list[dict], tolerance: float, detail: dict) -> dict:
+    """A fail anywhere dominates; insufficient evidence dominates a pass."""
+    statuses = [c["status"] for c in cells]
+    if "fail" in statuses:
+        status = "fail"
+    elif "insufficient" in statuses or not cells:
+        status = "insufficient"
+    else:
+        status = "pass"
+    return {"pass": {"pass": True, "fail": False}.get(status),
+            "status": status, "tolerance": tolerance, "detail": detail,
+            "n": sum(c["n"] for c in cells),
+            "required_n": sum(c["required_n"] for c in cells)}
+
+
 def hypothesis_verdicts(summary: dict, repro: dict) -> dict:
-    """Mechanical adjudication of the five pre-registered hypotheses."""
+    """Mechanical adjudication of the five pre-registered hypotheses.
+
+    Every cell is tri-state.  ``pass`` is ``None`` when the statistic needed by
+    the hypothesis is undefined or its membership is below the pre-registered
+    minimum; a NaN therefore reads as *insufficient*, never as a pass (m20259).
+    Thresholds are untouched: only the missing-evidence branch changed.
+    """
     aspects = sorted(summary)
-    spread_all = all(summary[a]["spread_ok"] for a in aspects)
-    band_all = all(summary[a]["all_in_band"] for a in aspects)
-    jitter_all = all(
-        (not math.isfinite(summary[a]["jitter_shift"]))
-        or summary[a]["jitter_shift"] <= JITTER_TOL for a in aspects)
+
+    cells_spread, cells_band, cells_jitter, detail_spread = [], [], [], {}
+    for a in aspects:
+        s = summary[a]
+        span = s.get("runout_sigma_rel", float("nan"))
+        detail_spread[a] = span
+        ok = None if not math.isfinite(span) else span <= SPREAD_TOL
+        cells_spread.append(_cell(ok, int(s.get("n_jitter", 0)),
+                                  MIN_JITTER_MEMBERS, span))
+        band_ok = all_in = bool(s["all_in_band"])
+        cells_band.append(_cell(band_ok, int(s["n_members"]), 1,
+                                s["err_worst_abs"]))
+        shift = s.get("jitter_shift", float("nan"))
+        has_axis = bool(s.get("n_control", 0)) and bool(s.get("n_jitter", 0))
+        jit_ok = (None if (not has_axis or not math.isfinite(shift))
+                  else shift <= JITTER_TOL)
+        cells_jitter.append(_cell(jit_ok, int(s.get("n_jitter", 0)), 1, shift))
+
     sign_aspect = [a for a in aspects if abs(a - SIGN_ASPECT) < 1e-9]
-    sign_ok, sign_detail = None, {}
+    sign_ok, sign_detail, sign_n = None, {}, 0
+    sign_cells = []
     for a in sign_aspect:
         errs = [e for e in summary[a]["t99_errors"] if math.isfinite(e)]
         sign_detail[a] = errs
+        sign_n = len(errs)
         sign_ok = bool(errs) and all(e > SIGN_FLOOR for e in errs)
+        sign_cells.append(_cell(sign_ok, len(errs), 1, errs))
+
+    n_repro = int(repro.get("n_checked") or 0)
+    repro_ok = repro.get("all_match")
+    repro_cell = _cell(repro_ok, n_repro, 1, repro_ok)
+
     return {
-        "H_REPRO": {"pass": repro.get("all_match"), "tolerance": REPRO_TOL,
-                    "detail": "jitter=0 control vs round-5 archived ratio"},
-        "H_SPREAD": {"pass": bool(spread_all), "tolerance": SPREAD_TOL,
-                     "detail": {a: summary[a]["runout_sigma_rel"] for a in aspects}},
-        "H_BAND": {"pass": bool(band_all), "tolerance": BAND_TOL,
-                   "detail": {a: summary[a]["err_worst_abs"] for a in aspects}},
-        "H_SIGN": {"pass": sign_ok, "tolerance": SIGN_FLOOR,
-                   "detail": sign_detail},
-        "H_JITTER": {"pass": bool(jitter_all), "tolerance": JITTER_TOL,
-                     "detail": {a: summary[a]["jitter_shift"] for a in aspects}},
+        "H_REPRO": _combine([repro_cell], REPRO_TOL, "jitter=0 control vs round-5 "
+                            "archived ratio"),
+        "H_SPREAD": _combine(cells_spread, SPREAD_TOL, detail_spread),
+        "H_BAND": _combine(cells_band, BAND_TOL,
+                           {a: summary[a]["err_worst_abs"] for a in aspects}),
+        "H_SIGN": _combine(sign_cells, SIGN_FLOOR, sign_detail),
+        "H_JITTER": _combine(cells_jitter, JITTER_TOL,
+                             {a: summary[a]["jitter_shift"] for a in aspects}),
     }
 
 
@@ -391,6 +462,10 @@ def main(argv=None) -> int:
                        "REPRO_TOL": REPRO_TOL, "JITTER_TOL": JITTER_TOL,
                        "SIGN_ASPECT": SIGN_ASPECT, "SIGN_FLOOR": SIGN_FLOOR},
         "n_cases": len(rows),
+        # aspects pre-registered by the wave design but never run in
+        # this branch (declared, not silently missing; m20259)
+        "incomplete_aspects": [a for a in (0.5, 1.0, 2.0)
+                               if a not in {r["aspect_nominal"] for r in rows}],
         "aspects": sorted(summary),
         "summary": {f"{a:g}": summary[a] for a in summary},
         "repro": repro,
@@ -411,7 +486,7 @@ def main(argv=None) -> int:
               f"in-band {s['n_in_band']}/{s['n_members']}, jitter shift="
               f"{100 * s['jitter_shift']:.1f} %")
     for h, v in verdicts.items():
-        print(f"{h}: {'PASS' if v['pass'] else ('FAIL' if v['pass'] is False else 'unknown')}")
+        print(f"{h}: {v['status'].upper()} (n={v['n']}/{v['required_n']})")
     print(f"artifacts -> {os.path.relpath(args.out_dir, ROOT)}")
     return 0
 
