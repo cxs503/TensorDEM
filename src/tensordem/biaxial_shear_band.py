@@ -454,6 +454,19 @@ def run_biaxial_shear_band(*, confining_stress: float = 100.0e3,
     for _step in range(max_steps):
         left, right, bottom, top = assembly.planes
         height = float(top.point[1] - bottom.point[1])
+        # The lateral servo reads its pressure as force / (servo_width * thickness),
+        # so ``servo_width`` must track the *current* specimen height.  Leaving it
+        # at the value set at specimen build time makes the servo regulate the
+        # initial-height-referenced stress, and the true confining pressure then
+        # drifts as 1/(1 - eps_axial): at eps_axial = 0.33 the specimen sits under
+        # 1.49 sigma_3 instead of sigma_3 (defect found in m20304, case
+        # CASE-DEM-BIAXIAL-FRICTION: measured 174 kPa against a 100 kPa target).
+        for _lateral in (0, 1):
+            plane = assembly.planes[_lateral]
+            if (plane.servo_stress is not None
+                    and abs(plane.servo_width - height) > 1e-12):
+                assembly.planes[_lateral] = replace(
+                    plane, servo_width=max(height, 1e-9))
         assembly.planes[3] = replace(top, velocity=float(strain_rate * height))
         out = assembly.step(dt)
         assembly.last_plane_forces = out["plane_forces"]
