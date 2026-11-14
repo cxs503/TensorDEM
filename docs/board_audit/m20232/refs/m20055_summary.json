@@ -1,0 +1,84 @@
+{
+  "case": "CASE-DEM-SILO-BEVERLOO",
+  "reference": {
+    "authors": "Beverloo, W. A.; Leniger, H. A.; van de Velde, J.",
+    "title": "The flow of granular solids through orifices",
+    "journal": "Chemical Engineering Science",
+    "volume": 15,
+    "issue": "3-4",
+    "pages": "260-269",
+    "year": 1961,
+    "doi": "10.1016/0009-2509(61)80059-4",
+    "equation_location": "correlation W = C rho_b g^(1/2) (D - k d)^(5/2); the coefficient pair for spherical particles is Eq. (4), p. 265"
+  },
+  "reference_coefficients": {
+    "C": 0.58,
+    "k": 1.4,
+    "C_range_spherical": [
+      0.55,
+      0.6
+    ],
+    "k_range_spherical": [
+      1.2,
+      1.6
+    ],
+    "applicability": "spherical particles, flat-bottom (or shallow hopper) silo, smooth walls, D/d >~ 4, free gravity discharge"
+  },
+  "rows": [
+    {
+      "case": "D4",
+      "D_over_d": 4.0,
+      "mu_p": 0.3,
+      "n_bed": 1525,
+      "H_over_D": 2.895576825506563,
+      "silo_D_over_D": 3.25,
+      "rho_b": 1298.484605837074,
+      "phi": 0.5193938423348297,
+      "n_disch_pct": 50.22950819672131,
+      "W": 1.8175328703858848,
+      "W_ref": 1.454479691076926,
+      "rel_pct": 24.961034625388752,
+      "C_recovered": 0.7247740008272548,
+      "C_rel_pct": 24.961034625388777,
+      "cv": 0.059826261180402046,
+      "pass10": false,
+      "wall_s": 749.0073988437653,
+      "dt_over_T": 0.035355339059327376
+    }
+  ],
+  "power_law": {},
+  "quantile_sensitivity": {
+    "D4": {
+      "0.20-0.80 (predeclared)": {
+        "W": 1.8175328703858846,
+        "cv": 0.059826261180402,
+        "span": [
+          1.6077340237660858,
+          4.255785139495135
+        ]
+      },
+      "0.10-0.60 (early)": {
+        "W": 1.740153656111144,
+        "cv": 0.08940792749554088,
+        "span": [
+          1.0909972897181452,
+          3.395832042096357
+        ]
+      },
+      "0.35-0.65 (tight)": {
+        "W": 1.8162115016244553,
+        "cv": 0.1642534139728625,
+        "span": [
+          2.2650525943105273,
+          3.5900414353664267
+        ]
+      }
+    }
+  },
+  "figures": {
+    "flow_law": "docs/figures/m20055_beverloo_flow_law.png",
+    "errors": "docs/figures/m20055_beverloo_errors.png"
+  },
+  "n_runs": 1,
+  "all_pass_10pct": false
+}
