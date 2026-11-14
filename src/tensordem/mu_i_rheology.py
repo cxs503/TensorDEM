@@ -1196,19 +1196,28 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
                 "slab_n_particles": n_bulk,
                 "slab_volume": v_bulk,
             }
-            if case.bulk_stress:
-                z_lo = max(margin, 0.0)
-                z_hi = plate_z - margin
-                y_lo = case.bulk_y_margin * D
-                y_hi = (1.0 - case.bulk_y_margin) * D
-                if z_hi > z_lo:
+            # round 12: the velocity-profile shear rate is a *kinematic*
+            # diagnostic, not a stress quantity, so it is sampled in every
+            # mode (the expensive virial estimators below stay gated on
+            # ``bulk_stress``).  The profile is never fed back into the
+            # integration, so archived runs keep bit-for-bit physics.
+            z_lo = max(margin, 0.0)
+            z_hi = plate_z - margin
+            y_lo = case.bulk_y_margin * D
+            y_hi = (1.0 - case.bulk_y_margin) * D
+            if z_hi > z_lo:
+                prof = shear_rate_profile(
+                    pos, vel, z_lo=z_lo, z_hi=z_hi, y_lo=y_lo, y_hi=y_hi,
+                    n_bins=case.bulk_bins)
+                sample.update({
+                    "shear_rate_measured": prof["shear_rate"],
+                    "profile_r2": prof["r2"],
+                })
+                if case.bulk_stress:
                     vir = bulk_virial_stress(
-                        pos, vel, contacts,
-                        z_lo=z_lo, z_hi=z_hi, y_lo=y_lo, y_hi=y_hi,
-                        box_width=W, n=n, mass=mass)
-                    prof = shear_rate_profile(
-                        pos, vel, z_lo=z_lo, z_hi=z_hi, y_lo=y_lo, y_hi=y_hi,
-                        n_bins=case.bulk_bins)
+                            pos, vel, contacts,
+                            z_lo=z_lo, z_hi=z_hi, y_lo=y_lo, y_hi=y_hi,
+                            box_width=W, n=n, mass=mass)
                     p_b = vir["pressure"]
                     sample.update({
                         "bulk_pressure_pa": p_b,
@@ -1219,8 +1228,6 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
                         "bulk_n_particles": vir["n_particles"],
                         "bulk_n_contacts": vir["n_contacts"],
                         "bulk_straddle_fraction": vir["straddle_fraction"],
-                        "shear_rate_measured": prof["shear_rate"],
-                        "profile_r2": prof["r2"],
                         "bulk_inertial_number": (
                             abs(prof["shear_rate"]) * d
                             / math.sqrt(p_b / rho)
@@ -1288,11 +1295,12 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
         raise MuIRheologyError("no samples collected in the shear phase")
 
     keys = ["normal_stress_pa", "shear_stress_pa", "mu",
-            "coordination", "solid_fraction", "porosity"]
+            "coordination", "solid_fraction", "porosity",
+            "shear_rate_measured", "profile_r2"]
     if case.bulk_stress and "bulk_mu" in series[0]:
         keys += ["bulk_pressure_pa", "bulk_shear_pa", "bulk_mu",
                  "bulk_kinetic_pressure_pa", "bulk_sigma_zz",
-                 "shear_rate_measured", "profile_r2", "bulk_inertial_number",
+                 "bulk_inertial_number",
                  "bulk_straddle_fraction", "bulk_mid_pressure_pa",
                  "bulk_mid_shear_pa", "bulk_mid_mu", "bulk_mid_n_contacts",
                  "full_pressure_pa", "full_shear_pa", "full_mu",
@@ -1444,7 +1452,8 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
     _rate = result.get("shear_rate_measured")
     result["inertial_number_imposed_rate"] = i_imposed_rate
     result["inertial_number_measured_rate"] = (
-        inertial_number(_rate, d, p_mean, rho) if _rate is not None else None)
+        inertial_number(_rate, d, p_mean, rho)
+        if _rate is not None and math.isfinite(_rate) else None)
     if "shear_rate_measured" in arr:
         _rate_final = float(np.nanmean(arr["shear_rate_measured"][-n_final:]))
         result["inertial_number_measured_rate_final"] = inertial_number(
