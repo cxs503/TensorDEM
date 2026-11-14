@@ -195,3 +195,17 @@ def test_confinement_p2_counts_resolved_specimens():
     verdict = r4._analyse(anchors + sens)
     assert verdict["p2_confinement"]["n_resolved_cumulative"] == 2
     assert verdict["p2_confinement"]["p2_holds"] is True
+
+def test_run_cached_is_spawn_picklable():
+    """The parallel path (mp spawn Pool) requires a module-level runner.
+
+    Regression: cj2546 (2026-11-14) failed with
+    ``AttributeError: Can't pickle local object 'main.<locals>._one'``
+    because the per-specimen runner was a closure inside ``main``.
+    """
+    import pickle
+
+    from benchmarks.biaxial_shear_band import run_r4_cumulative_ensemble as r4
+
+    assert pickle.dumps(r4._run_cached) is not None
+    assert r4._run_cached.__module__ == r4.__name__

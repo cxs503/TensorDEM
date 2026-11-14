@@ -381,13 +381,13 @@ def b64(path):
     return base64.b64encode(Path(path).read_bytes()).decode()
 
 
-def publish(markdown, figures):
+def publish(markdown, figures, mission_id: int = MISSION_ID):
     token = post("/auth/login", {"username": USER, "password": PASS})["access_token"]
     body = {
         "title": "CASE-BIAXIAL-SHEAR-BAND R4 — 累积窗口测量闭合 R3 测量欠账",
         "summary": markdown.split("---")[0].strip()[:2000],
         "scenario_key": "case_biaxial_shear_band_r4",
-        "mission_id": MISSION_ID,
+        "mission_id": mission_id,
         "tags": ["TensorDEM", "CASE-BIAXIAL-SHEAR-BAND", "shear-band",
                  "biaxial", "validation", "cumulative-window", "bootstrap"],
         "markdown": markdown,
@@ -407,6 +407,7 @@ def main(argv=None):
     parser.add_argument("--json", default=str(JSON_PATH))
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--publish", action="store_true")
+    parser.add_argument("--mission-id", type=int, default=MISSION_ID)
     args = parser.parse_args(argv)
 
     data = load(args.json)
@@ -427,12 +428,13 @@ def main(argv=None):
                         "predictions from each specimen's own φ, ψ.",
              "png_base64": b64(fig2) if fig2 else None},
         ],
-        "mission_id": MISSION_ID, "scenario_key": "case_biaxial_shear_band_r4",
+        "mission_id": args.mission_id, "scenario_key": "case_biaxial_shear_band_r4",
     }
     Path("/tmp/report_r4.json").write_text(json.dumps(payload))
     if args.publish:
         out = publish(payload["markdown"],
-                      [f for f in payload["figures"] if f["png_base64"]])
+                      [f for f in payload["figures"] if f["png_base64"]],
+                      mission_id=args.mission_id)
         print(json.dumps(out)[:600])
     else:
         print("wrote /tmp/report_r4.json (use --publish)")
