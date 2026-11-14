@@ -1,0 +1,147 @@
+{
+ "study": "CASE-COLUMN-COLLAPSE ensemble (initial-realization uncertainty)",
+ "reference": "Lube et al. 2004 JFM 508:175-199, doi:10.1017/S0022112004009036",
+ "tolerance": 0.15,
+ "thresholds": {
+  "SPREAD_TOL": 0.05,
+  "BAND_TOL": 0.15,
+  "REPRO_TOL": 0.005,
+  "JITTER_TOL": 0.05,
+  "SIGN_ASPECT": 0.5,
+  "SIGN_FLOOR": 0.15
+ },
+ "n_cases": 1,
+ "aspects": [
+  0.5
+ ],
+ "summary": {
+  "0.5": {
+   "n_members": 1,
+   "runout_mean": NaN,
+   "runout_sigma": NaN,
+   "runout_sigma_rel": NaN,
+   "runout_min": 1.573348115774934,
+   "runout_max": 1.573348115774934,
+   "err_mean": -0.02879745939818892,
+   "err_sigma": 0.0,
+   "err_worst_abs": 0.02879745939818892,
+   "n_in_band": 1,
+   "all_in_band": true,
+   "spread_ok": false,
+   "t99_errors": [
+    0.5366068699924059
+   ],
+   "t95_errors": [
+    0.38406284467881396
+   ],
+   "t90_errors": [
+    0.27264833869107935
+   ],
+   "err_t99_mean": 0.5366068699924059,
+   "err_t95_mean": 0.38406284467881396,
+   "control_runout": 1.573348115774934,
+   "jitter_axis": [
+    0.0
+   ],
+   "stop_reasons": [
+    "at_rest"
+   ],
+   "jitter_shift": NaN
+  }
+ },
+ "repro": {
+  "available": true,
+  "archive_csv": "docs/artifacts/column_collapse_deposit_audit_m18385/cases_deposit_audit.csv",
+  "archive_sha256": "755eed7b88376cfa4a11b6032adb5204f1e6c6d4f4ae083b0601b70ee38989a4",
+  "tolerance": 0.005,
+  "per_aspect": {
+   "0.5": {
+    "archived_case": "w5b_confirm_wall0.8_a0.5",
+    "archived_runout_ratio": 1.573348115774934,
+    "current_runout_ratio": 1.573348115774934,
+    "delta": 0.0,
+    "match": true
+   }
+  },
+  "used": [
+   {
+    "aspect": 0.5,
+    "archived_case": "w5b_confirm_wall0.8_a0.5",
+    "archived_sha256": "1532745d30366201f4baf55820c3fce3ad2af7fe887416d84592116caf247f46",
+    "archived_runout_ratio": 1.573348115774934,
+    "this_runout_ratio": 1.573348115774934,
+    "delta": 0.0,
+    "match": true
+   }
+  ],
+  "all_match": true
+ },
+ "verdicts": {
+  "H_REPRO": {
+   "pass": true,
+   "tolerance": 0.005,
+   "detail": "jitter=0 control vs round-5 archived ratio"
+  },
+  "H_SPREAD": {
+   "pass": false,
+   "tolerance": 0.05,
+   "detail": {
+    "0.5": NaN
+   }
+  },
+  "H_BAND": {
+   "pass": true,
+   "tolerance": 0.15,
+   "detail": {
+    "0.5": 0.02879745939818892
+   }
+  },
+  "H_SIGN": {
+   "pass": true,
+   "tolerance": 0.15,
+   "detail": {
+    "0.5": [
+     0.5366068699924059
+    ]
+   }
+  },
+  "H_JITTER": {
+   "pass": true,
+   "tolerance": 0.05,
+   "detail": {
+    "0.5": NaN
+   }
+  }
+ },
+ "rows": [
+  {
+   "case": "ens_a0.5_m0_lattice",
+   "member": "m0_lattice",
+   "jitter": 0.0,
+   "seed": 12345,
+   "aspect_nominal": 0.5,
+   "aspect_measured": 0.5497375400976945,
+   "n_particles": 981,
+   "dt": 0.00048223135018603735,
+   "n_steps": 2156,
+   "stop_reason": "at_rest",
+   "runout_ratio_p995": 1.573348115774934,
+   "runout_ratio_max": 1.5733481454471883,
+   "ref_runout_ratio": 1.62,
+   "err_runout": -0.02879745939818892,
+   "ref_runout_ratio_measured_a": 1.6816745497211412,
+   "err_runout_measured_a": -0.06441581337136251,
+   "t90": 0.5971738567509061,
+   "t95": 0.6494536800264564,
+   "t99": 0.7210330009993791,
+   "ref_emplacement_time": 0.46923713220346497,
+   "energy_residual": 0.017768697643238563,
+   "peak_front_speed": 0.8381170123634156,
+   "wall_clock_s": 21.735814290121198,
+   "err_t90": 0.27264833869107935,
+   "err_t95": 0.38406284467881396,
+   "err_t99": 0.5366068699924059
+  }
+ ],
+ "figures": []
+}
