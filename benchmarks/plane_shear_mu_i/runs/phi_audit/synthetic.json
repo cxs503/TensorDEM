@@ -1,0 +1,48 @@
+{
+  "rows": [
+    {
+      "packing": "gap_0.12",
+      "n_particles": 2860,
+      "phi_true": 0.5199626729899774,
+      "phi_bed": 0.5199626729899774,
+      "phi_extent": 0.5200724089236088,
+      "phi_centres": 0.6387420248618135,
+      "predicted_boundary_factor": 1.0909090909090908,
+      "measured_slab_over_bed": 1.228438228438228,
+      "bed_err_pct": 0.0,
+      "extent_err_pct": 0.021104579103803367,
+      "centres_err_pct": 22.843822843822803,
+      "factor_err_pct": 12.606837606837583
+    },
+    {
+      "packing": "gap_0.06",
+      "n_particles": 1430,
+      "phi_true": 0.5199626729899774,
+      "phi_bed": 0.5199626729899774,
+      "phi_extent": 0.5206919946954404,
+      "phi_centres": 0.6969196665949579,
+      "predicted_boundary_factor": 1.2,
+      "measured_slab_over_bed": 1.34032634032634,
+      "bed_err_pct": 0.0,
+      "extent_err_pct": 0.1402642426751699,
+      "centres_err_pct": 34.03263403263399,
+      "factor_err_pct": 11.693861693861663
+    },
+    {
+      "packing": "gap_0.045",
+      "n_particles": 1073,
+      "phi_true": 0.5202050798305322,
+      "phi_bed": 0.5202050798305322,
+      "phi_extent": 0.5212505140966881,
+      "phi_centres": 0.7336847040790976,
+      "predicted_boundary_factor": 1.2857142857142858,
+      "measured_slab_over_bed": 1.4103758931345132,
+      "bed_err_pct": 0.0,
+      "extent_err_pct": 0.2009657934321618,
+      "centres_err_pct": 41.03758931345132,
+      "factor_err_pct": 9.69590279935102
+    }
+  ],
+  "verdict": "unexpected",
+  "ok": false
+}
