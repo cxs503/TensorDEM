@@ -1,0 +1,265 @@
+{
+  "rows": [
+    {
+      "I_target": 0.001,
+      "I_bulk_final": 0.0013273126714104765,
+      "abscissa_shift_pct": 32.73126714104764,
+      "strain_achieved": 2.0046678714774533,
+      "n_particles": 294,
+      "n_samples": 241,
+      "wall_clock_s": 490.87481954001123,
+      "mu_full_20pct": 0.24870598389216067,
+      "phi_container_20pct": 0.5612590581526892,
+      "mu_full_25pct": 0.2402660938682722,
+      "phi_container_25pct": 0.5606737921998374,
+      "mu_std_25pct": 0.0668758289786005,
+      "mu_std_rel_pct": 27.834068428841945,
+      "mu_range_25pct": [
+        0.12467812614009566,
+        0.3784293611318276
+      ],
+      "phi_std_25pct": 0.0028775889859302332,
+      "phi_range_25pct": [
+        0.5578728506786099,
+        0.5652339037332546
+      ],
+      "err_mu_20pct_at_target_pct": -31.219679206596506,
+      "err_mu_20pct_at_bulk_pct": -31.31838412265783,
+      "err_mu_25pct_at_target_pct": -33.55375390081778,
+      "err_mu_25pct_at_bulk_pct": -33.649109244732344,
+      "err_phi_20pct_pct": -12.275949473486635,
+      "err_phi_25pct_pct": -12.367425769991147,
+      "mu_ref_at_target": 0.36159468438538206,
+      "mu_ref_at_bulk": 0.3621143456151676,
+      "phi_ref": 0.6398006644518273,
+      "steady_phi": true,
+      "steady_mu": false,
+      "drift_mu_pct": 12.795335664683943,
+      "drift_phi_pct": -0.04010633296158103,
+      "pressure_control_error_final": -0.004768841387648437,
+      "servo_valid": true
+    },
+    {
+      "I_target": 0.003,
+      "I_bulk_final": 0.0023863037675514193,
+      "abscissa_shift_pct": -20.456541081619363,
+      "strain_achieved": 2.0116763004343623,
+      "n_particles": 294,
+      "n_samples": 244,
+      "wall_clock_s": 166.94469939172268,
+      "mu_full_20pct": 0.2893991505767585,
+      "phi_container_20pct": 0.5563013780700543,
+      "mu_full_25pct": 0.3152759347460821,
+      "phi_container_25pct": 0.556328903601394,
+      "mu_std_25pct": 0.10158595250893127,
+      "mu_std_rel_pct": 32.22128342613491,
+      "mu_range_25pct": [
+        0.08524584734229954,
+        0.42960689669799146
+      ],
+      "phi_std_25pct": 0.003510271482733315,
+      "phi_range_25pct": [
+        0.5519422551994444,
+        0.5622115916010506
+      ],
+      "err_mu_20pct_at_target_pct": -20.65875622081267,
+      "err_mu_20pct_at_bulk_pct": -20.448396835675474,
+      "err_mu_25pct_at_target_pct": -13.564415284054576,
+      "err_mu_25pct_at_bulk_pct": -13.335246498833309,
+      "err_phi_20pct_pct": -12.997152082571251,
+      "err_phi_25pct_pct": -12.992847222451543,
+      "mu_ref_at_target": 0.36475247524752474,
+      "mu_ref_at_bulk": 0.3637879553212343,
+      "phi_ref": 0.6394059405940594,
+      "steady_phi": false,
+      "steady_mu": false,
+      "drift_mu_pct": -26.93551765379845,
+      "drift_phi_pct": 2.017804580316507,
+      "pressure_control_error_final": -0.020068269024005714,
+      "servo_valid": true
+    },
+    {
+      "I_target": 0.01,
+      "I_bulk_final": 0.004955990795925724,
+      "abscissa_shift_pct": -50.440092040742755,
+      "strain_achieved": 2.0481972880230725,
+      "n_particles": 294,
+      "n_samples": 250,
+      "wall_clock_s": 65.90624206513166,
+      "mu_full_20pct": 0.3058653693991037,
+      "phi_container_20pct": 0.5501146805433552,
+      "mu_full_25pct": 0.30675955600695193,
+      "phi_container_25pct": 0.5503569501340745,
+      "mu_std_25pct": 0.016118809762092606,
+      "mu_std_rel_pct": 5.254542017177555,
+      "mu_range_25pct": [
+        0.26527012543981654,
+        0.3289828767761833
+      ],
+      "phi_std_25pct": 0.0009522911350876312,
+      "phi_range_25pct": [
+        0.5489350840829511,
+        0.5513759647087567
+      ],
+      "err_mu_20pct_at_target_pct": -18.541009867936296,
+      "err_mu_20pct_at_bulk_pct": -16.83937667455827,
+      "err_mu_25pct_at_target_pct": -18.302867386464694,
+      "err_mu_25pct_at_bulk_pct": -16.59625952852761,
+      "err_phi_20pct_pct": -13.783846830920066,
+      "err_phi_25pct_pct": -13.745877380402883,
+      "mu_ref_at_target": 0.37548387096774194,
+      "mu_ref_at_bulk": 0.3678007176571136,
+      "phi_ref": 0.6380645161290323,
+      "steady_phi": false,
+      "steady_mu": false,
+      "drift_mu_pct": 26.378698266473627,
+      "drift_phi_pct": 2.40239823739579,
+      "pressure_control_error_final": 0.05567370032029406,
+      "servo_valid": false
+    },
+    {
+      "I_target": 0.03,
+      "I_bulk_final": 0.01490033946412433,
+      "abscissa_shift_pct": -50.33220178625224,
+      "strain_achieved": 2.855291824451307,
+      "n_particles": 294,
+      "n_samples": 423,
+      "wall_clock_s": 49.18209662998561,
+      "mu_full_20pct": 0.30325749274469355,
+      "phi_container_20pct": 0.552767139156497,
+      "mu_full_25pct": 0.29254446128132183,
+      "phi_container_25pct": 0.5523105226845216,
+      "mu_std_25pct": 0.056885110416370864,
+      "mu_std_rel_pct": 19.444945280186996,
+      "mu_range_25pct": [
+        0.18194888257405278,
+        0.3713987232192401
+      ],
+      "phi_std_25pct": 0.0011958162002106121,
+      "phi_range_25pct": [
+        0.5500706246634189,
+        0.5536938820486927
+      ],
+      "err_mu_20pct_at_target_pct": -24.86863918487322,
+      "err_mu_20pct_at_bulk_pct": -20.761009774245743,
+      "err_mu_25pct_at_target_pct": -27.522768601474322,
+      "err_mu_25pct_at_bulk_pct": -23.56024743769557,
+      "err_phi_20pct_pct": -12.887700132930268,
+      "err_phi_25pct_pct": -12.959659748857622,
+      "mu_ref_at_target": 0.4036363636363636,
+      "mu_ref_at_bulk": 0.3827124650133777,
+      "phi_ref": 0.6345454545454545,
+      "steady_phi": false,
+      "steady_mu": false,
+      "drift_mu_pct": -14.887824392763491,
+      "drift_phi_pct": 2.9198962952919683,
+      "pressure_control_error_final": -0.0706951118103335,
+      "servo_valid": false
+    },
+    {
+      "I_target": 0.1,
+      "I_bulk_final": 0.07809393360535419,
+      "abscissa_shift_pct": -21.90606639464582,
+      "strain_achieved": 6.2561480497474555,
+      "n_particles": 294,
+      "n_samples": 1118,
+      "wall_clock_s": 36.98811153997667,
+      "mu_full_20pct": 0.3591773983662912,
+      "phi_container_20pct": 0.5528630052849017,
+      "mu_full_25pct": 0.3784761650116028,
+      "phi_container_25pct": 0.5529472297878962,
+      "mu_std_25pct": 0.07830513155130416,
+      "mu_std_rel_pct": 20.689580689685858,
+      "mu_range_25pct": [
+        0.18943531099085875,
+        0.4990963444272432
+      ],
+      "phi_std_25pct": 0.0004569159560543353,
+      "phi_range_25pct": [
+        0.552171804962349,
+        0.5534362496698637
+      ],
+      "err_mu_20pct_at_target_pct": -25.171375340355993,
+      "err_mu_20pct_at_bulk_pct": -21.772089510599947,
+      "err_mu_25pct_at_target_pct": -21.150798955916084,
+      "err_mu_25pct_at_bulk_pct": -17.568867936658783,
+      "err_phi_20pct_pct": -11.541919154415725,
+      "err_phi_25pct_pct": -11.528443233936603,
+      "mu_ref_at_target": 0.48,
+      "mu_ref_at_bulk": 0.4591422628052427,
+      "phi_ref": 0.625,
+      "steady_phi": false,
+      "steady_mu": false,
+      "drift_mu_pct": -13.910596203726044,
+      "drift_phi_pct": 3.971834055510929,
+      "pressure_control_error_final": -0.03766818487848855,
+      "servo_valid": true
+    },
+    {
+      "I_target": 0.3,
+      "I_bulk_final": 0.3288344110882135,
+      "abscissa_shift_pct": 9.61147036273784,
+      "strain_achieved": 98.9297614906877,
+      "n_particles": 294,
+      "n_samples": 20309,
+      "wall_clock_s": 136.0591827299795,
+      "mu_full_20pct": 0.4385205190029957,
+      "phi_container_20pct": 0.5775787801601153,
+      "mu_full_25pct": 0.43958735886414363,
+      "phi_container_25pct": 0.5774311034341447,
+      "mu_std_25pct": 0.08495366959514346,
+      "mu_std_rel_pct": 19.32577629499095,
+      "mu_range_25pct": [
+        0.2234258226223103,
+        0.7747776120886275
+      ],
+      "phi_std_25pct": 0.0007287869940399772,
+      "phi_range_25pct": [
+        0.5759521642723511,
+        0.578890863239615
+      ],
+      "err_mu_20pct_at_target_pct": -26.913246832834048,
+      "err_mu_20pct_at_bulk_pct": -28.229622984226676,
+      "err_mu_25pct_at_target_pct": -26.73544018930939,
+      "err_mu_25pct_at_bulk_pct": -28.055018842043943,
+      "err_phi_20pct_pct": -5.3149540721122435,
+      "err_phi_25pct_pct": -5.339163371451683,
+      "mu_ref_at_target": 0.6,
+      "mu_ref_at_bulk": 0.6110048981721524,
+      "phi_ref": 0.61,
+      "steady_phi": false,
+      "steady_mu": false,
+      "drift_mu_pct": -6.330735200386027,
+      "drift_phi_pct": 8.79214692260414,
+      "pressure_control_error_final": 0.001281957046896487,
+      "servo_valid": true
+    }
+  ],
+  "verdict": {
+    "mu_curve_within_10pct": false,
+    "phi_curve_within_10pct": false,
+    "mu_noise_exceeds_band_everywhere": false,
+    "overall": "FAIL"
+  },
+  "reference": {
+    "mu": {
+      "law": "mu_s+(mu_2-mu_s)/(I0/I+1)",
+      "constants": {
+        "mu_s": 0.36,
+        "mu_2": 0.84,
+        "I_0": 0.3
+      },
+      "status": "da Cruz 2005 / GDR MiDi 2004 fit as quoted in rounds 1-5: mu_s=0.36, mu_2=0.84, I0=0.30 -- QUOTED, NOT ARCHIVED; a second in-repo triple (0.379, 0.641, 0.279) exists in tests/test_mu_i_rheology.py, see reference_provenance.py"
+    },
+    "phi": {
+      "law": "phi_max-(phi_max-phi_min)/(I0/I+1)",
+      "constants": {
+        "phi_max": 0.64,
+        "phi_min": 0.58,
+        "I_0": 0.3
+      },
+      "status": "PROVENANCE-UNVERIFIED magnitudes (0.58, 0.64 inherited from round 1, no in-repo anchor; da Cruz 2005 is a 2D-disk study with phi ~ 0.84 -> 0.79, so these are 3D glass-bead numbers) + VERIFIED monotonicity (decreasing with I, i.e. dilatancy) and limits phi(I->0)=0.64, phi(I->inf)=0.58"
+    }
+  },
+  "ledger_band_pct": 10.0
+}
