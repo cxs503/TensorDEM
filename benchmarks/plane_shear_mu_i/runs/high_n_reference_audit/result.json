@@ -1,0 +1,30 @@
+{
+ "case": "CASE-DEM-PLANE-SHEAR-MUIDI",
+ "round": 19,
+ "defect": "round-18 higher-N sweep: inverted ref_phi + duplicated triple + TOL unit",
+ "I": [
+  0.001,
+  0.01,
+  0.03,
+  0.1,
+  0.3
+ ],
+ "phi_round18_local": [
+  0.5801993355481727,
+  0.5819354838709677,
+  0.5854545454545454,
+  0.595,
+  0.61
+ ],
+ "phi_reference_law": [
+  0.6398006644518273,
+  0.6380645161290323,
+  0.6345454545454545,
+  0.625,
+  0.61
+ ],
+ "phi_sign_agreement": "round-18 local grows with I; reference must decrease",
+ "tol_old": 0.1,
+ "tol_new_pct": 10.0,
+ "figure": "fig_reference_defects_r19.png"
+}
