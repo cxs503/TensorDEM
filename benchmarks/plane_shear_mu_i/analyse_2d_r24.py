@@ -34,9 +34,9 @@ ORDINATES = ("mu_wall", "mu_bulk", "phi_gap", "phi_cell", "p_wall", "p_bulk",
              "sigma_yy_over_P", "I_bulk")
 
 
-def load_runs(run_dir: Path) -> list[dict]:
+def load_runs(run_dir: Path, pattern: str = "point_I*_s*.json") -> list[dict]:
     runs = []
-    for path in sorted(run_dir.glob("point_I*_s*.json")):
+    for path in sorted(run_dir.glob(pattern)):
         data = json.loads(path.read_text())
         data["_file"] = path.name
         runs.append(data)
@@ -64,7 +64,7 @@ def _stats(values: list[float]) -> dict:
 
 
 def assemble(run_dir: Path, law, *, probe: bool = False) -> dict:
-    runs = load_runs(run_dir)
+    runs = load_runs(run_dir, "probe_I*.json" if probe else "point_I*_s*.json")
     if not runs:
         raise SystemExit(f"no runs in {run_dir}")
     by_I: dict[float, list[dict]] = {}
@@ -129,22 +129,45 @@ def _P(point: dict) -> float:
     return float(point.get("_P", 1.0e4))
 
 
+def _pick(node: dict, path: tuple[str, ...]) -> float | None:
+    """Follow a key path and return the scalar mean, or ``None``."""
+    cur = node
+    for key in path:
+        if not isinstance(cur, dict) or key not in cur:
+            return None
+        cur = cur[key]
+    if isinstance(cur, dict):
+        cur = cur.get("mean")
+    return float(cur) if isinstance(cur, (int, float)) else None
+
+
 def compare_with_3d(points_2d: list[dict], path: Path) -> list[dict]:
     """Pair every 2-D point with the 3-D ensemble mean at the closest I."""
     if not path.exists():
         return []
     data = json.loads(path.read_text())
-    pts3d = data.get("points", [])
+    pts3d = data.get("points", {})
+    if isinstance(pts3d, dict):            # round-23 file is keyed by I_target
+        pts3d = list(pts3d.values())
     out = []
     for p in points_2d:
         I2 = p["I_measured"]
-        cands = [q for q in pts3d if q.get("I_bulk", {}).get("mean")]
+        cands = []
+        for q in pts3d:
+            I3 = _pick(q, ("I_bulk_mean",))
+            if I3 is None:
+                I3 = _pick(q, ("I_bulk",))
+            mu3 = _pick(q, ("mu", "mu_full_zz_final"))
+            if mu3 is None:
+                mu3 = _pick(q, ("mu_full_zz_final",))
+            if I3 is not None and mu3 is not None:
+                cands.append((q, I3, mu3))
         if not cands:
             continue
-        q = min(cands, key=lambda r: abs(r["I_bulk"]["mean"] - I2))
-        mu3 = q["mu_full_zz_final"]["mean"] if "mu_full_zz_final" in q else q.get("mu_bulk", {}).get("mean")
-        out.append({"I_2d": I2, "I_3d": q["I_bulk"]["mean"],
+        q, I3, mu3 = min(cands, key=lambda t: abs(t[1] - I2))
+        out.append({"I_2d": I2, "I_3d": I3,
                     "mu_2d": p["mu_wall"]["mean"], "mu_3d": mu3,
+                    "I_3d_target": q.get("I_target"),
                     "delta_pct": 100.0 * (p["mu_wall"]["mean"] / mu3 - 1.0) if mu3 else float("nan")})
     return out
 
@@ -191,7 +214,8 @@ def tables(result: dict, cmp3d: list[dict], out: Path) -> None:
     out.write_text("\n".join(lines) + "\n")
 
 
-def figures(result: dict, cmp3d: list[dict], outdir: Path, law) -> list[tuple[str, str]]:
+def figures(result: dict, cmp3d: list[dict], outdir: Path, law, tag: str = ""
+            ) -> list[tuple[str, str]]:
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
@@ -215,7 +239,7 @@ def figures(result: dict, cmp3d: list[dict], outdir: Path, law) -> list[tuple[st
     ax.set_xlabel("inertial number I"), ax.set_ylabel("effective friction mu")
     ax.set_title("2-D disk plane shear: mu(I) with seed 95 % CI")
     ax.legend(fontsize=8), ax.grid(alpha=0.3)
-    path = outdir / "fig_r24_muI_2d.png"
+    path = outdir / f"fig_r24_muI_2d{tag}.png"
     fig.tight_layout(), fig.savefig(path, dpi=130), plt.close(fig)
     made.append((path.name, "mu(I) of the 2-D disk cell (seed mean with 95 % Student-t interval) "
                             "against the archived 2-D law and its +-10 % band."))
@@ -231,7 +255,7 @@ def figures(result: dict, cmp3d: list[dict], outdir: Path, law) -> list[tuple[st
     ax.set_xlabel("inertial number I"), ax.set_ylabel("solid fraction phi")
     ax.set_title("phi(I): area fraction (primary) and cell fraction (secondary)")
     ax.legend(fontsize=8), ax.grid(alpha=0.3)
-    path = outdir / "fig_r24_phiI_2d.png"
+    path = outdir / f"fig_r24_phiI_2d{tag}.png"
     fig.tight_layout(), fig.savefig(path, dpi=130), plt.close(fig)
     made.append((path.name, "phi_gap (primary, surface-to-surface control volume) and phi_cell "
                             "(secondary) against the archived dilatancy law."))
@@ -246,7 +270,7 @@ def figures(result: dict, cmp3d: list[dict], outdir: Path, law) -> list[tuple[st
         ax.set_xlabel("inertial number I"), ax.set_ylabel("mu")
         ax.set_title("dimensionality: 2-D device vs 3-D device vs the 2-D law")
         ax.legend(fontsize=8), ax.grid(alpha=0.3)
-        path = outdir / "fig_r24_dimensionality.png"
+        path = outdir / f"fig_r24_dimensionality{tag}.png"
         fig.tight_layout(), fig.savefig(path, dpi=130), plt.close(fig)
         made.append((path.name, "the same quantity measured on both devices: does building the "
                                 "law's own dimension close the offset?"))
@@ -262,10 +286,11 @@ def main(argv: list | None = None) -> int:
     law = reference_archive.archived_law()
     result = assemble(run_dir, law, probe=args.probe)
     cmp3d = compare_with_3d(result["points"], HERE / "runs" / "seed_ensemble" / "analysis_r23.json")
-    (run_dir / "analysis_r24.json").write_text(json.dumps(
+    tag = "_probe" if args.probe else ""
+    (run_dir / f"analysis_r24{tag}.json").write_text(json.dumps(
         {"points": result["points"], "verdict": result["verdict"], "vs_3d": cmp3d}, indent=1))
-    tables(result, cmp3d, run_dir / "tables_r24.md")
-    made = figures(result, cmp3d, run_dir, law)
+    tables(result, cmp3d, run_dir / f"tables_r24{tag}.md")
+    made = figures(result, cmp3d, run_dir, law, tag=tag)
     print(json.dumps(result["verdict"], indent=1))
     for name, cap in made:
         print("figure", name)
