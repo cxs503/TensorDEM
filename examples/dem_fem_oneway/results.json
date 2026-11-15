@@ -1,5 +1,6 @@
 {
   "scenario": "dem_fem_oneway_particle_impact",
+  "scope": "numerical_verification_only",
   "dem": {
     "n_steps": 102,
     "dt": 6.70918268045492e-05,
@@ -21,19 +22,51 @@
     "energy_final_J": 1.7391078179924509e-09,
     "work_done_J": 1.7391078188882509e-09
   },
+  "modal": {
+    "peak_deflection_m": 4.545831071805974e-08,
+    "n_modes": 9
+  },
+  "dt_convergence": [
+    {
+      "refinement": 1,
+      "dt": 6.70918268045492e-05,
+      "peak_deflection_m": 4.503447049462851e-08,
+      "n_samples": 102
+    },
+    {
+      "refinement": 2,
+      "dt": 3.35459134022746e-05,
+      "peak_deflection_m": 4.5400671458897697e-08,
+      "n_samples": 203
+    },
+    {
+      "refinement": 4,
+      "dt": 1.6772956701137305e-05,
+      "peak_deflection_m": 4.5465689317927386e-08,
+      "n_samples": 405
+    },
+    {
+      "refinement": 8,
+      "dt": 8.386478350568653e-06,
+      "peak_deflection_m": 4.546681684387689e-08,
+      "n_samples": 809
+    }
+  ],
   "verification": {
-    "impulse_error_relative": 0.0,
-    "impulse_pass": true,
-    "deflection_analytical_static_m": 4.350122688546933e-08,
-    "deflection_error_relative": 0.035245985433834504,
+    "force_history_port_parity_error_relative": 0.0,
+    "force_history_port_parity_pass": true,
+    "deflection_dynamic_vs_modal_m": 4.545831071805974e-08,
+    "deflection_error_relative": 0.009323712578321718,
     "deflection_pass": true,
     "dem_dissipation_J": 3.2726777014626535e-05,
     "fem_work_done_J": 1.7391078188882509e-09,
-    "work_energy_error_relative": 5.150916989648723e-10,
+    "work_energy_error_relative": 5.150916986995529e-10,
     "energy_pass": true,
     "energy_balance_error_relative": 0.001088882839285933,
     "separability_dem": true,
     "separability_fem": true,
-    "separability_fem_deflection_error": 2.194816714561837e-12
+    "separability_fem_deflection_error": 2.194816714561837e-12,
+    "dt_convergence_ratio": 1.000024799490922,
+    "dt_convergence_pass": true
   }
 }

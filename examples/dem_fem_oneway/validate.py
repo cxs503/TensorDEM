@@ -30,30 +30,38 @@ def validate():
     v = results["verification"]
     checks = []
 
-    # 1. Impulse ledger
-    impulse_ok = v["impulse_pass"]
-    checks.append(("Impulse ledger ≤1e-10", impulse_ok, v["impulse_error_relative"]))
+    # 1. Force history port parity (renamed from impulse)
+    parity_ok = v["force_history_port_parity_pass"]
+    checks.append(("Force history port parity ≤1e-10", parity_ok, v["force_history_port_parity_error_relative"]))
 
-    # 2. Deflection
+    # 2. Deflection: dynamic vs modal superposition ≤1%
     deflection_ok = v["deflection_pass"]
-    checks.append(("Deflection ≤5%", deflection_ok, v["deflection_error_relative"]))
+    checks.append(("Deflection dynamic vs modal ≤1%", deflection_ok, v["deflection_error_relative"]))
 
     # 3. Energy (work-energy balance)
     energy_ok = v["energy_pass"]
     checks.append(("Work-Energy ≤1e-8", energy_ok, v["work_energy_error_relative"]))
 
-    # 4. Separability
+    # 4. dt convergence
+    dt_conv_ok = v.get("dt_convergence_pass", False)
+    checks.append(("dt convergence ratio ≥0.9", dt_conv_ok, v.get("dt_convergence_ratio", "N/A")))
+
+    # 5. Separability
     sep_dem_ok = v["separability_dem"]
     sep_fem_ok = v["separability_fem"]
     checks.append(("Separability DEM", sep_dem_ok, ""))
     checks.append(("Separability FEM", sep_fem_ok, v.get("separability_fem_deflection_error", "N/A")))
 
-    # 5. Ledger completeness
+    # 6. Ledger completeness
     ledger_ok = all(k in ledger for k in [
-        "ledger_type", "dem_side", "fem_side", "interface",
-        "energy_balance", "deflection_comparison", "separability",
+        "ledger_type", "dem_side", "fem_side", "modal_side", "interface",
+        "energy_balance", "deflection_comparison", "dt_convergence", "separability",
     ])
     checks.append(("Ledger completeness", ledger_ok, ""))
+
+    # 7. Scope field present
+    scope_ok = results.get("scope") == "numerical_verification_only"
+    checks.append(("scope=numerical_verification_only", scope_ok, results.get("scope", "MISSING")))
 
     print("DEM-FEM Coupling Validation Results")
     print("=" * 50)
