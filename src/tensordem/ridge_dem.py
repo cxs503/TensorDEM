@@ -249,6 +249,10 @@ class RidgeAssembly:
                  mudline: float | None = None,
                  bond_contact_mode: str = "exclusive"):
         self.material = material
+        #: Optional unbonded-contact friction mobilisation meter.  ``None``
+        #: (default) leaves the contact law and every historical number
+        #: untouched; see :meth:`enable_friction_meter`.
+        self.friction_meter: dict[str, float] | None = None
         #: runtime bond strengths.  They start at the material values and can be
         #: re-set with :meth:`set_bond_strengths` (age-dependent freeze bonds).
         self.bond_tensile_strength = float(material.bond_tensile_strength)
@@ -548,6 +552,21 @@ class RidgeAssembly:
                     v_t / m.velocity_regularisation)
             loaded = m.contact_stiffness * overlap[active] \
                 - m.contact_damping * v_n > 0.0
+            if self.friction_meter is not None:
+                # Diagnostic only: how much of the Coulomb capacity the
+                # regularised law actually mobilises, ``tanh(v_t/v_reg)``.
+                _loaded = loaded
+                _ratio = torch.tanh(v_t[_loaded] / m.velocity_regularisation)
+                _meter = self.friction_meter
+                _meter["calls"] += 1.0
+                _meter["contacts"] += float(_loaded.sum())
+                _meter["sum_fn"] += float(magnitude[_loaded].sum())
+                # absolute values: v_t changes sign from contact to contact,
+                # so a signed mean would cancel the mobilisation away
+                _meter["sum_abs_tanh"] += float(_ratio.abs().sum())
+                _meter["sum_fn_abs_tanh"] += float((magnitude[_loaded] * _ratio.abs()).sum())
+                _meter["saturated"] += float((_ratio.abs() >= 0.99).sum())
+                _meter["sum_vt_abs"] += float(v_t[_loaded].abs().sum())
             contact_damping_power += float(
                 (m.contact_damping * v_n ** 2 * loaded).sum())
             contact_friction_power += float((-tangential * v_t).sum())
@@ -712,6 +731,49 @@ class RidgeAssembly:
 
     def positions_of(self, mask) -> torch.Tensor:
         return self.pos[torch.as_tensor(mask, dtype=torch.bool)]
+
+    def enable_friction_meter(self) -> dict[str, float]:
+        """Start accumulating the unbonded-contact friction mobilisation meter.
+
+        The rotationless contact law is not Coulomb but its regularised form
+        ``F_t = -mu F_n tanh(v_t / v_reg)``: the mobilised fraction of the
+        Coulomb capacity is ``tanh(v_t/v_reg)``, which is a *rate* ratio, not a
+        material property.  This meter reports how much of that capacity the
+        assembly actually mobilises, so a measured macro friction angle can be
+        traced back to the contact law instead of being asserted.
+
+        ``sum_fn_abs_tanh / sum_fn`` is the normal-force-weighted mean
+        mobilisation ``<|tanh(v_t/v_reg)|>``, i.e. the factor by which the
+        effective contact friction falls below ``mu``.  Pure instrumentation: enabling it never changes a force.
+        """
+        self.friction_meter = {"calls": 0.0, "contacts": 0.0, "sum_fn": 0.0,
+                               "sum_abs_tanh": 0.0, "sum_fn_abs_tanh": 0.0,
+                               "saturated": 0.0, "sum_vt_abs": 0.0}
+        return self.friction_meter
+
+    def read_friction_meter(self, *, reset: bool = True) -> dict[str, float]:
+        """Return the accumulated meter (and reset it by default)."""
+        meter = self.friction_meter
+        if meter is None:
+            raise RuntimeError("friction meter is not enabled; "
+                               "call enable_friction_meter() first")
+        out = dict(meter)
+        contacts = out["contacts"]
+        out["mean_abs_tanh"] = (out["sum_abs_tanh"] / contacts
+                                if contacts else float("nan"))
+        out["fn_weighted_mean_abs_tanh"] = (out["sum_fn_abs_tanh"] / out["sum_fn"]
+                                           if out["sum_fn"] else float("nan"))
+        out["saturated_fraction"] = (out["saturated"] / contacts
+                                     if contacts else float("nan"))
+        out["mean_abs_vt"] = out["sum_vt_abs"] / contacts if contacts else float("nan")
+        if reset:
+            for key in meter:
+                meter[key] = 0.0
+        return out
+
+    def disable_friction_meter(self) -> None:
+        """Stop metering (the contact law is unaffected either way)."""
+        self.friction_meter = None
 
 
 TRIANGULAR_PACKING_POROSITY = 1.0 - math.pi / (2.0 * math.sqrt(3.0))
