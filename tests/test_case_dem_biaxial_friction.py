@@ -8,6 +8,7 @@ tolerance 8 %).  These tests pin:
 * the pre-declared reference / tolerance / configuration (no silent mutation),
 * the acceptance arithmetic (``friction_angle_deg`` / ``judge_friction``)
   against analytic values,
+* the Bolton dilatancy index arithmetic,
 * the end-to-end quick pipeline (8x16 smoke specimen, not a result),
 * critical-state analysis integration (phi_cv extraction + Rowe cross-check),
 * self-consistency of any committed anchor artefact (``run.json``): the
@@ -34,6 +35,7 @@ from tensordem.biaxial_friction_case import (
     PHI_REF_DEG,
     QUICK_CONFIG,
     TOLERANCE,
+    bolton_dilatancy_index,
     friction_angle_deg,
     judge_friction,
     run_biaxial_friction_case,
@@ -58,6 +60,7 @@ def test_anchor_configuration_matches_the_task_board():
     assert ANCHOR_CONFIG["wall_friction"] == pytest.approx(0.0)
     assert ANCHOR_CONFIG["consolidation_steps"] == 4000
     assert ANCHOR_CONFIG["strain_target"] == pytest.approx(0.30)
+    assert ANCHOR_CONFIG["freeze_bond_fraction"] == pytest.approx(0.0)
     assert PHI_REF_DEG == pytest.approx(38.0)
     assert TOLERANCE == pytest.approx(0.08)
 
@@ -67,6 +70,7 @@ def test_quick_configuration_is_a_smoke_not_a_result():
     assert QUICK_CONFIG["columns"] * QUICK_CONFIG["rows"] < 500
     assert QUICK_CONFIG["confining_stress"] == pytest.approx(100.0e3)
     assert QUICK_CONFIG["wall_friction"] == pytest.approx(0.0)
+    assert QUICK_CONFIG["freeze_bond_fraction"] == pytest.approx(0.0)
 
 
 def test_critical_state_references_are_declared():
@@ -115,6 +119,37 @@ def test_judge_friction_acceptance_arithmetic(phi_got, expect_pass):
 
 
 # ---------------------------------------------------------------------------
+# Bolton dilatancy index (analytic)
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("phi_peak,phi_cv,A,expected_IR", [
+    (38.0, 33.0, 5.0, 1.0),    # Bolton plane-strain: phi_peak = 33 + 5*1 = 38
+    (38.0, 33.0, 3.0, 5.0/3.0),  # triaxial A=3
+    (45.0, 30.0, 5.0, 3.0),    # dense specimen
+    (33.0, 33.0, 5.0, 0.0),    # critical state: no dilation
+])
+def test_bolton_dilatancy_index_analytic(phi_peak, phi_cv, A, expected_IR):
+    assert bolton_dilatancy_index(phi_peak, phi_cv, A=A) == pytest.approx(expected_IR, abs=1e-12)
+
+
+def test_bolton_dilatancy_index_rejects_unphysical():
+    """phi_peak < phi_cv is unphysical (no negative dilation index)."""
+    assert math.isnan(bolton_dilatancy_index(30.0, 35.0))
+    assert math.isnan(bolton_dilatancy_index(float("nan"), 33.0))
+    assert math.isnan(bolton_dilatancy_index(38.0, float("nan")))
+
+
+def test_bolton_dilatancy_index_bolton_1986_table2():
+    """Bolton (1986) Table 2: phi_ps = phi_cv + 5*I_R for plane strain.
+
+    At D_r=80%, sigma_3=100 kPa: phi_ps=38, phi_cv=33 => I_R = 1.0.
+    This is the anchor reference point.
+    """
+    I_R = bolton_dilatancy_index(38.0, 33.0, A=5.0)
+    assert I_R == pytest.approx(1.0, abs=1e-12)
+
+
+# ---------------------------------------------------------------------------
 # End-to-end quick pipeline (smoke, not a result)
 # ---------------------------------------------------------------------------
 
@@ -131,6 +166,8 @@ def test_quick_pipeline_runs_and_judges(tmp_path):
     # the quick specimen is under-consolidated; do NOT assert the verdict
     assert result["case_key"] == CASE_KEY
     assert result["reference"].startswith("Bolton (1986)")
+    # freeze_bond_fraction must be 0 (cohesionless sand)
+    assert result["config"]["freeze_bond_fraction"] == pytest.approx(0.0)
 
 
 def test_quick_pipeline_includes_critical_state_analysis():
@@ -148,6 +185,26 @@ def test_quick_pipeline_includes_critical_state_analysis():
         assert "phi_mu_deg" in cs["rowe"]
         assert cs["rowe"]["phi_mu_deg"] == pytest.approx(
             math.degrees(math.atan(0.55)), abs=1e-9)
+
+
+def test_quick_pipeline_includes_bolton_dilatancy():
+    """The quick pipeline must include Bolton dilatancy index."""
+    result = run_biaxial_friction_case(quick=True)
+    bd = result.get("bolton_dilatancy", {})
+    assert isinstance(bd, dict)
+    assert "I_R" in bd
+    assert bd["A"] == pytest.approx(5.0)
+
+
+def test_quick_pipeline_includes_dimensionless_numbers():
+    """The quick pipeline must include dimensionless numbers for quasi-static audit."""
+    result = run_biaxial_friction_case(quick=True)
+    dim = result.get("dimensionless", {})
+    assert isinstance(dim, dict)
+    assert "inertial_number" in dim
+    assert dim["inertial_number"] > 0.0
+    assert "confining_stress_kPa" in dim
+    assert dim["confining_stress_kPa"] == pytest.approx(100.0)
 
 
 # ---------------------------------------------------------------------------
@@ -190,3 +247,12 @@ def test_committed_artefact_has_critical_state_analysis():
         assert "phi_cv_deg" in cs
         assert "converged" in cs
         assert "rowe" in cs
+
+
+@pytest.mark.skipif(not os.path.exists(ARTIFACT),
+                      reason="anchor artefact not committed yet")
+def test_committed_artefact_is_cohesionless():
+    """If run.json is committed, it must use freeze_bond_fraction=0 (sand ref)."""
+    with open(ARTIFACT) as f:
+        rec = json.load(f)
+    assert rec["config"]["freeze_bond_fraction"] == pytest.approx(0.0)
