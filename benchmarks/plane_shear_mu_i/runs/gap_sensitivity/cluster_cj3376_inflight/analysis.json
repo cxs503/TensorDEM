@@ -1,0 +1,158 @@
+{
+ "experiment": "finite_gap_wall_layer_sensitivity",
+ "round": 21,
+ "protocol": {
+  "P_pa": 62500.0,
+  "kn": 62500.0,
+  "mu": 0.5,
+  "mu_rolling": 0.05,
+  "restitution": 0.3,
+  "radius_m": 0.005,
+  "density": 2500.0,
+  "box_width_m": 0.12,
+  "box_depth_m": 0.05,
+  "seed": 5279,
+  "strain_target": 4.0
+ },
+ "reference": {
+  "mu": {
+   "law": "mu_s+(mu_2-mu_s)/(I0/I+1)",
+   "constants": {
+    "mu_s": 0.36,
+    "mu_2": 0.84,
+    "I_0": 0.3
+   },
+   "status": "da Cruz 2005 / GDR MiDi 2004 fit as quoted in rounds 1-5: mu_s=0.36, mu_2=0.84, I0=0.30 -- QUOTED, NOT ARCHIVED; a second in-repo triple (0.379, 0.641, 0.279) exists in tests/test_mu_i_rheology.py, see reference_provenance.py"
+  },
+  "phi": {
+   "law": "phi_max-(phi_max-phi_min)/(I0/I+1)",
+   "constants": {
+    "phi_max": 0.64,
+    "phi_min": 0.58,
+    "I_0": 0.3
+   },
+   "status": "PROVENANCE-UNVERIFIED magnitudes (0.58, 0.64 inherited from round 1, no in-repo anchor; da Cruz 2005 is a 2D-disk study with phi ~ 0.84 -> 0.79, so these are 3D glass-bead numbers) + VERIFIED monotonicity (decreasing with I, i.e. dilatancy) and limits phi(I->0)=0.64, phi(I->inf)=0.58"
+  }
+ },
+ "reference_status": {
+  "mu": "da Cruz 2005 / GDR MiDi 2004 fit as quoted in rounds 1-5: mu_s=0.36, mu_2=0.84, I0=0.30 -- QUOTED, NOT ARCHIVED; a second in-repo triple (0.379, 0.641, 0.279) exists in tests/test_mu_i_rheology.py, see reference_provenance.py",
+  "phi": "PROVENANCE-UNVERIFIED magnitudes (0.58, 0.64 inherited from round 1, no in-repo anchor; da Cruz 2005 is a 2D-disk study with phi ~ 0.84 -> 0.79, so these are 3D glass-bead numbers) + VERIFIED monotonicity (decreasing with I, i.e. dilatancy) and limits phi(I->0)=0.64, phi(I->inf)=0.58"
+ },
+ "per_I": {
+  "0.1": {
+   "I_abscissa": 0.09031369791001724,
+   "n_points": 1,
+   "gaps_d": [
+    2.727943099461038
+   ],
+   "phi_bed": [
+    0.4798475962546165
+   ],
+   "mu_wall": [
+    0.30578279348436893
+   ],
+   "mu_bulk": [
+    0.13237592929760666
+   ],
+   "mu_drift_pct_halfsplit": [
+    -29.664820397821078
+   ],
+   "mu_drift_max_abs_pct": 29.664820397821078,
+   "strain_budget_respected_all": false,
+   "phi_fit": {
+    "key": "phi_bed",
+    "n_points": 1,
+    "identified": false,
+    "v_inf": NaN,
+    "slope_per_d": NaN,
+    "delta_over_d": NaN,
+    "delta_m": NaN,
+    "r2": NaN
+   },
+   "mu_wall_fit": {
+    "key": "mu_wall",
+    "n_points": 1,
+    "identified": false,
+    "v_inf": NaN,
+    "slope_per_d": NaN,
+    "delta_over_d": NaN,
+    "delta_m": NaN,
+    "r2": NaN
+   },
+   "mu_bulk_fit": {
+    "key": "mu_bulk",
+    "n_points": 1,
+    "identified": false,
+    "v_inf": NaN,
+    "slope_per_d": NaN,
+    "delta_over_d": NaN,
+    "delta_m": NaN,
+    "r2": NaN
+   },
+   "reference_at_I": {
+    "mu": 0.47106598417871126,
+    "phi": 0.626116751977661
+   },
+   "err_pct_thinnest_gap": {
+    "phi": -23.361322830133002,
+    "mu_wall": -35.087057067495195,
+    "mu_bulk": -71.8986439811824
+   },
+   "err_pct_gap_extrapolated": {
+    "phi": null,
+    "mu_wall": null,
+    "mu_bulk": null
+   },
+   "residuals": {
+    "phi_bed": [
+     {
+      "gap_d": 2.727943099461038,
+      "I": 0.09031369791001724,
+      "value": 0.4798475962546165,
+      "ref": 0.626116751977661,
+      "err_pct": -23.361322830133002,
+      "fit_inf": NaN
+     }
+    ],
+    "mu_wall": [
+     {
+      "gap_d": 2.727943099461038,
+      "I": 0.09031369791001724,
+      "value": 0.30578279348436893,
+      "ref": 0.47106598417871126,
+      "err_pct": -35.087057067495195,
+      "fit_inf": NaN
+     }
+    ],
+    "mu_bulk": [
+     {
+      "gap_d": 2.727943099461038,
+      "I": 0.09031369791001724,
+      "value": 0.13237592929760666,
+      "ref": 0.47106598417871126,
+      "err_pct": -71.8986439811824,
+      "fit_inf": NaN
+     }
+    ]
+   }
+  }
+ },
+ "verdict": {
+  "band_pct": 10.0,
+  "rows": [],
+  "n_inside_band_thinnest": 0,
+  "n_inside_band_extrapolated": 0,
+  "n_comparisons": 0,
+  "correction_improves_majority": false
+ },
+ "figures": [
+  {
+   "file": "runs/gap_sensitivity/fig_gap_sensitivity.png",
+   "caption": "(a) phi vs 1/(gap in diameters) with the linear wall-layer fit; diamonds are the H->inf intercept; (b) mu from the platen (solid) and the bulk slab (dashed) on the same abscissa; (c) error against the reference law at the thinnest measured gap vs the extrapolated unbounded-gap value (red lines = the +/-10 % acceptance band); (d) half-split drift of mu as a stationarity proxy, per gap."
+  },
+  {
+   "file": "runs/gap_sensitivity/fig_phi_extrapolation.png",
+   "caption": "Measured phi(d/H) (circles) and the fitted unbounded-gap value phi_inf (diamonds), with the identified dead-layer thickness delta/d per I."
+  }
+ ]
+}
