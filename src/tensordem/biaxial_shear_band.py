@@ -426,6 +426,7 @@ def run_biaxial_shear_band(*, confining_stress: float = 100.0e3,
                            axial_servo: bool = False,
                            material_overrides: dict[str, Any] | None = None,
                            record_snapshots: bool = False,
+                           mobilisation_every: int = 0,
                            ) -> dict[str, Any]:
     """Run one biaxial test (constant pressure or constant volume) and measure its band.
 
@@ -454,6 +455,15 @@ def run_biaxial_shear_band(*, confining_stress: float = 100.0e3,
     offline, e.g. by :mod:`tensordem.biaxial_band_diagnostics`.  It is off by
     default because the snapshots are not JSON-serialisable and are ~0.5 MB
     each.
+
+    ``mobilisation_every`` (steps, 0 = off) additionally samples the
+    unbonded-contact friction mobilisation meter
+    (:meth:`tensordem.ridge_dem.RidgeAssembly.enable_friction_meter`) every
+    ``mobilisation_every`` steps and appends the window mean to
+    ``result["mobilisation"]`` together with the axial strain.  This makes the
+    measured macro friction angle traceable to the contact law
+    ``F_t = -mu F_n tanh(v_t/v_reg)``; it is diagnostic only and cannot change
+    a single force.
     """
     if lateral_control not in ("servo", "isochoric"):
         raise ValueError(
@@ -533,9 +543,12 @@ def run_biaxial_shear_band(*, confining_stress: float = 100.0e3,
         for _k in (2, 3):
             _plane = assembly.planes[_k]
             assembly.planes[_k] = replace(_plane, servo_stress=None, velocity=0.0)
+    if mobilisation_every:
+        assembly.enable_friction_meter()
     prev = assembly.pos.detach().numpy().copy()
     reference = prev.copy()
     snapshots: list[dict[str, Any]] = []
+    mobilisation: list[dict[str, float]] = []
     if record_snapshots:
         snapshots.append({"strain": 0.0, "positions": reference.copy(), "window": None})
     strain = 0.0
@@ -631,6 +644,10 @@ def run_biaxial_shear_band(*, confining_stress: float = 100.0e3,
                         "volumetric_strain_log": axial_log + lateral_log,
                         "mean_stress": 0.5 * (sigma_v + sigma_h),
                         "stress_ratio": (sigma_v - sigma_h) / max(0.5 * (sigma_v + sigma_h), 1e-12)})
+        if mobilisation_every and (_step % mobilisation_every) == 0:
+            _sample = assembly.read_friction_meter(reset=True)
+            _sample["axial_strain"] = float(strain)
+            mobilisation.append(_sample)
         if strain + 1e-12 >= next_snapshot:
             next_snapshot += snapshot_strain
             window = (float(left.point[0]) + wall_margin_diameters * diameter,
@@ -756,6 +773,8 @@ def run_biaxial_shear_band(*, confining_stress: float = 100.0e3,
                     else "constant volume (kinematic volume-preserving walls)")
                  + ", top platen displacement driven; gravity neglected"),
         "lateral_control": lateral_control,
+        "mobilisation_every": int(mobilisation_every),
+        "mobilisation": mobilisation,
         "consolidation_state": consolidation_state,
         "snapshots": snapshots,
     }
