@@ -46,15 +46,29 @@ if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 
 from tensordem.mu_i_rheology import ServoShearCase, simulate_servo_shear  # noqa: E402
-from reference_law import ref_mu as _ref_mu, ref_phi as _ref_phi  # noqa: E402
+# round 19 (m21228): the reference law is imported, never re-copied.  This file
+# used to carry its own ``(mu_s, mu_2, I_0) = (0.36, 0.84, 0.30)`` trio *and*
+# its own ``ref_phi`` -- and that local ``ref_phi`` had the dilatancy sign
+# inverted (``phi_c + dphi/(I0/I+1)`` grows with I, whereas the physical
+# reference must *decrease*).  The round-2 defect D2 was thereby reintroduced
+# in the round-18 sweep, so the phi column of a round-18 assembly would have
+# had the wrong sign; no round-18 row was ever assembled, so no archived number
+# is affected.  ``reference_law.ref_phi`` is now the only definition.
+from reference_law import (  # noqa: E402
+    I_0, MU_2, MU_REF_STATUS, MU_S, PHI_MAX, PHI_MIN, PHI_REF_STATUS,
+    ref_mu, ref_phi, reference as reference_law,
+)
 
 RUNS = HERE / "runs" / "high_n"
 RUNS.mkdir(parents=True, exist_ok=True)
 
-# --- reference (da Cruz 2005 / GDR MiDi 2004), glass beads ----------------
-MU_S, MU_2, I_0 = 0.36, 0.84, 0.30
-PHI_C, PHI_J = 0.58, 0.64
-TOL = 0.10
+# --- reference: imported from reference_law (single source of truth) ------
+# Round 19 (m21228) defect fix: this was ``TOL = 0.10`` while every residual in
+# this file is a *percentage* (``err_mu_pct``), so the ledger band "error < 10 %"
+# was silently enforced as "error < 0.1 %" -- any assembly would have reported a
+# spurious FAIL.  The band is now stated in the unit it is compared in.
+TOL_PCT = 10.0
+TOL = TOL_PCT          # backward-compatible name, now correctly scaled
 
 # --- device (same contact law / P-kn as the baseline arm, bigger box) ------
 P = 6.25e4          # Pa, servo-held normal stress
@@ -83,9 +97,12 @@ PREREG = {
     "n_particles_expected": ">1000",
     "reference": {
         "mu": {"mu_s": MU_S, "mu_2": MU_2, "I_0": I_0,
-                "source": "da Cruz 2005 / GDR MiDi 2004"},
-        "phi": {"phi_c": PHI_C, "phi_j": PHI_J,
-                "status": "PROVENANCE-UNVERIFIED (hand-copied)"},
+                "source": "da Cruz 2005 / GDR MiDi 2004",
+                "status": MU_REF_STATUS},
+        "phi": {"phi_max": PHI_MAX, "phi_min": PHI_MIN,
+                "form": "phi_max - (phi_max - phi_min)/(I0/I + 1)",
+                "status": PHI_REF_STATUS},
+        "origin": "benchmarks/plane_shear_mu_i/reference_law.py (imported)",
     },
     "hypotheses": {
         "P1_noise_floor": "mu std (final 25 % window) < 10 % at I in [1e-2, 3e-2]",
@@ -95,12 +112,94 @@ PREREG = {
 }
 
 
-def ref_mu(I: float) -> float:
-    return MU_S + (MU_2 - MU_S) / (I_0 / I + 1.0)
+def summarise(res: dict, I_target: float) -> dict:
+    """Steady-state summary of one servo run (pure: no simulation).
 
+    Split out of ``run_point`` in round 19 (m21228) so the abscissa and the
+    reference handling are unit-testable without a 5-minute DEM run.
 
-def ref_phi(I: float) -> float:
-    return PHI_C + (PHI_J - PHI_C) / (I_0 / I + 1.0)
+    Two abscissae are reported, and the verdict is taken on the *measured*
+    one:
+
+    * ``I_target``     -- the value the servo was asked to hold;
+    * ``I_imposed_rate`` -- ``inertial_number`` (from the platen rate);
+    * ``I_measured_rate`` -- from the *measured* velocity-profile shear rate
+      (final window).  Rounds 9/10 established this as the physical abscissa:
+      with wall slip the bed shears slower than the platen drives it, so the
+      imposed-rate abscissa labels a high-I point at a higher I than the
+      material actually experiences and biases ``mu`` low.
+    """
+    series = res.get("series") or []
+    mu = [s["mu"] for s in series]
+    n_tail = max(1, int(0.25 * len(mu))) if mu else 0
+    tail = mu[-n_tail:] if n_tail else []
+    mu_std_rel_pct = (100.0 * float(_std(tail)) / (abs(_mean(tail)) + 1e-12)
+                      if tail else float("nan"))
+    mu_meas = float(_mean(tail)) if tail else float("nan")
+
+    i_imposed = res.get("inertial_number")
+    i_measured = res.get("inertial_number_measured_rate_final")
+    if i_measured is None:
+        i_measured = res.get("inertial_number_measured_rate")
+    abscissa = i_measured if i_measured is not None else i_imposed
+
+    # phi: the container-averaged steady value is the definition the reference
+    # law uses; the two alternative estimators are carried so the spread is
+    # visible rather than hidden behind one number (rounds 13-15 audits).
+    phi_meas = res.get("phi_bed_steady")
+    phi_meas = float(phi_meas) if phi_meas is not None else float("nan")
+    phi_extent = res.get("phi_extent_final")
+    phi_container = res.get("phi_container_final")
+
+    mu_ref = ref_mu(abscissa) if abscissa else float("nan")
+    phi_ref = ref_phi(abscissa) if abscissa else float("nan")
+    mu_ref_imposed = ref_mu(i_imposed) if i_imposed else float("nan")
+    phi_ref_imposed = ref_phi(i_imposed) if i_imposed else float("nan")
+
+    def _err(v, r):
+        if v is None or r is None or math.isnan(v) or math.isnan(r) or r == 0:
+            return float("nan")
+        return 100.0 * (v / r - 1.0)
+
+    return {
+        "case": "CASE-DEM-PLANE-SHEAR-MUIDI",
+        "round": 19,
+        "I_target": I_target,
+        "I_imposed_rate": i_imposed,
+        "I_measured_rate": i_measured,
+        "abscissa": "I_measured_rate",
+        "I_abscissa": abscissa,
+        "n_particles": res.get("n_particles"),
+        "mu_meas": mu_meas,
+        "mu_ref": mu_ref,
+        "err_mu_pct": _err(mu_meas, mu_ref),
+        "mu_std_rel_pct": mu_std_rel_pct,
+        "mu_ref_at_imposed_I": mu_ref_imposed,
+        "err_mu_pct_at_imposed_I": _err(mu_meas, mu_ref_imposed),
+        "phi_meas": phi_meas,
+        "phi_ref": phi_ref,
+        "err_phi_pct": _err(phi_meas, phi_ref),
+        "phi_ref_at_imposed_I": phi_ref_imposed,
+        "phi_extent_final": phi_extent,
+        "phi_container_final": phi_container,
+        "normal_stress_pa": res.get("normal_stress_measured_pa"),
+        "pressure_control_error": (
+            res["normal_stress_measured_pa"] / res["normal_stress_applied_pa"] - 1.0
+            if res.get("normal_stress_applied_pa") else float("nan")),
+        "shear_stress_pa": res.get("shear_stress_pa"),
+        "coordination": res.get("coordination_number"),
+        "shear_rate_imposed": res.get("shear_rate_imposed"),
+        "shear_rate_measured": res.get("shear_rate_measured"),
+        "shear_rate_ratio": (
+            res["shear_rate_measured"] / res["shear_rate_imposed"]
+            if res.get("shear_rate_measured") and res.get("shear_rate_imposed")
+            else float("nan")),
+        "shear_strain_achieved": res.get("shear_strain_achieved"),
+        "dt": res.get("dt"),
+        "shear_steps": res.get("shear_steps"),
+        "settle_steps": res.get("settle_steps"),
+        "servo_valid": res.get("servo_valid"),
+    }
 
 
 def run_point(I: float) -> dict:
@@ -116,51 +215,9 @@ def run_point(I: float) -> dict:
     t0 = time.perf_counter()
     res = simulate_servo_shear(case, return_series=True)
     wall = time.perf_counter() - t0
-    series = res["series"]
-
-    # --- noise floor: std of mu over the final 25 % window ----------------
-    mu = [s["mu"] for s in series]
-    n_tail = max(1, int(0.25 * len(mu)))
-    tail = mu[-n_tail:]
-    mu_std = float(_std(tail))
-    mu_std_rel_pct = 100.0 * mu_std / (abs(_mean(tail)) + 1e-12)
-
-    # --- steady-state mu / phi (final 25 % window) -------------------------
-    mu_meas = float(_mean(tail))
-    phi_steady = res.get("phi_bed_steady")
-    phi_meas = float(phi_steady) if phi_steady is not None else float("nan")
-
-    i_meas = res["inertial_number"]
-    mu_ref = ref_mu(i_meas)
-    phi_ref = ref_phi(i_meas)
-    err_mu_pct = 100.0 * (mu_meas / mu_ref - 1.0)
-    err_phi_pct = (100.0 * (phi_meas / phi_ref - 1.0)
-                   if not math.isnan(phi_meas) else float("nan"))
-
-    return {
-        "case": "CASE-DEM-PLANE-SHEAR-MUIDI",
-        "round": 18,
-        "I_target": I,
-        "I_measured": i_meas,
-        "n_particles": res["n_particles"],
-        "mu_meas": mu_meas,
-        "mu_ref": mu_ref,
-        "err_mu_pct": err_mu_pct,
-        "mu_std_rel_pct": mu_std_rel_pct,
-        "phi_meas": phi_meas,
-        "phi_ref": phi_ref,
-        "err_phi_pct": err_phi_pct,
-        "normal_stress_pa": res["normal_stress_measured_pa"],
-        "pressure_control_error": (res["normal_stress_measured_pa"]
-                                   / res["normal_stress_applied_pa"] - 1.0),
-        "shear_stress_pa": res["shear_stress_pa"],
-        "coordination": res["coordination_number"],
-        "wall_clock_s": wall,
-        "dt": res["dt"],
-        "shear_steps": res["shear_steps"],
-        "settle_steps": res["settle_steps"],
-        "servo_valid": res.get("servo_valid"),
-    }
+    rec = summarise(res, I)
+    rec["wall_clock_s"] = wall
+    return rec
 
 
 def _mean(xs):
@@ -172,21 +229,46 @@ def _std(xs):
     return math.sqrt(sum((x - m) ** 2 for x in xs) / len(xs)) if xs else float("nan")
 
 
-def assemble() -> dict:
+def assemble(runs_dir=None) -> dict:
+    """Collate the per-point rows into the pre-registered verdict (P1/P2/P3)."""
+    runs = Path(runs_dir) if runs_dir is not None else RUNS
     rows = []
-    for f in sorted(RUNS.glob("point_*.json")):
+    for f in sorted(runs.glob("point_*.json")):
         rows.append(json.loads(f.read_text()))
     rows.sort(key=lambda r: r["I_target"])
+    if not rows:
+        raise SystemExit(f"no point_*.json in {runs}")
+
+    def _mid(rs):
+        return [r for r in rs if 1e-2 <= r["I_target"] <= 3e-2]
+
+    def _num(r, key):
+        v = r.get(key)
+        return float("nan") if v is None else float(v)
+
+    mid = _mid(rows)
     verdict = {
-        "P1_noise_floor": all(r["mu_std_rel_pct"] < 10.0
-                              for r in rows if 1e-2 <= r["I_target"] <= 3e-2),
-        "P2_mu_convergence": all(abs(r["err_mu_pct"]) < TOL
-                                 for r in rows if 1e-2 <= r["I_target"] <= 3e-2),
-        "worst_mu_err_pct": max(abs(r["err_mu_pct"]) for r in rows),
-        "mu_within_10pct_full": all(abs(r["err_mu_pct"]) < TOL for r in rows),
+        "case": "CASE-DEM-PLANE-SHEAR-MUIDI",
+        "round": 19,
+        "abscissa": "I_measured_rate (fallback: imposed rate if unavailable)",
+        "P1_noise_floor": all(_num(r, "mu_std_rel_pct") < 10.0 for r in mid),
+        "P2_mu_convergence": all(abs(_num(r, "err_mu_pct")) < TOL_PCT
+                                 for r in mid),
+        "P3_honest_verdict": True,
+        "tolerance_pct": TOL_PCT,
+        "worst_mu_err_pct": max(abs(_num(r, "err_mu_pct")) for r in rows),
+        "mu_within_10pct_full": all(abs(_num(r, "err_mu_pct")) < TOL_PCT
+                                    for r in rows),
+        "worst_mu_err_pct_at_imposed_I": max(
+            abs(_num(r, "err_mu_pct_at_imposed_I")) for r in rows),
+        "phi_within_10pct_full": all(
+            abs(_num(r, "err_phi_pct")) < TOL_PCT for r in rows),
+        "worst_phi_err_pct": max(abs(_num(r, "err_phi_pct")) for r in rows),
+        "n_particles": [_num(r, "n_particles") for r in rows],
+        "servo_valid_all": all(r.get("servo_valid") in (True, None) for r in rows),
         "rows": rows,
     }
-    (RUNS / "result.json").write_text(json.dumps(verdict, indent=1))
+    (runs / "result.json").write_text(json.dumps(verdict, indent=1))
     return verdict
 
 
