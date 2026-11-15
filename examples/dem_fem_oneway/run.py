@@ -17,8 +17,14 @@ Verification targets
    superposition (independent implementation) ≤1%.
 3. **Energy ledger**: total energy + dissipation = initial (≤1e-8 relative).
 4. **Separability**: DEM alone and FEM alone run without coupling.
-5. **dt convergence**: 4-level time-step refinement chain
-   (dt/1, dt/2, dt/4, dt/8) with peak-deflection convergence ratio ≥0.9.
+5. **dt convergence**: 4-level time-step refinement chain (dt/1, dt/2, dt/4,
+   dt/8); every level's centre-deflection peak is compared against the
+   independent continuum modal anchor re-evaluated on the *same* grid, and the
+   gate is ``error(dt/T1=0.14) <= 1%`` and ``error(dt/T1=0.0175) <= 0.1%`` with
+   each finer level below the coarser one.  The peak ratio of two adjacent
+   refinements (~1.000025) is a *diagnostic only*: two levels that differ by 2
+   parts in 1e5 make any "ratio close to one" threshold true by construction, so
+   it is not a gate and no such threshold is asserted here.
 
 Usage
 -----
