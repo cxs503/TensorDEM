@@ -53,7 +53,7 @@ def summarise(tag: str, res: dict, elapsed: float) -> None:
     ev = np.asarray(h.get("volumetric_strain_log", h.get("volumetric_strain", np.zeros_like(eps))))
     phi = np.degrees(np.arcsin(np.clip((sv - sh) / np.maximum(sv + sh, 1e-30),
                                       -0.95, 0.95)))
-    print(f"== {tag} elapsed={elapsed:.0f}s steps={res['loading']['total_steps']} "
+    print(f"== {tag} elapsed={elapsed:.0f}s steps={res['loading']['steps']} "
           f"final_eps={eps[-1]:.3f} peak_phi={res['peak']['friction_angle_deg']:.2f}")
     for lo in np.arange(0.0, eps[-1] + 0.05, 0.05):
         m = (eps >= lo) & (eps < lo + 0.05)
