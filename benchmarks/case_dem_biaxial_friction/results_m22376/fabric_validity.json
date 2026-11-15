@@ -1,0 +1,201 @@
+{
+  "rows": [
+    {
+      "tag": "mu000",
+      "kn_N_per_m": 10000000.0,
+      "mu": 0.0,
+      "rate_1_per_s": 0.05,
+      "vreg": null,
+      "strain_target_log": 0.3,
+      "phi_cv_deg": 0.16491050388246906,
+      "peak_phi_deg": 24.920859461776434,
+      "q_cv_Pa": -1106.3978338929621,
+      "sigma_h_cv_Pa": 128427.9587538894,
+      "q_drift": 84.8005279588727,
+      "converged": false,
+      "flags": {
+        "isochoric": true,
+        "deviator_stationary": false,
+        "window_independent": false,
+        "lateral_walls_loaded": true
+      },
+      "coordination_number": 4.168421052631579,
+      "overlap_ratio_mean": 0.010091354814066988,
+      "overlap_ratio_max": 0.0404570555530183,
+      "dimensionless_stiffness": 51.909776744503226,
+      "fabric_anisotropy_a_c": 0.05242626520188258,
+      "normal_force_anisotropy_a_f": 0.10504261691421143,
+      "phi_stress_force_fabric_deg": 4.515825080439218,
+      "phi_from_measured_stress_deg": -0.24786800834816272,
+      "mobilisation": {},
+      "elapsed_s": 78.01633405685425,
+      "source": "artifacts/CASE-DEM-BIAXIAL-FRICTION/fabric_validity/arm_mu000.json"
+    },
+    {
+      "tag": "kn1e7",
+      "kn_N_per_m": 10000000.0,
+      "mu": 0.55,
+      "rate_1_per_s": 0.05,
+      "vreg": null,
+      "strain_target_log": 0.3,
+      "phi_cv_deg": 5.770515226496223,
+      "peak_phi_deg": 69.93257646028985,
+      "q_cv_Pa": 81532.4073182989,
+      "sigma_h_cv_Pa": 365587.9925698722,
+      "q_drift": 0.31881702515528454,
+      "converged": false,
+      "flags": {
+        "isochoric": true,
+        "deviator_stationary": false,
+        "window_independent": true,
+        "lateral_walls_loaded": true
+      },
+      "coordination_number": 3.9157894736842107,
+      "overlap_ratio_mean": 0.03731725282868554,
+      "overlap_ratio_max": 0.1004306394100083,
+      "dimensionless_stiffness": 18.235463970804553,
+      "fabric_anisotropy_a_c": 0.04508204459851766,
+      "normal_force_anisotropy_a_f": 0.09795379177751738,
+      "phi_stress_force_fabric_deg": 4.101176076198222,
+      "phi_from_measured_stress_deg": 5.757704175597071,
+      "mobilisation": {},
+      "elapsed_s": 91.65739583969116,
+      "source": "artifacts/CASE-DEM-BIAXIAL-FRICTION/fabric_validity/arm_kn1e7.json"
+    },
+    {
+      "tag": "kn1e7_mob",
+      "kn_N_per_m": 10000000.0,
+      "mu": 0.55,
+      "rate_1_per_s": 0.05,
+      "vreg": null,
+      "strain_target_log": 0.3,
+      "phi_cv_deg": 5.770515226496223,
+      "peak_phi_deg": 69.93257646028985,
+      "q_cv_Pa": 81532.4073182989,
+      "sigma_h_cv_Pa": 365587.9925698722,
+      "q_drift": 0.31881702515528454,
+      "converged": false,
+      "flags": {
+        "isochoric": true,
+        "deviator_stationary": false,
+        "window_independent": true,
+        "lateral_walls_loaded": true
+      },
+      "coordination_number": 3.9157894736842107,
+      "overlap_ratio_mean": 0.03731725282868554,
+      "overlap_ratio_max": 0.1004306394100083,
+      "dimensionless_stiffness": 18.235463970804553,
+      "fabric_anisotropy_a_c": 0.04508204459851766,
+      "normal_force_anisotropy_a_f": 0.09795379177751738,
+      "phi_stress_force_fabric_deg": 4.101176076198222,
+      "phi_from_measured_stress_deg": 5.757704175597071,
+      "mobilisation": {
+        "calls": 480.04,
+        "contacts": 172044.28,
+        "fn_weighted_mean_abs_tanh": 0.9821729254619146,
+        "mean_abs_tanh": 0.9780918351980781,
+        "mean_abs_vt": 0.19471175367034743,
+        "saturated": 156010.16,
+        "saturated_fraction": 0.895851773357945,
+        "sum_abs_tanh": 168828.4321586222,
+        "sum_damping_power": 263100539.0312476,
+        "sum_fn": 98270872528.0967,
+        "sum_fn_abs_tanh": 97025216125.0214,
+        "sum_friction_power": 12776902617.895851,
+        "sum_vt_abs": 34544.702754237245,
+        "n_samples": 25,
+        "strain_lo": 0.2800118991108538
+      },
+      "elapsed_s": 84.3599750995636,
+      "source": "artifacts/CASE-DEM-BIAXIAL-FRICTION/fabric_validity/arm_kn1e7_mob.json"
+    },
+    {
+      "tag": "vreg1em4",
+      "kn_N_per_m": 10000000.0,
+      "mu": 0.55,
+      "rate_1_per_s": 0.05,
+      "vreg": null,
+      "strain_target_log": 0.3,
+      "phi_cv_deg": 1.304535324230766,
+      "peak_phi_deg": 64.42317710568955,
+      "q_cv_Pa": 20067.22212774449,
+      "sigma_h_cv_Pa": 432000.43235602544,
+      "q_drift": 0.47337040252373547,
+      "converged": false,
+      "flags": {
+        "isochoric": true,
+        "deviator_stationary": false,
+        "window_independent": true,
+        "lateral_walls_loaded": true
+      },
+      "coordination_number": 3.968421052631579,
+      "overlap_ratio_mean": 0.040104549180515904,
+      "overlap_ratio_max": 0.11408332140645738,
+      "dimensionless_stiffness": 15.43208332063069,
+      "fabric_anisotropy_a_c": 0.07048635018962386,
+      "normal_force_anisotropy_a_f": 0.09970272796200304,
+      "phi_stress_force_fabric_deg": 4.881461256134492,
+      "phi_from_measured_stress_deg": 1.3006530914862717,
+      "mobilisation": {
+        "calls": 480.04,
+        "contacts": 170624.4,
+        "fn_weighted_mean_abs_tanh": 0.9997252946897768,
+        "mean_abs_tanh": 0.9995912785117987,
+        "mean_abs_vt": 0.20158299162079935,
+        "saturated": 170464.76,
+        "saturated_fraction": 0.998873526375217,
+        "sum_abs_tanh": 170583.0543544093,
+        "sum_damping_power": 288111942.0579578,
+        "sum_fn": 103640313789.68692,
+        "sum_fn_abs_tanh": 103624985408.67802,
+        "sum_friction_power": 13665848894.475218,
+        "sum_vt_abs": 35406.21567839525,
+        "n_samples": 25,
+        "strain_lo": 0.2800118991108538
+      },
+      "elapsed_s": 85.75979661941528,
+      "source": "artifacts/CASE-DEM-BIAXIAL-FRICTION/fabric_validity/arm_vreg1em4.json"
+    }
+  ],
+  "judgement": {
+    "V1_stiffness": {
+      "arms": [
+        {
+          "tag": "kn1e7",
+          "kn": 10000000.0,
+          "dimensionless_stiffness": 18.235463970804553,
+          "phi_cv_deg": 5.770515226496223,
+          "overlap_ratio_mean": 0.03731725282868554
+        }
+      ],
+      "verdict": "WITHHELD (ladder arms missing)"
+    },
+    "V2_friction": {
+      "phi_mu0_deg": 0.16491050388246906,
+      "phi_mu055_deg": 5.770515226496223,
+      "phi_mu15_deg": null,
+      "mu0_ok": true,
+      "mu_gap_deg": null,
+      "gap_ok": null,
+      "verdict": "WITHHELD (control arms missing)"
+    },
+    "V3_rate": {
+      "phi_rate_half_deg": null,
+      "phi_baseline_deg": 5.770515226496223,
+      "drift_deg": null,
+      "verdict": "WITHHELD (rate arm missing)"
+    },
+    "anchor_diagnostic": {
+      "reference_deg": 28.810793742973065,
+      "reference_source": "Rowe (1962) D=0 limit arctan(mu=0.55)",
+      "secondary_reference_deg": 33.0,
+      "measured_deg": 5.770515226496223,
+      "relative_error": 0.7997099532218321,
+      "tolerance": 0.08,
+      "pass": false,
+      "note": "10x20 specimen, not the 24x48 anchor geometry: this row is a diagnostic, the anchor verdict is the 24x48 record"
+    }
+  },
+  "figure": "docs/figures/CASE-DEM-BIAXIAL-FRICTION_R10_micro_validity.png",
+  "markdown_table": "| arm | kn [N/m] | mu | rate [1/s] | phi_cv [deg] | peak [deg] | overlap/d | Z | a_c | a_f | q_drift | converged |\n|---|---|---|---|---|---|---|---|---|---|---|---|\n| mu000 | 1e+07 | 0.00 | 0.0500 | 0.16 | 24.92 | 0.0101 | 4.17 | 0.052 | 0.105 | 84.801 | False |\n| kn1e7 | 1e+07 | 0.55 | 0.0500 | 5.77 | 69.93 | 0.0373 | 3.92 | 0.045 | 0.098 | 0.319 | False |\n| kn1e7_mob | 1e+07 | 0.55 | 0.0500 | 5.77 | 69.93 | 0.0373 | 3.92 | 0.045 | 0.098 | 0.319 | False |\n| vreg1em4 | 1e+07 | 0.55 | 0.0500 | 1.30 | 64.42 | 0.0401 | 3.97 | 0.070 | 0.100 | 0.473 | False |"
+}
