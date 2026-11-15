@@ -1,0 +1,334 @@
+{
+ "anchor": "CASE-COLUMN-COLLAPSE",
+ "reference": "Lube et al. (2004) JFM 508, 175-199",
+ "tolerance": 0.15,
+ "n_points": 7,
+ "missing_cases": [],
+ "points": [
+  {
+   "case_id": "R_a1_g8",
+   "source": "docs/artifacts/column_collapse_deep_refinement_m20873/cases/R_a1_g8.json",
+   "aspect_nominal": 1.0,
+   "aspect_measured": 1.0782571055943022,
+   "runout_ratio": 2.106047163976525,
+   "grains_per_radius": 8.0,
+   "n_particles": 1955
+  },
+  {
+   "case_id": "R_a3_g8",
+   "source": "docs/artifacts/column_collapse_deep_refinement_m20873/cases/R_a3_g8.json",
+   "aspect_nominal": 3.0,
+   "aspect_measured": 3.0866314544814117,
+   "runout_ratio": 4.119299853460151,
+   "grains_per_radius": 8.0,
+   "n_particles": 5673
+  },
+  {
+   "case_id": "R_a1_g12",
+   "source": "docs/artifacts/column_collapse_deep_refinement_m20873/cases/R_a1_g12.json",
+   "aspect_nominal": 1.0,
+   "aspect_measured": 0.9884775364686476,
+   "runout_ratio": 2.0781657377119505,
+   "grains_per_radius": 12.0,
+   "n_particles": 6412
+  },
+  {
+   "case_id": "KN_a1.6_g12",
+   "source": "docs/artifacts/column_collapse_kink_m21007/cases/KN_a1.6_g12.json",
+   "aspect_nominal": 1.6,
+   "aspect_measured": 1.6149451660576526,
+   "runout_ratio": 2.889084064663394,
+   "grains_per_radius": 12.0,
+   "n_particles": 10527
+  },
+  {
+   "case_id": "R_a3_g12",
+   "source": "docs/artifacts/column_collapse_deep_refinement_m20873/cases/R_a3_g12.json",
+   "aspect_nominal": 3.0,
+   "aspect_measured": 3.007095454033219,
+   "runout_ratio": 4.355892755212519,
+   "grains_per_radius": 12.0,
+   "n_particles": 19687
+  },
+  {
+   "case_id": "R_a1_g16",
+   "source": "docs/artifacts/column_collapse_deep_refinement_m20873/cases/R_a1_g16.json",
+   "aspect_nominal": 1.0,
+   "aspect_measured": 1.002774662942104,
+   "runout_ratio": 2.0409797007848707,
+   "grains_per_radius": 16.0,
+   "n_particles": 16030
+  },
+  {
+   "case_id": "SB_a3_g16",
+   "source": "docs/artifacts/column_collapse_sqrt_branch_m20931/cases/SB_a3_g16.json",
+   "aspect_nominal": 3.0,
+   "aspect_measured": 3.0395832276585497,
+   "runout_ratio": 4.208665392153482,
+   "grains_per_radius": 16.0,
+   "n_particles": 48923
+  }
+ ],
+ "law_defect": {
+  "break_at": 1.7,
+  "crossover_aspect": 1.6649323621227892,
+  "break_minus_crossover": 0.03506763787721079,
+  "value_linear_branch": 3.108,
+  "value_sqrt_branch": 3.086144769664848,
+  "absolute_jump": 0.021855230335152243,
+  "relative_jump": 0.007081725572298962,
+  "linear_slope_at_break": 1.24,
+  "sqrt_slope_at_break": 0.6135719910778964,
+  "slope_ratio_across_break": 2.020952745612821
+ },
+ "groups": {
+  "all": {
+   "n_points": 7,
+   "error_table": [
+    {
+     "case_id": "R_a1_g8",
+     "aspect_measured": 1.0782571055943022,
+     "grains_per_radius": 8.0,
+     "runout_ratio": 2.106047163976525,
+     "form_piecewise": 2.3370388109369347,
+     "form_linear_only": 2.3370388109369347,
+     "form_sqrt_only": 2.661426552791731,
+     "err_piecewise": -0.09883945695698718,
+     "err_linear_only": -0.09883945695698718,
+     "err_sqrt_only": -0.20867733067164115
+    },
+    {
+     "case_id": "R_a3_g8",
+     "aspect_measured": 3.0866314544814117,
+     "grains_per_radius": 8.0,
+     "runout_ratio": 4.119299853460151,
+     "form_piecewise": 3.8110098760894484,
+     "form_linear_only": 4.82742300355695,
+     "form_sqrt_only": 3.8110098760894484,
+     "err_piecewise": 0.08089456269975485,
+     "err_linear_only": -0.14668761150100956,
+     "err_sqrt_only": 0.08089456269975485
+    },
+    {
+     "case_id": "R_a1_g12",
+     "aspect_measured": 0.9884775364686476,
+     "grains_per_radius": 12.0,
+     "runout_ratio": 2.0781657377119505,
+     "form_piecewise": 2.225712145221123,
+     "form_linear_only": 2.225712145221123,
+     "form_sqrt_only": 2.5907553216506107,
+     "err_piecewise": -0.0662917744444054,
+     "err_linear_only": -0.0662917744444054,
+     "err_sqrt_only": -0.19785333630505927
+    },
+    {
+     "case_id": "KN_a1.6_g12",
+     "aspect_measured": 1.6149451660576526,
+     "grains_per_radius": 12.0,
+     "runout_ratio": 2.889084064663394,
+     "form_piecewise": 3.002532005911489,
+     "form_linear_only": 3.002532005911489,
+     "form_sqrt_only": 3.0332878854475065,
+     "err_piecewise": -0.03778409056913786,
+     "err_linear_only": -0.03778409056913786,
+     "err_sqrt_only": -0.0475404334273526
+    },
+    {
+     "case_id": "R_a3_g12",
+     "aspect_measured": 3.007095454033219,
+     "grains_per_radius": 12.0,
+     "runout_ratio": 4.355892755212519,
+     "form_piecewise": 3.7745566064373315,
+     "form_linear_only": 4.728798363001191,
+     "form_sqrt_only": 3.7745566064373315,
+     "err_piecewise": 0.15401442060340165,
+     "err_linear_only": -0.07885842853997328,
+     "err_sqrt_only": 0.15401442060340165
+    },
+    {
+     "case_id": "R_a1_g16",
+     "aspect_measured": 1.002774662942104,
+     "grains_per_radius": 16.0,
+     "runout_ratio": 2.0409797007848707,
+     "form_piecewise": 2.243440582048209,
+     "form_linear_only": 2.243440582048209,
+     "form_sqrt_only": 2.6022181927352426,
+     "err_piecewise": -0.0902457069215072,
+     "err_linear_only": -0.0902457069215072,
+     "err_sqrt_only": -0.21567695342274243
+    },
+    {
+     "case_id": "SB_a3_g16",
+     "aspect_measured": 3.0395832276585497,
+     "grains_per_radius": 16.0,
+     "runout_ratio": 4.208665392153482,
+     "form_piecewise": 3.7895040890462752,
+     "form_linear_only": 4.769083202296601,
+     "form_sqrt_only": 3.7895040890462752,
+     "err_piecewise": 0.11061112305401928,
+     "err_linear_only": -0.1175105961399969,
+     "err_sqrt_only": 0.11061112305401928
+    }
+   ],
+   "forms": {
+    "piecewise": {
+     "n": 7,
+     "rms_relative": 0.09727351371989111,
+     "bias_relative": 0.00747986820930545,
+     "max_abs_relative": 0.15401442060340165,
+     "worst_case": "R_a3_g12",
+     "n_within_0p03": 0,
+     "n_within_0p15": 6
+    },
+    "linear_only": {
+     "n": 7,
+     "rms_relative": 0.09657004123823588,
+     "bias_relative": -0.09088823786757391,
+     "max_abs_relative": 0.14668761150100956,
+     "worst_case": "R_a3_g8",
+     "n_within_0p03": 0,
+     "n_within_0p15": 7
+    },
+    "sqrt_only": {
+     "n": 7,
+     "rms_relative": 0.15764698567319788,
+     "bias_relative": -0.04631827820994566,
+     "max_abs_relative": 0.21567695342274243,
+     "worst_case": "R_a1_g16",
+     "n_within_0p03": 0,
+     "n_within_0p15": 3
+    },
+    "best_forms": [
+     "linear_only"
+    ],
+    "best_form": "linear_only"
+   },
+   "trend_piecewise": {
+    "n_points": 7,
+    "slope_per_aspect": 0.09895262355622843,
+    "intercept": -0.1878492831576073,
+    "r2": 0.9348730531760334,
+    "span_aspect": [
+     0.9884775364686476,
+     3.0866314544814117
+    ]
+   },
+   "slope_test": {
+    "slope_below": 1.2944297337173636,
+    "slope_above": -2.9746643082270308,
+    "slope_ratio_measured": -0.43515153294351855,
+    "law_slope_ratio": 2.020952745612821,
+    "a_below": [
+     0.9884775364686476,
+     1.6149451660576526
+    ],
+    "a_above": [
+     3.007095454033219,
+     3.0866314544814117
+    ]
+   },
+   "power_fit": {
+    "prefactor": 1.070416571411308,
+    "exponent": 1.0011711329244173,
+    "offset": 1.0,
+    "n_points": 7,
+    "rms_relative": 0.03182512881423718,
+    "max_abs_relative": 0.055190288118143735,
+    "bias_relative": 0.00014227104658596435
+   }
+  },
+  "gpr12": {
+   "n_points": 3,
+   "error_table": [
+    {
+     "case_id": "R_a1_g12",
+     "aspect_measured": 0.9884775364686476,
+     "grains_per_radius": 12.0,
+     "runout_ratio": 2.0781657377119505,
+     "form_piecewise": 2.225712145221123,
+     "form_linear_only": 2.225712145221123,
+     "form_sqrt_only": 2.5907553216506107,
+     "err_piecewise": -0.0662917744444054,
+     "err_linear_only": -0.0662917744444054,
+     "err_sqrt_only": -0.19785333630505927
+    },
+    {
+     "case_id": "KN_a1.6_g12",
+     "aspect_measured": 1.6149451660576526,
+     "grains_per_radius": 12.0,
+     "runout_ratio": 2.889084064663394,
+     "form_piecewise": 3.002532005911489,
+     "form_linear_only": 3.002532005911489,
+     "form_sqrt_only": 3.0332878854475065,
+     "err_piecewise": -0.03778409056913786,
+     "err_linear_only": -0.03778409056913786,
+     "err_sqrt_only": -0.0475404334273526
+    },
+    {
+     "case_id": "R_a3_g12",
+     "aspect_measured": 3.007095454033219,
+     "grains_per_radius": 12.0,
+     "runout_ratio": 4.355892755212519,
+     "form_piecewise": 3.7745566064373315,
+     "form_linear_only": 4.728798363001191,
+     "form_sqrt_only": 3.7745566064373315,
+     "err_piecewise": 0.15401442060340165,
+     "err_linear_only": -0.07885842853997328,
+     "err_sqrt_only": 0.15401442060340165
+    }
+   ],
+   "forms": {
+    "piecewise": {
+     "n": 3,
+     "rms_relative": 0.09923487057301017,
+     "bias_relative": 0.01664618519661946,
+     "max_abs_relative": 0.15401442060340165,
+     "worst_case": "R_a3_g12",
+     "n_within_0p03": 0,
+     "n_within_0p15": 2
+    },
+    "linear_only": {
+     "n": 3,
+     "rms_relative": 0.06335321252290949,
+     "bias_relative": -0.060978097851172176,
+     "max_abs_relative": 0.07885842853997328,
+     "worst_case": "R_a3_g12",
+     "n_within_0p03": 0,
+     "n_within_0p15": 3
+    },
+    "sqrt_only": {
+     "n": 3,
+     "rms_relative": 0.14733915213016185,
+     "bias_relative": -0.030459783043003407,
+     "max_abs_relative": 0.19785333630505927,
+     "worst_case": "R_a1_g12",
+     "n_within_0p03": 0,
+     "n_within_0p15": 1
+    },
+    "best_forms": [
+     "linear_only"
+    ],
+    "best_form": "linear_only"
+   },
+   "trend_piecewise": {
+    "n_points": 3,
+    "slope_per_aspect": 0.11390230238530809,
+    "intercept": -0.19637079333894847,
+    "r2": 0.9647909182400763,
+    "span_aspect": [
+     0.9884775364686476,
+     3.007095454033219
+    ]
+   },
+   "power_fit": {
+    "prefactor": 1.1154183422531143,
+    "exponent": 1.016380745333531,
+    "offset": 1.0,
+    "n_points": 3,
+    "rms_relative": 0.017971999692628828,
+    "max_abs_relative": 0.025456534715674235,
+    "bias_relative": -6.610825931792005e-05
+   }
+  }
+ }
+}
