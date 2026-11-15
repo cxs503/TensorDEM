@@ -492,6 +492,16 @@ class ServoShearCase:
     bulk_stress: bool = True
     bulk_y_margin: float = 0.2
     bulk_bins: int = 6
+    # full-gap kinematic diagnostic (m21528).  ``shear_rate_measured`` above
+    # fits the central half of the gap only (``bulk_margin_z`` 25 % each side),
+    # so a bed that localises its deformation in the two wall layers reads as
+    # "not shearing".  With this flag every sample also carries the whole-gap
+    # strain partition (``strain_partition``): a full-gap rate, an
+    # extreme-bin difference rate, the two wall velocity ratios and the
+    # interior velocity fraction.  Sampling only -- the integration is not
+    # touched, so every archived case stays bit-for-bit reproducible.
+    profile_detail: bool = False
+    profile_bins: int = 9
     # cross-validation diagnostic (m17500): also accumulate the *contact-local*
     # inertial-number proxy I_c = |v_t|/sqrt(f_n/(rho d^2)) and mu(I_c) on the
     # same samples.  Diagnostic only -- the integration (Coulomb cap at
@@ -907,7 +917,8 @@ def inertial_number(shear_rate, particle_diameter, pressure, density):
     return abs(shear_rate) * particle_diameter / math.sqrt(pressure / density)
 
 
-def shear_rate_profile(pos, vel, *, z_lo, z_hi, y_lo, y_hi, n_bins=6):
+def shear_rate_profile(pos, vel, *, z_lo, z_hi, y_lo, y_hi, n_bins=6,
+                        plate_vx=None, gap=None):
     """Least-squares slope ``d<v_x>/dz`` of the slab velocity profile.
 
     The imposed ``gamma_dot`` is the *platen* rate; localisation or wall slip
@@ -946,10 +957,140 @@ def shear_rate_profile(pos, vel, *, z_lo, z_hi, y_lo, y_hi, n_bins=6):
     ss_res = float(_np.sum(w * (means_a - pred) ** 2))
     ss_tot = float(_np.sum(w * (means_a - _np.average(means_a, weights=w)) ** 2))
     r2 = 1.0 - ss_res / ss_tot if ss_tot > 0 else float("nan")
-    return {"shear_rate": float(slope), "n_bins": len(centers), "r2": r2,
-            "profile": [[float(c), float(m), int(k)] for c, m, k
-                        in zip(centers, means, counts)],
-            "intercept": float(intercept)}
+    out = {"shear_rate": float(slope), "n_bins": len(centers), "r2": r2,
+           "profile": [[float(c), float(m), int(k)] for c, m, k
+                       in zip(centers, means, counts)],
+           "intercept": float(intercept),
+           "v_top": float(means_a[-1]),
+           "v_bottom": float(means_a[0]),
+           # velocity deficit of the topmost occupied bin against the linear
+           # no-slip expectation ``plate_vx * z_top / gap``.  This key was
+           # advertised in the early-return branches but never computed on the
+           # success path (m21528), i.e. it was always NaN in every archived
+           # run; it is now defined whenever ``plate_vx`` and ``gap`` are given.
+           "slip_top": float("nan")}
+    if plate_vx is not None and gap is not None and plate_vx != 0.0 and gap > 0.0:
+        expectation = plate_vx * centers_a[-1] / gap
+        out["slip_top"] = float(1.0 - means_a[-1] / expectation)
+    return out
+
+
+def strain_partition(pos, vel, *, plate_vx, gap, y_lo, y_hi, n_bins=9,
+                     interior_margin=0.25):
+    """Where does the wall-to-wall velocity difference actually live?
+
+    ``shear_rate_profile`` fits the *interior* slab: the caller passes
+    ``z_lo = bulk_margin_z * plate_z`` and ``z_hi = plate_z - z_lo``, i.e. the
+    central 50 % of the gap.  That is the correct window for an *interior*
+    stress estimate, but it is a blind window for a *kinematic* abscissa: a bed
+    that localises its deformation inside the two wall layers has a flat
+    interior profile, so the interior least-squares slope collapses towards
+    zero while the walls still move at ``plate_vx``.
+
+    Rounds 19/20 of CASE-DEM-PLANE-SHEAR-MUIDI read such a zero slope as "the
+    bed is not shearing, the cell is still in its start-up transient" and drew
+    a protocol conclusion from it (a longer strain window at low I).  A flat
+    interior profile and a static bed are different physical statements and are
+    only distinguishable if the wall layers are measured too.  This function
+    bins the **whole** gap and reports, on the same state:
+
+    ``shear_rate_full``      weighted least squares over all occupied bins
+    ``shear_rate_adjacent``  slope between the two extreme occupied bins
+                             (difference estimator, immune to curvature)
+    ``shear_rate_interior``  the legacy central-50 % estimator, for reference
+    ``v_top_over_platen``    topmost-bin velocity / platen velocity
+    ``v_bot_over_platen``    bottom-bin velocity / platen velocity
+    ``interior_strain_fraction``  slope across the interior window divided by
+                             the extreme-bin slope, i.e. the share of the
+                             deformation gradient the legacy window can see;
+                             1 = linear Couette flow, 0 = the interior is a
+                             plug and every bit of the deformation is inside
+                             the wall layers
+    ``q_full`` / ``q_adjacent`` / ``q_interior``  the same rates divided by the
+                             imposed platen rate, i.e. the measured/imposed
+                             shear-rate ratio of each estimator.
+
+    Diagnostic only: nothing here feeds back into the integration.
+    """
+    import numpy as _np
+
+    out = {"n_particles": 0, "n_bins": 0, "profile": [],
+           "shear_rate_full": float("nan"), "shear_rate_adjacent": float("nan"),
+           "shear_rate_interior": float("nan"),
+           "v_top": float("nan"), "v_bottom": float("nan"),
+           "v_top_over_platen": float("nan"),
+           "v_bot_over_platen": float("nan"),
+           "interior_strain_fraction": float("nan"),
+           "wall_strain_fraction": float("nan"),
+           "q_full": float("nan"), "q_adjacent": float("nan"),
+           "q_interior": float("nan")}
+    if gap is None or not (gap > 0.0):
+        return out
+    sel = ((pos[:, 2] > 0.0) & (pos[:, 2] < gap)
+           & (pos[:, 1] >= y_lo) & (pos[:, 1] <= y_hi))
+    n_sel = int(_np.count_nonzero(sel))
+    out["n_particles"] = n_sel
+    if n_sel < 3 * n_bins:
+        return out
+    z = pos[sel, 2]
+    vx = vel[sel, 0]
+    edges = _np.linspace(0.0, gap, n_bins + 1)
+    centers, means, counts = [], [], []
+    for k in range(n_bins):
+        m = (z >= edges[k]) & (z <= edges[k + 1] if k == n_bins - 1
+                               else z < edges[k + 1])
+        c = int(_np.count_nonzero(m))
+        if c == 0:
+            continue
+        centers.append(0.5 * (edges[k] + edges[k + 1]))
+        means.append(float(vx[m].mean()))
+        counts.append(c)
+    if len(centers) < 3:
+        return out
+    c_a = _np.asarray(centers)
+    m_a = _np.asarray(means)
+    w = _np.asarray(counts, dtype=float)
+    slope = float(_np.polyfit(c_a, m_a, 1, w=_np.sqrt(w))[0])
+    adjacent = float((m_a[-1] - m_a[0]) / (c_a[-1] - c_a[0]))
+    legacy = shear_rate_profile(pos, vel, z_lo=interior_margin * gap,
+                                z_hi=(1.0 - interior_margin) * gap,
+                                y_lo=y_lo, y_hi=y_hi, n_bins=6)
+    interior = float(legacy["shear_rate"])
+    dv = float(m_a[-1] - m_a[0])
+    v25 = float(_np.interp(interior_margin * gap, c_a, m_a))
+    v75 = float(_np.interp((1.0 - interior_margin) * gap, c_a, m_a))
+    # dimensionless: interior slope / extreme-bin slope.  Normalising by the
+    # extreme-bin slope (not by the velocity difference) is what makes the
+    # index 1 for linear Couette flow whatever the bin layout is.
+    interior_rate = ((v75 - v25) / ((1.0 - 2.0 * interior_margin) * gap)
+                     if interior_margin < 0.5 else float("nan"))
+    ivf = (interior_rate / adjacent if adjacent != 0.0 else float("nan"))
+    out.update({
+        "n_bins": len(centers),
+        "profile": [[float(c), float(m), int(k)]
+                    for c, m, k in zip(centers, means, counts)],
+        "shear_rate_full": slope,
+        "shear_rate_adjacent": adjacent,
+        "shear_rate_interior": interior,
+        "v_top": float(m_a[-1]),
+        "v_bottom": float(m_a[0]),
+        "interior_strain_fraction": float(ivf),
+        "wall_strain_fraction": (float(1.0 - ivf) if ivf == ivf
+                                 else float("nan")),
+    })
+    if plate_vx:
+        # the imposed *rate* is plate_vx / gap, not plate_vx (the platen is a
+        # velocity, q is a rate ratio); getting this wrong makes q_adjacent
+        # equal to gap x the true ratio.
+        gamma_imposed = plate_vx / gap
+        out.update({
+            "v_top_over_platen": float(m_a[-1] / plate_vx),
+            "v_bot_over_platen": float(m_a[0] / plate_vx),
+            "q_full": slope / gamma_imposed,
+            "q_adjacent": adjacent / gamma_imposed,
+            "q_interior": interior / gamma_imposed,
+        })
+    return out
 
 
 def phi_from_extent(pos, radius: float, box_width: float, box_depth: float) -> dict:
@@ -1119,6 +1260,7 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
     plate_vz = 0.0
     series: list[dict] = []
     proxy_series: list[dict] = []
+    gap_profile_series: list[dict] = []
     wall_clock = _time.perf_counter()
 
     ghost_shift = np.array([[0.0, 0.0, 0.0],
@@ -1356,6 +1498,28 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
                     "shear_rate_measured": prof["shear_rate"],
                     "profile_r2": prof["r2"],
                 })
+                if case.profile_detail:
+                    part = strain_partition(
+                        pos, vel, plate_vx=plate_vx, gap=plate_z,
+                        y_lo=y_lo, y_hi=y_hi, n_bins=case.profile_bins)
+                    sample.update({
+                        "gap_shear_rate_full": part["shear_rate_full"],
+                        "gap_shear_rate_adjacent": part["shear_rate_adjacent"],
+                        "gap_shear_rate_interior": part["shear_rate_interior"],
+                        "gap_q_full": part["q_full"],
+                        "gap_q_adjacent": part["q_adjacent"],
+                        "gap_q_interior": part["q_interior"],
+                        "gap_v_top_over_platen": part["v_top_over_platen"],
+                        "gap_v_bot_over_platen": part["v_bot_over_platen"],
+                        "gap_interior_strain_fraction":
+                            part["interior_strain_fraction"],
+                        "gap_wall_strain_fraction":
+                            part["wall_strain_fraction"],
+                        "gap_n_particles": part["n_particles"],
+                    })
+                    gap_profile_series.append(
+                        {"strain": strain, "plate_z": plate_z,
+                         "plate_vx": plate_vx, "profile": part["profile"]})
                 if case.bulk_stress:
                     vir = bulk_virial_stress(
                             pos, vel, contacts,
@@ -1644,6 +1808,30 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
     else:
         result["inertial_number_measured_rate_final"] = None
         result["shear_rate_measured_final"] = None
+
+    if case.profile_detail:
+        # tail average over the final 20 % of samples, the window the servo
+        # validity verdict uses, so a drifting transient cannot leak in.
+        _tail = series[-n_final:] if series else []
+        _gap_keys = ("gap_shear_rate_full", "gap_shear_rate_adjacent",
+                     "gap_shear_rate_interior", "gap_q_full", "gap_q_adjacent",
+                     "gap_q_interior", "gap_v_top_over_platen",
+                     "gap_v_bot_over_platen", "gap_interior_strain_fraction",
+                     "gap_wall_strain_fraction", "gap_n_particles")
+        _gap = {}
+        for _k in _gap_keys:
+            _vals = [float(sv[_k]) for sv in _tail
+                     if _k in sv and math.isfinite(float(sv[_k]))]
+            _gap[_k] = float(np.mean(_vals)) if _vals else None
+        result["gap_kinematics"] = _gap
+        if gap_profile_series:
+            result["gap_profile_final"] = gap_profile_series[-1]
+        result["gap_inertial_number_average_measured"] = (
+            inertial_number(_gap["gap_shear_rate_adjacent"], d, p_final, rho)
+            if _gap.get("gap_shear_rate_adjacent") else None)
+        result["gap_inertial_number_full_measured"] = (
+            inertial_number(_gap["gap_shear_rate_full"], d, p_final, rho)
+            if _gap.get("gap_shear_rate_full") else None)
 
     if case.bulk_stress and result.get("bulk_mu") is not None:
         mu_b, mu_w = result["bulk_mu"], result["mu_effective"]
