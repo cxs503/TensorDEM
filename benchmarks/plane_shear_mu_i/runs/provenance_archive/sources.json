@@ -1,0 +1,168 @@
+{
+ "attributed_triples": {
+  "PRIMARY_REPO": [
+   0.36,
+   0.84,
+   0.3
+  ],
+  "TEST_GDR_MIDI": [
+   0.379,
+   0.641,
+   0.279
+  ]
+ },
+ "case": "CASE-DEM-PLANE-SHEAR-MUIDI",
+ "excerpt_pad_chars": 420,
+ "generated_utc": "2026-11-15T12:47:41Z",
+ "kind": "reference-archive",
+ "round": 22,
+ "sources": [
+  {
+   "arxiv_abs": "https://arxiv.org/abs/cond-mat/0503682",
+   "arxiv_id": "cond-mat/0503682",
+   "attributed_triple_numbers_missing": {
+    "PRIMARY_REPO": [
+     "0.36"
+    ],
+    "TEST_GDR_MIDI": [
+     "0.379",
+     "0.641",
+     "0.279"
+    ]
+   },
+   "attributed_triple_numbers_present": {
+    "PRIMARY_REPO": [
+     "0.84",
+     "0.3"
+    ],
+    "TEST_GDR_MIDI": []
+   },
+   "authors": "F. da Cruz, S. Emam, M. Prochnow, J.-N. Roux, F. Chevoir",
+   "excerpts": [
+    {
+     "anchor": "\u03bd(I) \u2243\u03bdmax \u2212aI,",
+     "char_offset": 35784,
+     "label": "dilatancy_law_eq13",
+     "text": " and the e\ufb00ective friction co- e\ufb03cient, as functions of I. Then we will study the in- \ufb02uence of the mechanical properties of the grains, the coe\ufb03cients of restitution e and friction \u00b5. A. Dilatancy law We call \u201cdilatancy law\u201d the variations of the average solid fraction \u03bd as a function of the inertial number I (Fig. 3). We observe that \u03bd decreases approximately lin- early with I, starting from a maximum value \u03bdmax : \u03bd(I) \u2243\u03bdmax \u2212aI, (13) 9 with \u03bdmax \u22430.81 and a \u22430.3 (for \u00b5 = 0.4). The er- ror bar (independent of I) corresponds to the statistical dispersion inside the layer. 0.00 0.05 0.10 0.15 0.20 0.76 0.78 0.80 0.82 a) I 10 -3 10 -2 10 -1 0.76 0.78 0.80 0.82 b) I FIG. 3: Dilatancy law : (a) Linear scale (b) Logarithmic scale (\u00b5 = 0.4, various e and \u03ba). B. Friction law The e\ufb00ective friction coe\ufb03cient has been de\ufb01ned as the ratio of the shear s"
+    },
+    {
+     "anchor": "with \u03bdmax \u22430.81 and a \u22430.3 (for \u00b5 = 0.4)",
+     "char_offset": 35807,
+     "label": "dilatancy_constants",
+     "text": "ion co- e\ufb03cient, as functions of I. Then we will study the in- \ufb02uence of the mechanical properties of the grains, the coe\ufb03cients of restitution e and friction \u00b5. A. Dilatancy law We call \u201cdilatancy law\u201d the variations of the average solid fraction \u03bd as a function of the inertial number I (Fig. 3). We observe that \u03bd decreases approximately lin- early with I, starting from a maximum value \u03bdmax : \u03bd(I) \u2243\u03bdmax \u2212aI, (13) 9 with \u03bdmax \u22430.81 and a \u22430.3 (for \u00b5 = 0.4). The er- ror bar (independent of I) corresponds to the statistical dispersion inside the layer. 0.00 0.05 0.10 0.15 0.20 0.76 0.78 0.80 0.82 a) I 10 -3 10 -2 10 -1 0.76 0.78 0.80 0.82 b) I FIG. 3: Dilatancy law : (a) Linear scale (b) Logarithmic scale (\u00b5 = 0.4, various e and \u03ba). B. Friction law The e\ufb00ective friction coe\ufb03cient has been de\ufb01ned as the ratio of the shear stress to the pressure inside the material \u00b5\u2217= S/"
+    },
+    {
+     "anchor": "min + bI,",
+     "char_offset": 37614,
+     "label": "friction_law_eq14",
+     "text": "cal chute), we refer to [25, 55, 60]. In the following we shall only discuss the e\ufb00ective friction coe\ufb03cient in the volume of the \ufb02owing layer. We call \u201cfriction law\u201d the variations of the e\ufb00ective friction coe\ufb03cient \u00b5\u2217(averaged over the width in the cen- tral part of the \ufb02owing layer) as a function of I (Fig. 4). We observe that \u00b5\u2217increases approximately linearly with I, starting from a minimum value \u00b5\u2217 min : \u00b5\u2217\u2243\u00b5\u2217 min + bI, (14) with \u00b5\u2217 min \u22430.22 and b \u22431.0 (for \u00b5 \u0338= 0). The error bars (independent of I) correspond to the statistical disper- sion inside the layer. We also observe that \u00b5\u2217tends to saturate for I \u22650.2. Within the error bars, it is di\ufb03cult to be more precise about those dependencies. A more careful measurement is deferred for future work. We now compare this friction law with other works. We \ufb01rst notice that the increase o"
+    },
+    {
+     "anchor": "min \u22430.22 and b \u22431.0",
+     "char_offset": 37637,
+     "label": "friction_law_constants",
+     "text": " [25, 55, 60]. In the following we shall only discuss the e\ufb00ective friction coe\ufb03cient in the volume of the \ufb02owing layer. We call \u201cfriction law\u201d the variations of the e\ufb00ective friction coe\ufb03cient \u00b5\u2217(averaged over the width in the cen- tral part of the \ufb02owing layer) as a function of I (Fig. 4). We observe that \u00b5\u2217increases approximately linearly with I, starting from a minimum value \u00b5\u2217 min : \u00b5\u2217\u2243\u00b5\u2217 min + bI, (14) with \u00b5\u2217 min \u22430.22 and b \u22431.0 (for \u00b5 \u0338= 0). The error bars (independent of I) correspond to the statistical disper- sion inside the layer. We also observe that \u00b5\u2217tends to saturate for I \u22650.2. Within the error bars, it is di\ufb03cult to be more precise about those dependencies. A more careful measurement is deferred for future work. We now compare this friction law with other works. We \ufb01rst notice that the increase of \u00b5\u2217with I is contrary to the well"
+    },
+    {
+     "anchor": "tends to saturate for I \u22650.2",
+     "char_offset": 37790,
+     "label": "saturation",
+     "text": "tions of the e\ufb00ective friction coe\ufb03cient \u00b5\u2217(averaged over the width in the cen- tral part of the \ufb02owing layer) as a function of I (Fig. 4). We observe that \u00b5\u2217increases approximately linearly with I, starting from a minimum value \u00b5\u2217 min : \u00b5\u2217\u2243\u00b5\u2217 min + bI, (14) with \u00b5\u2217 min \u22430.22 and b \u22431.0 (for \u00b5 \u0338= 0). The error bars (independent of I) correspond to the statistical disper- sion inside the layer. We also observe that \u00b5\u2217tends to saturate for I \u22650.2. Within the error bars, it is di\ufb03cult to be more precise about those dependencies. A more careful measurement is deferred for future work. We now compare this friction law with other works. We \ufb01rst notice that the increase of \u00b5\u2217with I is contrary to the well documented decrease of the friction coe\ufb03- cient with the velocity in the quasi-static regime [61]. However, in those studies, this softening is interpreted as a"
+    },
+    {
+     "anchor": "min \u22430.11",
+     "char_offset": 47226,
+     "label": "frictionless_singular",
+     "text": " 12 0.0 0.2 0.4 0.6 0.8 0.80 0.82 0.84 a) max \u00b5 FIG. 6: In\ufb02uence of \u00b5 on the critical state (I = 4 \u00b7 10\u22123 and e = 0.1): (a) Maximum packing fraction \u03bdmax, (b) E\ufb00ective friction coe\ufb03cient \u00b5\u2217 min, (c) Coordination number Zmax. observe a saturation for I \u22650.1 if e = 0.9, which will be discussed in Sec. V E 4. For I \u22640.1, the linear approxi- mation (Eqn. (14)) is in trouble : it is rather a sub-linear dependency, and \u00b5\u2217 min \u22430.11. So the case of frictionless grains is singular and deserves a speci\ufb01c treatment. Starting from both variations of solid fraction and ef- 0.00 0.04 0.08 0.12 0.16 0.20 0.1 0.2 0.3 0.4 \u00b5 * I FIG. 7: In\ufb02uence of \u00b5 on the friction law (\u00b5 = 0 (\u25a0), \u00b5 \u0338= 0 (+). FIG. 8: (Color online) Variation of the e\ufb00ective friction coe\ufb03cient as a function of solid fraction. fective friction as a function of the local friction coef- \ufb01ci"
+    },
+    {
+     "anchor": "we measure a = 0.38",
+     "char_offset": 45731,
+     "label": "dilatancy_vs_mu",
+     "text": "in\ufb02uence on the coordination number (see Sec. VII A). Furthermore, we have shown that softer grains favor lo- calization of the shear (see Sec. IV D 2). 2. In\ufb02uence of the local friction coe\ufb03cient The local friction coe\ufb03cient \u00b5 has a signi\ufb01cant in\ufb02u- ence on the dilatancy law. The solid fraction remains a linearly decreasing function of I, but both parameters \u03bdmax and a depend on \u00b5. The variation of a is not simple: we measure a = 0.38 for \u00b5 = 0, 0.31 for \u00b5 = 0.4 and 0.37 for \u00b5 = 0.8 [26]. Fig. 6 (a) indicates that \u03bdmax is a decreasing function of \u00b5 (it is not purely geometrical in the quasi-static regime). This shows that the solid fraction, from the critical state to the collisional regime, depends on the frictional properties of the material. We notice that our measurements are in agreement with other observations [34, 39, 79]. The in\ufb02uence of "
+    },
+    {
+     "anchor": "\u03bdmax = 0.78 instead of 0.81 for \u00b5 = 0.4",
+     "char_offset": 40264,
+     "label": "thin_layer_packing",
+     "text": "erme- diate regime (10\u22122 \u2264I \u22640.2), we observe approximately linear variations of the solid fraction and of the e\ufb00ective friction coe\ufb03cient as a function of I (Eqs. (13) and (14)). In the case of a thin layer (see Sec. IV C), the dilatancy and friction laws are not a\ufb00ected. The parameters remain the same, except for the solid fraction which is smaller than for a thick layer : \u03bdmax = 0.82 instead of 0.84 for \u00b5 = 0 and \u03bdmax = 0.78 instead of 0.81 for \u00b5 = 0.4. In the case of a very small polydispersity (see Sec. IV D), the friction law is preserved in the central sheared layer. For larger polydispersity (\u226450%), the dilatancy and friction laws are not a\ufb00ected. When taking into account the elasticity of the grains, it is natural to draw a diagram of the \ufb02ow regimes as a func- tion of the two dimensionless numbers, already quoted in Sec. III B, \u03b1 = I/\u221a\u03ba and \u03bd [28, 39]. This"
+    },
+    {
+     "anchor": "S(P, \u02d9\u03b3) = \u00b5\u2217",
+     "char_offset": 42120,
+     "label": "constitutive_shear_stress",
+     "text": "n of the shear rate and the solid fraction : P(\u03bd, \u02d9\u03b3) = a2 (\u03bdmax \u2212\u03bd)2 m\u02d9\u03b32. (15) The divergency with the solid fraction is shown in Fig. 5. FIG. 5: P/\u02d9\u03b32 as a function of (\u03bdmax \u2212\u03bd). The straight line indicates a slope of \u22122 (\u00b5 = 0.4, various e). 2. Shear stress From the de\ufb01nition of I (Eqn. (10)) and the friction law (Eqn. (14)), the shear stress may be expressed as a function of the shear rate and the pressure : 11 S(P, \u02d9\u03b3) = \u00b5\u2217 minP + b \u221a mP \u02d9\u03b3. (16) Using the previous expression of P (Eqn. (15)), it is also possible to express the shear stress as a function of the shear rate and the solid fraction : S(P, \u03bd, \u02d9\u03b3) = \u00b5\u2217 minP + ab (\u03bdmax \u2212\u03bd)m\u02d9\u03b32, (17) or, eliminating P : S(\u03bd, \u02d9\u03b3) = ab(\u03bd\u2217\u2212\u03bd) (\u03bdmax\u2212\u03bd)2 m\u02d9\u03b32, (18) with the solid fraction \u03bd\u2217= \u03bdmax + a\u00b5\u2217 min/b (\u03bd\u2217\u22480.86 for \u00b5 = 0.4). 3. Comments We \ufb01rst notice that the dilatancy and friction laws, me"
+    }
+   ],
+   "excerpts_file": "runs/provenance_archive/dacruz2005_excerpts.txt",
+   "journal_ref": "Phys. Rev. E 72, 021309 (2005)",
+   "key": "dacruz2005",
+   "n_chars_extracted": 90174,
+   "n_decimal_literals": 69,
+   "numbers_inventory_file": "runs/provenance_archive/dacruz2005_numbers.txt",
+   "pdf_bytes": 1264160,
+   "pdf_sha256": "c3635a0d481ef35100d4d04a4ac3bf1c724b7e2ca8bff5fef994398117537358",
+   "pdf_url": "https://arxiv.org/pdf/cond-mat/0503682",
+   "reading_note": "arXiv v1 (29 Mar 2005); the published PRE version is not open access - constants are read from this copy and the identity of the copy is recorded by SHA-256.",
+   "title": "Rheophysics of dense granular materials: Discrete simulation of plane shear flows"
+  },
+  {
+   "arxiv_abs": "https://arxiv.org/abs/cond-mat/0312502",
+   "arxiv_id": "cond-mat/0312502",
+   "attributed_triple_numbers_missing": {
+    "PRIMARY_REPO": [
+     "0.36",
+     "0.84",
+     "0.3"
+    ],
+    "TEST_GDR_MIDI": [
+     "0.379",
+     "0.641",
+     "0.279"
+    ]
+   },
+   "attributed_triple_numbers_present": {
+    "PRIMARY_REPO": [],
+    "TEST_GDR_MIDI": []
+   },
+   "authors": "G.D.R. MiDi",
+   "excerpts": [
+    {
+     "anchor": "reaches its maximum, 0.85, in the quasi-static limit",
+     "char_offset": 10093,
+     "label": "packing_path",
+     "text": "hown in \ufb01gure 2c. The volume fraction pro\ufb01les \u03a6(y) are plotted for di\ufb00erent I. For small I, \u03a6 is uniform across the shear cell \u2013 apart from oscillations due to ordering close to the wall. By contrast, for larger I, a signi\ufb01cant decrease of \u03a6 is observed close to the walls so that it is no longer uniform. The transition is evidenced on \ufb01gure 2f, where the av- erage volume fraction is plotted as a function of I. < \u03a6 > reaches its maximum, 0.85, in the quasi-static limit I \u22430, decreases gently linearly with I down to 0.80 for I \u22430.1 and decreases more rapidly for larger I. Small I corre- sponds to the dense \ufb02ow regime, associated to a network of enduring contacts [27], and large I corresponds to the dy- namic inertial regime, associated to binary collisions [23]. 3.2.3 Velocity \ufb02uctuations pro\ufb01le The velocity \ufb02uctuations pro\ufb01les are shown in \ufb01gure 2d, where \u03b4V 2 is normalised by its"
+    },
+    {
+     "anchor": "corresponding to the internal",
+     "char_offset": 11800,
+     "label": "effective_friction_qualitative",
+     "text": "friction coe\ufb03cient \u00b5e\ufb00is de\ufb01ned either as the ratio of shear to normal force at the wall, or as the ratio of the shear stress to the pressure inside the mate- rial. Both de\ufb01nitions give approximately the same results. Figure 2e displays the e\ufb00ective friction for two di\ufb00erent simulations and di\ufb00erent values of the restitution coe\ufb03- cient e and interparticle friction \u00b5p. It shows that \u00b5e\ufb00 starts from a \ufb01nite value \u00b5S, corresponding to the internal Mohr-Coulomb friction [10], remains approximately shear rate independent in the quasi-static regime (I < 10\u22123), and increases for larger values of I [17,18,28,21] up to some threshold where the \ufb02ow leaves the dense regime. Above this threshold \u00b5e\ufb00saturates or even slightly de- creases. This threshold value depends on the restitution coe\ufb03cient e as observed in inset of \ufb01gure 2e. Whereas for e = 0.9 the transition occ"
+    },
+    {
+     "anchor": "\u03c4/P = \u00b5(I)",
+     "char_offset": 65453,
+     "label": "local_rheology_assumption",
+     "text": "n the following section we discuss the implication of this assumption in regards to the data collected in this paper, before discussing the necessity to consider a non local rheology. 8.4.1 The local rheology assumption Hereafter, we will call local, a rheology for which stresses and shear rate at a given location in the \ufb02ow are related trough a univoque relation, which from dimensional anal- ysis can be written as: \u03c4/P = \u00b5(I), (20) I being given by eq. (15). As soon as \u03c4/P depends on the rescaled shear rate at other locations or on any further \ufb01eld whose governing equation would need to be precised, we consider the rheology as non local. Under this assumption of a local rheology, one can pre- dict velocity pro\ufb01les in both plane shear and inclined plane con\ufb01gurations. In the following we test this hypothesis fac- ing the data. In the plan"
+    },
+    {
+     "anchor": "remains approximately shear",
+     "char_offset": 11858,
+     "label": "shear_rate_independent",
+     "text": "ar to normal force at the wall, or as the ratio of the shear stress to the pressure inside the mate- rial. Both de\ufb01nitions give approximately the same results. Figure 2e displays the e\ufb00ective friction for two di\ufb00erent simulations and di\ufb00erent values of the restitution coe\ufb03- cient e and interparticle friction \u00b5p. It shows that \u00b5e\ufb00 starts from a \ufb01nite value \u00b5S, corresponding to the internal Mohr-Coulomb friction [10], remains approximately shear rate independent in the quasi-static regime (I < 10\u22123), and increases for larger values of I [17,18,28,21] up to some threshold where the \ufb02ow leaves the dense regime. Above this threshold \u00b5e\ufb00saturates or even slightly de- creases. This threshold value depends on the restitution coe\ufb03cient e as observed in inset of \ufb01gure 2e. Whereas for e = 0.9 the transition occurs for I \u22430.1, for e = 0.1 the dense \ufb02ow regime extends"
+    }
+   ],
+   "excerpts_file": "runs/provenance_archive/gdr_midi2004_excerpts.txt",
+   "journal_ref": "Eur. Phys. J. E 14, 341 (2004)",
+   "key": "gdr_midi2004",
+   "n_chars_extracted": 100960,
+   "n_decimal_literals": 74,
+   "numbers_inventory_file": "runs/provenance_archive/gdr_midi2004_numbers.txt",
+   "pdf_bytes": 677766,
+   "pdf_sha256": "60bf931c5a2d7805a0527eb72f4283b69ed222968c3bf814cc270e6f888f5980",
+   "pdf_url": "https://arxiv.org/pdf/cond-mat/0312502",
+   "reading_note": "arXiv v1 (18 Dec 2003), the EPJ E 14:341 manuscript.",
+   "title": "On dense granular flows"
+  }
+ ]
+}
