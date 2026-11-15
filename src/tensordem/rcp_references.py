@@ -49,6 +49,26 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
 
 
+# ---------------------------------------------------------------------------
+# Provenance tiers
+# ---------------------------------------------------------------------------
+# ``literature``  : the value is transcribed from a primary source that states
+#                   it (table / equation / abstract), so a measured packing
+#                   fraction may be judged against it.
+# ``derived``     : the value is constructed here (interpolation, consensus
+#                   average, or a DEM number of this same code family).  A
+#                   measured value cannot be *validated* against it -- the
+#                   comparison would be circular.
+# ``unverified``  : a composite citation without a transcribed table entry
+#                   (no page/table number recorded), so the number is a
+#                   placeholder for orientation only.
+PROVENANCE_LITERATURE = "literature"
+PROVENANCE_DERIVED = "derived"
+PROVENANCE_UNVERIFIED = "unverified"
+PROVENANCE_TIERS = (PROVENANCE_LITERATURE, PROVENANCE_DERIVED,
+                    PROVENANCE_UNVERIFIED)
+
+
 @dataclass(frozen=True)
 class RCPReference:
     """A single friction-dependent RCP reference point."""
@@ -64,6 +84,50 @@ class RCPReference:
     """Digital Object Identifier."""
     notes: str = ""
     """Additional context (e.g., measurement method, polydispersity)."""
+    provenance: str = PROVENANCE_LITERATURE
+    """Provenance tier: ``literature`` / ``derived`` / ``unverified``."""
+
+    def __post_init__(self) -> None:
+        if self.provenance not in PROVENANCE_TIERS:
+            raise ValueError(f"unknown provenance tier: {self.provenance!r}")
+
+    @property
+    def anchored(self) -> bool:
+        """True only when a measured value may be *judged* against this point."""
+        return self.provenance == PROVENANCE_LITERATURE
+
+    def claim_status(self, phi: float, *, tol_rel: float = 0.03) -> Dict:
+        """Accuracy verdict for a measured ``phi`` against **this** anchor.
+
+        The verdict is ``WITHHELD`` whenever the anchor is not ``literature``:
+        a derived/unverified anchor can rank-order measurements but cannot
+        certify them, and reporting "<3% vs reference" against a derived
+        number is self-referential (the reference was built, not measured).
+        """
+        rel = self.relative_error(phi)
+        lo, hi = self.band
+        anchored = self.anchored
+        if not anchored:
+            verdict = "WITHHELD"
+        elif abs(rel) < tol_rel and lo <= phi <= hi:
+            verdict = "PASS"
+        else:
+            verdict = "FAIL"
+        return {
+            "mu": self.mu,
+            "phi_measured": float(phi),
+            "phi_ref": self.phi_rcp,
+            "rel_error": float(rel),
+            "abs_rel_error": float(abs(rel)),
+            "band_2sigma": [float(lo), float(hi)],
+            "in_band": bool(lo <= phi <= hi),
+            "tol_rel": tol_rel,
+            "within_tolerance": bool(abs(rel) < tol_rel),
+            "anchor_provenance": self.provenance,
+            "anchor_source": self.source,
+            "anchor_doi": self.doi,
+            "verdict": verdict,
+        }
 
     @property
     def band(self) -> Tuple[float, float]:
@@ -95,6 +159,7 @@ _REFERENCES: List[RCPReference] = [
         notes="Classic poured/compressed monodisperse sphere experiments; "
               "the canonical RCP value.  Uncertainty reflects scatter across "
               "experimental realisations and container effects.",
+        provenance=PROVENANCE_LITERATURE,
     ),
     RCPReference(
         mu=0.0,
@@ -105,6 +170,7 @@ _REFERENCES: List[RCPReference] = [
         notes="Theoretical/numerical consensus value for frictionless RCP; "
               "slightly higher than Scott's experimental value, possibly due "
               "to container effects in experiments.",
+        provenance=PROVENANCE_LITERATURE,
     ),
     RCPReference(
         mu=0.1,
@@ -112,8 +178,10 @@ _REFERENCES: List[RCPReference] = [
         phi_uncertainty=0.008,
         source="Pournin et al. (2001) PRE; interpolated from DEM study",
         doi="10.1103/PhysRevE.63.051303",
-        notes="Low-friction DEM simulations; φ decreases from the frictionless "
-              "value due to stabilisation of looser force-chain networks.",
+        notes="CONSTRUCTED point (interpolated between the frictionless and "
+              "moderate-friction anchors), not a transcribed table value: it "
+              "ranks measurements but cannot certify them.",
+        provenance=PROVENANCE_DERIVED,
     ),
     RCPReference(
         mu=0.3,
@@ -124,6 +192,7 @@ _REFERENCES: List[RCPReference] = [
         notes="Moderate friction; packing fraction drops noticeably.  The "
               "uncertainty is larger because fewer experimental data points "
               "exist at this specific μ.",
+        provenance=PROVENANCE_UNVERIFIED,
     ),
     RCPReference(
         mu=0.5,
@@ -133,6 +202,7 @@ _REFERENCES: List[RCPReference] = [
         doi="10.1103/PhysRevLett.64.2727",
         notes="High friction; approaching the random loose packing (RLP) limit. "
               "The RLP limit for very high friction is φ ≈ 0.56 (Onoda & Liniger).",
+        provenance=PROVENANCE_UNVERIFIED,
     ),
     RCPReference(
         mu=1.0,
@@ -143,6 +213,7 @@ _REFERENCES: List[RCPReference] = [
         notes="Random loose packing (RLP) limit for very high friction. "
               "This is the lower bound for disordered monodisperse sphere "
               "packings under gravity.",
+        provenance=PROVENANCE_UNVERIFIED,
     ),
 ]
 
@@ -183,7 +254,8 @@ def get_reference(mu: float, *, method: str = "nearest") -> RCPReference:
         unc = lo_ref.phi_uncertainty + t * (hi_ref.phi_uncertainty - lo_ref.phi_uncertainty)
         source = f"Interpolated between {lo_ref.source} and {hi_ref.source}"
         return RCPReference(mu=mu, phi_rcp=phi, phi_uncertainty=unc,
-                            source=source, notes=f"Linear interpolation at μ={mu}")
+                            source=source, notes=f"Linear interpolation at μ={mu}",
+                            provenance=PROVENANCE_DERIVED)
 
     raise ValueError(f"Unknown method: {method}")
 
@@ -212,3 +284,90 @@ def frictionless_reference() -> RCPReference:
 def all_friction_values() -> List[float]:
     """Return all distinct friction coefficients in the reference table."""
     return sorted({r.mu for r in _REFERENCES})
+
+
+# ---------------------------------------------------------------------------
+# Anchor policy: what may be claimed, and what may only be bracketed
+# ---------------------------------------------------------------------------
+
+def bracket_limits() -> Tuple[float, float]:
+    """Disordered-packing bracket used when no literature anchor exists.
+
+    Lower edge = the loosest ordered-disorder limit in the table (RLP, high
+    friction), upper edge = the frictionless RCP upper confidence bound.  A
+    frictional packing *must* fall inside it; falling inside is necessary but
+    not sufficient, so a value that only meets the bracket is graded
+    ``PASS_BRACKET``, never ``PASS``.
+    """
+    lower = min(r.phi_rcp for r in _REFERENCES)
+    upper = max(r.band[1] for r in _REFERENCES)
+    return (float(lower), float(upper))
+
+
+def bracket_check(phi: float, *, mu: Optional[float] = None) -> Dict:
+    """Necessary-condition check against the disordered-packing bracket."""
+    lower, upper = bracket_limits()
+    if mu is not None and mu > 0.0:
+        # friction can only lower the packing fraction relative to frictionless
+        upper = min(upper, max(r.band[1] for r in _REFERENCES if r.mu == 0.0))
+    inside = lower <= phi <= upper
+    return {
+        "phi": float(phi),
+        "mu": mu,
+        "bracket": [float(lower), float(upper)],
+        "inside": bool(inside),
+        "verdict": "PASS_BRACKET" if inside else "FAIL_BRACKET",
+        "note": "necessary condition only; not an accuracy claim",
+    }
+
+
+def anchor_for(mu: float) -> Dict:
+    """Resolve the anchor policy for ``mu``.
+
+    Returns the nearest table entry plus the policy that may be used on a
+    measurement: ``anchored`` when the nearest entry is transcribed from
+    literature, otherwise ``bracketed`` (judge with :func:`bracket_check`).
+    """
+    ref = get_reference(mu)
+    return {
+        "mu": mu,
+        "entry_mu": ref.mu,
+        "phi_ref": ref.phi_rcp,
+        "provenance": ref.provenance,
+        "source": ref.source,
+        "anchor": ref,
+        "policy": "anchored" if ref.anchored else "bracketed",
+    }
+
+
+def judge(phi: float, mu: float, *, tol_rel: float = 0.03) -> Dict:
+    """Full verdict for a measured packing fraction at friction ``mu``.
+
+    ``verdict`` is ``PASS``/``FAIL`` only when a literature anchor exists;
+    otherwise the accuracy claim is ``WITHHELD`` and the strongest admissible
+    statement is the bracket verdict.
+    """
+    info = anchor_for(mu)
+    ref: RCPReference = info["anchor"]
+    out = ref.claim_status(phi, tol_rel=tol_rel)
+    out["policy"] = info["policy"]
+    out["bracket"] = bracket_check(phi, mu=mu)
+    if out["verdict"] == "WITHHELD":
+        out["strongest_statement"] = out["bracket"]["verdict"]
+    else:
+        out["strongest_statement"] = out["verdict"]
+    return out
+
+
+def provenance_table() -> List[Dict]:
+    """Reference table with provenance tiers (machine-checkable coverage)."""
+    rows = reference_table()
+    for row in rows:
+        row["provenance"] = get_reference(row["mu"]).provenance
+        row["anchored"] = bool(get_reference(row["mu"]).anchored)
+    return rows
+
+
+def anchored_frictions() -> List[float]:
+    """Friction coefficients backed by a literature anchor."""
+    return sorted({r.mu for r in _REFERENCES if r.anchored})
