@@ -1,0 +1,35 @@
+{
+ "0": {
+  "polydispersity": 0.0,
+  "radius_mean_mm": 5.0,
+  "radius_sd_mm": 0.0,
+  "radius_max_over_min": 1.0,
+  "band_phi_seed": 0.7993607974134028,
+  "psi6_mean": 0.8856656205109708,
+  "psi6_hexatic_fraction": 0.8186813186813187,
+  "z_mean": 2.336244541484716,
+  "psi6_round25_after_compaction": 0.914
+ },
+ "0.25": {
+  "polydispersity": 0.25,
+  "radius_mean_mm": 4.999999999999999,
+  "radius_sd_mm": 0.7112264996518386,
+  "radius_max_over_min": 1.665598555398051,
+  "band_phi_seed": 0.7328102141268602,
+  "psi6_mean": 0.44665079025843596,
+  "psi6_hexatic_fraction": 0.11440677966101695,
+  "z_mean": 2.7554585152838427,
+  "psi6_round25_after_compaction": null
+ },
+ "0.5": {
+  "polydispersity": 0.5,
+  "radius_mean_mm": 5.0,
+  "radius_sd_mm": 1.4183215202624424,
+  "radius_max_over_min": 2.9953756508141356,
+  "band_phi_seed": 0.7337485045899671,
+  "psi6_mean": 0.3898001756647384,
+  "psi6_hexatic_fraction": 0.07942238267148015,
+  "z_mean": 3.1441048034934496,
+  "psi6_round25_after_compaction": null
+ }
+}
