@@ -26,6 +26,29 @@ LEDGER_KEYS = [
 DT_OVER_T1_EXPECTED = [0.1399, 0.0699, 0.0350, 0.0175]
 
 
+# Numeric gates: the tolerance lives here, and the measured error from
+# ``results.json`` must satisfy it.  The run-time boolean written by ``run.py``
+# is *cross-checked*, never trusted on its own -- a gate that only reads a
+# self-authored flag passes any hand-edited or regressed results file.
+PARITY_TOL = 1e-10
+DEFLECTION_TOL = 0.01
+ENERGY_TOL = 1e-8
+
+
+def _numeric_gate(error, declared, tol: float) -> tuple[bool, str]:
+    """PASS only if the measured error is inside ``tol`` *and* the flag agrees."""
+    try:
+        err = float(error)
+    except (TypeError, ValueError):
+        return False, f"error missing ({error!r})"
+    value = f"error={err:.6e} tol={tol:.0e} declared={declared}"
+    if err > tol:
+        return False, value + " -> error exceeds tolerance"
+    if declared is not True:
+        return False, value + " -> run-time flag disagrees with the number"
+    return True, value
+
+
 def load_ledger(results: dict, ledger_path: Path | None) -> tuple[dict, str]:
     """Return (ledger, source).  Inline ledger wins over the artifacts dump."""
     if isinstance(results.get("ledger"), dict):
@@ -61,17 +84,20 @@ def validate(results_path: Path | str | None = None,
     checks = []
 
     # 1. Force history port parity (renamed from "impulse"); algebra check only.
+    ok, detail = _numeric_gate(v.get("force_history_port_parity_error_relative"),
+                               v.get("force_history_port_parity_pass"), PARITY_TOL)
     checks.append(("Force history port parity <=1e-10 [numerical_verification_only]",
-                   v["force_history_port_parity_pass"],
-                   v["force_history_port_parity_error_relative"]))
+                   ok, detail))
 
     # 2. Deflection: dynamic FEM vs continuum modal superposition <=1%
-    checks.append(("Deflection dynamic vs modal <=1%", v["deflection_pass"],
-                   v["deflection_error_relative"]))
+    ok, detail = _numeric_gate(v.get("deflection_error_relative"),
+                               v.get("deflection_pass"), DEFLECTION_TOL)
+    checks.append(("Deflection dynamic vs modal <=1%", ok, detail))
 
     # 3. Energy (work-energy balance)
-    checks.append(("Work-Energy <=1e-8", v["energy_pass"],
-                   v["work_energy_error_relative"]))
+    ok, detail = _numeric_gate(v.get("work_energy_error_relative"),
+                               v.get("energy_pass"), ENERGY_TOL)
+    checks.append(("Work-Energy <=1e-8", ok, detail))
 
     # 4. dt chain: 4 levels, per-level error against the independent modal anchor.
     chain = v.get("dt_convergence_errors_vs_modal", [])
@@ -79,11 +105,15 @@ def validate(results_path: Path | str | None = None,
     chain_len_ok = len(chain) == 4
     chain_dt_ok = (len(chain_dt) == 4 and all(
         abs(a - b) <= 5e-3 for a, b in zip(chain_dt, DT_OVER_T1_EXPECTED)))
-    chain_ok = bool(chain_len_ok and chain_dt_ok and v.get("dt_convergence_pass", False))
+    chain_monotone = bool(len(chain) >= 2 and chain[1] <= chain[0]
+                          and chain[-1] <= chain[1])
+    chain_ok = bool(chain_len_ok and chain_dt_ok and chain_monotone
+                    and v.get("dt_convergence_pass", False))
     checks.append(("dt chain 4 levels @ dt/T1=0.14/0.07/0.035/0.0175", chain_ok,
                    "/".join(f"{100 * e:.4f}%" for e in chain)))
-    checks.append(("dt chain per-level errors (<=1% @dt, <=0.1% @dt/8)",
-                   bool(chain and chain[0] <= 0.01 and chain[-1] <= 1e-3),
+    checks.append(("dt chain per-level errors (<=1% @dt, <=0.1% @dt/8, finer below coarser)",
+                   bool(chain and chain[0] <= 0.01 and chain[-1] <= 1e-3
+                        and chain_monotone),
                    (f"{100 * chain[0]:.4f}%/{100 * chain[-1]:.4f}%" if chain else "N/A")))
 
     # 5. Separability
