@@ -18,12 +18,12 @@ import os
 import urllib.request
 from pathlib import Path
 
-REPO = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parents[2]  # repo root
 MISSION_ID = 20055
 BASE = os.environ.get("TENSOR_API_BASE", "").rstrip("/")
 USER = os.environ.get("TENSOR_AGENT_USER", "")
 PASS = os.environ.get("TENSOR_AGENT_PASS", "")
-SUM = REPO / "runs" / "m20055_beverloo" / "summary.json"
+SUM = ROOT / "runs" / "m20055_beverloo" / "summary.json"
 
 
 def post(path, body, token=None):
@@ -168,7 +168,7 @@ def main() -> int:
     for fid, path in s["figures"].items():
         if Path(path).exists():
             figs.append({"name": fid, "caption": captions.get(fid, fid),
-                         "png_base64": b64(REPO / path)})
+                         "png_base64": b64(ROOT / path)})
     body = {
         "title": title,
         "summary": (f"用无序压实床 + 堵孔压实 + 卸料流质量分位稳态估计，复用 TensorDEM 平底料仓 DEM 复现 "
@@ -182,7 +182,7 @@ def main() -> int:
         "markdown": "\n".join(md),
         "figures": figs,
     }
-    out = REPO / ".scratch" / "report_m20055.json"
+    out = ROOT / ".scratch" / "report_m20055.json"
     out.parent.mkdir(exist_ok=True)
     out.write_text(json.dumps(body))
     print("wrote", out, len(out.read_bytes()), "bytes,", len(figs), "figures")
