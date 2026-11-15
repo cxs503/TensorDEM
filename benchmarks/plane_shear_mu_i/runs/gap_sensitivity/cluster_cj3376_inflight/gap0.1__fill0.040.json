@@ -1,0 +1,57 @@
+{
+ "case": "CASE-DEM-PLANE-SHEAR-MUIDI",
+ "round": 21,
+ "experiment": "finite_gap_wall_layer_sensitivity",
+ "I_target": 0.1,
+ "fill_height": 0.04,
+ "box_width": 0.06,
+ "box_depth": 0.03,
+ "wall_mode": "smooth",
+ "n_particles": 45,
+ "gap_m": 0.02727943099461038,
+ "gap_d": 2.727943099461038,
+ "strain_target": 0.3,
+ "strain_achieved": 0.6011817498985911,
+ "strain_budget_respected": false,
+ "mu_wall": 0.30578279348436893,
+ "mu_bulk": 0.13237592929760666,
+ "mu_full": 0.47088081454236796,
+ "mu_drift_pct_halfsplit": -29.664820397821078,
+ "phi_bed": 0.4798475962546165,
+ "phi_extent": 0.46336188913869814,
+ "phi_container_final": 0.479246903985969,
+ "coordination": 2.9728395061728397,
+ "p_measured_pa": 76625.40227567678,
+ "pressure_control_error_pct": 22.60064364108285,
+ "shear_rate_measured": NaN,
+ "shear_rate_imposed": 50.0,
+ "shear_rate_ratio": NaN,
+ "profile_r2": NaN,
+ "I_imposed_rate": 0.09031369791001724,
+ "I_measured_rate": NaN,
+ "I_abscissa": 0.09031369791001724,
+ "mu_full_over_wall": 1.4146407723336032,
+ "full_momentum_balance": 1.351251651071409,
+ "servo_valid": false,
+ "wall_clock_s": 9.083517529070377,
+ "reference": {
+  "mu": {
+   "law": "mu_s+(mu_2-mu_s)/(I0/I+1)",
+   "constants": {
+    "mu_s": 0.36,
+    "mu_2": 0.84,
+    "I_0": 0.3
+   },
+   "status": "da Cruz 2005 / GDR MiDi 2004 fit as quoted in rounds 1-5: mu_s=0.36, mu_2=0.84, I0=0.30 -- QUOTED, NOT ARCHIVED; a second in-repo triple (0.379, 0.641, 0.279) exists in tests/test_mu_i_rheology.py, see reference_provenance.py"
+  },
+  "phi": {
+   "law": "phi_max-(phi_max-phi_min)/(I0/I+1)",
+   "constants": {
+    "phi_max": 0.64,
+    "phi_min": 0.58,
+    "I_0": 0.3
+   },
+   "status": "PROVENANCE-UNVERIFIED magnitudes (0.58, 0.64 inherited from round 1, no in-repo anchor; da Cruz 2005 is a 2D-disk study with phi ~ 0.84 -> 0.79, so these are 3D glass-bead numbers) + VERIFIED monotonicity (decreasing with I, i.e. dilatancy) and limits phi(I->0)=0.64, phi(I->inf)=0.58"
+  }
+ }
+}
