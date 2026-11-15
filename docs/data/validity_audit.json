@@ -1,0 +1,48 @@
+{
+  "case_key": "CASE-DEM-BIAXIAL-FRICTION",
+  "phi_ref_deg": 38.0,
+  "tolerance": 0.08,
+  "screen_tags": [
+    "s08x16_c300",
+    "s08x16_r02",
+    "s08x16_r05",
+    "s12x24_r05"
+  ],
+  "pressure_tags": [
+    "p100"
+  ],
+  "size": {
+    "rows": [],
+    "phi_spread_deg": NaN
+  },
+  "rate": {
+    "rows": [],
+    "delta_phi_deg": NaN
+  },
+  "consolidation": {
+    "rows": [],
+    "delta_phi_deg": NaN
+  },
+  "pressure": {
+    "rows": [
+      {
+        "tag": "p100",
+        "confining_kPa": 100.0,
+        "q_kPa": 438.3051628062585,
+        "p_kPa": 322.33764906381384,
+        "phi_wall_deg": 42.83466903715605,
+        "phi_internal_deg": 42.46024452584043
+      }
+    ],
+    "fit": {
+      "phi_fit_deg": NaN,
+      "cohesion_c_kPa": NaN,
+      "r2": NaN,
+      "slope": NaN,
+      "intercept_kPa": NaN
+    },
+    "phi_spread_deg": NaN,
+    "bond_control": null
+  },
+  "figure": "/srv/tensor/agent/work/m21262/docs/figures/CASE-DEM-BIAXIAL-FRICTION_validity_audit.png"
+}
