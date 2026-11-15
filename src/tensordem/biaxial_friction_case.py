@@ -37,6 +37,15 @@ A strain_target of 0.30 ensures the post-peak branch is long enough for the
 critical-state friction angle to be extracted.  The peak friction angle is
 measured at the deviator maximum, which typically occurs at eps_a ≈ 0.05–0.10,
 so the longer target does not affect the peak measurement.
+
+Why freeze_bond_fraction = 0
+-----------------------------
+The Bolton (1986) reference is for uncemented quartz sand.  Freeze bonds add
+cohesion (tensile strength at contacts), which inflates the peak friction
+angle beyond the purely frictional Mohr-Coulomb envelope.  Setting
+freeze_bond_fraction = 0 ensures the DEM specimen is cohesionless, matching
+the physical basis of the reference.  (Previous versions used 0.35, which
+was appropriate for ice-ridge rubble but not for sand validation.)
 """
 from __future__ import annotations
 
@@ -86,7 +95,7 @@ ANCHOR_CONFIG: dict[str, Any] = {
     "servo_gain": 3.0e-4,
     "servo_velocity_limit": 2.0,
     "radius": 0.75,
-    "freeze_bond_fraction": 0.35,
+    "freeze_bond_fraction": 0.0,   # uncemented sand (Bolton ref is cohesionless)
 }
 
 QUICK_CONFIG: dict[str, Any] = {
@@ -101,7 +110,7 @@ QUICK_CONFIG: dict[str, Any] = {
     "servo_gain": 3.0e-4,
     "servo_velocity_limit": 0.5,
     "radius": 0.75,
-    "freeze_bond_fraction": 0.35,
+    "freeze_bond_fraction": 0.0,   # uncemented sand (matches anchor)
 }
 
 
@@ -128,6 +137,22 @@ def judge_friction(phi_got: float, *, phi_ref: float = PHI_REF_DEG,
         "within_tolerance": bool(math.isfinite(rel) and rel <= tolerance),
         "passed": bool(math.isfinite(rel) and rel <= tolerance),
     }
+
+
+def bolton_dilatancy_index(phi_peak_deg: float, phi_cv_deg: float,
+                           *, A: float = 5.0) -> float:
+    """Bolton (1986) dilatancy index I_R from peak and critical-state angles.
+
+    phi_peak = phi_cv + A * I_R  =>  I_R = (phi_peak - phi_cv) / A
+
+    A = 3 for triaxial, A = 5 for plane strain (Bolton 1986, Eq. 8).
+    Returns NaN if inputs are invalid or phi_peak < phi_cv (unphysical).
+    """
+    if not (math.isfinite(phi_peak_deg) and math.isfinite(phi_cv_deg)):
+        return float("nan")
+    if phi_peak_deg < phi_cv_deg:
+        return float("nan")
+    return (phi_peak_deg - phi_cv_deg) / A
 
 
 def _extract_critical_state(stress_path: dict[str, Any],
@@ -186,7 +211,7 @@ def run_biaxial_friction_case(*, quick: bool = False,
 
     config = dict(QUICK_CONFIG if quick else ANCHOR_CONFIG)
     config.update({k: v for k, v in overrides.items() if v is not None})
-    freeze_bond = float(config.pop("freeze_bond_fraction", 0.35))
+    freeze_bond = float(config.pop("freeze_bond_fraction", 0.0))
     radius = float(config.pop("radius", 0.75))
 
     started = time.time()
@@ -231,6 +256,10 @@ def run_biaxial_friction_case(*, quick: bool = False,
         mu=0.55,
     )
 
+    # Bolton dilatancy index (informational)
+    phi_cv_deg = cs_analysis.get("phi_cv_deg", float("nan"))
+    I_R = bolton_dilatancy_index(phi_peak, phi_cv_deg)
+
     # Dimensionless numbers
     strain_rate = float(config["strain_rate"])
     diameter = 2.0 * radius
@@ -258,6 +287,11 @@ def run_biaxial_friction_case(*, quick: bool = False,
         },
         "judgement": judgement,
         "critical_state": cs_analysis,
+        "bolton_dilatancy": {
+            "I_R": I_R,
+            "A": 5.0,
+            "note": "Bolton (1986) Eq.8: phi_peak = phi_cv + A*I_R, A=5 (plane strain)",
+        },
         "dimensionless": {
             "inertial_number": inertial_number,
             "strain_rate_non-dimensional": strain_rate * diameter / math.sqrt(sigma3 / rho),
@@ -302,9 +336,10 @@ def render_figure(result: dict[str, Any], out_path: str) -> str:
         eps = np.asarray(stress_path["axial_strain"])
         dev = np.asarray(stress_path.get("deviator", []))
         ax1.plot(eps, dev / 1e3, "b-", linewidth=1.5, label="deviator stress")
-        peak_idx = int(np.argmax(dev))
-        ax1.axvline(x=float(hist.get("axial_strain", 0)), color="r",
-                    linestyle="--", alpha=0.5, label="peak")
+        peak_idx = int(np.argmax(dev)) if dev.size > 0 else 0
+        if dev.size > 0:
+            ax1.axvline(x=float(eps[peak_idx]), color="r",
+                        linestyle="--", alpha=0.5, label="peak")
         if has_cs and "window" in cs:
             lo, hi = cs["window"]
             ax1.axvspan(lo, hi, alpha=0.10, color="green", label="CS window")
