@@ -10,12 +10,15 @@ This is a **one-way** coupling: the beam does not react back on the particle.
 
 Verification targets
 --------------------
-1. **Impulse ledger**: DEM-side Σ∫F dt vs FEM-side Σ∫F dt (same force history,
-   must match to ≤1e-10 relative).
-2. **Deflection**: beam center peak deflection vs analytical static deflection
-   using the peak DEM force as equivalent static load (≤5%).
+1. **force_history_port_parity**: DEM-side Σ∫F dt vs FEM-side Σ∫F dt (same force
+   history, must match to ≤1e-10 relative).  *scope=numerical_verification_only*
+   — this is a consistency check on the trapezoid rule, not physical evidence.
+2. **Deflection**: beam center peak deflection (FEM) vs continuum modal
+   superposition (independent implementation) ≤1%.
 3. **Energy ledger**: total energy + dissipation = initial (≤1e-8 relative).
 4. **Separability**: DEM alone and FEM alone run without coupling.
+5. **dt convergence**: 4-level time-step refinement chain
+   (dt/1, dt/2, dt/4, dt/8) with peak-deflection convergence ratio ≥0.9.
 
 Usage
 -----
@@ -34,6 +37,7 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
+import numpy as np
 import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "src"))
@@ -42,6 +46,11 @@ from tensordem.dem3d import DEM3DConfig, IceDEM3D
 from tensordem.fem_euler_bernoulli import (
     EulerBernoulliBeam, BeamConfig,
     beam_center_deflection_analytic,
+)
+from tensordem.dem_fem_gates import (
+    beam_natural_frequencies,
+    modal_response,
+    modal_static_deflection,
 )
 
 
@@ -242,6 +251,66 @@ def run_fem(force_history, time_history, config, *, ringdown_steps: int = 0):
     }
 
 
+def run_fem_at_refinement(force, times, config, factor: int, ringdown_steps: int = 0):
+    """Drive the FEM with the same force history sampled ``factor`` times finer."""
+    if factor == 1:
+        t_fine = list(times)
+        f_fine = list(force)
+    else:
+        dt = times[1] - times[0]
+        dt_fine = dt / factor
+        t_fine = [times[0] + i * dt_fine for i in range(int((times[-1] - times[0]) / dt_fine) + 1)]
+        f_fine = np.interp(t_fine, times, force).tolist()
+
+    beam_cfg = BeamConfig(
+        length=config.beam_length,
+        width=config.beam_width,
+        height=config.beam_height,
+        young_modulus=config.beam_young_modulus,
+        density=config.beam_density,
+        n_elements=config.beam_n_elements,
+        bc=config.beam_bc,
+        damping_ratio=config.beam_damping,
+    )
+    beam = EulerBernoulliBeam(beam_cfg, device=config.device)
+
+    dt_use = t_fine[1] - t_fine[0]
+    center_node = beam.n_node // 2
+    center_dof = 2 * center_node
+
+    deflection_history = []
+    energy_history = []
+
+    for f in f_fine:
+        f_vec = torch.zeros(beam.n_dof, dtype=beam.dtype, device=beam.device)
+        f_vec[center_dof] = f
+        result = beam.apply_load(f_vec, dt_use)
+        deflection_history.append(result["deflection"][center_node])
+        energy_history.append({
+            "kinetic": beam.kinetic_energy(),
+            "strain": beam.strain_energy(),
+            "total": beam.total_energy(),
+        })
+
+    # Ring-down
+    ring_down = []
+    for _ in range(max(0, int(ringdown_steps))):
+        zero = torch.zeros(beam.n_dof, dtype=beam.dtype, device=beam.device)
+        beam.apply_load(zero, dt_use)
+        ring_down.append(beam.center_deflection())
+
+    peak_deflection = max(abs(d) for d in deflection_history)
+
+    return {
+        "deflection_history": deflection_history,
+        "energy_history": energy_history,
+        "peak_deflection_m": peak_deflection,
+        "dt": dt_use,
+        "refinement": factor,
+        "ring_down_deflection": ring_down,
+    }
+
+
 def test_dem_alone(config):
     cfg = DEM3DConfig(
         nx=2, ny=2, nz=2,
@@ -289,6 +358,45 @@ def test_fem_alone(config):
             "analytical_deflection_m": analytical, "relative_error": error}
 
 
+def compute_modal_peak_deflection(force_history, time_history, config):
+    """Compute peak deflection via continuum modal superposition (independent of FEM)."""
+    beam_cfg = BeamConfig(
+        length=config.beam_length, width=config.beam_width,
+        height=config.beam_height, young_modulus=config.beam_young_modulus,
+        density=config.beam_density, n_elements=config.beam_n_elements,
+        bc=config.beam_bc,
+    )
+    ei = config.beam_young_modulus * beam_cfg.inertia
+    rho_a = beam_cfg.mass_per_length
+
+    # Extend with ring-down for proper modal comparison
+    omega1 = float(beam_natural_frequencies(ei, rho_a, config.beam_length)[0])
+    f1 = omega1 / (2.0 * math.pi)
+    t1 = 1.0 / f1
+    dt = time_history[1] - time_history[0]
+    ringdown_steps = int(math.ceil(5.0 * t1 / dt))
+
+    t_ext = time_history + [time_history[-1] + dt * (i + 1) for i in range(ringdown_steps)]
+    f_ext = force_history + [0.0] * ringdown_steps
+
+    modal = modal_response(
+        f_ext, t_ext, ei=ei, mass_per_length=rho_a, length=config.beam_length,
+        x_load=config.beam_length / 2.0, x_probe=config.beam_length / 2.0,
+        n_modes=9, bc=config.beam_bc,
+    )
+
+    # Only compare the forced phase (same window as FEM)
+    n_forced = len(force_history)
+    modal_forced = modal["deflection"][:n_forced]
+
+    return {
+        "peak_deflection_m": float(np.max(np.abs(modal_forced))),
+        "peak_deflection_full_m": modal["peak_deflection"],
+        "n_modes": modal["n_modes"],
+        "modal_forced": modal_forced.tolist(),
+    }
+
+
 def main():
     config = CouplingConfig()
 
@@ -296,25 +404,25 @@ def main():
     print("DEM-FEM One-Way Coupling: Particle Impact on Beam")
     print("=" * 60)
 
-    print("\n[1/5] Separability: DEM alone...")
+    print("\n[1/6] Separability: DEM alone...")
     dem_alone = test_dem_alone(config)
     assert dem_alone["status"] == "ok"
     print(f"  OK (v_z={dem_alone['particle_vz']:.4f} m/s)")
 
-    print("\n[2/5] Separability: FEM alone...")
+    print("\n[2/6] Separability: FEM alone...")
     fem_alone = test_fem_alone(config)
     assert fem_alone["status"] == "ok"
     print(f"  OK (static error={fem_alone['relative_error']:.2e})")
     assert fem_alone["relative_error"] < 0.05
 
-    print("\n[3/5] Running DEM...")
+    print("\n[3/6] Running DEM...")
     dem_result = run_dem(config)
     print(f"  {dem_result['n_steps']} steps, dt={dem_result['dt']:.6e}s")
     print(f"  Peak force: {dem_result['peak_force_N']:.2f} N")
     print(f"  Contact duration: {dem_result['contact_duration_s']:.6e}s")
     print(f"  Impulse: {dem_result['impulse_dem_Ns']:.6e} Ns")
 
-    print("\n[4/5] Running FEM...")
+    print("\n[4/6] Running FEM...")
     fem_result = run_fem(
         dem_result["force_history"], dem_result["time_history"], config,
     )
@@ -322,29 +430,26 @@ def main():
     print(f"  Impulse: {fem_result['impulse_fem_Ns']:.6e} Ns")
     print(f"  Work done on FEM: {fem_result['work_done_J']:.6e} J")
 
-    print("\n[5/5] Verification...")
+    print("\n[5/6] Modal superposition (independent anchor)...")
+    modal_result = compute_modal_peak_deflection(
+        dem_result["force_history"], dem_result["time_history"], config,
+    )
+    print(f"  Modal peak deflection: {modal_result['peak_deflection_m']:.6e} m")
+    print(f"  Modal n_modes: {modal_result['n_modes']}")
 
-    # 1. Impulse
+    print("\n[6/6] Verification...")
+
+    # 1. Force history port parity (renamed from impulse)
     impulse_dem = dem_result["impulse_dem_Ns"]
     impulse_fem = fem_result["impulse_fem_Ns"]
-    impulse_error = abs(impulse_dem - impulse_fem) / max(abs(impulse_dem), 1e-30)
-    print(f"  Impulse: DEM={impulse_dem:.6e}, FEM={impulse_fem:.6e}, err={impulse_error:.2e}")
+    force_history_parity_error = abs(impulse_dem - impulse_fem) / max(abs(impulse_dem), 1e-30)
+    print(f"  Force history port parity: DEM={impulse_dem:.6e}, FEM={impulse_fem:.6e}, err={force_history_parity_error:.2e}")
 
-    # 2. Deflection
-    peak_force = dem_result["peak_force_N"]
-    beam_cfg = BeamConfig(
-        length=config.beam_length, width=config.beam_width,
-        height=config.beam_height, young_modulus=config.beam_young_modulus,
-        density=config.beam_density, n_elements=config.beam_n_elements,
-        bc=config.beam_bc,
-    )
-    analytical_deflection = beam_center_deflection_analytic(
-        peak_force, config.beam_length, config.beam_young_modulus,
-        beam_cfg.inertia, bc=config.beam_bc,
-    )
-    peak_deflection = fem_result["peak_deflection_m"]
-    deflection_error = abs(peak_deflection - analytical_deflection) / max(abs(analytical_deflection), 1e-30)
-    print(f"  Deflection: peak={peak_deflection:.6e}m, static={analytical_deflection:.6e}m, err={deflection_error:.4f}")
+    # 2. Deflection: dynamic FEM vs modal superposition ≤1%
+    fem_peak = fem_result["peak_deflection_m"]
+    modal_peak = modal_result["peak_deflection_m"]
+    deflection_error = abs(fem_peak - modal_peak) / max(abs(modal_peak), 1e-30)
+    print(f"  Deflection (dynamic vs modal): FEM={fem_peak:.6e}m, modal={modal_peak:.6e}m, err={deflection_error:.4f}")
 
     # 3. Energy ledger: total energy + dissipation = initial
     e_initial = dem_result["e_initial"]["mechanical_energy_J"]
@@ -355,22 +460,10 @@ def main():
     # Dissipation = numerical dissipation in DEM
     dissipation = e_initial - e_final_dem
 
-    # Energy balance: e_final_dem + e_final_fem + dissipation should equal e_initial + work_done
-    # But in one-way coupling, work_done is independent of DEM energy
-    # So we check: e_initial = e_final_dem + dissipation (exact by definition)
-    # And: work_done = e_final_fem (for undamped system)
+    # Work-energy error
+    work_energy_error = abs(work_done - e_final_fem) / max(abs(work_done), 1e-30)
 
-    # The energy ledger error is the balance error:
-    # |e_initial - (e_final_dem + dissipation)| / e_initial = 0 (by construction)
-    # But we also check work-energy balance for FEM:
-    work_energy_error = abs(work_done - e_final_fem) / max(abs(e_final_fem), 1e-30)
-
-    # For the coupled system energy balance:
-    # Total final energy = e_final_dem + e_final_fem
-    # Total initial energy = e_initial
-    # Dissipation = e_initial - e_final_dem (DEM numerical dissipation)
-    # Balance: e_initial = e_final_dem + e_final_fem + (dissipation - e_final_fem)
-    # The residual is: e_initial - e_final_dem - e_final_fem = dissipation - e_final_fem
+    # Energy balance
     energy_residual = e_initial - e_final_dem - e_final_fem
     energy_balance_error = abs(energy_residual) / max(abs(e_initial), 1e-30)
 
@@ -380,11 +473,51 @@ def main():
     print(f"  Work-energy error (FEM): {work_energy_error:.2e}")
     print(f"  Energy balance error: {energy_balance_error:.2e}")
 
+    # 4. dt convergence chain (4 levels: dt/1, dt/2, dt/4, dt/8)
+    print("\n  dt convergence chain...")
+    beam_cfg = BeamConfig(
+        length=config.beam_length, width=config.beam_width,
+        height=config.beam_height, young_modulus=config.beam_young_modulus,
+        density=config.beam_density, n_elements=config.beam_n_elements,
+        bc=config.beam_bc,
+    )
+    ei = config.beam_young_modulus * beam_cfg.inertia
+    rho_a = beam_cfg.mass_per_length
+    omega1 = float(beam_natural_frequencies(ei, rho_a, config.beam_length)[0])
+    f1 = omega1 / (2.0 * math.pi)
+    t1 = 1.0 / f1
+
+    convergence_results = []
+    for factor in [1, 2, 4, 8]:
+        ringdown_steps = int(math.ceil(5.0 * t1 / (dem_result["dt"] / factor)))
+        fem_ref = run_fem_at_refinement(
+            dem_result["force_history"], dem_result["time_history"],
+            config, factor, ringdown_steps=ringdown_steps,
+        )
+        convergence_results.append({
+            "refinement": factor,
+            "dt": fem_ref["dt"],
+            "peak_deflection_m": fem_ref["peak_deflection_m"],
+            "n_samples": len(fem_ref["deflection_history"]),
+        })
+        print(f"    dt/{factor}: peak_def={fem_ref['peak_deflection_m']:.6e}m, dt={fem_ref['dt']:.6e}s")
+
+    # Convergence ratio: compare finest vs second-finest
+    if len(convergence_results) >= 2:
+        finest = convergence_results[-1]
+        second_finest = convergence_results[-2]
+        convergence_ratio = finest["peak_deflection_m"] / max(second_finest["peak_deflection_m"], 1e-30)
+    else:
+        convergence_ratio = 1.0
+
+    print(f"  Convergence ratio (dt/8 vs dt/4): {convergence_ratio:.4f}")
+
     # Use work-energy error as the energy criterion
     energy_error = work_energy_error
 
     results = {
         "scenario": "dem_fem_oneway_particle_impact",
+        "scope": "numerical_verification_only",
         "dem": {
             "n_steps": dem_result["n_steps"], "dt": dem_result["dt"],
             "peak_force_N": dem_result["peak_force_N"],
@@ -405,12 +538,17 @@ def main():
             "energy_final_J": e_final_fem,
             "work_done_J": work_done,
         },
+        "modal": {
+            "peak_deflection_m": modal_result["peak_deflection_m"],
+            "n_modes": modal_result["n_modes"],
+        },
+        "dt_convergence": convergence_results,
         "verification": {
-            "impulse_error_relative": impulse_error,
-            "impulse_pass": impulse_error <= 1e-10,
-            "deflection_analytical_static_m": analytical_deflection,
+            "force_history_port_parity_error_relative": force_history_parity_error,
+            "force_history_port_parity_pass": force_history_parity_error <= 1e-10,
+            "deflection_dynamic_vs_modal_m": modal_peak,
             "deflection_error_relative": deflection_error,
-            "deflection_pass": deflection_error <= 0.05,
+            "deflection_pass": deflection_error <= 0.01,
             "dem_dissipation_J": dissipation,
             "fem_work_done_J": work_done,
             "work_energy_error_relative": work_energy_error,
@@ -419,6 +557,8 @@ def main():
             "separability_dem": dem_alone["status"] == "ok",
             "separability_fem": fem_alone["status"] == "ok",
             "separability_fem_deflection_error": fem_alone["relative_error"],
+            "dt_convergence_ratio": convergence_ratio,
+            "dt_convergence_pass": convergence_ratio >= 0.9,
         },
     }
 
@@ -441,11 +581,15 @@ def main():
             "work_done_J": work_done,
             "peak_deflection_m": fem_result["peak_deflection_m"],
         },
+        "modal_side": {
+            "peak_deflection_m": modal_result["peak_deflection_m"],
+            "n_modes": modal_result["n_modes"],
+        },
         "interface": {
             "impulse_dem_Ns": dem_result["impulse_dem_Ns"],
             "impulse_fem_Ns": fem_result["impulse_fem_Ns"],
             "impulse_error_abs": abs(dem_result["impulse_dem_Ns"] - fem_result["impulse_fem_Ns"]),
-            "impulse_error_relative": impulse_error,
+            "impulse_error_relative": force_history_parity_error,
             "force_samples_transferred": len(dem_result["force_history"]),
         },
         "energy_balance": {
@@ -460,9 +604,10 @@ def main():
         },
         "deflection_comparison": {
             "fem_peak_m": fem_result["peak_deflection_m"],
-            "analytical_static_m": analytical_deflection,
+            "modal_peak_m": modal_result["peak_deflection_m"],
             "error_relative": deflection_error,
         },
+        "dt_convergence": convergence_results,
         "separability": {
             "dem_alone_ok": dem_alone["status"] == "ok",
             "fem_alone_ok": fem_alone["status"] == "ok",
@@ -485,14 +630,15 @@ def main():
     print("\n" + "=" * 60)
     print("VERIFICATION SUMMARY")
     print("=" * 60)
-    print(f"  Impulse (≤1e-10):  {impulse_error:.2e}  {'PASS' if impulse_error <= 1e-10 else 'FAIL'}")
-    print(f"  Deflection (≤5%):  {deflection_error:.4f}  {'PASS' if deflection_error <= 0.05 else 'FAIL'}")
+    print(f"  Force history port parity (≤1e-10):  {force_history_parity_error:.2e}  {'PASS' if force_history_parity_error <= 1e-10 else 'FAIL'}")
+    print(f"  Deflection dynamic vs modal (≤1%):  {deflection_error:.4f}  {'PASS' if deflection_error <= 0.01 else 'FAIL'}")
     print(f"  Work-Energy (≤1e-8): {work_energy_error:.2e}  {'PASS' if work_energy_error <= 1e-8 else 'FAIL'}")
+    print(f"  dt convergence ratio (≥0.9): {convergence_ratio:.4f}  {'PASS' if convergence_ratio >= 0.9 else 'FAIL'}")
     print(f"  Sep DEM:           {'PASS' if dem_alone['status'] == 'ok' else 'FAIL'}")
     print(f"  Sep FEM:           {'PASS' if fem_alone['status'] == 'ok' else 'FAIL'}")
 
-    all_pass = (impulse_error <= 1e-10 and deflection_error <= 0.05
-                and work_energy_error <= 1e-8
+    all_pass = (force_history_parity_error <= 1e-10 and deflection_error <= 0.01
+                and work_energy_error <= 1e-8 and convergence_ratio >= 0.9
                 and dem_alone["status"] == "ok" and fem_alone["status"] == "ok")
     print(f"\n  Overall: {'ALL PASS' if all_pass else 'SOME FAILURES'}")
     return results, ledger
