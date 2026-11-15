@@ -212,7 +212,10 @@ def pair_contact_forces(pos: np.ndarray, vel: np.ndarray, omega: np.ndarray,
     n = pos.shape[0]
     res = _empty_pair_result(n)
     if iu.size == 0:
-        if update_state:
+        if update_state and state is not None:
+            # no pair at all this step: every stored spring is destroyed, book it
+            # as release loss instead of dropping it silently (m21164)
+            res["release_loss"] = float(state.live.sum())
             state.clear()
         return res
 
@@ -306,9 +309,14 @@ def pair_contact_forces(pos: np.ndarray, vel: np.ndarray, omega: np.ndarray,
         np.add.at(torque, ia, -torque_r)
         np.add.at(torque, ja, torque_r)
 
-    live = np.where(f_n > 0.0,
-                    0.5 * kn * overlap_a * overlap_a
-                    + 0.5 * kt * np.einsum("ij,ij->i", tang, tang), 0.0)
+    # Total stored spring energy of the contact -- normal + tangential + rolling,
+    # clipped ("dead") contacts included.  ``release_loss`` below books the drop
+    # of this total when a contact leaves the neighbour list, so every channel
+    # that can silently vanish is accounted for
+    # (docs/PREREG_COLUMN_ENERGY_CLOSURE_m21164.md).
+    live = (0.5 * kn * overlap_a * overlap_a
+            + 0.5 * kt * np.einsum("ij,ij->i", tang, tang)
+            + 0.5 * kr * np.einsum("ij,ij->i", roll, roll))
     release_loss = 0.0
     if update_state:
         prev_live, prev_total = state.take_live(keys)
@@ -397,9 +405,13 @@ def wall_contact_forces(pos: np.ndarray, vel: np.ndarray, omega: np.ndarray,
     act = overlap > 0.0
     if not act.any():
         if state is not None and update_state:
+            # all floor contacts lost: book their stored springs (normal +
+            # tangential + rolling) instead of zeroing them silently (m21164)
+            out["release_loss"] = float(state.live.sum())
             state.tang[:] = 0.0
             state.roll[:] = 0.0
             state.active[:] = False
+            state.live[:] = 0.0
         return out
 
     idx = np.nonzero(act)[0]
@@ -472,9 +484,10 @@ def wall_contact_forces(pos: np.ndarray, vel: np.ndarray, omega: np.ndarray,
     if mu_rolling_wall > 0.0:
         torque[idx] += torque_r
 
-    live = np.where(f_n > 0.0,
-                    0.5 * kn * ov * ov + 0.5 * kt * np.einsum("ij,ij->i", tang, tang),
-                    0.0)
+    # same convention as the pair kernel: the whole store, rolling included
+    live = (0.5 * kn * ov * ov
+            + 0.5 * kt * np.einsum("ij,ij->i", tang, tang)
+            + 0.5 * kr * np.einsum("ij,ij->i", roll, roll))
     release_loss = 0.0
     if state is not None and update_state:
         prev_live = state.live[idx]
