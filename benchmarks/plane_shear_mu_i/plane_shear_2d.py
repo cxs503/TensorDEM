@@ -80,6 +80,13 @@ from tensordem.granular2d.engine import DiskConfig, DiskSystem  # noqa: E402
 # --------------------------------------------------------------------------- #
 # 1. Case definition
 # --------------------------------------------------------------------------- #
+# Band area fraction (free-disk area over the centre band W x (h_eff - 2r)) used to
+# seed a *polydisperse* cell.  It must be reachable by positional relaxation: the
+# 2-D random close packing of equal disks is ~0.84, so 0.78 leaves the projection
+# room to converge.  Monodisperse cells keep their rounds-24/25 seed unchanged.
+PHI_SEED = 0.78
+
+
 @dataclass(frozen=True)
 class PlaneShear2DCase:
     """A 2-D disk plane-shear cell held at constant confining stress."""
@@ -104,6 +111,11 @@ class PlaneShear2DCase:
     phi_init: float = 0.80
     sample_every: int = 40
     init_mode: str = "lattice"   # "lattice" (R24) or "random" (disordered RSA seed)
+    # Round 26: physical symmetry break.  Half-width of the bounded uniform
+    # radius draw r = radius*(1 + w*u), u ~ U(-1,1); the mean radius is preserved.
+    # 0.0 = monodisperse (rounds 24-25); 0.5 = the widest spread for which the
+    # archived law is stated to hold (da Cruz 2005 / GDR MiDi 2004).
+    polydispersity: float = 0.0
 
     # -- derived quantities -------------------------------------------------
     @property
@@ -151,6 +163,12 @@ class PlaneShear2DCase:
             raise ValueError("n_particles must be positive")
         if self.mu_p <= 0.0 or self.kn <= 0.0:
             raise ValueError("mu_p and kn must be positive")
+        if not (0.0 <= self.polydispersity <= 0.5):
+            raise ValueError(
+                "polydispersity must be in [0, 0.5]: the archived friction law is "
+                "stated for at most 50 % polydispersity (r_max/r_min = 3 at "
+                "w = 0.5), and beyond that the mean-radius definition of I / "
+                "gap_eff would silently stop meaning the same measurement")
         if self.init_mode not in ("lattice", "random"):
             raise ValueError("init_mode must be 'lattice' or 'random'")
 
@@ -158,6 +176,40 @@ class PlaneShear2DCase:
 # --------------------------------------------------------------------------- #
 # 2. Initial state: pinned rows + lattice packing with a seeded jitter
 # --------------------------------------------------------------------------- #
+def _draw_radii(case: PlaneShear2DCase, n: int, *, stream: int = 0
+                ) -> np.ndarray:
+    """Per-disk radii with the *arithmetic mean exactly* ``case.radius``.
+
+    ``polydispersity = w`` draws ``r_i = radius (1 + w u_i)``, ``u_i ~ U(-1, 1)``:
+    bounded (no vanishing disks), symmetric, and - because the draw is rescaled to
+    its own mean - the mean radius is invariant.  That matters for the ordinates:
+    ``I = gammadot d / sqrt(P/rho)``, ``gap_eff = h - 2 radius`` and ``phi_cell``
+    keep their monodisperse meaning, so a polydisperse run stays comparable to
+    rounds 24-25 by construction and the area fraction moves only by ``O(w^2)``.
+
+    ``stream`` decorrelates the radius draw from the positional draw of the same
+    seed, so a monodisperse/polydisperse pair at fixed ``seed`` differs in the
+    radii, not in the packing sites.
+    """
+    w = float(case.polydispersity)
+    if w <= 0.0:
+        return np.full(n, case.radius)
+    rng = np.random.default_rng(case.seed + 104729 * (stream + 1))
+    r = case.radius * (1.0 + w * rng.uniform(-1.0, 1.0, size=n))
+    return r * (case.radius / float(r.mean()))
+
+
+def _relax_iters(case: PlaneShear2DCase) -> int:
+    """Projection budget for :func:`_relax_overlaps` at the case's size spread.
+
+    Measured on the probe cell (``/tmp`` study, see round-26 doc): monodisperse
+    configurations relax in < 400 sweeps, ``w = 0.25`` needs ~400 and ``w = 0.5``
+    (``r_max/r_min = 3``) ~800; the budget is set at roughly twice the observed
+    need so that an overlap-free seed is a *hard* precondition, not a hope.
+    """
+    return int(math.ceil(400.0 + 2200.0 * float(case.polydispersity)))
+
+
 def _wall_row(case: PlaneShear2DCase, y: float, offset: float
               ) -> tuple[np.ndarray, np.ndarray]:
     """A touching row of disks at height ``y``; spacing keeps them just in contact."""
@@ -196,11 +248,16 @@ def _lattice_packing(case: PlaneShear2DCase, y_lo: float, y_hi: float
     pos = pos[idx]
     pos += rng.uniform(-0.05, 0.05, size=pos.shape) * case.diameter
     pos[:, 1] = np.clip(pos[:, 1], y_lo, y_hi)
-    rad = np.full(len(pos), case.radius)
+    rad = _draw_radii(case, len(pos), stream=1)
+    if case.polydispersity > 0.0:
+        # variable radii overlap on a mean-diameter lattice: make the seeded state
+        # admissible before the protocol starts (positional projection, no dynamics)
+        pos = _relax_overlaps(pos, rad, case.width, y_lo, y_hi,
+                              iters=_relax_iters(case))
     return pos, rad
 
 
-def _relax_overlaps(pos: np.ndarray, radius: float, width: float, y_lo: float,
+def _relax_overlaps(pos: np.ndarray, radius, width: float, y_lo: float,
                     y_hi: float, *, iters: int = 400, tol: float = 1.0e-4
                     ) -> np.ndarray:
     """Remove overlaps by positional projection (periodic in ``x``, walls in ``y``).
@@ -209,15 +266,55 @@ def _relax_overlaps(pos: np.ndarray, radius: float, width: float, y_lo: float,
     sites (a jittered lattice) and this loop turns them into a contact-free
     configuration at (almost) the same area fraction.  No dynamics, no engine
     state - the physical protocol starts from the returned positions.
+
+    ``radius`` may be a scalar (monodisperse) or one radius per disk; the contact
+    distance of a pair is then ``r_i + r_j`` and the correction is split by
+    inverse area (a large disk is displaced less than a small one - the 0.5/0.5
+    split oscillates once ``r_max/r_min`` approaches 3).
+
+    Round 26 defect fix: the *acceptance* test of the previous revision built a
+    plain (non-periodic) k-d tree, so it could not see a pair that is close
+    **through the periodic boundary in x**: such a seed was certified clean while
+    the engine started from an overlapping state.  The test below wraps ``dx``
+    exactly as the relaxation does, and it is the loop's *convergence* criterion,
+    not a postscript - a seed that cannot be cleaned is an error, never silently
+    returned.
     """
     from scipy.spatial import cKDTree
 
     pos = np.array(pos, dtype=np.float64, copy=True)
-    d = 2.0 * radius
-    for _ in range(iters):
+    rad = np.asarray(radius, dtype=np.float64)
+    if rad.ndim == 0:
+        rad = np.full(len(pos), float(rad))
+    if rad.shape != (len(pos),):
+        raise ValueError("radius must be a scalar or one radius per position")
+    d = 2.0 * float(rad.max())
+    uniform = bool(np.all(rad == rad[0]))
+    box = (width, 10.0 * (y_hi - y_lo + d))
+
+    def _bad(pts: np.ndarray, slack: float) -> int:
+        """#pairs closer than ``slack * (r_i + r_j)``, periodic in ``x``."""
+        if width > 0:
+            pts = np.array(pts, dtype=np.float64, copy=True)
+            pts[:, 0] = np.mod(pts[:, 0], width)
+        tree = cKDTree(pts, boxsize=box)
+        pairs = tree.query_pairs(r=d * max(slack, 1.0) * 1.001,
+                                 output_type="ndarray")
+        if len(pairs) == 0:
+            return 0
+        i, j = pairs[:, 0], pairs[:, 1]
+        dx = pts[j, 0] - pts[i, 0]
+        dx -= width * np.round(dx / width)
+        dy = pts[j, 1] - pts[i, 1]
+        dist = np.maximum(np.hypot(dx, dy), 1.0e-12)
+        return int(np.sum(dist < (rad[i] + rad[j]) * slack))
+
+    sweeps = 0
+    while sweeps < iters and _bad(pos, 1.0 + tol) > 0:
+        sweeps += 1
         pts = pos.copy()
         pts[:, 0] = np.mod(pts[:, 0], width)
-        tree = cKDTree(pts, boxsize=(width, 10.0 * (y_hi - y_lo + d)))
+        tree = cKDTree(pts, boxsize=box)
         pairs = tree.query_pairs(r=d * (1.0 + tol), output_type="ndarray")
         if len(pairs) == 0:
             break
@@ -225,23 +322,31 @@ def _relax_overlaps(pos: np.ndarray, radius: float, width: float, y_lo: float,
         dx = pts[j, 0] - pts[i, 0]
         dx -= width * np.round(dx / width)
         dy = pts[j, 1] - pts[i, 1]
-        dist = np.hypot(dx, dy)
-        dist = np.maximum(dist, 1.0e-12)
-        overlap = np.maximum(0.0, d * (1.0 + tol) - dist)
-        # split the correction evenly; deterministic order (pairs are sorted)
-        corr = 0.5 * overlap / dist
-        np.add.at(pos[:, 0], i, -corr * dx)
-        np.add.at(pos[:, 1], i, -corr * dy)
-        np.add.at(pos[:, 0], j, +corr * dx)
-        np.add.at(pos[:, 1], j, +corr * dy)
+        dist = np.maximum(np.hypot(dx, dy), 1.0e-12)
+        overlap = np.maximum(0.0, (rad[i] + rad[j]) * (1.0 + tol) - dist)
+        corr = overlap / dist
+        if uniform:
+            # legacy arithmetic for the monodisperse case: exactly the split the
+            # rounds-24/25 seeds were produced with
+            corr = 0.5 * corr
+            np.add.at(pos[:, 0], i, -corr * dx)
+            np.add.at(pos[:, 1], i, -corr * dy)
+            np.add.at(pos[:, 0], j, +corr * dx)
+            np.add.at(pos[:, 1], j, +corr * dy)
+        else:
+            area = rad ** 2
+            f_i = area[j] / (area[i] + area[j])
+            np.add.at(pos[:, 0], i, -(f_i * corr) * dx)
+            np.add.at(pos[:, 1], i, -(f_i * corr) * dy)
+            np.add.at(pos[:, 0], j, +((1.0 - f_i) * corr) * dx)
+            np.add.at(pos[:, 1], j, +((1.0 - f_i) * corr) * dy)
         pos[:, 0] = np.mod(pos[:, 0], width)
         pos[:, 1] = np.clip(pos[:, 1], y_lo, y_hi)
-    pts = pos.copy()
-    pts[:, 0] = np.mod(pts[:, 0], width)
-    tree = cKDTree(pts)
-    pairs = tree.query_pairs(r=d * (1.0 - 1.0e-3), output_type="ndarray")
-    if len(pairs):
-        raise RuntimeError(f"_relax_overlaps left {len(pairs)} overlapping pairs")
+    leftover = _bad(pos, 1.0 - 1.0e-3)
+    if leftover:
+        raise RuntimeError(
+            f"_relax_overlaps left {leftover} overlapping pairs after "
+            f"{sweeps} sweeps (including periodic images in x)")
     return pos
 
 
@@ -283,11 +388,13 @@ def _random_packing(case: PlaneShear2DCase, y_lo: float, y_hi: float
     pos += rng.uniform(-0.4, 0.4, size=pos.shape) * case.diameter
     pos[:, 0] = np.mod(pos[:, 0], case.width)
     pos[:, 1] = np.clip(pos[:, 1], y_lo, y_hi)
-    pos = _relax_overlaps(pos, r, case.width, y_lo, y_hi)
-    return pos, np.full(len(pos), r)
+    rad = _draw_radii(case, len(pos), stream=2)
+    pos = _relax_overlaps(pos, rad, case.width, y_lo, y_hi,
+                          iters=_relax_iters(case))
+    return pos, rad
 
 
-def hexatic_order(pos: np.ndarray, radius: float, width: float,
+def hexatic_order(pos: np.ndarray, radius, width: float,
                   *, shell: tuple[float, float] = (1.25, 1.75)) -> dict:
     """Local 6-fold bond-order statistics of a 2-D disk configuration.
 
@@ -302,8 +409,15 @@ def hexatic_order(pos: np.ndarray, radius: float, width: float,
     pos = np.array(pos, dtype=np.float64, copy=True)
     if width > 0:
         pos[:, 0] = np.mod(pos[:, 0], width)
-    d = 2.0 * radius
-    lo, hi = shell[0] * d, shell[1] * d
+    # Round 26: ``radius`` may be scalar or per-disk.  The first-neighbour shell is
+    # then defined per pair (``shell * (r_i + r_j)``), which reduces exactly to
+    # ``shell * d`` when all radii are equal, so monodisperse numbers stay
+    # bit-comparable with rounds 24-25.
+    rad = np.asarray(radius, dtype=np.float64)
+    if rad.ndim == 0:
+        rad = np.full(len(pos), float(rad))
+    d_max = 2.0 * float(rad.max())
+    hi = shell[1] * d_max
     tree = cKDTree(pos)
     neigh = tree.query_ball_point(pos, r=hi)
     psi6 = []
@@ -318,7 +432,8 @@ def hexatic_order(pos: np.ndarray, radius: float, width: float,
                 dx -= width * round(dx / width)
             dy = pos[j, 1] - pos[i, 1]
             dist = math.hypot(dx, dy)
-            if lo <= dist <= hi:
+            d_ij = rad[i] + rad[j]
+            if shell[0] * d_ij <= dist <= shell[1] * d_ij:
                 ang.append(math.atan2(dy, dx))
         degrees.append(len(ang))
         if len(ang) >= 3:
@@ -342,15 +457,43 @@ class RoughWallShearCell:
         case.validate()
         self.case = case
         r = case.radius
-        bottom, rad_b = _wall_row(case, 1.0 * r, 0.0)
-        top, rad_t = _wall_row(case, 1.0 * r + case.gap + 2.0 * r, 0.5)
-        if case.init_mode == "random":
-            free_pos, rad_f = _random_packing(case, 3.0 * r, case.gap + r)
+        # Round 26: at a *fixed mean radius* a polydisperse draw carries the extra
+        # area <r^2>/r^2 = 1 + w^2/3, so the monodisperse seed box would be
+        # over-filled (the probe cell sits at phi ~ 0.86 and the area fraction
+        # would exceed the 2-D close packing).  Open the initial gap by exactly
+        # that factor, so the seeded state keeps the same phi_init; the constant-P
+        # servo then closes the gap to whatever density the imposed stress
+        # selects, which is the measurement.  For w = 0 the factor is 1 and the
+        # rounds-24/25 protocol is reproduced bit for bit.
+        if case.polydispersity > 0.0:
+            # `<r^2>/r^2 = 1 + w^2/3` at fixed mean radius, so the monodisperse box
+            # would be over-filled (the probe cell already sits at a *band*
+            # fraction of 0.86, above the 2-D random close packing ~0.84) and the
+            # projection jams instead of converging.  Seed the polydisperse cell
+            # at the band fraction PHI_SEED instead: the initial density is not a
+            # control variable of this experiment (the constant-P servo is), so
+            # the seed only has to be admissible and disordered.
+            area_est = (case.n_particles * math.pi * r ** 2
+                        * (1.0 + case.polydispersity ** 2 / 3.0))
+            gap_start = 2.0 * r + area_est / (case.width * PHI_SEED)
         else:
-            free_pos, rad_f = _lattice_packing(case, 3.0 * r, case.gap + r)
+            gap_start = case.gap
+        self.gap_start = gap_start
+        bottom, rad_b = _wall_row(case, 1.0 * r, 0.0)
+        top, rad_t = _wall_row(case, 1.0 * r + gap_start + 2.0 * r, 0.5)
+        # Round 26: the wall margin is r_wall + r_largest, not 2r.  The pinned rows
+        # are disks of the *nominal* radius, so with a size spread the old 2r margin
+        # let a large free disk start in contact with a wall grain (a seed defect
+        # that only becomes visible once radii vary).  For w = 0 this is exactly
+        # the old 3r / gap + r window.
+        r_max_free = r * (1.0 + case.polydispersity)
+        y_lo = bottom[0, 1] + r + r_max_free
+        y_hi = top[0, 1] - r - r_max_free
+        if case.init_mode == "random":
+            free_pos, rad_f = _random_packing(case, y_lo, y_hi)
+        else:
+            free_pos, rad_f = _lattice_packing(case, y_lo, y_hi)
         # free disks live strictly between the two rows' surfaces
-        y_lo = bottom[0, 1] + 2.0 * r
-        y_hi = top[0, 1] - 2.0 * r
         free_pos[:, 1] = np.clip(free_pos[:, 1], y_lo, y_hi)
         pos = np.vstack([free_pos, bottom, top])
         radii = np.concatenate([rad_f, rad_b, rad_t])
@@ -455,7 +598,8 @@ class RoughWallShearCell:
 
         p_bulk = -0.5 * float(sigma[0, 0] + sigma[1, 1])
         tau_bulk = 0.5 * float(abs(sigma[0, 1]) + abs(sigma[1, 0]))
-        disk_area = self.n_free * math.pi * case.radius**2
+        # Round 26: actual free-disk area (sum of pi r_i^2), not n * pi * <r>^2
+        disk_area = float(np.sum(math.pi * sysm.radii[self.free_idx] ** 2))
         phi_gap = disk_area / (case.width * self.gap_eff)
         phi_cell = disk_area / (case.width * (self.gap_eff + 2.0 * case.radius))
         p = p_bulk if p_bulk > 0 else p_wall
@@ -549,7 +693,8 @@ def simulate(case: PlaneShear2DCase, *, progress: bool = False) -> dict:
     # end-of-window structure: a crystal shears by basal slip at a far lower
     # effective friction than a disordered packing, so the order parameter is
     # part of the measurement, not a postscript
-    order = hexatic_order(cell.system.pos[cell.free_idx], case.radius, case.width)
+    free_radii = cell.system.radii[cell.free_idx]
+    order = hexatic_order(cell.system.pos[cell.free_idx], free_radii, case.width)
     first = win[: len(win) // 2]
     second = win[len(win) // 2:]
 
@@ -571,6 +716,12 @@ def simulate(case: PlaneShear2DCase, *, progress: bool = False) -> dict:
         "duration_s": time.time() - t0,
         "n_free": cell.n_free,
         "n_wall_per_row": cell.n_wall,
+        "polydispersity": case.polydispersity,
+        "radius_mean": float(np.mean(free_radii)),
+        "radius_sd": float(np.std(free_radii, ddof=1)) if len(free_radii) > 1 else 0.0,
+        "radius_min": float(np.min(free_radii)),
+        "radius_max": float(np.max(free_radii)),
+        "radius_ratio_max_over_min": float(np.max(free_radii) / np.min(free_radii)),
         "ke_settle": ke_settle,
         "p_compaction_end": avg("p_wall", settle_tail),
         "gap_eff_final": avg("gap_eff", win),
@@ -621,6 +772,10 @@ def main(argv: list | None = None) -> int:
     ap.add_argument("--init", dest="init_mode", default="lattice",
                     choices=("lattice", "random"),
                     help="lattice (R24 crystal seed) or random (disordered packing, R25)")
+    ap.add_argument("--polydispersity", type=float, default=0.0,
+                    help="half-width of the bounded uniform radius draw "
+                         "(0 = monodisperse; 0.5 = widest spread for which the "
+                         "archived law is stated)")
     ap.add_argument("--quick", action="store_true", help="small/short smoke run")
     ap.add_argument("--out", default=None)
     args = ap.parse_args(argv)
@@ -631,7 +786,8 @@ def main(argv: list | None = None) -> int:
                             shear_settle_strain=args.shear_setup_strain,
                             strain_measure=args.strain_measure,
                             n_particles=args.n_particles,
-                            init_mode=args.init_mode)
+                            init_mode=args.init_mode,
+                            polydispersity=args.polydispersity)
     if args.quick:
         case = replace(case, width=0.24, gap=0.12, n_particles=260,
                        settle_time_units=40.0, shear_settle_strain=0.4,
