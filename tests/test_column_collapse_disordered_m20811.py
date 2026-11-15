@@ -164,9 +164,12 @@ def test_verdicts_accept_a_clean_wave():
             _row(case="d2", runout_ratio=1.98, err=-0.01),
             _row(case="d3", runout_ratio=2.10, err=0.05)]
     out = mod.adjudicate(rows)
-    assert out["verdicts"]["C_PHI"] and out["verdicts"]["C_EQ"]
-    assert out["verdicts"]["C_DISORDER"] and out["verdicts"]["C_BAND"]
-    assert out["verdicts"]["C_SPREAD"]
+    states = out["verdict_states"]
+    assert states["C_PHI"] == mod.PASS
+    assert states["C_EQ"] == mod.PASS
+    assert states["C_DISORDER"] == mod.PASS
+    assert states["C_BAND"] == mod.PASS
+    assert states["C_SPREAD"] == mod.PASS
 
 
 def test_verdicts_catch_band_and_disorder_failures():
@@ -176,9 +179,77 @@ def test_verdicts_catch_band_and_disorder_failures():
             _row(case="d1", runout_ratio=2.5, err=0.25, hex_order=0.31),
             _row(case="d2", packing_fraction=0.40)]
     out = mod.adjudicate(rows)
-    assert not out["verdicts"]["C_BAND"]
-    assert not out["verdicts"]["C_DISORDER"]
-    assert not out["verdicts"]["C_PHI"]
+    states = out["verdict_states"]
+    assert states["C_BAND"] == mod.FAIL
+    assert states["C_DISORDER"] == mod.FAIL
+    assert states["C_PHI"] == mod.FAIL
+
+
+def test_verdict_states_are_three_valued_with_reasons():
+    """No criterion may be reported as a bare boolean: each carries a state
+    from {pass, fail, unevaluable} plus a human-readable reason."""
+    mod = _load_script()
+    out = mod.adjudicate([_row(case="d1")])
+    assert set(out["verdict_states"]) == {"C_PHI", "C_EQ", "C_DISORDER",
+                                          "C_BAND", "C_SPREAD", "B_LATTICE"}
+    for name, verdict in out["verdicts"].items():
+        assert verdict["state"] in (mod.PASS, mod.FAIL, mod.UNEVALUABLE)
+        assert verdict["state"] == out["verdict_states"][name]
+        assert isinstance(verdict["reason"], str) and verdict["reason"]
+        assert verdict["evidence"] >= 0
+
+
+def test_criteria_without_evidence_are_unevaluable_never_pass():
+    """Vacuous-truth regression (m20811 reported C_DISORDER = true from an
+    ``all()`` over an empty set when no in-run lattice control existed)."""
+    mod = _load_script()
+    out = mod.adjudicate([_row(case="d1", lattice_hex_order=float("nan"))])
+    states = out["verdict_states"]
+    assert states["C_DISORDER"] == mod.UNEVALUABLE
+    assert states["C_SPREAD"] == mod.UNEVALUABLE          # one member only
+    assert states["C_BAND"] == mod.PASS                   # the one member is in band
+    assert out["evidence_coverage"]["disorder_evaluable"] == []
+    assert out["evidence_coverage"]["spread_evaluable"] == []
+    assert "lattice control" in out["verdicts"]["C_DISORDER"]["reason"]
+    assert "spread undefined" in out["verdicts"]["C_SPREAD"]["reason"]
+
+
+def test_disorder_needs_a_lattice_control_at_the_same_aspect():
+    mod = _load_script()
+    with_control = mod.adjudicate([_row(case="d1", hex_order=0.15),
+                                   _row(case="m0", phase="lattice_control",
+                                        hex_order=0.31, lattice_hex_order=0.32)])
+    assert with_control["verdict_states"]["C_DISORDER"] == mod.PASS
+    assert with_control["verdict_states"]["B_LATTICE"] == mod.PASS
+    ratio = with_control["per_aspect"][0.5]["hex_order_ratio_max"]
+    assert ratio == pytest.approx(0.15 / 0.32)
+    without = mod.adjudicate([_row(case="d1", hex_order=0.15)])
+    assert without["verdict_states"]["C_DISORDER"] == mod.UNEVALUABLE
+    assert without["verdict_states"]["B_LATTICE"] == mod.FAIL
+
+
+def test_spread_transitions_at_two_members():
+    mod = _load_script()
+    single = mod.adjudicate([_row(case="d1")])
+    assert single["verdict_states"]["C_SPREAD"] == mod.UNEVALUABLE
+    twins = mod.adjudicate([_row(case="d1", runout_ratio=2.0),
+                            _row(case="d2", runout_ratio=2.0)])
+    assert twins["verdict_states"]["C_SPREAD"] == mod.PASS
+    wide = mod.adjudicate([_row(case="d1", runout_ratio=2.0),
+                           _row(case="d2", runout_ratio=3.0)])
+    assert wide["verdict_states"]["C_SPREAD"] == mod.FAIL
+    assert "a=0.5" in wide["verdicts"]["C_SPREAD"]["reason"]
+
+
+def test_overlap_violation_fails_c_eq_and_marks_the_member_inadmissible():
+    mod = _load_script()
+    out = mod.adjudicate([_row(case="d1", max_overlap_frac=0.03),
+                          _row(case="d2", aspect_nominal=1.0)])
+    assert out["verdict_states"]["C_EQ"] == mod.FAIL
+    assert out["n_admissible"] == 1
+    assert out["per_aspect"][0.5]["n_admissible"] == 0
+    assert out["per_aspect"][0.5]["band_on_admissible"] is None
+    assert out["per_aspect"][1.0]["band_on_admissible"] == [True]
 
 
 def test_spread_and_empty_input():
@@ -186,16 +257,82 @@ def test_spread_and_empty_input():
     assert mod._spread([1.0, 1.0]) == 0.0
     assert math.isnan(mod._spread([1.0]))
     assert math.isnan(mod._spread([]))
-    assert mod.adjudicate([])["incomplete"] is True
+    empty = mod.adjudicate([])
+    assert empty["incomplete"] is True
+    assert empty["verdict_states"] == {}
 
 
-@pytest.mark.skipif(not os.path.exists(os.path.join(BUNDLE, "cases_disordered.csv")),
-                    reason="wave artifacts not produced yet")
-def test_bundled_csv_regression():
+# --- the committed bundle --------------------------------------------------
+
+BUNDLE_CSV = os.path.join(BUNDLE, "cases_disordered.csv")
+BUNDLE_SUMMARY = os.path.join(BUNDLE, "summary.json")
+HAVE_BUNDLE = os.path.exists(BUNDLE_CSV) and os.path.exists(BUNDLE_SUMMARY)
+
+
+@pytest.mark.skipif(not HAVE_BUNDLE, reason="wave artifacts not produced yet")
+def test_bundled_csv_is_self_consistent_with_the_lube_law():
+    """Every derived column of the committed CSV is re-derived from geometry."""
     mod = _load_script()
-    rows = mod.load_cases()
-    assert len(rows) >= 4
+    rows = mod.load_bundled_cases()
+    assert len(rows) >= 2
     for row in rows:
         assert 0.0 < row["packing_fraction"] < 0.75
-        assert row["reference"] == pytest.approx(
-            mod.lube_2004_runout_ratio(row["aspect_measured"]))
+        ref = mod.lube_2004_runout_ratio(row["aspect_measured"])
+        assert row["reference"] == pytest.approx(ref, rel=1e-9)
+        assert row["err"] == pytest.approx(row["runout_ratio"] / ref - 1.0,
+                                           abs=1e-9)
+        assert row["aspect_measured"] > 0.0
+
+
+@pytest.mark.skipif(not HAVE_BUNDLE, reason="wave artifacts not produced yet")
+def test_bundled_summary_is_reproducible_from_the_bundled_csv():
+    """The committed summary must follow from the committed CSV alone: no run
+    directory, no hand-typed number."""
+    mod = _load_script()
+    with open(BUNDLE_SUMMARY) as fh:
+        summary = json.load(fh)
+    fresh = mod.adjudicate(mod.load_bundled_cases())
+    assert summary["verdict_states"] == fresh["verdict_states"]
+    assert summary["evidence_coverage"] == fresh["evidence_coverage"]
+    assert summary["n_cases"] == fresh["n_cases"]
+    assert summary["source"]["bundle_csv_sha256"] == mod.bundle_sha256()
+    for verdict in summary["verdicts"].values():
+        assert verdict["state"] in (mod.PASS, mod.FAIL, mod.UNEVALUABLE)
+        assert verdict["reason"]
+
+
+@pytest.mark.skipif(not HAVE_BUNDLE, reason="wave artifacts not produced yet")
+def test_bundled_bundle_supports_no_disorder_or_spread_claim():
+    """Corrected reading of the m20811 bundle (m21886).
+
+    Two states, one per aspect, no in-run lattice control, one state in breach
+    of C_EQ -> C_DISORDER and C_SPREAD are unevaluable, not ``true``.
+    """
+    mod = _load_script()
+    out = mod.adjudicate(mod.load_bundled_cases())
+    states = out["verdict_states"]
+    assert states["C_DISORDER"] == mod.UNEVALUABLE
+    assert states["C_SPREAD"] == mod.UNEVALUABLE
+    assert states["C_EQ"] == mod.FAIL
+    assert states["C_BAND"] == mod.PASS
+    assert states["B_LATTICE"] == mod.FAIL    # declared in m20811, never run
+    cov = out["evidence_coverage"]
+    assert cov["n_members"] == 2
+    assert all(n == 1 for n in cov["members_per_aspect"].values())
+    assert out["n_admissible"] == 1
+
+
+@pytest.mark.skipif(not HAVE_BUNDLE, reason="wave artifacts not produced yet")
+def test_bundled_csv_loader_rejects_tampered_derived_columns(tmp_path):
+    mod = _load_script()
+    raw = open(BUNDLE_CSV).read().splitlines()
+    header = raw[0].split(",")
+    for column, factor in (("reference", 1.05), ("err", 1.0)):
+        cells = raw[1].split(",")
+        i = header.index(column)
+        cells[i] = repr(float(cells[i]) + (0.01 if column == "err"
+                                           else float(cells[i]) * (factor - 1.0)))
+        bad = tmp_path / f"bad_{column}.csv"
+        bad.write_text("\n".join([raw[0], ",".join(cells), *raw[2:]]) + "\n")
+        with pytest.raises(ValueError):
+            mod.load_bundled_cases(str(bad))

@@ -1,8 +1,10 @@
 {
  "n_cases": 2,
+ "n_admissible": 1,
  "per_aspect": {
   "0.5": {
    "n_members": 1,
+   "n_admissible": 1,
    "err_min": -0.12085621159021742,
    "err_max": -0.12085621159021742,
    "worst_abs_err": 0.12085621159021742,
@@ -18,11 +20,33 @@
    "hex_order_ratio_max": NaN,
    "lattice_control_runout": NaN,
    "lattice_control_err": NaN,
-   "C_BAND": true,
-   "C_SPREAD": false
+   "band_on_admissible": [
+    true
+   ],
+   "C_BAND": {
+    "state": "pass",
+    "reason": "1 member(s) within 15 % of Lube(a_meas)",
+    "evidence": 1
+   },
+   "C_SPREAD": {
+    "state": "unevaluable",
+    "reason": "1 member(s) < 2: spread undefined",
+    "evidence": 1
+   },
+   "C_DISORDER": {
+    "state": "unevaluable",
+    "reason": "no in-run lattice control at this aspect: no disorder baseline",
+    "evidence": 1
+   },
+   "B_LATTICE": {
+    "state": "fail",
+    "reason": "no in-run lattice control row",
+    "evidence": 0
+   }
   },
   "1.0": {
    "n_members": 1,
+   "n_admissible": 0,
    "err_min": -0.056523827133917126,
    "err_max": -0.056523827133917126,
    "worst_abs_err": 0.056523827133917126,
@@ -38,16 +62,82 @@
    "hex_order_ratio_max": NaN,
    "lattice_control_runout": NaN,
    "lattice_control_err": NaN,
-   "C_BAND": true,
-   "C_SPREAD": false
+   "band_on_admissible": null,
+   "C_BAND": {
+    "state": "pass",
+    "reason": "1 member(s) within 15 % of Lube(a_meas)",
+    "evidence": 1
+   },
+   "C_SPREAD": {
+    "state": "unevaluable",
+    "reason": "1 member(s) < 2: spread undefined",
+    "evidence": 1
+   },
+   "C_DISORDER": {
+    "state": "unevaluable",
+    "reason": "no in-run lattice control at this aspect: no disorder baseline",
+    "evidence": 1
+   },
+   "B_LATTICE": {
+    "state": "fail",
+    "reason": "no in-run lattice control row",
+    "evidence": 0
+   }
   }
  },
  "verdicts": {
-  "C_PHI": true,
-  "C_EQ": false,
-  "C_DISORDER": true,
-  "C_BAND": true,
-  "C_SPREAD": false
+  "C_PHI": {
+   "state": "pass",
+   "reason": "2 state(s) in [0.52, 0.68]",
+   "evidence": 2
+  },
+  "C_EQ": {
+   "state": "fail",
+   "reason": "state(s) violating at_rest/overlap: d1_j005_s505",
+   "evidence": 2
+  },
+  "C_DISORDER": {
+   "state": "unevaluable",
+   "reason": "a=0.5: no in-run lattice control at this aspect: no disorder baseline; a=1: no in-run lattice control at this aspect: no disorder baseline",
+   "evidence": 2
+  },
+  "C_BAND": {
+   "state": "pass",
+   "reason": "all 2 aspect(s) pass",
+   "evidence": 2
+  },
+  "C_SPREAD": {
+   "state": "unevaluable",
+   "reason": "a=0.5: 1 member(s) < 2: spread undefined; a=1: 1 member(s) < 2: spread undefined",
+   "evidence": 2
+  },
+  "B_LATTICE": {
+   "state": "fail",
+   "reason": "a=0.5: no in-run lattice control row; a=1: no in-run lattice control row",
+   "evidence": 0
+  }
+ },
+ "verdict_states": {
+  "C_PHI": "pass",
+  "C_EQ": "fail",
+  "C_DISORDER": "unevaluable",
+  "C_BAND": "pass",
+  "C_SPREAD": "unevaluable",
+  "B_LATTICE": "fail"
+ },
+ "evidence_coverage": {
+  "n_rows": 2,
+  "n_members": 2,
+  "aspects": [
+   0.5,
+   1.0
+  ],
+  "members_per_aspect": {
+   "0.5": 1,
+   "1.0": 1
+  },
+  "spread_evaluable": [],
+  "disorder_evaluable": []
  },
  "incomplete": false,
  "criteria": {
@@ -58,9 +148,17 @@
   "C_SPREAD": "sigma/mean of r_inf/r_i across members <= 5 % per aspect",
   "B_LATTICE": "lattice control re-run in this wave (baseline in-run)"
  },
+ "source": {
+  "mode": "bundle",
+  "bundle_csv": "docs/artifacts/column_collapse_disordered_m20811/cases_disordered.csv",
+  "bundle_csv_sha256": "b26bf386ccd7b28316558d0b856a961489f646513eb8fe373ccae00bdc57c44b",
+  "run_dir": ""
+ },
+ "supersedes": "m20811 summary.json reported C_DISORDER=pass from an all() over an empty set (no in-run lattice control) and C_SPREAD=fail from a spread that is undefined for a single member; both are re-adjudicated here as 'unevaluable' (m21886).",
  "archive_m20533_worst_abs_err": {},
  "figures": [
   "fig_runout_disorder.png",
-  "fig_err_band.png"
+  "fig_err_band.png",
+  "fig_verdict_evidence.png"
  ]
 }
