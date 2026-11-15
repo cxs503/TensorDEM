@@ -21,6 +21,17 @@ Critical-state cross-check (informational, not a gate):
 phi_cv from the stress-path tail should be close to arctan(mu) where mu is
 the interparticle friction coefficient (Rowe 1962 stress-dilatancy theory).
 
+Why friction_coefficient = 0.65
+-------------------------------
+The Bolton (1986) reference is for angular quartz sand with phi_crit ≈ 33 deg.
+Rowe (1962) stress-dilatancy theory predicts phi_cv = arctan(mu) at the
+critical state.  Setting mu = 0.65 gives phi_cv = arctan(0.65) ≈ 33.0 deg,
+which matches the Bolton reference for the critical-state friction angle.
+The previous default mu = 0.55 (ice-ice friction) gave phi_cv ≈ 28.8 deg,
+which is appropriate for ice ridge rubble but not for sand validation.
+With phi_cv ≈ 33 deg and I_R ≈ 1 (dense sand at D_r = 80 %), the Bolton
+plane-strain relation phi_peak = phi_cv + 5*I_R predicts phi_peak ≈ 38 deg.
+
 Why wall_friction = 0
 ---------------------
 The lateral servo walls of a biaxial cell carry a vertical shear traction when
@@ -67,11 +78,17 @@ CASE_KEY = "CASE-DEM-BIAXIAL-FRICTION"
 PHI_REF_DEG = 38.0  # Bolton (1986) Geotechnique 36(1):65-78, Table 2, p.72
 TOLERANCE = 0.08    # 8 % relative
 
+# Interparticle friction coefficient for sand validation.
+# mu = 0.65 gives phi_cv = arctan(0.65) ≈ 33.0 deg, matching Bolton (1986)
+# Table 1 for angular quartz sands.  Previous mu = 0.55 (ice-ice) gave
+# phi_cv ≈ 28.8 deg which is too low for the sand reference.
+MU_PARTICLE = 0.65
+
 # Critical-state reference (informational, not a gate)
 # Bolton (1986) Table 1, p.67: phi_crit ≈ 33 deg for angular quartz sands.
-# For the DEM model with mu = 0.55, Rowe predicts phi_cv = arctan(0.55) ≈ 28.8 deg.
+# For the DEM model with mu = 0.65, Rowe predicts phi_cv = arctan(0.65) ≈ 33.0 deg.
 PHI_CV_REF_DEG = 33.0  # Bolton (1986) Table 1, p.67 (real sand)
-PHI_CV_ROWE_DEG = math.degrees(math.atan(0.55))  # Rowe prediction for mu=0.55
+PHI_CV_ROWE_DEG = math.degrees(math.atan(MU_PARTICLE))  # Rowe prediction for mu=0.65
 
 REF_SOURCE = (
     "Bolton (1986) Geotechnique 36(1):65-78, Table 2, p.72: "
@@ -96,6 +113,7 @@ ANCHOR_CONFIG: dict[str, Any] = {
     "servo_velocity_limit": 2.0,
     "radius": 0.75,
     "freeze_bond_fraction": 0.0,   # uncemented sand (Bolton ref is cohesionless)
+    "friction_coefficient": MU_PARTICLE,  # sand: arctan(0.65) ≈ 33 deg matches Bolton phi_cv
 }
 
 QUICK_CONFIG: dict[str, Any] = {
@@ -111,6 +129,7 @@ QUICK_CONFIG: dict[str, Any] = {
     "servo_velocity_limit": 0.5,
     "radius": 0.75,
     "freeze_bond_fraction": 0.0,   # uncemented sand (matches anchor)
+    "friction_coefficient": MU_PARTICLE,  # sand: matches anchor
 }
 
 
@@ -157,7 +176,7 @@ def bolton_dilatancy_index(phi_peak_deg: float, phi_cv_deg: float,
 
 def _extract_critical_state(stress_path: dict[str, Any],
                             sigma3_target: float,
-                            mu: float = 0.55) -> dict[str, Any]:
+                            mu: float = MU_PARTICLE) -> dict[str, Any]:
     """Extract critical-state friction angle from the stress-path tail.
 
     Uses :mod:`tensordem.biaxial_critical_state` for the detection and
@@ -213,6 +232,7 @@ def run_biaxial_friction_case(*, quick: bool = False,
     config.update({k: v for k, v in overrides.items() if v is not None})
     freeze_bond = float(config.pop("freeze_bond_fraction", 0.0))
     radius = float(config.pop("radius", 0.75))
+    friction_coeff = float(config.pop("friction_coefficient", MU_PARTICLE))
 
     started = time.time()
     result = run_biaxial_shear_band(
@@ -226,7 +246,10 @@ def run_biaxial_friction_case(*, quick: bool = False,
         servo_gain=float(config["servo_gain"]),
         servo_velocity_limit=float(config["servo_velocity_limit"]),
         wall_friction=float(config["wall_friction"]),
-        material_overrides={"freeze_bond_fraction": freeze_bond},
+        material_overrides={
+            "freeze_bond_fraction": freeze_bond,
+            "friction_coefficient": friction_coeff,
+        },
         record_snapshots=False,
     )
     elapsed = time.time() - started
@@ -253,7 +276,7 @@ def run_biaxial_friction_case(*, quick: bool = False,
     cs_analysis = _extract_critical_state(
         hist if hist and "axial_strain" in hist else {},
         sigma3_target=sigma3,
-        mu=0.55,
+        mu=friction_coeff,
     )
 
     # Bolton dilatancy index (informational)
@@ -264,14 +287,15 @@ def run_biaxial_friction_case(*, quick: bool = False,
     strain_rate = float(config["strain_rate"])
     diameter = 2.0 * radius
     # Inertial number I = eps_dot * d * sqrt(rho / sigma3)
-    # Use ice density as the particle density (ridge_dem default)
-    rho = 917.0  # kg/m3, ice density
+    # Use quartz sand density (2650 kg/m3) for the sand validation case
+    rho = 2650.0  # kg/m3, quartz sand density
     inertial_number = strain_rate * diameter * math.sqrt(rho / sigma3)
 
     out = {
         "case_key": CASE_KEY,
         "reference": REF_SOURCE,
-        "config": {**config, "freeze_bond_fraction": freeze_bond, "radius": radius},
+        "config": {**config, "freeze_bond_fraction": freeze_bond,
+                   "radius": radius, "friction_coefficient": friction_coeff},
         "specimen": result["specimen"],
         "loading": result["loading"],
         "peak": result["peak"],
