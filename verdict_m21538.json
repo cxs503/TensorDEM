@@ -1,0 +1,107 @@
+{
+  "mission_id": "m21538",
+  "anchor_slug": "GAP-ICE-ONEWAY-CLAIM",
+  "repo": "TensorDEM",
+  "scope": "m21538 GAP-ICE-ONEWAY-CLAIM one-way DEM-FEM coupling verification",
+  "audit_by": "m21564 board-audit",
+  "audit_date": "2026-11-15",
+
+  "impl_files": [
+    "src/tensordem/dem_fem_gates.py:318 lines (independent verification gates: hookean_impact, hertz_impact, beam_natural_frequencies, modal_response, modal_static_deflection, Gate dataclass, evaluate_gates, summarise)",
+    "src/tensordem/fem_euler_bernoulli.py:467 lines (Euler-Bernoulli beam FEM solver: 2-node Hermite elements, simply-supported/clamped/cantilever BCs, time-stepping with arbitrary nodal loads)",
+    "examples/dem_fem_oneway/run.py:648 lines (coupling driver: DEM3D particle impact → force history → FEM beam response + modal superposition + dt convergence chain)",
+    "examples/dem_fem_oneway/validate.py:81 lines (validation script: 7 acceptance criteria checks against results.json + ledger)",
+    "examples/dem_fem_oneway/independent_gates.py:362 lines (independent gate evaluator: 8 external + 2 self-comparison gates, FFT frequency extraction, dt-refined FEM replay)",
+    "tests/test_dem_fem_independent_gates.py:152 lines (11 unit tests for closed-form anchors: hookean, hertz, beam frequencies, mode shapes, modal response, gate arithmetic, independence classification)"
+  ],
+
+  "entry": "examples/dem_fem_oneway/run.py (coupling driver); examples/dem_fem_oneway/independent_gates.py (independent gate evaluation); examples/dem_fem_oneway/validate.py (acceptance validation)",
+
+  "run_artifacts": [
+    "examples/dem_fem_oneway/results.json (2190 bytes: DEM/FEM/modal results + verification flags + dt convergence chain)",
+    "artifacts/dem_fem_coupling_ledger.json (ledger: dem_side/fem_side/modal_side/interface/energy_balance/deflection_comparison/dt_convergence/separability)",
+    "artifacts/dem_fem_coupling/independent_gates.json (10 gates: G1-G8 external + S1-S2 self-comparison, all PASS)",
+    "docs/figures/dem_fem_independent_gates.png (171 KB: gate comparison figure)",
+    "docs/figures/dem_fem_dt_convergence.png (96 KB: dt convergence figure)"
+  ],
+
+  "tests": "tests/test_dem_fem_independent_gates.py: 11/11 passed (8.97s) — covers hookean_impact self-consistency, reduced mass & restitution, hertz published coefficients, beam natural frequencies vs closed form, mode shape orthogonality/normalisation, modal response static limit, modal response peak amplification, modal response bad input rejection, gate arithmetic & negative control, self_comparison counting, unknown independence rejection",
+
+  "integration_callers": [
+    "examples/dem_fem_oneway/run.py imports tensordem.dem3d.IceDEM3D, tensordem.fem_euler_bernoulli.EulerBernoulliBeam, tensordem.dem_fem_gates (beam_natural_frequencies, modal_response, modal_static_deflection)",
+    "examples/dem_fem_oneway/independent_gates.py imports tensordem.dem_fem_gates (beam_natural_frequencies, evaluate_gates, hookean_impact, modal_response, modal_static_deflection, summarise)",
+    "tests/test_dem_fem_independent_gates.py imports tensordem.dem_fem_gates (all public symbols)"
+  ],
+
+  "benchmark": {
+    "anchor": "GAP-ICE-ONEWAY-CLAIM (one-way DEM-FEM coupling verification)",
+    "scope_note": "numerical_verification_only — no experimental/physical benchmark; all anchors are analytic or independent-implementation comparisons",
+    "gates_external": {
+      "G1_contact_duration": {"reference": 0.005442192009720109, "measured": 0.005367346144363941, "rel_error": -0.01375, "tol_rel": 0.05, "independence": "analytic", "pass": true},
+      "G2_peak_contact_force": {"reference": 34.64607038408686, "measured": 34.64631047944937, "rel_error": 6.93e-06, "tol_rel": 0.03, "independence": "analytic", "pass": true},
+      "G3_impulse": {"reference": -0.12003501930591005, "measured": -0.12003420266432294, "rel_error": 6.80e-06, "tol_rel": 0.01, "independence": "analytic", "pass": true},
+      "G4_momentum_vs_impulse": {"reference": 0.11985079850648477, "measured": 0.12003420266432294, "rel_error": 0.00153, "tol_rel": 0.01, "independence": "cross_side", "pass": true},
+      "G5_beam_f1": {"reference": 2084.738325882345, "measured": 2078.4242744083544, "rel_error": -0.00303, "tol_rel": 0.02, "independence": "analytic", "pass": true},
+      "G6_peak_deflection": {"reference": 4.545831071805974e-08, "measured": 4.503447049462851e-08, "rel_error": -0.00932, "tol_rel": 0.05, "independence": "independent_implementation", "pass": true},
+      "G7_deflection_rms": {"reference": 2.366099577658366e-08, "measured": 2.3670210985842646e-08, "rel_error": 0.00039, "tol_rel": 0.1, "independence": "independent_implementation", "pass": true},
+      "G8_peak_energy": {"reference": 8.23071099693116e-07, "measured": 8.078936575255233e-07, "rel_error": -0.01844, "tol_rel": 0.05, "independence": "independent_implementation", "pass": true}
+    },
+    "gates_self_comparison": {
+      "S1_impulse_ledger": {"rel_error": 0.0, "independence": "self_comparison", "pass": true},
+      "S2_work_energy": {"rel_error": -5.15e-10, "independence": "self_comparison", "pass": true}
+    },
+    "worst_external_rel_error": 0.01844,
+    "all_external_pass": true,
+    "registered_referee": "UNKNOWN: could not query tensor_benchmark_cases DB (API unreachable); no explicit referee row found in worktree for GAP-ICE-ONEWAY-CLAIM",
+    "note": "This is a numerical verification benchmark, not a physical experiment benchmark. All 8 external gates pass with worst |rel_error|=1.84% (G8 peak energy). The scope is explicitly 'numerical_verification_only' — no experimental anchor exists."
+  },
+
+  "repro_cmd": "cd /srv/tensor/agent/work/m21538 && PYTHONPATH=src python examples/dem_fem_oneway/run.py && PYTHONPATH=src python examples/dem_fem_oneway/validate.py && PYTHONPATH=src python examples/dem_fem_oneway/independent_gates.py && python -m pytest tests/test_dem_fem_independent_gates.py -v — all verified executable by this audit (run.py produces results.json + ledger; validate.py ALL PASS; independent_gates.py 8/8 external PASS; pytest 11/11 PASS)",
+
+  "external_anchor": [
+    "Hookean impact closed form: t_c = π√(m/k), F_max = v√(mk), J = (1+e)mv — Johnson, Contact Mechanics, ch. 4",
+    "Hertz impact closed form: δ=(5mv²/4k)^{2/5}, t_c=2.943275(5m/4k)^{2/5}v^{-1/5} — Johnson, Contact Mechanics, ch. 4",
+    "Euler-Bernoulli beam natural frequencies: ω_n = (nπ/L)²√(EI/ρA) — standard continuum mechanics",
+    "Modal static deflection: δ_static = PL³/48EI (simply-supported, mid-span load) — standard beam theory",
+    "Continuum modal superposition (Duhamel integral) — independent implementation sharing no code with fem_euler_bernoulli.py"
+  ],
+
+  "level": 4,
+  "level_reason": "L4 = 基准验证（完整算例+误差分析+可复现）。Evidence: (1) Real code: 2028 lines across 6 files implementing DEM-FEM one-way coupling with independent verification gates; (2) 11 unit tests all pass; (3) 8 external gates all pass with worst |rel_error|=1.84%; (4) Full reproducibility: run.py → results.json + ledger → validate.py ALL PASS → independent_gates.py 8/8 external PASS; (5) dt convergence chain (4 levels, ratio=1.000); (6) Separability verified (DEM alone + FEM alone); (7) Energy ledger complete. L3 satisfied: dem_fem_gates.py is a library module importable by other callers; fem_euler_bernoulli.py is a standalone FEM solver. L5 not reached: no experimental/physical benchmark anchor (scope is explicitly numerical_verification_only); no external experimental data or literature comparison beyond analytic closed forms.",
+
+  "findings": {
+    "blocking": [],
+    "medium": [
+      "M1 No registered referee row in tensor_benchmark_cases for GAP-ICE-ONEWAY-CLAIM (API unreachable to confirm); the benchmark is numerical-verification-only with no experimental anchor",
+      "M2 The scope field correctly declares 'numerical_verification_only' — this is a consistency/verification benchmark, not a physical validation; readers expecting experimental comparison will be disappointed",
+      "M3 The peak deflection is ~45 nm — physically tiny; the case is designed for numerical verification (soft contact k=200 N/m, stiff beam E=2.1e11 Pa) not physical realism"
+    ],
+    "low": [
+      "L1 The shipped impulse ledger (S1) and work-energy (S2) gates are correctly tagged as self_comparison — the module documentation explicitly explains why they are not evidence",
+      "L2 The t_c/T1 ratio is 11.346 (shipped docstring claims ≈11) — verified correct by this audit",
+      "L3 DAF (Dynamic Amplification Factor) is 1.035 (FEM) / 1.045 (modal) — consistent with quasi-static response (t_c >> T1)"
+    ],
+    "credit": [
+      "REAL DEM-FEM coupling: IceDEM3D particle impact → force history → EulerBernoulliBeam time-stepping, no formula shortcuts",
+      "Independent verification gates: 8 external anchors (analytic + independent implementation) all pass, worst |rel_error|=1.84%",
+      "Honest scope declaration: 'numerical_verification_only' — no overclaiming of physical validation",
+      "Complete energy ledger: DEM initial/final, FEM kinetic/strain, work done, dissipation — all tracked",
+      "dt convergence chain: 4-level refinement with ratio=1.000 (excellent convergence)",
+      "Separability: DEM alone and FEM alone both verified independently",
+      "11 unit tests lock the closed-form anchors — a wrong formula would 'verify' the wrong thing, and these tests prevent that"
+    ]
+  },
+
+  "audit_artifacts": [
+    "verdict_m21538.json (this file)",
+    "verdict_m21538.sql (SQL insert)",
+    "Re-run evidence: pytest 11/11 PASS (8.97s); validate.py ALL PASS; independent_gates.py 8/8 external PASS"
+  ],
+
+  "independence_limitations": "Audited from m21564 worktree (TensorDEM clone); all m21538 deliverables reviewed by direct file read and re-execution; the tensor_benchmark_cases DB could not be queried (API unreachable) so the registered referee status is UNKNOWN; no experimental/physical benchmark exists for this anchor (scope is numerical_verification_only)",
+
+  "checks_not_run": [
+    "tensor_benchmark_cases DB query for GAP-ICE-ONEWAY-CLAIM referee row (API unreachable)",
+    "Physical/experimental benchmark comparison (none exists; scope is numerical_verification_only)"
+  ]
+}
