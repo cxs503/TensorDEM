@@ -212,7 +212,7 @@ def simulate_column(case: Column3DCase, *, return_positions: bool = True,
 
     time = 0.0
     diss = {"collision": 0.0, "friction": 0.0, "rolling": 0.0,
-            "wall_collision": 0.0, "wall_friction": 0.0}
+            "wall_collision": 0.0, "wall_friction": 0.0, "wall_rolling": 0.0}
     spring = {"normal": 0.0, "tangential": 0.0, "rolling": 0.0,
               "wall_normal": 0.0, "wall_tangential": 0.0, "wall_rolling": 0.0}
     dead_prev = 0.0
@@ -264,6 +264,7 @@ def simulate_column(case: Column3DCase, *, return_positions: bool = True,
         diss["rolling"] += cur["dissip_rolling"]
         diss["wall_collision"] += cur_wall["dissip_collision"]
         diss["wall_friction"] += cur_wall["dissip_friction"]
+        diss["wall_rolling"] += cur_wall["dissip_rolling"]
         cutoff += float(cur["release_loss"] + cur_wall["release_loss"])
         spring = {
             "normal": cur["energy_normal"],
@@ -305,7 +306,8 @@ def simulate_column(case: Column3DCase, *, return_positions: bool = True,
     # as an explicit fourth channel, reported separately from the physical
     # dashpot (collision) and friction dissipations.
     diss_cutoff = cutoff
-    diss_friction = diss["friction"] + diss["rolling"] + diss["wall_friction"]
+    diss_friction = (diss["friction"] + diss["rolling"] + diss["wall_friction"]
+                     + diss["wall_rolling"])
     diss_physical = diss_collision + diss_friction
     diss_total = diss_physical + diss_cutoff
     e_end = en["potential"] + en["kinetic"] + spring_total
@@ -382,7 +384,9 @@ def simulate_column(case: Column3DCase, *, return_positions: bool = True,
             "dissipated_friction": diss_friction,
             "dissipated_collision_grain": diss["collision"],
             "dissipated_friction_grain": diss["friction"] + diss["rolling"],
-            "dissipated_wall": diss["wall_collision"] + diss["wall_friction"],
+            "dissipated_wall": (diss["wall_collision"] + diss["wall_friction"]
+                                + diss["wall_rolling"]),
+            "dissipated_wall_rolling": diss["wall_rolling"],
             "dissipated_total": diss_total,
             "dissipated_cutoff": diss_cutoff,
             "dissipated_physical_only": diss_physical,

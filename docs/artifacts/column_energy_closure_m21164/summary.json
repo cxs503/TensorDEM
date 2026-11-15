@@ -1,0 +1,27 @@
+{
+ "anchor": "CASE-COLUMN-COLLAPSE",
+ "pre_repair_residual": {
+  "C4_col_a3_g4": 0.11802,
+  "C3_col_a1_g6": 0.04103
+ },
+ "post_repair_residual": {
+  "C3_col_a1_g6": 0.04032728355675958,
+  "C4_col_a3_g4": 0.09933734211963108,
+  "C5_col_a3_g4_dt2": 0.06334301649045859,
+  "C6_col_a3_g4_dt4": 0.03272648509353828
+ },
+ "dt_contraction_ratios": [
+  0.6376556402543483,
+  0.5166549827709562
+ ],
+ "prereg_band": [
+  0.35,
+  0.65
+ ],
+ "h2_verdict": "pass",
+ "figures": [
+  "fig_closure_channels.png",
+  "fig_dt_contraction.png",
+  "fig_ledger_waterfall.png"
+ ]
+}
