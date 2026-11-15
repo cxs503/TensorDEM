@@ -30,25 +30,37 @@
     {
       "refinement": 1,
       "dt": 6.70918268045492e-05,
+      "dt_over_t1": 0.13986890269290414,
       "peak_deflection_m": 4.503447049462851e-08,
+      "modal_anchor_peak_m": 4.545831071805974e-08,
+      "deflection_error_vs_modal_relative": 0.009323712578321718,
       "n_samples": 102
     },
     {
       "refinement": 2,
       "dt": 3.35459134022746e-05,
+      "dt_over_t1": 0.06993445134645207,
       "peak_deflection_m": 4.5400671458897697e-08,
+      "modal_anchor_peak_m": 4.54583107180597e-08,
+      "deflection_error_vs_modal_relative": 0.0012679586691968063,
       "n_samples": 203
     },
     {
       "refinement": 4,
       "dt": 1.6772956701137305e-05,
+      "dt_over_t1": 0.03496722567322605,
       "peak_deflection_m": 4.5465689317927386e-08,
+      "modal_anchor_peak_m": 4.5458310718059775e-08,
+      "deflection_error_vs_modal_relative": 0.00016231575153274658,
       "n_samples": 405
     },
     {
       "refinement": 8,
       "dt": 8.386478350568653e-06,
+      "dt_over_t1": 0.017483612836613024,
       "peak_deflection_m": 4.546681684387689e-08,
+      "modal_anchor_peak_m": 4.5463936428674675e-08,
+      "deflection_error_vs_modal_relative": 6.335604499917686e-05,
       "n_samples": 809
     }
   ],
@@ -66,7 +78,106 @@
     "separability_dem": true,
     "separability_fem": true,
     "separability_fem_deflection_error": 2.194816714561837e-12,
-    "dt_convergence_ratio": 1.000024799490922,
+    "dt_convergence_errors_vs_modal": [
+      0.009323712578321718,
+      0.0012679586691968063,
+      0.00016231575153274658,
+      6.335604499917686e-05
+    ],
+    "dt_convergence_criterion": "error(dt/T1=0.14) <= 1% and error(dt/T1=0.0175) <= 0.1% and both finer levels below the coarse level; per-level error against the independent continuum modal anchor, NOT a ratio of two nearly identical peaks",
+    "dt_convergence_peak_ratio_finest_over_second_finest": 1.000024799490922,
+    "dt_convergence_peak_ratio_is_diagnostic_only": true,
     "dt_convergence_pass": true
+  },
+  "ledger": {
+    "ledger_type": "dem_fem_coupling",
+    "dem_side": {
+      "total_impulse_Ns": -0.12003420266432294,
+      "energy_initial_J": 0.03005377321243206,
+      "energy_final_J": 0.030021046435417434,
+      "numerical_dissipation_J": 3.2726777014626535e-05,
+      "peak_force_N": 34.64631047944937,
+      "contact_duration_s": 0.005367346144363941,
+      "n_force_samples": 102
+    },
+    "fem_side": {
+      "total_impulse_Ns": -0.12003420266432294,
+      "energy_final_J": 1.7391078179924509e-09,
+      "kinetic_energy_J": 1.644207702925253e-09,
+      "strain_energy_J": 9.490011506719781e-11,
+      "work_done_J": 1.7391078188882509e-09,
+      "peak_deflection_m": 4.503447049462851e-08
+    },
+    "modal_side": {
+      "peak_deflection_m": 4.545831071805974e-08,
+      "n_modes": 9
+    },
+    "interface": {
+      "scope": "numerical_verification_only",
+      "force_history_port_parity_error_relative": 0.0,
+      "force_history_port_parity_error_abs_Ns": 0.0,
+      "impulse_dem_Ns": -0.12003420266432294,
+      "impulse_fem_Ns": -0.12003420266432294,
+      "force_samples_transferred": 102,
+      "note": "DEM and FEM integrate the same force array with the same trapezoid rule, so this parity is an algebra check on the port, not evidence of interface conservation."
+    },
+    "energy_balance": {
+      "dem_initial_J": 0.03005377321243206,
+      "dem_final_J": 0.030021046435417434,
+      "fem_final_J": 1.7391078179924509e-09,
+      "dem_dissipation_J": 3.2726777014626535e-05,
+      "fem_work_done_J": 1.7391078188882509e-09,
+      "work_energy_error_relative": 5.150916986995529e-10,
+      "energy_balance_residual_J": 3.272503790680854e-05,
+      "energy_balance_error_relative": 0.001088882839285933
+    },
+    "deflection_comparison": {
+      "fem_peak_m": 4.503447049462851e-08,
+      "modal_peak_m": 4.545831071805974e-08,
+      "error_relative": 0.009323712578321718
+    },
+    "dt_convergence": [
+      {
+        "refinement": 1,
+        "dt": 6.70918268045492e-05,
+        "dt_over_t1": 0.13986890269290414,
+        "peak_deflection_m": 4.503447049462851e-08,
+        "modal_anchor_peak_m": 4.545831071805974e-08,
+        "deflection_error_vs_modal_relative": 0.009323712578321718,
+        "n_samples": 102
+      },
+      {
+        "refinement": 2,
+        "dt": 3.35459134022746e-05,
+        "dt_over_t1": 0.06993445134645207,
+        "peak_deflection_m": 4.5400671458897697e-08,
+        "modal_anchor_peak_m": 4.54583107180597e-08,
+        "deflection_error_vs_modal_relative": 0.0012679586691968063,
+        "n_samples": 203
+      },
+      {
+        "refinement": 4,
+        "dt": 1.6772956701137305e-05,
+        "dt_over_t1": 0.03496722567322605,
+        "peak_deflection_m": 4.5465689317927386e-08,
+        "modal_anchor_peak_m": 4.5458310718059775e-08,
+        "deflection_error_vs_modal_relative": 0.00016231575153274658,
+        "n_samples": 405
+      },
+      {
+        "refinement": 8,
+        "dt": 8.386478350568653e-06,
+        "dt_over_t1": 0.017483612836613024,
+        "peak_deflection_m": 4.546681684387689e-08,
+        "modal_anchor_peak_m": 4.5463936428674675e-08,
+        "deflection_error_vs_modal_relative": 6.335604499917686e-05,
+        "n_samples": 809
+      }
+    ],
+    "separability": {
+      "dem_alone_ok": true,
+      "fem_alone_ok": true,
+      "fem_static_error": 2.194816714561837e-12
+    }
   }
 }
