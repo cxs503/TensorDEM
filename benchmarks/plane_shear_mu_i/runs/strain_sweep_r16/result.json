@@ -194,45 +194,6 @@
       "drift_phi_pct": 3.971834055510929,
       "pressure_control_error_final": -0.03766818487848855,
       "servo_valid": true
-    },
-    {
-      "I_target": 0.3,
-      "I_bulk_final": 0.3288344110882135,
-      "abscissa_shift_pct": 9.61147036273784,
-      "strain_achieved": 98.9297614906877,
-      "n_particles": 294,
-      "n_samples": 20309,
-      "wall_clock_s": 136.0591827299795,
-      "mu_full_20pct": 0.4385205190029957,
-      "phi_container_20pct": 0.5775787801601153,
-      "mu_full_25pct": 0.43958735886414363,
-      "phi_container_25pct": 0.5774311034341447,
-      "mu_std_25pct": 0.08495366959514346,
-      "mu_std_rel_pct": 19.32577629499095,
-      "mu_range_25pct": [
-        0.2234258226223103,
-        0.7747776120886275
-      ],
-      "phi_std_25pct": 0.0007287869940399772,
-      "phi_range_25pct": [
-        0.5759521642723511,
-        0.578890863239615
-      ],
-      "err_mu_20pct_at_target_pct": -26.913246832834048,
-      "err_mu_20pct_at_bulk_pct": -28.229622984226676,
-      "err_mu_25pct_at_target_pct": -26.73544018930939,
-      "err_mu_25pct_at_bulk_pct": -28.055018842043943,
-      "err_phi_20pct_pct": -5.3149540721122435,
-      "err_phi_25pct_pct": -5.339163371451683,
-      "mu_ref_at_target": 0.6,
-      "mu_ref_at_bulk": 0.6110048981721524,
-      "phi_ref": 0.61,
-      "steady_phi": false,
-      "steady_mu": false,
-      "drift_mu_pct": -6.330735200386027,
-      "drift_phi_pct": 8.79214692260414,
-      "pressure_control_error_final": 0.001281957046896487,
-      "servo_valid": true
     }
   ],
   "verdict": {
