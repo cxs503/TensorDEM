@@ -1,0 +1,72 @@
+{
+  "case": "CASE-DEM-PLANE-SHEAR-MUIDI",
+  "round": 24,
+  "title": "2-D disk plane-shear cell: is the 16-57 % mu(I) offset a dimensional artefact?",
+  "written_at": "before the analysis of cluster job cj4011 (the probe and the production sweep were queued when this file was written; no run artifact existed)",
+  "question": "Rounds 1-23 measured mu(I) on 3-D spheres and judged it against the 2-D disk law of da Cruz et al. 2005. Round 23 closed the seed hypothesis (CV up to 20.6 %) and left exactly one candidate mechanism for the +29 % offset at I = 0.03: dimension. This round measures the law on a device of the law's own dimension: monodisperse 2-D disks, rough (grain-glued) walls, constant confining stress, prescribed shear rate.",
+  "reference": {
+    "source": "da Cruz, Emam, Prochnow, Roux, Chevoir 2005 Phys. Rev. E 72:021309, Eq. (13)-(14)",
+    "accessed_via": "benchmarks/plane_shear_mu_i/reference_archive.py::archived_law (no literal constants are retyped here)",
+    "mu_law": "mu(I) = mu_min + b I, valid for I <= I_saturation",
+    "phi_law": "phi(I) = nu_max - a I, valid for I <= I_saturation",
+    "i_saturation": 0.2,
+    "note": "I > 0.2 is outside the fit; DaCruzLaw.mu() returns None there and such points are reported, never judged."
+  },
+  "device": {
+    "module": "benchmarks/plane_shear_mu_i/plane_shear_2d.py",
+    "kind": "2-D monodisperse disks, periodic in x, two pinned rows of glued grains as rough walls",
+    "diameter_m": 0.01,
+    "cell": "W = 0.40 m (40 d) x gap = 0.30 m (30 d), ~1220 free disks",
+    "normal_stress_Pa": 10000.0,
+    "mu_particle_particle": 0.4,
+    "mu_rolling": 0.0,
+    "kn_N_per_m": 100000.0,
+    "inertial_numbers_judged": [0.005, 0.01, 0.02, 0.05, 0.1, 0.2],
+    "inertial_numbers_reported_not_judged": [0.3],
+    "seeds": [0, 1, 2],
+    "protocol": "compaction at constant P with the rows held still (40-60 d/sqrt(P/rho)), then shear through 0.5 strain of transient, then a measurement window of 1.0 strain",
+    "primary_mu_ordinate": "mu_wall: the two pinned rows carry equal and opposite tractions, so each row is summed separately and the pair averaged; because the wall grains are particles, no wall load is lost and no wall-slip law is assumed (the walls are rough by construction)",
+    "secondary_mu_ordinate": "mu_bulk: symmetric part of the Love-Weber tensor over all contacts / (W h_eff t); reported as a consistency check, NOT the judging ordinate, because in 2-D the friction contacts carry a contact couple that the symmetric virial does not include",
+    "primary_phi_ordinate": "phi_gap = free-disk area / (W h_eff), h_eff = wall-grain surface-to-surface distance (the pinned rows carry no free volume, so the control volume of the sheared material is surface-to-surface). phi_cell (centre-to-centre, half wall layers included) is reported as the secondary definition.",
+    "measured_ordinates_for_I": "I = gammadot_measured d / sqrt(p/rho) with gammadot_measured = 2 V / h_eff and p the measured confining stress"
+  },
+  "tolerance": {
+    "mu": 0.10,
+    "phi": 0.10,
+    "basis": "the ledger acceptance (<10 % vs the archived law) -- unchanged, not relaxed"
+  },
+  "predictions": {
+    "P1": {
+      "statement": "estimator calibration: at every judged point the wall traction and the virial agree with the imposed stress, |p_wall/P - 1| <= 0.10 and |sigma_yy/P - 1| <= 0.10",
+      "falsified_if": "any judged point outside 10 %"
+    },
+    "P2": {
+      "statement": "dimensionality: the 2-D device lands inside the 10 % band of the archived 2-D law at every judged point",
+      "falsified_if": "any judged point outside 10 %"
+    },
+    "P3": {
+      "statement": "if dimension is the mechanism, mu_2D is BELOW mu_3D at the same I by more than the 3-D seed spread (relative difference >= 10 % at I = 0.02 and 0.1)",
+      "falsified_if": "mu_2D is not lower than mu_3D, or the gap is smaller than 10 %, in which case dimension is not the explanation and the residual sits in the device or the estimator"
+    },
+    "P4": {
+      "statement": "phi: phi_gap is inside the 10 % band of nu_max - a I at every judged point, i.e. the round-22 WITHHELD verdict on phi is resolved by making the definition commensurable",
+      "falsified_if": "any judged point outside 10 %"
+    },
+    "P5": {
+      "statement": "stationarity: |drift_z(mu_wall)| < 2 between the two halves of the measurement window at every judged point and seed",
+      "falsified_if": "any point exceeds 2"
+    }
+  },
+  "decision_rule": {
+    "acceptance": "PASS iff every judged point (I <= I_saturation) is within 10 % of the archived law on mu; phi judged separately",
+    "if_fail": "report the sign and size of the residual against the 3-D device at the same I; a residual much smaller than the 3-D one confirms dimension as a contributor, an unchanged residual falsifies it",
+    "honest_fail": "a failing outcome is published as FAIL with the same detail as a passing one; no tolerance is re-negotiated after the fact"
+  },
+  "artifacts": {
+    "runs": "benchmarks/plane_shear_mu_i/runs/plane_shear_2d/point_I<I>_s<seed>.json",
+    "analysis": "benchmarks/plane_shear_mu_i/runs/plane_shear_2d/analysis_r24.json",
+    "tables": "benchmarks/plane_shear_mu_i/runs/plane_shear_2d/tables_r24.md",
+    "figures": "benchmarks/plane_shear_mu_i/runs/plane_shear_2d/fig_r24_*.png",
+    "doc": "docs/CASE_DEM_PLANE_SHEAR_MUIDI_R24.md"
+  }
+}
