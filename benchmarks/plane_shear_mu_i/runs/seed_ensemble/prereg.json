@@ -1,0 +1,59 @@
+{
+  "case": "CASE-DEM-PLANE-SHEAR-MUIDI",
+  "round": 23,
+  "question": "is the mu(I) dip and the 16-57 % offset of round 22 a realisation artefact or a device property?",
+  "device": {
+    "simulator": "tensordem.mu_i_rheology.simulate_servo_shear",
+    "P_applied_Pa": 62500.0,
+    "kn_N_per_m": 62500.0,
+    "mu_contact": 0.5,
+    "mu_rolling": 0.05,
+    "restitution": 0.3,
+    "radius_m": 0.005,
+    "box_m": [
+      0.12,
+      0.05,
+      0.06
+    ],
+    "settle_steps": 2500,
+    "min_shear_steps": 2500,
+    "shear_strain": 0.2
+  },
+  "axes": {
+    "I_targets": [
+      0.01,
+      0.03,
+      0.1,
+      0.3
+    ],
+    "seeds": [
+      5279,
+      6113,
+      7919,
+      104729,
+      1299709,
+      2000003
+    ],
+    "ladder_I": 0.03,
+    "ladder_mu_contact": [
+      0.2,
+      0.3,
+      0.4,
+      0.5,
+      0.7
+    ]
+  },
+  "reference": "archived da Cruz 2005 Eq. (13)/(14): mu = 0.22 + 1.00 I, phi = 0.81 - 0.30 I, valid for I <= 0.2",
+  "tolerance": 0.1,
+  "predictions": {
+    "P1_spread": "CV(mu_full_zz_final) < 10 % at every judged point",
+    "P2_dip": "the I=0.03 -> 0.1 decrease survives the ensemble (median paired delta < 0 and disjoint 95 % CIs)",
+    "P3_bias": "ensemble mean mu outside the 10 % band at I = 0.03 and 0.1",
+    "P4_friction": "mu increases with mu_contact; at I = 0.03 the ladder does not reach the 10 % band around 0.25"
+  },
+  "decision_rules": {
+    "P1": "CV <= 0.10 -> one realisation resolves the band",
+    "P2": "dip is systematic if the paired differences are all negative and the mean change is more than 2 standard errors from zero",
+    "P3": "outside the band if |mean/law - 1| > 10 % and the 95 % CI of the mean excludes the law value"
+  }
+}
