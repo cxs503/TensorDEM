@@ -103,6 +103,7 @@ class PlaneShear2DCase:
     servo_gain: float = 0.05
     phi_init: float = 0.80
     sample_every: int = 40
+    init_mode: str = "lattice"   # "lattice" (R24) or "random" (disordered RSA seed)
 
     # -- derived quantities -------------------------------------------------
     @property
@@ -150,6 +151,8 @@ class PlaneShear2DCase:
             raise ValueError("n_particles must be positive")
         if self.mu_p <= 0.0 or self.kn <= 0.0:
             raise ValueError("mu_p and kn must be positive")
+        if self.init_mode not in ("lattice", "random"):
+            raise ValueError("init_mode must be 'lattice' or 'random'")
 
 
 # --------------------------------------------------------------------------- #
@@ -197,6 +200,138 @@ def _lattice_packing(case: PlaneShear2DCase, y_lo: float, y_hi: float
     return pos, rad
 
 
+def _relax_overlaps(pos: np.ndarray, radius: float, width: float, y_lo: float,
+                    y_hi: float, *, iters: int = 400, tol: float = 1.0e-4
+                    ) -> np.ndarray:
+    """Remove overlaps by positional projection (periodic in ``x``, walls in ``y``).
+
+    Used only to make a *seeded* packing admissible: the caller supplies loitering
+    sites (a jittered lattice) and this loop turns them into a contact-free
+    configuration at (almost) the same area fraction.  No dynamics, no engine
+    state - the physical protocol starts from the returned positions.
+    """
+    from scipy.spatial import cKDTree
+
+    pos = np.array(pos, dtype=np.float64, copy=True)
+    d = 2.0 * radius
+    for _ in range(iters):
+        pts = pos.copy()
+        pts[:, 0] = np.mod(pts[:, 0], width)
+        tree = cKDTree(pts, boxsize=(width, 10.0 * (y_hi - y_lo + d)))
+        pairs = tree.query_pairs(r=d * (1.0 + tol), output_type="ndarray")
+        if len(pairs) == 0:
+            break
+        i, j = pairs[:, 0], pairs[:, 1]
+        dx = pts[j, 0] - pts[i, 0]
+        dx -= width * np.round(dx / width)
+        dy = pts[j, 1] - pts[i, 1]
+        dist = np.hypot(dx, dy)
+        dist = np.maximum(dist, 1.0e-12)
+        overlap = np.maximum(0.0, d * (1.0 + tol) - dist)
+        # split the correction evenly; deterministic order (pairs are sorted)
+        corr = 0.5 * overlap / dist
+        np.add.at(pos[:, 0], i, -corr * dx)
+        np.add.at(pos[:, 1], i, -corr * dy)
+        np.add.at(pos[:, 0], j, +corr * dx)
+        np.add.at(pos[:, 1], j, +corr * dy)
+        pos[:, 0] = np.mod(pos[:, 0], width)
+        pos[:, 1] = np.clip(pos[:, 1], y_lo, y_hi)
+    pts = pos.copy()
+    pts[:, 0] = np.mod(pts[:, 0], width)
+    tree = cKDTree(pts)
+    pairs = tree.query_pairs(r=d * (1.0 - 1.0e-3), output_type="ndarray")
+    if len(pairs):
+        raise RuntimeError(f"_relax_overlaps left {len(pairs)} overlapping pairs")
+    return pos
+
+
+def _random_packing(case: PlaneShear2DCase, y_lo: float, y_hi: float
+                    ) -> tuple[np.ndarray, np.ndarray]:
+    """A *disordered* packing at the same area fraction as ``_lattice_packing``.
+
+    Round 25 (m22440): the round-24 device seeded the cell from a triangular
+    lattice jittered by 5 % of a diameter.  That is a crystal seed, and a
+    crystal shears by basal slip at a much lower effective friction than a
+    disordered packing - the returned sweep (``runs/plane_shear_2d/probe_*.json``)
+    shows ``mu_wall = 0.096...0.129`` with ``mu_p = 0.4``, i.e. the frictionless
+    branch of the law, while ``phi_gap = 0.874`` sits 8 % above the archived
+    ``nu_max = 0.81`` and within 4 % of the hexagonal limit ``pi/sqrt(12)``.
+    This function removes the crystal seed *without touching the density*: the
+    lattice sites are displaced by 40 % of a diameter and overlaps are relaxed
+    by projection, so the topology at the start is disordered while ``phi`` is
+    unchanged.
+    """
+    from scipy.spatial import cKDTree
+
+    r = case.radius
+    rng = np.random.default_rng(case.seed + 7919)
+    spacing = case.diameter * (1.0 + 1.0e-3)
+    dy = spacing * math.sqrt(3.0) / 2.0
+    n_y = max(1, int(math.floor((y_hi - y_lo) / dy)))
+    n_x = max(1, int(math.floor(case.width / spacing)))
+    pts = []
+    for k in range(n_y):
+        y = y_lo + (k + 0.5) * (y_hi - y_lo) / n_y
+        shift = 0.5 * spacing if k % 2 else 0.0
+        for m in range(n_x):
+            pts.append((m * spacing + shift + 0.5 * spacing, y))
+    pos = np.asarray(pts, dtype=np.float64)
+    if len(pos) < case.n_particles:
+        raise ValueError("lattice provides fewer sites than n_particles")
+    idx = np.sort(rng.permutation(len(pos))[: case.n_particles])
+    pos = pos[idx]
+    pos += rng.uniform(-0.4, 0.4, size=pos.shape) * case.diameter
+    pos[:, 0] = np.mod(pos[:, 0], case.width)
+    pos[:, 1] = np.clip(pos[:, 1], y_lo, y_hi)
+    pos = _relax_overlaps(pos, r, case.width, y_lo, y_hi)
+    return pos, np.full(len(pos), r)
+
+
+def hexatic_order(pos: np.ndarray, radius: float, width: float,
+                  *, shell: tuple[float, float] = (1.25, 1.75)) -> dict:
+    """Local 6-fold bond-order statistics of a 2-D disk configuration.
+
+    ``psi6_i = |1/n_i sum_j exp(6 i theta_ij)|`` over the first-neighbour shell
+    (``shell`` in diameters).  A triangular lattice gives ``psi6 -> 1``; a
+    disordered packing gives ``psi6 ~ 0.3-0.5``.  Reported alongside ``Z`` (mean
+    number of first neighbours) because a crystal is not only orientationally
+    ordered, it is also over-coordinated at a contact.
+    """
+    from scipy.spatial import cKDTree
+
+    pos = np.array(pos, dtype=np.float64, copy=True)
+    if width > 0:
+        pos[:, 0] = np.mod(pos[:, 0], width)
+    d = 2.0 * radius
+    lo, hi = shell[0] * d, shell[1] * d
+    tree = cKDTree(pos)
+    neigh = tree.query_ball_point(pos, r=hi)
+    psi6 = []
+    degrees = []
+    for i, js in enumerate(neigh):
+        ang = []
+        for j in js:
+            if j == i:
+                continue
+            dx = pos[j, 0] - pos[i, 0]
+            if width > 0:
+                dx -= width * round(dx / width)
+            dy = pos[j, 1] - pos[i, 1]
+            dist = math.hypot(dx, dy)
+            if lo <= dist <= hi:
+                ang.append(math.atan2(dy, dx))
+        degrees.append(len(ang))
+        if len(ang) >= 3:
+            psi6.append(abs(sum(complex(math.cos(6 * a), math.sin(6 * a))
+                                for a in ang)) / len(ang))
+    psi6 = np.asarray(psi6) if psi6 else np.zeros(1)
+    deg = np.asarray(degrees) if degrees else np.zeros(1)
+    return {"psi6_mean": float(psi6.mean()), "psi6_sd": float(psi6.std(ddof=1))
+            if psi6.size > 1 else 0.0,
+            "psi6_hexatic_fraction": float((psi6 > 0.8).mean()),
+            "z_mean": float(deg.mean())}
+
+
 # --------------------------------------------------------------------------- #
 # 3. The cell
 # --------------------------------------------------------------------------- #
@@ -209,7 +344,10 @@ class RoughWallShearCell:
         r = case.radius
         bottom, rad_b = _wall_row(case, 1.0 * r, 0.0)
         top, rad_t = _wall_row(case, 1.0 * r + case.gap + 2.0 * r, 0.5)
-        free_pos, rad_f = _lattice_packing(case, 3.0 * r, case.gap + r)
+        if case.init_mode == "random":
+            free_pos, rad_f = _random_packing(case, 3.0 * r, case.gap + r)
+        else:
+            free_pos, rad_f = _lattice_packing(case, 3.0 * r, case.gap + r)
         # free disks live strictly between the two rows' surfaces
         y_lo = bottom[0, 1] + 2.0 * r
         y_hi = top[0, 1] - 2.0 * r
@@ -408,6 +546,10 @@ def simulate(case: PlaneShear2DCase, *, progress: bool = False) -> dict:
 
     win = [r for r in samples if r["phase"] == "measure"]
     trans = [r for r in samples if r["phase"] == "transient"]
+    # end-of-window structure: a crystal shears by basal slip at a far lower
+    # effective friction than a disordered packing, so the order parameter is
+    # part of the measurement, not a postscript
+    order = hexatic_order(cell.system.pos[cell.free_idx], case.radius, case.width)
     first = win[: len(win) // 2]
     second = win[len(win) // 2:]
 
@@ -433,6 +575,11 @@ def simulate(case: PlaneShear2DCase, *, progress: bool = False) -> dict:
         "p_compaction_end": avg("p_wall", settle_tail),
         "gap_eff_final": avg("gap_eff", win),
         "config_digest": cell.system.digest(),
+        "psi6_mean": order["psi6_mean"],
+        "psi6_sd": order["psi6_sd"],
+        "psi6_hexatic_fraction": order["psi6_hexatic_fraction"],
+        "z_mean": order["z_mean"],
+        "phi_gap_final": float(np.mean([r["phi_gap"] for r in win])) if win else float("nan"),
         "seconds_per_step": (time.time() - t0) / max(1, len(samples) * block),
     }
     for key in ("mu_wall", "mu_bulk", "phi_gap", "phi_cell", "p_wall", "p_bulk",
@@ -471,6 +618,9 @@ def main(argv: list | None = None) -> int:
     ap.add_argument("--np", dest="n_particles", type=int, default=1220)
     ap.add_argument("--width", type=float, default=0.40)
     ap.add_argument("--gap", type=float, default=0.30)
+    ap.add_argument("--init", dest="init_mode", default="lattice",
+                    choices=("lattice", "random"),
+                    help="lattice (R24 crystal seed) or random (disordered packing, R25)")
     ap.add_argument("--quick", action="store_true", help="small/short smoke run")
     ap.add_argument("--out", default=None)
     args = ap.parse_args(argv)
@@ -480,7 +630,8 @@ def main(argv: list | None = None) -> int:
                             settle_time_units=args.settle_units,
                             shear_settle_strain=args.shear_setup_strain,
                             strain_measure=args.strain_measure,
-                            n_particles=args.n_particles)
+                            n_particles=args.n_particles,
+                            init_mode=args.init_mode)
     if args.quick:
         case = replace(case, width=0.24, gap=0.12, n_particles=260,
                        settle_time_units=40.0, shear_settle_strain=0.4,
