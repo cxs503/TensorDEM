@@ -1,0 +1,366 @@
+{
+ "round": "m21723",
+ "case": "CASE-COLUMN-COLLAPSE",
+ "axis": "PHI",
+ "reference": "Lube et al. 2004 JFM 508:175-199",
+ "tolerance": 0.15,
+ "phi_map": {
+  "ladder": [
+   {
+    "aspect": 3.0,
+    "grains_per_radius": 4.0,
+    "n_particles": 553,
+    "aspect_measured": 3.1297278327728963,
+    "phi0": 0.5457470079188775,
+    "admissible": true
+   },
+   {
+    "aspect": 3.0,
+    "grains_per_radius": 5.0,
+    "n_particles": 1278,
+    "aspect_measured": 3.0646613368674376,
+    "phi0": 0.5744001109018632,
+    "admissible": true
+   },
+   {
+    "aspect": 3.0,
+    "grains_per_radius": 8.0,
+    "n_particles": 5673,
+    "aspect_measured": 3.0866314544814117,
+    "phi0": 0.6263056415989606,
+    "admissible": true
+   },
+   {
+    "aspect": 3.0,
+    "grains_per_radius": 10.0,
+    "n_particles": 11412,
+    "aspect_measured": 3.0217204595120615,
+    "phi0": 0.6337288253691072,
+    "admissible": true
+   },
+   {
+    "aspect": 3.0,
+    "grains_per_radius": 12.0,
+    "n_particles": 19687,
+    "aspect_measured": 3.007095454033219,
+    "phi0": 0.6370680540402115,
+    "admissible": true
+   },
+   {
+    "aspect": 3.0,
+    "grains_per_radius": 14.0,
+    "n_particles": 31750,
+    "aspect_measured": 3.0127529811560088,
+    "phi0": 0.6572427403461915,
+    "admissible": true
+   },
+   {
+    "aspect": 3.0,
+    "grains_per_radius": 16.0,
+    "n_particles": 48923,
+    "aspect_measured": 3.0395832276585497,
+    "phi0": 0.6615169558895261,
+    "admissible": true
+   },
+   {
+    "aspect": 1.0,
+    "grains_per_radius": 4.0,
+    "n_particles": 195,
+    "aspect_measured": 1.14619952351004,
+    "phi0": 0.525469111276928,
+    "admissible": true
+   },
+   {
+    "aspect": 1.0,
+    "grains_per_radius": 5.0,
+    "n_particles": 426,
+    "aspect_measured": 1.0440865849319627,
+    "phi0": 0.5620037766912532,
+    "admissible": true
+   },
+   {
+    "aspect": 1.0,
+    "grains_per_radius": 8.0,
+    "n_particles": 1955,
+    "aspect_measured": 1.0782571055943022,
+    "phi0": 0.61784957274999,
+    "admissible": true
+   },
+   {
+    "aspect": 1.0,
+    "grains_per_radius": 10.0,
+    "n_particles": 3804,
+    "aspect_measured": 1.0184102915881448,
+    "phi0": 0.6267779542349724,
+    "admissible": true
+   },
+   {
+    "aspect": 1.0,
+    "grains_per_radius": 12.0,
+    "n_particles": 6412,
+    "aspect_measured": 0.9884775364686476,
+    "phi0": 0.6312192139022624,
+    "admissible": true
+   },
+   {
+    "aspect": 1.0,
+    "grains_per_radius": 14.0,
+    "n_particles": 10797,
+    "aspect_measured": 1.032286803648126,
+    "phi0": 0.6523014123300667,
+    "admissible": true
+   },
+   {
+    "aspect": 1.0,
+    "grains_per_radius": 16.0,
+    "n_particles": 16030,
+    "aspect_measured": 1.002774662942104,
+    "phi0": 0.6570101963795614,
+    "admissible": true
+   }
+  ],
+  "phi0_span": {
+   "1": [
+    0.525469111276928,
+    0.6570101963795614
+   ],
+   "3": [
+    0.5457470079188775,
+    0.6615169558895261
+   ]
+  }
+ },
+ "missing_cases": [
+  "PH_A3g12_gap0.05",
+  "PH_A3g12_gap0.08"
+ ],
+ "arms": {
+  "A3g8": {
+   "phi_span": 0.15164793982365454,
+   "fit": {
+    "status": "fit",
+    "slope": -2.9058828298484425,
+    "intercept": 5.946906919912264,
+    "stderr": 1.5847709686275115,
+    "r2": 0.6270185672437517,
+    "n": 4,
+    "n_distinct": 4,
+    "x_span": 0.15164793982365454,
+    "reason": ""
+   },
+   "resolved": {
+    "resolved": false,
+    "reason": "|slope| = 2.90588 <= 2 * stderr = 3.16954"
+   },
+   "members": [
+    {
+     "case_id": "PH_A3g8_gap0.02",
+     "packing_gap": 0.02,
+     "phi0": 0.6263056415989606,
+     "runout_ratio_p995": 4.119299853460151,
+     "runout_error_measured": 0.08089456269975485,
+     "aspect_measured": 3.0866314544814117,
+     "n_particles": 5673,
+     "stop_reason": "at_rest"
+    },
+    {
+     "case_id": "PH_A3g8_gap0.05",
+     "packing_gap": 0.05,
+     "phi0": 0.5703603349216341,
+     "runout_ratio_p995": 4.369957450461484,
+     "runout_error_measured": 0.15343699636849786,
+     "aspect_measured": 3.037700237249191,
+     "n_particles": 5222,
+     "stop_reason": "at_rest"
+    },
+    {
+     "case_id": "PH_A3g8_gap0.08",
+     "packing_gap": 0.08,
+     "phi0": 0.5059135814470636,
+     "runout_ratio_p995": 4.267498013063217,
+     "runout_error_measured": 0.1319278482176979,
+     "aspect_measured": 2.997475154910508,
+     "n_particles": 4628,
+     "stop_reason": "at_rest"
+    },
+    {
+     "case_id": "PH_A3g8_gap0.12",
+     "packing_gap": 0.12,
+     "phi0": 0.4746577017753061,
+     "runout_ratio_p995": 4.7040759930708465,
+     "runout_error_measured": 0.247535120434054,
+     "aspect_measured": 2.998733467722212,
+     "n_particles": 4303,
+     "stop_reason": "at_rest"
+    }
+   ]
+  },
+  "A3g12": {
+   "phi_span": 0.0,
+   "fit": {
+    "status": "insufficient",
+    "slope": NaN,
+    "intercept": NaN,
+    "stderr": NaN,
+    "r2": NaN,
+    "n": 1,
+    "n_distinct": 1,
+    "x_span": NaN,
+    "reason": "arm has fewer than two members in this run"
+   },
+   "resolved": {
+    "resolved": false,
+    "reason": "fit status 'insufficient': arm has fewer than two members in this run"
+   },
+   "members": [
+    {
+     "case_id": "PH_A3g12_gap0.02",
+     "packing_gap": 0.02,
+     "phi0": 0.6370680540402115,
+     "runout_ratio_p995": 4.355892755212519,
+     "runout_error_measured": 0.15401442060340165,
+     "aspect_measured": 3.007095454033219,
+     "n_particles": 19687,
+     "stop_reason": "at_rest"
+    }
+   ]
+  },
+  "A1g8": {
+   "phi_span": 0.1471750090556111,
+   "fit": {
+    "status": "fit",
+    "slope": 0.5704194380283486,
+    "intercept": 1.7917943185767782,
+    "stderr": 0.4867831603453465,
+    "r2": 0.4070821560400669,
+    "n": 4,
+    "n_distinct": 4,
+    "x_span": 0.1471750090556111,
+    "reason": ""
+   },
+   "resolved": {
+    "resolved": false,
+    "reason": "|slope| = 0.570419 <= 2 * stderr = 0.973566"
+   },
+   "members": [
+    {
+     "case_id": "PH_A1g8_gap0.02",
+     "packing_gap": 0.02,
+     "phi0": 0.61784957274999,
+     "runout_ratio_p995": 2.106047163976525,
+     "runout_error_measured": -0.09883945695698718,
+     "aspect_measured": 1.0782571055943022,
+     "n_particles": 1955,
+     "stop_reason": "at_rest"
+    },
+    {
+     "case_id": "PH_A1g8_gap0.05",
+     "packing_gap": 0.05,
+     "phi0": 0.5635013030055496,
+     "runout_ratio_p995": 2.166963426517937,
+     "runout_error_measured": -0.026452668141397864,
+     "aspect_measured": 0.9885829922262814,
+     "n_particles": 1679,
+     "stop_reason": "at_rest"
+    },
+    {
+     "case_id": "PH_A1g8_gap0.08",
+     "packing_gap": 0.08,
+     "phi0": 0.5004235204707167,
+     "runout_ratio_p995": 2.098456208326861,
+     "runout_error_measured": -0.06784809930622555,
+     "aspect_measured": 1.009028667244732,
+     "n_particles": 1541,
+     "stop_reason": "at_rest"
+    },
+    {
+     "case_id": "PH_A1g8_gap0.12",
+     "packing_gap": 0.12,
+     "phi0": 0.4706745636943789,
+     "runout_ratio_p995": 2.0235092015884226,
+     "runout_error_measured": -0.11862794223722688,
+     "aspect_measured": 1.0450505364702551,
+     "n_particles": 1487,
+     "stop_reason": "at_rest"
+    }
+   ]
+  }
+ },
+ "confound": {
+  "implied_shift": 0.33641390402035515,
+  "implied_relative": 0.08849876728215712,
+  "share": 0.49898235541435065,
+  "observed_spread": 0.6741999999999999,
+  "dphi": 0.11576994797064855,
+  "exceeds_tolerance_alone": false,
+  "tolerance": 0.15,
+  "reason": "the phi_0 slope is not resolved, so it cannot explain a spread",
+  "verdict": "indeterminate"
+ },
+ "cross_resolution": {
+  "slope_g8": -2.9058828298484425,
+  "slope_g12": NaN,
+  "relative_gap": NaN,
+  "note": "a=3 at 12 grains/r_i carries only one member in this run: no cross-resolution slope (queue job)"
+ },
+ "ladder": {
+  "source": "docs/AUDIT_COLUMN_COLLAPSE_GRID_CONVERGENCE_m21656.md",
+  "source_sha256": "f2d2f66a5d425bf4b38ac6e32f8f4df8aa5113221fe52e00cfd652052d22fc3a",
+  "rows": [
+   {
+    "grains_per_radius": 4.0,
+    "n_particles": 553,
+    "aspect_measured": 3.1297,
+    "phi0": 0.5457,
+    "runout_ratio_p995": 4.7935,
+    "reference": 3.8306
+   },
+   {
+    "grains_per_radius": 5.0,
+    "n_particles": 1278,
+    "aspect_measured": 3.0647,
+    "phi0": 0.5744,
+    "runout_ratio_p995": 4.3446,
+    "reference": 3.801
+   },
+   {
+    "grains_per_radius": 8.0,
+    "n_particles": 5673,
+    "aspect_measured": 3.0866,
+    "phi0": 0.6263,
+    "runout_ratio_p995": 4.1193,
+    "reference": 3.811
+   },
+   {
+    "grains_per_radius": 12.0,
+    "n_particles": 19687,
+    "aspect_measured": 3.0071,
+    "phi0": 0.6371,
+    "runout_ratio_p995": 4.3559,
+    "reference": 3.7746
+   },
+   {
+    "grains_per_radius": 16.0,
+    "n_particles": 48923,
+    "aspect_measured": 3.0396,
+    "phi0": 0.6615,
+    "runout_ratio_p995": 4.2087,
+    "reference": 3.7895
+   }
+  ],
+  "phi0_span": 0.11576994797064855,
+  "rho_spread": 0.6741999999999999,
+  "reference_mean": 3.8013399999999997,
+  "fit_rho_vs_phi0": {
+   "status": "fit",
+   "slope": -4.324170092383854,
+   "intercept": 6.997819586261768,
+   "stderr": 1.9163965158209673,
+   "r2": 0.6292346757124245,
+   "n": 5,
+   "n_distinct": 5,
+   "x_span": 0.11580000000000001,
+   "reason": ""
+  }
+ }
+}
