@@ -567,6 +567,13 @@ class RidgeAssembly:
                 _meter["sum_fn_abs_tanh"] += float((magnitude[_loaded] * _ratio.abs()).sum())
                 _meter["saturated"] += float((_ratio.abs() >= 0.99).sum())
                 _meter["sum_vt_abs"] += float(v_t[_loaded].abs().sum())
+                # Independent energy route (W): power dissipated by the
+                # regularised tangential law at the same contacts the stress
+                # tensor is built from.  ``-F_t v_t >= 0`` by construction.
+                _meter["sum_friction_power"] += float(
+                    (-tangential[_loaded] * v_t[_loaded]).sum())
+                _meter["sum_damping_power"] += float(
+                    (m.contact_damping * v_n[_loaded] ** 2).sum())
             contact_damping_power += float(
                 (m.contact_damping * v_n ** 2 * loaded).sum())
             contact_friction_power += float((-tangential * v_t).sum())
@@ -748,7 +755,9 @@ class RidgeAssembly:
         """
         self.friction_meter = {"calls": 0.0, "contacts": 0.0, "sum_fn": 0.0,
                                "sum_abs_tanh": 0.0, "sum_fn_abs_tanh": 0.0,
-                               "saturated": 0.0, "sum_vt_abs": 0.0}
+                               "saturated": 0.0, "sum_vt_abs": 0.0,
+                               "sum_friction_power": 0.0,
+                               "sum_damping_power": 0.0}
         return self.friction_meter
 
     def read_friction_meter(self, *, reset: bool = True) -> dict[str, float]:

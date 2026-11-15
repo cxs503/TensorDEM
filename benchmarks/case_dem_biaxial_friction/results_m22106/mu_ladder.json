@@ -1,0 +1,115 @@
+{
+ "module": "CASE-DEM-BIAXIAL-FRICTION",
+ "round": "R8(m22106)",
+ "prereg": "prereg/m22106_mu_ladder_prereg.md",
+ "references": {
+  "rowe_1962_D0_atan_mu055": 28.810793742973065,
+  "bolton_1986_quartz_crit": 33.0,
+  "bolton_1986_plane_strain_peak_dense": 38.0
+ },
+ "arms": [
+  {
+   "tag": "smoke_10x20",
+   "path": "artifacts/CASE-DEM-BIAXIAL-FRICTION/mu_ladder_smoke/iso_smoke_10x20.json",
+   "mu": 0.55,
+   "atan_mu_deg": 28.810793742973065,
+   "specimen": {
+    "columns": 10,
+    "rows": 20,
+    "particles": 190,
+    "radius": 0.75,
+    "dt": 0.000497077533935517
+   },
+   "config": {
+    "confining_stress": 100000.0,
+    "strain_rate": 0.05,
+    "strain_target": 0.3,
+    "consolidation_steps": 600,
+    "lateral_control": "isochoric"
+   },
+   "elapsed_s": 81.28759765625,
+   "peak": {
+    "axial_strain": 0.03278015590270798,
+    "sigma_v": 381818.48571063805,
+    "sigma_h": 11953.03417302225,
+    "deviator": 369865.4515376158,
+    "friction_angle_deg": 69.93257646028985,
+    "dilation_angle_deg": 33.49757916433548,
+    "sin_phi": 0.9392894936812405,
+    "post_peak_d_eps_v_d_eps_a": -0.5519017518484081
+   },
+   "inertial_number": 0.007182008771924469,
+   "gate_state": "WITHHELD",
+   "phi_cv_deg": 5.801020810458668,
+   "strain_budget": {
+    "declared_target": 0.3,
+    "delivered_engineering": 0.2593768968015352,
+    "delivered_log": 0.3002634157441623,
+    "delivered_relative_to_target_log": 0.0008780524805411065,
+    "note": "strain_target is a logarithmic-strain budget after the m22106 break-condition fix; engineering strain is 1-exp(-log)"
+   },
+   "flags": {
+    "isochoric": true,
+    "deviator_stationary": false,
+    "window_independent": true,
+    "lateral_walls_loaded": true
+   },
+   "thresholds": {
+    "vol_tolerance": 0.02,
+    "deviator_tolerance": 0.05,
+    "servo_tolerance": 0.1,
+    "window_spread_tolerance_deg": 1.5
+   },
+   "window": [
+    0.28021073259532986,
+    0.3002634157441623
+   ],
+   "phi_cv_window_spread_deg": 1.0904122764647717,
+   "phi_last10pct_deg": 6.340567664033818,
+   "phi_last25pct_deg": NaN,
+   "q_cv_MPa": 0.08189893396706027,
+   "sigma_h_cv_kPa": 365.0989444866733,
+   "d_eps_v_d_eps_a": 2.485356792790946e-05,
+   "q_drift": 0.31817099121452275,
+   "peak_phi_deg": 69.93257646028985,
+   "rowe": {
+    "error": "stress path too short for the Rowe check"
+   },
+   "relative_error_vs_rowe_atan_mu": -0.7986511283857449,
+   "relative_error_vs_anchor_ref": -0.7986511283857449,
+   "mobilisation": {
+    "samples": 4,
+    "calls": 800.0,
+    "mean_contacts_per_call": 372.15375,
+    "fn_weighted_mean_abs_tanh": 0.9812115962248623,
+    "saturated_fraction": 0.9114411718275041,
+    "mean_abs_vt": 0.18002059090120737,
+    "friction_power_W": 24529892.61995768,
+    "damping_power_W": 410504.8349847846
+   },
+   "energy_balance": {
+    "volume_m3": 389.40734089471414,
+    "q_window_Pa": 81898.93396706028,
+    "strain_rate": 0.05,
+    "boundary_power_W": 1594602.3049112363,
+    "contact_friction_power_W": 24529892.61995768,
+    "contact_damping_power_W": 410504.8349847846,
+    "contact_total_power_W": 24940397.454942465,
+    "residual_fraction": -14.64051260814575
+   }
+  }
+ ],
+ "verdict": {
+  "arms_total": 1,
+  "arms_with_critical_state": 0,
+  "thresholds": {
+   "H1_min_spread_deg": 10.0,
+   "H2_insensitive_deg": 2.0,
+   "H3_ceiling_deg": 28.810793742973065,
+   "H4_max_residual": 0.15
+  },
+  "verdict": "WITHHELD",
+  "reason": "fewer than two arms reached a gated critical state; no ladder can be judged"
+ },
+ "figure": "docs/figures/CASE-DEM-BIAXIAL-FRICTION_R8_mu_ladder.png"
+}

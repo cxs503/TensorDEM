@@ -675,7 +675,16 @@ def run_biaxial_shear_band(*, confining_stress: float = 100.0e3,
                                   if k not in ("angles_deg", "eta2_curve")}
             bands.append(band)
             prev = current
-        if strain >= strain_target:
+        # ``strain_target`` is a *true* (logarithmic) strain budget, and the step
+        # budget above is derived from it (``t = strain_target / strain_rate``),
+        # because the platen velocity is proportional to the *current* height.
+        # Stopping on the engineering strain instead made every run end short of
+        # the declared target without saying so: a run asked for ``eps_a = 0.60``
+        # stopped at engineering 0.451 (= log 0.60) when the step budget ran out,
+        # which is why earlier rounds reported "eps_a -> 0.45" for a target of
+        # 0.60.  Breaking on the logarithmic measure makes the declared target and
+        # the delivered path the same number (deviation <= one step).
+        if axial_log >= strain_target:
             break
 
     hist = {key: np.array([row[key] for row in history]) for key in history[0]}
