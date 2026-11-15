@@ -30,6 +30,7 @@ import torch
 from tensordem.biaxial_friction_case import (
     ANCHOR_CONFIG,
     CASE_KEY,
+    MU_PARTICLE,
     PHI_CV_REF_DEG,
     PHI_CV_ROWE_DEG,
     PHI_REF_DEG,
@@ -61,6 +62,7 @@ def test_anchor_configuration_matches_the_task_board():
     assert ANCHOR_CONFIG["consolidation_steps"] == 4000
     assert ANCHOR_CONFIG["strain_target"] == pytest.approx(0.30)
     assert ANCHOR_CONFIG["freeze_bond_fraction"] == pytest.approx(0.0)
+    assert ANCHOR_CONFIG["friction_coefficient"] == pytest.approx(0.65)
     assert PHI_REF_DEG == pytest.approx(38.0)
     assert TOLERANCE == pytest.approx(0.08)
 
@@ -71,12 +73,19 @@ def test_quick_configuration_is_a_smoke_not_a_result():
     assert QUICK_CONFIG["confining_stress"] == pytest.approx(100.0e3)
     assert QUICK_CONFIG["wall_friction"] == pytest.approx(0.0)
     assert QUICK_CONFIG["freeze_bond_fraction"] == pytest.approx(0.0)
+    assert QUICK_CONFIG["friction_coefficient"] == pytest.approx(0.65)
 
 
 def test_critical_state_references_are_declared():
     """The critical-state reference values are pre-declared and not mutated."""
     assert PHI_CV_REF_DEG == pytest.approx(33.0)  # Bolton 1986 Table 1
-    assert PHI_CV_ROWE_DEG == pytest.approx(math.degrees(math.atan(0.55)), abs=1e-9)
+    assert PHI_CV_ROWE_DEG == pytest.approx(math.degrees(math.atan(0.65)), abs=1e-9)
+
+
+def test_mu_particle_matches_rowe_prediction():
+    """The interparticle friction coefficient gives phi_cv matching Bolton."""
+    # arctan(0.65) ≈ 33.0 deg, matching Bolton (1986) Table 1 for angular quartz sands
+    assert math.degrees(math.atan(MU_PARTICLE)) == pytest.approx(PHI_CV_REF_DEG, abs=0.5)
 
 
 # ---------------------------------------------------------------------------
@@ -168,6 +177,8 @@ def test_quick_pipeline_runs_and_judges(tmp_path):
     assert result["reference"].startswith("Bolton (1986)")
     # freeze_bond_fraction must be 0 (cohesionless sand)
     assert result["config"]["freeze_bond_fraction"] == pytest.approx(0.0)
+    # friction_coefficient must be 0.65 (sand)
+    assert result["config"]["friction_coefficient"] == pytest.approx(0.65)
 
 
 def test_quick_pipeline_includes_critical_state_analysis():
@@ -184,7 +195,7 @@ def test_quick_pipeline_includes_critical_state_analysis():
         assert "rowe" in cs
         assert "phi_mu_deg" in cs["rowe"]
         assert cs["rowe"]["phi_mu_deg"] == pytest.approx(
-            math.degrees(math.atan(0.55)), abs=1e-9)
+            math.degrees(math.atan(0.65)), abs=1e-9)
 
 
 def test_quick_pipeline_includes_bolton_dilatancy():
@@ -256,3 +267,12 @@ def test_committed_artefact_is_cohesionless():
     with open(ARTIFACT) as f:
         rec = json.load(f)
     assert rec["config"]["freeze_bond_fraction"] == pytest.approx(0.0)
+
+
+@pytest.mark.skipif(not os.path.exists(ARTIFACT),
+                      reason="anchor artefact not committed yet")
+def test_committed_artefact_uses_sand_friction():
+    """If run.json is committed, it must use friction_coefficient=0.65 (sand ref)."""
+    with open(ARTIFACT) as f:
+        rec = json.load(f)
+    assert rec["config"]["friction_coefficient"] == pytest.approx(0.65)
