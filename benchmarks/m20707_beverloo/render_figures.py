@@ -33,6 +33,8 @@ def main(run_dir: str | None = None) -> None:
     cases = {}
     for p in sorted(run_dir.glob("*.json")):
         d = json.loads(p.read_text())
+        if "case_id" not in d:   # skip summary.json / non-case artifacts
+            continue
         cases[d["case_id"]] = d
 
     if not cases:
