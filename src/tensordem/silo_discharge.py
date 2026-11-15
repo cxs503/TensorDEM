@@ -78,6 +78,13 @@ class SiloCase:
     settle_loose_gap: float = 0.5
     #: mass quantiles of the discharge stream that define the steady window
     steady_quantiles: tuple = (0.2, 0.8)
+    #: meter the Eulerian mass flux through the mid-plate orifice plane
+    #: (``z = -t/2``, ``radial < a``).  This is an *independent* second estimate
+    #: of the same steady mass flow rate: ``steady_flow_rate_kg_s`` counts
+    #: particles that ended up below the plate, the flux meter counts the
+    #: particles that crossed the aperture.  Agreement between the two excludes
+    #: a discharge-bookkeeping bias as the source of a Beverloo mismatch.
+    measure_orifice_flux: bool = False
 
     @property
     def diameter(self) -> float:
@@ -356,8 +363,15 @@ def simulate_silo(case: SiloCase, *, return_history: bool = False) -> dict:
     bed_height = 0.0
     n_bed = 0
     bed_step = 0
+    # orifice-plane flux meter (independent estimator, see SiloCase)
+    flux_z = -0.5 * case.plate_thickness if case.measure_orifice_flux else None
+    flux_t: list[float] = []
+    flux_n: list[int] = []
+    n_crossed = 0
     for step in range(n_steps):
         t_now = step * dt
+        if flux_z is not None:
+            z_prev = pos[:, 2].copy()   # copy: pos is updated in place
         closed = bool(case.plug_during_settle and t_now < t_settle)
         if case.plug_during_settle and bed_step == 0 and t_now >= t_settle:
             bed_step = step
@@ -388,6 +402,17 @@ def simulate_silo(case: SiloCase, *, return_history: bool = False) -> dict:
         pos[idx_a] = pa
         vel[idx_a] = va
         omega[idx_a] = oa
+
+        # Eulerian mass flux through the mid-plate aperture plane
+        if flux_z is not None:
+            radial_now = np.hypot(pos[:, 0], pos[:, 1])
+            crossed = (alive & (z_prev > flux_z) & (pos[:, 2] <= flux_z)
+                       & (radial_now < case.orifice_radius))
+            n_new = int(crossed.sum())
+            if n_new:
+                n_crossed += n_new
+                flux_t.append(t_now)
+                flux_n.append(n_crossed)
 
         # discharge: particles whose centre is below the plate bottom
         below = alive & (pos[:, 2] < discharge_z)
@@ -449,6 +474,7 @@ def simulate_silo(case: SiloCase, *, return_history: bool = False) -> dict:
         "steady_n_hi": steady["steady_n_hi"],
         "steady_window_s": steady.get("steady_window_s", 0.0),
         "n_discharged_total": steady["n_discharged_total"],
+        "orifice_flux": _flux_summary(flux_t, flux_n, mass, case),
         "discharge_time_s": [float(x) for x in dis_t],
         "discharge_cumulative_n": [int(x) for x in dis_n],
         "packing": case.packing,
@@ -472,6 +498,29 @@ def simulate_silo(case: SiloCase, *, return_history: bool = False) -> dict:
         out["velocities"] = vel
         out["alive"] = alive
     return out
+
+
+def _flux_summary(flux_t, flux_n, mass: float, case: "SiloCase") -> dict:
+    """Steady mass flux through the aperture plane (independent estimator)."""
+    if not case.measure_orifice_flux:
+        return {"measured": False}
+    if len(flux_n) < 4:
+        return {"measured": True, "n_crossed": int(flux_n[-1]) if flux_n else 0,
+                "steady_flux_kg_s": float("nan"), "steady_flux_cv": float("nan")}
+    try:
+        st = steady_rate(flux_t, flux_n, mass, case.window, case.n_windows,
+                         case.steady_quantiles)
+    except Exception:                                     # pragma: no cover
+        return {"measured": True, "n_crossed": int(flux_n[-1]),
+                "steady_flux_kg_s": float("nan"), "steady_flux_cv": float("nan")}
+    return {
+        "measured": True,
+        "n_crossed": int(flux_n[-1]),
+        "steady_flux_kg_s": st["steady_flow_rate_kg_s"],
+        "steady_flux_cv": st["steady_rate_cv"],
+        "steady_flux_interval_s": st["steady_interval_s"],
+        "steady_flux_windows_kg_s": st["steady_rate_windows_kg_s"],
+    }
 
 
 def beverloo_fit(W: np.ndarray, D: np.ndarray, d: float, rho_b: float, g: float,
