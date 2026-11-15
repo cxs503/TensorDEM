@@ -1,0 +1,452 @@
+{
+ "n_runs": 28,
+ "tolerances": {
+  "dt_bias": 0.0005,
+  "intercept_shift": 0.001
+ },
+ "ladders": {
+  "0": {
+   "raw": [
+    [
+     4000.0,
+     0.6423746810504044
+    ],
+    [
+     16000.0,
+     0.6379053116959197
+    ],
+    [
+     64000.0,
+     0.6367647448488053
+    ],
+    [
+     256000.0,
+     0.6357108331286041
+    ]
+   ],
+   "corrected": [
+    [
+     4000.0,
+     0.6428040206936225
+    ],
+    [
+     16000.0,
+     0.6379053116959197
+    ],
+    [
+     64000.0,
+     0.6359198725921664
+    ],
+    [
+     256000.0,
+     0.6357108331286041
+    ]
+   ],
+   "rows": [
+    {
+     "kn": 4000.0,
+     "phi_coarse": 0.6423746810504044,
+     "phi_fine": 0.6426322848363353,
+     "n_coarse": 3,
+     "coarse_std": 0.00022340381063669455,
+     "n_fine": 1,
+     "delta": 0.0002576037859308711,
+     "limit": 0.6428040206936225,
+     "lo": 0.6427181527649789,
+     "hi": 0.6428898886222661,
+     "by_order": {
+      "q1": 0.6428898886222661,
+      "q2": 0.6427181527649789
+     },
+     "half_width": 8.586792864362369e-05,
+     "admissible": true,
+     "z_vs_seed_noise": 1.153085908412697,
+     "level_used": 0.6428040206936225,
+     "inside_correction_band": [
+      0.6427181527649789,
+      0.6428898886222661
+     ]
+    },
+    {
+     "kn": 16000.0,
+     "phi_coarse": 0.6379053116959197,
+     "phi_fine": null,
+     "n_coarse": 1,
+     "coarse_std": null,
+     "n_fine": 0,
+     "delta": null,
+     "admissible": null,
+     "level_used": 0.6379053116959197
+    },
+    {
+     "kn": 64000.0,
+     "phi_coarse": 0.6367647448488053,
+     "phi_fine": 0.636257821494822,
+     "n_coarse": 3,
+     "coarse_std": 0.00031349731333564225,
+     "n_fine": 1,
+     "delta": -0.0005069233539832796,
+     "limit": 0.6359198725921664,
+     "lo": 0.6357508981408387,
+     "hi": 0.6360888470434942,
+     "by_order": {
+      "q1": 0.6357508981408387,
+      "q2": 0.6360888470434942
+     },
+     "half_width": 0.00016897445132774136,
+     "admissible": false,
+     "z_vs_seed_noise": 1.6169942529636545,
+     "level_used": 0.6359198725921664,
+     "inside_correction_band": [
+      0.6357508981408387,
+      0.6360888470434942
+     ]
+    },
+    {
+     "kn": 256000.0,
+     "phi_coarse": 0.6357108331286041,
+     "phi_fine": null,
+     "n_coarse": 1,
+     "coarse_std": null,
+     "n_fine": 0,
+     "delta": null,
+     "admissible": null,
+     "level_used": 0.6357108331286041
+    }
+   ]
+  },
+  "0.1": {
+   "raw": [
+    [
+     4000.0,
+     0.6262811439407491
+    ],
+    [
+     16000.0,
+     0.6215875002833193
+    ],
+    [
+     64000.0,
+     0.6192806087061297
+    ]
+   ],
+   "corrected": [
+    [
+     4000.0,
+     0.6263539781241372
+    ],
+    [
+     16000.0,
+     0.6215875002833193
+    ],
+    [
+     64000.0,
+     0.6194786888853653
+    ]
+   ],
+   "rows": [
+    {
+     "kn": 4000.0,
+     "phi_coarse": 0.6262811439407491,
+     "phi_fine": 0.626324844450782,
+     "n_coarse": 3,
+     "coarse_std": 0.0003985464922471281,
+     "n_fine": 1,
+     "delta": 4.3700510032884665e-05,
+     "limit": 0.6263539781241372,
+     "lo": 0.6263394112874596,
+     "hi": 0.6263685449608148,
+     "by_order": {
+      "q1": 0.6263685449608148,
+      "q2": 0.6263394112874596
+     },
+     "half_width": 1.4566836677609718e-05,
+     "admissible": true,
+     "z_vs_seed_noise": 0.10964971686612447,
+     "level_used": 0.6263539781241372,
+     "inside_correction_band": [
+      0.6263394112874596,
+      0.6263685449608148
+     ]
+    },
+    {
+     "kn": 16000.0,
+     "phi_coarse": 0.6215875002833193,
+     "phi_fine": null,
+     "n_coarse": 1,
+     "coarse_std": null,
+     "n_fine": 0,
+     "delta": null,
+     "admissible": null,
+     "level_used": 0.6215875002833193
+    },
+    {
+     "kn": 64000.0,
+     "phi_coarse": 0.6192806087061297,
+     "phi_fine": 0.619399456813671,
+     "n_coarse": 1,
+     "coarse_std": null,
+     "n_fine": 1,
+     "delta": 0.00011884810754136943,
+     "limit": 0.6194786888853653,
+     "lo": 0.6194390728495182,
+     "hi": 0.6195183049212124,
+     "by_order": {
+      "q1": 0.6195183049212124,
+      "q2": 0.6194390728495182
+     },
+     "half_width": 3.961603584712314e-05,
+     "admissible": true,
+     "z_vs_seed_noise": null,
+     "level_used": 0.6194786888853653,
+     "inside_correction_band": [
+      0.6194390728495182,
+      0.6195183049212124
+     ]
+    }
+   ]
+  }
+ },
+ "intercepts": {
+  "0": {
+   "raw": {
+    "kn": [
+     4000.0,
+     16000.0,
+     64000.0,
+     256000.0
+    ],
+    "value": [
+     0.6423746810504044,
+     0.6379053116959197,
+     0.6367647448488053,
+     0.6357108331286041
+    ],
+    "delta": [
+     -0.00446936935448472,
+     -0.0011405668471143882,
+     -0.001053911720201195
+    ],
+    "ratio": [
+     4.0,
+     4.0,
+     4.0
+    ],
+    "order": null,
+    "order_used": 1.0,
+    "limit": 0.6353595292218703,
+    "delta_from_last": 0.00035130390673376866,
+    "n_levels": 4
+   },
+   "corrected": {
+    "kn": [
+     4000.0,
+     16000.0,
+     64000.0,
+     256000.0
+    ],
+    "value": [
+     0.6428040206936225,
+     0.6379053116959197,
+     0.6359198725921664,
+     0.6357108331286041
+    ],
+    "delta": [
+     -0.004898708997702839,
+     -0.0019854391037532615,
+     -0.00020903946356232161
+    ],
+    "ratio": [
+     4.0,
+     4.0,
+     4.0
+    ],
+    "order": 1.6238054396941684,
+    "order_used": 1.6238054396941684,
+    "limit": 0.635686234217223,
+    "delta_from_last": 2.459891138106851e-05,
+    "n_levels": 4
+   }
+  },
+  "0.1": {
+   "raw": {
+    "kn": [
+     4000.0,
+     16000.0,
+     64000.0
+    ],
+    "value": [
+     0.6262811439407491,
+     0.6215875002833193,
+     0.6192806087061297
+    ],
+    "delta": [
+     -0.004693643657429747,
+     -0.0023068915771896625
+    ],
+    "ratio": [
+     4.0,
+     4.0
+    ],
+    "order": 0.5123790583140884,
+    "order_used": 0.5123790583140884,
+    "limit": 0.6170509055069715,
+    "delta_from_last": 0.0022297031991581617,
+    "n_levels": 3
+   },
+   "corrected": {
+    "kn": [
+     4000.0,
+     16000.0,
+     64000.0
+    ],
+    "value": [
+     0.6263539781241372,
+     0.6215875002833193,
+     0.6194786888853653
+    ],
+    "delta": [
+     -0.004766477840817851,
+     -0.002108811397954047
+    ],
+    "ratio": [
+     4.0,
+     4.0
+    ],
+    "order": 0.5882467581276108,
+    "order_used": 0.5882467581276108,
+    "limit": 0.617805384274818,
+    "delta_from_last": 0.001673304610547266,
+    "n_levels": 3
+   }
+  }
+ },
+ "gates": [
+  {
+   "id": "T_bias_mu0_kn4000",
+   "criterion": "|Delta| < 0.0005",
+   "observed": "+2.576e-04",
+   "status": "PASS",
+   "note": ""
+  },
+  {
+   "id": "T_bias_mu0_kn16000",
+   "criterion": "|Delta| < 0.0005",
+   "observed": "no dt/2 run",
+   "status": "NOT_RUN",
+   "note": "probe artifact absent"
+  },
+  {
+   "id": "T_bias_mu0_kn64000",
+   "criterion": "|Delta| < 0.0005",
+   "observed": "-5.069e-04",
+   "status": "FAIL",
+   "note": ""
+  },
+  {
+   "id": "T_bias_mu0_kn256000",
+   "criterion": "|Delta| < 0.0005",
+   "observed": "no dt/2 run",
+   "status": "NOT_RUN",
+   "note": "probe artifact absent"
+  },
+  {
+   "id": "T_bias_mu0.1_kn4000",
+   "criterion": "|Delta| < 0.0005",
+   "observed": "+4.370e-05",
+   "status": "PASS",
+   "note": ""
+  },
+  {
+   "id": "T_bias_mu0.1_kn16000",
+   "criterion": "|Delta| < 0.0005",
+   "observed": "no dt/2 run",
+   "status": "NOT_RUN",
+   "note": "probe artifact absent"
+  },
+  {
+   "id": "T_bias_mu0.1_kn64000",
+   "criterion": "|Delta| < 0.0005",
+   "observed": "+1.188e-04",
+   "status": "PASS",
+   "note": ""
+  },
+  {
+   "id": "T_intercept_shift_corrected_mu0",
+   "criterion": "|limit_corrected - limit_raw| < 0.001",
+   "observed": "3.267e-04",
+   "status": "PASS",
+   "note": ""
+  },
+  {
+   "id": "T_intercept_shift_corrected_mu0.1",
+   "criterion": "|limit_corrected - limit_raw| < 0.001",
+   "observed": "7.545e-04",
+   "status": "PASS",
+   "note": ""
+  },
+  {
+   "id": "T_frictionless_claim_survives_dt_correction",
+   "criterion": "verdict stays PASS vs literature anchor",
+   "observed": "PASS rel=-0.144%",
+   "status": "PASS",
+   "note": ""
+  },
+  {
+   "id": "T_stiff_end_covered_mu0",
+   "criterion": "a dt/2 probe exists at k_n >= 16000 (not only the softest level)",
+   "observed": "probed levels [4000.0, 64000.0]",
+   "status": "PASS",
+   "note": ""
+  },
+  {
+   "id": "T_stiff_end_covered_mu0.1",
+   "criterion": "a dt/2 probe exists at k_n >= 16000 (not only the softest level)",
+   "observed": "probed levels [4000.0, 64000.0]",
+   "status": "PASS",
+   "note": ""
+  }
+ ],
+ "errors": [
+  {
+   "mu": 0.0,
+   "quantity": "hard-sphere intercept (dt-corrected ladder)",
+   "value": 0.635686234217223,
+   "anchor": 0.6366,
+   "rel_error": -0.0014353845158294387,
+   "verdict": "PASS",
+   "under_3pct": "yes",
+   "in_band": true
+  },
+  {
+   "mu": 0.0,
+   "quantity": "hard-sphere intercept (raw ladder)",
+   "value": 0.6353595292218703,
+   "anchor": 0.6366,
+   "rel_error": -0.0019485874617180658,
+   "verdict": "PASS",
+   "under_3pct": "yes",
+   "in_band": true
+  },
+  {
+   "mu": 0.1,
+   "quantity": "hard-sphere intercept (dt-corrected ladder)",
+   "value": 0.617805384274818,
+   "anchor": 0.625,
+   "rel_error": -0.011511385160291177,
+   "verdict": "WITHHELD",
+   "under_3pct": "no admissible anchor",
+   "in_band": false
+  },
+  {
+   "mu": 0.1,
+   "quantity": "hard-sphere intercept (raw ladder)",
+   "value": 0.6170509055069715,
+   "anchor": 0.625,
+   "rel_error": -0.012718551188845595,
+   "verdict": "WITHHELD",
+   "under_3pct": "no admissible anchor",
+   "in_band": false
+  }
+ ]
+}
