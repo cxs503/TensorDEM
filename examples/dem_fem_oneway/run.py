@@ -58,9 +58,15 @@ from tensordem.dem_fem_gates import (
 class CouplingConfig:
     """Parameters designed for verifiable DEM-FEM coupling.
 
-    Very soft contact (k=200 N/m) gives contact duration ~5.4ms.
+    The impact is carried by the *platen* contact law,
+    ``platen_stiffness = 2.0e4 N/m`` -- **not** by ``contact_stiffness``
+    (2.0e2 N/m), which is the particle-particle law and is inert here (the
+    packing holds a single moving particle).  With the platen spring the
+    contact duration is ``t_c = pi*sqrt(m/k) = 5.44 ms`` for
+    ``m = 0.0600175 kg`` (measured 5.37 ms).
     Stiff beam (h=80mm, L=0.3m) gives natural period ~0.48ms.
-    Ratio tc/T1 ≈ 11 ensures quasi-static response (DAF ≈ 1.035).
+    Ratio tc/T1 = 11.35 gives a quasi-static response (DAF 1.045 vs the
+    continuum modal anchor; 1.035 vs ``P L^3/48EI``).
     """
     particle_radius: float = 0.025
     particle_density: float = 917.0
@@ -397,6 +403,38 @@ def compute_modal_peak_deflection(force_history, time_history, config):
     }
 
 
+def modal_peak_on_grid(force_history, time_history, config, factor, n_modes=9):
+    """Peak centre deflection of the continuum modal anchor on a refined grid.
+
+    The force history is linearly interpolated onto the same ``dt / factor``
+    grid used by the FEM, so anchor and FEM integrate an identical load.
+    """
+    if factor == 1:
+        t_grid, f_grid = list(time_history), list(force_history)
+    else:
+        dt = time_history[1] - time_history[0]
+        dt_fine = dt / factor
+        n = int((time_history[-1] - time_history[0]) / dt_fine) + 1
+        t_grid = [time_history[0] + i * dt_fine for i in range(n)]
+        f_grid = np.interp(t_grid, time_history, force_history).tolist()
+
+    beam_cfg = BeamConfig(
+        length=config.beam_length, width=config.beam_width,
+        height=config.beam_height, young_modulus=config.beam_young_modulus,
+        density=config.beam_density, n_elements=config.beam_n_elements,
+        bc=config.beam_bc,
+    )
+    modal = modal_response(
+        f_grid, t_grid,
+        ei=config.beam_young_modulus * beam_cfg.inertia,
+        mass_per_length=beam_cfg.mass_per_length,
+        length=config.beam_length,
+        x_load=config.beam_length / 2.0, x_probe=config.beam_length / 2.0,
+        n_modes=n_modes, bc=config.beam_bc,
+    )
+    return float(np.max(np.abs(np.asarray(modal["deflection"]))))
+
+
 def main():
     config = CouplingConfig()
 
@@ -494,23 +532,42 @@ def main():
             dem_result["force_history"], dem_result["time_history"],
             config, factor, ringdown_steps=ringdown_steps,
         )
+        anchor_peak = modal_peak_on_grid(
+            dem_result["force_history"], dem_result["time_history"], config, factor,
+        )
+        dt_level = fem_ref["dt"]
+        level_error = abs(fem_ref["peak_deflection_m"] - anchor_peak) / max(abs(anchor_peak), 1e-30)
         convergence_results.append({
             "refinement": factor,
-            "dt": fem_ref["dt"],
+            "dt": dt_level,
+            "dt_over_t1": dt_level / t1,
             "peak_deflection_m": fem_ref["peak_deflection_m"],
+            "modal_anchor_peak_m": anchor_peak,
+            "deflection_error_vs_modal_relative": level_error,
             "n_samples": len(fem_ref["deflection_history"]),
         })
-        print(f"    dt/{factor}: peak_def={fem_ref['peak_deflection_m']:.6e}m, dt={fem_ref['dt']:.6e}s")
+        print(f"    dt/{factor}: dt/T1={dt_level / t1:.4f}, "
+              f"peak_def={fem_ref['peak_deflection_m']:.6e}m, "
+              f"anchor={anchor_peak:.6e}m, err={100 * level_error:.4f}%")
 
-    # Convergence ratio: compare finest vs second-finest
-    if len(convergence_results) >= 2:
-        finest = convergence_results[-1]
-        second_finest = convergence_results[-2]
-        convergence_ratio = finest["peak_deflection_m"] / max(second_finest["peak_deflection_m"], 1e-30)
-    else:
-        convergence_ratio = 1.0
+    dt_errors = [r["deflection_error_vs_modal_relative"] for r in convergence_results]
 
-    print(f"  Convergence ratio (dt/8 vs dt/4): {convergence_ratio:.4f}")
+    # Diagnostic only: two adjacent refinements give a peak ratio ~1 by
+    # construction, so that ratio can never turn red on physics.  The gate
+    # below uses the per-level error against the independent modal anchor.
+    finest = convergence_results[-1]
+    second_finest = convergence_results[-2]
+    convergence_ratio = finest["peak_deflection_m"] / max(second_finest["peak_deflection_m"], 1e-30)
+    dt_chain_pass = (
+        dt_errors[0] <= 0.01          # coarse level dt/T1 = 0.14 inside 1%
+        and dt_errors[-1] <= 1e-3     # finest level inside 0.1%
+        and dt_errors[1] <= dt_errors[0]
+        and dt_errors[-1] <= dt_errors[1]
+    )
+    print("  dt chain errors vs modal anchor: "
+          + ", ".join(f"{100 * e:.4f}%" for e in dt_errors)
+          + f"  ({'PASS' if dt_chain_pass else 'FAIL'})")
+    print(f"  (diagnostic) peak ratio dt/8 over dt/4: {convergence_ratio:.6f}")
 
     # Use work-energy error as the energy criterion
     energy_error = work_energy_error
@@ -557,8 +614,16 @@ def main():
             "separability_dem": dem_alone["status"] == "ok",
             "separability_fem": fem_alone["status"] == "ok",
             "separability_fem_deflection_error": fem_alone["relative_error"],
-            "dt_convergence_ratio": convergence_ratio,
-            "dt_convergence_pass": convergence_ratio >= 0.9,
+            "dt_convergence_errors_vs_modal": dt_errors,
+            "dt_convergence_criterion": (
+                "error(dt/T1=0.14) <= 1% and error(dt/T1=0.0175) <= 0.1% and both "
+                "finer levels below the coarse level; per-level error against the "
+                "independent continuum modal anchor, NOT a ratio of two nearly "
+                "identical peaks"
+            ),
+            "dt_convergence_peak_ratio_finest_over_second_finest": convergence_ratio,
+            "dt_convergence_peak_ratio_is_diagnostic_only": True,
+            "dt_convergence_pass": dt_chain_pass,
         },
     }
 
@@ -586,11 +651,18 @@ def main():
             "n_modes": modal_result["n_modes"],
         },
         "interface": {
+            "scope": "numerical_verification_only",
+            "force_history_port_parity_error_relative": force_history_parity_error,
+            "force_history_port_parity_error_abs_Ns": abs(
+                dem_result["impulse_dem_Ns"] - fem_result["impulse_fem_Ns"]),
             "impulse_dem_Ns": dem_result["impulse_dem_Ns"],
             "impulse_fem_Ns": fem_result["impulse_fem_Ns"],
-            "impulse_error_abs": abs(dem_result["impulse_dem_Ns"] - fem_result["impulse_fem_Ns"]),
-            "impulse_error_relative": force_history_parity_error,
             "force_samples_transferred": len(dem_result["force_history"]),
+            "note": (
+                "DEM and FEM integrate the same force array with the same trapezoid rule, so "
+                "this parity is an algebra check on the port, not evidence of interface "
+                "conservation."
+            ),
         },
         "energy_balance": {
             "dem_initial_J": e_initial,
@@ -617,15 +689,22 @@ def main():
 
     results_path = Path(__file__).parent / "results.json"
     ledger_path = Path(__file__).parent.parent.parent / "artifacts" / "dem_fem_coupling_ledger.json"
-    ledger_path.parent.mkdir(parents=True, exist_ok=True)
+    # The ledger is inlined into results.json as well: the artifacts/ copy is a
+    # convenience dump, while the committed results.json keeps validate.py
+    # runnable in a clean checkout.
+    results["ledger"] = ledger
 
     with open(results_path, "w") as f:
         json.dump(results, f, indent=2)
-    with open(ledger_path, "w") as f:
-        json.dump(ledger, f, indent=2)
+    try:
+        ledger_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(ledger_path, "w") as f:
+            json.dump(ledger, f, indent=2)
+    except OSError as exc:  # read-only checkout: results.json already carries it
+        print(f"  (ledger dump to {ledger_path} skipped: {exc})")
 
     print(f"\nResults: {results_path}")
-    print(f"Ledger: {ledger_path}")
+    print(f"Ledger: {ledger_path} (also inlined at results['ledger'])")
 
     print("\n" + "=" * 60)
     print("VERIFICATION SUMMARY")
@@ -633,12 +712,14 @@ def main():
     print(f"  Force history port parity (≤1e-10):  {force_history_parity_error:.2e}  {'PASS' if force_history_parity_error <= 1e-10 else 'FAIL'}")
     print(f"  Deflection dynamic vs modal (≤1%):  {deflection_error:.4f}  {'PASS' if deflection_error <= 0.01 else 'FAIL'}")
     print(f"  Work-Energy (≤1e-8): {work_energy_error:.2e}  {'PASS' if work_energy_error <= 1e-8 else 'FAIL'}")
-    print(f"  dt convergence ratio (≥0.9): {convergence_ratio:.4f}  {'PASS' if convergence_ratio >= 0.9 else 'FAIL'}")
+    print("  dt chain errors vs modal (<=1% @dt, <=0.1% @dt/8): "
+          + "/".join(f"{100 * e:.3f}%" for e in dt_errors)
+          + f"  {'PASS' if dt_chain_pass else 'FAIL'}")
     print(f"  Sep DEM:           {'PASS' if dem_alone['status'] == 'ok' else 'FAIL'}")
     print(f"  Sep FEM:           {'PASS' if fem_alone['status'] == 'ok' else 'FAIL'}")
 
     all_pass = (force_history_parity_error <= 1e-10 and deflection_error <= 0.01
-                and work_energy_error <= 1e-8 and convergence_ratio >= 0.9
+                and work_energy_error <= 1e-8 and dt_chain_pass
                 and dem_alone["status"] == "ok" and fem_alone["status"] == "ok")
     print(f"\n  Overall: {'ALL PASS' if all_pass else 'SOME FAILURES'}")
     return results, ledger
