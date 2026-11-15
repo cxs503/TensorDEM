@@ -1,0 +1,644 @@
+{
+ "case": "CASE-DEM-PLANE-SHEAR-MUIDI",
+ "round": 20,
+ "reference": {
+  "mu": {
+   "constants": {
+    "mu_s": 0.36,
+    "mu_2": 0.84,
+    "I_0": 0.3
+   },
+   "status": "da Cruz 2005 / GDR MiDi 2004 fit as quoted in rounds 1-5: mu_s=0.36, mu_2=0.84, I0=0.30 -- QUOTED, NOT ARCHIVED; a second in-repo triple (0.379, 0.641, 0.279) exists in tests/test_mu_i_rheology.py, see reference_provenance.py"
+  },
+  "phi": {
+   "constants": {
+    "phi_max": 0.64,
+    "phi_min": 0.58
+   },
+   "status": "PROVENANCE-UNVERIFIED magnitudes (0.58, 0.64 inherited from round 1, no in-repo anchor; da Cruz 2005 is a 2D-disk study with phi ~ 0.84 -> 0.79, so these are 3D glass-bead numbers) + VERIFIED monotonicity (decreasing with I, i.e. dilatancy) and limits phi(I->0)=0.64, phi(I->inf)=0.58"
+  },
+  "candidates": [
+   "PRIMARY_REPO",
+   "TEST_GDR_MIDI"
+  ]
+ },
+ "tolerance_pct": 10.0,
+ "range_covered": [
+  0.003,
+  0.003
+ ],
+ "ledger_range": [
+  0.001,
+  0.3
+ ],
+ "range_complete": false,
+ "n_particles": [
+  1276.0
+ ],
+ "min_n_particles": 1276.0,
+ "servo_valid_all": true,
+ "mu_verdicts": [
+  {
+   "arm": "mu_wall",
+   "abscissa": "I_measured_rate",
+   "n_points": 1,
+   "I_abscissa": [
+    9.46737503830861e-05
+   ],
+   "mu_measured": [
+    0.22995411345207556
+   ],
+   "err_pct_vs_primary_repo": [
+    -36.15071490443215
+   ],
+   "worst_abs_err_pct": 36.15071490443215,
+   "within_band_all_points": false,
+   "per_triple": [
+    {
+     "candidate": "PRIMARY_REPO",
+     "status": "QUOTED-NOT-ARCHIVED",
+     "triple": [
+      0.36,
+      0.84,
+      0.3
+     ],
+     "rel_err": [
+      -0.36150714904432146
+     ],
+     "max_abs_rel_err": 0.36150714904432146,
+     "n_within_tol": 0,
+     "n_points": 1,
+     "passes_all": false
+    },
+    {
+     "candidate": "TEST_GDR_MIDI",
+     "status": "ATTRIBUTED-NOT-ARCHIVED",
+     "triple": [
+      0.379,
+      0.641,
+      0.279
+     ],
+     "rel_err": [
+      -0.3934031604382986
+     ],
+     "max_abs_rel_err": 0.3934031604382986,
+     "n_within_tol": 0,
+     "n_points": 1,
+     "passes_all": false
+    }
+   ],
+   "envelope_oracle": {
+    "provenance_can_rescue": null,
+    "min_max_abs_rel_err": NaN
+   },
+   "tolerance_pct": 10.0
+  },
+  {
+   "arm": "mu_wall",
+   "abscissa": "I_imposed_rate",
+   "n_points": 1,
+   "I_abscissa": [
+    0.0029742872019057785
+   ],
+   "mu_measured": [
+    0.22995411345207556
+   ],
+   "err_pct_vs_primary_repo": [
+    -36.9491478388784
+   ],
+   "worst_abs_err_pct": 36.9491478388784,
+   "within_band_all_points": false,
+   "per_triple": [
+    {
+     "candidate": "PRIMARY_REPO",
+     "status": "QUOTED-NOT-ARCHIVED",
+     "triple": [
+      0.36,
+      0.84,
+      0.3
+     ],
+     "rel_err": [
+      -0.36949147838878404
+     ],
+     "max_abs_rel_err": 0.36949147838878404,
+     "n_within_tol": 0,
+     "n_points": 1,
+     "passes_all": false
+    },
+    {
+     "candidate": "TEST_GDR_MIDI",
+     "status": "ATTRIBUTED-NOT-ARCHIVED",
+     "triple": [
+      0.379,
+      0.641,
+      0.279
+     ],
+     "rel_err": [
+      -0.39765311475443466
+     ],
+     "max_abs_rel_err": 0.39765311475443466,
+     "n_within_tol": 0,
+     "n_points": 1,
+     "passes_all": false
+    }
+   ],
+   "envelope_oracle": {
+    "provenance_can_rescue": null,
+    "min_max_abs_rel_err": NaN
+   },
+   "tolerance_pct": 10.0
+  },
+  {
+   "arm": "mu_wall",
+   "abscissa": "I_abscissa_best",
+   "n_points": 1,
+   "I_abscissa": [
+    9.46737503830861e-05
+   ],
+   "mu_measured": [
+    0.22995411345207556
+   ],
+   "err_pct_vs_primary_repo": [
+    -36.15071490443215
+   ],
+   "worst_abs_err_pct": 36.15071490443215,
+   "within_band_all_points": false,
+   "per_triple": [
+    {
+     "candidate": "PRIMARY_REPO",
+     "status": "QUOTED-NOT-ARCHIVED",
+     "triple": [
+      0.36,
+      0.84,
+      0.3
+     ],
+     "rel_err": [
+      -0.36150714904432146
+     ],
+     "max_abs_rel_err": 0.36150714904432146,
+     "n_within_tol": 0,
+     "n_points": 1,
+     "passes_all": false
+    },
+    {
+     "candidate": "TEST_GDR_MIDI",
+     "status": "ATTRIBUTED-NOT-ARCHIVED",
+     "triple": [
+      0.379,
+      0.641,
+      0.279
+     ],
+     "rel_err": [
+      -0.3934031604382986
+     ],
+     "max_abs_rel_err": 0.3934031604382986,
+     "n_within_tol": 0,
+     "n_points": 1,
+     "passes_all": false
+    }
+   ],
+   "envelope_oracle": {
+    "provenance_can_rescue": null,
+    "min_max_abs_rel_err": NaN
+   },
+   "tolerance_pct": 10.0
+  },
+  {
+   "arm": "mu_full",
+   "abscissa": "I_measured_rate",
+   "n_points": 1,
+   "I_abscissa": [
+    9.46737503830861e-05
+   ],
+   "mu_measured": [
+    0.43554220905654606
+   ],
+   "err_pct_vs_primary_repo": [
+    20.933077733356022
+   ],
+   "worst_abs_err_pct": 20.933077733356022,
+   "within_band_all_points": false,
+   "per_triple": [
+    {
+     "candidate": "PRIMARY_REPO",
+     "status": "QUOTED-NOT-ARCHIVED",
+     "triple": [
+      0.36,
+      0.84,
+      0.3
+     ],
+     "rel_err": [
+      0.2093307773335602
+     ],
+     "max_abs_rel_err": 0.2093307773335602,
+     "n_within_tol": 0,
+     "n_points": 1,
+     "passes_all": false
+    },
+    {
+     "candidate": "TEST_GDR_MIDI",
+     "status": "ATTRIBUTED-NOT-ARCHIVED",
+     "triple": [
+      0.379,
+      0.641,
+      0.279
+     ],
+     "rel_err": [
+      0.14891846700747946
+     ],
+     "max_abs_rel_err": 0.14891846700747946,
+     "n_within_tol": 0,
+     "n_points": 1,
+     "passes_all": false
+    }
+   ],
+   "envelope_oracle": {
+    "provenance_can_rescue": null,
+    "min_max_abs_rel_err": NaN
+   },
+   "tolerance_pct": 10.0
+  },
+  {
+   "arm": "mu_full",
+   "abscissa": "I_imposed_rate",
+   "n_points": 1,
+   "I_abscissa": [
+    0.0029742872019057785
+   ],
+   "mu_measured": [
+    0.43554220905654606
+   ],
+   "err_pct_vs_primary_repo": [
+    19.420814095920825
+   ],
+   "worst_abs_err_pct": 19.420814095920825,
+   "within_band_all_points": false,
+   "per_triple": [
+    {
+     "candidate": "PRIMARY_REPO",
+     "status": "QUOTED-NOT-ARCHIVED",
+     "triple": [
+      0.36,
+      0.84,
+      0.3
+     ],
+     "rel_err": [
+      0.19420814095920824
+     ],
+     "max_abs_rel_err": 0.19420814095920824,
+     "n_within_tol": 0,
+     "n_points": 1,
+     "passes_all": false
+    },
+    {
+     "candidate": "TEST_GDR_MIDI",
+     "status": "ATTRIBUTED-NOT-ARCHIVED",
+     "triple": [
+      0.379,
+      0.641,
+      0.279
+     ],
+     "rel_err": [
+      0.14086888501283057
+     ],
+     "max_abs_rel_err": 0.14086888501283057,
+     "n_within_tol": 0,
+     "n_points": 1,
+     "passes_all": false
+    }
+   ],
+   "envelope_oracle": {
+    "provenance_can_rescue": null,
+    "min_max_abs_rel_err": NaN
+   },
+   "tolerance_pct": 10.0
+  },
+  {
+   "arm": "mu_full",
+   "abscissa": "I_abscissa_best",
+   "n_points": 1,
+   "I_abscissa": [
+    9.46737503830861e-05
+   ],
+   "mu_measured": [
+    0.43554220905654606
+   ],
+   "err_pct_vs_primary_repo": [
+    20.933077733356022
+   ],
+   "worst_abs_err_pct": 20.933077733356022,
+   "within_band_all_points": false,
+   "per_triple": [
+    {
+     "candidate": "PRIMARY_REPO",
+     "status": "QUOTED-NOT-ARCHIVED",
+     "triple": [
+      0.36,
+      0.84,
+      0.3
+     ],
+     "rel_err": [
+      0.2093307773335602
+     ],
+     "max_abs_rel_err": 0.2093307773335602,
+     "n_within_tol": 0,
+     "n_points": 1,
+     "passes_all": false
+    },
+    {
+     "candidate": "TEST_GDR_MIDI",
+     "status": "ATTRIBUTED-NOT-ARCHIVED",
+     "triple": [
+      0.379,
+      0.641,
+      0.279
+     ],
+     "rel_err": [
+      0.14891846700747946
+     ],
+     "max_abs_rel_err": 0.14891846700747946,
+     "n_within_tol": 0,
+     "n_points": 1,
+     "passes_all": false
+    }
+   ],
+   "envelope_oracle": {
+    "provenance_can_rescue": null,
+    "min_max_abs_rel_err": NaN
+   },
+   "tolerance_pct": 10.0
+  },
+  {
+   "arm": "mu_bulk",
+   "abscissa": "I_measured_rate",
+   "n_points": 1,
+   "I_abscissa": [
+    9.46737503830861e-05
+   ],
+   "mu_measured": [
+    0.3948875440736179
+   ],
+   "err_pct_vs_primary_repo": [
+    9.644863506647884
+   ],
+   "worst_abs_err_pct": 9.644863506647884,
+   "within_band_all_points": true,
+   "per_triple": [
+    {
+     "candidate": "PRIMARY_REPO",
+     "status": "QUOTED-NOT-ARCHIVED",
+     "triple": [
+      0.36,
+      0.84,
+      0.3
+     ],
+     "rel_err": [
+      0.09644863506647883
+     ],
+     "max_abs_rel_err": 0.09644863506647883,
+     "n_within_tol": 1,
+     "n_points": 1,
+     "passes_all": true
+    },
+    {
+     "candidate": "TEST_GDR_MIDI",
+     "status": "ATTRIBUTED-NOT-ARCHIVED",
+     "triple": [
+      0.379,
+      0.641,
+      0.279
+     ],
+     "rel_err": [
+      0.04167537001794219
+     ],
+     "max_abs_rel_err": 0.04167537001794219,
+     "n_within_tol": 1,
+     "n_points": 1,
+     "passes_all": true
+    }
+   ],
+   "envelope_oracle": {
+    "provenance_can_rescue": null,
+    "min_max_abs_rel_err": NaN
+   },
+   "tolerance_pct": 10.0
+  },
+  {
+   "arm": "mu_bulk",
+   "abscissa": "I_imposed_rate",
+   "n_points": 1,
+   "I_abscissa": [
+    0.0029742872019057785
+   ],
+   "mu_measured": [
+    0.3948875440736179
+   ],
+   "err_pct_vs_primary_repo": [
+    8.273758568111145
+   ],
+   "worst_abs_err_pct": 8.273758568111145,
+   "within_band_all_points": true,
+   "per_triple": [
+    {
+     "candidate": "PRIMARY_REPO",
+     "status": "QUOTED-NOT-ARCHIVED",
+     "triple": [
+      0.36,
+      0.84,
+      0.3
+     ],
+     "rel_err": [
+      0.08273758568111145
+     ],
+     "max_abs_rel_err": 0.08273758568111145,
+     "n_within_tol": 1,
+     "n_points": 1,
+     "passes_all": true
+    },
+    {
+     "candidate": "TEST_GDR_MIDI",
+     "status": "ATTRIBUTED-NOT-ARCHIVED",
+     "triple": [
+      0.379,
+      0.641,
+      0.279
+     ],
+     "rel_err": [
+      0.03437715735659852
+     ],
+     "max_abs_rel_err": 0.03437715735659852,
+     "n_within_tol": 1,
+     "n_points": 1,
+     "passes_all": true
+    }
+   ],
+   "envelope_oracle": {
+    "provenance_can_rescue": null,
+    "min_max_abs_rel_err": NaN
+   },
+   "tolerance_pct": 10.0
+  },
+  {
+   "arm": "mu_bulk",
+   "abscissa": "I_abscissa_best",
+   "n_points": 1,
+   "I_abscissa": [
+    9.46737503830861e-05
+   ],
+   "mu_measured": [
+    0.3948875440736179
+   ],
+   "err_pct_vs_primary_repo": [
+    9.644863506647884
+   ],
+   "worst_abs_err_pct": 9.644863506647884,
+   "within_band_all_points": true,
+   "per_triple": [
+    {
+     "candidate": "PRIMARY_REPO",
+     "status": "QUOTED-NOT-ARCHIVED",
+     "triple": [
+      0.36,
+      0.84,
+      0.3
+     ],
+     "rel_err": [
+      0.09644863506647883
+     ],
+     "max_abs_rel_err": 0.09644863506647883,
+     "n_within_tol": 1,
+     "n_points": 1,
+     "passes_all": true
+    },
+    {
+     "candidate": "TEST_GDR_MIDI",
+     "status": "ATTRIBUTED-NOT-ARCHIVED",
+     "triple": [
+      0.379,
+      0.641,
+      0.279
+     ],
+     "rel_err": [
+      0.04167537001794219
+     ],
+     "max_abs_rel_err": 0.04167537001794219,
+     "n_within_tol": 1,
+     "n_points": 1,
+     "passes_all": true
+    }
+   ],
+   "envelope_oracle": {
+    "provenance_can_rescue": null,
+    "min_max_abs_rel_err": NaN
+   },
+   "tolerance_pct": 10.0
+  }
+ ],
+ "mu_best_arm": {
+  "arm": "mu_bulk",
+  "abscissa": "I_imposed_rate",
+  "worst_abs_err_pct": 8.273758568111145
+ },
+ "mu_passes_full_range": false,
+ "envelope_can_rescue": false,
+ "phi": {
+  "reference_status": "PROVENANCE-UNVERIFIED -> WITHHELD",
+  "rows": [
+   {
+    "I_target": 0.003,
+    "I_measured_rate": 9.46737503830861e-05,
+    "estimators": {
+     "phi_bed_steady": 0.59228526988007,
+     "phi_extent_final": 0.586892853540558,
+     "phi_container_final": 0.5920862475982198
+    },
+    "spread_pct": 0.9133164581880466,
+    "phi_ref_at_target": 0.6394059405940594,
+    "err_pct_vs_ref_at_target": -7.369445249478057
+   }
+  ]
+ },
+ "rows": [
+  {
+   "case": "CASE-DEM-PLANE-SHEAR-MUIDI",
+   "round": 20,
+   "I_target": 0.003,
+   "I_imposed_rate": 0.0029742872019057785,
+   "I_measured_rate": 9.46737503830861e-05,
+   "I_abscissa_best": 9.46737503830861e-05,
+   "mu_wall": 0.22995411345207556,
+   "mu_full": 0.43554220905654606,
+   "mu_bulk": 0.3948875440736179,
+   "mu_std_rel_pct": 13.966886806735953,
+   "mu_n_tail_samples": 160,
+   "phi_bed_steady": 0.59228526988007,
+   "phi_extent_final": 0.586892853540558,
+   "phi_container_final": 0.5920862475982198,
+   "p_over_zz": 0.5541660975342926,
+   "pressure_control_error_pct": 1.7364793834207637,
+   "shear_rate_ratio": -0.010028225200155642,
+   "shear_strain_achieved": 0.5096220908766752,
+   "n_particles": 1276.0,
+   "coordination": 4.296376664088263,
+   "servo_valid": true,
+   "dt": 3.214875667906916e-05,
+   "settle_steps": 4133.0,
+   "shear_steps": 10369.0,
+   "mu_ref__mu_wall__I_measured_rate": 0.3601514302123925,
+   "err_pct__mu_wall__I_measured_rate": -36.15071490443215,
+   "mu_ref__mu_wall__I_imposed_rate": 0.3647121419777889,
+   "err_pct__mu_wall__I_imposed_rate": -36.9491478388784,
+   "mu_ref__mu_wall__I_abscissa_best": 0.3601514302123925,
+   "err_pct__mu_wall__I_abscissa_best": -36.15071490443215,
+   "mu_ref__mu_full__I_measured_rate": 0.3601514302123925,
+   "err_pct__mu_full__I_measured_rate": 20.933077733356022,
+   "mu_ref__mu_full__I_imposed_rate": 0.3647121419777889,
+   "err_pct__mu_full__I_imposed_rate": 19.420814095920825,
+   "mu_ref__mu_full__I_abscissa_best": 0.3601514302123925,
+   "err_pct__mu_full__I_abscissa_best": 20.933077733356022,
+   "mu_ref__mu_bulk__I_measured_rate": 0.3601514302123925,
+   "err_pct__mu_bulk__I_measured_rate": 9.644863506647884,
+   "mu_ref__mu_bulk__I_imposed_rate": 0.3647121419777889,
+   "err_pct__mu_bulk__I_imposed_rate": 8.273758568111145,
+   "mu_ref__mu_bulk__I_abscissa_best": 0.3601514302123925,
+   "err_pct__mu_bulk__I_abscissa_best": 9.644863506647884,
+   "mu_ref_at_target": 0.36475247524752474,
+   "phi_ref_at_target": 0.6394059405940594,
+   "err_mu_pct_at_target": -36.956119819056376,
+   "err_phi_pct_at_target": -7.369445249478057,
+   "wall_clock_s": 210.20361632481217,
+   "shear_strain_target": 0.5,
+   "shard": "1/6"
+  }
+ ],
+ "prereg": {
+  "case": "CASE-DEM-PLANE-SHEAR-MUIDI",
+  "round": 20,
+  "kind": "full-range (I=1e-3..0.3) higher-N sweep + estimator x abscissa x reference-triple verdict matrix",
+  "device": "tensordem.mu_i_rheology.simulate_servo_shear",
+  "box": [
+   0.16,
+   0.08,
+   0.09
+  ],
+  "n_particles_expected": ">1000",
+  "I_targets": [
+   0.001,
+   0.003,
+   0.01,
+   0.03,
+   0.1,
+   0.3
+  ],
+  "shear_strain": 0.5,
+  "seed": 5279,
+  "tolerance_pct": 10.0,
+  "hypotheses": {
+   "Q1_range": "every ledger-range point is measured at N>1000, so the verdict no longer rests on N=294 low-I points",
+   "Q2_estimator": "the estimator spread (wall / full-cell / bulk; p vs sigma_zz) is smaller than the 10% band, i.e. the verdict does not depend on which one is quoted",
+   "Q3_abscissa": "the measured-rate abscissa moves mu inside the band where the imposed-rate one does not (round-19 claim)",
+   "Q4_falsification": "best_case_over_envelope answers whether ANY admissible triple can hold the curve inside 10%; `provenance_can_rescue=False` means the residual is structural, not bibliographic",
+   "Q5_honest": "the worst-point error of the best arm is reported whether or not it passes"
+  }
+ }
+}

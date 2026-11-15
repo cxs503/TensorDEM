@@ -247,13 +247,20 @@ def assemble(runs_dir=None) -> dict:
         return float("nan") if v is None else float(v)
 
     mid = _mid(rows)
+    # round 20 (m21290): ``all([])`` is True, so an assembly whose mid-I points
+    # were never run (a dropped shard) used to report P1/P2 = True -- a vacuous
+    # PASS on the two hypotheses that carry the round-18 prediction.  Both are
+    # now gated on the mid points actually being present.
+    mid_present = bool(mid)
     verdict = {
         "case": "CASE-DEM-PLANE-SHEAR-MUIDI",
         "round": 19,
         "abscissa": "I_measured_rate (fallback: imposed rate if unavailable)",
-        "P1_noise_floor": all(_num(r, "mu_std_rel_pct") < 10.0 for r in mid),
-        "P2_mu_convergence": all(abs(_num(r, "err_mu_pct")) < TOL_PCT
-                                 for r in mid),
+        "mid_points_present": mid_present,
+        "P1_noise_floor": mid_present and all(
+            _num(r, "mu_std_rel_pct") < 10.0 for r in mid),
+        "P2_mu_convergence": mid_present and all(
+            abs(_num(r, "err_mu_pct")) < TOL_PCT for r in mid),
         "P3_honest_verdict": True,
         "tolerance_pct": TOL_PCT,
         "worst_mu_err_pct": max(abs(_num(r, "err_mu_pct")) for r in rows),
