@@ -1,0 +1,694 @@
+{
+  "anchors": [
+    {
+      "anchor_id": "A1_pressure_area_exponent_and_reference",
+      "candidate_value": -0.3,
+      "dimension": {
+        "length": "0",
+        "mass": "0",
+        "time": "0"
+      },
+      "locator": null,
+      "locator_hint": "ISO 19906:2019 pressure-area annex (Annex A in the 2010 edition) -- clause/table/page NOT confirmed",
+      "provenance_type": "recall-prior (not a transcription; text unavailable)",
+      "quantity": "pressure-area exponent ex, reference pressure C_R, reference area A_R (ex=-0.3, C_R=1200000.0 Pa, A_R=2.5 m^2)",
+      "quote": null,
+      "source_note": "docs/ICE_CONTACT_PRESSURE_ROLLING_PROXY.md:170 -- \"the pressure-area exponent was not digitised from the standard here\"",
+      "unit": "1 (exponent); C_R in Pa; A_R in m^2",
+      "usable_for_claim": false,
+      "verification_status": "UNVERIFIED_CANDIDATE"
+    },
+    {
+      "anchor_id": "A2_design_global_ice_force",
+      "candidate_value": null,
+      "dimension": {
+        "length": "1",
+        "mass": "1",
+        "time": "-2"
+      },
+      "locator": null,
+      "locator_hint": "ISO 19906:2019 global ice action clauses (Clause 14/15 in the 2010 edition) -- whether a single tabulated design global force exists at all is unconfirmed",
+      "provenance_type": "locator-hypothesis-only",
+      "quantity": "design global ice force (clause-level action format)",
+      "quote": null,
+      "source_note": "no value registered on purpose: recall-level candidates are not transcriptions; the clause/table that carries the design global force format has to be located in the primary text first",
+      "unit": "N",
+      "usable_for_claim": false,
+      "verification_status": "LOCATOR_ONLY"
+    }
+  ],
+  "artifact": "benchmarks/anchors/ice-hull-propeller-threefield.json",
+  "case_caliber": {
+    "dem_bow_speed_m_s": 0.1,
+    "dem_model_width_m": 0.2,
+    "dem_particle_radius_m": 0.025,
+    "dem_wedge_angle_deg": 45.0,
+    "doc_vs_code_hull_check": {
+      "code_defaults": {
+        "beam_m": 20.0,
+        "buttock_angle_deg": 20.0,
+        "draught_m": 7.0,
+        "length_m": 120.0,
+        "stem_angle_deg": 30.0,
+        "waterline_entry_angle_deg": 22.0
+      },
+      "consistency_ok": false,
+      "doc_source": "docs/THREEFIELD_ICE_HULL_PROPELLER.md:20",
+      "doc_values": {
+        "beam_m": 22.0,
+        "buttock_angle_deg": 20.0,
+        "draught_m": 8.0,
+        "length_m": 150.0,
+        "stem_angle_deg": 30.0,
+        "waterline_entry_angle_deg": 22.0
+      },
+      "mismatched_fields": {
+        "beam_m": {
+          "code_default": 20.0,
+          "doc": 22.0
+        },
+        "draught_m": {
+          "code_default": 7.0,
+          "doc": 8.0
+        },
+        "length_m": {
+          "code_default": 120.0,
+          "doc": 150.0
+        }
+      },
+      "note": "documentation and code defaults disagree; the calibre below uses the executed values and the mismatch is flagged rather than silently reconciled",
+      "used_in_this_artifact": "code defaults (what the solver executes)"
+    },
+    "ice_thickness_levels_m": [
+      0.3,
+      0.6
+    ],
+    "reference_hull_code_defaults": {
+      "beam_m": 20.0,
+      "buttock_angle_deg": 20.0,
+      "draught_m": 7.0,
+      "friction_coefficient": 0.05,
+      "length_m": 120.0,
+      "stem_angle_deg": 30.0,
+      "waterline_entry_angle_deg": 22.0
+    },
+    "source": {
+      "HullGeometry": "src/tensordem/threefield/resistance.py",
+      "HullIceCase": "src/tensordem/threefield/hull_ice.py",
+      "IceProperties": "src/tensordem/threefield/resistance.py"
+    },
+    "unit_width_basis": "unit-width normalisation: the hull-ice DEM is run as a unit-width section and reports the bow reaction in N/m (tensordem.threefield.hull_ice, docs/THREEFIELD_ICE_HULL_PROPELLER.md §2.1)",
+    "unit_width_m": 1.0
+  },
+  "checks": {
+    "dimensional_homogeneity": {
+      "all_ok": true,
+      "equations": [
+        {
+          "detail": "pressure x length must be a line load [N/m]",
+          "equation": "q = p h",
+          "homogeneous": true,
+          "lhs_dimension": "(M^1 L^0 T^-2)",
+          "rhs_dimension": "(M^1 L^0 T^-2)"
+        },
+        {
+          "detail": "pressure x area must be a force [N]",
+          "equation": "F = p A",
+          "homogeneous": true,
+          "lhs_dimension": "(M^1 L^1 T^-2)",
+          "rhs_dimension": "(M^1 L^1 T^-2)"
+        },
+        {
+          "detail": "line load x width must be a force [N]",
+          "equation": "F = q w",
+          "homogeneous": true,
+          "lhs_dimension": "(M^1 L^1 T^-2)",
+          "rhs_dimension": "(M^1 L^1 T^-2)"
+        },
+        {
+          "detail": "contact area from width and thickness [m^2]",
+          "equation": "A = w h",
+          "homogeneous": true,
+          "lhs_dimension": "(M^0 L^2 T^0)",
+          "rhs_dimension": "(M^0 L^2 T^0)"
+        },
+        {
+          "detail": "C_A carries the compensating exponent so the product is a stress",
+          "equation": "p(A) = C_A A^ex",
+          "homogeneous": true,
+          "lhs_dimension": "(M^1 L^-1 T^-2)",
+          "rhs_dimension": "(M^1 L^-1 T^-2)"
+        },
+        {
+          "detail": "the pressure-area ratio must be dimensionless",
+          "equation": "A / A_R",
+          "homogeneous": true,
+          "lhs_dimension": "(M^0 L^0 T^0)",
+          "rhs_dimension": "(M^0 L^0 T^0)"
+        }
+      ]
+    },
+    "internal_consistency": {
+      "all_ok": true,
+      "checks": [
+        {
+          "check": "reference point p(A_R) == C_R",
+          "ok": true,
+          "relative_residual": 0.0,
+          "tolerance": 1e-12
+        },
+        {
+          "check": "area round trip A -> p -> A",
+          "ok": true,
+          "tolerance": 1e-09,
+          "worst_relative_residual": 1.8503717077085943e-16
+        },
+        {
+          "absolute_residual": 4.6884440774164204e-11,
+          "check": "d ln p / d ln A == ex on the converted curve",
+          "ok": true,
+          "target": -0.3,
+          "tolerance": 1e-09,
+          "value": -0.29999999995311555
+        },
+        {
+          "check": "scale covariance of p(A) under A -> lambda^2 A",
+          "expected_ratio": 0.5172818579717866,
+          "lambda": 3.0,
+          "measured_ratio": 0.5172818579717866,
+          "ok": true,
+          "relative_residual": 0.0,
+          "tolerance": 1e-12
+        },
+        {
+          "check": "pressure decreases with contact area (size effect)",
+          "converted_curve_decreases": true,
+          "exponent_negative": true,
+          "ok": true
+        },
+        {
+          "check": "MPa -> Pa bookkeeping (x 1e6)",
+          "ok": true,
+          "tolerance": 1e-15,
+          "worst_relative_residual": 0.0
+        }
+      ]
+    },
+    "recompute": {
+      "independent_form_note": "p = C_R (A/A_R)^ex is the same law written without C_A; agreement to machine precision shows the coefficient is not mis-glued",
+      "independent_reference_form": [
+        {
+          "label": "unit_width_h0.30",
+          "pressure_reference_form_pa": 2266871.34262445,
+          "relative_residual": 0.0
+        },
+        {
+          "label": "unit_width_h0.60",
+          "pressure_reference_form_pa": 1841271.6802779865,
+          "relative_residual": 1.264509991370301e-16
+        },
+        {
+          "label": "full_beam_upper_bound_h0.30",
+          "pressure_reference_form_pa": 922821.8597947635,
+          "relative_residual": 0.0
+        },
+        {
+          "label": "full_beam_upper_bound_h0.60",
+          "pressure_reference_form_pa": 749564.2670282146,
+          "relative_residual": 0.0
+        }
+      ],
+      "ok": true,
+      "per_point": [
+        {
+          "label": "unit_width_h0.30",
+          "relative_residuals": {
+            "force": 0.0,
+            "line_load": 0.0,
+            "pressure": 0.0
+          }
+        },
+        {
+          "label": "unit_width_h0.60",
+          "relative_residuals": {
+            "force": 0.0,
+            "line_load": 0.0,
+            "pressure": 0.0
+          }
+        },
+        {
+          "label": "full_beam_upper_bound_h0.30",
+          "relative_residuals": {
+            "force": 0.0,
+            "line_load": 0.0,
+            "pressure": 0.0
+          }
+        },
+        {
+          "label": "full_beam_upper_bound_h0.60",
+          "relative_residuals": {
+            "force": 0.0,
+            "line_load": 0.0,
+            "pressure": 0.0
+          }
+        }
+      ],
+      "tolerance": 1e-09,
+      "worst_relative_residual": 1.264509991370301e-16
+    }
+  },
+  "claim_guard": {
+    "all_ok": true,
+    "claims_permitted": [],
+    "gate_raises_on_candidate": true,
+    "policy": "an anchor may enter a claim only with verification_status=VERIFIED plus a verbatim quote and a table/clause/page locator; require_anchor() enforces it, so no unverified candidate can leak into a comparison",
+    "unverified_anchors_blocked": [
+      "A1_pressure_area_exponent_and_reference",
+      "A2_design_global_ice_force"
+    ]
+  },
+  "conversion_chain": {
+    "caliber_levels": [
+      {
+        "area_m2": 0.3,
+        "label": "unit_width_h0.30",
+        "note": "width of the contact patch equals the ice thickness (1:1 aspect, single-floe bow contact), reported as a line load",
+        "thickness_m": 0.3,
+        "width_m": 1.0
+      },
+      {
+        "area_m2": 0.6,
+        "label": "unit_width_h0.60",
+        "note": "width of the contact patch equals the ice thickness (1:1 aspect, single-floe bow contact), reported as a line load",
+        "thickness_m": 0.6,
+        "width_m": 1.0
+      },
+      {
+        "area_m2": 6.0,
+        "label": "full_beam_upper_bound_h0.30",
+        "note": "geometric upper bound: contact width taken as the full beam, so the force is not a predicted bow load",
+        "thickness_m": 0.3,
+        "width_m": 20.0
+      },
+      {
+        "area_m2": 12.0,
+        "label": "full_beam_upper_bound_h0.60",
+        "note": "geometric upper bound: contact width taken as the full beam, so the force is not a predicted bow load",
+        "thickness_m": 0.6,
+        "width_m": 20.0
+      }
+    ],
+    "coefficient_dimension": "(M^1 L^-2/5 T^-2)",
+    "exponent": -0.3,
+    "points": [
+      {
+        "area_m2": 0.3,
+        "area_ratio_to_reference": 0.12,
+        "force_n": 680061.402787335,
+        "label": "unit_width_h0.30",
+        "line_load_n_per_m": 680061.402787335,
+        "note": "width of the contact patch equals the ice thickness (1:1 aspect, single-floe bow contact), reported as a line load",
+        "outside_reference_area": true,
+        "pressure_mpa": 2.2668713426244502,
+        "pressure_pa": 2266871.34262445,
+        "thickness_m": 0.3,
+        "width_m": 1.0
+      },
+      {
+        "area_m2": 0.6,
+        "area_ratio_to_reference": 0.24,
+        "force_n": 1104763.0081667919,
+        "label": "unit_width_h0.60",
+        "line_load_n_per_m": 1104763.0081667919,
+        "note": "width of the contact patch equals the ice thickness (1:1 aspect, single-floe bow contact), reported as a line load",
+        "outside_reference_area": true,
+        "pressure_mpa": 1.8412716802779867,
+        "pressure_pa": 1841271.6802779867,
+        "thickness_m": 0.6,
+        "width_m": 1.0
+      },
+      {
+        "area_m2": 6.0,
+        "area_ratio_to_reference": 2.4,
+        "force_n": 5536931.158768581,
+        "label": "full_beam_upper_bound_h0.30",
+        "line_load_n_per_m": 276846.55793842906,
+        "note": "geometric upper bound: contact width taken as the full beam, so the force is not a predicted bow load",
+        "outside_reference_area": true,
+        "pressure_mpa": 0.9228218597947635,
+        "pressure_pa": 922821.8597947635,
+        "thickness_m": 0.3,
+        "width_m": 20.0
+      },
+      {
+        "area_m2": 12.0,
+        "area_ratio_to_reference": 4.8,
+        "force_n": 8994771.204338577,
+        "label": "full_beam_upper_bound_h0.60",
+        "line_load_n_per_m": 449738.5602169288,
+        "note": "geometric upper bound: contact width taken as the full beam, so the force is not a predicted bow load",
+        "outside_reference_area": true,
+        "pressure_mpa": 0.7495642670282147,
+        "pressure_pa": 749564.2670282146,
+        "thickness_m": 0.6,
+        "width_m": 20.0
+      }
+    ],
+    "pressure_area_coefficient_pa": 1579658.645201085,
+    "reference_area_m2": 2.5,
+    "reference_pressure_pa": 1200000.0,
+    "residuals": {
+      "inversion_log_slope_minus_exponent": 4.6884440774164204e-11,
+      "reference_point_recovery_relative": 0.0
+    },
+    "steps": [
+      {
+        "dimension": "(M^1 L^-2/5 T^-2)",
+        "formula": "C_A = C_R * A_R^(-ex)",
+        "provenance": "closed form, arithmetic over registered inputs",
+        "step": 1
+      },
+      {
+        "dimension": "(M^1 L^-1 T^-2)",
+        "formula": "p(A) = C_A * A^ex",
+        "provenance": "pressure-area law as registered",
+        "step": 2
+      },
+      {
+        "dimension": "(M^1 T^-2)",
+        "formula": "q = p * h",
+        "provenance": "line load; the unit the unit-width DEM reports",
+        "step": 3
+      },
+      {
+        "dimension": "(M^1 L^1 T^-2)",
+        "formula": "F = q * w = p * A",
+        "provenance": "global force at the calibre area",
+        "step": 4
+      }
+    ]
+  },
+  "criteria": [
+    {
+      "criterion_id": "C1_verbatim_transcription",
+      "measured": {
+        "anchors_registered": 2,
+        "anchors_verified": 0,
+        "primary_text_present": false,
+        "verified_fraction": 0.0
+      },
+      "requirement": "quote + table/clause/page + value transcribed verbatim into the artifact (source value, no rewriting, no lossy rounding)",
+      "status": "FAIL",
+      "why": "the ISO 19906:2019 primary text is absent from the worktree (see source_availability); transcribing from recall would be fabrication, so the two numeric candidates carry quote=null and the global-force anchor carries no value at all"
+    },
+    {
+      "criterion_id": "C2_conversion_recomputable",
+      "measured": {
+        "chain_module": "src/tensordem/threefield/iso_anchor.py",
+        "script": "scripts/build_ice_hull_propeller_anchor.py",
+        "tolerance": 1e-09,
+        "worst_relative_residual": 1.264509991370301e-16
+      },
+      "requirement": "conversion chain landed as a script and recomputable, recompute residual < 1e-9",
+      "status": "PASS",
+      "why": "the chain (ex, C_R, A_R) -> C_A -> p(A) -> q = p h -> F = p A is re-evaluated from the artifact's own stored numbers and matches within machine precision; conditional on the candidate triple, which is why this criterion does not rescue C1"
+    },
+    {
+      "criterion_id": "C3_dimensional_and_consistency",
+      "measured": {
+        "consistency_all_ok": true,
+        "consistency_checks": 6,
+        "dimensional_all_ok": true,
+        "dimensional_equations_checked": 6
+      },
+      "requirement": "dimensional homogeneity and internal consistency machine checks pass",
+      "status": "PASS",
+      "why": "exact rational exponent arithmetic plus numeric residuals; see checks.dimensional_homogeneity and checks.internal_consistency"
+    },
+    {
+      "criterion_id": "C4_unverified_not_cited",
+      "measured": {
+        "claims_permitted": [],
+        "gate_raises_on_candidate": true,
+        "unverified_anchors_blocked": [
+          "A1_pressure_area_exponent_and_reference",
+          "A2_design_global_ice_force"
+        ]
+      },
+      "requirement": "unverified candidate values may not be cited directly, only used as cross-check references",
+      "status": "PASS",
+      "why": "require_anchor() refuses any anchor without a verbatim quote and locator; the gate is exercised on every registered candidate and the claims list is empty by construction"
+    }
+  ],
+  "downstream_gate": {
+    "blocked_until": "C1 passes: anchors transcribed verbatim with locators",
+    "domain_comparison_allowed": false,
+    "why": "comparing the DEM/LBM/thermal results with a recalled pressure-area triple would measure agreement with the agent's memory, not with the standard"
+  },
+  "experiment": "exp-1 external anchor verification and calibre conversion",
+  "generated_by": {
+    "chain_module": "src/tensordem/threefield/iso_anchor.py",
+    "chain_module_sha256": "197e2d9dac1eb16df313ac7f3a46f9c8751e7214f7f9d1f386a56988c56411d1",
+    "git_rev": "639848ab871e6d360fb510393dbc0b5293eb8770",
+    "no_wall_clock_fields": true,
+    "regenerate": "python3 scripts/build_ice_hull_propeller_anchor.py",
+    "script": "scripts/build_ice_hull_propeller_anchor.py",
+    "script_sha256": "977ef8278285fb4c8039cf4da78d149cc83dbecaa1d26deb2401c3f74ce2bdea",
+    "volatile_fields": [
+      "source_availability.content_mentions_sample",
+      "source_availability.content_mention_hits"
+    ],
+    "volatile_reason": "these count/list every worktree file that merely *mentions* the standard, so they change when unrelated docs are added; everything else in this artifact is byte-reproducible"
+  },
+  "repository": "TensorDEM",
+  "source_availability": {
+    "conclusion": "no ISO 19906 document (pdf/txt/docx/...) exists in the worktree; the only occurrences are code/doc *mentions* of the standard, which are secondary and therefore cannot serve as a transcription source",
+    "content_mention_hits": 49,
+    "content_mentions_sample": [
+      {
+        "excerpt": "self-built plus citation (Keinonen 2017/2019; ISO 19906 local pressure).",
+        "line": 15,
+        "path": "benchmarks/ice_channel_dem.py"
+      },
+      {
+        "excerpt": "\"ISO 19906:2010 Arctic offshore structures -- local ice pressure\",",
+        "line": 101,
+        "path": "benchmarks/ice_channel_dem.py"
+      },
+      {
+        "excerpt": "| comparison with ISO 19906 pressure–area practice | **WITHHELD** | the pressure–area exponent was not digitised from the standard here; the campaign band `gamm",
+        "line": 170,
+        "path": "docs/ICE_CONTACT_PRESSURE_ROLLING_PROXY.md"
+      },
+      {
+        "excerpt": "ISO 19906 局部冰压。R_eff = 5 m、t_eff = 0.5 m 时 `k_n = 1.5e7 N/m`，",
+        "line": 47,
+        "path": "docs/ice_channel_dem.md"
+      },
+      {
+        "excerpt": "> 对文献（Keinonen/ISO 19906）只对标了量级（局部压力 1.5 MPa），未做定量验证。",
+        "line": 103,
+        "path": "docs/ice_channel_dem.md"
+      },
+      {
+        "excerpt": "practice (ISO 19906 style peak-then-softening) both require; the hyperbolic law",
+        "line": 50,
+        "path": "docs/ice_ridge_pipeline_grounding.md"
+      },
+      {
+        "excerpt": "the classical **Westergaard (1926) / Kerr (1979)** quantity that ISO 19906",
+        "line": 27,
+        "path": "docs/ice_sheet_plate_on_foundation.md"
+      },
+      {
+        "excerpt": "for an engineering case needs the creep/strength model of ISO 19906 on top.",
+        "line": 141,
+        "path": "docs/ice_sheet_plate_on_foundation.md"
+      },
+      {
+        "excerpt": "rules and ISO 19906 reduce the nominal local pressure below the uniaxial",
+        "line": 96,
+        "path": "docs/rudder_ice_load_dem_fsm.md"
+      },
+      {
+        "excerpt": "# ISO 19906 external-anchor ledger — ice-hull-propeller-threefield, exp-1",
+        "line": 1,
+        "path": "docs/threefield_iso_anchor_ledger.md"
+      },
+      {
+        "excerpt": "results with the ISO 19906:2019 pressure–area practice. Before any such comparison is",
+        "line": 15,
+        "path": "docs/threefield_iso_anchor_ledger.md"
+      },
+      {
+        "excerpt": "| C1 verbatim transcription | quote + table/clause/page + exact value in the artifact | **FAIL** | 0 / 2 anchors verified; ISO 19906:2019 primary text absent fr",
+        "line": 25,
+        "path": "docs/threefield_iso_anchor_ledger.md"
+      },
+      {
+        "excerpt": "1. Obtain the ISO 19906:2019 primary text and transcribe (a) the pressure–area exponent,",
+        "line": 85,
+        "path": "docs/threefield_iso_anchor_ledger.md"
+      },
+      {
+        "excerpt": "\"\"\"Build the ISO 19906 external-anchor ledger for ice-hull-propeller-threefield.",
+        "line": 2,
+        "path": "scripts/build_ice_hull_propeller_anchor.py"
+      },
+      {
+        "excerpt": "* the ISO anchors themselves: WITHHELD -- the ISO 19906:2019 primary text is not",
+        "line": 18,
+        "path": "scripts/build_ice_hull_propeller_anchor.py"
+      },
+      {
+        "excerpt": "Scans the worktree for any file that could hold the ISO 19906 text (name or",
+        "line": 87,
+        "path": "scripts/build_ice_hull_propeller_anchor.py"
+      },
+      {
+        "excerpt": "\"no ISO 19906 document (pdf/txt/docx/...) exists in the worktree; the \"",
+        "line": 126,
+        "path": "scripts/build_ice_hull_propeller_anchor.py"
+      },
+      {
+        "excerpt": "\"the ISO 19906:2019 primary text is absent from the worktree (see \"",
+        "line": 240,
+        "path": "scripts/build_ice_hull_propeller_anchor.py"
+      },
+      {
+        "excerpt": "locator_hint=(\"ISO 19906:2019 pressure-area annex (Annex A in the \"",
+        "line": 306,
+        "path": "scripts/build_ice_hull_propeller_anchor.py"
+      },
+      {
+        "excerpt": "locator_hint=(\"ISO 19906:2019 global ice action clauses (Clause 14/15 in \"",
+        "line": 312,
+        "path": "scripts/build_ice_hull_propeller_anchor.py"
+      },
+      {
+        "excerpt": "\"headline\": (\"external anchors NOT verified: ISO 19906:2019 primary text is \"",
+        "line": 434,
+        "path": "scripts/build_ice_hull_propeller_anchor.py"
+      },
+      {
+        "excerpt": "\"obtain the ISO 19906:2019 primary text (Annex A pressure-area; Clause \"",
+        "line": 440,
+        "path": "scripts/build_ice_hull_propeller_anchor.py"
+      },
+      {
+        "excerpt": "与 ISO 19906 的定量对标=WITHHELD；全尺度斑块长度=NOT_SUPPORTED。",
+        "line": 80,
+        "path": "scripts/make_ice_contact_report.py"
+      },
+      {
+        "excerpt": "* 绝对压力水平 vs 实验：**无基准**（本构型无实测压力场，ISO 19906 压力-面积关系未数字化）→ “是否<3%” **无法回答**（WITHHELD），仅以战役给定 γ、L_c 带做一致性检查。",
+        "line": 152,
+        "path": "scripts/make_ice_contact_report.py"
+      },
+      {
+        "excerpt": "\"\"\"Figures for the ISO 19906 / DEM ridge-grounding node (IN155-N11).",
+        "line": 1,
+        "path": "scripts/make_ridge_iso_grounding_figures.py"
+      },
+      {
+        "excerpt": "axes.set_title(\"DEM load-displacement (solid), peak (dotted) and ISO 19906 form (dashed)\")",
+        "line": 63,
+        "path": "scripts/make_ridge_iso_grounding_figures.py"
+      },
+      {
+        "excerpt": "axes.plot(ratios, iso, \"k--\", marker=\"s\", label=\"ISO 19906 form V_ISO\")",
+        "line": 81,
+        "path": "scripts/make_ridge_iso_grounding_figures.py"
+      },
+      {
+        "excerpt": "axes.bar(index + 0.25, iso, width=0.25, label=\"ISO 19906 H (N_p s_u D)\", color=\"0.6\")",
+        "line": 172,
+        "path": "scripts/make_ridge_iso_grounding_figures.py"
+      },
+      {
+        "excerpt": "\"\"\"Ridge-keel grounding vs the ISO 19906 form: DEM case runner.",
+        "line": 1,
+        "path": "scripts/run_ridge_iso_grounding.py"
+      },
+      {
+        "excerpt": "\"ISO 19906 hull-ice design compilations; Poirier et al. 2011 ice-steel \"",
+        "line": 148,
+        "path": "src/tensordem/ice_steel_friction.py"
+      },
+      {
+        "excerpt": "\"Riska (2017) / ISO 19906 hull-ice friction compilation\",",
+        "line": 234,
+        "path": "src/tensordem/ice_steel_friction.py"
+      },
+      {
+        "excerpt": "\"Riska (2017) / ISO 19906 hull-ice friction compilation\",",
+        "line": 237,
+        "path": "src/tensordem/ice_steel_friction.py"
+      },
+      {
+        "excerpt": "\"Riska (2017) / ISO 19906 hull-ice friction compilation\",",
+        "line": 240,
+        "path": "src/tensordem/ice_steel_friction.py"
+      },
+      {
+        "excerpt": "ISO 19906 pressure-area logic for a patch of a few square metres,",
+        "line": 704,
+        "path": "src/tensordem/ice_steel_friction.py"
+      },
+      {
+        "excerpt": "(1926) / Kerr (1979) quantity that ISO 19906 local-ice-pressure practice is built",
+        "line": 14,
+        "path": "src/tensordem/plate_on_foundation.py"
+      },
+      {
+        "excerpt": "strength of the ice, 0.5 MPa by default (typical first-year sea ice, ISO 19906",
+        "line": 371,
+        "path": "src/tensordem/plate_on_foundation.py"
+      },
+      {
+        "excerpt": "(ISO 19906 style) both show.  This spring adds the documented post-peak",
+        "line": 343,
+        "path": "src/tensordem/ridge_geotech.py"
+      },
+      {
+        "excerpt": "the peak, post-peak softening ratio (the ISO 19906-style peak-then-softening",
+        "line": 19,
+        "path": "src/tensordem/ridge_grounding.py"
+      },
+      {
+        "excerpt": "The ISO 19906-style signature of an ice load-displacement curve is a rise to",
+        "line": 488,
+        "path": "src/tensordem/ridge_grounding.py"
+      },
+      {
+        "excerpt": "\"\"\"ISO 19906-form grounding load vs. the DEM ridge-keel / buried-pipeline runs.",
+        "line": 1,
+        "path": "src/tensordem/ridge_iso19906.py"
+      }
+    ],
+    "file_name_hits": [],
+    "files_scanned": 1279,
+    "is_primary_text_present": false
+  },
+  "study": "ice-hull-propeller-threefield",
+  "task_key": "paper-exp-ice-hull-propeller-threefield-1",
+  "verdict": {
+    "criteria_met": 3,
+    "criteria_total": 4,
+    "gap": [
+      "obtain the ISO 19906:2019 primary text (Annex A pressure-area; Clause 14/15 global ice actions) and transcribe the exponent, reference pressure/area and the design global force with table/clause/page",
+      "replace the recall-prior candidate triple with the transcribed values, then regenerate this artifact (one command) -- the checks and the calibre conversion need no change",
+      "confirm whether a single tabulated design global force exists; if the standard only supplies an action format, register the format and the required ice-strength/action-factor tables instead of a number"
+    ],
+    "headline": "external anchors NOT verified: ISO 19906:2019 primary text is absent from the worktree, so no verbatim quote/table/page can be entered; the conversion + check machinery is in place and self-consistent on the registered candidates",
+    "met": [
+      "C2_conversion_recomputable",
+      "C3_dimensional_and_consistency",
+      "C4_unverified_not_cited"
+    ],
+    "overall": "HONEST_FAIL",
+    "unmet": [
+      "C1_verbatim_transcription"
+    ]
+  }
+}
