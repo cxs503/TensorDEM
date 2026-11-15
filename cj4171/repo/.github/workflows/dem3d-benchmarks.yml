@@ -1,0 +1,206 @@
+name: DEM3D benchmark cases
+
+on:
+  workflow_dispatch:
+    inputs:
+      repeat:
+        description: "Repeat each case and require deterministic CPU signatures"
+        required: false
+        type: boolean
+        default: false
+  pull_request:
+    branches: [main]
+    paths:
+      - "benchmarks/dem3d/**"
+      - "scripts/benchmark_dem3d_three_point_bending.py"
+      - "scripts/benchmark_dem3d_bending_load_convergence.py"
+      - "scripts/benchmark_dem3d_bending_resolution.py"
+      - "tests/test_dem3d_bending_resolution.py"
+      - "docs/dem3d_bending_resolution_sensitivity.md"
+      - "tests/test_dem3d_bending_load_convergence.py"
+      - "docs/dem3d_bending_load_convergence.md"
+      - "tests/test_dem3d_three_point_bending.py"
+      - "docs/dem3d_three_point_bending.md"
+      - "scripts/benchmark_dem3d_bending_resolution.py"
+      - "tests/test_dem3d_bending_resolution.py"
+      - "docs/dem3d_bending_resolution_sensitivity.md"
+      - "scripts/benchmark_dem3d_energy_timestep.py"
+      - "tests/test_dem3d_energy_timestep.py"
+      - "docs/dem3d_energy_timestep_campaign.md"
+      - "scripts/benchmark_dem3d_ucs_timestep_convergence.py"
+      - "tests/test_dem3d_ucs_timestep_convergence.py"
+      - "docs/dem3d_ucs_timestep_convergence.md"
+      - "src/tensordem/dem3d_wedge.py"
+      - "scripts/benchmark_dem3d_moving_wedge_bow.py"
+      - "tests/test_dem3d_moving_wedge_bow.py"
+      - "docs/dem3d_moving_wedge_bow.md"
+      - "scripts/benchmark_dem3d_wedge_resistance_sensitivity.py"
+      - "scripts/benchmark_dem3d_ship_ice_formula_baselines.py"
+      - "tests/test_dem3d_ship_ice_formula_baselines.py"
+      - "docs/dem3d_mt_uikku_formula_baselines.md"
+      - "tests/test_dem3d_wedge_resistance_sensitivity.py"
+      - "docs/dem3d_wedge_resistance_sensitivity.md"
+      - "scripts/validate_dem3d_fracture.py"
+      - "tests/test_dem3d_fracture_objectivity.py"
+      - "docs/dem3d_fracture_objectivity_energy.md"
+      - "scripts/calibrate_dem3d_ucs.py"
+      - "tests/test_dem3d_ucs_calibration.py"
+      - "docs/dem3d_ucs_calibration.md"
+      - "docs/dem3d_material_calibration_roadmap.md"
+      - "scripts/benchmark_dem3d_ucs.py"
+      - "tests/test_dem3d_ucs_benchmark.py"
+      - "scripts/benchmark_dem3d_ucs_sensitivity.py"
+      - "tests/test_dem3d_ucs_sensitivity.py"
+      - "scripts/calibrate_dem3d_ucs.py"
+      - "tests/test_dem3d_ucs_calibration.py"
+      - "docs/dem3d_ucs_calibration.md"
+      - "docs/dem3d_material_calibration_roadmap.md"
+      - "scripts/benchmark_dem3d_ucs_fracture_threshold.py"
+      - "tests/test_dem3d_ucs_fracture_threshold.py"
+      - "docs/dem3d_ucs_fracture_threshold.md"
+      - "docs/dem3d_ucs_sensitivity.md"
+      - "scripts/visualize_dem3d_benchmarks.py"
+      - "tests/test_dem3d_visualization.py"
+      - "docs/dem3d_benchmark_visualization.md"
+      - "docs/DEM3D_BENCHMARK_PAPER.md"
+      - "scripts/plot_dem3d_benchmark_paper.py"
+      - "tests/test_dem3d_paper_figures.py"
+      - "pyproject.toml"
+      - ".github/workflows/dem3d-benchmarks.yml"
+  push:
+    branches: [main]
+    paths:
+      - "benchmarks/dem3d/**"
+      - "scripts/benchmark_dem3d_energy_timestep.py"
+      - "tests/test_dem3d_energy_timestep.py"
+      - "docs/dem3d_energy_timestep_campaign.md"
+      - "scripts/benchmark_dem3d_ucs_timestep_convergence.py"
+      - "tests/test_dem3d_ucs_timestep_convergence.py"
+      - "docs/dem3d_ucs_timestep_convergence.md"
+      - "src/tensordem/dem3d_wedge.py"
+      - "scripts/benchmark_dem3d_moving_wedge_bow.py"
+      - "tests/test_dem3d_moving_wedge_bow.py"
+      - "docs/dem3d_moving_wedge_bow.md"
+      - "scripts/benchmark_dem3d_wedge_resistance_sensitivity.py"
+      - "scripts/benchmark_dem3d_ship_ice_formula_baselines.py"
+      - "tests/test_dem3d_ship_ice_formula_baselines.py"
+      - "docs/dem3d_mt_uikku_formula_baselines.md"
+      - "tests/test_dem3d_wedge_resistance_sensitivity.py"
+      - "docs/dem3d_wedge_resistance_sensitivity.md"
+      - "scripts/validate_dem3d_fracture.py"
+      - "tests/test_dem3d_fracture_objectivity.py"
+      - "docs/dem3d_fracture_objectivity_energy.md"
+      - "scripts/benchmark_dem3d.py"
+      - "scripts/run_dem3d_benchmark_suite.py"
+      - "scripts/run_dem3d_mechanics_benchmarks.py"
+      - "tests/test_dem3d_mechanics_benchmarks.py"
+      - "scripts/run_dem3d_specimen_response_benchmarks.py"
+      - "scripts/benchmark_dem3d_platen_compression.py"
+      - "tests/test_dem3d_platen_compression.py"
+      - "scripts/benchmark_dem3d_ucs.py"
+      - "tests/test_dem3d_ucs_benchmark.py"
+      - "scripts/benchmark_dem3d_ucs_sensitivity.py"
+      - "tests/test_dem3d_ucs_sensitivity.py"
+      - "scripts/benchmark_dem3d_ucs_fracture_threshold.py"
+      - "tests/test_dem3d_ucs_fracture_threshold.py"
+      - "docs/dem3d_ucs_fracture_threshold.md"
+      - "docs/dem3d_ucs_sensitivity.md"
+      - "docs/dem3d_ucs_benchmark.md"
+      - "docs/dem3d_plane_platen_boundaries.md"
+      - "src/tensordem/dem3d_cli.py"
+      - "tests/test_dem3d_specimen_response_benchmarks.py"
+      - "docs/dem3d_specimen_response_benchmarks.md"
+      - "src/tensordem/dem3d.py"
+      - "src/tensordem/dem3d_energy.py"
+      - "scripts/visualize_dem3d_benchmarks.py"
+      - "tests/test_dem3d_visualization.py"
+      - "docs/dem3d_benchmark_visualization.md"
+      - "docs/DEM3D_BENCHMARK_PAPER.md"
+      - "scripts/plot_dem3d_benchmark_paper.py"
+      - "tests/test_dem3d_paper_figures.py"
+      - "pyproject.toml"
+      - ".github/workflows/dem3d-benchmarks.yml"
+
+permissions:
+  contents: read
+
+env:
+  TORCH_DEVICE_BACKEND_AUTOLOAD: "0"
+
+jobs:
+  benchmark-cases:
+    runs-on: ci-loong64
+    timeout-minutes: 30
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Install package and dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[test,viz]"
+      - name: Run named DEM3D benchmark cases
+        shell: bash
+        run: |
+          REPEAT_FLAG=""
+          if [[ "${{ inputs.repeat }}" == "true" ]]; then
+            REPEAT_FLAG="--verify-repeat"
+          fi
+          python scripts/run_dem3d_benchmark_suite.py \
+            ${REPEAT_FLAG} \
+            --output results-dem3d-benchmark-suite
+          python scripts/visualize_dem3d_benchmarks.py \
+            --input results-dem3d-benchmark-suite \
+            --output results-dem3d-visualizations
+          python -m unittest discover -s tests -p test_dem3d_visualization.py
+          python scripts/run_dem3d_mechanics_benchmarks.py \
+            --output results-dem3d-mechanics
+          python scripts/run_dem3d_specimen_response_benchmarks.py \
+            --output results-dem3d-specimen-response
+          python scripts/benchmark_dem3d_platen_compression.py \
+            --output results-dem3d-platen-compression
+          python scripts/benchmark_dem3d_ucs.py \
+            --output results-dem3d-ucs
+          python scripts/benchmark_dem3d_ucs_sensitivity.py \
+            --output results-dem3d-ucs-sensitivity
+          python scripts/benchmark_dem3d_ucs_fracture_threshold.py \
+            --output results-dem3d-ucs-fracture-threshold
+          python scripts/benchmark_dem3d_energy_timestep.py --output results-dem3d-energy-timestep
+          python scripts/benchmark_dem3d_ucs_timestep_convergence.py --output results-dem3d-ucs-timestep
+          python scripts/benchmark_dem3d_moving_wedge_bow.py --output results-dem3d-moving-wedge-bow
+          python scripts/benchmark_dem3d_wedge_resistance_sensitivity.py --output results-dem3d-wedge-sensitivity
+          python scripts/benchmark_dem3d_ship_ice_formula_baselines.py --output results-dem3d-mt-uikku-formulas
+          python scripts/benchmark_dem3d_three_point_bending.py --output results-dem3d-three-point-bending
+          python scripts/validate_dem3d_fracture.py --output results-dem3d-fracture-validation
+          python -m unittest discover -s tests -p test_dem3d_fracture_objectivity.py
+          python scripts/benchmark_dem3d_bending_load_convergence.py --output results-dem3d-bending-load-convergence
+          python -m unittest discover -s tests -p test_dem3d_bending_load_convergence.py
+          python scripts/benchmark_dem3d_bending_resolution.py --output results-dem3d-bending-resolution
+          python -m unittest discover -s tests -p test_dem3d_bending_resolution.py
+          python scripts/plot_dem3d_benchmark_paper.py --input-root . --output results-dem3d-paper-figures
+          python -m unittest discover -s tests -p test_dem3d_paper_figures.py
+      - name: Upload benchmark results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dem3d-benchmark-results-${{ github.run_id }}
+          path: |
+            results-dem3d-benchmark-suite/
+            results-dem3d-visualizations/
+            results-dem3d-mechanics/
+            results-dem3d-specimen-response/
+            results-dem3d-platen-compression/
+            results-dem3d-ucs/
+            results-dem3d-ucs-sensitivity/
+            results-dem3d-ucs-fracture-threshold/
+            results-dem3d-fracture-validation/
+            results-dem3d-energy-timestep/
+            results-dem3d-ucs-timestep/
+            results-dem3d-moving-wedge-bow/
+            results-dem3d-wedge-sensitivity/
+            results-dem3d-mt-uikku-formulas/
+            results-dem3d-three-point-bending/
+            results-dem3d-bending-load-convergence/
+            results-dem3d-bending-resolution/
+            results-dem3d-paper-figures/
+          if-no-files-found: warn
+          retention-days: 30
