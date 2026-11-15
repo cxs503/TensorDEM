@@ -1,0 +1,644 @@
+{
+ "provenance_tiers": [
+  {
+   "mu": 0.0,
+   "phi_rcp": 0.6366,
+   "phi_uncertainty": 0.005,
+   "band_2sigma": [
+    0.6266,
+    0.6466000000000001
+   ],
+   "source": "Scott & Kilgour (1969); Bernal & Mason (1960)",
+   "doi": "10.1088/0022-3727/2/6/1107",
+   "notes": "Classic poured/compressed monodisperse sphere experiments; the canonical RCP value.  Uncertainty reflects scatter across experimental realisations and container effects.",
+   "provenance": "literature",
+   "anchored": true
+  },
+  {
+   "mu": 0.0,
+   "phi_rcp": 0.64,
+   "phi_uncertainty": 0.004,
+   "band_2sigma": [
+    0.632,
+    0.648
+   ],
+   "source": "Torquato & Stillinger (2010) RMP review",
+   "doi": "10.1103/RevModPhys.82.2633",
+   "notes": "Theoretical/numerical consensus value for frictionless RCP; slightly higher than Scott's experimental value, possibly due to container effects in experiments.",
+   "provenance": "literature",
+   "anchored": true
+  },
+  {
+   "mu": 0.1,
+   "phi_rcp": 0.625,
+   "phi_uncertainty": 0.008,
+   "band_2sigma": [
+    0.609,
+    0.641
+   ],
+   "source": "Pournin et al. (2001) PRE; interpolated from DEM study",
+   "doi": "10.1103/PhysRevE.63.051303",
+   "notes": "CONSTRUCTED point (interpolated between the frictionless and moderate-friction anchors), not a transcribed table value: it ranks measurements but cannot certify them.",
+   "provenance": "derived",
+   "anchored": false
+  },
+  {
+   "mu": 0.3,
+   "phi_rcp": 0.6,
+   "phi_uncertainty": 0.01,
+   "band_2sigma": [
+    0.58,
+    0.62
+   ],
+   "source": "Pournin et al. (2001) PRE; Silbert (2010) Soft Matter",
+   "doi": "10.1103/PhysRevE.63.051303",
+   "notes": "Moderate friction; packing fraction drops noticeably.  The uncertainty is larger because fewer experimental data points exist at this specific \u03bc.",
+   "provenance": "unverified",
+   "anchored": false
+  },
+  {
+   "mu": 0.5,
+   "phi_rcp": 0.585,
+   "phi_uncertainty": 0.012,
+   "band_2sigma": [
+    0.5609999999999999,
+    0.609
+   ],
+   "source": "Pournin et al. (2001) PRE; Onoda & Liniger (1990) PRL",
+   "doi": "10.1103/PhysRevLett.64.2727",
+   "notes": "High friction; approaching the random loose packing (RLP) limit. The RLP limit for very high friction is \u03c6 \u2248 0.56 (Onoda & Liniger).",
+   "provenance": "unverified",
+   "anchored": false
+  },
+  {
+   "mu": 1.0,
+   "phi_rcp": 0.56,
+   "phi_uncertainty": 0.015,
+   "band_2sigma": [
+    0.53,
+    0.5900000000000001
+   ],
+   "source": "Onoda & Liniger (1990) PRL; Silbert (2010)",
+   "doi": "10.1103/PhysRevLett.64.2727",
+   "notes": "Random loose packing (RLP) limit for very high friction. This is the lower bound for disordered monodisperse sphere packings under gravity.",
+   "provenance": "unverified",
+   "anchored": false
+  }
+ ],
+ "bracket_limits": [
+  0.56,
+  0.648
+ ],
+ "n_primary": 10000,
+ "band": [
+  0.62,
+  0.66
+ ],
+ "tolerance_rel": 0.03,
+ "order_range": [
+  0.5,
+  1.5
+ ],
+ "tiers": {
+  "0": {
+   "kn_levels": [
+    4000.0,
+    16000.0,
+    64000.0,
+    256000.0
+   ],
+   "points": [
+    {
+     "kn": 4000.0,
+     "phi": 0.6423746810504044,
+     "n_seeds": 3,
+     "std": 0.00022340381063669455,
+     "seeds": [
+      1,
+      2,
+      3
+     ],
+     "paths": [
+      "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn4000_e0.1_seed1.json",
+      "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn4000_e0.1_seed2.json",
+      "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn4000_e0.1_seed3.json"
+     ]
+    },
+    {
+     "kn": 16000.0,
+     "phi": 0.6379053116959197,
+     "n_seeds": 1,
+     "std": null,
+     "seeds": [
+      1
+     ],
+     "paths": [
+      "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn16000_e0.1_seed1.json"
+     ]
+    },
+    {
+     "kn": 64000.0,
+     "phi": 0.6367647448488053,
+     "n_seeds": 3,
+     "std": 0.00031349731333564225,
+     "seeds": [
+      1,
+      2,
+      3
+     ],
+     "paths": [
+      "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn64000_e0.1_seed1.json",
+      "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn64000_e0.1_seed2.json",
+      "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn64000_e0.1_seed3.json"
+     ]
+    },
+    {
+     "kn": 256000.0,
+     "phi": 0.6357108331286041,
+     "n_seeds": 1,
+     "std": null,
+     "seeds": [
+      1
+     ],
+     "paths": [
+      "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn256000_e0.1_seed1.json"
+     ]
+    }
+   ],
+   "production": {
+    "phi": 0.6423746810504044,
+    "n_seeds": 3,
+    "seeds": [
+     1,
+     2,
+     3
+    ],
+    "std": 0.00022340381063669455,
+    "paths": [
+     "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn4000_e0.1_seed1.json",
+     "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn4000_e0.1_seed2.json",
+     "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn4000_e0.1_seed3.json"
+    ]
+   },
+   "three_level": {
+    "kn": [
+     4000.0,
+     16000.0,
+     64000.0
+    ],
+    "value": [
+     0.6423746810504044,
+     0.6379053116959197,
+     0.6367647448488053
+    ],
+    "delta": [
+     -0.00446936935448472,
+     -0.0011405668471143882
+    ],
+    "ratio": [
+     4.0,
+     4.0
+    ],
+    "order": 0.9851601361371577,
+    "order_used": 0.9851601361371577,
+    "limit": 0.6363739458362907,
+    "delta_from_last": 0.0003907990125145977,
+    "n_levels": 3
+   },
+   "selfcheck": {
+    "fit": {
+     "kn": [
+      4000.0,
+      16000.0,
+      64000.0
+     ],
+     "value": [
+      0.6423746810504044,
+      0.6379053116959197,
+      0.6367647448488053
+     ],
+     "delta": [
+      -0.00446936935448472,
+      -0.0011405668471143882
+     ],
+     "ratio": [
+      4.0,
+      4.0
+     ],
+     "order": 0.9851601361371577,
+     "order_used": 0.9851601361371577,
+     "limit": 0.6363739458362907,
+     "delta_from_last": 0.0003907990125145977,
+     "n_levels": 3
+    },
+    "full": {
+     "kn": [
+      4000.0,
+      16000.0,
+      64000.0,
+      256000.0
+     ],
+     "value": [
+      0.6423746810504044,
+      0.6379053116959197,
+      0.6367647448488053,
+      0.6357108331286041
+     ],
+     "delta": [
+      -0.00446936935448472,
+      -0.0011405668471143882,
+      -0.001053911720201195
+     ],
+     "ratio": [
+      4.0,
+      4.0,
+      4.0
+     ],
+     "order": null,
+     "order_used": 1.0,
+     "limit": 0.6353595292218703,
+     "delta_from_last": 0.00035130390673376866,
+     "n_levels": 4
+    },
+    "points": [
+     [
+      4000.0,
+      0.6423746810504044
+     ],
+     [
+      16000.0,
+      0.6379053116959197
+     ],
+     [
+      64000.0,
+      0.6367647448488053
+     ],
+     [
+      256000.0,
+      0.6357108331286041
+     ]
+    ],
+    "predicted": 0.6364736763267036,
+    "measured": 0.6357108331286041,
+    "prediction_error": 0.0007628431980994943,
+    "limit_shift": 0.001014416614420366,
+    "pair_orders": [
+     {
+      "kn": [
+       4000.0,
+       16000.0,
+       64000.0
+      ],
+      "order": 0.9851601361371577
+     },
+     {
+      "kn": [
+       16000.0,
+       64000.0,
+       256000.0
+      ],
+      "order": 0.056998488680947756
+     }
+    ],
+    "n_levels": 4
+   },
+   "four_level": {
+    "kn": [
+     4000.0,
+     16000.0,
+     64000.0,
+     256000.0
+    ],
+    "value": [
+     0.6423746810504044,
+     0.6379053116959197,
+     0.6367647448488053,
+     0.6357108331286041
+    ],
+    "delta": [
+     -0.00446936935448472,
+     -0.0011405668471143882,
+     -0.001053911720201195
+    ],
+    "ratio": [
+     4.0,
+     4.0,
+     4.0
+    ],
+    "order": null,
+    "order_used": 1.0,
+    "limit": 0.6353595292218703,
+    "delta_from_last": 0.00035130390673376866,
+    "n_levels": 4
+   },
+   "order_bracket": {
+    "by_order": {
+     "0.5": 0.6346569214084029,
+     "0.6": 0.6348985050934837,
+     "0.7": 0.6350678181519658,
+     "0.8": 0.6351920310557867,
+     "0.9": 0.6352862457611367,
+     "1.0": 0.6353595292218703,
+     "1.1": 0.6354176558588502,
+     "1.2": 0.6354644787749838,
+     "1.3": 0.6355026680962251,
+     "1.4": 0.6355341328865136,
+     "1.5": 0.6355602743114325
+    },
+    "lo": 0.6346569214084029,
+    "hi": 0.6355602743114325,
+    "reference_p": null
+   }
+  },
+  "0.1": {
+   "kn_levels": [
+    4000.0,
+    16000.0,
+    64000.0
+   ],
+   "points": [
+    {
+     "kn": 4000.0,
+     "phi": 0.6262811439407491,
+     "n_seeds": 3,
+     "std": 0.0003985464922471281,
+     "seeds": [
+      1,
+      2,
+      3
+     ],
+     "paths": [
+      "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn4000_e0.1_seed1.json",
+      "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn4000_e0.1_seed2.json",
+      "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn4000_e0.1_seed3.json"
+     ]
+    },
+    {
+     "kn": 16000.0,
+     "phi": 0.6215875002833193,
+     "n_seeds": 1,
+     "std": null,
+     "seeds": [
+      1
+     ],
+     "paths": [
+      "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn16000_e0.1_seed1.json"
+     ]
+    },
+    {
+     "kn": 64000.0,
+     "phi": 0.6192806087061297,
+     "n_seeds": 1,
+     "std": null,
+     "seeds": [
+      1
+     ],
+     "paths": [
+      "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn64000_e0.1_seed1.json"
+     ]
+    }
+   ],
+   "production": {
+    "phi": 0.6262811439407491,
+    "n_seeds": 3,
+    "seeds": [
+     1,
+     2,
+     3
+    ],
+    "std": 0.0003985464922471281,
+    "paths": [
+     "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn4000_e0.1_seed1.json",
+     "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn4000_e0.1_seed2.json",
+     "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn4000_e0.1_seed3.json"
+    ]
+   },
+   "three_level": {
+    "kn": [
+     4000.0,
+     16000.0,
+     64000.0
+    ],
+    "value": [
+     0.6262811439407491,
+     0.6215875002833193,
+     0.6192806087061297
+    ],
+    "delta": [
+     -0.004693643657429747,
+     -0.0023068915771896625
+    ],
+    "ratio": [
+     4.0,
+     4.0
+    ],
+    "order": 0.5123790583140884,
+    "order_used": 0.5123790583140884,
+    "limit": 0.6170509055069715,
+    "delta_from_last": 0.0022297031991581617,
+    "n_levels": 3
+   },
+   "order_bracket": {
+    "by_order": {
+     "0.5": 0.61697371712894,
+     "0.6": 0.6175025160383902,
+     "0.7": 0.6178731228558625,
+     "0.8": 0.6181450106203786,
+     "0.9": 0.6183512357776223,
+     "1.0": 0.6185116448470664,
+     "1.1": 0.6186388773720389,
+     "1.2": 0.6187413673517758,
+     "1.3": 0.6188249593849807,
+     "1.4": 0.6188938321931138,
+     "1.5": 0.6189510527665312
+    },
+    "lo": 0.61697371712894,
+    "hi": 0.6189510527665312,
+    "reference_p": 0.5123790583140884
+   }
+  }
+ },
+ "gates": [
+  {
+   "id": "A1_frictionless_production_vs_literature",
+   "criterion": "|phi(k_n=4000, mu=0) - 0.6366|/phi_ref < 3%",
+   "got": 0.00907112951681488,
+   "pass": true
+  },
+  {
+   "id": "A2_frictionless_intercept_bracket_stable",
+   "criterion": "nuisance-order bracket width < 0.005 (mu=0)",
+   "got": 0.000903352903029564,
+   "pass": true
+  },
+  {
+   "id": "A3_lowfriction_intercept_bracket_stable",
+   "criterion": "nuisance-order bracket width < 0.005 (mu=0.1)",
+   "got": 0.001977335637591171,
+   "pass": true
+  },
+  {
+   "id": "A4_lowfriction_order_checkable",
+   "criterion": "mu=0.1 ladder has >=4 stiffness levels (leave-one-out check exists)",
+   "got": 3,
+   "pass": false
+  },
+  {
+   "id": "A5_no_claim_on_derived_anchor",
+   "criterion": "0 verdicts claim accuracy against a non-literature anchor",
+   "got": 0,
+   "pass": true
+  },
+  {
+   "id": "A6_policy_coverage",
+   "criterion": "every verdict carries anchor provenance + policy",
+   "got": 9,
+   "pass": true
+  }
+ ],
+ "verdicts": [
+  {
+   "tier_mu": 0.0,
+   "quantity": "production k_n=4000",
+   "phi": 0.6423746810504044,
+   "in_ledger_band": true,
+   "anchor_provenance": "literature",
+   "anchor_phi": 0.6366,
+   "rel_error_vs_anchor": 0.00907112951681488,
+   "verdict": "PASS",
+   "bracket_verdict": "PASS_BRACKET",
+   "strongest_statement": "PASS"
+  },
+  {
+   "tier_mu": 0.0,
+   "quantity": "intercept (3 levels)",
+   "phi": 0.6363739458362907,
+   "in_ledger_band": true,
+   "anchor_provenance": "literature",
+   "anchor_phi": 0.6366,
+   "rel_error_vs_anchor": -0.00035509607871409,
+   "verdict": "PASS",
+   "bracket_verdict": "PASS_BRACKET",
+   "strongest_statement": "PASS"
+  },
+  {
+   "tier_mu": 0.0,
+   "quantity": "intercept (4 levels)",
+   "phi": 0.6353595292218703,
+   "in_ledger_band": true,
+   "anchor_provenance": "literature",
+   "anchor_phi": 0.6366,
+   "rel_error_vs_anchor": -0.0019485874617181098,
+   "verdict": "PASS",
+   "bracket_verdict": "PASS_BRACKET",
+   "strongest_statement": "PASS"
+  },
+  {
+   "tier_mu": 0.0,
+   "quantity": "intercept bracket (low edge, p=1.5)",
+   "phi": 0.6346569214084029,
+   "in_ledger_band": true,
+   "anchor_provenance": "literature",
+   "anchor_phi": 0.6366,
+   "rel_error_vs_anchor": -0.0030522755130335533,
+   "verdict": "PASS",
+   "bracket_verdict": "PASS_BRACKET",
+   "strongest_statement": "PASS"
+  },
+  {
+   "tier_mu": 0.0,
+   "quantity": "intercept bracket (high edge, p=0.5)",
+   "phi": 0.6355602743114325,
+   "in_ledger_band": true,
+   "anchor_provenance": "literature",
+   "anchor_phi": 0.6366,
+   "rel_error_vs_anchor": -0.0016332480184850784,
+   "verdict": "PASS",
+   "bracket_verdict": "PASS_BRACKET",
+   "strongest_statement": "PASS"
+  },
+  {
+   "tier_mu": 0.1,
+   "quantity": "production k_n=4000",
+   "phi": 0.6262811439407491,
+   "in_ledger_band": true,
+   "anchor_provenance": "derived",
+   "anchor_phi": 0.625,
+   "rel_error_vs_anchor": 0.0020498303051985634,
+   "verdict": "WITHHELD",
+   "bracket_verdict": "PASS_BRACKET",
+   "strongest_statement": "PASS_BRACKET"
+  },
+  {
+   "tier_mu": 0.1,
+   "quantity": "intercept (3 levels)",
+   "phi": 0.6170509055069715,
+   "in_ledger_band": false,
+   "anchor_provenance": "derived",
+   "anchor_phi": 0.625,
+   "rel_error_vs_anchor": -0.012718551188845573,
+   "verdict": "WITHHELD",
+   "bracket_verdict": "PASS_BRACKET",
+   "strongest_statement": "PASS_BRACKET"
+  },
+  {
+   "tier_mu": 0.1,
+   "quantity": "intercept bracket (low edge, p=1.5)",
+   "phi": 0.61697371712894,
+   "in_ledger_band": false,
+   "anchor_provenance": "derived",
+   "anchor_phi": 0.625,
+   "rel_error_vs_anchor": -0.012842052593695974,
+   "verdict": "WITHHELD",
+   "bracket_verdict": "PASS_BRACKET",
+   "strongest_statement": "PASS_BRACKET"
+  },
+  {
+   "tier_mu": 0.1,
+   "quantity": "intercept bracket (high edge, p=0.5)",
+   "phi": 0.6189510527665312,
+   "in_ledger_band": false,
+   "anchor_provenance": "derived",
+   "anchor_phi": 0.625,
+   "rel_error_vs_anchor": -0.009678315573550145,
+   "verdict": "WITHHELD",
+   "bracket_verdict": "PASS_BRACKET",
+   "strongest_statement": "PASS_BRACKET"
+  }
+ ],
+ "cross_script": {
+  "available": true,
+  "gates": [
+   {
+    "id": "G13_vs_ref_mu0",
+    "mu": 0.0,
+    "limit": 0.6364354536058531,
+    "rel_error_vs_frictionless": 0.0002584768993826314,
+    "pass": true,
+    "anchor_used": 0.6366,
+    "rel_error_vs_table_entry": -0.00035509607871409,
+    "table_entry_phi": 0.6366,
+    "table_entry_provenance": "literature",
+    "table_entry_verdict": "PASS"
+   },
+   {
+    "id": "G13_vs_ref_mu0.1",
+    "mu": 0.1,
+    "limit": 0.6170509055069715,
+    "rel_error_vs_frictionless": 0.030708599580629214,
+    "pass": false,
+    "anchor_used": 0.6366,
+    "rel_error_vs_table_entry": -0.012718551188845573,
+    "table_entry_phi": 0.625,
+    "table_entry_provenance": "derived",
+    "table_entry_verdict": "WITHHELD"
+   }
+  ]
+ },
+ "provenance_sha256": "f2d8daf7365d3fa851c6d136f336501f1042a4eddbdb3792f659010cde56a31d",
+ "figures": {
+  "intercept_policy": "benchmarks/case_rcp_deposition/figures/fig_m21145_intercept_policy.png",
+  "verdict_map": "benchmarks/case_rcp_deposition/figures/fig_m21145_verdict_map.png"
+ },
+ "self_sha256": "dcca1f07a75dba3891e9707b5cfe4a8adab5ef3670e3ba16323446375c85254e"
+}
