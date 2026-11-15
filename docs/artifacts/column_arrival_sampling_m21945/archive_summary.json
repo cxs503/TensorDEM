@@ -1,0 +1,458 @@
+{
+  "R_a1_g12": {
+    "artifact": "docs/artifacts/column_collapse_deep_refinement_m20873/cases/R_a1_g12.json",
+    "aspect_nominal": 1.0,
+    "aspect_measured": 0.9884775364686476,
+    "grains_per_radius": 12.0,
+    "native_stride": 5,
+    "native_sample_dt": 0.0019687012432152706,
+    "n_samples": 578,
+    "reference_time": 0.6587935780367367,
+    "band": {
+      "min_definition": "fraction_0.5",
+      "max_definition": "velocity_0.005",
+      "min_time": 0.42169580629672415,
+      "max_time": 0.8685909885065701,
+      "spread_s": 0.446895182209846,
+      "spread_rel": 1.0597572362277428,
+      "n_finite": 13,
+      "n_nan": 0,
+      "definition_dominated": true
+    },
+    "adjudication": {
+      "tolerance": 0.15,
+      "primary": "fraction_0.9",
+      "primary_error": 0.022611008801765767,
+      "primary_in_band": true,
+      "in_band": {
+        "fraction_0.5": false,
+        "fraction_0.75": true,
+        "fraction_0.9": true,
+        "fraction_0.95": true,
+        "fraction_0.99": false,
+        "velocity_0.1": false,
+        "velocity_0.05": false,
+        "velocity_0.02": false,
+        "velocity_0.01": false,
+        "velocity_0.005": false,
+        "length_0.5d": true,
+        "length_1d": true,
+        "length_2d": true
+      },
+      "n_in_band": 6,
+      "n_definitions": 13,
+      "flips": [
+        "fraction_0.5",
+        "fraction_0.99",
+        "velocity_0.005",
+        "velocity_0.01",
+        "velocity_0.02",
+        "velocity_0.05",
+        "velocity_0.1"
+      ],
+      "n_flips": 7,
+      "best": "fraction_0.9",
+      "best_error": 0.022611008801765767,
+      "worst": "fraction_0.5",
+      "worst_error": -0.35989690799139984,
+      "any_within_three_percent": true
+    },
+    "sampling": {
+      "steps_per_sample": {
+        "5": 0.6736895654282721,
+        "10": 0.6736895654282721,
+        "20": 0.6776269679147023,
+        "40": 0.6776269679147023
+      },
+      "bias_rel": {
+        "5": 0.0,
+        "10": 0.0,
+        "20": 0.005844535359438456,
+        "40": 0.005844535359438456
+      },
+      "spread_rel": 0.005844535359438456,
+      "spread_s": 0.003937402486430264
+    },
+    "bound_violations": [],
+    "definition_times": {
+      "fraction_0.5": 0.42169580629672415,
+      "fraction_0.75": 0.5713171007810852,
+      "fraction_0.9": 0.6736895654282721,
+      "fraction_0.95": 0.7386567064543714,
+      "fraction_0.99": 0.8154360549397616,
+      "velocity_0.1": 0.8154360549397616,
+      "velocity_0.05": 0.837091768615128,
+      "velocity_0.02": 0.8646535860201399,
+      "velocity_0.01": 0.866622287263355,
+      "velocity_0.005": 0.8685909885065701,
+      "length_0.5d": 0.7544063164000925,
+      "length_1d": 0.6992826815900688,
+      "length_2d": 0.64219034553683
+    }
+  },
+  "R_a1_g16": {
+    "artifact": "docs/artifacts/column_collapse_deep_refinement_m20873/cases/R_a1_g16.json",
+    "aspect_nominal": 1.0,
+    "aspect_measured": 1.002774662942104,
+    "grains_per_radius": 16.0,
+    "native_stride": 5,
+    "native_sample_dt": 0.0017049452890864625,
+    "n_samples": 664,
+    "reference_time": 0.6634123053950187,
+    "band": {
+      "min_definition": "fraction_0.5",
+      "max_definition": "fraction_0.99",
+      "min_time": 0.4316921471966775,
+      "max_time": 0.8715680317810095,
+      "spread_s": 0.439875884584332,
+      "spread_rel": 1.018957345971656,
+      "n_finite": 13,
+      "n_nan": 0,
+      "definition_dominated": true
+    },
+    "adjudication": {
+      "tolerance": 0.15,
+      "primary": "fraction_0.9",
+      "primary_error": -0.0074801668728161005,
+      "primary_in_band": true,
+      "in_band": {
+        "fraction_0.5": false,
+        "fraction_0.75": false,
+        "fraction_0.9": true,
+        "fraction_0.95": true,
+        "fraction_0.99": false,
+        "velocity_0.1": true,
+        "velocity_0.05": true,
+        "velocity_0.02": true,
+        "velocity_0.01": false,
+        "velocity_0.005": false,
+        "length_0.5d": false,
+        "length_1d": true,
+        "length_2d": true
+      },
+      "n_in_band": 7,
+      "n_definitions": 13,
+      "flips": [
+        "fraction_0.5",
+        "fraction_0.75",
+        "fraction_0.99",
+        "length_0.5d",
+        "velocity_0.005",
+        "velocity_0.01"
+      ],
+      "n_flips": 6,
+      "best": "fraction_0.9",
+      "best_error": -0.0074801668728161005,
+      "worst": "fraction_0.5",
+      "worst_error": -0.34928528806888354,
+      "any_within_three_percent": true
+    },
+    "sampling": {
+      "steps_per_sample": {
+        "5": 0.6584498706451843,
+        "10": 0.6584498706451843,
+        "20": 0.6618597612233575,
+        "40": 0.668679542379704
+      },
+      "bias_rel": {
+        "5": 0.0,
+        "10": 0.0,
+        "20": 0.005178663904713064,
+        "40": 0.015535991714139193
+      },
+      "spread_rel": 0.015535991714139193,
+      "spread_s": 0.010229671734519608
+    },
+    "bound_violations": [],
+    "definition_times": {
+      "fraction_0.5": 0.4316921471966775,
+      "fraction_0.75": 0.5510383174327285,
+      "fraction_0.9": 0.6584498706451843,
+      "fraction_0.95": 0.7249427369195618,
+      "fraction_0.99": 0.8715680317810095,
+      "velocity_0.1": 0.7266476822086484,
+      "velocity_0.05": 0.7573366974122072,
+      "velocity_0.02": 0.762451533279467,
+      "velocity_0.01": 0.7692713144358134,
+      "velocity_0.005": 0.7709762597249,
+      "length_0.5d": 0.8016652749284588,
+      "length_1d": 0.711303174606869,
+      "length_2d": 0.6379905271761451
+    }
+  },
+  "R_a1_g8": {
+    "artifact": "docs/artifacts/column_collapse_deep_refinement_m20873/cases/R_a1_g8.json",
+    "aspect_nominal": 1.0,
+    "aspect_measured": 1.0782571055943022,
+    "grains_per_radius": 8.0,
+    "native_stride": 5,
+    "native_sample_dt": 0.0024111567509299547,
+    "n_samples": 533,
+    "reference_time": 0.6838412262574917,
+    "band": {
+      "min_definition": "fraction_0.5",
+      "max_definition": "velocity_0.005",
+      "min_time": 0.43931276001948544,
+      "max_time": 0.8371536239229349,
+      "spread_s": 0.39784086390344947,
+      "spread_rel": 0.9055982436881722,
+      "n_finite": 13,
+      "n_nan": 0,
+      "definition_dominated": true
+    },
+    "adjudication": {
+      "tolerance": 0.15,
+      "primary": "fraction_0.9",
+      "primary_error": -0.02262012628912357,
+      "primary_in_band": true,
+      "in_band": {
+        "fraction_0.5": false,
+        "fraction_0.75": false,
+        "fraction_0.9": true,
+        "fraction_0.95": true,
+        "fraction_0.99": false,
+        "velocity_0.1": true,
+        "velocity_0.05": false,
+        "velocity_0.02": false,
+        "velocity_0.01": false,
+        "velocity_0.005": false,
+        "length_0.5d": true,
+        "length_1d": true,
+        "length_2d": false
+      },
+      "n_in_band": 5,
+      "n_definitions": 13,
+      "flips": [
+        "fraction_0.5",
+        "fraction_0.75",
+        "fraction_0.99",
+        "length_2d",
+        "velocity_0.005",
+        "velocity_0.01",
+        "velocity_0.02",
+        "velocity_0.05"
+      ],
+      "n_flips": 8,
+      "best": "fraction_0.9",
+      "best_error": -0.02262012628912357,
+      "worst": "fraction_0.5",
+      "worst_error": -0.35758076121888,
+      "any_within_three_percent": true
+    },
+    "sampling": {
+      "steps_per_sample": {
+        "5": 0.6683726513578381,
+        "10": 0.670783808108768,
+        "20": 0.6756061216106279,
+        "40": 0.6756061216106279
+      },
+      "bias_rel": {
+        "5": 0.0,
+        "10": 0.0036075036075033126,
+        "20": 0.010822510822509937,
+        "40": 0.010822510822509937
+      },
+      "spread_rel": 0.010822510822509937,
+      "spread_s": 0.007233470252789864
+    },
+    "bound_violations": [],
+    "definition_times": {
+      "fraction_0.5": 0.43931276001948544,
+      "fraction_0.75": 0.5502259705622703,
+      "fraction_0.9": 0.6683726513578381,
+      "fraction_0.95": 0.7190069431273671,
+      "fraction_0.99": 0.7865193321534059,
+      "velocity_0.1": 0.7503519808894565,
+      "velocity_0.05": 0.8033974294099155,
+      "velocity_0.02": 0.8250978401682851,
+      "velocity_0.01": 0.832331310421075,
+      "velocity_0.005": 0.8371536239229349,
+      "length_0.5d": 0.7093623161236473,
+      "length_1d": 0.6539057108522583,
+      "length_2d": 0.5574594408150602
+    }
+  },
+  "R_a3_g12": {
+    "artifact": "docs/artifacts/column_collapse_deep_refinement_m20873/cases/R_a3_g12.json",
+    "aspect_nominal": 3.0,
+    "aspect_measured": 3.007095454033219,
+    "grains_per_radius": 12.0,
+    "native_stride": 5,
+    "native_sample_dt": 0.0019687012432154094,
+    "n_samples": 855,
+    "reference_time": 1.1490516796283154,
+    "band": {
+      "min_definition": "fraction_0.5",
+      "max_definition": "velocity_0.01",
+      "min_time": 0.7307819014815109,
+      "max_time": 1.4552639589848078,
+      "spread_s": 0.7244820575032969,
+      "spread_rel": 0.99137931034493,
+      "n_finite": 13,
+      "n_nan": 0,
+      "definition_dominated": true
+    },
+    "adjudication": {
+      "tolerance": 0.15,
+      "primary": "fraction_0.9",
+      "primary_error": -0.017920975516064405,
+      "primary_in_band": true,
+      "in_band": {
+        "fraction_0.5": false,
+        "fraction_0.75": false,
+        "fraction_0.9": true,
+        "fraction_0.95": true,
+        "fraction_0.99": false,
+        "velocity_0.1": true,
+        "velocity_0.05": false,
+        "velocity_0.02": false,
+        "velocity_0.01": false,
+        "velocity_0.005": false,
+        "length_0.5d": false,
+        "length_1d": true,
+        "length_2d": true
+      },
+      "n_in_band": 5,
+      "n_definitions": 13,
+      "flips": [
+        "fraction_0.5",
+        "fraction_0.75",
+        "fraction_0.99",
+        "length_0.5d",
+        "velocity_0.005",
+        "velocity_0.01",
+        "velocity_0.02",
+        "velocity_0.05"
+      ],
+      "n_flips": 8,
+      "best": "fraction_0.9",
+      "best_error": -0.017920975516064405,
+      "worst": "fraction_0.5",
+      "worst_error": -0.36401302531675733,
+      "any_within_three_percent": true
+    },
+    "sampling": {
+      "steps_per_sample": {
+        "5": 1.1284595526110037,
+        "10": 1.1304282538542194,
+        "20": 1.1343656563406508,
+        "40": 1.1343656563406508
+      },
+      "bias_rel": {
+        "5": 0.0,
+        "10": 0.0017445917655272193,
+        "20": 0.005233775296581658,
+        "40": 0.005233775296581658
+      },
+      "spread_rel": 0.005233775296581658,
+      "spread_s": 0.005906103729647061
+    },
+    "bound_violations": [],
+    "definition_times": {
+      "fraction_0.5": 0.7307819014815109,
+      "fraction_0.75": 0.94143293450553,
+      "fraction_0.9": 1.1284595526110037,
+      "fraction_0.95": 1.2229572122853567,
+      "fraction_0.99": 1.378484610499396,
+      "velocity_0.1": 1.3036739632571999,
+      "velocity_0.05": 1.4493578552551607,
+      "velocity_0.02": 1.453295257741592,
+      "velocity_0.01": 1.4552639589848078,
+      "velocity_0.005": 1.4552639589848078,
+      "length_0.5d": 1.3666724030401018,
+      "length_1d": 1.321392274446141,
+      "length_2d": 1.2229572122853567
+    }
+  },
+  "R_a3_g8": {
+    "artifact": "docs/artifacts/column_collapse_deep_refinement_m20873/cases/R_a3_g8.json",
+    "aspect_nominal": 3.0,
+    "aspect_measured": 3.0866314544814117,
+    "grains_per_radius": 8.0,
+    "native_stride": 5,
+    "native_sample_dt": 0.0024111567509299547,
+    "n_samples": 672,
+    "reference_time": 1.157008377804527,
+    "band": {
+      "min_definition": "fraction_0.5",
+      "max_definition": "velocity_0.005",
+      "min_time": 0.6948953756180676,
+      "max_time": 1.473699006168443,
+      "spread_s": 0.7788036305503754,
+      "spread_rel": 1.1207494795280173,
+      "n_finite": 13,
+      "n_nan": 0,
+      "definition_dominated": true
+    },
+    "adjudication": {
+      "tolerance": 0.15,
+      "primary": "fraction_0.9",
+      "primary_error": -0.013871121050023421,
+      "primary_in_band": true,
+      "in_band": {
+        "fraction_0.5": false,
+        "fraction_0.75": false,
+        "fraction_0.9": true,
+        "fraction_0.95": true,
+        "fraction_0.99": false,
+        "velocity_0.1": true,
+        "velocity_0.05": false,
+        "velocity_0.02": false,
+        "velocity_0.01": false,
+        "velocity_0.005": false,
+        "length_0.5d": true,
+        "length_1d": true,
+        "length_2d": true
+      },
+      "n_in_band": 6,
+      "n_definitions": 13,
+      "flips": [
+        "fraction_0.5",
+        "fraction_0.75",
+        "fraction_0.99",
+        "velocity_0.005",
+        "velocity_0.01",
+        "velocity_0.02",
+        "velocity_0.05"
+      ],
+      "n_flips": 7,
+      "best": "fraction_0.9",
+      "best_error": -0.013871121050023421,
+      "worst": "fraction_0.5",
+      "worst_error": -0.3994033328119358,
+      "any_within_three_percent": true
+    },
+    "sampling": {
+      "steps_per_sample": {
+        "5": 1.1409593745401092,
+        "10": 1.1433705312910392,
+        "20": 1.148192844792899,
+        "40": 1.1578374717966189
+      },
+      "bias_rel": {
+        "5": 0.0,
+        "10": 0.0021132713440404735,
+        "20": 0.006339814032121421,
+        "40": 0.014792899408283315
+      },
+      "spread_rel": 0.014792899408283315,
+      "spread_s": 0.016878097256509683
+    },
+    "bound_violations": [],
+    "definition_times": {
+      "fraction_0.5": 0.6948953756180676,
+      "fraction_0.75": 0.9263664237073432,
+      "fraction_0.9": 1.1409593745401092,
+      "fraction_0.95": 1.2374056445773074,
+      "fraction_0.99": 1.370019265878455,
+      "velocity_0.1": 1.3290296011126457,
+      "velocity_0.05": 1.413420087395194,
+      "velocity_0.02": 1.4495874386591434,
+      "velocity_0.01": 1.4568209089119333,
+      "velocity_0.005": 1.473699006168443,
+      "length_0.5d": 1.314562660607066,
+      "length_1d": 1.263928368837537,
+      "length_2d": 1.1771267258040585
+    }
+  }
+}
