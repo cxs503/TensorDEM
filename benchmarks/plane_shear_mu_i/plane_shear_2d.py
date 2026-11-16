@@ -127,6 +127,15 @@ class PlaneShear2DCase:
     # 0.0 = monodisperse (rounds 24-25); 0.5 = the widest spread for which the
     # archived law is stated to hold (da Cruz 2005 / GDR MiDi 2004).
     polydispersity: float = 0.0
+    # Round 33: a rough wall made of grain-glued disks is a *moving* boundary.
+    # The rows' grains must therefore be advected at +-V like the wall they are
+    # glued to.  Rounds 24-32 imposed the rows' *velocity* (so the friction law
+    # saw +-V) but never translated their *positions*, which leaves a frozen
+    # corrugated surface: the near-wall disks then have no geometric reason to
+    # travel with the wall and the cell is dragged by friction alone, not by
+    # interlocking.  ``True`` is the physical setting; ``False`` reproduces the
+    # archived rounds bit-for-bit and is kept as the ablation control.
+    wall_translate: bool = True
 
     # -- derived quantities -------------------------------------------------
     @property
@@ -576,6 +585,15 @@ class RoughWallShearCell:
                 hi = self.y_bottom + 2.0 * case.radius + 4.0 * case.gap
                 self.y_top = min(max(self.y_top, lo), hi)
             self._set_wall_kinematics(servo_vy)
+            if case.wall_translate and self.v_wall != 0.0:
+                # advect the wall grains with the wall they are glued to; the
+                # row is a cyclic gap sequence, so the modulo only rotates it
+                # (no two wall grains can ever overlap: min gap is the spacing)
+                pos = sysm.pos
+                pos[self.bottom_idx, 0] = np.mod(
+                    pos[self.bottom_idx, 0] + self.v_wall * self.dt, case.width)
+                pos[self.top_idx, 0] = np.mod(
+                    pos[self.top_idx, 0] - self.v_wall * self.dt, case.width)
         self.time += n_steps * self.dt
 
     # -- diagnostics --------------------------------------------------------
