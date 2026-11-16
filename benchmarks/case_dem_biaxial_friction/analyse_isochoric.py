@@ -24,7 +24,9 @@ Usage:
 """
 from __future__ import annotations
 
+import argparse
 import glob
+import gzip
 import json
 import math
 import os
@@ -54,6 +56,11 @@ REF_SOURCES = {
 }
 PROBE_DIR = os.environ.get("PROBE_DIR", os.path.join(REPO, "runs", "m20537"))
 OUT_DIR = os.path.join(REPO, "artifacts", "CASE-DEM-BIAXIAL-FRICTION")
+# committed, downsampled copy of the probe stress paths: the analysis (and the
+# provenance regression test) must run with no cluster artefacts on disk
+DATA_DIR = os.path.join(REPO, "benchmarks", "case_dem_biaxial_friction",
+                        "results_m22748")
+BUNDLE = os.path.join(DATA_DIR, "iso_paths.json.gz")
 
 PATH_KEYS = ("axial_strain", "axial_strain_log", "sigma_v", "sigma_h", "deviator",
              "volumetric_strain", "volumetric_strain_log")
@@ -203,12 +210,111 @@ def render(payload: dict, path: str) -> str:
     return path
 
 
+def _sig(x: float, digits: int = 7) -> float:
+    """Round to ``digits`` significant figures (keeps the JSON small)."""
+    if x == 0.0 or not math.isfinite(x):
+        return float(x)
+    return float(f"{x:.{digits}g}")
+
+
+def load_runs(probe_dir: str) -> tuple[list[dict], list[str]]:
+    """Load probe records from a directory of ``iso_*.json`` files.
+
+    Falls back to the committed, downsampled bundle
+    (``results_m22748/iso_paths.json.gz``) when the probe directory is empty, so
+    the published numbers can be recomputed on a clean checkout.
+    """
+    paths = sorted(glob.glob(os.path.join(probe_dir, "iso_*.json*")))
+    if not paths and os.path.exists(BUNDLE):
+        paths = [BUNDLE]
+    runs: list[dict] = []
+    for path in paths:
+        opener = gzip.open if path.endswith(".gz") else open
+        with opener(path, "rt") as fh:
+            data = json.load(fh)
+        runs.extend(data if isinstance(data, list) else [data])
+    runs.sort(key=lambda r: r["tag"])
+    return runs, [os.path.basename(p) for p in paths]
+
+
+def compact_runs(runs: list[dict], out_path: str, max_samples: int = 1000) -> str:
+    """Write a gzip bundle of the stress paths, decimated to ``max_samples``.
+
+    Every recorded array is subsampled with a fixed stride (the last sample is
+    always kept) and rounded to 7 significant figures.  This is what makes the
+    round-3 numbers auditable from the repository without a 120 k-step raw
+    artefact: the decimated path re-analyses to the published ``phi_cv`` within
+    the reported uncertainty (see
+    ``tests/test_biaxial_isochoric_provenance.py``).
+    """
+    bundle = []
+    for raw in runs:
+        sp = raw["stress_path"]
+        n = len(np.asarray(sp["axial_strain"]))
+        stride = max(1, int(math.ceil(n / float(max_samples))))
+        idx = np.arange(0, n, stride)
+        if idx[-1] != n - 1:
+            idx = np.append(idx, n - 1)
+        rec = {k: raw[k] for k in ("tag", "config", "specimen", "loading", "peak",
+                                   "note", "elapsed_s") if k in raw}
+        rec["stress_path"] = {k: [_sig(float(v)) for v in np.asarray(arr)[idx]]
+                              for k, arr in sp.items()
+                              if len(np.asarray(arr)) == n}
+        rec["compaction"] = {"stride": int(stride), "n_original": int(n),
+                             "n_kept": int(idx.size),
+                             "note": "fixed-stride decimation of the probe record; "
+                                     "the last sample is always kept"}
+        bundle.append(rec)
+    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+    with gzip.open(out_path, "wt") as fh:
+        json.dump(bundle, fh, separators=(",", ":"))
+    return out_path
+
+
+def markdown_table(cases: list[dict]) -> str:
+    """Sensitivity table (markdown) of the analysed configurations."""
+    head = ("| run | grid | phi_peak [deg] | phi_cv [deg] | dEv/dEa | q drift | "
+            "window spread [deg] | sigma_h [kPa] | p [kPa] | converged | "
+            "err vs Rowe |\n"
+            "|---|---|---|---|---|---|---|---|---|---|---|\n")
+    rows = []
+    for r in cases:
+        c = r["critical_state"]
+        cfg = r["config"]
+        rows.append(
+            f"| `{r['tag']}` | {cfg['columns']}x{cfg['rows']} | "
+            f"{r['peak_phi_deg']:.2f} | **{c['phi_cv_deg']:.2f}** | "
+            f"{c['d_eps_v_d_eps_a']:+.2e} | {c['q_drift']:.3f} | "
+            f"{c['window_spread_deg']:.2f} | {c['sigma_h_cv_Pa'] / 1e3:.0f} | "
+            f"{r['mean_pressure_in_window_kPa']:.0f} | "
+            f"{'yes' if c['converged'] else 'no'} | "
+            f"{r['judge_primary_rowe']['relative_error'] * 100:.1f} % |")
+    return head + "\n".join(rows)
+
+
 def main() -> int:
-    paths = sorted(glob.glob(os.path.join(PROBE_DIR, "iso_*.json")))
-    if not paths:
-        print(f"no isochoric runs under {PROBE_DIR}")
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("--probe-dir", default=os.environ.get(
+        "PROBE_DIR", os.path.join(REPO, "runs", "m20537")),
+        help="directory holding the iso_*.json probe records "
+             "(empty => committed bundle)")
+    ap.add_argument("--out-dir", default=OUT_DIR)
+    ap.add_argument("--compact", metavar="PATH",
+                    help="write a downsampled gzip bundle of the consumed runs")
+    ap.add_argument("--max-samples", type=int, default=1000,
+                    help="samples per configuration kept by --compact")
+    ap.add_argument("--markdown", action="store_true",
+                    help="print the sensitivity table as markdown")
+    ap.add_argument("--no-figure", action="store_true")
+    args = ap.parse_args()
+
+    runs, names = load_runs(args.probe_dir)
+    if not runs:
+        print(f"no isochoric runs under {args.probe_dir}")
         return 2
-    cases = [analyse_one(json.load(open(p))) for p in paths]
+    if args.compact:
+        print("compacted:", compact_runs(runs, args.compact, args.max_samples))
+    cases = [analyse_one(raw) for raw in runs]
     payload = {
         "case_key": "CASE-DEM-BIAXIAL-FRICTION",
         "round": 3,
@@ -219,16 +325,20 @@ def main() -> int:
         "references": REF_SOURCES,
         "tolerance": TOLERANCE,
         "anchor_mu": MU_ANCHOR,
-        "provenance": {"probe_dir": os.path.relpath(PROBE_DIR, REPO),
-                       "raw_runs": [os.path.basename(p) for p in paths]},
+        "provenance": {"probe_dir": os.path.relpath(args.probe_dir, REPO)
+                       if os.path.isdir(args.probe_dir) else args.probe_dir,
+                       "raw_runs": names,
+                       "compaction": [r.get("compaction") for r in runs]},
         "cases": cases,
     }
-    os.makedirs(OUT_DIR, exist_ok=True)
-    json_path = os.path.join(OUT_DIR, "run_iso.json")
+    os.makedirs(args.out_dir, exist_ok=True)
+    json_path = os.path.join(args.out_dir, "run_iso.json")
     with open(json_path, "w") as fh:
         json.dump(payload, fh, indent=1,
                   default=lambda o: o.tolist() if hasattr(o, "tolist") else float(o))
-    png = render(payload, os.path.join(OUT_DIR, "biaxial_isochoric.png"))
+    png = ""
+    if not args.no_figure:
+        png = render(payload, os.path.join(args.out_dir, "biaxial_isochoric.png"))
 
     print(f"{'tag':30s} {'peak':>6s} {'phi_cv':>7s} {'dEv/dEa':>9s} {'p[win]':>7s} "
           f"{'q_drift':>8s} {'jump':>6s} {'err(rowe)':>9s} {'conv':>5s}")
@@ -239,6 +349,9 @@ def main() -> int:
               f"{c['q_drift']:8.3f} {c['window_spread_deg']:6.2f} "
               f"{r['judge_primary_rowe']['relative_error'] * 100:8.1f}% "
               f"{str(c['converged']):>5s} flags={c['flags']}")
+    if args.markdown:
+        print()
+        print(markdown_table(cases))
     print("artefacts:", json_path, png)
     return 0
 
