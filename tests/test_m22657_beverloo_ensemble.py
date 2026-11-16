@@ -31,8 +31,24 @@ for p in (ROOT / "src", BENCH):
     if str(p) not in sys.path:
         sys.path.insert(0, str(p))
 
-import analyse as A  # noqa: E402
-import run_case as R  # noqa: E402
+def _load(name: str):
+    """Load a benchmark module under a mission-scoped name.
+
+    Every benchmark directory ships its own ``analyse.py``/``run_case.py``;
+    importing them by bare module name makes whichever test file pytest collects
+    first win the ``sys.modules`` slot and silently swaps estimators between
+    missions.  Loading by path keeps this suite order-independent.
+    """
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(f"m22657_{name}", BENCH / f"{name}.py")
+    mod = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = mod
+    spec.loader.exec_module(mod)
+    return mod
+
+
+A = _load("analyse")
+R = _load("run_case")
 
 
 # ------------------------------------------------------------------ t distribution

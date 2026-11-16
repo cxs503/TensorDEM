@@ -311,6 +311,24 @@ class SiloFlow:
             raise ValueError("fill volume must be positive")
         return self.bed_mass / vol
 
+    def surface_height(self, quantile: float = 0.95) -> float:
+        """Free-surface height of the bed, measured from the settled particles.
+
+        The top of a poured bed is ragged, so a single ``max(z)`` is a one-particle
+        statistic (it moves by a full diameter when a particle bounces).  Here the
+        surface is the *mean centre height of the top layer* (particles above the
+        ``quantile`` of the z distribution) plus one radius, i.e. the envelope the
+        top particles touch.  With a settling bed this sits below the nominal fill
+        line, which is why ``bulk_density(surface_height())`` is larger than
+        ``bulk_density(nominal_fill_height)``.
+        """
+        if self.n == 0:
+            return 0.0
+        z = self.pos[:, 2]
+        thr = float(np.quantile(z, quantile))
+        top = z[z >= thr]
+        return float(np.mean(top)) + float(self.mat.radius)
+
     # ---------------------------------------------------------------- helpers
     def _expand(self, n: int) -> None:
         pad = n - self.n

@@ -100,7 +100,12 @@ def run_discharge(case: DischargeCase, *, dt: float | None = None, flow: SiloFlo
             geometry, material, case.fill_height,
             wall_mu=case.wall_mu, seed=case.seed, settle_time=case.settle_time, dt=dt,
         )
+    # two bulk-density conventions: the nominal fill line (kept for continuity with
+    # earlier rounds) and the *measured* settled surface (physics-correct: the bed
+    # compacts during deposition, so the nominal line over-states the volume).
+    surface_height = flow.surface_height()
     rho_b = flow.bulk_density(case.fill_height)
+    rho_b_meas = flow.bulk_density(surface_height)
     bed_mass = flow.bed_mass
     n_bed = flow.n
     flow.plugged = False
@@ -112,12 +117,16 @@ def run_discharge(case: DischargeCase, *, dt: float | None = None, flow: SiloFlo
     for _ in range(case.n_windows):
         m0 = flow.mass_exited
         n0 = flow.n_exited
+        h0 = flow.surface_height()
         for _ in range(n_win):
             flow.step()
+        h1 = flow.surface_height()
         windows.append({
             "mass_kg": flow.mass_exited - m0,
             "particles": flow.n_exited - n0,
             "time_s": n_win * flow.dt,
+            "surface_height_start_m": h0,
+            "surface_height_end_m": h1,
         })
     rates = np.array([w["mass_kg"] / w["time_s"] for w in windows])
     # steady state = the last 50 % of the measurement window series
@@ -140,6 +149,11 @@ def run_discharge(case: DischargeCase, *, dt: float | None = None, flow: SiloFlo
         "n_bed": n_bed,
         "bed_mass_kg": bed_mass,
         "rho_bulk": rho_b,
+        "rho_bulk_measured": rho_b_meas,
+        "surface_height_m": surface_height,
+        "window_particles": [int(w["particles"]) for w in windows],
+        "window_surface_height_m": [0.5 * (w["surface_height_start_m"] + w["surface_height_end_m"])
+                                    for w in windows],
         "n_windows": case.n_windows,
         "window_time_s": case.window_time,
         "discard_time_s": case.discard_time,
