@@ -50,7 +50,7 @@ SC_LIMIT_GATE = 0.002        # |limit(3 levels) - limit(all levels)|
 sys.path.insert(0, os.path.join(ROOT, "src"))
 from tensordem.deposition_packing import (  # noqa: E402
     extrapolation_selfconsistency, stiffness_limit)
-from tensordem.rcp_references import get_reference  # noqa: E402
+from tensordem.rcp_references import bracket_check, get_reference  # noqa: E402
 
 
 def reference():
@@ -217,20 +217,51 @@ def main() -> int:
     # The mu=0.1 tier is compared against the mu=0.1 reference (0.6250) from
     # Pournin et al. (2001), NOT the frictionless reference — comparing a
     # frictional packing against a frictionless benchmark is a category error.
+    #
+    # Anchor policy (m21145, applied to the ledger path in m23840): the
+    # mu=0.1 table entry is self-declared interpolated (provenance
+    # ``derived``), so it may rank the measurement but may not certify it.
+    # A certified <3 % accuracy claim is admissible only against a
+    # ``literature`` anchor; against any other tier the gate degrades to the
+    # disordered-packing bracket (necessary condition) and the accuracy
+    # claim is WITHHELD.
+    def ref_gate(gid, phi, mu, label, what):
+        """Reference-comparison gate under the m21145 anchor policy."""
+        ref_mu = get_reference(mu)
+        dev = phi / ref_mu.phi_rcp - 1.0
+        base = {"id": gid, "got": phi, "value": abs(dev),
+                "phi_ref": ref_mu.phi_rcp, "phi_ref_source": ref_mu.source,
+                "anchor_provenance": ref_mu.provenance}
+        if ref_mu.anchored:
+            ok = abs(dev) < TOL_REL
+            base.update({
+                "criterion": f"|{what}/phi_ref(mu={mu:g}) - 1| < {TOL_REL:.0%} "
+                             f"({label}, phi_ref={ref_mu.phi_rcp}, "
+                             f"literature anchor)",
+                "pass": bool(ok),
+                "verdict": "PASS" if ok else "FAIL",
+                "claim_status": "CERTIFIED",
+            })
+        else:
+            br = bracket_check(phi, mu=mu)
+            base.update({
+                "criterion": f"{what} inside disordered-packing bracket "
+                             f"({label}; anchor {ref_mu.provenance} at "
+                             f"phi_ref={ref_mu.phi_rcp}: accuracy claim "
+                             f"WITHHELD, bracket is a necessary condition)",
+                "pass": bool(br["inside"]),
+                "verdict": br["verdict"],
+                "claim_status": "WITHHELD",
+                "bracket": br["bracket"],
+                "strongest_statement": br["verdict"],
+            })
+        return base
+
     for gid, mu, label in (("G12_stiffness_limit_vs_ref", 0.0, "mu=0"),
                            ("G13_stiffness_limit_vs_ref_frictional", 0.1, "mu=0.1")):
         s = stiff.get(mu)
         if s:
-            ref_mu = get_reference(mu)
-            dev = s["limit"] / ref_mu.phi_rcp - 1.0
-            gates.append({"id": gid,
-                          "criterion": f"|phi(k_n->inf)/phi_ref(mu={mu:g}) - 1| "
-                                       f"< {TOL_REL:.0%} ({label}, "
-                                       f"phi_ref={ref_mu.phi_rcp})",
-                          "got": s["limit"], "value": abs(dev),
-                          "pass": bool(abs(dev) < TOL_REL),
-                          "phi_ref": ref_mu.phi_rcp,
-                          "phi_ref_source": ref_mu.source})
+            gates.append(ref_gate(gid, s["limit"], mu, label, "phi(k_n->inf)"))
     # G18: friction-dependent reference comparison for the production value
     # (not just the extrapolated limit) — this is the gate that directly
     # answers the ledger acceptance question for each tier.
@@ -238,15 +269,7 @@ def main() -> int:
                            ("G18b_production_vs_friction_ref", 0.1, "mu=0.1")):
         s = stat(mu)
         if s:
-            ref_mu = get_reference(mu)
-            dev = s[0] / ref_mu.phi_rcp - 1.0
-            gates.append({"id": gid,
-                          "criterion": f"|phi_prod(mu={mu:g})/phi_ref(mu={mu:g}) - 1| "
-                                       f"< {TOL_REL:.0%} (phi_ref={ref_mu.phi_rcp})",
-                          "got": s[0], "value": abs(dev),
-                          "pass": bool(abs(dev) < TOL_REL),
-                          "phi_ref": ref_mu.phi_rcp,
-                          "phi_ref_source": ref_mu.source})
+            gates.append(ref_gate(gid, s[0], mu, label, "phi_prod"))
     # leave-one-level-out: with >= 4 k_n levels the extrapolation can be asked
     # to predict a measurement it never saw (three levels fix three parameters,
     # so a three-level fit has no out-of-sample content at all).
@@ -683,40 +706,54 @@ def main() -> int:
         A("")
     A("## 5 Gates")
     A("")
-    A("| gate | criterion | got | pass |")
+    A("| gate | criterion | got | verdict |")
     A("|---|---|---|---|")
     for g in gates:
-        A(f"| {g['id']} | {g['criterion']} | {fmt(g['got'])} | "
-          f"{'PASS' if g['pass'] else 'FAIL'} |")
+        cell = g.get("verdict", "PASS" if g["pass"] else "FAIL")
+        A(f"| {g['id']} | {g['criterion']} | {fmt(g['got'])} | {cell} |")
     A("")
     A("## 6 Error judgement")
     A("")
-    # Use friction-dependent references for error calculation
+    # Use friction-dependent references for error calculation, under the
+    # m21145 anchor policy: a <3 % statement is an accuracy claim only when
+    # the anchor is ``literature``; against a ``derived``/``unverified``
+    # entry the same number is a ranking, and the strongest admissible
+    # statement is the disordered-packing bracket verdict.
     ref_mu0 = get_reference(0.0)
     ref_mu01 = get_reference(0.1)
+
+    def err_line(what, phi, err_std, mu, ref_mu, dev_pct):
+        if ref_mu.anchored:
+            return (f"* {what}: phi = {phi:.5f} +- {err_std:.5f} vs reference "
+                    f"{ref_mu.phi_rcp} ({ref_mu.source[:40]}...): "
+                    f"**{dev_pct:+.2f} %** -> "
+                    f"{'<' if abs(dev_pct) < 3 else '>'}3 % "
+                    f"({'满足' if abs(dev_pct) < 3 else '不满足'}).")
+        br = bracket_check(phi, mu=mu)
+        return (f"* {what}: phi = {phi:.5f} +- {err_std:.5f} vs table entry "
+                f"{ref_mu.phi_rcp} ({ref_mu.provenance}, "
+                f"{ref_mu.source[:40]}...): {dev_pct:+.2f} % is a ranking "
+                f"only, **not an accuracy claim** (claim WITHHELD); "
+                f"strongest admissible statement: "
+                f"{'inside' if br['inside'] else 'outside'} the "
+                f"disordered-packing bracket "
+                f"[{br['bracket'][0]:.4f}, {br['bracket'][1]:.4f}] -> "
+                f"{br['verdict']}.")
+
     if frictionless and lowfric:
         d0 = 100 * (frictionless[0] / ref_mu0.phi_rcp - 1)
         d1 = 100 * (lowfric[0] / ref_mu01.phi_rcp - 1)
-        A(f"* frictionless tier (k_n = {kn_prod:g}, N = {n_primary}, "
-          f"{frictionless[1]} seeds): phi = {frictionless[0]:.5f} +- "
-          f"{frictionless[2]:.5f} vs reference {ref_mu0.phi_rcp} "
-          f"({ref_mu0.source[:40]}...): **{d0:+.2f} %** -> "
-          f"{'<' if abs(d0) < 3 else '>'}3 % "
-          f"({'满足' if abs(d0) < 3 else '不满足'}).")
-        A(f"* low-friction tier (mu = 0.1): phi = {lowfric[0]:.5f} +- "
-          f"{lowfric[2]:.5f} vs reference {ref_mu01.phi_rcp} "
-          f"({ref_mu01.source[:40]}...): **{d1:+.2f} %** -> "
-          f"{'<' if abs(d1) < 3 else '>'}3 % "
-          f"({'满足' if abs(d1) < 3 else '不满足'}).")
+        A(err_line(f"frictionless tier (k_n = {kn_prod:g}, N = {n_primary}, "
+                   f"{frictionless[1]} seeds)",
+                   frictionless[0], frictionless[2], 0.0, ref_mu0, d0))
+        A(err_line("low-friction tier (mu = 0.1)",
+                   lowfric[0], lowfric[2], 0.1, ref_mu01, d1))
     for mu, s in sorted(stiff.items()):
         ref_mu = get_reference(mu)
         dev = 100 * (s["limit"] / ref_mu.phi_rcp - 1)
-        A(f"* hard-sphere limit (mu = {mu:g}, Richardson over "
-          f"{s['n_levels']} k_n levels, p = {s['order_used']:.2f}): "
-          f"phi_inf = {s['limit']:.5f} vs reference {ref_mu.phi_rcp}: "
-          f"**{dev:+.2f} %** -> "
-          f"{'<' if abs(dev) < 3 else '>'}3 % "
-          f"({'满足' if abs(dev) < 3 else '不满足'}).")
+        A(err_line(f"hard-sphere limit (mu = {mu:g}, Richardson over "
+                   f"{s['n_levels']} k_n levels, p = {s['order_used']:.2f})",
+                   s["limit"], 0.0, mu, ref_mu, dev))
     for mu, sc in sorted(selfcheck.items()):
         A(f"* extrapolation self-consistency (mu = {mu:g}): the 3-level fit "
           f"predicts the withheld k_n = {sc['points'][-1][0]:g} level to "
