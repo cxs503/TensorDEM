@@ -1,6 +1,6 @@
 # AUDIT m21145 - CASE-DEM-RCP-PACKING-FRACTION 锚点溯源与精度判定审计
 
-**Mission** m21145 · **Repo** TensorDEM · **Artifacts sha256** `7923e6e68ec9d120`  
+**Mission** m21145 · **Repo** TensorDEM · **Artifacts sha256** `00908c38d79e256c`  
 本文件全部数字由 `benchmarks/case_rcp_deposition/anchor_provenance_audit.py` 程序化写入。
 
 ## 1 结论先行
@@ -76,7 +76,7 @@
 | A2_frictionless_intercept_bracket_stable | nuisance-order bracket width < 0.005 (mu=0) | 9.034e-04 | PASS |
 | A3_lowfriction_intercept_bracket_stable | nuisance-order bracket width < 0.005 (mu=0.1) | 5.856e-04 | PASS |
 | A4_lowfriction_order_checkable | mu=0.1 ladder has >=4 stiffness levels (leave-one-out check exists) | 4 | PASS |
-| A5_no_claim_on_derived_anchor | 0 verdicts claim accuracy against a non-literature anchor | 0 | PASS |
+| A5_no_claim_on_derived_anchor | 0 accuracy claims (this audit + merged ledger) rest on a non-literature anchor | 0 | PASS |
 | A6_policy_coverage | every verdict carries anchor provenance + policy | 10 | PASS |
 
 ## 6 与已并订单审计的一致性
