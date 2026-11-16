@@ -60,6 +60,7 @@ python3 benchmarks/case_rcp_deposition/aggregate.py   # this document
 | seed | N | mu | k_n | dt | phi_bulk | phi (overlap-corr.) | Z | max ov/d | settled | steps | wall / s |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | 1 | 10000 | 0.1 | 16000 | 6.354e-04 | 0.62159 | 0.62101 | 5.56 | 0.0035 | yes | 33055 | 593 |
+| 1 | 10000 | 0.1 | 256000 | 1.588e-04 | 0.61860 | 0.61856 | 5.34 | 0.0002 | yes | 122773 | 1586 |
 | 1 | 10000 | 0.1 | 4000 | 1.271e-03 | 0.62671 | 0.62449 | 5.81 | 0.0115 | yes | 17731 | 368 |
 | 1 | 10000 | 0.1 | 4000 | 6.354e-04 | 0.62632 | 0.62402 | 5.84 | 0.0106 | yes | 35416 | 657 |
 | 2 | 10000 | 0.1 | 4000 | 1.271e-03 | 0.62592 | 0.62369 | 5.83 | 0.0105 | yes | 17731 | 382 |
@@ -75,7 +76,9 @@ python3 benchmarks/case_rcp_deposition/aggregate.py   # this document
 | 1 | 10000 | 0 | 64000 | 3.177e-04 | 0.63680 | 0.63665 | 5.82 | 0.0007 | yes | 84997 | 939 |
 | 1 | 10000 | 0 | 64000 | 1.588e-04 | 0.63626 | 0.63611 | 5.74 | 0.0008 | yes | 157401 | 1564 |
 | 2 | 10000 | 0 | 64000 | 3.177e-04 | 0.63706 | 0.63691 | 5.75 | 0.0008 | yes | 75553 | 952 |
+| 2 | 10000 | 0 | 64000 | 1.588e-04 | 0.63659 | 0.63644 | 5.71 | 0.0008 | yes | 154253 | 1448 |
 | 3 | 10000 | 0 | 64000 | 3.177e-04 | 0.63644 | 0.63628 | 5.74 | 0.0009 | yes | 69257 | 891 |
+| 3 | 10000 | 0 | 64000 | 1.588e-04 | 0.63526 | 0.63511 | 5.68 | 0.0009 | yes | 138513 | 1202 |
 | 1 | 1000 | 0 | 4000 | 1.271e-03 | 0.64203 | 0.64098 | 6.06 | 0.0039 | yes | 26793 | 45 |
 | 1 | 2000 | 0.1 | 16000 | 6.354e-04 | 0.61814 | 0.61778 | 5.52 | 0.0020 | yes | 25972 | 101 |
 | 1 | 2000 | 0.1 | 4000 | 1.271e-03 | 0.62504 | 0.62369 | 5.70 | 0.0056 | yes | 14579 | 63 |
@@ -107,19 +110,21 @@ Tier means (N = 10000, k_n = 4000, dt = t_c/20):
 | tier | phi per k_n level | Delta (consecutive) | observed order p | phi(k_n->inf) | |phi_prod - phi_inf| |
 |---|---|---|---|---|---|
 | mu=0 | 4000: 0.64261 / 16000: 0.63791 / 64000: 0.63680 / 256000: 0.63571 | -0.00470 / -0.00111 / -0.00109 | 1.000 (default: non-monotone) | 0.63535 | 0.00703 |
-| mu=0.1 | 4000: 0.62671 / 16000: 0.62159 / 64000: 0.61928 | -0.00512 / -0.00231 | 0.575 | 0.61739 | 0.00889 |
+| mu=0.1 | 4000: 0.62671 / 16000: 0.62159 / 64000: 0.61928 / 256000: 0.61860 | -0.00512 / -0.00231 / -0.00068 | 0.878 | 0.61831 | 0.00797 |
 
 ### 3.1b Is the extrapolation checkable? (leave-one-level-out)
 
 | tier | 3-level limit | prediction at withheld level | measured | prediction error | all-level limit | limit shift |
 |---|---|---|---|---|---|---|
 | mu=0 | 0.63646 | 0.63654 | 0.63571 | 0.00083 | 0.63535 | 0.00111 |
+| mu=0.1 | 0.61739 | 0.61824 | 0.61860 | 0.00036 | 0.61831 | 0.00092 |
 
 Withheld level and observed pair orders:
 
 | tier | withheld k_n | adjacent-pair orders p |
 |---|---|---|
 | mu=0 | 256000 | 4000-16000-64000: 1.044, 16000-64000-256000: 0.012 |
+| mu=0.1 | 256000 | 4000-16000-64000: 0.575, 16000-64000-256000: 0.878 |
 
 `p = 1` is what linear-spring compressibility predicts; a drifting or
 half-integer `p` means the ladder is not a single power law and the
@@ -130,7 +135,7 @@ intercept inherits the shift column as its error bar.
 | tier | k_n | seeds | phi(dt = t_c/20) | phi(dt = t_c/40) | |Delta| |
 |---|---|---|---|---|---|
 | mu=0 | 4000 | 1 | 0.64261 | 0.64263 | 0.00002 |
-| mu=0 | 64000 | 1 | 0.63680 | 0.63626 | 0.00054 |
+| mu=0 | 64000 | 1, 2, 3 | 0.63676 | 0.63603 | 0.00073 |
 | mu=0.1 | 4000 | 1 | 0.62671 | 0.62632 | 0.00038 |
 | mu=0.1 | 64000 | 1 | 0.61928 | 0.61940 | 0.00012 |
 
@@ -165,14 +170,15 @@ intercept inherits the shift column as its error bar.
 | G3_frictionless_in_band | 0.62 <= phi <= 0.66 (mu=0) | 0.6424 | PASS |
 | G4_overlap_correction_is_small | |phi - phi_overlap_corrected| / phi < 1% | 0.0036 | PASS |
 | G5_stiffness_convergence | |phi(k_n=4000) - phi(k_n->inf)| < 0.005 (mu=0) | 0.0073 | FAIL |
-| G6_stiffness_convergence_frictional | |phi(k_n=4000) - phi(k_n->inf)| < 0.005 (mu=0.1) | 0.0093 | FAIL |
+| G6_stiffness_convergence_frictional | |phi(k_n=4000) - phi(k_n->inf)| < 0.005 (mu=0.1) | 0.0084 | FAIL |
 | G12_stiffness_limit_vs_ref | |phi(k_n->inf)/phi_ref(mu=0) - 1| < 3% (mu=0, phi_ref=0.6366) | 0.6353 | PASS |
-| G13_stiffness_limit_vs_ref_frictional | |phi(k_n->inf)/phi_ref(mu=0.1) - 1| < 3% (mu=0.1, phi_ref=0.625) | 0.6174 | PASS |
+| G13_stiffness_limit_vs_ref_frictional | |phi(k_n->inf)/phi_ref(mu=0.1) - 1| < 3% (mu=0.1, phi_ref=0.625) | 0.6183 | PASS |
 | G18_production_vs_friction_ref | |phi_prod(mu=0)/phi_ref(mu=0) - 1| < 3% (phi_ref=0.6366) | 0.6424 | PASS |
 | G18b_production_vs_friction_ref | |phi_prod(mu=0.1)/phi_ref(mu=0.1) - 1| < 3% (phi_ref=0.625) | 0.6263 | PASS |
 | G17_extrapolation_selfconsistency_mu0 | 3-level fit predicts k_n=256000 to < 0.002 and the 4th level moves the limit by < 0.002 (mu=0) | 0.0008 | PASS |
+| G17_extrapolation_selfconsistency_mu0.1 | 3-level fit predicts k_n=256000 to < 0.002 and the 4th level moves the limit by < 0.002 (mu=0.1) | 0.0004 | PASS |
 | G14_timestep_convergence_mu0 | |phi(dt/2) - phi(dt)| < 0.002 (mu=0, k_n=4000, same seed) | 0.0000 | PASS |
-| G14_timestep_convergence_mu0_kn64000 | |phi(dt/2) - phi(dt)| < 0.002 (mu=0, k_n=64000, same seed) | 0.0005 | PASS |
+| G14_timestep_convergence_mu0_kn64000 | |phi(dt/2) - phi(dt)| < 0.002 (mu=0, k_n=64000, same seed) | 0.0007 | PASS |
 | G14_timestep_convergence_mu0.1 | |phi(dt/2) - phi(dt)| < 0.002 (mu=0.1, k_n=4000, same seed) | 0.0004 | PASS |
 | G14_timestep_convergence_mu0.1_kn64000 | |phi(dt/2) - phi(dt)| < 0.002 (mu=0.1, k_n=64000, same seed) | 0.0001 | PASS |
 | G7_finite_size | max-min phi over the N scan < 0.01 (mu=0) | 0.0049 | PASS |
@@ -188,10 +194,11 @@ intercept inherits the shift column as its error bar.
 * frictionless tier (k_n = 4000, N = 10000, 3 seeds): phi = 0.64237 +- 0.00022 vs reference 0.6366 (Scott & Kilgour (1969); Bernal & Mason (...): **+0.91 %** -> <3 % (满足).
 * low-friction tier (mu = 0.1): phi = 0.62628 +- 0.00040 vs reference 0.625 (Pournin et al. (2001) PRE; interpolated ...): **+0.20 %** -> <3 % (满足).
 * hard-sphere limit (mu = 0, Richardson over 4 k_n levels, p = 1.00): phi_inf = 0.63535 vs reference 0.6366: **-0.20 %** -> <3 % (满足).
-* hard-sphere limit (mu = 0.1, Richardson over 3 k_n levels, p = 0.58): phi_inf = 0.61739 vs reference 0.625: **-1.22 %** -> <3 % (满足).
+* hard-sphere limit (mu = 0.1, Richardson over 4 k_n levels, p = 0.88): phi_inf = 0.61831 vs reference 0.625: **-1.07 %** -> <3 % (满足).
 * extrapolation self-consistency (mu = 0): the 3-level fit predicts the withheld k_n = 256000 level to **0.00083** and admitting it moves the hard-sphere limit by **0.00111** -> the intercept is reproducible at the 0.002 level.
+* extrapolation self-consistency (mu = 0.1): the 3-level fit predicts the withheld k_n = 256000 level to **0.00036** and admitting it moves the hard-sphere limit by **0.00092** -> the intercept is reproducible at the 0.002 level.
 * timestep (mu = 0, k_n = 4000): halving dt moves phi by 0.00002 (below the 0.002 gate) -> the stiffness systemic is not a disguised timestep error.
-* timestep (mu = 0, k_n = 64000): halving dt moves phi by 0.00054 (below the 0.002 gate) -> the stiffness systemic is not a disguised timestep error.
+* timestep (mu = 0, k_n = 64000): halving dt moves phi by 0.00073 (below the 0.002 gate) -> the stiffness systemic is not a disguised timestep error.
 * timestep (mu = 0.1, k_n = 4000): halving dt moves phi by 0.00038 (below the 0.002 gate) -> the stiffness systemic is not a disguised timestep error.
 * timestep (mu = 0.1, k_n = 64000): halving dt moves phi by 0.00012 (below the 0.002 gate) -> the stiffness systemic is not a disguised timestep error.
 * The reference value is a *poured* experimental packing, so the comparison
@@ -209,9 +216,9 @@ intercept inherits the shift column as its error bar.
   The reported production number is quoted at `k_n`; the hard-sphere limit
   is quoted separately and neither replaces the other.
 * The systematic would already be below the 0.005 gate at `k_n = 16000`
-  (max |phi - phi_inf| = 0.0042), but that level carries 1 seed(s) per tier
+  (max |phi - phi_inf| = 0.0033), but that level carries 1 seed(s) per tier
   against the 3-seed requirement above: seed coverage, not physics, is what
-  pins the production arm at `k_n = 4000` (gaps mu=0: 0.0073, mu=0.1: 0.0093).
+  pins the production arm at `k_n = 4000` (gaps mu=0: 0.0073, mu=0.1: 0.0084).
 * The transient impact overlap is larger than the settled one (the drop
   height sets the impact velocity); only the settled maximum enters §3.
 * Periodic sidewalls: the footprint is a square cell; wall-induced layering
@@ -219,7 +226,6 @@ intercept inherits the shift column as its error bar.
   resolved by this cell.
 * `z12_fraction` is a crystalline-order proxy; it is ~0 here, i.e. the pour
   does not crystallise at these sizes.
-* **Pending runs (1 of the `plan.json` cases have no JSON in `runs/` yet).** The numbers in §3 are the runs present in the tree; re-running `aggregate.py` after the missing cases land promotes them with no code change. Cases not yet in: N=10000,mu=0.1,kn=256000,seed=1.
 * Polydispersity is absent by construction (monodisperse spheres, as the
   reference experiments); a polydisperse pour would raise phi and is out of
   scope.

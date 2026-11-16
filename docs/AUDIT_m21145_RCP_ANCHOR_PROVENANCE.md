@@ -1,6 +1,6 @@
 # AUDIT m21145 - CASE-DEM-RCP-PACKING-FRACTION 锚点溯源与精度判定审计
 
-**Mission** m21145 · **Repo** TensorDEM · **Artifacts sha256** `198195c374ba3b6c`  
+**Mission** m21145 · **Repo** TensorDEM · **Artifacts sha256** `7923e6e68ec9d120`  
 本文件全部数字由 `benchmarks/case_rcp_deposition/anchor_provenance_audit.py` 程序化写入。
 
 ## 1 结论先行
@@ -83,7 +83,7 @@
 
 | gate | mu | 截距 | vs 无摩擦文献 | vs mu 表值 | 表值 provenance | 表值判定 |
 |---|---|---|---|---|---|---|
-| G13_vs_ref_mu0 | 0 | 0.63644 | +0.03% | -0.04% | literature | PASS |
+| G13_vs_ref_mu0 | 0 | 0.63637 | +0.04% | -0.04% | literature | PASS |
 | G13_vs_ref_mu0.1 | 0.1 | 0.61705 | +3.07% (FAIL) | -1.27% | derived | WITHHELD |
 
 ## 7 图
