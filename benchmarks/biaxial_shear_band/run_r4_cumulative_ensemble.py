@@ -71,6 +71,7 @@ Add ``--only-seed N`` / ``--quick`` for smoke runs.
 from __future__ import annotations
 
 import argparse
+import functools
 import json
 import math
 import multiprocessing as mp
@@ -83,6 +84,11 @@ import numpy as np
 
 THETA_REF_DEG = 60.0
 TOLERANCE = 0.15
+#: the *measured* experimental range of the anchor reference (Desrues & Viggiani
+#: 2004 report 55-60 deg); the 60 deg midpoint is the tolerance anchor, this band
+#: is reported separately so "within 15 % of the midpoint" and "inside the
+#: measured range" never get confused.
+ANCHOR_BAND_DEG = (55.0, 60.0)
 BOND_FRACTION = 0.35
 WALL_FRICTION = 0.55
 CONSOLIDATION_STEPS = 4000
@@ -320,6 +326,44 @@ def _ensemble_stats(values: list[float]) -> dict:
                                      <= TOLERANCE)}
 
 
+def _failure_modes(records: list[dict], cum) -> dict:
+    """Why each anchor specimen did or did not produce a band angle.
+
+    Three states are physically different and must not be pooled:
+
+    ``no_post_peak_window``
+        no snapshot fell inside the late post-peak window, i.e. the specimen was
+        still hardening at the strain target (peak at the last snapshot) -- the
+        angle is undefined, not badly measured;
+    ``degenerate_window``
+        the late window held a single snapshot (``strain_span == 0``): the
+        deviator peak is at the strain target, so there is no displacement
+        increment to differentiate;
+    ``unresolved_measurement``
+        a window existed but the Radon focus failed its significance bar
+        (``z``/``eta2``), so the operator could not identify a band;
+    ``resolved``
+        a band angle with a significant focus exists.
+    """
+    modes = {"resolved": [], "degenerate_window": [],
+             "unresolved_measurement": [], "no_post_peak_window": []}
+    for r in records:
+        late = (r.get("cumulative") or {}).get("late_window") or {}
+        if not (r.get("cumulative") or {}):
+            modes["no_post_peak_window"].append(r["name"])
+        elif cum(r, "late_window", "resolved"):
+            modes["resolved"].append(r["name"])
+        elif float(late.get("strain_span") or 0.0) <= 0.0:
+            # the late window collapsed to a single snapshot: the deviator peak
+            # sits at (or one snapshot before) the strain target, so the window
+            # contains no displacement increment and the strain field is
+            # degenerate by construction
+            modes["degenerate_window"].append(r["name"])
+        else:
+            modes["unresolved_measurement"].append(r["name"])
+    return {key: {"n": len(vals), "specimens": vals} for key, vals in modes.items()}
+
+
 def _analyse(results: list[dict]) -> dict:
     anchor = [r for r in results if r["axis"] == "anchor" and "error" not in r]
     sens = [r for r in results if r["axis"] != "anchor" and "error" not in r]
@@ -343,6 +387,11 @@ def _analyse(results: list[dict]) -> dict:
             [r["one_step"]["theta_deg"] for r in anchor]),
         "specimens_resolved": int(resolved),
         "specimens_total": int(len(anchor)),
+        "failure_modes": _failure_modes(anchor, cum),
+        "literature_band_deg": list(ANCHOR_BAND_DEG),
+        "within_literature_band": bool(
+            np.isfinite(primary.get("mean_deg", math.nan))
+            and ANCHOR_BAND_DEG[0] <= primary["mean_deg"] <= ANCHOR_BAND_DEG[1]),
         "pass_rule": ("|mean-60|/60 <= 0.15 (cumulative late-window Radon) and "
                       ">= 6/8 specimens resolved"),
         "passed": bool(primary.get("within_tolerance") and resolved >= 6),
@@ -524,6 +573,17 @@ def _run_cached(config: dict, cache_dir: str, resume: bool) -> dict:
     return result
 
 
+def _run_cached_safe(config: dict, cache_dir: str, resume: bool) -> dict:
+    """``_run_cached`` that never raises, so one bad specimen cannot kill a pool."""
+    try:
+        return _run_cached(config, cache_dir, resume)
+    except Exception as exc:                             # pragma: no cover - reported
+        return {"name": config["name"], "axis": config["axis"],
+                "seed": config["seed"],
+                "confining_stress": config["confining_stress"],
+                "error": repr(exc), "traceback": traceback.format_exc()}
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--workers", type=int, default=1)
@@ -548,23 +608,20 @@ def main(argv=None) -> int:
 
     configs = [{**c, "quick": bool(args.quick)} for c in configs]
 
+    #: ``_run_cached_safe`` takes (config, cache_dir, resume); ``imap_unordered``
+    #: passes one argument per item, so the constant arguments are bound with
+    #: ``functools.partial`` (until R4 the pool call site passed them as extra
+    #: positional arguments and the multi-worker path raised TypeError).
+    worker = functools.partial(_run_cached_safe, cache_dir=args.cache,
+                              resume=args.resume)
     if args.workers > 1 and len(configs) > 1:
         with mp.get_context("spawn").Pool(min(args.workers, len(configs))) as pool:
-            for result in pool.imap_unordered(
-                    _run_cached, configs, [args.cache] * len(configs),
-                    [args.resume] * len(configs)):
+            for result in pool.imap_unordered(worker, configs):
                 results.append(result)
                 print(f"[done] {result['name']} {result.get('error', '')}", flush=True)
     else:
         for config in configs:
-            try:
-                results.append(_run_cached(config, args.cache, args.resume))
-            except Exception as exc:                     # pragma: no cover - reported
-                results.append({"name": config["name"], "axis": config["axis"],
-                                "seed": config["seed"],
-                                "confining_stress": config["confining_stress"],
-                                "error": repr(exc),
-                                "traceback": traceback.format_exc()})
+            results.append(worker(config))
             print(f"[done] {results[-1]['name']} {results[-1].get('error', '')}", flush=True)
 
     results.sort(key=lambda r: (r["axis"], r["name"]))
