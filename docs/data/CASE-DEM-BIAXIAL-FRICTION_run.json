@@ -1,0 +1,167 @@
+{
+  "case_key": "CASE-DEM-BIAXIAL-FRICTION",
+  "reference": "Bolton (1986) Geotechnique 36(1):65-78, Table 2, p.72: dense Hostun sand plane-strain peak friction angle phi_ps = 38 deg (D_r = 80 %, sigma_3 = 100 kPa); Table 1, p.67: phi_crit \u2248 33 deg for angular quartz sands",
+  "config": {
+    "columns": 12,
+    "rows": 24,
+    "confining_stress": 100000.0,
+    "wall_friction": 0.0,
+    "consolidation_steps": 1500,
+    "strain_rate": 0.05,
+    "strain_target": 0.25,
+    "snapshot_strain": 0.01,
+    "servo_gain": 0.0003,
+    "servo_velocity_limit": 1.0,
+    "freeze_bond_fraction": 0.0,
+    "radius": 0.75,
+    "friction_coefficient": 0.65
+  },
+  "specimen": {
+    "columns": 12,
+    "rows": 24,
+    "particles": 276,
+    "bonds": 0,
+    "radius": 0.75,
+    "jitter": 0.03,
+    "width0": 17.845394738065366,
+    "height0": 31.377876430563134,
+    "dt": 0.000497077533935517
+  },
+  "loading": {
+    "axial_strain_rate": 0.05,
+    "final_axial_strain": 0.22120564398893183,
+    "steps": 10059,
+    "inertial_number": 0.007182008771924469
+  },
+  "peak": {
+    "axial_strain": 0.0734870016664421,
+    "sigma_v": 468928.3389518566,
+    "sigma_h": 102709.02259276685,
+    "deviator": 366219.31635908975,
+    "friction_angle_deg": 39.840284657695435,
+    "dilation_angle_deg": 71.80512766123321,
+    "sin_phi": 0.6406497213015033,
+    "post_peak_d_eps_v_d_eps_a": -0.9932760984447668
+  },
+  "band": {
+    "angle_deg": NaN,
+    "angle_mean_deg": 47.111111111111114,
+    "angle_std_deg": 10.83660919132143,
+    "resolved": false,
+    "late_snapshots": 9,
+    "representative": {
+      "angle_deg": 22.0,
+      "folded_angle_deg": 22.0,
+      "binning": "equal_count",
+      "eta2": 0.191588567477374,
+      "conjugate": {
+        "angle_deg": 173.0,
+        "eta2": 0.18129164846025633
+      },
+      "null_eta2": 0.12660601980095332,
+      "z_score": 2.079195390695021,
+      "bins": 12,
+      "localisation_index": 0.6515812025313389,
+      "particles": 155,
+      "gamma_mean": 0.0018924702010616424,
+      "axial_strain": 0.14001475955965517,
+      "cumulative": {
+        "angle_deg": 112.0,
+        "folded_angle_deg": 68.0,
+        "binning": "equal_count",
+        "eta2": 0.25490245020340957,
+        "conjugate": {
+          "angle_deg": 175.0,
+          "eta2": 0.16453877451446874
+        },
+        "null_eta2": 0.09159125417580483,
+        "z_score": 4.476668777034348,
+        "bins": 13,
+        "localisation_index": 0.646611187047587,
+        "particles": 168,
+        "gamma_mean": 0.010338150033575758
+      }
+    }
+  },
+  "stress_definitions": {
+    "sigma_v": 453393.5623623021,
+    "sigma_h": 94177.03431791802,
+    "sigma_v_relative_difference": -0.03312825286754403,
+    "sigma_h_relative_difference": -0.08306951092970176,
+    "friction_angle_internal_deg": 40.99693520735962,
+    "friction_angle_relative_difference": 0.029032185879243458
+  },
+  "theory": {
+    "mohr_coulomb": 64.92014232884772,
+    "roscoe": 80.9025638306166,
+    "arthur": 72.91135307973217
+  },
+  "friction_angle": {
+    "phi_peak_wall_deg": 39.840284657695435,
+    "phi_peak_internal_deg": 40.99693520735962,
+    "phi_ref_deg": 38.0,
+    "tolerance": 0.08
+  },
+  "judgement": {
+    "ref_deg": 38.0,
+    "got_deg": 39.840284657695435,
+    "relative_error": 0.048428543623564066,
+    "tolerance": 0.08,
+    "within_tolerance": true,
+    "passed": true
+  },
+  "critical_state": {
+    "phi_cv_deg": 23.670738583882663,
+    "q_cv_Pa": 137171.02774575897,
+    "sigma_h_cv_Pa": 102215.49680107186,
+    "d_eps_v_d_eps_a": -0.9248335391944135,
+    "q_drift": 0.09894740829820954,
+    "converged": false,
+    "flags": {
+      "isochoric": false,
+      "deviator_stationary": false,
+      "window_independent": true,
+      "servo_on_target": true
+    },
+    "window": [
+      0.21696451519114546,
+      0.22120564398893183
+    ],
+    "peak_phi_deg": 40.063654868663356,
+    "peak_strain": 0.0725193321996244,
+    "rowe": {
+      "mu": 0.65,
+      "phi_mu_deg": 33.02386755579665,
+      "phi_cv_predicted_deg": 33.02386755579665,
+      "phi_from_rowe_relation_mean_deg": 47.70675063367282,
+      "measured_minus_rowe_mean": -0.5981484076090618
+    },
+    "phi_cv_vs_rowe_rel_err": 0.28322330678292224
+  },
+  "bolton_dilatancy": {
+    "I_R": 3.233909214762554,
+    "A": 5.0,
+    "note": "Bolton (1986) Eq.8: phi_peak = phi_cv + A*I_R, A=5 (plane strain)"
+  },
+  "dimensionless": {
+    "inertial_number": 0.012209115447074781,
+    "strain_rate_non-dimensional": 0.012209115447074781,
+    "confining_stress_kPa": 100.0
+  },
+  "elapsed_s": 109.14,
+  "environment": {
+    "python": "3.11.6",
+    "platform": "Linux-6.6.52-1.7.lns23.loongarch64-loongarch64-with-glibc2.38",
+    "machine": "loongarch64"
+  },
+  "repro_cmd": "TENSORDEM_THREADS=4 PYTHONPATH=src python benchmarks/case_dem_biaxial_friction/run_case.py",
+  "distilled": {
+    "dropped_channels": {},
+    "source": {
+      "artefact": "docs/data/CASE-DEM-BIAXIAL-FRICTION_run.json",
+      "sha256": "ef34e1b494f9e17e266848badcfee41247a62e1561a3d43ea3f593b5cbb27547"
+    },
+    "config_fingerprint": "83800e5c17a6e818",
+    "run_record_digest": "ef34e1b494f9e17e266848badcfee41247a62e1561a3d43ea3f593b5cbb27547"
+  }
+}
