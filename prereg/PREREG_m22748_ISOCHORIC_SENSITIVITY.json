@@ -1,0 +1,38 @@
+{
+ "mission": 22748,
+ "preregistered_before_sensitivity_runs_landed": true,
+ "timestamp_utc": "2026-11-16T02:06Z",
+ "decision": "Do the four isochoric sensitivity configurations (resolution / particle friction / confining stress / strain rate) change the round-3 verdict phi_cv = 14.3 deg << Rowe limit 28.81 deg?",
+ "alternatives": {
+  "H1_shape": "The 50% gap is a 2D-disc shape/kinematics effect: phi_cv stays far from 28.81 deg in every sensitivity config.",
+  "H2_discretisation": "The gap is a numerical/discretisation artefact: refining 24x48 -> 16x32 or slowing the rate moves phi_cv towards 28.81 deg."
+ },
+ "decision_rules_predeclared": {
+  "resolution_invariance": "|phi_cv(16x32) - phi_cv(24x48)| <= 2.0 deg => resolution-independent",
+  "friction_monotonicity": "phi_cv(mu=0.30) < phi_cv(mu=0.55) strictly; report sin(phi_cv)/mu ratio for both",
+  "pressure_invariance": "|phi_cv(p=200 kPa) - phi_cv(p=100 kPa)| <= 2.0 deg => pressure-independent (friction angle is a stress-ratio quantity)",
+  "rate_invariance": "|phi_cv(eps_dot=0.005) - phi_cv(eps_dot=0.01)| <= 2.0 deg AND inertial number < 1e-3 => rate-independent"
+ },
+ "outcome_metric": "phi_cv_deg from tensordem.biaxial_critical_state.critical_state_from_stress_path(strain_measure='log', boundary_control='isochoric'), same window rule (last 20% above eps_a=0.20) as round 3",
+ "baseline": "anchor_24x48_mu055_p100 (round-3 published value 14.31 deg)",
+ "stopping_rule": "one run per configuration (deterministic seed); no re-tuning of the window, tolerances, or the reference after seeing results",
+ "analysis": "same analyse_isochoric.py path for all configs; no exclusions; uncertainty read from window_sensitivity spread",
+ "acknowledged_limits": "single seed per config (no ensemble); phi_cv uncertainty ~ +-1.5 deg from window spread; q-drift gate remains failed for the anchor",
+ "pending_configurations": [
+  "res_16x32_mu055_p100",
+  "mu_24x48_mu030_p100",
+  "pressure_24x48_mu055_p200",
+  "rate_24x48_mu055_p100_slow"
+ ],
+ "attempt_log": {
+  "cluster_jobs": {
+   "cj4339": "anchor (already published, re-submitted)",
+   "cj4340": "res_16x32",
+   "cj4341": "mu_030",
+   "cj4342": "p_200",
+   "cj4343": "rate_slow"
+  },
+  "outcome": "all five jobs returned state=succeeded with empty artefacts (0 kB fetch) and rc=0 after ~1 minute of wall clock, i.e. they did not execute the 120 k-step runs; no stress path was produced. The sensitivity matrix is therefore NOT reported — round 4 must re-submit and the decision rules above stay unmodified.",
+  "honest_status": "pending (no data)"
+ }
+}
