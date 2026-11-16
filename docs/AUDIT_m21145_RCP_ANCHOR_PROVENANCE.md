@@ -1,6 +1,6 @@
 # AUDIT m21145 - CASE-DEM-RCP-PACKING-FRACTION 锚点溯源与精度判定审计
 
-**Mission** m21145 · **Repo** TensorDEM · **Artifacts sha256** `dcca1f07a75dba38`  
+**Mission** m21145 · **Repo** TensorDEM · **Artifacts sha256** `198195c374ba3b6c`  
 本文件全部数字由 `benchmarks/case_rcp_deposition/anchor_provenance_audit.py` 程序化写入。
 
 ## 1 结论先行
@@ -8,7 +8,7 @@
 1. **无摩擦档 (mu=0) 的精度声称站得住**：生产值 φ=0.64237 vs 文献 0.6366，相对误差 +0.91%，判定 **PASS**（锚点 provenance = literature）。
 2. **低摩擦档 (mu=0.1) 的 3% 声称不成立，降级为 WITHHELD**：现网唯一 mu 索引锚 φ=0.625 自身标为 *interpolated from DEM study*（provenance = derived），拿它认证同一代码族的输出是自指。可说的最强结论是廓形必要条件：PASS_BRACKET。
 3. **跨脚本判定互相矛盾已消解**：同一硬球截距在 `docs/CASE_RCP_PACKING_FRACTION_M20918.md` 被判 -1.22%（vs 表值 0.6250）而 `runs/order_audit.json` 判 +3.07% FAIL（vs 无摩擦文献 0.6366）。两者锚点不同且都不是 mu=0.1 的文献点；本审计把锚点策略写进代码（`tensordem.rcp_references.judge`）。
-4. **低摩擦外推阶不可辨识的欠账已量化**：p∈[0.5,1.5] 下截距区间 [0.61697, 0.61895]，宽度 0.00198；第四刚度水平（k_n=256000, mu=0.1）尚未回件，故拟合阶 p=0.51 仍不可检验，本节只给出阶次区间包络，不把单个外推值当作定值。
+4. **低摩擦外推阶不可辨识的欠账已量化**：p∈[0.5,1.5] 下截距区间 [0.61791, 0.61850]，宽度 0.00059；第四刚度水平 k_n=256000 已补测，四点拟合 p=0.8777530885312191、φ∞=0.61831；留一预测误差 4.51e-04。
 
 ## 2 锚点溯源分级表
 
@@ -46,9 +46,12 @@
 | 4000 | 0.62628 (3) | 3.99e-04 | deposition_n10000_mu0.1_kn4000_e0.1_seed1.json<br>deposition_n10000_mu0.1_kn4000_e0.1_seed2.json<br>deposition_n10000_mu0.1_kn4000_e0.1_seed3.json |
 | 16000 | 0.62159 (1) | - | deposition_n10000_mu0.1_kn16000_e0.1_seed1.json |
 | 64000 | 0.61928 (1) | - | deposition_n10000_mu0.1_kn64000_e0.1_seed1.json |
+| 256000 | 0.61860 (1) | - | deposition_n10000_mu0.1_kn256000_e0.1_seed1.json |
 
 - 三点拟合: p = 0.512, φ∞ = 0.61705
-- 阶次区间 p∈[0.5,1.5] → φ∞ ∈ [0.61697, 0.61895]
+- 四点拟合: p = 0.878, φ∞ = 0.61831
+- 留一预测检验: 预测最硬一级误差 4.51e-04, 纳入后截距位移 1.26e-03
+- 阶次区间 p∈[0.5,1.5] → φ∞ ∈ [0.61791, 0.61850]
 
 ## 4 判定矩阵（锚点策略）
 
@@ -61,8 +64,9 @@
 | 0 | intercept bracket (high edge, p=0.5) | 0.63556 | 是 | 0.6366 (literature) | -0.16% | PASS | PASS |
 | 0.1 | production k_n=4000 | 0.62628 | 是 | 0.6250 (derived) | +0.20% | WITHHELD | PASS_BRACKET |
 | 0.1 | intercept (3 levels) | 0.61705 | 否 | 0.6250 (derived) | -1.27% | WITHHELD | PASS_BRACKET |
-| 0.1 | intercept bracket (low edge, p=1.5) | 0.61697 | 否 | 0.6250 (derived) | -1.28% | WITHHELD | PASS_BRACKET |
-| 0.1 | intercept bracket (high edge, p=0.5) | 0.61895 | 否 | 0.6250 (derived) | -0.97% | WITHHELD | PASS_BRACKET |
+| 0.1 | intercept (4 levels) | 0.61831 | 否 | 0.6250 (derived) | -1.07% | WITHHELD | PASS_BRACKET |
+| 0.1 | intercept bracket (low edge, p=1.5) | 0.61791 | 否 | 0.6250 (derived) | -1.13% | WITHHELD | PASS_BRACKET |
+| 0.1 | intercept bracket (high edge, p=0.5) | 0.61850 | 否 | 0.6250 (derived) | -1.04% | WITHHELD | PASS_BRACKET |
 
 ## 5 门控
 
@@ -70,10 +74,10 @@
 |---|---|---|---|
 | A1_frictionless_production_vs_literature | |phi(k_n=4000, mu=0) - 0.6366|/phi_ref < 3% | 9.071e-03 | PASS |
 | A2_frictionless_intercept_bracket_stable | nuisance-order bracket width < 0.005 (mu=0) | 9.034e-04 | PASS |
-| A3_lowfriction_intercept_bracket_stable | nuisance-order bracket width < 0.005 (mu=0.1) | 1.977e-03 | PASS |
-| A4_lowfriction_order_checkable | mu=0.1 ladder has >=4 stiffness levels (leave-one-out check exists) | 3 | FAIL |
+| A3_lowfriction_intercept_bracket_stable | nuisance-order bracket width < 0.005 (mu=0.1) | 5.856e-04 | PASS |
+| A4_lowfriction_order_checkable | mu=0.1 ladder has >=4 stiffness levels (leave-one-out check exists) | 4 | PASS |
 | A5_no_claim_on_derived_anchor | 0 verdicts claim accuracy against a non-literature anchor | 0 | PASS |
-| A6_policy_coverage | every verdict carries anchor provenance + policy | 9 | PASS |
+| A6_policy_coverage | every verdict carries anchor provenance + policy | 10 | PASS |
 
 ## 6 与已并订单审计的一致性
 
@@ -111,6 +115,7 @@
 | intercept bracket (high edge, p=0.5) (mu=0) | 0.6366 (literature) | 0.63556 | -0.16% | 是 |
 | production k_n=4000 (mu=0.1) | 0.6250 (derived) | 0.62628 | +0.20% | 无基准(锚点非文献)→WITHHELD |
 | intercept (3 levels) (mu=0.1) | 0.6250 (derived) | 0.61705 | -1.27% | 无基准(锚点非文献)→WITHHELD |
-| intercept bracket (low edge, p=1.5) (mu=0.1) | 0.6250 (derived) | 0.61697 | -1.28% | 无基准(锚点非文献)→WITHHELD |
-| intercept bracket (high edge, p=0.5) (mu=0.1) | 0.6250 (derived) | 0.61895 | -0.97% | 无基准(锚点非文献)→WITHHELD |
+| intercept (4 levels) (mu=0.1) | 0.6250 (derived) | 0.61831 | -1.07% | 无基准(锚点非文献)→WITHHELD |
+| intercept bracket (low edge, p=1.5) (mu=0.1) | 0.6250 (derived) | 0.61791 | -1.13% | 无基准(锚点非文献)→WITHHELD |
+| intercept bracket (high edge, p=0.5) (mu=0.1) | 0.6250 (derived) | 0.61850 | -1.04% | 无基准(锚点非文献)→WITHHELD |
 
