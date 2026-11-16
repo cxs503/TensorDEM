@@ -163,7 +163,7 @@ intercept inherits the shift column as its error bar.
 
 ## 5 Gates
 
-| gate | criterion | got | pass |
+| gate | criterion | got | verdict |
 |---|---|---|---|
 | G1_frictionless_vs_ref | |phi/phi_ref - 1| < 3%, phi_ref=0.6366, N=10000, k_n=4000 | 0.6424 | PASS |
 | G2_low_friction_in_band | 0.62 <= phi <= 0.66 (mu=0.1) | 0.6263 | PASS |
@@ -171,10 +171,10 @@ intercept inherits the shift column as its error bar.
 | G4_overlap_correction_is_small | |phi - phi_overlap_corrected| / phi < 1% | 0.0036 | PASS |
 | G5_stiffness_convergence | |phi(k_n=4000) - phi(k_n->inf)| < 0.005 (mu=0) | 0.0073 | FAIL |
 | G6_stiffness_convergence_frictional | |phi(k_n=4000) - phi(k_n->inf)| < 0.005 (mu=0.1) | 0.0084 | FAIL |
-| G12_stiffness_limit_vs_ref | |phi(k_n->inf)/phi_ref(mu=0) - 1| < 3% (mu=0, phi_ref=0.6366) | 0.6353 | PASS |
-| G13_stiffness_limit_vs_ref_frictional | |phi(k_n->inf)/phi_ref(mu=0.1) - 1| < 3% (mu=0.1, phi_ref=0.625) | 0.6183 | PASS |
-| G18_production_vs_friction_ref | |phi_prod(mu=0)/phi_ref(mu=0) - 1| < 3% (phi_ref=0.6366) | 0.6424 | PASS |
-| G18b_production_vs_friction_ref | |phi_prod(mu=0.1)/phi_ref(mu=0.1) - 1| < 3% (phi_ref=0.625) | 0.6263 | PASS |
+| G12_stiffness_limit_vs_ref | |phi(k_n->inf)/phi_ref(mu=0) - 1| < 3% (mu=0, phi_ref=0.6366, literature anchor) | 0.6353 | PASS |
+| G13_stiffness_limit_vs_ref_frictional | phi(k_n->inf) inside disordered-packing bracket (mu=0.1; anchor derived at phi_ref=0.625: accuracy claim WITHHELD, bracket is a necessary condition) | 0.6183 | PASS_BRACKET |
+| G18_production_vs_friction_ref | |phi_prod/phi_ref(mu=0) - 1| < 3% (mu=0, phi_ref=0.6366, literature anchor) | 0.6424 | PASS |
+| G18b_production_vs_friction_ref | phi_prod inside disordered-packing bracket (mu=0.1; anchor derived at phi_ref=0.625: accuracy claim WITHHELD, bracket is a necessary condition) | 0.6263 | PASS_BRACKET |
 | G17_extrapolation_selfconsistency_mu0 | 3-level fit predicts k_n=256000 to < 0.002 and the 4th level moves the limit by < 0.002 (mu=0) | 0.0008 | PASS |
 | G17_extrapolation_selfconsistency_mu0.1 | 3-level fit predicts k_n=256000 to < 0.002 and the 4th level moves the limit by < 0.002 (mu=0.1) | 0.0004 | PASS |
 | G14_timestep_convergence_mu0 | |phi(dt/2) - phi(dt)| < 0.002 (mu=0, k_n=4000, same seed) | 0.0000 | PASS |
@@ -192,9 +192,9 @@ intercept inherits the shift column as its error bar.
 ## 6 Error judgement
 
 * frictionless tier (k_n = 4000, N = 10000, 3 seeds): phi = 0.64237 +- 0.00022 vs reference 0.6366 (Scott & Kilgour (1969); Bernal & Mason (...): **+0.91 %** -> <3 % (满足).
-* low-friction tier (mu = 0.1): phi = 0.62628 +- 0.00040 vs reference 0.625 (Pournin et al. (2001) PRE; interpolated ...): **+0.20 %** -> <3 % (满足).
-* hard-sphere limit (mu = 0, Richardson over 4 k_n levels, p = 1.00): phi_inf = 0.63535 vs reference 0.6366: **-0.20 %** -> <3 % (满足).
-* hard-sphere limit (mu = 0.1, Richardson over 4 k_n levels, p = 0.88): phi_inf = 0.61831 vs reference 0.625: **-1.07 %** -> <3 % (满足).
+* low-friction tier (mu = 0.1): phi = 0.62628 +- 0.00040 vs table entry 0.625 (derived, Pournin et al. (2001) PRE; interpolated ...): +0.20 % is a ranking only, **not an accuracy claim** (claim WITHHELD); strongest admissible statement: inside the disordered-packing bracket [0.5600, 0.6480] -> PASS_BRACKET.
+* hard-sphere limit (mu = 0, Richardson over 4 k_n levels, p = 1.00): phi = 0.63535 +- 0.00000 vs reference 0.6366 (Scott & Kilgour (1969); Bernal & Mason (...): **-0.20 %** -> <3 % (满足).
+* hard-sphere limit (mu = 0.1, Richardson over 4 k_n levels, p = 0.88): phi = 0.61831 +- 0.00000 vs table entry 0.625 (derived, Pournin et al. (2001) PRE; interpolated ...): -1.07 % is a ranking only, **not an accuracy claim** (claim WITHHELD); strongest admissible statement: inside the disordered-packing bracket [0.5600, 0.6480] -> PASS_BRACKET.
 * extrapolation self-consistency (mu = 0): the 3-level fit predicts the withheld k_n = 256000 level to **0.00083** and admitting it moves the hard-sphere limit by **0.00111** -> the intercept is reproducible at the 0.002 level.
 * extrapolation self-consistency (mu = 0.1): the 3-level fit predicts the withheld k_n = 256000 level to **0.00036** and admitting it moves the hard-sphere limit by **0.00092** -> the intercept is reproducible at the 0.002 level.
 * timestep (mu = 0, k_n = 4000): halving dt moves phi by 0.00002 (below the 0.002 gate) -> the stiffness systemic is not a disguised timestep error.

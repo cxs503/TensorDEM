@@ -624,7 +624,7 @@
   },
   {
    "id": "A5_no_claim_on_derived_anchor",
-   "criterion": "0 verdicts claim accuracy against a non-literature anchor",
+   "criterion": "0 accuracy claims (this audit + merged ledger) rest on a non-literature anchor",
    "got": 0,
    "pass": true
   },
@@ -791,5 +791,5 @@
   "intercept_policy": "benchmarks/case_rcp_deposition/figures/fig_m21145_intercept_policy.png",
   "verdict_map": "benchmarks/case_rcp_deposition/figures/fig_m21145_verdict_map.png"
  },
- "self_sha256": "7923e6e68ec9d12071f195cf213f4d8af299490f13a6799bb83230eb4b4fd69d"
+ "self_sha256": "00908c38d79e256c8ac97632c8161c34a99e5f3b5efe55eb00f0e9c5d107a6ac"
 }
