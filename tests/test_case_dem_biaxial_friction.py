@@ -45,7 +45,16 @@ from tensordem.biaxial_friction_case import (
 torch.set_num_threads(1)
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-ARTIFACT = os.path.join(REPO, "artifacts", CASE_KEY, "run.json")
+# Run records live in two tiers: the full artefact written by ``run_case.py``
+# under ``artifacts/`` (filtered out of the PR gate, so usually absent on a
+# clean checkout) and the tracked distilled record under ``docs/data/``.  The
+# self-consistency tests below must run against whichever exists -- guarding on
+# the untracked path alone silently turned them into no-ops on ``main``.
+_FULL_ARTIFACT = os.path.join(REPO, "artifacts", CASE_KEY, "run.json")
+_TRACKED_ARTIFACT = os.path.join(REPO, "docs", "data",
+                                 f"{CASE_KEY}_run.json")
+ARTIFACT = (_FULL_ARTIFACT if os.path.exists(_FULL_ARTIFACT)
+            else _TRACKED_ARTIFACT)
 
 
 # ---------------------------------------------------------------------------
