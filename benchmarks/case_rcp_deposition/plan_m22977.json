@@ -1,0 +1,39 @@
+{
+ "mission": 22977,
+ "anchor": "CASE-DEM-RCP-PACKING-FRACTION",
+ "note": "m22824 的 6 个作业（cj4410-cj4415）在节点上 staging 阶段因 GitHub 不可达全部失败且零产物，本单以 stage_dir 直投重递；本账由 submission_ledger.py 对在盘产物逐行核对。",
+ "jobs": [
+  {
+   "jid": "cj4495",
+   "tag": "deposition_n10000_mu0.1_kn64000_e0.1_seed2",
+   "why": "低摩擦刚性端粗时间步第二种子（原档仅 seed1）"
+  },
+  {
+   "jid": "cj4496",
+   "tag": "deposition_n10000_mu0.1_kn64000_e0.1_seed3",
+   "why": "同上第三种子，使粗侧达 3 种子"
+  },
+  {
+   "jid": "cj4497",
+   "tag": "deposition_n10000_mu0.1_kn64000_e0.1_seed2_dtf0.025",
+   "why": "低摩擦刚性端细时间步第二种子"
+  },
+  {
+   "jid": "cj4498",
+   "tag": "deposition_n10000_mu0.1_kn64000_e0.1_seed3_dtf0.025",
+   "why": "同上第三种子，使细侧达 3 种子"
+  },
+  {
+   "jid": "cj4499",
+   "tag": "deposition_n10000_mu0_kn4000_e0.1_seed1",
+   "why": "复现证书：cf4b761c 存档算例在当前实现 b44c1914 下重跑",
+   "dir": "runs_repro_m22824"
+  },
+  {
+   "jid": "cj4500",
+   "tag": "deposition_n10000_mu0_kn64000_e0.1_seed1",
+   "why": "同上，跨摘要时间步对所在档",
+   "dir": "runs_repro_m22824"
+  }
+ ]
+}
