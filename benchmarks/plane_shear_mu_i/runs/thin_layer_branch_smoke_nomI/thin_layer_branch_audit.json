@@ -1,0 +1,93 @@
+{
+ "geometry": {
+  "gap": 0.15,
+  "diameter": 0.01,
+  "layers": 15.0,
+  "nu_max_thick": 0.81,
+  "nu_max_thin": 0.78,
+  "a": 0.3,
+  "layer_separation": "the archived excerpt does not give the layer count that separates its 'thin' from its 'thick' case; the branch is therefore carried as an envelope, not resolved"
+ },
+ "summary": {
+  "n_points": 2,
+  "tolerance": 0.1,
+  "a": 0.3,
+  "rows": [
+   {
+    "I": 0.11056844580212694,
+    "phi": 0.8042556601589115,
+    "tolerance": 0.1,
+    "a": 0.3,
+    "branches": {
+     "thick": {
+      "nu_max": 0.81,
+      "nu_ref": 0.776829466259362,
+      "err": 0.03530529555169143,
+      "err_pct": 3.530529555169143,
+      "within": true
+     },
+     "thin": {
+      "nu_max": 0.78,
+      "nu_ref": 0.746829466259362,
+      "err": 0.07689331566840762,
+      "err_pct": 7.689331566840762,
+      "within": true
+     }
+    },
+    "branch_sensitive": false,
+    "err_shift_pct": 4.158802011671619,
+    "file": "prof_r31_w0.5_I0.05_s0_smoke.json",
+    "I_source": "I_bulk"
+   },
+   {
+    "I": 0.45053266274742965,
+    "phi": 0.7838519701423564,
+    "tolerance": 0.1,
+    "a": 0.3,
+    "branches": {
+     "thick": {
+      "nu_max": 0.81,
+      "nu_ref": 0.6748402011757711,
+      "err": 0.16153715913286512,
+      "err_pct": 16.15371591328651,
+      "within": false
+     },
+     "thin": {
+      "nu_max": 0.78,
+      "nu_ref": 0.6448402011757711,
+      "err": 0.21557553129150106,
+      "err_pct": 21.557553129150104,
+      "within": false
+     }
+    },
+    "branch_sensitive": false,
+    "err_shift_pct": 5.403837215863593,
+    "file": "prof_r31_w0.5_I0.2_s0_smoke.json",
+    "I_source": "I_bulk"
+   }
+  ],
+  "verdict": {
+   "thick": "FAIL",
+   "thin": "FAIL"
+  },
+  "worst_err_pct": {
+   "thick": 16.15371591328651,
+   "thin": 21.557553129150104
+  },
+  "branch_sensitive": false
+ },
+ "comparison": {
+  "phi_verdict_by_branch": {
+   "thick": "FAIL",
+   "thin": "FAIL"
+  },
+  "phi_worst_abs_err_pct_by_branch": {
+   "thick": 16.15371591328651,
+   "thin": 21.557553129150104
+  },
+  "branch_sensitive": false,
+  "phi_statement": "BRANCH-INSENSITIVE: both nu_max branches give FAIL, so the thin/thick ambiguity does not change the phi verdict.",
+  "mu_statement": "the friction law is thickness-invariant in the archived text ('the dilatancy and friction laws are not affected'), so no mu verdict may be attributed to the branch choice",
+  "layer_separation": "the archived excerpt does not give the layer count that separates its 'thin' from its 'thick' case; the branch is therefore carried as an envelope, not resolved"
+ }
+}
