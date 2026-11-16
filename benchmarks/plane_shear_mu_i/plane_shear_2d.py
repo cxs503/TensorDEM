@@ -71,8 +71,19 @@ from pathlib import Path
 import numpy as np
 
 REPO = Path(__file__).resolve().parents[2]
-if str(REPO / "src") not in sys.path:
-    sys.path.insert(0, str(REPO / "src"))
+BENCH_DIR = Path(__file__).resolve().parent
+for _p in (str(REPO / "src"), str(BENCH_DIR)):
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
+
+# Round 31 instrumentation: bin-resolved flow profile + contact/kinetic stress
+# split (see ``profile_r31`` for why R30 asked for it).  Optional on import so
+# that the archived rounds keep running even if the analysis tooling is absent.
+try:  # pragma: no cover - exercised by every simulate() call
+    from profile_r31 import ProfileAccumulator, compare_to_nominal
+except Exception:  # pragma: no cover
+    ProfileAccumulator = None  # type: ignore[assignment]
+    compare_to_nominal = None  # type: ignore[assignment]
 
 from tensordem.granular2d.engine import DiskConfig, DiskSystem  # noqa: E402
 
@@ -676,12 +687,15 @@ def simulate(case: PlaneShear2DCase, *, progress: bool = False) -> dict:
     cell._set_wall_kinematics(0.0)
     t_shear_start = cell.time
     gamma = 0.0
+    prof = ProfileAccumulator() if ProfileAccumulator is not None else None
     while gamma < case.shear_settle_strain + case.strain_measure:
         cell.advance(block)
         m = cell.measure()
         gamma = (cell.time - t_shear_start) * cell.shear_rate
         m["strain"] = gamma
         m["phase"] = "measure" if gamma >= case.shear_settle_strain else "transient"
+        if prof is not None and m["phase"] == "measure":
+            prof.add(cell)
         samples.append(m)
         if progress and len(samples) % 500 == 0:
             print(f"  shear strain {gamma:.2f} phi {m['phi_gap']:.3f} "
@@ -754,6 +768,28 @@ def simulate(case: PlaneShear2DCase, *, progress: bool = False) -> dict:
     summary["drift_z_mu_bulk"] = drift("mu_bulk")
     summary["drift_z_mu_wall"] = drift("mu_wall")
     summary["drift_z_phi_gap"] = drift("phi_gap")
+
+    # --- round 31: bin-resolved flow profile and contact/kinetic stress split
+    if prof is not None and prof.samples > 0:
+        profile = prof.finalize(
+            width=case.width, thickness=case.thickness,
+            y_bottom=cell.y_bottom, y_top=cell.y_top, radius=case.radius,
+            density=case.density, v_wall=v_wall)
+        summary["profile"] = profile
+        if compare_to_nominal is not None:
+            summary["profile_derived"] = compare_to_nominal(
+                profile, gap_eff=summary["gap_eff_final"],
+                diameter=case.diameter, pressure=case.normal_stress,
+                density=case.density)
+        # the pooled virial of the bins must reproduce the whole-cell virial:
+        # a free consistency check on the binning (no literature constant used)
+        p_tot = profile["p_contact_total"]
+        summary["profile_consistency"] = {
+            "p_bin_over_p_bulk": (p_tot / summary["p_bulk"]
+                                  if summary["p_bulk"] else float("nan")),
+            "mu_bin_over_mu_bulk": (profile["mu_contact"] / summary["mu_bulk"]
+                                    if summary["mu_bulk"] else float("nan")),
+        }
     summary["samples"] = samples
     return summary
 
