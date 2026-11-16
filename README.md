@@ -132,10 +132,11 @@ python -m tensordem --nx 31 --ny 5 --speed 0.5 --breaking-strain 0.01 \
 python -m pytest -q        # 全套测试（CI 用同一条命令）
 ```
 
-测试套件是 **pytest 风格**（2026-11 巡检快照：343 个测试文件、2714 个模块级 `test_*` 函数、
-319 个 `unittest.TestCase` 类，计数脚本见 `scripts/readme_api_audit.py:_test_style`）。<!-- audit-allow: test-runner: 本句是解释为何改用 pytest 的说明，不是可执行命令 -->
+测试套件是 **pytest 风格**（2026-11 巡检快照：698 个测试文件、6506 个模块级 `test_*` 函数、
+346 个 `unittest.TestCase` 类，计数脚本见 `scripts/readme_api_audit.py:_test_style`，
+可用 `python scripts/readme_claim_audit.py` 复核本句是否仍与代码树一致）。<!-- audit-allow: test-runner: 本句是解释为何改用 pytest 的说明，不是可执行命令 -->
 `python -m unittest discover -s tests` 只认 `TestCase`
-子类，会**静默跳过**这 2714 个函数并照样打印 `OK`（假绿，本仓库 2026-11 已实测：
+子类，会**静默跳过**这 6506 个函数并照样打印 `OK`（假绿，本仓库 2026-11 已实测：
 `-p test_tutorial_first_verified_run.py` 报 `Ran 0 tests ... OK`），因此本文档统一用
 `python -m pytest -q`。
 
