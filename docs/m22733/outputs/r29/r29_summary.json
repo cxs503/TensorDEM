@@ -1,0 +1,182 @@
+{
+ "round": 29,
+ "mission": 22733,
+ "tolerance": 0.1,
+ "reference": {
+  "mu_s": 0.36,
+  "mu_2": 0.84,
+  "I_0": 0.3,
+  "status": "da Cruz 2005 / GDR MiDi 2004 fit as quoted in rounds 1-5: mu_s=0.36, mu_2=0.84, I0=0.30 -- QUOTED, NOT ARCHIVED; a second in-repo triple (0.379, 0.641, 0.279) exists in tests/test_mu_i_rheology.py, see reference_provenance.py"
+ },
+ "runs": [
+  {
+   "file": "long_r29_w0.5_I0.05_s0.json",
+   "w": 0.5,
+   "I_target": 0.05,
+   "seed": 0,
+   "strain_measure": 0.6,
+   "strain_max": 0.9015899017026157,
+   "n_samples": 310,
+   "duration_s": 70.25630187988281,
+   "stats": {
+    "mu_wall": {
+     "tau": 4.820090726105537,
+     "n_eff": 64.3141421220652,
+     "n": 310,
+     "window": 26,
+     "sd": 0.08496803781398689,
+     "sem": 0.01059503385067303
+    },
+    "mu_bulk": {
+     "tau": 8.744196397309267,
+     "n_eff": 35.45208569370561,
+     "n": 310,
+     "window": 44,
+     "sd": 0.056825503471372794,
+     "sem": 0.009543823455884216
+    },
+    "phi_gap": {
+     "tau": 83.51911040241069,
+     "n_eff": 3.711725358500133,
+     "n": 310,
+     "window": 155,
+     "sd": 0.004573612271730213,
+     "sem": 0.0023739492339443654
+    }
+   },
+   "blocks": {
+    "mu_wall": [
+     {
+      "lo": 0.0,
+      "hi": 1.0,
+      "n": 310,
+      "mean": 0.17706435820615848,
+      "sem": 0.01059503385067303
+     }
+    ],
+    "mu_bulk": [
+     {
+      "lo": 0.0,
+      "hi": 1.0,
+      "n": 310,
+      "mean": 0.15271549395634818,
+      "sem": 0.009543823455884216
+     }
+    ],
+    "phi_gap": [
+     {
+      "lo": 0.0,
+      "hi": 1.0,
+      "n": 310,
+      "mean": 0.8042556601589115,
+      "sem": 0.0023739492339443654
+     }
+    ],
+    "I_bulk": [
+     {
+      "lo": 0.0,
+      "hi": 1.0,
+      "n": 310,
+      "mean": 0.11056844580212694,
+      "sem": 0.02572020239327686
+     }
+    ]
+   },
+   "trend_all": {
+    "slope": NaN,
+    "slope_err": NaN,
+    "z": NaN,
+    "per_strain": NaN
+   },
+   "trend_second": {
+    "slope": NaN,
+    "slope_err": NaN,
+    "z": NaN,
+    "per_strain": NaN
+   },
+   "last_block_pair_z": NaN,
+   "last_two_consistent": false,
+   "stationary": false,
+   "saturation": {
+    "mu_inf": 0.1698975498625901,
+    "a": 5.869761499414084,
+    "gamma0": 0.06675641669743432,
+    "rms": 7.918328187572595,
+    "n": 310
+   },
+   "mu_wall_mean": 0.17706435820615848,
+   "mu_wall_last_half": 0.17271059148892653,
+   "mu_bulk_last_half": 0.16509839469635015,
+   "phi_gap_last_half": 0.806567967493388,
+   "I_bulk_last_half": 0.08165675595555362,
+   "psi6_mean": 0.382706201166441,
+   "z_mean": 2.87,
+   "p_bulk_over_p_wall": 0.9675223089411403
+  }
+ ],
+ "ensemble": [
+  {
+   "w": 0.5,
+   "I_target": 0.05,
+   "n_seeds": 1,
+   "I_measured": 0.08165675595555362,
+   "mu": 0.17271059148892653,
+   "mu_seed_sem": NaN,
+   "phi": 0.806567967493388,
+   "phi_seed_sem": NaN,
+   "all_stationary": false,
+   "any_stationary": false,
+   "files": [
+    "long_r29_w0.5_I0.05_s0.json"
+   ],
+   "I": 0.08165675595555362,
+   "mu_ref": 0.4626976261969545,
+   "err_pct": -62.67311917969305,
+   "within_tol": false,
+   "envelope_best_case_err_pct": 118.36779114334463,
+   "envelope_can_rescue": false,
+   "phi_ref": 0.6271627967253807,
+   "phi_err_pct": 28.605837544053887,
+   "phi_within_tol": false
+  }
+ ],
+ "curve_envelope": {},
+ "archived_1_strain": {
+  "w0.5_I0.05": {
+   "mu_wall": 0.1543479868430177,
+   "mu_bulk": 0.15459972685798318,
+   "phi_gap": 0.811782334060493,
+   "I_bulk": 0.04744621278667478,
+   "mu_wall_sd": 0.05615642120389831,
+   "drift_z_mu_wall": -9.621768075537865,
+   "strain_measure": 1.0
+  },
+  "w0.5_I0.2": {
+   "mu_wall": 0.16158154648301748,
+   "mu_bulk": 0.1383020983086348,
+   "phi_gap": 0.808454501794237,
+   "I_bulk": 0.17300963104011965,
+   "mu_wall_sd": 0.0653584946399209,
+   "drift_z_mu_wall": 2.186284352631566,
+   "strain_measure": 1.0
+  },
+  "w0.5_I0.02": {
+   "mu_wall": 0.1278239322490804,
+   "mu_bulk": 0.12820537817667715,
+   "phi_gap": 0.8147653014930902,
+   "I_bulk": 0.019911340557151696,
+   "mu_wall_sd": 0.04343810363028293,
+   "drift_z_mu_wall": -4.75147238113116,
+   "strain_measure": 1.0
+  },
+  "w0.0_I0.05": {
+   "mu_wall": 0.05932591203174207,
+   "mu_bulk": 0.04104564849453326,
+   "phi_gap": 0.8753360410205832,
+   "I_bulk": 0.066875731769892,
+   "mu_wall_sd": 0.04391664629141371,
+   "drift_z_mu_wall": -7.5641524243532805,
+   "strain_measure": 1.0
+  }
+ }
+}
