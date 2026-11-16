@@ -194,6 +194,10 @@ def _run_one(config: dict) -> dict:
         confining_stress=config["confining_stress"],
         columns=16 if quick else 24, rows=32 if quick else 48,
         strain_rate=0.05, strain_target=0.08 if quick else 0.12,
+        # optional peak-relative stopping rule (R6); absent keys keep the R4
+        # behaviour bit-identical to the published round
+        post_peak_strain=config.get("post_peak_strain"),
+        strain_cap=config.get("strain_cap"),
         consolidation_steps=600 if quick else CONSOLIDATION_STEPS,
         snapshot_strain=0.01, servo_gain=3.0e-4, servo_velocity_limit=2.0,
         wall_friction=WALL_FRICTION,
@@ -302,6 +306,11 @@ def _run_one(config: dict) -> dict:
         "theory_angles_deg": result.get("theory", {}),
         "inertial_number": result.get("loading", {}).get("inertial_number"),
         "wall_time_s": time.time() - started,
+        # the stopping decision (target / post_peak / cap) and the size of the
+        # post-peak record are outputs, never assumed by the analysis
+        "stopping": result.get("stopping"),
+        "n_snapshots": len(snapshots),
+        "n_late_snapshots": len(late),
         "gamma_field": field,
     }
 
