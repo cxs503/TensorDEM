@@ -1,0 +1,43 @@
+{
+  "anchor": "CASE-DEM-PLANE-SHEAR-MUIDI",
+  "round": 34,
+  "title": "Stress-estimator pairing audit: which pressure belongs in I, which stress in mu",
+  "registered_before_runs": true,
+  "question": "Rounds 24-33 judged (mu_bulk, I_measured) against the 2-D ruler, where mu_bulk is the Love-Weber *contact* stress of the whole cell and I_measured uses the *profile* contact-only pressure of the central band. Do the other, equally admissible stress channels move the judged error across the 10 % acceptance band? If yes, the residual (+19..27 %) is not identifiable as a physics error from a single pairing.",
+  "device": "plane_shear_2d.RoughWallShearCell, repaired wall (wall_translate=True, R33)",
+  "protocol": {
+    "n_particles": 310,
+    "width_m": 0.24,
+    "gap_m": 0.14,
+    "settle_time_units": 20.0,
+    "shear_settle_strain": 0.4,
+    "strain_measure": 0.6,
+    "sample_every": 40,
+    "normal_stress_pa": 10000.0,
+    "kn_N_per_m": 100000.0,
+    "mu_p": 0.4,
+    "mu_rolling": 0.0,
+    "note": "round-31/33 short protocol, identical to runs/wall_translation_r33/smoke_filled_n310_wfixed_I0.05_s0.json (a *diagnostic*, not anchor evidence)"
+  },
+  "points": [
+    {"I_target": 0.05, "seed": 0},
+    {"I_target": 0.05, "seed": 1},
+    {"I_target": 0.10, "seed": 0}
+  ],
+  "ruler": {
+    "source": "reference_2d (da Cruz 2005 Eqs. 13-14, provenance-gated)",
+    "mu": "mu*(I) = 0.22 + 1.0 I",
+    "phi": "nu(I) = 0.81 - 0.3 I",
+    "tolerance": 0.10
+  },
+  "predictions": {
+    "P1_kinetic_share_of_normal_stress_gt_0.15": "the profile's kinetic part carries >15 % of the normal stress at I=0.05, so contact-only and total stress are NOT interchangeable",
+    "P2_pressure_channel_spread_gt_1.15": "max/min over {p_wall, p_bulk, p_profile_contact, p_profile_total} exceeds 1.15 within one run",
+    "P3_error_spread_gt_10pp": "the mu error against the ruler, taken over the four self-consistent pairings {(mu_X, p_X)}, spans more than 10 percentage points at a fixed run -> a single-pairing PASS/FAIL is not identifiable at the anchor's tolerance",
+    "P4_falsifier": "if the spread under P3 is <2 percentage points, the pairing is irrelevant and the residual must be attributed to physics; the harness-defect hypothesis is then falsified"
+  },
+  "decisions_fixed_in_advance": {
+    "if_P3_holds": "report every pairing, adopt the dimension-consistent (total,total) pairing as the default judging convention for the cj4610 campaign, and mark the legacy single-pairing verdict WITHHELD rather than FAIL",
+    "if_P4_holds": "keep the legacy pairing, record the residual as physics, and close the harness question"
+  }
+}
