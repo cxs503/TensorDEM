@@ -1,0 +1,5207 @@
+{
+ "anchor": "CASE-DEM-RCP-PACKING-FRACTION",
+ "atol": 1e-12,
+ "baseline": "head",
+ "records": [
+  {
+   "counts": {
+    "n_drift": 15,
+    "n_leaves": 1047,
+    "n_missing": 117,
+    "n_same": 915,
+    "n_type_change": 0,
+    "n_value_change": 0,
+    "n_within_tol": 0
+   },
+   "doc": [],
+   "docs": [],
+   "drift": [
+    {
+     "abs_delta": 0.0009204377086992066,
+     "cur": 0.6183098776212702,
+     "path": "/gates/id=G13_stiffness_limit_vs_ref_frictional/got",
+     "ref": 0.617389439912571,
+     "rel_delta": 0.001490854312036096,
+     "status": "DRIFT",
+     "tol": 6.18389439912571e-10
+    },
+    {
+     "abs_delta": -0.001472700333918664,
+     "cur": 0.010704195805967709,
+     "path": "/gates/id=G13_stiffness_limit_vs_ref_frictional/value",
+     "ref": 0.012176896139886373,
+     "rel_delta": -0.12094217746464299,
+     "status": "DRIFT",
+     "tol": 1.3176896139886373e-11
+    },
+    {
+     "abs_delta": 0.00018836696989310564,
+     "cur": 0.0007297640360642843,
+     "path": "/gates/id=G14_timestep_convergence_mu0_kn64000/got",
+     "ref": 0.0005413970661711787,
+     "rel_delta": 0.347927577859367,
+     "status": "DRIFT",
+     "tol": 1.5413970661711788e-12
+    },
+    {
+     "abs_delta": 0.00018836696989310564,
+     "cur": 0.0007297640360642843,
+     "path": "/gates/id=G14_timestep_convergence_mu0_kn64000/value",
+     "ref": 0.0005413970661711787,
+     "rel_delta": 0.347927577859367,
+     "status": "DRIFT",
+     "tol": 1.5413970661711788e-12
+    },
+    {
+     "abs_delta": -0.0009204377086992066,
+     "cur": 0.008398514114360767,
+     "path": "/gates/id=G6_stiffness_convergence_frictional/got",
+     "ref": 0.009318951823059973,
+     "rel_delta": -0.09877051906433952,
+     "status": "DRIFT",
+     "tol": 1.0318951823059973e-11
+    },
+    {
+     "abs_delta": -0.0009204377086992066,
+     "cur": 0.008398514114360767,
+     "path": "/gates/id=G6_stiffness_convergence_frictional/value",
+     "ref": 0.009318951823059973,
+     "rel_delta": -0.09877051906433952,
+     "status": "DRIFT",
+     "tol": 1.0318951823059973e-11
+    },
+    {
+     "abs_delta": 3.0,
+     "cur": 9,
+     "path": "/impl_hashes/b44c19146425bc58",
+     "ref": 6,
+     "rel_delta": 0.5,
+     "status": "DRIFT",
+     "tol": 6.001000000000001e-09
+    },
+    {
+     "abs_delta": -0.0016036680845773477,
+     "cur": 0.0002875007089813142,
+     "path": "/stiffness/mu=0.1/delta_from_last",
+     "ref": 0.0018911687935586619,
+     "rel_delta": -0.8479772350513903,
+     "status": "DRIFT",
+     "tol": 2.8911687935586616e-12
+    },
+    {
+     "abs_delta": 0.0009204377086992066,
+     "cur": 0.6183098776212702,
+     "path": "/stiffness/mu=0.1/limit",
+     "ref": 0.617389439912571,
+     "rel_delta": 0.001490854312036096,
+     "status": "DRIFT",
+     "tol": 6.18389439912571e-10
+    },
+    {
+     "abs_delta": 1.0,
+     "cur": 4,
+     "path": "/stiffness/mu=0.1/n_levels",
+     "ref": 3,
+     "rel_delta": 0.3333333333333333,
+     "status": "DRIFT",
+     "tol": 3.0010000000000003e-09
+    },
+    {
+     "abs_delta": 0.3025306990662917,
+     "cur": 0.8777530885312191,
+     "path": "/stiffness/mu=0.1/order",
+     "ref": 0.5752223894649274,
+     "rel_delta": 0.5259369325795996,
+     "status": "DRIFT",
+     "tol": 5.762223894649275e-10
+    },
+    {
+     "abs_delta": 0.3025306990662917,
+     "cur": 0.8777530885312191,
+     "path": "/stiffness/mu=0.1/order_used",
+     "ref": 0.5752223894649274,
+     "rel_delta": 0.5259369325795996,
+     "status": "DRIFT",
+     "tol": 5.762223894649275e-10
+    },
+    {
+     "abs_delta": 0.00018836696989310564,
+     "cur": 0.0007297640360642843,
+     "path": "/timestep/mu=0.0|kn=64000.0/delta",
+     "ref": 0.0005413970661711787,
+     "rel_delta": 0.347927577859367,
+     "status": "DRIFT",
+     "tol": 1.5413970661711788e-12
+    },
+    {
+     "abs_delta": -3.4473712187899075e-05,
+     "cur": 0.6367647448488053,
+     "path": "/timestep/mu=0.0|kn=64000.0/phi",
+     "ref": 0.6367992185609932,
+     "rel_delta": -5.413592099846013e-05,
+     "status": "DRIFT",
+     "tol": 6.377992185609932e-10
+    },
+    {
+     "abs_delta": -0.00022284068208100472,
+     "cur": 0.636034980812741,
+     "path": "/timestep/mu=0.0|kn=64000.0/phi_halved",
+     "ref": 0.636257821494822,
+     "rel_delta": -0.0003502364521939605,
+     "status": "DRIFT",
+     "tol": 6.37257821494822e-10
+    }
+   ],
+   "json": "runs/summary.json",
+   "missing_by_prefix": {
+    "/gates/id=G17_extrapolation_selfconsistency_mu0.1": 6,
+    "/probe_runs/n=10000|mu=0.0|kn=64000.0|dt_frac=0.025": 5,
+    "/probe_runs/n=10000|mu=0.0|kn=64000.0|dt_frac=0.025#0": 5,
+    "/probe_runs/n=10000|mu=0.0|kn=64000.0|dt_frac=0.025#1": 5,
+    "/probe_runs/n=10000|mu=0.0|kn=64000.0|dt_frac=0.025#2": 5,
+    "/runs/path=benchmarks": 72,
+    "/selfcheck/mu=0.1": 13,
+    "/stiffness/mu=0.1": 4,
+    "/timestep/mu=0.0|kn=64000.0": 2
+   },
+   "n_path_leaks": 0,
+   "n_verdict_leaves": 24,
+   "name": "aggregate",
+   "new_untracked": [],
+   "other_changes": [
+    {
+     "cur": "3-level fit predicts k_n=256000 to < 0.002 and the 4th level moves the limit by < 0.002 (mu=0.1)",
+     "path": "/gates/id=G17_extrapolation_selfconsistency_mu0.1/criterion",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 0.0003559927356576731,
+     "path": "/gates/id=G17_extrapolation_selfconsistency_mu0.1/got",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": "G17_extrapolation_selfconsistency_mu0.1",
+     "path": "/gates/id=G17_extrapolation_selfconsistency_mu0.1/id",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 0.0009204377086992066,
+     "path": "/gates/id=G17_extrapolation_selfconsistency_mu0.1/limit_shift",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": true,
+     "path": "/gates/id=G17_extrapolation_selfconsistency_mu0.1/pass",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 0.0003559927356576731,
+     "path": "/gates/id=G17_extrapolation_selfconsistency_mu0.1/value",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 0.025,
+     "path": "/probe_runs/n=10000|mu=0.0|kn=64000.0|dt_frac=0.025#0/dt_frac",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 64000.0,
+     "path": "/probe_runs/n=10000|mu=0.0|kn=64000.0|dt_frac=0.025#0/kn",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 0.0,
+     "path": "/probe_runs/n=10000|mu=0.0|kn=64000.0|dt_frac=0.025#0/mu",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 10000,
+     "path": "/probe_runs/n=10000|mu=0.0|kn=64000.0|dt_frac=0.025#0/n",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 0.636257821494822,
+     "path": "/probe_runs/n=10000|mu=0.0|kn=64000.0|dt_frac=0.025#0/phi",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 0.025,
+     "path": "/probe_runs/n=10000|mu=0.0|kn=64000.0|dt_frac=0.025#1/dt_frac",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 64000.0,
+     "path": "/probe_runs/n=10000|mu=0.0|kn=64000.0|dt_frac=0.025#1/kn",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 0.0,
+     "path": "/probe_runs/n=10000|mu=0.0|kn=64000.0|dt_frac=0.025#1/mu",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 10000,
+     "path": "/probe_runs/n=10000|mu=0.0|kn=64000.0|dt_frac=0.025#1/n",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 0.6365899596244352,
+     "path": "/probe_runs/n=10000|mu=0.0|kn=64000.0|dt_frac=0.025#1/phi",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 0.025,
+     "path": "/probe_runs/n=10000|mu=0.0|kn=64000.0|dt_frac=0.025#2/dt_frac",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 64000.0,
+     "path": "/probe_runs/n=10000|mu=0.0|kn=64000.0|dt_frac=0.025#2/kn",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 0.0,
+     "path": "/probe_runs/n=10000|mu=0.0|kn=64000.0|dt_frac=0.025#2/mu",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 10000,
+     "path": "/probe_runs/n=10000|mu=0.0|kn=64000.0|dt_frac=0.025#2/n",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 0.6352571613189657,
+     "path": "/probe_runs/n=10000|mu=0.0|kn=64000.0|dt_frac=0.025#2/phi",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": null,
+     "path": "/probe_runs/n=10000|mu=0.0|kn=64000.0|dt_frac=0.025/dt_frac",
+     "ref": 0.025,
+     "status": "MISSING_CUR"
+    },
+    {
+     "cur": null,
+     "path": "/probe_runs/n=10000|mu=0.0|kn=64000.0|dt_frac=0.025/kn",
+     "ref": 64000.0,
+     "status": "MISSING_CUR"
+    },
+    {
+     "cur": null,
+     "path": "/probe_runs/n=10000|mu=0.0|kn=64000.0|dt_frac=0.025/mu",
+     "ref": 0.0,
+     "status": "MISSING_CUR"
+    },
+    {
+     "cur": null,
+     "path": "/probe_runs/n=10000|mu=0.0|kn=64000.0|dt_frac=0.025/n",
+     "ref": 10000,
+     "status": "MISSING_CUR"
+    },
+    {
+     "cur": null,
+     "path": "/probe_runs/n=10000|mu=0.0|kn=64000.0|dt_frac=0.025/phi",
+     "ref": 0.636257821494822,
+     "status": "MISSING_CUR"
+    },
+    {
+     "cur": 5.336725828472136,
+     "path": "/runs/path=benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn256000_e0.1_seed1.json/Z",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 2.5,
+     "path": "/runs/path=benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn256000_e0.1_seed1.json/band[0]",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 19.28181607530927,
+     "path": "/runs/path=benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn256000_e0.1_seed1.json/band[1]",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 0.00015884889851313966,
+     "path": "/runs/path=benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn256000_e0.1_seed1.json/dt",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 0.05,
+     "path": "/runs/path=benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn256000_e0.1_seed1.json/dt_frac",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 0.1,
+     "path": "/runs/path=benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn256000_e0.1_seed1.json/e",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": "b44c19146425bc58",
+     "path": "/runs/path=benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn256000_e0.1_seed1.json/impl",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 3.0063635918836246e-05,
+     "path": "/runs/path=benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn256000_e0.1_seed1.json/ke_final",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 256000.0,
+     "path": "/runs/path=benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn256000_e0.1_seed1.json/kn",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 2.135547345063716e-05,
+     "path": "/runs/path=benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn256000_e0.1_seed1.json/mean_ov",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 0.1,
+     "path": "/runs/path=benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn256000_e0.1_seed1.json/mu",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 10000,
+     "path": "/runs/path=benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn256000_e0.1_seed1.json/n",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 0.00020081458929444018,
+     "path": "/runs/path=benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn256000_e0.1_seed1.json/ovmax",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn256000_e0.1_seed1.json",
+     "path": "/runs/path=benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn256000_e0.1_seed1.json/path",
+     "ref": null,
+     "status": "MISSING_REF"
+    }
+   ],
+   "path_leaks": [],
+   "returncode": 0,
+   "script": "aggregate.py",
+   "stdout_tail": "wrote docs/CASE_RCP_DEPOSITION.md and 5 figures; all gates pass = False\n  G1_frictionless_vs_ref: PASS (0.6424)\n  G2_low_friction_in_band: PASS (0.6263)\n  G3_frictionless_in_band: PASS (0.6424)\n  G4_overlap_correction_is_small: PASS (0.0036)\n  G5_stiffness_convergence: FAIL (0.0073)\n  G6_stiffness_convergence_frictional: FAIL (0.0084)\n  G12_stiffness_limit_vs_ref: PASS (0.6353)\n  G13_stiffness_limit_vs_ref_frictional: PASS (0.6183)\n  G18_production_vs_friction_ref: PASS (0.6424)\n  G18b_production_vs_friction_ref: PASS (0.6263)\n  G17_extrapolation_selfconsistency_mu0: PASS (0.0008)\n  G17_extrapolation_selfconsistency_mu0.1: PASS (0.0004)\n  G14_timestep_convergence_mu0: PASS (0.0000)\n  G14_timestep_convergence_mu0_kn64000: PASS (0.0007)\n  G14_timestep_convergence_mu0.1: PASS (0.0004)\n  G14_timestep_convergence_mu0.1_kn64000: PASS (0.0001)\n  G7_finite_size: PASS (0.0049)\n  G8_settled: PASS (True)\n  G15_production_size: PASS (10000)\n  G16_seed_coverage: PASS (3)\n  G9_residual_overlap: FAIL (0.0115)\n  G10_friction_loosens: PASS (-0.0161)\n  G11_energy_never_increases: PASS (0)\n",
+   "stochastic": false,
+   "touched_tracked": [],
+   "verdict": "STALE",
+   "verdict_changes": [
+    {
+     "cur": true,
+     "path": "/gates/id=G17_extrapolation_selfconsistency_mu0.1/pass",
+     "ref": "<absent>"
+    }
+   ],
+   "wall_s": 10.6
+  },
+  {
+   "counts": {
+    "n_drift": 25,
+    "n_leaves": 153,
+    "n_missing": 18,
+    "n_same": 88,
+    "n_type_change": 1,
+    "n_value_change": 21,
+    "n_within_tol": 0
+   },
+   "doc": [
+    "docs/AUDIT_m16929_RCP_PRODUCTION_WAVE.md"
+   ],
+   "docs": [
+    {
+     "cur_chars": 3978,
+     "diff_examples": [
+      "| runs\uff08\u542b\u63a2\u9488\uff09 | 11 | 31 |",
+      "| mu=0.1 \u79cd\u5b50\u6570 | 3 | 3 |",
+      "| 0 | 4000, 16000, 64000, 256000 | 1.000 | 0.63536 | 0.00702 | -0.19 % |"
+     ],
+     "identical": false,
+     "leak_examples": [],
+     "n_added_lines": 0,
+     "n_changed_lines": 10,
+     "n_leaks_cur": 0,
+     "n_leaks_ref": 0,
+     "n_removed_lines": 0,
+     "path": "docs/AUDIT_m16929_RCP_PRODUCTION_WAVE.md",
+     "ref_chars": 3955
+    }
+   ],
+   "drift": [
+    {
+     "abs_delta": 5.0,
+     "cur": 25,
+     "path": "/after_full_set/n_prod_runs",
+     "ref": 20,
+     "rel_delta": 0.25,
+     "status": "DRIFT",
+     "tol": 2.0001e-08
+    },
+    {
+     "abs_delta": 9.0,
+     "cur": 31,
+     "path": "/after_full_set/n_runs",
+     "ref": 22,
+     "rel_delta": 0.4090909090909091,
+     "status": "DRIFT",
+     "tol": 2.2001000000000003e-08
+    },
+    {
+     "abs_delta": -0.0019422024901768475,
+     "cur": 0.0002875007089813142,
+     "path": "/after_full_set/stiffness/0.1/delta_from_last",
+     "ref": 0.0022297031991581617,
+     "rel_delta": -0.8710587538781566,
+     "status": "DRIFT",
+     "tol": 3.2297031991581617e-12
+    },
+    {
+     "abs_delta": 0.0012589721142987065,
+     "cur": 0.6183098776212702,
+     "path": "/after_full_set/stiffness/0.1/limit",
+     "ref": 0.6170509055069715,
+     "rel_delta": 0.0020403051078327645,
+     "status": "DRIFT",
+     "tol": 6.180509055069715e-10
+    },
+    {
+     "abs_delta": 1.0,
+     "cur": 4,
+     "path": "/after_full_set/stiffness/0.1/n_levels",
+     "ref": 3,
+     "rel_delta": 0.3333333333333333,
+     "status": "DRIFT",
+     "tol": 3.0010000000000003e-09
+    },
+    {
+     "abs_delta": 0.3653740302171308,
+     "cur": 0.8777530885312191,
+     "path": "/after_full_set/stiffness/0.1/order",
+     "ref": 0.5123790583140884,
+     "rel_delta": 0.7130932154396452,
+     "status": "DRIFT",
+     "tol": 5.133790583140884e-10
+    },
+    {
+     "abs_delta": 0.3653740302171308,
+     "cur": 0.8777530885312191,
+     "path": "/after_full_set/stiffness/0.1/order_used",
+     "ref": 0.5123790583140884,
+     "rel_delta": 0.7130932154396452,
+     "status": "DRIFT",
+     "tol": 5.133790583140884e-10
+    },
+    {
+     "abs_delta": -3.4473712187899075e-05,
+     "cur": -0.0011405668471143882,
+     "path": "/after_full_set/stiffness/0/delta[1]",
+     "ref": -0.001106093134926489,
+     "rel_delta": -0.031167097145205765,
+     "status": "DRIFT",
+     "tol": 2.1060931349264894e-12
+    },
+    {
+     "abs_delta": -1.2461048406353648e-05,
+     "cur": 0.00035130390673376866,
+     "path": "/after_full_set/stiffness/0/delta_from_last",
+     "ref": 0.0003637649551401223,
+     "rel_delta": -0.034255769365011124,
+     "status": "DRIFT",
+     "tol": 1.3637649551401224e-12
+    },
+    {
+     "abs_delta": -0.0010759243839827404,
+     "cur": 0.6353595292218703,
+     "path": "/after_full_set/stiffness/0/limit",
+     "ref": 0.6364354536058531,
+     "rel_delta": -0.0016905475298192054,
+     "status": "DRIFT",
+     "tol": 6.374354536058531e-10
+    },
+    {
+     "abs_delta": 1.0,
+     "cur": 4,
+     "path": "/after_full_set/stiffness/0/n_levels",
+     "ref": 3,
+     "rel_delta": 0.3333333333333333,
+     "status": "DRIFT",
+     "tol": 3.0010000000000003e-09
+    },
+    {
+     "abs_delta": -0.007299203891415695,
+     "cur": 1.0,
+     "path": "/after_full_set/stiffness/0/order_used",
+     "ref": 1.0072992038914157,
+     "rel_delta": -0.007246311585691009,
+     "status": "DRIFT",
+     "tol": 1.0082992038914158e-09
+    },
+    {
+     "abs_delta": -3.4473712187899075e-05,
+     "cur": 0.6367647448488053,
+     "path": "/after_full_set/stiffness/0/value[2]",
+     "ref": 0.6367992185609932,
+     "rel_delta": -5.413592099846013e-05,
+     "status": "DRIFT",
+     "tol": 6.377992185609932e-10
+    },
+    {
+     "abs_delta": 1.0,
+     "cur": 11,
+     "path": "/before_screening_set/n_prod_runs",
+     "ref": 10,
+     "rel_delta": 0.1,
+     "status": "DRIFT",
+     "tol": 1.0001e-08
+    },
+    {
+     "abs_delta": 1.0,
+     "cur": 11,
+     "path": "/before_screening_set/n_runs",
+     "ref": 10,
+     "rel_delta": 0.1,
+     "status": "DRIFT",
+     "tol": 1.0001e-08
+    },
+    {
+     "abs_delta": -0.0002366326658458373,
+     "cur": -0.006424726369896661,
+     "path": "/before_screening_set/stiffness/0.1/delta[0]",
+     "ref": -0.006188093704050823,
+     "rel_delta": -0.03823999395660958,
+     "status": "DRIFT",
+     "tol": 7.1880937040508235e-12
+    },
+    {
+     "abs_delta": 7.887755528190876e-05,
+     "cur": 0.002141575456632183,
+     "path": "/before_screening_set/stiffness/0.1/delta_from_last",
+     "ref": 0.0020626979013502744,
+     "rel_delta": 0.038239993956591646,
+     "status": "DRIFT",
+     "tol": 3.062697901350275e-12
+    },
+    {
+     "abs_delta": -7.887755528190876e-05,
+     "cur": 0.616001587913629,
+     "path": "/before_screening_set/stiffness/0.1/limit",
+     "ref": 0.6160804654689109,
+     "rel_delta": -0.0001280312551735811,
+     "status": "DRIFT",
+     "tol": 6.17080465468911e-10
+    },
+    {
+     "abs_delta": 0.0002366326658458373,
+     "cur": 0.6245678897401579,
+     "path": "/before_screening_set/stiffness/0.1/value[0]",
+     "ref": 0.624331257074312,
+     "rel_delta": 0.0003790178101201038,
+     "status": "DRIFT",
+     "tol": 6.253312570743121e-10
+    },
+    {
+     "abs_delta": -0.0059649511074351125,
+     "cur": 5.714486060231913,
+     "path": "/before_screening_set/tiers/0.1/Z",
+     "ref": 5.720451011339348,
+     "rel_delta": -0.0010427414019648284,
+     "status": "DRIFT",
+     "tol": 5.721451011339349e-09
+    },
+    {
+     "abs_delta": 0.00037171326711560315,
+     "cur": -0.018900581620864276,
+     "path": "/before_screening_set/tiers/0.1/dev_vs_ref",
+     "ref": -0.01927229488797988,
+     "rel_delta": 0.019287441857660684,
+     "status": "DRIFT",
+     "tol": 2.027229488797988e-11
+    },
+    {
+     "abs_delta": 1.0,
+     "cur": 3,
+     "path": "/before_screening_set/tiers/0.1/n_seeds",
+     "ref": 2,
+     "rel_delta": 0.5,
+     "status": "DRIFT",
+     "tol": 2.001e-09
+    },
+    {
+     "abs_delta": 0.0002366326658458373,
+     "cur": 0.6245678897401579,
+     "path": "/before_screening_set/tiers/0.1/phi_mean",
+     "ref": 0.624331257074312,
+     "rel_delta": 0.0003790178101201038,
+     "status": "DRIFT",
+     "tol": 6.253312570743121e-10
+    },
+    {
+     "abs_delta": -0.00018422777606814825,
+     "cur": 0.0008197195999509817,
+     "path": "/before_screening_set/tiers/0.1/phi_std",
+     "ref": 0.00100394737601913,
+     "rel_delta": -0.183503419072274,
+     "status": "DRIFT",
+     "tol": 2.00394737601913e-12
+    },
+    {
+     "abs_delta": -1.0,
+     "cur": 1,
+     "path": "/before_screening_set/tiers/0.1/seeds[1]",
+     "ref": 2,
+     "rel_delta": -0.5,
+     "status": "DRIFT",
+     "tol": 2.001e-09
+    }
+   ],
+   "json": "runs/debt_audit.json",
+   "missing_by_prefix": {
+    "/after_full_set/stiffness": 8,
+    "/before_screening_set/tiers": 1,
+    "/runs_used/22": 1,
+    "/runs_used/23": 1,
+    "/runs_used/24": 1,
+    "/runs_used/25": 1,
+    "/runs_used/26": 1,
+    "/runs_used/27": 1,
+    "/runs_used/28": 1,
+    "/runs_used/29": 1,
+    "/runs_used/30": 1
+   },
+   "n_path_leaks": 0,
+   "n_verdict_leaves": 8,
+   "name": "debt_audit",
+   "new_untracked": [],
+   "other_changes": [
+    {
+     "cur": -0.0006832303758781411,
+     "path": "/after_full_set/stiffness/0.1/delta[2]",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 256000.0,
+     "path": "/after_full_set/stiffness/0.1/kn[3]",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 4.0,
+     "path": "/after_full_set/stiffness/0.1/ratio[2]",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 0.6185973783302515,
+     "path": "/after_full_set/stiffness/0.1/value[3]",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": -0.001053911720201195,
+     "path": "/after_full_set/stiffness/0/delta[2]",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 256000.0,
+     "path": "/after_full_set/stiffness/0/kn[3]",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": null,
+     "path": "/after_full_set/stiffness/0/order",
+     "ref": 1.0072992038914157,
+     "status": "TYPE_CHANGE"
+    },
+    {
+     "cur": 4.0,
+     "path": "/after_full_set/stiffness/0/ratio[2]",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 0.6357108331286041,
+     "path": "/after_full_set/stiffness/0/value[3]",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 2,
+     "path": "/before_screening_set/tiers/0.1/seeds[2]",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn4000_e0.1_seed1.json",
+     "path": "/runs_used[10]",
+     "ref": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn4000_e0.1_seed3.json",
+     "status": "VALUE_CHANGE"
+    },
+    {
+     "cur": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn4000_e0.1_seed1_dtf0.025.json",
+     "path": "/runs_used[11]",
+     "ref": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn64000_e0.1_seed1.json",
+     "status": "VALUE_CHANGE"
+    },
+    {
+     "cur": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn4000_e0.1_seed2.json",
+     "path": "/runs_used[12]",
+     "ref": "benchmarks/case_rcp_deposition/runs/deposition_n1000_mu0_kn4000_e0.1_seed1.json",
+     "status": "VALUE_CHANGE"
+    },
+    {
+     "cur": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn4000_e0.1_seed3.json",
+     "path": "/runs_used[13]",
+     "ref": "benchmarks/case_rcp_deposition/runs/deposition_n2000_mu0.1_kn16000_e0.1_seed1.json",
+     "status": "VALUE_CHANGE"
+    },
+    {
+     "cur": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn64000_e0.1_seed1.json",
+     "path": "/runs_used[14]",
+     "ref": "benchmarks/case_rcp_deposition/runs/deposition_n2000_mu0.1_kn4000_e0.1_seed1.json",
+     "status": "VALUE_CHANGE"
+    },
+    {
+     "cur": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn64000_e0.1_seed1_dtf0.025.json",
+     "path": "/runs_used[15]",
+     "ref": "benchmarks/case_rcp_deposition/runs/deposition_n2000_mu0.1_kn4000_e0.1_seed2.json",
+     "status": "VALUE_CHANGE"
+    },
+    {
+     "cur": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn64000_e0.1_seed2.json",
+     "path": "/runs_used[16]",
+     "ref": "benchmarks/case_rcp_deposition/runs/deposition_n2000_mu0.3_kn4000_e0.1_seed1.json",
+     "status": "VALUE_CHANGE"
+    },
+    {
+     "cur": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn64000_e0.1_seed2_dtf0.025.json",
+     "path": "/runs_used[17]",
+     "ref": "benchmarks/case_rcp_deposition/runs/deposition_n2000_mu0.5_kn4000_e0.1_seed1.json",
+     "status": "VALUE_CHANGE"
+    },
+    {
+     "cur": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn64000_e0.1_seed3.json",
+     "path": "/runs_used[18]",
+     "ref": "benchmarks/case_rcp_deposition/runs/deposition_n2000_mu0_kn16000_e0.1_seed1.json",
+     "status": "VALUE_CHANGE"
+    },
+    {
+     "cur": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn64000_e0.1_seed3_dtf0.025.json",
+     "path": "/runs_used[19]",
+     "ref": "benchmarks/case_rcp_deposition/runs/deposition_n2000_mu0_kn4000_e0.1_seed1.json",
+     "status": "VALUE_CHANGE"
+    },
+    {
+     "cur": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn256000_e0.1_seed1.json",
+     "path": "/runs_used[1]",
+     "ref": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn4000_e0.1_seed1.json",
+     "status": "VALUE_CHANGE"
+    },
+    {
+     "cur": "benchmarks/case_rcp_deposition/runs/deposition_n1000_mu0_kn4000_e0.1_seed1.json",
+     "path": "/runs_used[20]",
+     "ref": "benchmarks/case_rcp_deposition/runs/deposition_n2000_mu0_kn4000_e0.1_seed2.json",
+     "status": "VALUE_CHANGE"
+    },
+    {
+     "cur": "benchmarks/case_rcp_deposition/runs/deposition_n2000_mu0.1_kn16000_e0.1_seed1.json",
+     "path": "/runs_used[21]",
+     "ref": "benchmarks/case_rcp_deposition/runs/deposition_n4000_mu0_kn4000_e0.1_seed1.json",
+     "status": "VALUE_CHANGE"
+    },
+    {
+     "cur": "benchmarks/case_rcp_deposition/runs/deposition_n2000_mu0.1_kn4000_e0.1_seed1.json",
+     "path": "/runs_used[22]",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": "benchmarks/case_rcp_deposition/runs/deposition_n2000_mu0.1_kn4000_e0.1_seed2.json",
+     "path": "/runs_used[23]",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": "benchmarks/case_rcp_deposition/runs/deposition_n2000_mu0.1_mur0_kn4000_e0.1_seed1.json",
+     "path": "/runs_used[24]",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": "benchmarks/case_rcp_deposition/runs/deposition_n2000_mu0.3_kn4000_e0.1_seed1.json",
+     "path": "/runs_used[25]",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": "benchmarks/case_rcp_deposition/runs/deposition_n2000_mu0.5_kn4000_e0.1_seed1.json",
+     "path": "/runs_used[26]",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": "benchmarks/case_rcp_deposition/runs/deposition_n2000_mu0_kn16000_e0.1_seed1.json",
+     "path": "/runs_used[27]",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": "benchmarks/case_rcp_deposition/runs/deposition_n2000_mu0_kn4000_e0.1_seed1.json",
+     "path": "/runs_used[28]",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": "benchmarks/case_rcp_deposition/runs/deposition_n2000_mu0_kn4000_e0.1_seed2.json",
+     "path": "/runs_used[29]",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn4000_e0.1_seed1.json",
+     "path": "/runs_used[2]",
+     "ref": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn4000_e0.1_seed1_dtf0.025.json",
+     "status": "VALUE_CHANGE"
+    },
+    {
+     "cur": "benchmarks/case_rcp_deposition/runs/deposition_n4000_mu0_kn4000_e0.1_seed1.json",
+     "path": "/runs_used[30]",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn4000_e0.1_seed1_dtf0.025.json",
+     "path": "/runs_used[3]",
+     "ref": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn4000_e0.1_seed2.json",
+     "status": "VALUE_CHANGE"
+    },
+    {
+     "cur": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn4000_e0.1_seed2.json",
+     "path": "/runs_used[4]",
+     "ref": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn4000_e0.1_seed3.json",
+     "status": "VALUE_CHANGE"
+    },
+    {
+     "cur": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn4000_e0.1_seed3.json",
+     "path": "/runs_used[5]",
+     "ref": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn64000_e0.1_seed1.json",
+     "status": "VALUE_CHANGE"
+    },
+    {
+     "cur": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn64000_e0.1_seed1.json",
+     "path": "/runs_used[6]",
+     "ref": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn16000_e0.1_seed1.json",
+     "status": "VALUE_CHANGE"
+    },
+    {
+     "cur": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn64000_e0.1_seed1_dtf0.025.json",
+     "path": "/runs_used[7]",
+     "ref": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn4000_e0.1_seed1.json",
+     "status": "VALUE_CHANGE"
+    },
+    {
+     "cur": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn16000_e0.1_seed1.json",
+     "path": "/runs_used[8]",
+     "ref": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn4000_e0.1_seed1_dtf0.025.json",
+     "status": "VALUE_CHANGE"
+    },
+    {
+     "cur": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn256000_e0.1_seed1.json",
+     "path": "/runs_used[9]",
+     "ref": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn4000_e0.1_seed2.json",
+     "status": "VALUE_CHANGE"
+    }
+   ],
+   "path_leaks": [],
+   "returncode": 0,
+   "script": "debt_audit.py",
+   "stdout_tail": "{\n \"0\": {\n  \"n_seeds\": 3,\n  \"seeds\": [\n   1,\n   2,\n   3\n  ],\n  \"phi_mean\": 0.6423746810504044,\n  \"phi_std\": 0.00022340381063669455,\n  \"dev_vs_ref\": 0.00907112951681488,\n  \"in_band\": true,\n  \"lt_3pct\": true,\n  \"Z\": 6.357592218743534\n },\n \"0.1\": {\n  \"n_seeds\": 3,\n  \"seeds\": [\n   1,\n   2,\n   3\n  ],\n  \"phi_mean\": 0.6262811439407491,\n  \"phi_std\": 0.0003985464922471281,\n  \"dev_vs_ref\": -0.016209324629674837,\n  \"in_band\": true,\n  \"lt_3pct\": true,\n  \"Z\": 5.817056162186361\n }\n}\nwrote docs/AUDIT_m16929_RCP_PRODUCTION_WAVE.md\n",
+   "stochastic": false,
+   "touched_tracked": [],
+   "verdict": "CENTRE_OK",
+   "verdict_changes": [],
+   "wall_s": 5.0
+  },
+  {
+   "counts": {
+    "n_drift": 36,
+    "n_leaves": 403,
+    "n_missing": 211,
+    "n_same": 150,
+    "n_type_change": 2,
+    "n_value_change": 4,
+    "n_within_tol": 0
+   },
+   "doc": [
+    "docs/AUDIT_m16999_RCP_EXTRAPOLATION_ORDER.md"
+   ],
+   "docs": [
+    {
+     "cur_chars": 8157,
+     "diff_examples": [
+      "> run-set sha256 `865caf65926c5fff\u2026`, 31 run files).",
+      "| $k_n$ \u68af\u7ea7 | 4000, 16000, 64000, 256000 |",
+      "| 64000 | 0.63676 | 3 | -0.00114 | 0.985 |"
+     ],
+     "identical": false,
+     "leak_examples": [],
+     "n_added_lines": 7,
+     "n_changed_lines": 28,
+     "n_leaks_cur": 0,
+     "n_leaks_ref": 0,
+     "n_removed_lines": 0,
+     "path": "docs/AUDIT_m16999_RCP_EXTRAPOLATION_ORDER.md",
+     "ref_chars": 6727
+    }
+   ],
+   "drift": [
+    {
+     "abs_delta": 1.0,
+     "cur": 3,
+     "path": "/friction_scan/2000/mu=0.1/n_seeds",
+     "ref": 2,
+     "rel_delta": 0.5,
+     "status": "DRIFT",
+     "tol": 2.001e-09
+    },
+    {
+     "abs_delta": 0.0002366326658458373,
+     "cur": 0.6245678897401579,
+     "path": "/friction_scan/2000/mu=0.1/phi",
+     "ref": 0.624331257074312,
+     "rel_delta": 0.0003790178101201038,
+     "status": "DRIFT",
+     "tol": 6.253312570743121e-10
+    },
+    {
+     "abs_delta": 0.0007291119648581423,
+     "cur": 0.6178587831448296,
+     "path": "/gates/id=G13_corrected_limit_vs_ref_mu0.1/got",
+     "ref": 0.6171296711799714,
+     "rel_delta": 0.0011814566677114345,
+     "status": "DRIFT",
+     "tol": 6.181296711799715e-10
+    },
+    {
+     "abs_delta": -0.0011453219680460647,
+     "cur": 0.02943954893994738,
+     "path": "/gates/id=G13_corrected_limit_vs_ref_mu0.1/value",
+     "ref": 0.030584870907993444,
+     "rel_delta": -0.03744733700173086,
+     "status": "DRIFT",
+     "tol": 3.1584870907993447e-11
+    },
+    {
+     "abs_delta": -0.0006377366051781852,
+     "cur": 0.6358460385792466,
+     "path": "/gates/id=G13_corrected_limit_vs_ref_mu0/got",
+     "ref": 0.6364837751844248,
+     "rel_delta": -0.0010019683612412546,
+     "status": "DRIFT",
+     "tol": 6.374837751844248e-10
+    },
+    {
+     "abs_delta": 0.0010017854306915153,
+     "cur": 0.0011843566144414952,
+     "path": "/gates/id=G13_corrected_limit_vs_ref_mu0/value",
+     "ref": 0.00018257118374997994,
+     "rel_delta": 5.487095006533995,
+     "status": "DRIFT",
+     "tol": 1.1825711837499799e-12
+    },
+    {
+     "abs_delta": -6.150776956237447e-05,
+     "cur": 0.6363739458362907,
+     "path": "/gates/id=G13_vs_ref_mu0/got",
+     "ref": 0.6364354536058531,
+     "rel_delta": -9.664415961412871e-05,
+     "status": "DRIFT",
+     "tol": 6.374354536058531e-10
+    },
+    {
+     "abs_delta": 9.661917933145858e-05,
+     "cur": 0.00035509607871409,
+     "path": "/gates/id=G13_vs_ref_mu0/value",
+     "ref": 0.0002584768993826314,
+     "rel_delta": 0.3738019898963203,
+     "status": "DRIFT",
+     "tol": 1.2584768993826314e-12
+    },
+    {
+     "abs_delta": 7.514759750848476e-05,
+     "cur": 0.00011884810754136943,
+     "path": "/gates/id=G18_timestep_at_stiffest_mu0.1/got",
+     "ref": 4.3700510032884665e-05,
+     "rel_delta": 1.7196045870388272,
+     "status": "DRIFT",
+     "tol": 1.0437005100328847e-12
+    },
+    {
+     "abs_delta": 0.00047216025013341323,
+     "cur": 0.0007297640360642843,
+     "path": "/gates/id=G18_timestep_at_stiffest_mu0/got",
+     "ref": 0.0002576037859308711,
+     "rel_delta": 1.8328932877567226,
+     "status": "DRIFT",
+     "tol": 1.257603785930871e-12
+    },
+    {
+     "abs_delta": 18.0,
+     "cur": 62,
+     "path": "/provenance/n_run_files_total",
+     "ref": 44,
+     "rel_delta": 0.4090909090909091,
+     "status": "DRIFT",
+     "tol": 4.4001000000000005e-08
+    },
+    {
+     "abs_delta": 9.0,
+     "cur": 31,
+     "path": "/provenance/n_runs",
+     "ref": 22,
+     "rel_delta": 0.4090909090909091,
+     "status": "DRIFT",
+     "tol": 2.2001000000000003e-08
+    },
+    {
+     "abs_delta": 0.00023769621508273886,
+     "cur": -0.0020691953621069237,
+     "path": "/tiers/0.1/corrected_limit/delta[1]",
+     "ref": -0.0023068915771896625,
+     "rel_delta": 0.1030374454669035,
+     "status": "DRIFT",
+     "tol": 3.3068915771896626e-12
+    },
+    {
+     "abs_delta": -0.0014123423407362834,
+     "cur": 0.0007385951854219641,
+     "path": "/tiers/0.1/corrected_limit/delta_from_last",
+     "ref": 0.0021509375261582475,
+     "rel_delta": -0.6566170907152491,
+     "status": "DRIFT",
+     "tol": 3.1509375261582476e-12
+    },
+    {
+     "abs_delta": 0.0007291119648581423,
+     "cur": 0.6178587831448296,
+     "path": "/tiers/0.1/corrected_limit/limit",
+     "ref": 0.6171296711799714,
+     "rel_delta": 0.0011814566677114345,
+     "status": "DRIFT",
+     "tol": 6.181296711799715e-10
+    },
+    {
+     "abs_delta": 1.0,
+     "cur": 4,
+     "path": "/tiers/0.1/corrected_limit/n_levels",
+     "ref": 3,
+     "rel_delta": 0.3333333333333333,
+     "status": "DRIFT",
+     "tol": 3.0010000000000003e-09
+    },
+    {
+     "abs_delta": 0.05826805481214625,
+     "cur": 0.5839558986570824,
+     "path": "/tiers/0.1/corrected_limit/order",
+     "ref": 0.5256878438449362,
+     "rel_delta": 0.110841548828612,
+     "status": "DRIFT",
+     "tol": 5.266878438449361e-10
+    },
+    {
+     "abs_delta": 0.05826805481214625,
+     "cur": 0.5839558986570824,
+     "path": "/tiers/0.1/corrected_limit/order_used",
+     "ref": 0.5256878438449362,
+     "rel_delta": 0.110841548828612,
+     "status": "DRIFT",
+     "tol": 5.266878438449361e-10
+    },
+    {
+     "abs_delta": 0.00023769621508273886,
+     "cur": 0.6195183049212124,
+     "path": "/tiers/0.1/corrected_limit/value[2]",
+     "ref": 0.6192806087061297,
+     "rel_delta": 0.00038382634905904836,
+     "status": "DRIFT",
+     "tol": 6.202806087061296e-10
+    },
+    {
+     "abs_delta": 0.00023769621508273886,
+     "cur": 0.6195183049212124,
+     "path": "/tiers/0.1/corrected_points[2][1]",
+     "ref": 0.6192806087061297,
+     "rel_delta": 0.00038382634905904836,
+     "status": "DRIFT",
+     "tol": 6.202806087061296e-10
+    },
+    {
+     "abs_delta": -0.0014940017843164677,
+     "cur": -0.0026000949192429568,
+     "path": "/tiers/0/corrected_limit/delta[1]",
+     "ref": -0.001106093134926489,
+     "rel_delta": -1.350701615570337,
+     "status": "DRIFT",
+     "tol": 2.1060931349264894e-12
+    },
+    {
+     "abs_delta": -0.00018023792592591903,
+     "cur": 0.0001352054506424949,
+     "path": "/tiers/0/corrected_limit/delta_from_last",
+     "ref": 0.0003154433765684139,
+     "rel_delta": -0.5713796494529619,
+     "status": "DRIFT",
+     "tol": 1.3154433765684138e-12
+    },
+    {
+     "abs_delta": -0.0006377366051781852,
+     "cur": 0.6358460385792466,
+     "path": "/tiers/0/corrected_limit/limit",
+     "ref": 0.6364837751844248,
+     "rel_delta": -0.0010019683612412546,
+     "status": "DRIFT",
+     "tol": 6.374837751844248e-10
+    },
+    {
+     "abs_delta": 1.0,
+     "cur": 4,
+     "path": "/tiers/0/corrected_limit/n_levels",
+     "ref": 3,
+     "rel_delta": 0.3333333333333333,
+     "status": "DRIFT",
+     "tol": 3.0010000000000003e-09
+    },
+    {
+     "abs_delta": -0.08599909539284001,
+     "cur": 1.0,
+     "path": "/tiers/0/corrected_limit/order_used",
+     "ref": 1.08599909539284,
+     "rel_delta": -0.07918891991501285,
+     "status": "DRIFT",
+     "tol": 1.0869990953928401e-09
+    },
+    {
+     "abs_delta": -0.0014940017843164677,
+     "cur": 0.6353052167766767,
+     "path": "/tiers/0/corrected_limit/value[2]",
+     "ref": 0.6367992185609932,
+     "rel_delta": -0.0023461112086358045,
+     "status": "DRIFT",
+     "tol": 6.377992185609932e-10
+    },
+    {
+     "abs_delta": -0.0014940017843164677,
+     "cur": 0.6353052167766767,
+     "path": "/tiers/0/corrected_points[2][1]",
+     "ref": 0.6367992185609932,
+     "rel_delta": -0.0023461112086358045,
+     "status": "DRIFT",
+     "tol": 6.377992185609932e-10
+    },
+    {
+     "abs_delta": 2.0,
+     "cur": 3,
+     "path": "/tiers/0/point_meta[2][1]/n_seeds",
+     "ref": 1,
+     "rel_delta": 2.0,
+     "status": "DRIFT",
+     "tol": 1.0010000000000002e-09
+    },
+    {
+     "abs_delta": -3.4473712187899075e-05,
+     "cur": 0.6367647448488053,
+     "path": "/tiers/0/point_meta[2][1]/phi",
+     "ref": 0.6367992185609932,
+     "rel_delta": -5.413592099846013e-05,
+     "status": "DRIFT",
+     "tol": 6.377992185609932e-10
+    },
+    {
+     "abs_delta": -3.4473712187899075e-05,
+     "cur": 0.6367647448488053,
+     "path": "/tiers/0/points[2][1]",
+     "ref": 0.6367992185609932,
+     "rel_delta": -5.413592099846013e-05,
+     "status": "DRIFT",
+     "tol": 6.377992185609932e-10
+    },
+    {
+     "abs_delta": -3.4473712187899075e-05,
+     "cur": -0.0011405668471143882,
+     "path": "/tiers/0/three_level/delta[1]",
+     "ref": -0.001106093134926489,
+     "rel_delta": -0.031167097145205765,
+     "status": "DRIFT",
+     "tol": 2.1060931349264894e-12
+    },
+    {
+     "abs_delta": 2.7034057374475395e-05,
+     "cur": 0.0003907990125145977,
+     "path": "/tiers/0/three_level/delta_from_last",
+     "ref": 0.0003637649551401223,
+     "rel_delta": 0.07431737717576965,
+     "status": "DRIFT",
+     "tol": 1.3637649551401224e-12
+    },
+    {
+     "abs_delta": -6.150776956237447e-05,
+     "cur": 0.6363739458362907,
+     "path": "/tiers/0/three_level/limit",
+     "ref": 0.6364354536058531,
+     "rel_delta": -9.664415961412871e-05,
+     "status": "DRIFT",
+     "tol": 6.374354536058531e-10
+    },
+    {
+     "abs_delta": -0.022139067754258,
+     "cur": 0.9851601361371577,
+     "path": "/tiers/0/three_level/order",
+     "ref": 1.0072992038914157,
+     "rel_delta": -0.021978641171093924,
+     "status": "DRIFT",
+     "tol": 1.0082992038914158e-09
+    },
+    {
+     "abs_delta": -0.022139067754258,
+     "cur": 0.9851601361371577,
+     "path": "/tiers/0/three_level/order_used",
+     "ref": 1.0072992038914157,
+     "rel_delta": -0.021978641171093924,
+     "status": "DRIFT",
+     "tol": 1.0082992038914158e-09
+    },
+    {
+     "abs_delta": -3.4473712187899075e-05,
+     "cur": 0.6367647448488053,
+     "path": "/tiers/0/three_level/value[2]",
+     "ref": 0.6367992185609932,
+     "rel_delta": -5.413592099846013e-05,
+     "status": "DRIFT",
+     "tol": 6.377992185609932e-10
+    }
+   ],
+   "json": "runs/order_audit.json",
+   "missing_by_prefix": {
+    "/gates/id=G13_four_level_vs_ref_mu0": 5,
+    "/gates/id=G13_four_level_vs_ref_mu0.1": 5,
+    "/gates/id=G17_extrapolation_selfconsistency_mu0": 5,
+    "/gates/id=G17_extrapolation_selfconsistency_mu0.1": 5,
+    "/kn_levels/3": 1,
+    "/tiers/0": 96,
+    "/tiers/0.1": 94
+   },
+   "n_path_leaks": 0,
+   "n_verdict_leaves": 11,
+   "name": "order_audit",
+   "new_untracked": [],
+   "other_changes": [
+    {
+     "cur": true,
+     "path": "/gates/id=G13_corrected_limit_vs_ref_mu0.1/pass",
+     "ref": false,
+     "status": "VALUE_CHANGE"
+    },
+    {
+     "cur": "|phi(k_n->inf)/phi_ref - 1| < 3% (4-level, mu=0.1)",
+     "path": "/gates/id=G13_four_level_vs_ref_mu0.1/criterion",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 0.6183098776212702,
+     "path": "/gates/id=G13_four_level_vs_ref_mu0.1/got",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": "G13_four_level_vs_ref_mu0.1",
+     "path": "/gates/id=G13_four_level_vs_ref_mu0.1/id",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": true,
+     "path": "/gates/id=G13_four_level_vs_ref_mu0.1/pass",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 0.028730949385375237,
+     "path": "/gates/id=G13_four_level_vs_ref_mu0.1/value",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": "|phi(k_n->inf)/phi_ref - 1| < 3% (4-level, mu=0)",
+     "path": "/gates/id=G13_four_level_vs_ref_mu0/criterion",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 0.6353595292218703,
+     "path": "/gates/id=G13_four_level_vs_ref_mu0/got",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": "G13_four_level_vs_ref_mu0",
+     "path": "/gates/id=G13_four_level_vs_ref_mu0/id",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": true,
+     "path": "/gates/id=G13_four_level_vs_ref_mu0/pass",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 0.0019485874617181098,
+     "path": "/gates/id=G13_four_level_vs_ref_mu0/value",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": "3-level fit predicts the k_n=256000 measurement to < 0.002, and admitting that level moves the limit by < 0.002",
+     "path": "/gates/id=G17_extrapolation_selfconsistency_mu0.1/criterion",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": "G17_extrapolation_selfconsistency_mu0.1",
+     "path": "/gates/id=G17_extrapolation_selfconsistency_mu0.1/id",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 0.0012589721142987065,
+     "path": "/gates/id=G17_extrapolation_selfconsistency_mu0.1/limit_shift",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": true,
+     "path": "/gates/id=G17_extrapolation_selfconsistency_mu0.1/pass",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 0.0004505899857261131,
+     "path": "/gates/id=G17_extrapolation_selfconsistency_mu0.1/prediction_error",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": "3-level fit predicts the k_n=256000 measurement to < 0.002, and admitting that level moves the limit by < 0.002",
+     "path": "/gates/id=G17_extrapolation_selfconsistency_mu0/criterion",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": "G17_extrapolation_selfconsistency_mu0",
+     "path": "/gates/id=G17_extrapolation_selfconsistency_mu0/id",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 0.001014416614420366,
+     "path": "/gates/id=G17_extrapolation_selfconsistency_mu0/limit_shift",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": true,
+     "path": "/gates/id=G17_extrapolation_selfconsistency_mu0/pass",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 0.0007628431980994943,
+     "path": "/gates/id=G17_extrapolation_selfconsistency_mu0/prediction_error",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": "|phi(dt/2) - phi(dt)| < 0.002 at k_n=64000",
+     "path": "/gates/id=G18_timestep_at_stiffest_mu0.1/criterion",
+     "ref": "|phi(dt/2) - phi(dt)| < 0.002 at k_n=4000",
+     "status": "VALUE_CHANGE"
+    },
+    {
+     "cur": "|phi(dt/2) - phi(dt)| < 0.002 at k_n=64000",
+     "path": "/gates/id=G18_timestep_at_stiffest_mu0/criterion",
+     "ref": "|phi(dt/2) - phi(dt)| < 0.002 at k_n=4000",
+     "status": "VALUE_CHANGE"
+    },
+    {
+     "cur": 256000.0,
+     "path": "/kn_levels[3]",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": "865caf65926c5fff684047ca7992353c4321f24d08cf8eebb62c95d96cabd49c",
+     "path": "/provenance/sha256",
+     "ref": "e4ab72c26fac528d8e3256d7ecfc9f5d52d3f99cda22412745f5676f5b8190c9",
+     "status": "VALUE_CHANGE"
+    },
+    {
+     "cur": -0.0009209265909608799,
+     "path": "/tiers/0.1/corrected_limit/delta[2]",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 256000.0,
+     "path": "/tiers/0.1/corrected_limit/kn[3]",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 4.0,
+     "path": "/tiers/0.1/corrected_limit/ratio[2]",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 0.6185973783302515,
+     "path": "/tiers/0.1/corrected_limit/value[3]",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 256000.0,
+     "path": "/tiers/0.1/corrected_points[3][0]",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 0.6185973783302515,
+     "path": "/tiers/0.1/corrected_points[3][1]",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": -0.004693643657429747,
+     "path": "/tiers/0.1/four_level/delta[0]",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": -0.0023068915771896625,
+     "path": "/tiers/0.1/four_level/delta[1]",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": -0.0006832303758781411,
+     "path": "/tiers/0.1/four_level/delta[2]",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 0.0002875007089813142,
+     "path": "/tiers/0.1/four_level/delta_from_last",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 4000.0,
+     "path": "/tiers/0.1/four_level/kn[0]",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 16000.0,
+     "path": "/tiers/0.1/four_level/kn[1]",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 64000.0,
+     "path": "/tiers/0.1/four_level/kn[2]",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 256000.0,
+     "path": "/tiers/0.1/four_level/kn[3]",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 0.6183098776212702,
+     "path": "/tiers/0.1/four_level/limit",
+     "ref": null,
+     "status": "MISSING_REF"
+    }
+   ],
+   "path_leaks": [],
+   "returncode": 0,
+   "script": "order_audit.py",
+   "stdout_tail": "wrote benchmarks/case_rcp_deposition/runs/order_audit.json and docs/AUDIT_m16999_RCP_EXTRAPOLATION_ORDER.md\n  G17_extrapolation_selfconsistency_mu0: PASS\n  G18_timestep_at_stiffest_mu0: PASS\n  G17_extrapolation_selfconsistency_mu0.1: PASS\n  G18_timestep_at_stiffest_mu0.1: PASS\n  G19_friction_monotone_N2000: PASS\n  G13_vs_ref_mu0: PASS\n  G13_four_level_vs_ref_mu0: PASS\n  G13_corrected_limit_vs_ref_mu0: PASS\n  G13_vs_ref_mu0.1: FAIL\n  G13_four_level_vs_ref_mu0.1: PASS\n  G13_corrected_limit_vs_ref_mu0.1: PASS\n",
+   "stochastic": false,
+   "touched_tracked": [],
+   "verdict": "STALE",
+   "verdict_changes": [
+    {
+     "cur": true,
+     "path": "/gates/id=G13_corrected_limit_vs_ref_mu0.1/pass",
+     "ref": false
+    },
+    {
+     "cur": true,
+     "path": "/gates/id=G13_four_level_vs_ref_mu0.1/pass",
+     "ref": "<absent>"
+    },
+    {
+     "cur": true,
+     "path": "/gates/id=G13_four_level_vs_ref_mu0/pass",
+     "ref": "<absent>"
+    },
+    {
+     "cur": true,
+     "path": "/gates/id=G17_extrapolation_selfconsistency_mu0.1/pass",
+     "ref": "<absent>"
+    },
+    {
+     "cur": true,
+     "path": "/gates/id=G17_extrapolation_selfconsistency_mu0/pass",
+     "ref": "<absent>"
+    }
+   ],
+   "wall_s": 7.6
+  },
+  {
+   "counts": {
+    "n_drift": 1,
+    "n_leaves": 4446,
+    "n_missing": 639,
+    "n_same": 3805,
+    "n_type_change": 0,
+    "n_value_change": 1,
+    "n_within_tol": 0
+   },
+   "doc": [
+    "docs/AUDIT_m17063_RCP_STEADY_STATE.md"
+   ],
+   "docs": [
+    {
+     "cur_chars": 9392,
+     "diff_examples": [
+      "> \u4ece `benchmarks/case_rcp_deposition/runs/` \u7a0b\u5e8f\u5316\u6ce8\u5165\uff08run-set sha256 `a4f92ac7bb090c85\u2026`\uff0c",
+      "| 0.1 | 256000 | 0.61860 | 2.23e-05 | 5.3367 | 5.6553 | 0.0011 |",
+      "   \u56fa\u5b9a settle \u5bb9\u5dee\u300d\uff0c\u7269\u7406\u65f6\u95f4\u5e76\u4e0d\u76f8\u7b49\uff1b\u786c\u9608\u503c\u4e0b\u6700\u786c\u4e00\u7ea7\u7684 z \u6389\u5230 5.337\uff08\u4f4e\u4e8e $z_c=6$\uff09\uff0c"
+     ],
+     "identical": false,
+     "leak_examples": [],
+     "n_added_lines": 1,
+     "n_changed_lines": 4,
+     "n_leaks_cur": 0,
+     "n_leaks_ref": 0,
+     "n_removed_lines": 0,
+     "path": "docs/AUDIT_m17063_RCP_STEADY_STATE.md",
+     "ref_chars": 9327
+    }
+   ],
+   "drift": [
+    {
+     "abs_delta": 8.0,
+     "cur": 31,
+     "path": "/n_runs",
+     "ref": 23,
+     "rel_delta": 0.34782608695652173,
+     "status": "DRIFT",
+     "tol": 2.3001000000000002e-08
+    }
+   ],
+   "json": "runs/steady_state_audit.json",
+   "missing_by_prefix": {
+    "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1": 209,
+    "/friction_scan/name=deposition_n2000_mu0.1_mur0_kn4000_e0.1_seed1": 209,
+    "/gates/G25_stiffness_ladder_coordination_converged": 8,
+    "/ladder/name=deposition_n10000_mu0.1_kn256000_e0.1_seed1": 213
+   },
+   "n_path_leaks": 0,
+   "n_verdict_leaves": 7,
+   "name": "steady_state_audit",
+   "new_untracked": [],
+   "other_changes": [
+    {
+     "cur": null,
+     "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/box_width",
+     "ref": 11.783732668501438,
+     "status": "MISSING_CUR"
+    },
+    {
+     "cur": null,
+     "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination/band[0]",
+     "ref": 2.5,
+     "status": "MISSING_CUR"
+    },
+    {
+     "cur": null,
+     "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination/band[1]",
+     "ref": 10.273935962181405,
+     "status": "MISSING_CUR"
+    },
+    {
+     "cur": null,
+     "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination/n_band",
+     "ref": 1291,
+     "status": "MISSING_CUR"
+    },
+    {
+     "cur": null,
+     "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination/rattler_fraction",
+     "ref": 0.001549186676994578,
+     "status": "MISSING_CUR"
+    },
+    {
+     "cur": null,
+     "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination/z_excess",
+     "ref": 1.7025561580170407,
+     "status": "MISSING_CUR"
+    },
+    {
+     "cur": null,
+     "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination/z_isostatic",
+     "ref": 4.0,
+     "status": "MISSING_CUR"
+    },
+    {
+     "cur": null,
+     "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination/z_mean",
+     "ref": 5.702556158017041,
+     "status": "MISSING_CUR"
+    },
+    {
+     "cur": null,
+     "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination/z_mean_excluding_rattlers",
+     "ref": 5.708301008533747,
+     "status": "MISSING_CUR"
+    },
+    {
+     "cur": null,
+     "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination/z_std",
+     "ref": 1.329455828489958,
+     "status": "MISSING_CUR"
+    },
+    {
+     "cur": null,
+     "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[0]/band[0]",
+     "ref": 2.5,
+     "status": "MISSING_CUR"
+    },
+    {
+     "cur": null,
+     "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[0]/band[1]",
+     "ref": 10.273935962181405,
+     "status": "MISSING_CUR"
+    },
+    {
+     "cur": null,
+     "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[0]/gap_over_diameter",
+     "ref": 0.0,
+     "status": "MISSING_CUR"
+    },
+    {
+     "cur": null,
+     "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[0]/gap_tolerance",
+     "ref": 0.0,
+     "status": "MISSING_CUR"
+    },
+    {
+     "cur": null,
+     "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[0]/n_band",
+     "ref": 1291,
+     "status": "MISSING_CUR"
+    },
+    {
+     "cur": null,
+     "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[0]/rattler_fraction",
+     "ref": 0.001549186676994578,
+     "status": "MISSING_CUR"
+    },
+    {
+     "cur": null,
+     "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[0]/z_excess",
+     "ref": -0.29744384198295926,
+     "status": "MISSING_CUR"
+    },
+    {
+     "cur": null,
+     "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[0]/z_isostatic",
+     "ref": 6.0,
+     "status": "MISSING_CUR"
+    },
+    {
+     "cur": null,
+     "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[0]/z_mean",
+     "ref": 5.702556158017041,
+     "status": "MISSING_CUR"
+    },
+    {
+     "cur": null,
+     "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[0]/z_mean_excluding_rattlers",
+     "ref": 5.708301008533747,
+     "status": "MISSING_CUR"
+    },
+    {
+     "cur": null,
+     "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[0]/z_std",
+     "ref": 1.329455828489958,
+     "status": "MISSING_CUR"
+    },
+    {
+     "cur": null,
+     "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[1]/band[0]",
+     "ref": 2.5,
+     "status": "MISSING_CUR"
+    },
+    {
+     "cur": null,
+     "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[1]/band[1]",
+     "ref": 10.273935962181405,
+     "status": "MISSING_CUR"
+    },
+    {
+     "cur": null,
+     "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[1]/gap_over_diameter",
+     "ref": 0.0001,
+     "status": "MISSING_CUR"
+    },
+    {
+     "cur": null,
+     "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[1]/gap_tolerance",
+     "ref": 0.0001,
+     "status": "MISSING_CUR"
+    },
+    {
+     "cur": null,
+     "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[1]/n_band",
+     "ref": 1291,
+     "status": "MISSING_CUR"
+    },
+    {
+     "cur": null,
+     "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[1]/rattler_fraction",
+     "ref": 0.001549186676994578,
+     "status": "MISSING_CUR"
+    },
+    {
+     "cur": null,
+     "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[1]/z_excess",
+     "ref": -0.271107668474051,
+     "status": "MISSING_CUR"
+    },
+    {
+     "cur": null,
+     "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[1]/z_isostatic",
+     "ref": 6.0,
+     "status": "MISSING_CUR"
+    },
+    {
+     "cur": null,
+     "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[1]/z_mean",
+     "ref": 5.728892331525949,
+     "status": "MISSING_CUR"
+    },
+    {
+     "cur": null,
+     "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[1]/z_mean_excluding_rattlers",
+     "ref": 5.734678044996121,
+     "status": "MISSING_CUR"
+    },
+    {
+     "cur": null,
+     "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[1]/z_std",
+     "ref": 1.3339145016754557,
+     "status": "MISSING_CUR"
+    },
+    {
+     "cur": null,
+     "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[2]/band[0]",
+     "ref": 2.5,
+     "status": "MISSING_CUR"
+    },
+    {
+     "cur": null,
+     "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[2]/band[1]",
+     "ref": 10.273935962181405,
+     "status": "MISSING_CUR"
+    },
+    {
+     "cur": null,
+     "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[2]/gap_over_diameter",
+     "ref": 0.001,
+     "status": "MISSING_CUR"
+    },
+    {
+     "cur": null,
+     "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[2]/gap_tolerance",
+     "ref": 0.001,
+     "status": "MISSING_CUR"
+    },
+    {
+     "cur": null,
+     "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[2]/n_band",
+     "ref": 1291,
+     "status": "MISSING_CUR"
+    },
+    {
+     "cur": null,
+     "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[2]/rattler_fraction",
+     "ref": 0.000774593338497289,
+     "status": "MISSING_CUR"
+    },
+    {
+     "cur": null,
+     "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[2]/z_excess",
+     "ref": -0.14484895429899325,
+     "status": "MISSING_CUR"
+    },
+    {
+     "cur": null,
+     "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[2]/z_isostatic",
+     "ref": 6.0,
+     "status": "MISSING_CUR"
+    }
+   ],
+   "path_leaks": [],
+   "returncode": 0,
+   "script": "steady_state_audit.py",
+   "stdout_tail": "_mu0.1_kn4000_e0.1_seed3: phi=0.62622 plateau_len=7.01 ptp=1.17e-03 res/Fn=0.1292 z0=5.817\ndeposition_n10000_mu0_kn4000_e0.1_seed1: phi=0.64261 plateau_len=11.02 ptp=1.79e-03 res/Fn=0.0081 z0=6.371\ndeposition_n10000_mu0_kn4000_e0.1_seed2: phi=0.64216 plateau_len=10.01 ptp=1.85e-03 res/Fn=0.0102 z0=6.361\ndeposition_n10000_mu0_kn4000_e0.1_seed3: phi=0.64235 plateau_len=10.51 ptp=1.86e-03 res/Fn=0.0094 z0=6.341\n  G20_steady_state_plateau: PASS\n  G21_static_balance_frictionless: PASS\n  G22_frictional_residual_within_coulomb_bound: PASS\n  G23_friction_ordering_of_z_robust: PASS\n  G24_isostaticity_resolvable: PASS\n  G25_stiffness_ladder_coordination_converged: FAIL\n  G26_friction_pulls_z_towards_frictional_isostatic: PASS\nfigure: benchmarks/case_rcp_deposition/figures/steady_state_plateau.png\nfigure: benchmarks/case_rcp_deposition/figures/steady_state_residual.png\nfigure: benchmarks/case_rcp_deposition/figures/steady_state_coordination.png\nfigure: benchmarks/case_rcp_deposition/figures/steady_state_ladder.png\nfigure: benchmarks/case_rcp_deposition/figures/steady_state_friction.png\nwrote benchmarks/case_rcp_deposition/runs/steady_state_audit.json and docs/AUDIT_m17063_RCP_STEADY_STATE.md\n",
+   "stochastic": false,
+   "touched_tracked": [],
+   "verdict": "CENTRE_OK",
+   "verdict_changes": [],
+   "wall_s": 42.5
+  },
+  {
+   "counts": {
+    "n_drift": 2,
+    "n_leaves": 3668,
+    "n_missing": 955,
+    "n_same": 2711,
+    "n_type_change": 0,
+    "n_value_change": 0,
+    "n_within_tol": 0
+   },
+   "doc": [
+    "docs/AUDIT_m18395_RCP_PHI_DEFINITION.md"
+   ],
+   "docs": [
+    {
+     "cur_chars": 13084,
+     "diff_examples": [],
+     "identical": true,
+     "leak_examples": [],
+     "n_added_lines": 0,
+     "n_changed_lines": 0,
+     "n_leaks_cur": 0,
+     "n_leaks_ref": 0,
+     "n_removed_lines": 0,
+     "path": "docs/AUDIT_m18395_RCP_PHI_DEFINITION.md",
+     "ref_chars": 13084
+    }
+   ],
+   "drift": [
+    {
+     "abs_delta": 8.0,
+     "cur": 31,
+     "path": "/n_runs_audited",
+     "ref": 23,
+     "rel_delta": 0.34782608695652173,
+     "status": "DRIFT",
+     "tol": 2.3001000000000002e-08
+    },
+    {
+     "abs_delta": -11.178136678412557,
+     "cur": 46.49733654037118,
+     "path": "/wall_clock_s",
+     "ref": 57.675473218783736,
+     "rel_delta": -0.1938109226431464,
+     "status": "DRIFT",
+     "tol": 5.767647321878374e-08
+    }
+   ],
+   "json": "runs/phi_definition_audit.json",
+   "missing_by_prefix": {
+    "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1": 125,
+    "/runs/tag=deposition_n10000_mu0.1_kn64000_e0.1_seed1_dtf0.025": 125,
+    "/runs/tag=deposition_n10000_mu0_kn64000_e0.1_seed1_dtf0.025": 123,
+    "/runs/tag=deposition_n10000_mu0_kn64000_e0.1_seed2": 123,
+    "/runs/tag=deposition_n10000_mu0_kn64000_e0.1_seed2_dtf0.025": 123,
+    "/runs/tag=deposition_n10000_mu0_kn64000_e0.1_seed3": 123,
+    "/runs/tag=deposition_n10000_mu0_kn64000_e0.1_seed3_dtf0.025": 123,
+    "/runs/tag=deposition_n2000_mu0.1_mur0_kn4000_e0.1_seed1": 90
+   },
+   "n_path_leaks": 0,
+   "n_verdict_leaves": 10,
+   "name": "phi_definition_audit",
+   "new_untracked": [],
+   "other_changes": [
+    {
+     "cur": 2.5,
+     "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/band[0]",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 19.28181607530927,
+     "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/band[1]",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 20.149899425205867,
+     "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/box_width",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 0.0,
+     "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/cic_reproduction_error",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 0.6185973783302515,
+     "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/definitions/D1_cic_bin0.5d",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 0.6168599621713767,
+     "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/definitions/D2_cic_bin0.25d",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 0.6202083266373071,
+     "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/definitions/D3_cic_bin1.0d",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 0.6193308237381431,
+     "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/definitions/D4_exact_slab_raw",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 0.6192925205223321,
+     "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/definitions/D5_exact_slab_deflated",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 0.592050524508373,
+     "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/definitions/D8_volume_balance_to_surface",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 0.5920505241328735,
+     "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/definitions/D9_exact_slab_full_column",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 0.6083298528316315,
+     "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/margin_scan/0.5d",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 0.5920505241328735,
+     "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/margin_scan/0d",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 0.6178023194310671,
+     "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/margin_scan/1d",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 0.6193308237381431,
+     "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/margin_scan/2.5d",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 0.6194871408992536,
+     "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/margin_scan/4d",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 0.6201687285220883,
+     "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/margin_scan/6d",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": null,
+     "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/mc",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 10000,
+     "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/n",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 0.00020081458929432916,
+     "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/overlap/max_overlap_over_d",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 2.134688318113122e-05,
+     "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/overlap/mean_overlap_over_d",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": false,
+     "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/overlap/truncated_neighbours",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 0.05,
+     "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/params/dt_frac",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 256000.0,
+     "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/params/kn",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 0.1,
+     "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/params/mu",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 10000,
+     "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/params/n",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 0.1,
+     "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/params/restitution",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 1,
+     "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/params/seed",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": -0.4909524985385677,
+     "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/profile_check/cic_minus_exact[0]",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": -0.01923463939615011,
+     "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/profile_check/cic_minus_exact[10]",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 0.008732964558611278,
+     "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/profile_check/cic_minus_exact[11]",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": -0.0016129703582425936,
+     "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/profile_check/cic_minus_exact[12]",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": -0.0016726630108017115,
+     "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/profile_check/cic_minus_exact[13]",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 0.004238895985547719,
+     "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/profile_check/cic_minus_exact[14]",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": -0.010303793492541513,
+     "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/profile_check/cic_minus_exact[15]",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 0.008077435448336945,
+     "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/profile_check/cic_minus_exact[16]",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 0.0018179638795547959,
+     "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/profile_check/cic_minus_exact[17]",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": -0.0005743288921215006,
+     "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/profile_check/cic_minus_exact[18]",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": -0.010754804402867912,
+     "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/profile_check/cic_minus_exact[19]",
+     "ref": null,
+     "status": "MISSING_REF"
+    },
+    {
+     "cur": 0.3544351491653128,
+     "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/profile_check/cic_minus_exact[1]",
+     "ref": null,
+     "status": "MISSING_REF"
+    }
+   ],
+   "path_leaks": [],
+   "returncode": 0,
+   "script": "phi_definition_audit.py",
+   "stdout_tail": "e. 10 % of it), the frictionless tier stays within 3 % of the reference under every estimator, and the seed-mean tier ordering survives all seven. The residual deviation from 0.6366 is therefore physics (soft-sphere stiffness, monodispersity and the frictional tier), not read-out.\n\n**The control volume is NOT a free choice** \u2014 this is the one material analyst degree of freedom. Dropping the floor and free-surface layers is what puts the number in the band: the whole-bed read-out (`margin = 0`) gives phi = 0.59600..0.61591, i.e. below the 0.62 lower bound on 6 of 6 production runs, and the `0.5 d` margin is still below it on 3 runs. From `1 d` upward the band is control-volume invariant (phi = 0.62384..0.64260 at `1 d`, the merged `2.5 d` column and beyond). **The acceptance criterion must therefore be read as `phi_bulk` on the bulk band with >= 2.5 d dropped at floor and free surface, not as `\u7a33\u6001\u5b54\u9699\u7387` of the whole bed** \u2014 under the whole-bed reading the tier means are 0.61546 (mu = 0, 0.7 % below the 0.62 lower bound) and 0.59766 (mu = 0.1, 3.6 % below the 0.62 lower bound).\nwrote benchmarks/case_rcp_deposition/runs/phi_definition_audit.json + docs/AUDIT_m18395_RCP_PHI_DEFINITION.md\n",
+   "stochastic": false,
+   "touched_tracked": [],
+   "verdict": "CENTRE_OK",
+   "verdict_changes": [],
+   "wall_s": 53.6
+  },
+  {
+   "counts": {
+    "n_drift": 2,
+    "n_leaves": 509,
+    "n_missing": 0,
+    "n_same": 506,
+    "n_type_change": 0,
+    "n_value_change": 1,
+    "n_within_tol": 0
+   },
+   "doc": [
+    "docs/AUDIT_m21145_RCP_ANCHOR_PROVENANCE.md"
+   ],
+   "docs": [
+    {
+     "cur_chars": 6769,
+     "diff_examples": [
+      "**Mission** m21145 \u00b7 **Repo** TensorDEM \u00b7 **Artifacts sha256** `7923e6e68ec9d120`  ",
+      "| G13_vs_ref_mu0 | 0 | 0.63637 | +0.04% | -0.04% | literature | PASS |"
+     ],
+     "identical": false,
+     "leak_examples": [],
+     "n_added_lines": 0,
+     "n_changed_lines": 2,
+     "n_leaks_cur": 0,
+     "n_leaks_ref": 0,
+     "n_removed_lines": 0,
+     "path": "docs/AUDIT_m21145_RCP_ANCHOR_PROVENANCE.md",
+     "ref_chars": 6769
+    }
+   ],
+   "drift": [
+    {
+     "abs_delta": -6.150776956237447e-05,
+     "cur": 0.6363739458362907,
+     "path": "/cross_script/gates/id=G13_vs_ref_mu0/limit",
+     "ref": 0.6364354536058531,
+     "rel_delta": -9.664415961412871e-05,
+     "status": "DRIFT",
+     "tol": 6.374354536058531e-10
+    },
+    {
+     "abs_delta": 9.661917933145858e-05,
+     "cur": 0.00035509607871409,
+     "path": "/cross_script/gates/id=G13_vs_ref_mu0/rel_error_vs_frictionless",
+     "ref": 0.0002584768993826314,
+     "rel_delta": 0.3738019898963203,
+     "status": "DRIFT",
+     "tol": 1.2584768993826314e-12
+    }
+   ],
+   "json": "runs/anchor_provenance_audit.json",
+   "missing_by_prefix": {},
+   "n_path_leaks": 0,
+   "n_verdict_leaves": 38,
+   "name": "anchor_provenance_audit",
+   "new_untracked": [],
+   "other_changes": [
+    {
+     "cur": "7923e6e68ec9d12071f195cf213f4d8af299490f13a6799bb83230eb4b4fd69d",
+     "path": "/self_sha256",
+     "ref": "198195c374ba3b6c8076bb897ec74df110f72d3f74edab98ffd213aaf771453b",
+     "status": "VALUE_CHANGE"
+    }
+   ],
+   "path_leaks": [],
+   "returncode": 0,
+   "script": "anchor_provenance_audit.py",
+   "stdout_tail": "wrote benchmarks/case_rcp_deposition/runs/anchor_provenance_audit.json\nwrote docs/AUDIT_m21145_RCP_ANCHOR_PROVENANCE.md\n  A1_frictionless_production_vs_literature: PASS (0.00907112951681488)\n  A2_frictionless_intercept_bracket_stable: PASS (0.000903352903029564)\n  A3_lowfriction_intercept_bracket_stable: PASS (0.0005856260364669463)\n  A4_lowfriction_order_checkable: PASS (4)\n  A5_no_claim_on_derived_anchor: PASS (0)\n  A6_policy_coverage: PASS (10)\n",
+   "stochastic": false,
+   "touched_tracked": [],
+   "verdict": "CENTRE_OK",
+   "verdict_changes": [],
+   "wall_s": 7.7
+  },
+  {
+   "counts": {
+    "n_drift": 0,
+    "n_leaves": 316,
+    "n_missing": 0,
+    "n_same": 316,
+    "n_type_change": 0,
+    "n_value_change": 0,
+    "n_within_tol": 0
+   },
+   "doc": [
+    "docs/AUDIT_m21401_RCP_TIMESTEP_LADDER.md"
+   ],
+   "docs": [
+    {
+     "cur_chars": 5183,
+     "diff_examples": [],
+     "identical": true,
+     "leak_examples": [],
+     "n_added_lines": 0,
+     "n_changed_lines": 0,
+     "n_leaks_cur": 0,
+     "n_leaks_ref": 0,
+     "n_removed_lines": 0,
+     "path": "docs/AUDIT_m21401_RCP_TIMESTEP_LADDER.md",
+     "ref_chars": 5183
+    }
+   ],
+   "drift": [],
+   "json": "runs/timestep_ladder_audit.json",
+   "missing_by_prefix": {},
+   "n_path_leaks": 0,
+   "n_verdict_leaves": 21,
+   "name": "timestep_ladder_audit",
+   "new_untracked": [],
+   "other_changes": [],
+   "path_leaks": [],
+   "returncode": 0,
+   "script": "timestep_ladder_audit.py",
+   "stdout_tail": "WROTE docs/AUDIT_m21401_RCP_TIMESTEP_LADDER.md\n  PASS     T_bias_mu0_kn4000                      +2.576e-04\n  NOT_RUN  T_bias_mu0_kn16000                     no dt/2 run\n  FAIL     T_bias_mu0_kn64000                     -7.298e-04\n  NOT_RUN  T_bias_mu0_kn256000                    no dt/2 run\n  PASS     T_bias_mu0.1_kn4000                    +4.370e-05\n  NOT_RUN  T_bias_mu0.1_kn16000                   no dt/2 run\n  PASS     T_bias_mu0.1_kn64000                   +1.188e-04\n  NOT_RUN  T_bias_mu0.1_kn256000                  no dt/2 run\n  PASS     T_intercept_shift_corrected_mu0        4.054e-04\n  PASS     T_intercept_shift_corrected_mu0.1      3.453e-04\n  PASS     T_frictionless_claim_survives_dt_correction PASS rel=-0.131%\n  PASS     T_stiff_end_covered_mu0                probed levels [4000.0, 64000.0]\n  PASS     T_stiff_end_covered_mu0.1              probed levels [4000.0, 64000.0]\n",
+   "stochastic": false,
+   "touched_tracked": [],
+   "verdict": "REPRODUCED",
+   "verdict_changes": [],
+   "wall_s": 8.1
+  },
+  {
+   "counts": {
+    "n_drift": 0,
+    "n_leaves": 101,
+    "n_missing": 0,
+    "n_same": 101,
+    "n_type_change": 0,
+    "n_value_change": 0,
+    "n_within_tol": 0
+   },
+   "doc": [
+    "docs/AUDIT_m22558_RCP_SEED_RESOLVED_BIAS.md"
+   ],
+   "docs": [
+    {
+     "cur_chars": 3895,
+     "diff_examples": [],
+     "identical": true,
+     "leak_examples": [],
+     "n_added_lines": 0,
+     "n_changed_lines": 0,
+     "n_leaks_cur": 0,
+     "n_leaks_ref": 0,
+     "n_removed_lines": 0,
+     "path": "docs/AUDIT_m22558_RCP_SEED_RESOLVED_BIAS.md",
+     "ref_chars": 3895
+    }
+   ],
+   "drift": [],
+   "json": "runs/seed_bias_audit.json",
+   "missing_by_prefix": {},
+   "n_path_leaks": 0,
+   "n_verdict_leaves": 12,
+   "name": "seed_bias_audit",
+   "new_untracked": [],
+   "other_changes": [],
+   "path_leaks": [],
+   "returncode": 0,
+   "script": "seed_bias_audit.py",
+   "stdout_tail": "wrote benchmarks/case_rcp_deposition/runs/seed_bias_audit.json\n{\n \"UNDECIDABLE\": 3,\n \"CONVERGED\": 1\n}\nmu=0 kn=4000 delta=+2.576e-04 verdict=UNDECIDABLE ci=[-8.523e-04,+1.368e-03]\nmu=0 kn=64000 delta=-7.298e-04 verdict=UNDECIDABLE ci=[-2.192e-03,+7.325e-04]\nmu=0.1 kn=4000 delta=+4.370e-05 verdict=UNDECIDABLE ci=[-1.936e-03,+2.024e-03]\nmu=0.1 kn=64000 delta=+1.188e-04 verdict=CONVERGED\n",
+   "stochastic": false,
+   "touched_tracked": [],
+   "verdict": "REPRODUCED",
+   "verdict_changes": [],
+   "wall_s": 1.0
+  },
+  {
+   "counts": {
+    "n_drift": 12,
+    "n_leaves": 308,
+    "n_missing": 0,
+    "n_same": 294,
+    "n_type_change": 0,
+    "n_value_change": 2,
+    "n_within_tol": 0
+   },
+   "doc": [],
+   "docs": [],
+   "drift": [
+    {
+     "abs_delta": 2500.0,
+     "cur": 4000,
+     "path": "/n_mc",
+     "ref": 1500,
+     "rel_delta": 1.6666666666666667,
+     "status": "DRIFT",
+     "tol": 1.500001e-06
+    },
+    {
+     "abs_delta": 9.87471351289182e-05,
+     "cur": 0.6198110493851364,
+     "path": "/tiers/0.1/fit/hi",
+     "ref": 0.6197123022500075,
+     "rel_delta": 0.0001593435127403379,
+     "status": "DRIFT",
+     "tol": 6.207123022500075e-10
+    },
+    {
+     "abs_delta": 0.0005358758948528219,
+     "cur": 0.6112769554779282,
+     "path": "/tiers/0.1/fit/lo",
+     "ref": 0.6107410795830753,
+     "rel_delta": 0.000877419110596981,
+     "status": "DRIFT",
+     "tol": 6.117410795830754e-10
+    },
+    {
+     "abs_delta": 2500.0,
+     "cur": 4000,
+     "path": "/tiers/0.1/fit/n_mc",
+     "ref": 1500,
+     "rel_delta": 1.6666666666666667,
+     "status": "DRIFT",
+     "tol": 1.500001e-06
+    },
+    {
+     "abs_delta": 0.07445682977655377,
+     "cur": 1.867307999209378,
+     "path": "/tiers/0.1/fit/p_hi",
+     "ref": 1.7928511694328242,
+     "rel_delta": 0.041529844220202894,
+     "status": "DRIFT",
+     "tol": 1.7938511694328244e-09
+    },
+    {
+     "abs_delta": -0.00023989465668386835,
+     "cur": 0.0024057397235339004,
+     "path": "/tiers/0.1/fit/sd",
+     "ref": 0.0026456343802177687,
+     "rel_delta": -0.09067566496626871,
+     "status": "DRIFT",
+     "tol": 3.645634380217769e-12
+    },
+    {
+     "abs_delta": 5.65937950182116e-05,
+     "cur": 0.6365951963703596,
+     "path": "/tiers/0/fit/hi",
+     "ref": 0.6365386025753413,
+     "rel_delta": 8.890866129601794e-05,
+     "status": "DRIFT",
+     "tol": 6.375386025753413e-10
+    },
+    {
+     "abs_delta": -8.953737563499597e-05,
+     "cur": 0.6333881423742737,
+     "path": "/tiers/0/fit/lo",
+     "ref": 0.6334776797499087,
+     "rel_delta": -0.0001413425894821496,
+     "status": "DRIFT",
+     "tol": 6.344776797499087e-10
+    },
+    {
+     "abs_delta": 2500.0,
+     "cur": 4000,
+     "path": "/tiers/0/fit/n_mc",
+     "ref": 1500,
+     "rel_delta": 1.6666666666666667,
+     "status": "DRIFT",
+     "tol": 1.500001e-06
+    },
+    {
+     "abs_delta": 0.07135775229122965,
+     "cur": 1.4658917389436703,
+     "path": "/tiers/0/fit/p_hi",
+     "ref": 1.3945339866524407,
+     "rel_delta": 0.0511696043081194,
+     "status": "DRIFT",
+     "tol": 1.3955339866524408e-09
+    },
+    {
+     "abs_delta": -0.013543938116368226,
+     "cur": 0.354981644962733,
+     "path": "/tiers/0/fit/p_lo",
+     "ref": 0.3685255830791012,
+     "rel_delta": -0.03675169035269153,
+     "status": "DRIFT",
+     "tol": 3.695255830791012e-10
+    },
+    {
+     "abs_delta": -4.128480038303973e-06,
+     "cur": 0.0008980885312343481,
+     "path": "/tiers/0/fit/sd",
+     "ref": 0.000902217011272652,
+     "rel_delta": -0.004575927949397018,
+     "status": "DRIFT",
+     "tol": 1.902217011272652e-12
+    }
+   ],
+   "json": "runs/stiffness_seed_audit.json",
+   "missing_by_prefix": {},
+   "n_path_leaks": 2,
+   "n_verdict_leaves": 10,
+   "name": "stiffness_seed_audit",
+   "new_untracked": [],
+   "other_changes": [
+    {
+     "cur": "benchmarks/case_rcp_deposition/figures/fig_stiff_stiffness_ladder_seeds.png",
+     "path": "/figures[0]",
+     "ref": "/root/tp-agent/work/m22796/benchmarks/case_rcp_deposition/figures/fig_stiff_stiffness_ladder_seeds.png",
+     "status": "VALUE_CHANGE"
+    },
+    {
+     "cur": "benchmarks/case_rcp_deposition/figures/fig_stiff_stiffness_limit_ci.png",
+     "path": "/figures[1]",
+     "ref": "/root/tp-agent/work/m22796/benchmarks/case_rcp_deposition/figures/fig_stiff_stiffness_limit_ci.png",
+     "status": "VALUE_CHANGE"
+    }
+   ],
+   "path_leaks": [
+    {
+     "foreign": "/root/tp-agent/work/",
+     "path": "/figures[0]",
+     "source": "HEAD",
+     "value": "/root/tp-agent/work/m22796/benchmarks/case_rcp_deposition/figures/fig_stiff_stiffness_ladder_seeds.png"
+    },
+    {
+     "foreign": "/root/tp-agent/work/",
+     "path": "/figures[1]",
+     "source": "HEAD",
+     "value": "/root/tp-agent/work/m22796/benchmarks/case_rcp_deposition/figures/fig_stiff_stiffness_limit_ci.png"
+    }
+   ],
+   "returncode": 0,
+   "script": "stiffness_seed_audit.py",
+   "stdout_tail": "[mu=0] levels=4 phi_inf=0.63562 CI=[0.63339,0.63660] p=0.71 [0.35,1.47] chi2_red=2.93 -> IN_BAND (spread over definitions 0.00103)\n    kn=     4000 n=3 phi=0.64237 CI=[0.64182,0.64293] -> IN_BAND (seed)\n    kn=    16000 n=1 phi=0.63791 CI=[0.63715,0.63866] -> IN_BAND (pooled_sd)\n    kn=    64000 n=3 phi=0.63676 CI=[0.63599,0.63754] -> IN_BAND (seed)\n    kn=   256000 n=1 phi=0.63571 CI=[0.63496,0.63647] -> IN_BAND (pooled_sd)\n[mu=0.1] levels=4 phi_inf=0.61782 CI=[0.61128,0.61981] p=0.60 [0.20,1.87] chi2_red=0.21 -> OUT_OF_BAND (spread over definitions 0.00190)\n    kn=     4000 n=3 phi=0.62628 CI=[0.62529,0.62727] -> IN_BAND (seed)\n    kn=    16000 n=1 phi=0.62159 CI=[0.61987,0.62330] -> UNDECIDABLE (pooled_sd)\n    kn=    64000 n=1 phi=0.61928 CI=[0.61757,0.62100] -> UNDECIDABLE (pooled_sd)\n    kn=   256000 n=1 phi=0.61860 CI=[0.61688,0.62031] -> UNDECIDABLE (pooled_sd)\nresolved tiers: 2/2\n",
+   "stochastic": true,
+   "touched_tracked": [
+    "benchmarks/case_rcp_deposition/runs/stiffness_seed_audit.json"
+   ],
+   "verdict": "CENTRE_OK",
+   "verdict_changes": [],
+   "wall_s": 73.7
+  }
+ ],
+ "regen": {
+  "records": [
+   {
+    "counts": {
+     "n_drift": 15,
+     "n_leaves": 1047,
+     "n_missing": 117,
+     "n_same": 915,
+     "n_type_change": 0,
+     "n_value_change": 0,
+     "n_within_tol": 0
+    },
+    "doc": [],
+    "docs": [],
+    "drift": [
+     {
+      "abs_delta": 0.0009204377086992066,
+      "cur": 0.6183098776212702,
+      "path": "/gates/id=G13_stiffness_limit_vs_ref_frictional/got",
+      "ref": 0.617389439912571,
+      "rel_delta": 0.001490854312036096,
+      "status": "DRIFT",
+      "tol": 6.18389439912571e-10
+     },
+     {
+      "abs_delta": -0.001472700333918664,
+      "cur": 0.010704195805967709,
+      "path": "/gates/id=G13_stiffness_limit_vs_ref_frictional/value",
+      "ref": 0.012176896139886373,
+      "rel_delta": -0.12094217746464299,
+      "status": "DRIFT",
+      "tol": 1.3176896139886373e-11
+     },
+     {
+      "abs_delta": 0.00018836696989310564,
+      "cur": 0.0007297640360642843,
+      "path": "/gates/id=G14_timestep_convergence_mu0_kn64000/got",
+      "ref": 0.0005413970661711787,
+      "rel_delta": 0.347927577859367,
+      "status": "DRIFT",
+      "tol": 1.5413970661711788e-12
+     },
+     {
+      "abs_delta": 0.00018836696989310564,
+      "cur": 0.0007297640360642843,
+      "path": "/gates/id=G14_timestep_convergence_mu0_kn64000/value",
+      "ref": 0.0005413970661711787,
+      "rel_delta": 0.347927577859367,
+      "status": "DRIFT",
+      "tol": 1.5413970661711788e-12
+     },
+     {
+      "abs_delta": -0.0009204377086992066,
+      "cur": 0.008398514114360767,
+      "path": "/gates/id=G6_stiffness_convergence_frictional/got",
+      "ref": 0.009318951823059973,
+      "rel_delta": -0.09877051906433952,
+      "status": "DRIFT",
+      "tol": 1.0318951823059973e-11
+     },
+     {
+      "abs_delta": -0.0009204377086992066,
+      "cur": 0.008398514114360767,
+      "path": "/gates/id=G6_stiffness_convergence_frictional/value",
+      "ref": 0.009318951823059973,
+      "rel_delta": -0.09877051906433952,
+      "status": "DRIFT",
+      "tol": 1.0318951823059973e-11
+     },
+     {
+      "abs_delta": 3.0,
+      "cur": 9,
+      "path": "/impl_hashes/b44c19146425bc58",
+      "ref": 6,
+      "rel_delta": 0.5,
+      "status": "DRIFT",
+      "tol": 6.001000000000001e-09
+     },
+     {
+      "abs_delta": -0.0016036680845773477,
+      "cur": 0.0002875007089813142,
+      "path": "/stiffness/mu=0.1/delta_from_last",
+      "ref": 0.0018911687935586619,
+      "rel_delta": -0.8479772350513903,
+      "status": "DRIFT",
+      "tol": 2.8911687935586616e-12
+     },
+     {
+      "abs_delta": 0.0009204377086992066,
+      "cur": 0.6183098776212702,
+      "path": "/stiffness/mu=0.1/limit",
+      "ref": 0.617389439912571,
+      "rel_delta": 0.001490854312036096,
+      "status": "DRIFT",
+      "tol": 6.18389439912571e-10
+     },
+     {
+      "abs_delta": 1.0,
+      "cur": 4,
+      "path": "/stiffness/mu=0.1/n_levels",
+      "ref": 3,
+      "rel_delta": 0.3333333333333333,
+      "status": "DRIFT",
+      "tol": 3.0010000000000003e-09
+     },
+     {
+      "abs_delta": 0.3025306990662917,
+      "cur": 0.8777530885312191,
+      "path": "/stiffness/mu=0.1/order",
+      "ref": 0.5752223894649274,
+      "rel_delta": 0.5259369325795996,
+      "status": "DRIFT",
+      "tol": 5.762223894649275e-10
+     },
+     {
+      "abs_delta": 0.3025306990662917,
+      "cur": 0.8777530885312191,
+      "path": "/stiffness/mu=0.1/order_used",
+      "ref": 0.5752223894649274,
+      "rel_delta": 0.5259369325795996,
+      "status": "DRIFT",
+      "tol": 5.762223894649275e-10
+     },
+     {
+      "abs_delta": 0.00018836696989310564,
+      "cur": 0.0007297640360642843,
+      "path": "/timestep/mu=0.0|kn=64000.0/delta",
+      "ref": 0.0005413970661711787,
+      "rel_delta": 0.347927577859367,
+      "status": "DRIFT",
+      "tol": 1.5413970661711788e-12
+     },
+     {
+      "abs_delta": -3.4473712187899075e-05,
+      "cur": 0.6367647448488053,
+      "path": "/timestep/mu=0.0|kn=64000.0/phi",
+      "ref": 0.6367992185609932,
+      "rel_delta": -5.413592099846013e-05,
+      "status": "DRIFT",
+      "tol": 6.377992185609932e-10
+     },
+     {
+      "abs_delta": -0.00022284068208100472,
+      "cur": 0.636034980812741,
+      "path": "/timestep/mu=0.0|kn=64000.0/phi_halved",
+      "ref": 0.636257821494822,
+      "rel_delta": -0.0003502364521939605,
+      "status": "DRIFT",
+      "tol": 6.37257821494822e-10
+     }
+    ],
+    "json": "runs/summary.json",
+    "missing_by_prefix": {
+     "/gates/id=G17_extrapolation_selfconsistency_mu0.1": 6,
+     "/probe_runs/n=10000|mu=0.0|kn=64000.0|dt_frac=0.025": 5,
+     "/probe_runs/n=10000|mu=0.0|kn=64000.0|dt_frac=0.025#0": 5,
+     "/probe_runs/n=10000|mu=0.0|kn=64000.0|dt_frac=0.025#1": 5,
+     "/probe_runs/n=10000|mu=0.0|kn=64000.0|dt_frac=0.025#2": 5,
+     "/runs/path=benchmarks": 72,
+     "/selfcheck/mu=0.1": 13,
+     "/stiffness/mu=0.1": 4,
+     "/timestep/mu=0.0|kn=64000.0": 2
+    },
+    "n_path_leaks": 0,
+    "n_verdict_leaves": 24,
+    "name": "aggregate",
+    "new_untracked": [],
+    "other_changes": [
+     {
+      "cur": "3-level fit predicts k_n=256000 to < 0.002 and the 4th level moves the limit by < 0.002 (mu=0.1)",
+      "path": "/gates/id=G17_extrapolation_selfconsistency_mu0.1/criterion",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 0.0003559927356576731,
+      "path": "/gates/id=G17_extrapolation_selfconsistency_mu0.1/got",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": "G17_extrapolation_selfconsistency_mu0.1",
+      "path": "/gates/id=G17_extrapolation_selfconsistency_mu0.1/id",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 0.0009204377086992066,
+      "path": "/gates/id=G17_extrapolation_selfconsistency_mu0.1/limit_shift",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": true,
+      "path": "/gates/id=G17_extrapolation_selfconsistency_mu0.1/pass",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 0.0003559927356576731,
+      "path": "/gates/id=G17_extrapolation_selfconsistency_mu0.1/value",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 0.025,
+      "path": "/probe_runs/n=10000|mu=0.0|kn=64000.0|dt_frac=0.025#0/dt_frac",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 64000.0,
+      "path": "/probe_runs/n=10000|mu=0.0|kn=64000.0|dt_frac=0.025#0/kn",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 0.0,
+      "path": "/probe_runs/n=10000|mu=0.0|kn=64000.0|dt_frac=0.025#0/mu",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 10000,
+      "path": "/probe_runs/n=10000|mu=0.0|kn=64000.0|dt_frac=0.025#0/n",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 0.636257821494822,
+      "path": "/probe_runs/n=10000|mu=0.0|kn=64000.0|dt_frac=0.025#0/phi",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 0.025,
+      "path": "/probe_runs/n=10000|mu=0.0|kn=64000.0|dt_frac=0.025#1/dt_frac",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 64000.0,
+      "path": "/probe_runs/n=10000|mu=0.0|kn=64000.0|dt_frac=0.025#1/kn",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 0.0,
+      "path": "/probe_runs/n=10000|mu=0.0|kn=64000.0|dt_frac=0.025#1/mu",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 10000,
+      "path": "/probe_runs/n=10000|mu=0.0|kn=64000.0|dt_frac=0.025#1/n",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 0.6365899596244352,
+      "path": "/probe_runs/n=10000|mu=0.0|kn=64000.0|dt_frac=0.025#1/phi",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 0.025,
+      "path": "/probe_runs/n=10000|mu=0.0|kn=64000.0|dt_frac=0.025#2/dt_frac",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 64000.0,
+      "path": "/probe_runs/n=10000|mu=0.0|kn=64000.0|dt_frac=0.025#2/kn",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 0.0,
+      "path": "/probe_runs/n=10000|mu=0.0|kn=64000.0|dt_frac=0.025#2/mu",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 10000,
+      "path": "/probe_runs/n=10000|mu=0.0|kn=64000.0|dt_frac=0.025#2/n",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 0.6352571613189657,
+      "path": "/probe_runs/n=10000|mu=0.0|kn=64000.0|dt_frac=0.025#2/phi",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": null,
+      "path": "/probe_runs/n=10000|mu=0.0|kn=64000.0|dt_frac=0.025/dt_frac",
+      "ref": 0.025,
+      "status": "MISSING_CUR"
+     },
+     {
+      "cur": null,
+      "path": "/probe_runs/n=10000|mu=0.0|kn=64000.0|dt_frac=0.025/kn",
+      "ref": 64000.0,
+      "status": "MISSING_CUR"
+     },
+     {
+      "cur": null,
+      "path": "/probe_runs/n=10000|mu=0.0|kn=64000.0|dt_frac=0.025/mu",
+      "ref": 0.0,
+      "status": "MISSING_CUR"
+     },
+     {
+      "cur": null,
+      "path": "/probe_runs/n=10000|mu=0.0|kn=64000.0|dt_frac=0.025/n",
+      "ref": 10000,
+      "status": "MISSING_CUR"
+     },
+     {
+      "cur": null,
+      "path": "/probe_runs/n=10000|mu=0.0|kn=64000.0|dt_frac=0.025/phi",
+      "ref": 0.636257821494822,
+      "status": "MISSING_CUR"
+     },
+     {
+      "cur": 5.336725828472136,
+      "path": "/runs/path=benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn256000_e0.1_seed1.json/Z",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 2.5,
+      "path": "/runs/path=benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn256000_e0.1_seed1.json/band[0]",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 19.28181607530927,
+      "path": "/runs/path=benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn256000_e0.1_seed1.json/band[1]",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 0.00015884889851313966,
+      "path": "/runs/path=benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn256000_e0.1_seed1.json/dt",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 0.05,
+      "path": "/runs/path=benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn256000_e0.1_seed1.json/dt_frac",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 0.1,
+      "path": "/runs/path=benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn256000_e0.1_seed1.json/e",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": "b44c19146425bc58",
+      "path": "/runs/path=benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn256000_e0.1_seed1.json/impl",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 3.0063635918836246e-05,
+      "path": "/runs/path=benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn256000_e0.1_seed1.json/ke_final",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 256000.0,
+      "path": "/runs/path=benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn256000_e0.1_seed1.json/kn",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 2.135547345063716e-05,
+      "path": "/runs/path=benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn256000_e0.1_seed1.json/mean_ov",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 0.1,
+      "path": "/runs/path=benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn256000_e0.1_seed1.json/mu",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 10000,
+      "path": "/runs/path=benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn256000_e0.1_seed1.json/n",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 0.00020081458929444018,
+      "path": "/runs/path=benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn256000_e0.1_seed1.json/ovmax",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn256000_e0.1_seed1.json",
+      "path": "/runs/path=benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn256000_e0.1_seed1.json/path",
+      "ref": null,
+      "status": "MISSING_REF"
+     }
+    ],
+    "path_leaks": [],
+    "returncode": 0,
+    "script": "aggregate.py",
+    "stdout_tail": "wrote docs/CASE_RCP_DEPOSITION.md and 5 figures; all gates pass = False\n  G1_frictionless_vs_ref: PASS (0.6424)\n  G2_low_friction_in_band: PASS (0.6263)\n  G3_frictionless_in_band: PASS (0.6424)\n  G4_overlap_correction_is_small: PASS (0.0036)\n  G5_stiffness_convergence: FAIL (0.0073)\n  G6_stiffness_convergence_frictional: FAIL (0.0084)\n  G12_stiffness_limit_vs_ref: PASS (0.6353)\n  G13_stiffness_limit_vs_ref_frictional: PASS (0.6183)\n  G18_production_vs_friction_ref: PASS (0.6424)\n  G18b_production_vs_friction_ref: PASS (0.6263)\n  G17_extrapolation_selfconsistency_mu0: PASS (0.0008)\n  G17_extrapolation_selfconsistency_mu0.1: PASS (0.0004)\n  G14_timestep_convergence_mu0: PASS (0.0000)\n  G14_timestep_convergence_mu0_kn64000: PASS (0.0007)\n  G14_timestep_convergence_mu0.1: PASS (0.0004)\n  G14_timestep_convergence_mu0.1_kn64000: PASS (0.0001)\n  G7_finite_size: PASS (0.0049)\n  G8_settled: PASS (True)\n  G15_production_size: PASS (10000)\n  G16_seed_coverage: PASS (3)\n  G9_residual_overlap: FAIL (0.0115)\n  G10_friction_loosens: PASS (-0.0161)\n  G11_energy_never_increases: PASS (0)\n",
+    "stochastic": false,
+    "touched_tracked": [],
+    "verdict": "STALE",
+    "verdict_changes": [
+     {
+      "cur": true,
+      "path": "/gates/id=G17_extrapolation_selfconsistency_mu0.1/pass",
+      "ref": "<absent>"
+     }
+    ],
+    "wall_s": 10.6
+   },
+   {
+    "counts": {
+     "n_drift": 25,
+     "n_leaves": 153,
+     "n_missing": 18,
+     "n_same": 88,
+     "n_type_change": 1,
+     "n_value_change": 21,
+     "n_within_tol": 0
+    },
+    "doc": [
+     "docs/AUDIT_m16929_RCP_PRODUCTION_WAVE.md"
+    ],
+    "docs": [
+     {
+      "cur_chars": 3978,
+      "diff_examples": [
+       "| runs\uff08\u542b\u63a2\u9488\uff09 | 11 | 31 |",
+       "| mu=0.1 \u79cd\u5b50\u6570 | 3 | 3 |",
+       "| 0 | 4000, 16000, 64000, 256000 | 1.000 | 0.63536 | 0.00702 | -0.19 % |"
+      ],
+      "identical": false,
+      "leak_examples": [],
+      "n_added_lines": 0,
+      "n_changed_lines": 10,
+      "n_leaks_cur": 0,
+      "n_leaks_ref": 0,
+      "n_removed_lines": 0,
+      "path": "docs/AUDIT_m16929_RCP_PRODUCTION_WAVE.md",
+      "ref_chars": 3955
+     }
+    ],
+    "drift": [
+     {
+      "abs_delta": 5.0,
+      "cur": 25,
+      "path": "/after_full_set/n_prod_runs",
+      "ref": 20,
+      "rel_delta": 0.25,
+      "status": "DRIFT",
+      "tol": 2.0001e-08
+     },
+     {
+      "abs_delta": 9.0,
+      "cur": 31,
+      "path": "/after_full_set/n_runs",
+      "ref": 22,
+      "rel_delta": 0.4090909090909091,
+      "status": "DRIFT",
+      "tol": 2.2001000000000003e-08
+     },
+     {
+      "abs_delta": -0.0019422024901768475,
+      "cur": 0.0002875007089813142,
+      "path": "/after_full_set/stiffness/0.1/delta_from_last",
+      "ref": 0.0022297031991581617,
+      "rel_delta": -0.8710587538781566,
+      "status": "DRIFT",
+      "tol": 3.2297031991581617e-12
+     },
+     {
+      "abs_delta": 0.0012589721142987065,
+      "cur": 0.6183098776212702,
+      "path": "/after_full_set/stiffness/0.1/limit",
+      "ref": 0.6170509055069715,
+      "rel_delta": 0.0020403051078327645,
+      "status": "DRIFT",
+      "tol": 6.180509055069715e-10
+     },
+     {
+      "abs_delta": 1.0,
+      "cur": 4,
+      "path": "/after_full_set/stiffness/0.1/n_levels",
+      "ref": 3,
+      "rel_delta": 0.3333333333333333,
+      "status": "DRIFT",
+      "tol": 3.0010000000000003e-09
+     },
+     {
+      "abs_delta": 0.3653740302171308,
+      "cur": 0.8777530885312191,
+      "path": "/after_full_set/stiffness/0.1/order",
+      "ref": 0.5123790583140884,
+      "rel_delta": 0.7130932154396452,
+      "status": "DRIFT",
+      "tol": 5.133790583140884e-10
+     },
+     {
+      "abs_delta": 0.3653740302171308,
+      "cur": 0.8777530885312191,
+      "path": "/after_full_set/stiffness/0.1/order_used",
+      "ref": 0.5123790583140884,
+      "rel_delta": 0.7130932154396452,
+      "status": "DRIFT",
+      "tol": 5.133790583140884e-10
+     },
+     {
+      "abs_delta": -3.4473712187899075e-05,
+      "cur": -0.0011405668471143882,
+      "path": "/after_full_set/stiffness/0/delta[1]",
+      "ref": -0.001106093134926489,
+      "rel_delta": -0.031167097145205765,
+      "status": "DRIFT",
+      "tol": 2.1060931349264894e-12
+     },
+     {
+      "abs_delta": -1.2461048406353648e-05,
+      "cur": 0.00035130390673376866,
+      "path": "/after_full_set/stiffness/0/delta_from_last",
+      "ref": 0.0003637649551401223,
+      "rel_delta": -0.034255769365011124,
+      "status": "DRIFT",
+      "tol": 1.3637649551401224e-12
+     },
+     {
+      "abs_delta": -0.0010759243839827404,
+      "cur": 0.6353595292218703,
+      "path": "/after_full_set/stiffness/0/limit",
+      "ref": 0.6364354536058531,
+      "rel_delta": -0.0016905475298192054,
+      "status": "DRIFT",
+      "tol": 6.374354536058531e-10
+     },
+     {
+      "abs_delta": 1.0,
+      "cur": 4,
+      "path": "/after_full_set/stiffness/0/n_levels",
+      "ref": 3,
+      "rel_delta": 0.3333333333333333,
+      "status": "DRIFT",
+      "tol": 3.0010000000000003e-09
+     },
+     {
+      "abs_delta": -0.007299203891415695,
+      "cur": 1.0,
+      "path": "/after_full_set/stiffness/0/order_used",
+      "ref": 1.0072992038914157,
+      "rel_delta": -0.007246311585691009,
+      "status": "DRIFT",
+      "tol": 1.0082992038914158e-09
+     },
+     {
+      "abs_delta": -3.4473712187899075e-05,
+      "cur": 0.6367647448488053,
+      "path": "/after_full_set/stiffness/0/value[2]",
+      "ref": 0.6367992185609932,
+      "rel_delta": -5.413592099846013e-05,
+      "status": "DRIFT",
+      "tol": 6.377992185609932e-10
+     },
+     {
+      "abs_delta": 1.0,
+      "cur": 11,
+      "path": "/before_screening_set/n_prod_runs",
+      "ref": 10,
+      "rel_delta": 0.1,
+      "status": "DRIFT",
+      "tol": 1.0001e-08
+     },
+     {
+      "abs_delta": 1.0,
+      "cur": 11,
+      "path": "/before_screening_set/n_runs",
+      "ref": 10,
+      "rel_delta": 0.1,
+      "status": "DRIFT",
+      "tol": 1.0001e-08
+     },
+     {
+      "abs_delta": -0.0002366326658458373,
+      "cur": -0.006424726369896661,
+      "path": "/before_screening_set/stiffness/0.1/delta[0]",
+      "ref": -0.006188093704050823,
+      "rel_delta": -0.03823999395660958,
+      "status": "DRIFT",
+      "tol": 7.1880937040508235e-12
+     },
+     {
+      "abs_delta": 7.887755528190876e-05,
+      "cur": 0.002141575456632183,
+      "path": "/before_screening_set/stiffness/0.1/delta_from_last",
+      "ref": 0.0020626979013502744,
+      "rel_delta": 0.038239993956591646,
+      "status": "DRIFT",
+      "tol": 3.062697901350275e-12
+     },
+     {
+      "abs_delta": -7.887755528190876e-05,
+      "cur": 0.616001587913629,
+      "path": "/before_screening_set/stiffness/0.1/limit",
+      "ref": 0.6160804654689109,
+      "rel_delta": -0.0001280312551735811,
+      "status": "DRIFT",
+      "tol": 6.17080465468911e-10
+     },
+     {
+      "abs_delta": 0.0002366326658458373,
+      "cur": 0.6245678897401579,
+      "path": "/before_screening_set/stiffness/0.1/value[0]",
+      "ref": 0.624331257074312,
+      "rel_delta": 0.0003790178101201038,
+      "status": "DRIFT",
+      "tol": 6.253312570743121e-10
+     },
+     {
+      "abs_delta": -0.0059649511074351125,
+      "cur": 5.714486060231913,
+      "path": "/before_screening_set/tiers/0.1/Z",
+      "ref": 5.720451011339348,
+      "rel_delta": -0.0010427414019648284,
+      "status": "DRIFT",
+      "tol": 5.721451011339349e-09
+     },
+     {
+      "abs_delta": 0.00037171326711560315,
+      "cur": -0.018900581620864276,
+      "path": "/before_screening_set/tiers/0.1/dev_vs_ref",
+      "ref": -0.01927229488797988,
+      "rel_delta": 0.019287441857660684,
+      "status": "DRIFT",
+      "tol": 2.027229488797988e-11
+     },
+     {
+      "abs_delta": 1.0,
+      "cur": 3,
+      "path": "/before_screening_set/tiers/0.1/n_seeds",
+      "ref": 2,
+      "rel_delta": 0.5,
+      "status": "DRIFT",
+      "tol": 2.001e-09
+     },
+     {
+      "abs_delta": 0.0002366326658458373,
+      "cur": 0.6245678897401579,
+      "path": "/before_screening_set/tiers/0.1/phi_mean",
+      "ref": 0.624331257074312,
+      "rel_delta": 0.0003790178101201038,
+      "status": "DRIFT",
+      "tol": 6.253312570743121e-10
+     },
+     {
+      "abs_delta": -0.00018422777606814825,
+      "cur": 0.0008197195999509817,
+      "path": "/before_screening_set/tiers/0.1/phi_std",
+      "ref": 0.00100394737601913,
+      "rel_delta": -0.183503419072274,
+      "status": "DRIFT",
+      "tol": 2.00394737601913e-12
+     },
+     {
+      "abs_delta": -1.0,
+      "cur": 1,
+      "path": "/before_screening_set/tiers/0.1/seeds[1]",
+      "ref": 2,
+      "rel_delta": -0.5,
+      "status": "DRIFT",
+      "tol": 2.001e-09
+     }
+    ],
+    "json": "runs/debt_audit.json",
+    "missing_by_prefix": {
+     "/after_full_set/stiffness": 8,
+     "/before_screening_set/tiers": 1,
+     "/runs_used/22": 1,
+     "/runs_used/23": 1,
+     "/runs_used/24": 1,
+     "/runs_used/25": 1,
+     "/runs_used/26": 1,
+     "/runs_used/27": 1,
+     "/runs_used/28": 1,
+     "/runs_used/29": 1,
+     "/runs_used/30": 1
+    },
+    "n_path_leaks": 0,
+    "n_verdict_leaves": 8,
+    "name": "debt_audit",
+    "new_untracked": [],
+    "other_changes": [
+     {
+      "cur": -0.0006832303758781411,
+      "path": "/after_full_set/stiffness/0.1/delta[2]",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 256000.0,
+      "path": "/after_full_set/stiffness/0.1/kn[3]",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 4.0,
+      "path": "/after_full_set/stiffness/0.1/ratio[2]",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 0.6185973783302515,
+      "path": "/after_full_set/stiffness/0.1/value[3]",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": -0.001053911720201195,
+      "path": "/after_full_set/stiffness/0/delta[2]",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 256000.0,
+      "path": "/after_full_set/stiffness/0/kn[3]",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": null,
+      "path": "/after_full_set/stiffness/0/order",
+      "ref": 1.0072992038914157,
+      "status": "TYPE_CHANGE"
+     },
+     {
+      "cur": 4.0,
+      "path": "/after_full_set/stiffness/0/ratio[2]",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 0.6357108331286041,
+      "path": "/after_full_set/stiffness/0/value[3]",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 2,
+      "path": "/before_screening_set/tiers/0.1/seeds[2]",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn4000_e0.1_seed1.json",
+      "path": "/runs_used[10]",
+      "ref": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn4000_e0.1_seed3.json",
+      "status": "VALUE_CHANGE"
+     },
+     {
+      "cur": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn4000_e0.1_seed1_dtf0.025.json",
+      "path": "/runs_used[11]",
+      "ref": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn64000_e0.1_seed1.json",
+      "status": "VALUE_CHANGE"
+     },
+     {
+      "cur": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn4000_e0.1_seed2.json",
+      "path": "/runs_used[12]",
+      "ref": "benchmarks/case_rcp_deposition/runs/deposition_n1000_mu0_kn4000_e0.1_seed1.json",
+      "status": "VALUE_CHANGE"
+     },
+     {
+      "cur": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn4000_e0.1_seed3.json",
+      "path": "/runs_used[13]",
+      "ref": "benchmarks/case_rcp_deposition/runs/deposition_n2000_mu0.1_kn16000_e0.1_seed1.json",
+      "status": "VALUE_CHANGE"
+     },
+     {
+      "cur": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn64000_e0.1_seed1.json",
+      "path": "/runs_used[14]",
+      "ref": "benchmarks/case_rcp_deposition/runs/deposition_n2000_mu0.1_kn4000_e0.1_seed1.json",
+      "status": "VALUE_CHANGE"
+     },
+     {
+      "cur": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn64000_e0.1_seed1_dtf0.025.json",
+      "path": "/runs_used[15]",
+      "ref": "benchmarks/case_rcp_deposition/runs/deposition_n2000_mu0.1_kn4000_e0.1_seed2.json",
+      "status": "VALUE_CHANGE"
+     },
+     {
+      "cur": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn64000_e0.1_seed2.json",
+      "path": "/runs_used[16]",
+      "ref": "benchmarks/case_rcp_deposition/runs/deposition_n2000_mu0.3_kn4000_e0.1_seed1.json",
+      "status": "VALUE_CHANGE"
+     },
+     {
+      "cur": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn64000_e0.1_seed2_dtf0.025.json",
+      "path": "/runs_used[17]",
+      "ref": "benchmarks/case_rcp_deposition/runs/deposition_n2000_mu0.5_kn4000_e0.1_seed1.json",
+      "status": "VALUE_CHANGE"
+     },
+     {
+      "cur": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn64000_e0.1_seed3.json",
+      "path": "/runs_used[18]",
+      "ref": "benchmarks/case_rcp_deposition/runs/deposition_n2000_mu0_kn16000_e0.1_seed1.json",
+      "status": "VALUE_CHANGE"
+     },
+     {
+      "cur": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn64000_e0.1_seed3_dtf0.025.json",
+      "path": "/runs_used[19]",
+      "ref": "benchmarks/case_rcp_deposition/runs/deposition_n2000_mu0_kn4000_e0.1_seed1.json",
+      "status": "VALUE_CHANGE"
+     },
+     {
+      "cur": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn256000_e0.1_seed1.json",
+      "path": "/runs_used[1]",
+      "ref": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn4000_e0.1_seed1.json",
+      "status": "VALUE_CHANGE"
+     },
+     {
+      "cur": "benchmarks/case_rcp_deposition/runs/deposition_n1000_mu0_kn4000_e0.1_seed1.json",
+      "path": "/runs_used[20]",
+      "ref": "benchmarks/case_rcp_deposition/runs/deposition_n2000_mu0_kn4000_e0.1_seed2.json",
+      "status": "VALUE_CHANGE"
+     },
+     {
+      "cur": "benchmarks/case_rcp_deposition/runs/deposition_n2000_mu0.1_kn16000_e0.1_seed1.json",
+      "path": "/runs_used[21]",
+      "ref": "benchmarks/case_rcp_deposition/runs/deposition_n4000_mu0_kn4000_e0.1_seed1.json",
+      "status": "VALUE_CHANGE"
+     },
+     {
+      "cur": "benchmarks/case_rcp_deposition/runs/deposition_n2000_mu0.1_kn4000_e0.1_seed1.json",
+      "path": "/runs_used[22]",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": "benchmarks/case_rcp_deposition/runs/deposition_n2000_mu0.1_kn4000_e0.1_seed2.json",
+      "path": "/runs_used[23]",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": "benchmarks/case_rcp_deposition/runs/deposition_n2000_mu0.1_mur0_kn4000_e0.1_seed1.json",
+      "path": "/runs_used[24]",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": "benchmarks/case_rcp_deposition/runs/deposition_n2000_mu0.3_kn4000_e0.1_seed1.json",
+      "path": "/runs_used[25]",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": "benchmarks/case_rcp_deposition/runs/deposition_n2000_mu0.5_kn4000_e0.1_seed1.json",
+      "path": "/runs_used[26]",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": "benchmarks/case_rcp_deposition/runs/deposition_n2000_mu0_kn16000_e0.1_seed1.json",
+      "path": "/runs_used[27]",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": "benchmarks/case_rcp_deposition/runs/deposition_n2000_mu0_kn4000_e0.1_seed1.json",
+      "path": "/runs_used[28]",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": "benchmarks/case_rcp_deposition/runs/deposition_n2000_mu0_kn4000_e0.1_seed2.json",
+      "path": "/runs_used[29]",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn4000_e0.1_seed1.json",
+      "path": "/runs_used[2]",
+      "ref": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn4000_e0.1_seed1_dtf0.025.json",
+      "status": "VALUE_CHANGE"
+     },
+     {
+      "cur": "benchmarks/case_rcp_deposition/runs/deposition_n4000_mu0_kn4000_e0.1_seed1.json",
+      "path": "/runs_used[30]",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn4000_e0.1_seed1_dtf0.025.json",
+      "path": "/runs_used[3]",
+      "ref": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn4000_e0.1_seed2.json",
+      "status": "VALUE_CHANGE"
+     },
+     {
+      "cur": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn4000_e0.1_seed2.json",
+      "path": "/runs_used[4]",
+      "ref": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn4000_e0.1_seed3.json",
+      "status": "VALUE_CHANGE"
+     },
+     {
+      "cur": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn4000_e0.1_seed3.json",
+      "path": "/runs_used[5]",
+      "ref": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn64000_e0.1_seed1.json",
+      "status": "VALUE_CHANGE"
+     },
+     {
+      "cur": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn64000_e0.1_seed1.json",
+      "path": "/runs_used[6]",
+      "ref": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn16000_e0.1_seed1.json",
+      "status": "VALUE_CHANGE"
+     },
+     {
+      "cur": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn64000_e0.1_seed1_dtf0.025.json",
+      "path": "/runs_used[7]",
+      "ref": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn4000_e0.1_seed1.json",
+      "status": "VALUE_CHANGE"
+     },
+     {
+      "cur": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn16000_e0.1_seed1.json",
+      "path": "/runs_used[8]",
+      "ref": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn4000_e0.1_seed1_dtf0.025.json",
+      "status": "VALUE_CHANGE"
+     },
+     {
+      "cur": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn256000_e0.1_seed1.json",
+      "path": "/runs_used[9]",
+      "ref": "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn4000_e0.1_seed2.json",
+      "status": "VALUE_CHANGE"
+     }
+    ],
+    "path_leaks": [],
+    "returncode": 0,
+    "script": "debt_audit.py",
+    "stdout_tail": "{\n \"0\": {\n  \"n_seeds\": 3,\n  \"seeds\": [\n   1,\n   2,\n   3\n  ],\n  \"phi_mean\": 0.6423746810504044,\n  \"phi_std\": 0.00022340381063669455,\n  \"dev_vs_ref\": 0.00907112951681488,\n  \"in_band\": true,\n  \"lt_3pct\": true,\n  \"Z\": 6.357592218743534\n },\n \"0.1\": {\n  \"n_seeds\": 3,\n  \"seeds\": [\n   1,\n   2,\n   3\n  ],\n  \"phi_mean\": 0.6262811439407491,\n  \"phi_std\": 0.0003985464922471281,\n  \"dev_vs_ref\": -0.016209324629674837,\n  \"in_band\": true,\n  \"lt_3pct\": true,\n  \"Z\": 5.817056162186361\n }\n}\nwrote docs/AUDIT_m16929_RCP_PRODUCTION_WAVE.md\n",
+    "stochastic": false,
+    "touched_tracked": [],
+    "verdict": "CENTRE_OK",
+    "verdict_changes": [],
+    "wall_s": 5.0
+   },
+   {
+    "counts": {
+     "n_drift": 36,
+     "n_leaves": 403,
+     "n_missing": 211,
+     "n_same": 150,
+     "n_type_change": 2,
+     "n_value_change": 4,
+     "n_within_tol": 0
+    },
+    "doc": [
+     "docs/AUDIT_m16999_RCP_EXTRAPOLATION_ORDER.md"
+    ],
+    "docs": [
+     {
+      "cur_chars": 8157,
+      "diff_examples": [
+       "> run-set sha256 `865caf65926c5fff\u2026`, 31 run files).",
+       "| $k_n$ \u68af\u7ea7 | 4000, 16000, 64000, 256000 |",
+       "| 64000 | 0.63676 | 3 | -0.00114 | 0.985 |"
+      ],
+      "identical": false,
+      "leak_examples": [],
+      "n_added_lines": 7,
+      "n_changed_lines": 28,
+      "n_leaks_cur": 0,
+      "n_leaks_ref": 0,
+      "n_removed_lines": 0,
+      "path": "docs/AUDIT_m16999_RCP_EXTRAPOLATION_ORDER.md",
+      "ref_chars": 6727
+     }
+    ],
+    "drift": [
+     {
+      "abs_delta": 1.0,
+      "cur": 3,
+      "path": "/friction_scan/2000/mu=0.1/n_seeds",
+      "ref": 2,
+      "rel_delta": 0.5,
+      "status": "DRIFT",
+      "tol": 2.001e-09
+     },
+     {
+      "abs_delta": 0.0002366326658458373,
+      "cur": 0.6245678897401579,
+      "path": "/friction_scan/2000/mu=0.1/phi",
+      "ref": 0.624331257074312,
+      "rel_delta": 0.0003790178101201038,
+      "status": "DRIFT",
+      "tol": 6.253312570743121e-10
+     },
+     {
+      "abs_delta": 0.0007291119648581423,
+      "cur": 0.6178587831448296,
+      "path": "/gates/id=G13_corrected_limit_vs_ref_mu0.1/got",
+      "ref": 0.6171296711799714,
+      "rel_delta": 0.0011814566677114345,
+      "status": "DRIFT",
+      "tol": 6.181296711799715e-10
+     },
+     {
+      "abs_delta": -0.0011453219680460647,
+      "cur": 0.02943954893994738,
+      "path": "/gates/id=G13_corrected_limit_vs_ref_mu0.1/value",
+      "ref": 0.030584870907993444,
+      "rel_delta": -0.03744733700173086,
+      "status": "DRIFT",
+      "tol": 3.1584870907993447e-11
+     },
+     {
+      "abs_delta": -0.0006377366051781852,
+      "cur": 0.6358460385792466,
+      "path": "/gates/id=G13_corrected_limit_vs_ref_mu0/got",
+      "ref": 0.6364837751844248,
+      "rel_delta": -0.0010019683612412546,
+      "status": "DRIFT",
+      "tol": 6.374837751844248e-10
+     },
+     {
+      "abs_delta": 0.0010017854306915153,
+      "cur": 0.0011843566144414952,
+      "path": "/gates/id=G13_corrected_limit_vs_ref_mu0/value",
+      "ref": 0.00018257118374997994,
+      "rel_delta": 5.487095006533995,
+      "status": "DRIFT",
+      "tol": 1.1825711837499799e-12
+     },
+     {
+      "abs_delta": -6.150776956237447e-05,
+      "cur": 0.6363739458362907,
+      "path": "/gates/id=G13_vs_ref_mu0/got",
+      "ref": 0.6364354536058531,
+      "rel_delta": -9.664415961412871e-05,
+      "status": "DRIFT",
+      "tol": 6.374354536058531e-10
+     },
+     {
+      "abs_delta": 9.661917933145858e-05,
+      "cur": 0.00035509607871409,
+      "path": "/gates/id=G13_vs_ref_mu0/value",
+      "ref": 0.0002584768993826314,
+      "rel_delta": 0.3738019898963203,
+      "status": "DRIFT",
+      "tol": 1.2584768993826314e-12
+     },
+     {
+      "abs_delta": 7.514759750848476e-05,
+      "cur": 0.00011884810754136943,
+      "path": "/gates/id=G18_timestep_at_stiffest_mu0.1/got",
+      "ref": 4.3700510032884665e-05,
+      "rel_delta": 1.7196045870388272,
+      "status": "DRIFT",
+      "tol": 1.0437005100328847e-12
+     },
+     {
+      "abs_delta": 0.00047216025013341323,
+      "cur": 0.0007297640360642843,
+      "path": "/gates/id=G18_timestep_at_stiffest_mu0/got",
+      "ref": 0.0002576037859308711,
+      "rel_delta": 1.8328932877567226,
+      "status": "DRIFT",
+      "tol": 1.257603785930871e-12
+     },
+     {
+      "abs_delta": 18.0,
+      "cur": 62,
+      "path": "/provenance/n_run_files_total",
+      "ref": 44,
+      "rel_delta": 0.4090909090909091,
+      "status": "DRIFT",
+      "tol": 4.4001000000000005e-08
+     },
+     {
+      "abs_delta": 9.0,
+      "cur": 31,
+      "path": "/provenance/n_runs",
+      "ref": 22,
+      "rel_delta": 0.4090909090909091,
+      "status": "DRIFT",
+      "tol": 2.2001000000000003e-08
+     },
+     {
+      "abs_delta": 0.00023769621508273886,
+      "cur": -0.0020691953621069237,
+      "path": "/tiers/0.1/corrected_limit/delta[1]",
+      "ref": -0.0023068915771896625,
+      "rel_delta": 0.1030374454669035,
+      "status": "DRIFT",
+      "tol": 3.3068915771896626e-12
+     },
+     {
+      "abs_delta": -0.0014123423407362834,
+      "cur": 0.0007385951854219641,
+      "path": "/tiers/0.1/corrected_limit/delta_from_last",
+      "ref": 0.0021509375261582475,
+      "rel_delta": -0.6566170907152491,
+      "status": "DRIFT",
+      "tol": 3.1509375261582476e-12
+     },
+     {
+      "abs_delta": 0.0007291119648581423,
+      "cur": 0.6178587831448296,
+      "path": "/tiers/0.1/corrected_limit/limit",
+      "ref": 0.6171296711799714,
+      "rel_delta": 0.0011814566677114345,
+      "status": "DRIFT",
+      "tol": 6.181296711799715e-10
+     },
+     {
+      "abs_delta": 1.0,
+      "cur": 4,
+      "path": "/tiers/0.1/corrected_limit/n_levels",
+      "ref": 3,
+      "rel_delta": 0.3333333333333333,
+      "status": "DRIFT",
+      "tol": 3.0010000000000003e-09
+     },
+     {
+      "abs_delta": 0.05826805481214625,
+      "cur": 0.5839558986570824,
+      "path": "/tiers/0.1/corrected_limit/order",
+      "ref": 0.5256878438449362,
+      "rel_delta": 0.110841548828612,
+      "status": "DRIFT",
+      "tol": 5.266878438449361e-10
+     },
+     {
+      "abs_delta": 0.05826805481214625,
+      "cur": 0.5839558986570824,
+      "path": "/tiers/0.1/corrected_limit/order_used",
+      "ref": 0.5256878438449362,
+      "rel_delta": 0.110841548828612,
+      "status": "DRIFT",
+      "tol": 5.266878438449361e-10
+     },
+     {
+      "abs_delta": 0.00023769621508273886,
+      "cur": 0.6195183049212124,
+      "path": "/tiers/0.1/corrected_limit/value[2]",
+      "ref": 0.6192806087061297,
+      "rel_delta": 0.00038382634905904836,
+      "status": "DRIFT",
+      "tol": 6.202806087061296e-10
+     },
+     {
+      "abs_delta": 0.00023769621508273886,
+      "cur": 0.6195183049212124,
+      "path": "/tiers/0.1/corrected_points[2][1]",
+      "ref": 0.6192806087061297,
+      "rel_delta": 0.00038382634905904836,
+      "status": "DRIFT",
+      "tol": 6.202806087061296e-10
+     },
+     {
+      "abs_delta": -0.0014940017843164677,
+      "cur": -0.0026000949192429568,
+      "path": "/tiers/0/corrected_limit/delta[1]",
+      "ref": -0.001106093134926489,
+      "rel_delta": -1.350701615570337,
+      "status": "DRIFT",
+      "tol": 2.1060931349264894e-12
+     },
+     {
+      "abs_delta": -0.00018023792592591903,
+      "cur": 0.0001352054506424949,
+      "path": "/tiers/0/corrected_limit/delta_from_last",
+      "ref": 0.0003154433765684139,
+      "rel_delta": -0.5713796494529619,
+      "status": "DRIFT",
+      "tol": 1.3154433765684138e-12
+     },
+     {
+      "abs_delta": -0.0006377366051781852,
+      "cur": 0.6358460385792466,
+      "path": "/tiers/0/corrected_limit/limit",
+      "ref": 0.6364837751844248,
+      "rel_delta": -0.0010019683612412546,
+      "status": "DRIFT",
+      "tol": 6.374837751844248e-10
+     },
+     {
+      "abs_delta": 1.0,
+      "cur": 4,
+      "path": "/tiers/0/corrected_limit/n_levels",
+      "ref": 3,
+      "rel_delta": 0.3333333333333333,
+      "status": "DRIFT",
+      "tol": 3.0010000000000003e-09
+     },
+     {
+      "abs_delta": -0.08599909539284001,
+      "cur": 1.0,
+      "path": "/tiers/0/corrected_limit/order_used",
+      "ref": 1.08599909539284,
+      "rel_delta": -0.07918891991501285,
+      "status": "DRIFT",
+      "tol": 1.0869990953928401e-09
+     },
+     {
+      "abs_delta": -0.0014940017843164677,
+      "cur": 0.6353052167766767,
+      "path": "/tiers/0/corrected_limit/value[2]",
+      "ref": 0.6367992185609932,
+      "rel_delta": -0.0023461112086358045,
+      "status": "DRIFT",
+      "tol": 6.377992185609932e-10
+     },
+     {
+      "abs_delta": -0.0014940017843164677,
+      "cur": 0.6353052167766767,
+      "path": "/tiers/0/corrected_points[2][1]",
+      "ref": 0.6367992185609932,
+      "rel_delta": -0.0023461112086358045,
+      "status": "DRIFT",
+      "tol": 6.377992185609932e-10
+     },
+     {
+      "abs_delta": 2.0,
+      "cur": 3,
+      "path": "/tiers/0/point_meta[2][1]/n_seeds",
+      "ref": 1,
+      "rel_delta": 2.0,
+      "status": "DRIFT",
+      "tol": 1.0010000000000002e-09
+     },
+     {
+      "abs_delta": -3.4473712187899075e-05,
+      "cur": 0.6367647448488053,
+      "path": "/tiers/0/point_meta[2][1]/phi",
+      "ref": 0.6367992185609932,
+      "rel_delta": -5.413592099846013e-05,
+      "status": "DRIFT",
+      "tol": 6.377992185609932e-10
+     },
+     {
+      "abs_delta": -3.4473712187899075e-05,
+      "cur": 0.6367647448488053,
+      "path": "/tiers/0/points[2][1]",
+      "ref": 0.6367992185609932,
+      "rel_delta": -5.413592099846013e-05,
+      "status": "DRIFT",
+      "tol": 6.377992185609932e-10
+     },
+     {
+      "abs_delta": -3.4473712187899075e-05,
+      "cur": -0.0011405668471143882,
+      "path": "/tiers/0/three_level/delta[1]",
+      "ref": -0.001106093134926489,
+      "rel_delta": -0.031167097145205765,
+      "status": "DRIFT",
+      "tol": 2.1060931349264894e-12
+     },
+     {
+      "abs_delta": 2.7034057374475395e-05,
+      "cur": 0.0003907990125145977,
+      "path": "/tiers/0/three_level/delta_from_last",
+      "ref": 0.0003637649551401223,
+      "rel_delta": 0.07431737717576965,
+      "status": "DRIFT",
+      "tol": 1.3637649551401224e-12
+     },
+     {
+      "abs_delta": -6.150776956237447e-05,
+      "cur": 0.6363739458362907,
+      "path": "/tiers/0/three_level/limit",
+      "ref": 0.6364354536058531,
+      "rel_delta": -9.664415961412871e-05,
+      "status": "DRIFT",
+      "tol": 6.374354536058531e-10
+     },
+     {
+      "abs_delta": -0.022139067754258,
+      "cur": 0.9851601361371577,
+      "path": "/tiers/0/three_level/order",
+      "ref": 1.0072992038914157,
+      "rel_delta": -0.021978641171093924,
+      "status": "DRIFT",
+      "tol": 1.0082992038914158e-09
+     },
+     {
+      "abs_delta": -0.022139067754258,
+      "cur": 0.9851601361371577,
+      "path": "/tiers/0/three_level/order_used",
+      "ref": 1.0072992038914157,
+      "rel_delta": -0.021978641171093924,
+      "status": "DRIFT",
+      "tol": 1.0082992038914158e-09
+     },
+     {
+      "abs_delta": -3.4473712187899075e-05,
+      "cur": 0.6367647448488053,
+      "path": "/tiers/0/three_level/value[2]",
+      "ref": 0.6367992185609932,
+      "rel_delta": -5.413592099846013e-05,
+      "status": "DRIFT",
+      "tol": 6.377992185609932e-10
+     }
+    ],
+    "json": "runs/order_audit.json",
+    "missing_by_prefix": {
+     "/gates/id=G13_four_level_vs_ref_mu0": 5,
+     "/gates/id=G13_four_level_vs_ref_mu0.1": 5,
+     "/gates/id=G17_extrapolation_selfconsistency_mu0": 5,
+     "/gates/id=G17_extrapolation_selfconsistency_mu0.1": 5,
+     "/kn_levels/3": 1,
+     "/tiers/0": 96,
+     "/tiers/0.1": 94
+    },
+    "n_path_leaks": 0,
+    "n_verdict_leaves": 11,
+    "name": "order_audit",
+    "new_untracked": [],
+    "other_changes": [
+     {
+      "cur": true,
+      "path": "/gates/id=G13_corrected_limit_vs_ref_mu0.1/pass",
+      "ref": false,
+      "status": "VALUE_CHANGE"
+     },
+     {
+      "cur": "|phi(k_n->inf)/phi_ref - 1| < 3% (4-level, mu=0.1)",
+      "path": "/gates/id=G13_four_level_vs_ref_mu0.1/criterion",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 0.6183098776212702,
+      "path": "/gates/id=G13_four_level_vs_ref_mu0.1/got",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": "G13_four_level_vs_ref_mu0.1",
+      "path": "/gates/id=G13_four_level_vs_ref_mu0.1/id",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": true,
+      "path": "/gates/id=G13_four_level_vs_ref_mu0.1/pass",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 0.028730949385375237,
+      "path": "/gates/id=G13_four_level_vs_ref_mu0.1/value",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": "|phi(k_n->inf)/phi_ref - 1| < 3% (4-level, mu=0)",
+      "path": "/gates/id=G13_four_level_vs_ref_mu0/criterion",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 0.6353595292218703,
+      "path": "/gates/id=G13_four_level_vs_ref_mu0/got",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": "G13_four_level_vs_ref_mu0",
+      "path": "/gates/id=G13_four_level_vs_ref_mu0/id",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": true,
+      "path": "/gates/id=G13_four_level_vs_ref_mu0/pass",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 0.0019485874617181098,
+      "path": "/gates/id=G13_four_level_vs_ref_mu0/value",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": "3-level fit predicts the k_n=256000 measurement to < 0.002, and admitting that level moves the limit by < 0.002",
+      "path": "/gates/id=G17_extrapolation_selfconsistency_mu0.1/criterion",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": "G17_extrapolation_selfconsistency_mu0.1",
+      "path": "/gates/id=G17_extrapolation_selfconsistency_mu0.1/id",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 0.0012589721142987065,
+      "path": "/gates/id=G17_extrapolation_selfconsistency_mu0.1/limit_shift",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": true,
+      "path": "/gates/id=G17_extrapolation_selfconsistency_mu0.1/pass",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 0.0004505899857261131,
+      "path": "/gates/id=G17_extrapolation_selfconsistency_mu0.1/prediction_error",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": "3-level fit predicts the k_n=256000 measurement to < 0.002, and admitting that level moves the limit by < 0.002",
+      "path": "/gates/id=G17_extrapolation_selfconsistency_mu0/criterion",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": "G17_extrapolation_selfconsistency_mu0",
+      "path": "/gates/id=G17_extrapolation_selfconsistency_mu0/id",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 0.001014416614420366,
+      "path": "/gates/id=G17_extrapolation_selfconsistency_mu0/limit_shift",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": true,
+      "path": "/gates/id=G17_extrapolation_selfconsistency_mu0/pass",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 0.0007628431980994943,
+      "path": "/gates/id=G17_extrapolation_selfconsistency_mu0/prediction_error",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": "|phi(dt/2) - phi(dt)| < 0.002 at k_n=64000",
+      "path": "/gates/id=G18_timestep_at_stiffest_mu0.1/criterion",
+      "ref": "|phi(dt/2) - phi(dt)| < 0.002 at k_n=4000",
+      "status": "VALUE_CHANGE"
+     },
+     {
+      "cur": "|phi(dt/2) - phi(dt)| < 0.002 at k_n=64000",
+      "path": "/gates/id=G18_timestep_at_stiffest_mu0/criterion",
+      "ref": "|phi(dt/2) - phi(dt)| < 0.002 at k_n=4000",
+      "status": "VALUE_CHANGE"
+     },
+     {
+      "cur": 256000.0,
+      "path": "/kn_levels[3]",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": "865caf65926c5fff684047ca7992353c4321f24d08cf8eebb62c95d96cabd49c",
+      "path": "/provenance/sha256",
+      "ref": "e4ab72c26fac528d8e3256d7ecfc9f5d52d3f99cda22412745f5676f5b8190c9",
+      "status": "VALUE_CHANGE"
+     },
+     {
+      "cur": -0.0009209265909608799,
+      "path": "/tiers/0.1/corrected_limit/delta[2]",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 256000.0,
+      "path": "/tiers/0.1/corrected_limit/kn[3]",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 4.0,
+      "path": "/tiers/0.1/corrected_limit/ratio[2]",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 0.6185973783302515,
+      "path": "/tiers/0.1/corrected_limit/value[3]",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 256000.0,
+      "path": "/tiers/0.1/corrected_points[3][0]",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 0.6185973783302515,
+      "path": "/tiers/0.1/corrected_points[3][1]",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": -0.004693643657429747,
+      "path": "/tiers/0.1/four_level/delta[0]",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": -0.0023068915771896625,
+      "path": "/tiers/0.1/four_level/delta[1]",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": -0.0006832303758781411,
+      "path": "/tiers/0.1/four_level/delta[2]",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 0.0002875007089813142,
+      "path": "/tiers/0.1/four_level/delta_from_last",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 4000.0,
+      "path": "/tiers/0.1/four_level/kn[0]",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 16000.0,
+      "path": "/tiers/0.1/four_level/kn[1]",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 64000.0,
+      "path": "/tiers/0.1/four_level/kn[2]",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 256000.0,
+      "path": "/tiers/0.1/four_level/kn[3]",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 0.6183098776212702,
+      "path": "/tiers/0.1/four_level/limit",
+      "ref": null,
+      "status": "MISSING_REF"
+     }
+    ],
+    "path_leaks": [],
+    "returncode": 0,
+    "script": "order_audit.py",
+    "stdout_tail": "wrote benchmarks/case_rcp_deposition/runs/order_audit.json and docs/AUDIT_m16999_RCP_EXTRAPOLATION_ORDER.md\n  G17_extrapolation_selfconsistency_mu0: PASS\n  G18_timestep_at_stiffest_mu0: PASS\n  G17_extrapolation_selfconsistency_mu0.1: PASS\n  G18_timestep_at_stiffest_mu0.1: PASS\n  G19_friction_monotone_N2000: PASS\n  G13_vs_ref_mu0: PASS\n  G13_four_level_vs_ref_mu0: PASS\n  G13_corrected_limit_vs_ref_mu0: PASS\n  G13_vs_ref_mu0.1: FAIL\n  G13_four_level_vs_ref_mu0.1: PASS\n  G13_corrected_limit_vs_ref_mu0.1: PASS\n",
+    "stochastic": false,
+    "touched_tracked": [],
+    "verdict": "STALE",
+    "verdict_changes": [
+     {
+      "cur": true,
+      "path": "/gates/id=G13_corrected_limit_vs_ref_mu0.1/pass",
+      "ref": false
+     },
+     {
+      "cur": true,
+      "path": "/gates/id=G13_four_level_vs_ref_mu0.1/pass",
+      "ref": "<absent>"
+     },
+     {
+      "cur": true,
+      "path": "/gates/id=G13_four_level_vs_ref_mu0/pass",
+      "ref": "<absent>"
+     },
+     {
+      "cur": true,
+      "path": "/gates/id=G17_extrapolation_selfconsistency_mu0.1/pass",
+      "ref": "<absent>"
+     },
+     {
+      "cur": true,
+      "path": "/gates/id=G17_extrapolation_selfconsistency_mu0/pass",
+      "ref": "<absent>"
+     }
+    ],
+    "wall_s": 7.6
+   },
+   {
+    "counts": {
+     "n_drift": 1,
+     "n_leaves": 4446,
+     "n_missing": 639,
+     "n_same": 3805,
+     "n_type_change": 0,
+     "n_value_change": 1,
+     "n_within_tol": 0
+    },
+    "doc": [
+     "docs/AUDIT_m17063_RCP_STEADY_STATE.md"
+    ],
+    "docs": [
+     {
+      "cur_chars": 9392,
+      "diff_examples": [
+       "> \u4ece `benchmarks/case_rcp_deposition/runs/` \u7a0b\u5e8f\u5316\u6ce8\u5165\uff08run-set sha256 `a4f92ac7bb090c85\u2026`\uff0c",
+       "| 0.1 | 256000 | 0.61860 | 2.23e-05 | 5.3367 | 5.6553 | 0.0011 |",
+       "   \u56fa\u5b9a settle \u5bb9\u5dee\u300d\uff0c\u7269\u7406\u65f6\u95f4\u5e76\u4e0d\u76f8\u7b49\uff1b\u786c\u9608\u503c\u4e0b\u6700\u786c\u4e00\u7ea7\u7684 z \u6389\u5230 5.337\uff08\u4f4e\u4e8e $z_c=6$\uff09\uff0c"
+      ],
+      "identical": false,
+      "leak_examples": [],
+      "n_added_lines": 1,
+      "n_changed_lines": 4,
+      "n_leaks_cur": 0,
+      "n_leaks_ref": 0,
+      "n_removed_lines": 0,
+      "path": "docs/AUDIT_m17063_RCP_STEADY_STATE.md",
+      "ref_chars": 9327
+     }
+    ],
+    "drift": [
+     {
+      "abs_delta": 8.0,
+      "cur": 31,
+      "path": "/n_runs",
+      "ref": 23,
+      "rel_delta": 0.34782608695652173,
+      "status": "DRIFT",
+      "tol": 2.3001000000000002e-08
+     }
+    ],
+    "json": "runs/steady_state_audit.json",
+    "missing_by_prefix": {
+     "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1": 209,
+     "/friction_scan/name=deposition_n2000_mu0.1_mur0_kn4000_e0.1_seed1": 209,
+     "/gates/G25_stiffness_ladder_coordination_converged": 8,
+     "/ladder/name=deposition_n10000_mu0.1_kn256000_e0.1_seed1": 213
+    },
+    "n_path_leaks": 0,
+    "n_verdict_leaves": 7,
+    "name": "steady_state_audit",
+    "new_untracked": [],
+    "other_changes": [
+     {
+      "cur": null,
+      "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/box_width",
+      "ref": 11.783732668501438,
+      "status": "MISSING_CUR"
+     },
+     {
+      "cur": null,
+      "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination/band[0]",
+      "ref": 2.5,
+      "status": "MISSING_CUR"
+     },
+     {
+      "cur": null,
+      "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination/band[1]",
+      "ref": 10.273935962181405,
+      "status": "MISSING_CUR"
+     },
+     {
+      "cur": null,
+      "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination/n_band",
+      "ref": 1291,
+      "status": "MISSING_CUR"
+     },
+     {
+      "cur": null,
+      "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination/rattler_fraction",
+      "ref": 0.001549186676994578,
+      "status": "MISSING_CUR"
+     },
+     {
+      "cur": null,
+      "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination/z_excess",
+      "ref": 1.7025561580170407,
+      "status": "MISSING_CUR"
+     },
+     {
+      "cur": null,
+      "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination/z_isostatic",
+      "ref": 4.0,
+      "status": "MISSING_CUR"
+     },
+     {
+      "cur": null,
+      "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination/z_mean",
+      "ref": 5.702556158017041,
+      "status": "MISSING_CUR"
+     },
+     {
+      "cur": null,
+      "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination/z_mean_excluding_rattlers",
+      "ref": 5.708301008533747,
+      "status": "MISSING_CUR"
+     },
+     {
+      "cur": null,
+      "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination/z_std",
+      "ref": 1.329455828489958,
+      "status": "MISSING_CUR"
+     },
+     {
+      "cur": null,
+      "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[0]/band[0]",
+      "ref": 2.5,
+      "status": "MISSING_CUR"
+     },
+     {
+      "cur": null,
+      "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[0]/band[1]",
+      "ref": 10.273935962181405,
+      "status": "MISSING_CUR"
+     },
+     {
+      "cur": null,
+      "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[0]/gap_over_diameter",
+      "ref": 0.0,
+      "status": "MISSING_CUR"
+     },
+     {
+      "cur": null,
+      "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[0]/gap_tolerance",
+      "ref": 0.0,
+      "status": "MISSING_CUR"
+     },
+     {
+      "cur": null,
+      "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[0]/n_band",
+      "ref": 1291,
+      "status": "MISSING_CUR"
+     },
+     {
+      "cur": null,
+      "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[0]/rattler_fraction",
+      "ref": 0.001549186676994578,
+      "status": "MISSING_CUR"
+     },
+     {
+      "cur": null,
+      "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[0]/z_excess",
+      "ref": -0.29744384198295926,
+      "status": "MISSING_CUR"
+     },
+     {
+      "cur": null,
+      "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[0]/z_isostatic",
+      "ref": 6.0,
+      "status": "MISSING_CUR"
+     },
+     {
+      "cur": null,
+      "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[0]/z_mean",
+      "ref": 5.702556158017041,
+      "status": "MISSING_CUR"
+     },
+     {
+      "cur": null,
+      "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[0]/z_mean_excluding_rattlers",
+      "ref": 5.708301008533747,
+      "status": "MISSING_CUR"
+     },
+     {
+      "cur": null,
+      "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[0]/z_std",
+      "ref": 1.329455828489958,
+      "status": "MISSING_CUR"
+     },
+     {
+      "cur": null,
+      "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[1]/band[0]",
+      "ref": 2.5,
+      "status": "MISSING_CUR"
+     },
+     {
+      "cur": null,
+      "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[1]/band[1]",
+      "ref": 10.273935962181405,
+      "status": "MISSING_CUR"
+     },
+     {
+      "cur": null,
+      "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[1]/gap_over_diameter",
+      "ref": 0.0001,
+      "status": "MISSING_CUR"
+     },
+     {
+      "cur": null,
+      "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[1]/gap_tolerance",
+      "ref": 0.0001,
+      "status": "MISSING_CUR"
+     },
+     {
+      "cur": null,
+      "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[1]/n_band",
+      "ref": 1291,
+      "status": "MISSING_CUR"
+     },
+     {
+      "cur": null,
+      "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[1]/rattler_fraction",
+      "ref": 0.001549186676994578,
+      "status": "MISSING_CUR"
+     },
+     {
+      "cur": null,
+      "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[1]/z_excess",
+      "ref": -0.271107668474051,
+      "status": "MISSING_CUR"
+     },
+     {
+      "cur": null,
+      "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[1]/z_isostatic",
+      "ref": 6.0,
+      "status": "MISSING_CUR"
+     },
+     {
+      "cur": null,
+      "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[1]/z_mean",
+      "ref": 5.728892331525949,
+      "status": "MISSING_CUR"
+     },
+     {
+      "cur": null,
+      "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[1]/z_mean_excluding_rattlers",
+      "ref": 5.734678044996121,
+      "status": "MISSING_CUR"
+     },
+     {
+      "cur": null,
+      "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[1]/z_std",
+      "ref": 1.3339145016754557,
+      "status": "MISSING_CUR"
+     },
+     {
+      "cur": null,
+      "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[2]/band[0]",
+      "ref": 2.5,
+      "status": "MISSING_CUR"
+     },
+     {
+      "cur": null,
+      "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[2]/band[1]",
+      "ref": 10.273935962181405,
+      "status": "MISSING_CUR"
+     },
+     {
+      "cur": null,
+      "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[2]/gap_over_diameter",
+      "ref": 0.001,
+      "status": "MISSING_CUR"
+     },
+     {
+      "cur": null,
+      "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[2]/gap_tolerance",
+      "ref": 0.001,
+      "status": "MISSING_CUR"
+     },
+     {
+      "cur": null,
+      "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[2]/n_band",
+      "ref": 1291,
+      "status": "MISSING_CUR"
+     },
+     {
+      "cur": null,
+      "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[2]/rattler_fraction",
+      "ref": 0.000774593338497289,
+      "status": "MISSING_CUR"
+     },
+     {
+      "cur": null,
+      "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[2]/z_excess",
+      "ref": -0.14484895429899325,
+      "status": "MISSING_CUR"
+     },
+     {
+      "cur": null,
+      "path": "/friction_scan/name=deposition_n2000_mu0.1_kn4000_e0.1_seed1/coordination_scan[2]/z_isostatic",
+      "ref": 6.0,
+      "status": "MISSING_CUR"
+     }
+    ],
+    "path_leaks": [],
+    "returncode": 0,
+    "script": "steady_state_audit.py",
+    "stdout_tail": "_mu0.1_kn4000_e0.1_seed3: phi=0.62622 plateau_len=7.01 ptp=1.17e-03 res/Fn=0.1292 z0=5.817\ndeposition_n10000_mu0_kn4000_e0.1_seed1: phi=0.64261 plateau_len=11.02 ptp=1.79e-03 res/Fn=0.0081 z0=6.371\ndeposition_n10000_mu0_kn4000_e0.1_seed2: phi=0.64216 plateau_len=10.01 ptp=1.85e-03 res/Fn=0.0102 z0=6.361\ndeposition_n10000_mu0_kn4000_e0.1_seed3: phi=0.64235 plateau_len=10.51 ptp=1.86e-03 res/Fn=0.0094 z0=6.341\n  G20_steady_state_plateau: PASS\n  G21_static_balance_frictionless: PASS\n  G22_frictional_residual_within_coulomb_bound: PASS\n  G23_friction_ordering_of_z_robust: PASS\n  G24_isostaticity_resolvable: PASS\n  G25_stiffness_ladder_coordination_converged: FAIL\n  G26_friction_pulls_z_towards_frictional_isostatic: PASS\nfigure: benchmarks/case_rcp_deposition/figures/steady_state_plateau.png\nfigure: benchmarks/case_rcp_deposition/figures/steady_state_residual.png\nfigure: benchmarks/case_rcp_deposition/figures/steady_state_coordination.png\nfigure: benchmarks/case_rcp_deposition/figures/steady_state_ladder.png\nfigure: benchmarks/case_rcp_deposition/figures/steady_state_friction.png\nwrote benchmarks/case_rcp_deposition/runs/steady_state_audit.json and docs/AUDIT_m17063_RCP_STEADY_STATE.md\n",
+    "stochastic": false,
+    "touched_tracked": [],
+    "verdict": "CENTRE_OK",
+    "verdict_changes": [],
+    "wall_s": 42.5
+   },
+   {
+    "counts": {
+     "n_drift": 2,
+     "n_leaves": 3668,
+     "n_missing": 955,
+     "n_same": 2711,
+     "n_type_change": 0,
+     "n_value_change": 0,
+     "n_within_tol": 0
+    },
+    "doc": [
+     "docs/AUDIT_m18395_RCP_PHI_DEFINITION.md"
+    ],
+    "docs": [
+     {
+      "cur_chars": 13084,
+      "diff_examples": [],
+      "identical": true,
+      "leak_examples": [],
+      "n_added_lines": 0,
+      "n_changed_lines": 0,
+      "n_leaks_cur": 0,
+      "n_leaks_ref": 0,
+      "n_removed_lines": 0,
+      "path": "docs/AUDIT_m18395_RCP_PHI_DEFINITION.md",
+      "ref_chars": 13084
+     }
+    ],
+    "drift": [
+     {
+      "abs_delta": 8.0,
+      "cur": 31,
+      "path": "/n_runs_audited",
+      "ref": 23,
+      "rel_delta": 0.34782608695652173,
+      "status": "DRIFT",
+      "tol": 2.3001000000000002e-08
+     },
+     {
+      "abs_delta": -11.178136678412557,
+      "cur": 46.49733654037118,
+      "path": "/wall_clock_s",
+      "ref": 57.675473218783736,
+      "rel_delta": -0.1938109226431464,
+      "status": "DRIFT",
+      "tol": 5.767647321878374e-08
+     }
+    ],
+    "json": "runs/phi_definition_audit.json",
+    "missing_by_prefix": {
+     "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1": 125,
+     "/runs/tag=deposition_n10000_mu0.1_kn64000_e0.1_seed1_dtf0.025": 125,
+     "/runs/tag=deposition_n10000_mu0_kn64000_e0.1_seed1_dtf0.025": 123,
+     "/runs/tag=deposition_n10000_mu0_kn64000_e0.1_seed2": 123,
+     "/runs/tag=deposition_n10000_mu0_kn64000_e0.1_seed2_dtf0.025": 123,
+     "/runs/tag=deposition_n10000_mu0_kn64000_e0.1_seed3": 123,
+     "/runs/tag=deposition_n10000_mu0_kn64000_e0.1_seed3_dtf0.025": 123,
+     "/runs/tag=deposition_n2000_mu0.1_mur0_kn4000_e0.1_seed1": 90
+    },
+    "n_path_leaks": 0,
+    "n_verdict_leaves": 10,
+    "name": "phi_definition_audit",
+    "new_untracked": [],
+    "other_changes": [
+     {
+      "cur": 2.5,
+      "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/band[0]",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 19.28181607530927,
+      "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/band[1]",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 20.149899425205867,
+      "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/box_width",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 0.0,
+      "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/cic_reproduction_error",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 0.6185973783302515,
+      "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/definitions/D1_cic_bin0.5d",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 0.6168599621713767,
+      "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/definitions/D2_cic_bin0.25d",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 0.6202083266373071,
+      "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/definitions/D3_cic_bin1.0d",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 0.6193308237381431,
+      "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/definitions/D4_exact_slab_raw",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 0.6192925205223321,
+      "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/definitions/D5_exact_slab_deflated",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 0.592050524508373,
+      "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/definitions/D8_volume_balance_to_surface",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 0.5920505241328735,
+      "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/definitions/D9_exact_slab_full_column",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 0.6083298528316315,
+      "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/margin_scan/0.5d",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 0.5920505241328735,
+      "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/margin_scan/0d",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 0.6178023194310671,
+      "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/margin_scan/1d",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 0.6193308237381431,
+      "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/margin_scan/2.5d",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 0.6194871408992536,
+      "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/margin_scan/4d",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 0.6201687285220883,
+      "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/margin_scan/6d",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": null,
+      "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/mc",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 10000,
+      "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/n",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 0.00020081458929432916,
+      "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/overlap/max_overlap_over_d",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 2.134688318113122e-05,
+      "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/overlap/mean_overlap_over_d",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": false,
+      "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/overlap/truncated_neighbours",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 0.05,
+      "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/params/dt_frac",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 256000.0,
+      "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/params/kn",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 0.1,
+      "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/params/mu",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 10000,
+      "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/params/n",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 0.1,
+      "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/params/restitution",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 1,
+      "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/params/seed",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": -0.4909524985385677,
+      "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/profile_check/cic_minus_exact[0]",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": -0.01923463939615011,
+      "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/profile_check/cic_minus_exact[10]",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 0.008732964558611278,
+      "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/profile_check/cic_minus_exact[11]",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": -0.0016129703582425936,
+      "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/profile_check/cic_minus_exact[12]",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": -0.0016726630108017115,
+      "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/profile_check/cic_minus_exact[13]",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 0.004238895985547719,
+      "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/profile_check/cic_minus_exact[14]",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": -0.010303793492541513,
+      "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/profile_check/cic_minus_exact[15]",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 0.008077435448336945,
+      "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/profile_check/cic_minus_exact[16]",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 0.0018179638795547959,
+      "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/profile_check/cic_minus_exact[17]",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": -0.0005743288921215006,
+      "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/profile_check/cic_minus_exact[18]",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": -0.010754804402867912,
+      "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/profile_check/cic_minus_exact[19]",
+      "ref": null,
+      "status": "MISSING_REF"
+     },
+     {
+      "cur": 0.3544351491653128,
+      "path": "/runs/tag=deposition_n10000_mu0.1_kn256000_e0.1_seed1/profile_check/cic_minus_exact[1]",
+      "ref": null,
+      "status": "MISSING_REF"
+     }
+    ],
+    "path_leaks": [],
+    "returncode": 0,
+    "script": "phi_definition_audit.py",
+    "stdout_tail": "e. 10 % of it), the frictionless tier stays within 3 % of the reference under every estimator, and the seed-mean tier ordering survives all seven. The residual deviation from 0.6366 is therefore physics (soft-sphere stiffness, monodispersity and the frictional tier), not read-out.\n\n**The control volume is NOT a free choice** \u2014 this is the one material analyst degree of freedom. Dropping the floor and free-surface layers is what puts the number in the band: the whole-bed read-out (`margin = 0`) gives phi = 0.59600..0.61591, i.e. below the 0.62 lower bound on 6 of 6 production runs, and the `0.5 d` margin is still below it on 3 runs. From `1 d` upward the band is control-volume invariant (phi = 0.62384..0.64260 at `1 d`, the merged `2.5 d` column and beyond). **The acceptance criterion must therefore be read as `phi_bulk` on the bulk band with >= 2.5 d dropped at floor and free surface, not as `\u7a33\u6001\u5b54\u9699\u7387` of the whole bed** \u2014 under the whole-bed reading the tier means are 0.61546 (mu = 0, 0.7 % below the 0.62 lower bound) and 0.59766 (mu = 0.1, 3.6 % below the 0.62 lower bound).\nwrote benchmarks/case_rcp_deposition/runs/phi_definition_audit.json + docs/AUDIT_m18395_RCP_PHI_DEFINITION.md\n",
+    "stochastic": false,
+    "touched_tracked": [],
+    "verdict": "CENTRE_OK",
+    "verdict_changes": [],
+    "wall_s": 53.6
+   },
+   {
+    "counts": {
+     "n_drift": 2,
+     "n_leaves": 509,
+     "n_missing": 0,
+     "n_same": 506,
+     "n_type_change": 0,
+     "n_value_change": 1,
+     "n_within_tol": 0
+    },
+    "doc": [
+     "docs/AUDIT_m21145_RCP_ANCHOR_PROVENANCE.md"
+    ],
+    "docs": [
+     {
+      "cur_chars": 6769,
+      "diff_examples": [
+       "**Mission** m21145 \u00b7 **Repo** TensorDEM \u00b7 **Artifacts sha256** `7923e6e68ec9d120`  ",
+       "| G13_vs_ref_mu0 | 0 | 0.63637 | +0.04% | -0.04% | literature | PASS |"
+      ],
+      "identical": false,
+      "leak_examples": [],
+      "n_added_lines": 0,
+      "n_changed_lines": 2,
+      "n_leaks_cur": 0,
+      "n_leaks_ref": 0,
+      "n_removed_lines": 0,
+      "path": "docs/AUDIT_m21145_RCP_ANCHOR_PROVENANCE.md",
+      "ref_chars": 6769
+     }
+    ],
+    "drift": [
+     {
+      "abs_delta": -6.150776956237447e-05,
+      "cur": 0.6363739458362907,
+      "path": "/cross_script/gates/id=G13_vs_ref_mu0/limit",
+      "ref": 0.6364354536058531,
+      "rel_delta": -9.664415961412871e-05,
+      "status": "DRIFT",
+      "tol": 6.374354536058531e-10
+     },
+     {
+      "abs_delta": 9.661917933145858e-05,
+      "cur": 0.00035509607871409,
+      "path": "/cross_script/gates/id=G13_vs_ref_mu0/rel_error_vs_frictionless",
+      "ref": 0.0002584768993826314,
+      "rel_delta": 0.3738019898963203,
+      "status": "DRIFT",
+      "tol": 1.2584768993826314e-12
+     }
+    ],
+    "json": "runs/anchor_provenance_audit.json",
+    "missing_by_prefix": {},
+    "n_path_leaks": 0,
+    "n_verdict_leaves": 38,
+    "name": "anchor_provenance_audit",
+    "new_untracked": [],
+    "other_changes": [
+     {
+      "cur": "7923e6e68ec9d12071f195cf213f4d8af299490f13a6799bb83230eb4b4fd69d",
+      "path": "/self_sha256",
+      "ref": "198195c374ba3b6c8076bb897ec74df110f72d3f74edab98ffd213aaf771453b",
+      "status": "VALUE_CHANGE"
+     }
+    ],
+    "path_leaks": [],
+    "returncode": 0,
+    "script": "anchor_provenance_audit.py",
+    "stdout_tail": "wrote benchmarks/case_rcp_deposition/runs/anchor_provenance_audit.json\nwrote docs/AUDIT_m21145_RCP_ANCHOR_PROVENANCE.md\n  A1_frictionless_production_vs_literature: PASS (0.00907112951681488)\n  A2_frictionless_intercept_bracket_stable: PASS (0.000903352903029564)\n  A3_lowfriction_intercept_bracket_stable: PASS (0.0005856260364669463)\n  A4_lowfriction_order_checkable: PASS (4)\n  A5_no_claim_on_derived_anchor: PASS (0)\n  A6_policy_coverage: PASS (10)\n",
+    "stochastic": false,
+    "touched_tracked": [],
+    "verdict": "CENTRE_OK",
+    "verdict_changes": [],
+    "wall_s": 7.7
+   },
+   {
+    "counts": {
+     "n_drift": 0,
+     "n_leaves": 316,
+     "n_missing": 0,
+     "n_same": 316,
+     "n_type_change": 0,
+     "n_value_change": 0,
+     "n_within_tol": 0
+    },
+    "doc": [
+     "docs/AUDIT_m21401_RCP_TIMESTEP_LADDER.md"
+    ],
+    "docs": [
+     {
+      "cur_chars": 5183,
+      "diff_examples": [],
+      "identical": true,
+      "leak_examples": [],
+      "n_added_lines": 0,
+      "n_changed_lines": 0,
+      "n_leaks_cur": 0,
+      "n_leaks_ref": 0,
+      "n_removed_lines": 0,
+      "path": "docs/AUDIT_m21401_RCP_TIMESTEP_LADDER.md",
+      "ref_chars": 5183
+     }
+    ],
+    "drift": [],
+    "json": "runs/timestep_ladder_audit.json",
+    "missing_by_prefix": {},
+    "n_path_leaks": 0,
+    "n_verdict_leaves": 21,
+    "name": "timestep_ladder_audit",
+    "new_untracked": [],
+    "other_changes": [],
+    "path_leaks": [],
+    "returncode": 0,
+    "script": "timestep_ladder_audit.py",
+    "stdout_tail": "WROTE docs/AUDIT_m21401_RCP_TIMESTEP_LADDER.md\n  PASS     T_bias_mu0_kn4000                      +2.576e-04\n  NOT_RUN  T_bias_mu0_kn16000                     no dt/2 run\n  FAIL     T_bias_mu0_kn64000                     -7.298e-04\n  NOT_RUN  T_bias_mu0_kn256000                    no dt/2 run\n  PASS     T_bias_mu0.1_kn4000                    +4.370e-05\n  NOT_RUN  T_bias_mu0.1_kn16000                   no dt/2 run\n  PASS     T_bias_mu0.1_kn64000                   +1.188e-04\n  NOT_RUN  T_bias_mu0.1_kn256000                  no dt/2 run\n  PASS     T_intercept_shift_corrected_mu0        4.054e-04\n  PASS     T_intercept_shift_corrected_mu0.1      3.453e-04\n  PASS     T_frictionless_claim_survives_dt_correction PASS rel=-0.131%\n  PASS     T_stiff_end_covered_mu0                probed levels [4000.0, 64000.0]\n  PASS     T_stiff_end_covered_mu0.1              probed levels [4000.0, 64000.0]\n",
+    "stochastic": false,
+    "touched_tracked": [],
+    "verdict": "REPRODUCED",
+    "verdict_changes": [],
+    "wall_s": 8.1
+   },
+   {
+    "counts": {
+     "n_drift": 0,
+     "n_leaves": 101,
+     "n_missing": 0,
+     "n_same": 101,
+     "n_type_change": 0,
+     "n_value_change": 0,
+     "n_within_tol": 0
+    },
+    "doc": [
+     "docs/AUDIT_m22558_RCP_SEED_RESOLVED_BIAS.md"
+    ],
+    "docs": [
+     {
+      "cur_chars": 3895,
+      "diff_examples": [],
+      "identical": true,
+      "leak_examples": [],
+      "n_added_lines": 0,
+      "n_changed_lines": 0,
+      "n_leaks_cur": 0,
+      "n_leaks_ref": 0,
+      "n_removed_lines": 0,
+      "path": "docs/AUDIT_m22558_RCP_SEED_RESOLVED_BIAS.md",
+      "ref_chars": 3895
+     }
+    ],
+    "drift": [],
+    "json": "runs/seed_bias_audit.json",
+    "missing_by_prefix": {},
+    "n_path_leaks": 0,
+    "n_verdict_leaves": 12,
+    "name": "seed_bias_audit",
+    "new_untracked": [],
+    "other_changes": [],
+    "path_leaks": [],
+    "returncode": 0,
+    "script": "seed_bias_audit.py",
+    "stdout_tail": "wrote benchmarks/case_rcp_deposition/runs/seed_bias_audit.json\n{\n \"UNDECIDABLE\": 3,\n \"CONVERGED\": 1\n}\nmu=0 kn=4000 delta=+2.576e-04 verdict=UNDECIDABLE ci=[-8.523e-04,+1.368e-03]\nmu=0 kn=64000 delta=-7.298e-04 verdict=UNDECIDABLE ci=[-2.192e-03,+7.325e-04]\nmu=0.1 kn=4000 delta=+4.370e-05 verdict=UNDECIDABLE ci=[-1.936e-03,+2.024e-03]\nmu=0.1 kn=64000 delta=+1.188e-04 verdict=CONVERGED\n",
+    "stochastic": false,
+    "touched_tracked": [],
+    "verdict": "REPRODUCED",
+    "verdict_changes": [],
+    "wall_s": 1.0
+   },
+   {
+    "counts": {
+     "n_drift": 12,
+     "n_leaves": 308,
+     "n_missing": 0,
+     "n_same": 294,
+     "n_type_change": 0,
+     "n_value_change": 2,
+     "n_within_tol": 0
+    },
+    "doc": [],
+    "docs": [],
+    "drift": [
+     {
+      "abs_delta": 2500.0,
+      "cur": 4000,
+      "path": "/n_mc",
+      "ref": 1500,
+      "rel_delta": 1.6666666666666667,
+      "status": "DRIFT",
+      "tol": 1.500001e-06
+     },
+     {
+      "abs_delta": 9.87471351289182e-05,
+      "cur": 0.6198110493851364,
+      "path": "/tiers/0.1/fit/hi",
+      "ref": 0.6197123022500075,
+      "rel_delta": 0.0001593435127403379,
+      "status": "DRIFT",
+      "tol": 6.207123022500075e-10
+     },
+     {
+      "abs_delta": 0.0005358758948528219,
+      "cur": 0.6112769554779282,
+      "path": "/tiers/0.1/fit/lo",
+      "ref": 0.6107410795830753,
+      "rel_delta": 0.000877419110596981,
+      "status": "DRIFT",
+      "tol": 6.117410795830754e-10
+     },
+     {
+      "abs_delta": 2500.0,
+      "cur": 4000,
+      "path": "/tiers/0.1/fit/n_mc",
+      "ref": 1500,
+      "rel_delta": 1.6666666666666667,
+      "status": "DRIFT",
+      "tol": 1.500001e-06
+     },
+     {
+      "abs_delta": 0.07445682977655377,
+      "cur": 1.867307999209378,
+      "path": "/tiers/0.1/fit/p_hi",
+      "ref": 1.7928511694328242,
+      "rel_delta": 0.041529844220202894,
+      "status": "DRIFT",
+      "tol": 1.7938511694328244e-09
+     },
+     {
+      "abs_delta": -0.00023989465668386835,
+      "cur": 0.0024057397235339004,
+      "path": "/tiers/0.1/fit/sd",
+      "ref": 0.0026456343802177687,
+      "rel_delta": -0.09067566496626871,
+      "status": "DRIFT",
+      "tol": 3.645634380217769e-12
+     },
+     {
+      "abs_delta": 5.65937950182116e-05,
+      "cur": 0.6365951963703596,
+      "path": "/tiers/0/fit/hi",
+      "ref": 0.6365386025753413,
+      "rel_delta": 8.890866129601794e-05,
+      "status": "DRIFT",
+      "tol": 6.375386025753413e-10
+     },
+     {
+      "abs_delta": -8.953737563499597e-05,
+      "cur": 0.6333881423742737,
+      "path": "/tiers/0/fit/lo",
+      "ref": 0.6334776797499087,
+      "rel_delta": -0.0001413425894821496,
+      "status": "DRIFT",
+      "tol": 6.344776797499087e-10
+     },
+     {
+      "abs_delta": 2500.0,
+      "cur": 4000,
+      "path": "/tiers/0/fit/n_mc",
+      "ref": 1500,
+      "rel_delta": 1.6666666666666667,
+      "status": "DRIFT",
+      "tol": 1.500001e-06
+     },
+     {
+      "abs_delta": 0.07135775229122965,
+      "cur": 1.4658917389436703,
+      "path": "/tiers/0/fit/p_hi",
+      "ref": 1.3945339866524407,
+      "rel_delta": 0.0511696043081194,
+      "status": "DRIFT",
+      "tol": 1.3955339866524408e-09
+     },
+     {
+      "abs_delta": -0.013543938116368226,
+      "cur": 0.354981644962733,
+      "path": "/tiers/0/fit/p_lo",
+      "ref": 0.3685255830791012,
+      "rel_delta": -0.03675169035269153,
+      "status": "DRIFT",
+      "tol": 3.695255830791012e-10
+     },
+     {
+      "abs_delta": -4.128480038303973e-06,
+      "cur": 0.0008980885312343481,
+      "path": "/tiers/0/fit/sd",
+      "ref": 0.000902217011272652,
+      "rel_delta": -0.004575927949397018,
+      "status": "DRIFT",
+      "tol": 1.902217011272652e-12
+     }
+    ],
+    "json": "runs/stiffness_seed_audit.json",
+    "missing_by_prefix": {},
+    "n_path_leaks": 2,
+    "n_verdict_leaves": 10,
+    "name": "stiffness_seed_audit",
+    "new_untracked": [],
+    "other_changes": [
+     {
+      "cur": "benchmarks/case_rcp_deposition/figures/fig_stiff_stiffness_ladder_seeds.png",
+      "path": "/figures[0]",
+      "ref": "/root/tp-agent/work/m22796/benchmarks/case_rcp_deposition/figures/fig_stiff_stiffness_ladder_seeds.png",
+      "status": "VALUE_CHANGE"
+     },
+     {
+      "cur": "benchmarks/case_rcp_deposition/figures/fig_stiff_stiffness_limit_ci.png",
+      "path": "/figures[1]",
+      "ref": "/root/tp-agent/work/m22796/benchmarks/case_rcp_deposition/figures/fig_stiff_stiffness_limit_ci.png",
+      "status": "VALUE_CHANGE"
+     }
+    ],
+    "path_leaks": [
+     {
+      "foreign": "/root/tp-agent/work/",
+      "path": "/figures[0]",
+      "source": "HEAD",
+      "value": "/root/tp-agent/work/m22796/benchmarks/case_rcp_deposition/figures/fig_stiff_stiffness_ladder_seeds.png"
+     },
+     {
+      "foreign": "/root/tp-agent/work/",
+      "path": "/figures[1]",
+      "source": "HEAD",
+      "value": "/root/tp-agent/work/m22796/benchmarks/case_rcp_deposition/figures/fig_stiff_stiffness_limit_ci.png"
+     }
+    ],
+    "returncode": 0,
+    "script": "stiffness_seed_audit.py",
+    "stdout_tail": "[mu=0] levels=4 phi_inf=0.63562 CI=[0.63339,0.63660] p=0.71 [0.35,1.47] chi2_red=2.93 -> IN_BAND (spread over definitions 0.00103)\n    kn=     4000 n=3 phi=0.64237 CI=[0.64182,0.64293] -> IN_BAND (seed)\n    kn=    16000 n=1 phi=0.63791 CI=[0.63715,0.63866] -> IN_BAND (pooled_sd)\n    kn=    64000 n=3 phi=0.63676 CI=[0.63599,0.63754] -> IN_BAND (seed)\n    kn=   256000 n=1 phi=0.63571 CI=[0.63496,0.63647] -> IN_BAND (pooled_sd)\n[mu=0.1] levels=4 phi_inf=0.61782 CI=[0.61128,0.61981] p=0.60 [0.20,1.87] chi2_red=0.21 -> OUT_OF_BAND (spread over definitions 0.00190)\n    kn=     4000 n=3 phi=0.62628 CI=[0.62529,0.62727] -> IN_BAND (seed)\n    kn=    16000 n=1 phi=0.62159 CI=[0.61987,0.62330] -> UNDECIDABLE (pooled_sd)\n    kn=    64000 n=1 phi=0.61928 CI=[0.61757,0.62100] -> UNDECIDABLE (pooled_sd)\n    kn=   256000 n=1 phi=0.61860 CI=[0.61688,0.62031] -> UNDECIDABLE (pooled_sd)\nresolved tiers: 2/2\n",
+    "stochastic": true,
+    "touched_tracked": [
+     "benchmarks/case_rcp_deposition/runs/stiffness_seed_audit.json"
+    ],
+    "verdict": "CENTRE_OK",
+    "verdict_changes": [],
+    "wall_s": 73.7
+   }
+  ],
+  "summary": {
+   "blocking": 2,
+   "counts": {
+    "CENTRE_OK": 5,
+    "FAILED": 0,
+    "NO_ARTEFACT": 0,
+    "REPRODUCED": 2,
+    "STALE": 2
+   },
+   "n_scripts": 9,
+   "overall": "REVIEW"
+  }
+ },
+ "registry": [
+  {
+   "json": "runs/summary.json",
+   "name": "aggregate",
+   "script": "aggregate.py",
+   "stochastic": false
+  },
+  {
+   "json": "runs/debt_audit.json",
+   "name": "debt_audit",
+   "script": "debt_audit.py",
+   "stochastic": false
+  },
+  {
+   "json": "runs/order_audit.json",
+   "name": "order_audit",
+   "script": "order_audit.py",
+   "stochastic": false
+  },
+  {
+   "json": "runs/steady_state_audit.json",
+   "name": "steady_state_audit",
+   "script": "steady_state_audit.py",
+   "stochastic": false
+  },
+  {
+   "json": "runs/phi_definition_audit.json",
+   "name": "phi_definition_audit",
+   "script": "phi_definition_audit.py",
+   "stochastic": false
+  },
+  {
+   "json": "runs/anchor_provenance_audit.json",
+   "name": "anchor_provenance_audit",
+   "script": "anchor_provenance_audit.py",
+   "stochastic": false
+  },
+  {
+   "json": "runs/timestep_ladder_audit.json",
+   "name": "timestep_ladder_audit",
+   "script": "timestep_ladder_audit.py",
+   "stochastic": false
+  },
+  {
+   "json": "runs/seed_bias_audit.json",
+   "name": "seed_bias_audit",
+   "script": "seed_bias_audit.py",
+   "stochastic": false
+  },
+  {
+   "json": "runs/stiffness_seed_audit.json",
+   "name": "stiffness_seed_audit",
+   "script": "stiffness_seed_audit.py",
+   "stochastic": true
+  }
+ ],
+ "root": "/root/tp-agent/work/m22859",
+ "rtol": 1e-09,
+ "summary": {
+  "blocking": 2,
+  "counts": {
+   "CENTRE_OK": 5,
+   "FAILED": 0,
+   "NO_ARTEFACT": 0,
+   "REPRODUCED": 2,
+   "STALE": 2
+  },
+  "n_scripts": 9,
+  "overall": "REVIEW"
+ }
+}
