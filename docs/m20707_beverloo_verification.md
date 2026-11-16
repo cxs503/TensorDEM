@@ -7,6 +7,30 @@
 per-case artefacts in `benchmarks/m20707_beverloo/results/` (commit `03ed6561`); no value
 in this note is hand-typed.
 
+**Evidence tier of that claim: UNGUARDED (m23244 audit).** The cited directory is
+matched by the `results/` rule in `.gitignore`, so it was never possible to commit
+those artefacts: as of this revision `benchmarks/m20707_beverloo/results/` does not
+exist in the tree, and the numbers below are therefore *not* reproducible from the
+repository alone. What m23244 adds is the machinery to close that hole:
+
+* the ignore rule is re-opened for this directory (`!benchmarks/m20707_beverloo/results/`)
+  so the artefacts can be committed at all;
+* `analyse.py --inject-doc` renders this note's evidence blocks from the committed
+  artefacts and `analyse.py --check-doc` fails when they disagree, with the pinned
+  rates of this revision (`PUBLISHED_BASELINE` in `analyse.py`) reused as the
+  reproduction baseline;
+* `tests/test_m20707_beverloo_campaign.py` carries the binding tests (artefacts
+  present, tracked, internally consistent, note == rendering, mutation rejected);
+  they are `skip`ped in this revision and activate as soon as
+  `results/pilot/*.json` is committed;
+* the renderer itself is exercised against `tests/fixtures/m20707_published_rates/`,
+  a fixture of exactly the rates printed below, so it is known to reproduce them.
+
+The re-run that would populate `results/pilot/` was submitted to the compute queue
+(job `cj4709`, 6 cases x 1 core) and was still `queued` after 27 min with 146 jobs in
+flight; it produced no artefact in this session, so the numbers below stay as
+`UNGUARDED` rather than being re-labelled as verified.
+
 ---
 
 ## 1. Case introduction
