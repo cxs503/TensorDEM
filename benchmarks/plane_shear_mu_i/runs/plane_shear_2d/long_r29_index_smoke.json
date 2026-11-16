@@ -1,0 +1,18 @@
+{
+ "round": 29,
+ "strain_measure": 8.0,
+ "combos": [
+  {
+   "file": "benchmarks/plane_shear_mu_i/runs/plane_shear_2d/long_r29_w0.5_I0.05_s0.json",
+   "w": 0.5,
+   "I_target": 0.05,
+   "seed": 0,
+   "mu_wall": 0.17706435820615848,
+   "mu_bulk": 0.15271549395634818,
+   "phi_gap": 0.8042556601589115,
+   "I_bulk": 0.11056844580212694,
+   "drift_z_mu_wall": 1.640367816062426,
+   "duration_s": 70.25630187988281
+  }
+ ]
+}
