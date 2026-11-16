@@ -11,9 +11,12 @@
     "err_phi_pct": -16.449462996938745,
     "slab_over_bed_measured": 1.1907243144473172,
     "boundary_layer_factor": 1.2622873662759238,
+    "boundary_factor_y": 1.25,
+    "boundary_factor_2wall": 1.5778592078449047,
     "pressure_control_error": -0.03605878867001655,
     "servo_valid": true,
-    "rate_ratio": 0.3802847613130637
+    "rate_ratio": 0.3802847613130637,
+    "slab_over_z_only": 0.9433068461742303
   },
   {
     "I_target": 0.03,
@@ -27,9 +30,12 @@
     "err_phi_pct": -14.793472641744332,
     "slab_over_bed_measured": 1.2187725621733023,
     "boundary_layer_factor": 1.2670048718408415,
+    "boundary_factor_y": 1.25,
+    "boundary_factor_2wall": 1.5837560898010519,
     "pressure_control_error": -0.05390739195217131,
     "servo_valid": false,
-    "rate_ratio": 0.9707166749461056
+    "rate_ratio": 0.9707166749461056,
+    "slab_over_z_only": 0.9619320250935878
   },
   {
     "I_target": 0.1,
@@ -43,9 +49,12 @@
     "err_phi_pct": -11.773200510316183,
     "slab_over_bed_measured": 1.2588747905637634,
     "boundary_layer_factor": 1.2737627736736297,
+    "boundary_factor_y": 1.25,
+    "boundary_factor_2wall": 1.592203467092037,
     "pressure_control_error": -0.0611356752525003,
     "servo_valid": false,
-    "rate_ratio": 0.6693200287544905
+    "rate_ratio": 0.6693200287544905,
+    "slab_over_z_only": 0.9883118085898144
   },
   {
     "I_target": 0.3,
@@ -59,8 +68,11 @@
     "err_phi_pct": -5.725661887232992,
     "slab_over_bed_measured": 1.2561089943433557,
     "boundary_layer_factor": 1.288900262778202,
+    "boundary_factor_y": 1.25,
+    "boundary_factor_2wall": 1.6111253284727525,
     "pressure_control_error": -0.004904672061274096,
     "servo_valid": true,
-    "rate_ratio": 0.9075829115477152
+    "rate_ratio": 0.9075829115477152,
+    "slab_over_z_only": 0.9745587231364471
   }
 ]

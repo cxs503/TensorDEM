@@ -144,7 +144,7 @@ steady-state φ(I) is made here. That is the next round's first measurement.
 | μ(I), `I ≥ 0.1` | < 10 % | −21.4 %, −27.8 % | **FAIL** |
 | φ(I), all four points | < 10 % | −16.4, −14.8, −11.8, −5.7 % | **FAIL** (2/4 inside band) |
 | φ estimator definition | < 5 % consistency | `phi_container` vs `phi_extent` agree to 2.4 % on a live state; both unbiased (≤ 0.2 %) on analytic packings | **PASS** |
-| definitional gap explained | > 90 % | 94–99 % of `plate_z/(plate_z−2r)` | **PASS** |
+| definitional gap explained (device) | > 90 % | 94–99 % of `plate_z/(plate_z−2r)` | **PASS** — device only; the analytic-packing version of this claim was 9.7–12.6 % short and is corrected in ⑧ |
 
 No key quantity is within 3 % of a literature reference except the low-`I` μ
 points (−0.1 %, +1.3 %), whose reference constants are themselves
@@ -169,3 +169,73 @@ real remaining gaps.
   it is the analytic scale of the difference between two quantities. The
   correct route is to recompute φ in the container definition from the archived
   state, which is what `rederive_archived_phi.py` does.
+
+## ⑧ R15-c correction (re-open of PR#1657 as mission m23285)
+
+The round-15 claim "*the* effect that reproduces the measurements is the
+boundary layer, `plate_z/(plate_z − 2r)`" was **not verified**: the same audit's
+own criterion (`|measured/predicted − 1| < 10 %`) failed on two of its three
+packings, and the shipped artifact carried
+
+```json
+"verdict": "unexpected", "ok": false
+```
+
+without any test noticing. Root cause: a centre-counted slab that is interior in
+**both** walled directions sees depletion at **both** wall pairs, so the
+container-average / centre-density ratio is
+
+```
+[ plate_z / (plate_z − 2r) ] * [ box_depth / (box_depth − 2r) ]
+```
+
+and the z factor alone leaves the y factor (1.111 in the audit geometry) out.
+`phi_definitions()` now returns `boundary_factor_y` and `boundary_factor_2wall`
+alongside the unchanged z-only `boundary_factor`, the audit's acceptance is the
+predeclared two-wall criterion (`runs/phi_audit/PREREG_R15C.md`, 5 %), and the
+"z-only is insufficient" condition is asserted explicitly, so the correction
+cannot degrade into a tolerance widening.
+
+### Analytic packings (truth known by construction, N = 1073…2860)
+
+| packing (gap) | φ_true | measured slab/bed | z-only pred | err [%] | two-wall pred | err [%] |
+|---|---|---|---|---|---|---|
+| gap_0.12 | 0.5200 | 1.2284 | 1.0909 | +12.6 | 1.2121 | +1.3 |
+| gap_0.06 | 0.5200 | 1.3403 | 1.2000 | +11.7 | 1.3333 | +0.5 |
+| gap_0.045 | 0.5202 | 1.4104 | 1.2857 | +9.7 | 1.4286 | -1.3 |
+
+Artifact verdict: `two_wall_boundary_factor_reproduces_slab_gap__z_only_model_insufficient` / `ok = True` with per-criterion flags
+`{'phi_bed_unbiased_lt_2pct': True, 'phi_extent_unbiased_lt_3pct': True, 'phi_centres_biased_high_gt_5pct': True, 'two_wall_factor_within_5pct': True, 'z_only_factor_insufficient': True}`.
+
+### Archived device points (re-derived, nothing re-simulated)
+
+| I | φ_centres (archived) | φ_container | slab/bed measured | z-only factor | measured/z-only | two-wall factor |
+|---|---|---|---|---|---|---|
+| 0.01 | 0.6348 | 0.5331 | 1.191 | 1.262 | 0.943 | 1.578 |
+| 0.03 | 0.6590 | 0.5407 | 1.219 | 1.267 | 0.962 | 1.584 |
+| 0.1 | 0.6942 | 0.5514 | 1.259 | 1.274 | 0.988 | 1.592 |
+| 0.3 | 0.7224 | 0.5751 | 1.256 | 1.289 | 0.975 | 1.611 |
+
+On the device the measured gap is **below** the z-only bound
+(`measured/z-only` = 0.94–0.99): the grafted bed sits denser against the y-walls
+than a geometrical shell allows, so the two-wall product (1.58–1.61) is *not*
+claimed for the device and the two-wall model is asserted on analytic packings
+only. Device-level claim (predeclared interval `measured/z-only ∈ [0.85, 1.00]`,
+now a regression test): the z-wall shell accounts for 94–99 % of the archived
+definitional gap — the round-15 conclusion that φ_centres and φ_container are
+different quantities, and that the archived φ verdict was an estimator artifact,
+**stands unchanged**.
+
+### What changed in this correction
+
+| item | before | after |
+|---|---|---|
+| boundary model | z only | z × y, with z-only kept for archived tables |
+| audit artifact | `ok: false`, `verdict: unexpected`, unnoticed | `ok: true`, named per-criterion flags, `z_only_factor_insufficient` asserted |
+| tests | 5, none on the audit verdict | 10 (incl. two-wall closure, artifact reproducibility, archived re-derivation determinism) |
+| device claim | "gap = z factor" | "z factor bounds the gap from above (0.94–0.99)"; two-wall not claimed |
+
+Reproduce with: `python benchmarks/plane_shear_mu_i/phi_estimator_audit.py --synthetic`
+and `python benchmarks/plane_shear_mu_i/rederive_archived_phi.py` (writes the
+tables above and `fig_phi_definition_audit.png`);
+`python -m pytest benchmarks/plane_shear_mu_i/test_phi_estimator_audit.py`.
