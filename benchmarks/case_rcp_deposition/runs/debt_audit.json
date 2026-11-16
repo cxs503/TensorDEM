@@ -13,57 +13,65 @@
    }
   },
   "n_primary": 10000,
-  "n_prod_runs": 20,
-  "n_runs": 22,
+  "n_prod_runs": 25,
+  "n_runs": 31,
   "stiffness": {
    "0": {
     "delta": [
      -0.00446936935448472,
-     -0.001106093134926489
+     -0.0011405668471143882,
+     -0.001053911720201195
     ],
-    "delta_from_last": 0.0003637649551401223,
+    "delta_from_last": 0.00035130390673376866,
     "kn": [
      4000.0,
      16000.0,
-     64000.0
+     64000.0,
+     256000.0
     ],
-    "limit": 0.6364354536058531,
-    "n_levels": 3,
-    "order": 1.0072992038914157,
-    "order_used": 1.0072992038914157,
+    "limit": 0.6353595292218703,
+    "n_levels": 4,
+    "order": null,
+    "order_used": 1.0,
     "ratio": [
+     4.0,
      4.0,
      4.0
     ],
     "value": [
      0.6423746810504044,
      0.6379053116959197,
-     0.6367992185609932
+     0.6367647448488053,
+     0.6357108331286041
     ]
    },
    "0.1": {
     "delta": [
      -0.004693643657429747,
-     -0.0023068915771896625
+     -0.0023068915771896625,
+     -0.0006832303758781411
     ],
-    "delta_from_last": 0.0022297031991581617,
+    "delta_from_last": 0.0002875007089813142,
     "kn": [
      4000.0,
      16000.0,
-     64000.0
+     64000.0,
+     256000.0
     ],
-    "limit": 0.6170509055069715,
-    "n_levels": 3,
-    "order": 0.5123790583140884,
-    "order_used": 0.5123790583140884,
+    "limit": 0.6183098776212702,
+    "n_levels": 4,
+    "order": 0.8777530885312191,
+    "order_used": 0.8777530885312191,
     "ratio": [
+     4.0,
      4.0,
      4.0
     ],
     "value": [
      0.6262811439407491,
      0.6215875002833193,
-     0.6192806087061297
+     0.6192806087061297,
+     0.6185973783302515
     ]
    }
   },
@@ -116,8 +124,8 @@
    }
   },
   "n_primary": 2000,
-  "n_prod_runs": 10,
-  "n_runs": 10,
+  "n_prod_runs": 11,
+  "n_runs": 11,
   "stiffness": {
    "0": {
     "delta": [
@@ -142,14 +150,14 @@
    },
    "0.1": {
     "delta": [
-     -0.006188093704050823
+     -0.006424726369896661
     ],
-    "delta_from_last": 0.0020626979013502744,
+    "delta_from_last": 0.002141575456632183,
     "kn": [
      4000.0,
      16000.0
     ],
-    "limit": 0.6160804654689109,
+    "limit": 0.616001587913629,
     "n_levels": 2,
     "order": null,
     "order_used": 1.0,
@@ -157,7 +165,7 @@
      4.0
     ],
     "value": [
-     0.624331257074312,
+     0.6245678897401579,
      0.6181431633702612
     ]
    }
@@ -177,14 +185,15 @@
     ]
    },
    "0.1": {
-    "Z": 5.720451011339348,
-    "dev_vs_ref": -0.01927229488797988,
+    "Z": 5.714486060231913,
+    "dev_vs_ref": -0.018900581620864276,
     "in_band": true,
     "lt_3pct": true,
-    "n_seeds": 2,
-    "phi_mean": 0.624331257074312,
-    "phi_std": 0.00100394737601913,
+    "n_seeds": 3,
+    "phi_mean": 0.6245678897401579,
+    "phi_std": 0.0008197195999509817,
     "seeds": [
+     1,
      1,
      2
     ]
@@ -198,21 +207,30 @@
  },
  "runs_used": [
   "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn16000_e0.1_seed1.json",
+  "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn256000_e0.1_seed1.json",
   "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn4000_e0.1_seed1.json",
   "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn4000_e0.1_seed1_dtf0.025.json",
   "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn4000_e0.1_seed2.json",
   "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn4000_e0.1_seed3.json",
   "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn64000_e0.1_seed1.json",
+  "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0.1_kn64000_e0.1_seed1_dtf0.025.json",
   "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn16000_e0.1_seed1.json",
+  "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn256000_e0.1_seed1.json",
   "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn4000_e0.1_seed1.json",
   "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn4000_e0.1_seed1_dtf0.025.json",
   "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn4000_e0.1_seed2.json",
   "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn4000_e0.1_seed3.json",
   "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn64000_e0.1_seed1.json",
+  "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn64000_e0.1_seed1_dtf0.025.json",
+  "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn64000_e0.1_seed2.json",
+  "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn64000_e0.1_seed2_dtf0.025.json",
+  "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn64000_e0.1_seed3.json",
+  "benchmarks/case_rcp_deposition/runs/deposition_n10000_mu0_kn64000_e0.1_seed3_dtf0.025.json",
   "benchmarks/case_rcp_deposition/runs/deposition_n1000_mu0_kn4000_e0.1_seed1.json",
   "benchmarks/case_rcp_deposition/runs/deposition_n2000_mu0.1_kn16000_e0.1_seed1.json",
   "benchmarks/case_rcp_deposition/runs/deposition_n2000_mu0.1_kn4000_e0.1_seed1.json",
   "benchmarks/case_rcp_deposition/runs/deposition_n2000_mu0.1_kn4000_e0.1_seed2.json",
+  "benchmarks/case_rcp_deposition/runs/deposition_n2000_mu0.1_mur0_kn4000_e0.1_seed1.json",
   "benchmarks/case_rcp_deposition/runs/deposition_n2000_mu0.3_kn4000_e0.1_seed1.json",
   "benchmarks/case_rcp_deposition/runs/deposition_n2000_mu0.5_kn4000_e0.1_seed1.json",
   "benchmarks/case_rcp_deposition/runs/deposition_n2000_mu0_kn16000_e0.1_seed1.json",

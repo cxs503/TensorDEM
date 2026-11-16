@@ -97,22 +97,40 @@ GATES = [
 # ---------------------------------------------------------------------------
 # run discovery
 # ---------------------------------------------------------------------------
+# Token prefixes, longest first: ``mur0`` must not be read as ``mu`` = "r0".
+# ``mur`` is the rolling-friction coefficient of the rougher run family; it is
+# recorded as its own parameter so that a tag this audit does not understand
+# can never abort the whole audit (it used to: `float("r0")`).
+TAG_TOKENS = (
+    ("seed", "seed", int),
+    ("dtf", "dt_frac", float),
+    ("mur", "mu_roll", float),
+    ("kn", "kn", float),
+    ("mu", "mu", float),
+    ("n", "n", int),
+    ("e", "restitution", float),
+)
+
+
 def parse_tag(tag: str) -> dict:
-    """``deposition_n10000_mu0.1_kn4000_e0.1_seed1`` -> parameter dict."""
+    """``deposition_n10000_mu0.1_kn4000_e0.1_seed1`` -> parameter dict.
+
+    Unknown or non-numeric tokens are ignored rather than fatal: the run corpus
+    grows (`mur0`, `dtf0.025`, ...) and a measurement-operator audit must not
+    stop auditing when a new suffix appears.
+    """
     out = {}
     for p in tag.split("_")[1:]:
-        if p.startswith("n") and p[1:].isdigit():
-            out["n"] = int(p[1:])
-        elif p.startswith("mu"):
-            out["mu"] = float(p[2:])
-        elif p.startswith("kn"):
-            out["kn"] = float(p[2:])
-        elif p.startswith("e"):
-            out["restitution"] = float(p[1:])
-        elif p.startswith("seed"):
-            out["seed"] = int(p[4:])
-        elif p.startswith("dtf"):
-            out["dt_frac"] = float(p[3:])
+        for prefix, key, kind in TAG_TOKENS:
+            if not p.startswith(prefix):
+                continue
+            raw = p[len(prefix):]
+            try:
+                val = kind(raw)
+            except ValueError:
+                continue                      # e.g. "mur0" reached via "mu"
+            out[key] = val
+            break
     out.setdefault("dt_frac", 1.0 / 20.0)
     return out
 
