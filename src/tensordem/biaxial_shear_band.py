@@ -408,6 +408,39 @@ def _make_specimen(material: RidgeMaterial, *, columns: int, rows: int,
 
 
 # ---------------------------------------------------------------------------
+# late-window protocol arithmetic
+# ---------------------------------------------------------------------------
+#: Fraction of the post-peak record kept by the *late* window when the caller
+#: does not ask for another one.  0.4 of the record is skipped after the peak
+#: (R4/R5/R6 used a fixed ``tail_start = peak + 0.4 * span``), i.e. 0.6 kept.
+DEFAULT_LATE_WINDOW_FRACTION = 0.6
+
+
+def late_window_span_cap(late_window_fraction: float,
+                         post_peak_strain: float | None) -> float | None:
+    """Largest late-window axial-strain span a peak-relative rule can deliver.
+
+    The late window keeps the last ``late_window_fraction`` of the post-peak
+    record, and a peak-relative rule stops at most ``post_peak_strain`` after
+    the peak, so the delivered span is bounded by
+    ``late_window_fraction * post_peak_strain``.  A protocol that predeclares a
+    *minimum* late-window span (e.g. ">= 0.02 so that three 0.01-strain
+    snapshots fit") is only satisfiable when this cap is at least that minimum;
+    R6 of CASE-BIAXIAL-SHEAR-BAND predeclared 0.02 while running
+    ``0.6 * 0.03 = 0.018``, which is arithmetically unsatisfiable and therefore
+    carried no physical information (its own report §⑦).  The cap is reported
+    in ``result["stopping"]["late_window_span_cap_log"]`` so a reader can check
+    the protocol before reading the verdict.
+    """
+    if not 0.0 < float(late_window_fraction) <= 1.0:
+        raise ValueError(
+            f"late_window_fraction must be in (0, 1], got {late_window_fraction!r}")
+    if post_peak_strain is None:
+        return None
+    return float(late_window_fraction) * float(post_peak_strain)
+
+
+# ---------------------------------------------------------------------------
 # driver
 # ---------------------------------------------------------------------------
 def run_biaxial_shear_band(*, confining_stress: float = 100.0e3,
@@ -417,6 +450,7 @@ def run_biaxial_shear_band(*, confining_stress: float = 100.0e3,
                            strain_target: float = 0.15,
                            post_peak_strain: float | None = None,
                            strain_cap: float | None = None,
+                           late_window_fraction: float = DEFAULT_LATE_WINDOW_FRACTION,
                            consolidation_steps: int = 4000,
                            snapshot_strain: float = 0.01,
                            jitter: float = 0.03,
@@ -461,6 +495,14 @@ def run_biaxial_shear_band(*, confining_stress: float = 100.0e3,
     the R5 band ensemble fail its resolution-count half.  The decision is
     reported in ``result["stopping"]`` (never silently).
 
+    ``late_window_fraction`` (default 0.6 = the R4/R5/R6 window) is the
+    fraction of the post-peak record kept by the *late* window used for the
+    band estimate; the skipped part is the first ``1 - fraction``.  It exists
+    because a peak-relative rule and a late-window definition must be declared
+    *together*: a rule of width ``w`` with a kept fraction ``f`` can only ever
+    deliver ``f * w`` of window span (see :func:`late_window_span_cap`).  The
+    default reproduces the published rounds bit-identically.
+
     ``record_snapshots`` additionally keeps every strain snapshot
     (``[{"strain": float, "positions": (N, 2) ndarray}, ...]``) under
     ``result["snapshots"]`` so a *local* (band-resolved) measurement can be run
@@ -480,6 +522,9 @@ def run_biaxial_shear_band(*, confining_stress: float = 100.0e3,
     if lateral_control not in ("servo", "isochoric"):
         raise ValueError(
             f"lateral_control must be 'servo' or 'isochoric', got {lateral_control!r}")
+    if not 0.0 < float(late_window_fraction) <= 1.0:
+        raise ValueError("late_window_fraction must be in (0, 1], got "
+                         f"{late_window_fraction!r}")
     if post_peak_strain is not None and not post_peak_strain > 0.0:
         raise ValueError(
             f"post_peak_strain must be positive when given, got {post_peak_strain!r}")
@@ -803,7 +848,8 @@ def run_biaxial_shear_band(*, confining_stress: float = 100.0e3,
     # those snapshots agree (spread < 10 deg over at least three snapshots).
     peak_strain = float(hist["axial_strain"][peak_index])
     final_strain = float(hist["axial_strain"][-1])
-    tail_start = peak_strain + 0.4 * max(final_strain - peak_strain, 0.0)
+    tail_start = peak_strain + (1.0 - float(late_window_fraction)) * max(
+        final_strain - peak_strain, 0.0)
     late = [b for b in bands if b["axial_strain"] >= tail_start
             and np.isfinite(b.get("folded_angle_deg", np.nan))]
     post_peak = [float(b["folded_angle_deg"]) for b in late]
@@ -837,6 +883,9 @@ def run_biaxial_shear_band(*, confining_stress: float = 100.0e3,
                                    - float(history[_peak_row]["axial_strain_log"])
                                    if _peak_row >= 0 else None),
             "peak_window_rows": int(_peak_window),
+            "late_window_fraction": float(late_window_fraction),
+            "late_window_span_cap_log": late_window_span_cap(
+                late_window_fraction, post_peak_strain),
         },
         "loading": {"axial_strain_rate": float(strain_rate),
                     "final_axial_strain": float(strain),
@@ -850,6 +899,7 @@ def run_biaxial_shear_band(*, confining_stress: float = 100.0e3,
                  "sin_phi": sin_phi,
                  "post_peak_d_eps_v_d_eps_a": slope},
         "band": {"angle_deg": angle, "angle_mean_deg": angle_mean,
+                 "late_window_fraction": float(late_window_fraction),
                  "angle_std_deg": angle_std, "resolved": resolved,
                  "late_snapshots": len(post_peak),
                  "representative": clean(best) if best else None,
