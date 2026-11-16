@@ -1,0 +1,17 @@
+{
+ "mission": 23125,
+ "anchor": "CASE-DEM-RCP-PACKING-FRACTION",
+ "note": "m23125 补齐『时间步偏差门』的配对（common-random-numbers）种子预算：m22824 §3 在 4 档中 3 档判 UNDECIDABLE，原因是粗/细两侧种子数不足，而两侧实际共享同一初始构型（同种子）。本账只补齐 μ=0 的两档——承载文献对标的档；μ=0.1 两档留待后续单。",
+ "jobs": [
+  {"jid": "cj4599", "tag": "deposition_n10000_mu0_kn4000_e0.1_seed2_dtf0.025", "why": "μ=0 kn=4000 细时间步 seed2（配对补齐）"},
+  {"jid": "cj4600", "tag": "deposition_n10000_mu0_kn4000_e0.1_seed3_dtf0.025", "why": "μ=0 kn=4000 细时间步 seed3（配对补齐）"},
+  {"jid": "cj4597", "tag": "deposition_n10000_mu0_kn4000_e0.1_seed4_dtf0.025", "why": "μ=0 kn=4000 细时间步 seed4"},
+  {"jid": "cj4598", "tag": "deposition_n10000_mu0_kn4000_e0.1_seed5_dtf0.025", "why": "μ=0 kn=4000 细时间步 seed5"},
+  {"jid": "cj4603", "tag": "deposition_n10000_mu0_kn4000_e0.1_seed4", "why": "μ=0 kn=4000 粗时间步 seed4"},
+  {"jid": "cj4604", "tag": "deposition_n10000_mu0_kn4000_e0.1_seed5", "why": "μ=0 kn=4000 粗时间步 seed5"},
+  {"jid": "cj4601", "tag": "deposition_n10000_mu0_kn64000_e0.1_seed4", "why": "μ=0 kn=64000 粗时间步 seed4"},
+  {"jid": "cj4602", "tag": "deposition_n10000_mu0_kn64000_e0.1_seed5", "why": "μ=0 kn=64000 粗时间步 seed5"},
+  {"jid": "cj4605", "tag": "deposition_n10000_mu0_kn64000_e0.1_seed4_dtf0.025", "why": "μ=0 kn=64000 细时间步 seed4"},
+  {"jid": "cj4606", "tag": "deposition_n10000_mu0_kn64000_e0.1_seed5_dtf0.025", "why": "μ=0 kn=64000 细时间步 seed5"}
+ ]
+}
