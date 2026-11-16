@@ -1,0 +1,68 @@
+{
+ "case": "CASE-DEM-PLANE-SHEAR-MUIDI",
+ "round": 29,
+ "mission": 22733,
+ "driver": "benchmarks/plane_shear_mu_i/run_long_window_r29.py",
+ "analysis": "benchmarks/plane_shear_mu_i/analyse_long_window_r29.py",
+ "cluster_job": "cj4332",
+ "device": "tensordem.granular2d 2-D rough-wall plane shear, round-25/26 case",
+ "axis": {
+  "strain_measure": 8.0,
+  "archived_rounds": 1.0,
+  "combos": [
+   {
+    "w": 0.5,
+    "I_target": 0.02,
+    "seed": 0
+   },
+   {
+    "w": 0.5,
+    "I_target": 0.05,
+    "seed": 0
+   },
+   {
+    "w": 0.5,
+    "I_target": 0.05,
+    "seed": 1
+   },
+   {
+    "w": 0.5,
+    "I_target": 0.05,
+    "seed": 2
+   },
+   {
+    "w": 0.5,
+    "I_target": 0.2,
+    "seed": 0
+   },
+   {
+    "w": 0.5,
+    "I_target": 0.2,
+    "seed": 1
+   },
+   {
+    "w": 0.5,
+    "I_target": 0.2,
+    "seed": 2
+   },
+   {
+    "w": 0.0,
+    "I_target": 0.05,
+    "seed": 0
+   }
+  ]
+ },
+ "statistics": {
+  "autocorr": "tau_int = 1 + 2 sum_k rho_k (Sokal window), n_eff = n/tau",
+  "sem": "sd/sqrt(n_eff)",
+  "stationarity": "last two 1-strain blocks agree within 2 sigma AND second-half weighted trend |z| < 2",
+  "saturation": "mu = mu_inf + a exp(-gamma/gamma0), gamma0 by grid"
+ },
+ "decision_rule": {
+  "PASS_mu": "every w = 0.5 point stationary AND |mu - mu_ref| <= 10 % at every I",
+  "PARTIAL": "stationary but the curve misses the law; report the stationary offset as the device's bias and keep the ledger FAIL",
+  "WITHHELD": "any point not certified stationary; report the drift explicitly",
+  "never": "no post-hoc choice of window, pressure convention or I definition after the data are read"
+ },
+ "declared_limitation": "the cited law is a 3-D glass-bead fit; the device is 2-D, so phi is judged on monotonicity only, and mu is judged on the curve-level envelope as well as on the pointwise band"
+}
