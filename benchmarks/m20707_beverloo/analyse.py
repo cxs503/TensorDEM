@@ -20,9 +20,11 @@ Usage
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
 from pathlib import Path
+from typing import List
 
 import numpy as np
 
@@ -286,6 +288,343 @@ def analyse_preset(run_dir: Path, preset: str) -> dict:
     return summary
 
 
+# ---------------------------------------------------------------------------
+# Document injection: the verification note is *rendered* from the committed
+# artefacts instead of being hand-edited, so a number in the note cannot drift
+# away from the run that produced it.  ``--check-doc`` is the guard the pytest
+# suite calls; any hand edit inside a generated block makes it fail.
+# ---------------------------------------------------------------------------
+DOC_PATH = ROOT / "docs" / "m20707_beverloo_verification.md"
+BEGIN_FMT = "<!-- BEGIN:GENERATED {name} (rendered by analyse.py --inject-doc) -->"
+END_FMT = "<!-- END:GENERATED {name} -->"
+SKIP_ARTEFACTS = {"summary.json", "analysis_summary.json"}
+
+# Steady mass-flow rates printed by the *pre-binding* revision of the note
+# (git b2a67b44, i.e. before the artefacts were tracked and the note rendered).
+# They are pinned here so the reproduction check below is a measurement of the
+# run against the published claim, not a comparison of the note with itself.
+PUBLISHED_BASELINE = {
+    "D4": 0.000458, "D5": 0.009817, "D5_g4": 0.004974,
+    "D5_mu40": 0.010799, "D5_mu55": 0.010930, "D6": 0.020616,
+}
+TOL_REPRODUCTION = 0.1        # predeclared |ΔW| / W in percent
+
+
+def artefact_digest(run_dir: Path) -> str:
+    """sha256 over the sorted per-case artefacts, truncated to 12 hex chars."""
+    h = hashlib.sha256()
+    for p in sorted(Path(run_dir).glob("*.json")):
+        if p.name in SKIP_ARTEFACTS:
+            continue
+        h.update(p.name.encode())
+        h.update(p.read_bytes())
+    return h.hexdigest()[:12]
+
+
+def _rel_to_repo(path) -> str:
+    """Path relative to the repo root when possible (stable in the note)."""
+    p = Path(path).resolve()
+    try:
+        return p.relative_to(ROOT).as_posix()
+    except ValueError:          # artefacts staged outside the checkout
+        return p.as_posix()
+
+
+def _steady_windows(case: dict) -> int:
+    res = case["result"]
+    return int(res.get("flow_rate_steady_windows",
+                       max(1, len(res["flow_rate_windows_kg_s"]) // 2)))
+
+
+def _arrow(ok: bool) -> str:
+    return "yes" if ok else "no"
+
+
+def render_results_block(results: dict) -> str:
+    """Render §3-§5 of the note (results, error judgement, full-preset status)."""
+    pilot = results.get("pilot")
+    full = results.get("full")
+    if not pilot:
+        raise SystemExit("no pilot artefacts to render the note from")
+    cases = pilot["cases"]
+    lines: List[str] = []
+
+    lines.append("## 3. Results — preset `pilot` (d = 2 mm)")
+    lines.append("")
+    lines.append(
+        "Everything in §3–§5 is rendered by `benchmarks/m20707_beverloo/analyse.py "
+        "--inject-doc` from the per-case artefacts committed next to the script; hand "
+        "editing these blocks makes `--check-doc` (and "
+        "`tests/test_m20707_beverloo_campaign.py`) fail."
+    )
+    lines.append("")
+    lines.append("| provenance | value |")
+    lines.append("|---|---|")
+    lines.append(f"| run directory | `{_rel_to_repo(pilot['run_dir'])}` |")
+    lines.append(f"| artefacts | {', '.join(sorted(c + '.json' for c in cases))} |")
+    lines.append(f"| artefact fingerprint (sha256[:12]) | `{artefact_digest(Path(pilot['run_dir']))}` |")
+    revs = sorted({str(c.get('git_sha', 'unknown')) for c in cases.values()})
+    hosts = sorted({str(c.get('host', 'unknown')) for c in cases.values()})
+    lines.append(f"| producing git revision | {', '.join('`' + r + '`' for r in revs)} |")
+    lines.append(f"| host | {', '.join(hosts)} |")
+    wall = ", ".join(f"{cid} {cases[cid].get('wall_clock_s', float('nan')):.0f}"
+                     for cid in sorted(cases))
+    lines.append(f"| wall clock (s) | {wall} |")
+    lines.append("")
+    lines.append("### Table 1a — reproduction of the pre-binding revision")
+    lines.append("")
+    lines.append("Pinned values are the rates printed by the note before the artefacts were")
+    lines.append(f"tracked; the predeclared reproduction criterion is |ΔW| < {TOL_REPRODUCTION} %.")
+    lines.append("")
+    lines.append("| case | W published (pre-binding note) | W this run | ΔW | reproduced? |")
+    lines.append("|---|---|---|---|---|")
+    repro_ok = True
+    for cid in sorted(PUBLISHED_BASELINE):
+        if cid not in cases:
+            continue
+        w_now = float(cases[cid]["result"]["flow_rate_kg_s"])
+        w_pub = float(PUBLISHED_BASELINE[cid])
+        delta = (w_now - w_pub) / w_pub * 100.0 if w_pub else float("nan")
+        ok = abs(delta) < TOL_REPRODUCTION
+        repro_ok = repro_ok and ok
+        lines.append(f"| {cid} | {w_pub:.6f} kg/s | {w_now:.6f} kg/s | {delta:+.4f} % "
+                     f"| {_arrow(ok)} |")
+    lines.append("")
+    lines.append(f"Reproduction verdict: **{'PASS' if repro_ok else 'FAIL'}** "
+                 f"(all cases within {TOL_REPRODUCTION} %).")
+    lines.append("")
+    lines.append("### Table 1 — flow rate vs Beverloo")
+    lines.append("")
+    lines.append("| case | D/d | μ | g (m/s²) | n_bed | ρ_b (kg/m³) | W_DEM (kg/s) "
+                 "| σ_W (kg/s) | n_steady | W_Beverloo (kg/s) | rel. err | C_rec | <10 %? |")
+    lines.append("|---|---|---|---|---|---|---|---|---|---|---|---|---|")
+    for cid in sorted(cases, key=lambda c: (cases[c]["case"]["D_over_d"], c)):
+        c = cases[cid]
+        cs, res, bev = c["case"], c["result"], c["beverloo"]
+        lines.append(
+            f"| {cid} | {cs['D_over_d']:.1f} | {cs['mu']:.2f} | {c['gravity']:.3f} "
+            f"| {res['n_bed']} | {res['rho_bulk']:.0f} | {res['flow_rate_kg_s']:.6f} "
+            f"| {res['flow_rate_std_kg_s']:.6f} | {_steady_windows(c)} "
+            f"| {bev['W_ref_kg_s']:.6f} | {bev['rel_err_pct']:+.1f} % "
+            f"| {bev['C_recovered']:.3f} | {_arrow(bev['pass_10pct'])} |"
+        )
+    lines.append("")
+    lines.append("`W_Beverloo` uses the *measured* ρ_b of the same case, with C and k from "
+                 "`benchmarks/m20055_beverloo/ref_beverloo_1961.json`.")
+    lines.append("")
+
+    # ---- power-law / exponent check -------------------------------------
+    exp = pilot.get("exponent_check")
+    lines.append("### Table 2 — power-law check")
+    lines.append("")
+    if exp:
+        k_fix = float(cases[exp["cases_used"][0]]["beverloo"]["k_ref"]) \
+            if exp["cases_used"] else 1.4
+        lines.append("| fit | points used | exponent p | C | k | R² | verdict |")
+        lines.append("|---|---|---|---|---|---|---|")
+        all_pts = ", ".join(exp["cases_used"]
+                            + [f"{c} (excluded)" for c in exp["cases_excluded"]])
+        lines.append(
+            f"| fixed k = {k_fix:.1f}, all sweep points | {all_pts} "
+            f"| {exp['exponent_all_points']:.3f} | n/a | {k_fix:.1f} | n/a "
+            f"| diagnostic (points outside the validity band included) |"
+        )
+        if exp.get("exponent_used_points") is not None:
+            lines.append(
+                f"| fixed k = {k_fix:.1f}, usable points | {', '.join(exp['cases_used'])} "
+                f"| {exp['exponent_used_points']:.3f} | {exp['c_used_points']:.3f} "
+                f"| {k_fix:.1f} | {exp['r2_used_points']:.4f} "
+                f"| **{exp['status']}** (|p−2.5| = {exp['deviation']:.3f}, "
+                f"tol {exp['tolerance']}) |"
+            )
+        fk = exp.get("free_k")
+        if fk:
+            note = " (k at the search bound → not identified)" if fk.get("at_boundary") else ""
+            lines.append(
+                f"| free k | {', '.join(exp['cases_used'])} | {fk['exponent']:.3f} "
+                f"| {fk['c']:.3f} | {fk['k']:.3f} | {fk['r2']:.4f} | diagnostic{note} |"
+            )
+        lines.append("")
+        if exp["cases_excluded"]:
+            lines.append(
+                f"Points with |rel. err| > {exp['validity_band_pct']:.0f} % "
+                f"({', '.join(exp['cases_excluded'])}) are outside the correlation's "
+                "applicability band (arching at this system size) and are excluded from "
+                "the fit, but always tabulated above."
+            )
+            lines.append("")
+    else:
+        lines.append("Not enough cases to fit the law (needs at least two sweep points).")
+        lines.append("")
+
+    # ---- gravity + steadiness + friction --------------------------------
+    grav = pilot.get("gravity_scaling")
+    lines.append("### Table 3 — √g scaling, discharge steadiness, friction sensitivity")
+    lines.append("")
+    if grav:
+        lines.append("| check | measured | expected | deviation | verdict |")
+        lines.append("|---|---|---|---|---|")
+        lines.append(f"| W(g/4)/W(g) | {grav['ratio']:.3f} | 0.500 "
+                     f"| {abs(grav['ratio'] - 0.5) * 100:.1f} % "
+                     f"| {'PASS' if grav['pass'] else 'FAIL'} |")
+        lines.append("")
+    cvs = pilot.get("window_cv") or {}
+    if cvs:
+        lines.append(f"| case | windows (kg/s) | CV (tol {TOL_CV}) | steady? |")
+        lines.append("|---|---|---|---|")
+        for cid in sorted(cvs):
+            wins = cases[cid]["result"]["flow_rate_windows_kg_s"]
+            lines.append(f"| {cid} | {', '.join(f'{w:.6f}' for w in wins)} "
+                         f"| {cvs[cid]:.3f} | {_arrow(cvs[cid] < TOL_CV)} |")
+        lines.append("")
+    fr = pilot.get("friction_sensitivity") or {}
+    if fr:
+        lines.append("| μ | C recovered | rel. err vs Beverloo |")
+        lines.append("|---|---|---|")
+        for cid in sorted(fr, key=lambda c: fr[c]["mu"]):
+            lines.append(f"| {fr[cid]['mu']:.2f} | {fr[cid]['C_recovered']:.3f} "
+                         f"| {fr[cid]['rel_err_pct']:+.1f} % |")
+        lines.append("")
+
+    # ---- §4 error judgement ---------------------------------------------
+    lines.append("## 4. Error judgement (explicit, per quantity)")
+    lines.append("")
+
+    def row(name: str, measured: float, reference: float, unit: str,
+            rel_pct: float, note: str = "") -> str:
+        if unit:                       # dimensional quantity, 6 decimals + unit
+            m, r = f"{measured:.6f} {unit}", f"{reference:.6f} {unit}"
+        else:                          # dimensionless (C, ratio)
+            m, r = f"{measured:.3f}", f"{reference:.3f}"
+        return (f"| {name} | {m} | {r} "
+                f"| {rel_pct:+.1f} % | **{_arrow(abs(rel_pct) < 3.0)}** "
+                f"| {_arrow(abs(rel_pct) < 10.0)}{note} |")
+
+    lines.append("| quantity | DEM | reference | relative error | < 3 % ? | < 10 % ? |")
+    lines.append("|---|---|---|---|---|---|")
+    prim = cases.get("D5")
+    if prim:
+        bev = prim["beverloo"]
+        lines.append(row("W at D/d = 5 (primary)", prim["result"]["flow_rate_kg_s"],
+                         bev["W_ref_kg_s"], "kg/s", bev["rel_err_pct"]))
+        lines.append(row(f"C recovered (D/d = 5, μ = {prim['case']['mu']:.2f})",
+                         bev["C_recovered"], bev["C_ref"], "", bev["rel_err_pct"]))
+        for cid in ("D6", "D4"):
+            if cid in cases:
+                b = cases[cid]["beverloo"]
+                extra = " (arching)" if abs(b["rel_err_pct"]) > LAW_VALIDITY_BAND else ""
+                lines.append(row(f"C recovered (D/d = {cases[cid]['case']['D_over_d']:.0f})",
+                                 b["C_recovered"], b["C_ref"], "", b["rel_err_pct"], extra))
+    if grav:
+        lines.append(row("W(g/4)/W(g)", grav["ratio"], 0.5, "",
+                         (grav["ratio"] - 0.5) * 100.0))
+    if exp and exp.get("exponent_used_points") is not None:
+        p = exp["exponent_used_points"]
+        lines.append(row("exponent p (usable sweep points)", p, 2.5, "",
+                         (p - 2.5) / 2.5 * 100.0))
+    lines.append("")
+    answers = []
+    if prim:
+        rel = prim["beverloo"]["rel_err_pct"]
+        inside3, inside10 = abs(rel) < 3.0, abs(rel) < 10.0
+        where = ("inside the 3 % band" if inside3 else
+                 ("inside the predeclared 10 % band but outside a 3 % band" if inside10
+                  else "outside both the 3 % and the 10 % band"))
+        answers.append(f"(i) Is the primary rate within 3 % of Beverloo? "
+                       f"**{'Yes' if inside3 else 'No'}** — it is {rel:+.1f} %, {where}.")
+    if exp:
+        if exp["status"] == "NOT_DETERMINED":
+            answers.append(
+                f"(ii) Is the 5/2 exponent verified? **No** — it is not even determined at "
+                f"pilot scale: with {exp['n_points_used']} usable diameters the fitted "
+                f"slope is {exp['exponent_used_points']:.3f} (deviation "
+                f"{exp['deviation']:.3f} against a {exp['tolerance']} tolerance), so the "
+                f"check is reported as **NOT_DETERMINED** rather than as a pass.")
+        else:
+            answers.append(
+                f"(ii) Is the 5/2 exponent verified? "
+                f"**{'Yes' if exp['status'] == 'PASS' else 'No'}** — fitted slope "
+                f"{exp['exponent_used_points']:.3f} on {exp['n_points_used']} points, "
+                f"deviation {exp['deviation']:.3f} against a {exp['tolerance']} tolerance "
+                f"(**{exp['status']}**).")
+    if cvs:
+        failing = [cid for cid in sorted(cvs) if cvs[cid] >= TOL_CV]
+        passing = [cid for cid in sorted(cvs) if cvs[cid] < TOL_CV]
+        detail = ("all cases are inside the band." if not failing else
+                  f"{len(failing)} of {len(cvs)} cases are outside: "
+                  + ", ".join(f"{cid}={cvs[cid]:.3f}" for cid in failing)
+                  + ("; the cases inside are " + ", ".join(passing) + "." if passing
+                     else "; no case is inside the band."))
+        answers.append(f"(iii) Is the steady-discharge criterion (CV < {TOL_CV}) met? "
+                       f"**{'Yes' if not failing else 'No'}** — {detail}")
+    if grav:
+        answers.append(f"(iv) Does the rate scale as √g? "
+                       f"**{'Yes' if grav['pass'] else 'No'}** — W(g/4)/W(g) = "
+                       f"{grav['ratio']:.3f} vs 0.500 "
+                       f"({abs(grav['ratio'] - 0.5) * 100:.1f} % deviation, "
+                       f"tol {TOL_GRAVITY}).")
+    lines.append("**Direct answers.** " + " ".join(answers))
+    lines.append("")
+
+    # ---- §5 full preset --------------------------------------------------
+    lines.append("## 5. Status of the `full` preset (d = 3 mm)")
+    lines.append("")
+    if full:
+        lines.append(
+            f"The `full` preset is measured: {len(full['cases'])} cases in "
+            f"`{_rel_to_repo(full['run_dir'])}/` "
+            f"(artefact fingerprint `{artefact_digest(Path(full['run_dir']))}`), "
+            f"primary-case rel. err "
+            f"{full['cases']['D5']['beverloo']['rel_err_pct']:+.1f} %.")
+    else:
+        run_dir = Path(pilot["run_dir"]).parent / "full"
+        rel_dir = _rel_to_repo(run_dir)
+        lines.append(
+            "**Withheld — not claimed.** No artefact exists in "
+            f"`{rel_dir}/`, so this note reports no `d = 3 mm` number at all. A `full` "
+            "case costs roughly 4.4× the particles, 4.5× the simulated time and a "
+            "stiffer contact (≈ 50 min of wall clock per case), which is outside the "
+            "control-node short-test budget. Evidence grade for the `d = 3 mm` "
+            "campaign: **WITHHELD**. One case per command:")
+        lines.append("")
+        lines.append("```bash")
+        lines.append("python benchmarks/m20707_beverloo/campaign.py --preset full --case D5")
+        lines.append("```")
+    lines.append("")
+    return "\n".join(lines)
+
+
+def render_comparison_block(results: dict) -> str:
+    """Render the m20707 row of the campaign-comparison table (§6)."""
+    pilot = results.get("pilot")
+    if not pilot or "D5" not in pilot["cases"]:
+        raise SystemExit("no pilot D5 artefact to render the comparison row from")
+    c = pilot["cases"]["D5"]
+    rel = c["beverloo"]["rel_err_pct"]
+    verdict = "PASS (<10 %)" if c["beverloo"]["pass_10pct"] else "FAIL (≥10 %)"
+    return (f"| **m20707 (pilot)** | **silo_flow** | **disordered** "
+            f"| **{c['case']['mu']:.2f}** | **{c['case']['D_over_d']:.0f}** "
+            f"| **{rel:+.1f} %** | **{verdict}** | this note (§3, fingerprint "
+            f"`{artefact_digest(Path(pilot['run_dir']))}`) |")
+
+
+def inject_block(text: str, name: str, body: str, path: Path) -> str:
+    begin, end = BEGIN_FMT.format(name=name), END_FMT.format(name=name)
+    if begin not in text or end not in text:
+        raise SystemExit(f"marker {name!r} not found in {path}")
+    i = text.index(begin) + len(begin)
+    j = text.index(end, i)
+    return text[:i] + "\n" + body.strip("\n") + "\n" + text[j:]
+
+
+def render_doc(results: dict, path: Path = DOC_PATH) -> str:
+    """Return the verification note with its generated blocks re-rendered."""
+    text = Path(path).read_text()
+    text = inject_block(text, "results", render_results_block(results), Path(path))
+    text = inject_block(text, "comparison-row", render_comparison_block(results), Path(path))
+    return text
+
+
 def main(argv=None) -> dict:
     ap = argparse.ArgumentParser()
     ap.add_argument("--preset", default="both", choices=["full", "pilot", "both"])
@@ -293,6 +632,14 @@ def main(argv=None) -> dict:
     ap.add_argument("--md-out", default=None, help="write the markdown tables here")
     ap.add_argument("--summary-out", default=None,
                     help="write one combined, machine-readable summary here")
+    ap.add_argument("--inject-doc", nargs="?", const=str(DOC_PATH), default=None,
+                    metavar="DOC",
+                    help="render the generated blocks of the verification note from the "
+                         "committed artefacts")
+    ap.add_argument("--check-doc", nargs="?", const=str(DOC_PATH), default=None,
+                    metavar="DOC",
+                    help="exit non-zero if the generated blocks of the note disagree "
+                         "with the artefacts")
     args = ap.parse_args(argv)
 
     presets = ["full", "pilot"] if args.preset == "both" else [args.preset]
@@ -315,6 +662,27 @@ def main(argv=None) -> dict:
     if args.md_out and md_chunks:
         Path(args.md_out).write_text("\n\n".join(md_chunks) + "\n")
         print(f"Markdown tables written to {args.md_out}")
+
+    if args.inject_doc or args.check_doc:
+        doc = Path(args.inject_doc or args.check_doc)
+        rendered = render_doc(results, doc)
+        current = doc.read_text()
+        if args.check_doc:
+            if rendered != current:
+                import difflib
+                diff = list(difflib.unified_diff(
+                    current.splitlines(), rendered.splitlines(),
+                    fromfile=f"{doc} (as committed)", tofile="rendered from artefacts",
+                    lineterm="", n=1))
+                print("\n".join(diff[:60]))
+                raise SystemExit(
+                    f"{doc}: generated blocks disagree with the artefacts "
+                    f"({len(diff)} diff lines) - re-run "
+                    f"`python benchmarks/m20707_beverloo/analyse.py --inject-doc`")
+            print(f"{doc}: generated blocks match the artefacts")
+        else:
+            doc.write_text(rendered)
+            print(f"Rendered the generated blocks of {doc} from the artefacts")
     return results
 
 

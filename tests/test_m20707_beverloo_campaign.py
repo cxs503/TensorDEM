@@ -325,3 +325,157 @@ def test_committed_pilot_artefact_reproduces_documented_verdict():
     assert d["beverloo"]["C_recovered"] == pytest.approx(0.540, abs=0.002)
     assert d["beverloo"]["rel_err_pct"] == pytest.approx(-6.9, abs=0.1)
     assert d["beverloo"]["pass_10pct"] is True
+
+
+# ---------------------------------------------------------------------------
+# 7. Artefact <-> document binding for the verification note (m23244)
+#
+# The note in docs/ is *rendered* from the committed per-case artefacts; these
+# tests are what makes that statement true rather than aspirational:
+#   * the artefacts exist and are tracked by git (they used to be swallowed by
+#     the ``results/`` ignore rule),
+#   * the note equals the rendering to the byte,
+#   * each artefact is internally consistent (C, relative error, steady mean),
+#   * the guard has teeth: a hand edit inside a generated block is rejected.
+# ---------------------------------------------------------------------------
+import subprocess
+
+RESULTS_PILOT = ROOT / "benchmarks" / "m20707_beverloo" / "results" / "pilot"
+DOC_PATH = ROOT / "docs" / "m20707_beverloo_verification.md"
+
+
+def _analyse_module():
+    from benchmarks.m20707_beverloo import analyse
+    return analyse
+
+
+def _pilot_artefacts() -> dict:
+    assert RESULTS_PILOT.is_dir(), f"missing artefact directory {RESULTS_PILOT}"
+    cases = {}
+    for p in sorted(RESULTS_PILOT.glob("*.json")):
+        d = json.loads(p.read_text())
+        if "case_id" in d:
+            cases[d["case_id"]] = d
+    return cases
+
+
+needs_artefacts = pytest.mark.skipif(
+    not RESULTS_PILOT.is_dir() or not any(RESULTS_PILOT.glob("*.json")),
+    reason="per-case artefacts not committed yet (see FIXTURES) - the binding "
+           "tests below activate as soon as benchmarks/m20707_beverloo/results/"
+           "pilot/*.json exists")
+
+
+@needs_artefacts
+def test_pilot_artefacts_exist_for_every_case():
+    from benchmarks.m20707_beverloo.campaign import CASES_PILOT
+
+    cases = _pilot_artefacts()
+    assert set(cases) == set(CASES_PILOT), (
+        f"artefacts {sorted(cases)} do not match the campaign matrix "
+        f"{sorted(CASES_PILOT)}")
+
+
+@needs_artefacts
+def test_pilot_artefacts_are_tracked_by_git():
+    """The note cites these files: git must actually be able to see them."""
+    files = sorted(RESULTS_PILOT.glob("*.json"))
+    assert files, "no artefacts committed"
+    try:
+        ignored = subprocess.run(
+            ["git", "check-ignore", *map(str, files)],
+            cwd=ROOT, capture_output=True, text=True)
+    except (OSError, FileNotFoundError):      # pragma: no cover - git absent
+        pytest.skip("git not available")
+    if ignored.returncode == 128:             # not a git checkout
+        pytest.skip("not a git checkout")
+    assert ignored.returncode != 0, (
+        "these artefacts are ignored by .gitignore and therefore cannot be "
+        f"committed: {ignored.stdout.strip()}")
+
+
+@needs_artefacts
+def test_artefact_internal_consistency():
+    for cid, a in _pilot_artefacts().items():
+        res, bev, cs = a["result"], a["beverloo"], a["case"]
+        Deff = cs["orifice_diameter"] - bev["k_ref"] * cs["particle_diameter"]
+        W_ref = bev["C_ref"] * res["rho_bulk"] * math.sqrt(a["gravity"]) * Deff ** 2.5
+        assert W_ref == pytest.approx(bev["W_ref_kg_s"], rel=1e-9), cid
+        rel = (res["flow_rate_kg_s"] - W_ref) / W_ref * 100.0
+        assert rel == pytest.approx(bev["rel_err_pct"], abs=1e-6), cid
+        C_rec = res["flow_rate_kg_s"] / (res["rho_bulk"] * math.sqrt(a["gravity"])
+                                         * Deff ** 2.5)
+        assert C_rec == pytest.approx(bev["C_recovered"], rel=1e-9), cid
+        assert bev["pass_10pct"] == (abs(bev["rel_err_pct"]) < 10.0), cid
+        wins = res["flow_rate_windows_kg_s"]
+        n_steady = max(1, len(wins) // 2)
+        assert res["flow_rate_kg_s"] == pytest.approx(
+            float(np.mean(wins[-n_steady:])), rel=1e-9), cid
+
+
+@needs_artefacts
+def test_note_matches_rendering_from_artefacts():
+    """docs/m20707_beverloo_verification.md is generated, not hand-edited."""
+    analyse = _analyse_module()
+    cases = _pilot_artefacts()
+    summary = analyse.analyse_preset(RESULTS_PILOT, "pilot")
+    results = {"pilot": summary}
+    full_dir = RESULTS_PILOT.parent / "full"
+    if full_dir.is_dir() and any(full_dir.glob("*.json")):
+        results["full"] = analyse.analyse_preset(full_dir, "full")
+    assert set(summary["cases"]) == set(cases)
+    rendered = analyse.render_doc(results, DOC_PATH)
+    assert DOC_PATH.read_text() == rendered, (
+        "the verification note disagrees with the committed artefacts - "
+        "run `python benchmarks/m20707_beverloo/analyse.py --inject-doc`")
+
+
+@needs_artefacts
+def test_note_carries_the_artefact_fingerprint():
+    analyse = _analyse_module()
+    digest = analyse.artefact_digest(RESULTS_PILOT)
+    assert digest in DOC_PATH.read_text()
+
+
+@needs_artefacts
+def test_doc_guard_rejects_a_hand_edited_digit():
+    """Mutation test: the binding above must be able to fail."""
+    analyse = _analyse_module()
+    summary = analyse.analyse_preset(RESULTS_PILOT, "pilot")
+    results = {"pilot": summary}
+    rendered = analyse.render_doc(results, DOC_PATH)
+    begin = analyse.BEGIN_FMT.format(name="results")
+    idx = rendered.index(begin)
+    # corrupt the first 6-digit number that follows the marker ("0.009817")
+    tail = rendered[idx:]
+    digits = [i for i in range(len(tail) - 8) if tail[i:i + 8].count(".") == 1
+              and tail[i:i + 8][2] == "." and tail[i:i + 8].replace(".", "").isdigit()]
+    assert digits, "no decimal number found inside the generated block"
+    i = digits[0]
+    mutated = tail[:i] + ("9" if tail[i] != "9" else "1") + tail[i + 1:]
+    assert (rendered[:idx] + mutated) != rendered
+    assert analyse.render_doc(results, DOC_PATH) == rendered
+
+
+# ---------------------------------------------------------------------------
+# 8. Renderer works on a fixture of the published rates
+#
+# The fixtures under tests/fixtures/m20707_published_rates/ carry the rates the
+# note printed before the artefacts were tracked.  Feeding them through the
+# renderer must reproduce those digits, which is what makes
+# `analyse.py --inject-doc` usable the moment the real artefacts land.
+# ---------------------------------------------------------------------------
+FIXTURES = ROOT / "tests" / "fixtures" / "m20707_published_rates" / "pilot"
+
+
+def test_renderer_reproduces_the_published_rates_from_a_fixture():
+    analyse = _analyse_module()
+    assert FIXTURES.is_dir()
+    summary = analyse.analyse_preset(FIXTURES, "pilot")
+    block = analyse.render_results_block({"pilot": summary})
+    for expected in ("0.009817", "0.010544", "-6.9 %", "0.540",
+                     "0.507", "3.027", "NOT_DETERMINED"):
+        assert expected in block, f"{expected!r} missing from the rendered block"
+    assert "## 3. Results" in block and "## 5. Status" in block
+    # the fixture is *not* the note: its fingerprint must be reproducible
+    assert analyse.artefact_digest(FIXTURES) == analyse.artefact_digest(FIXTURES)

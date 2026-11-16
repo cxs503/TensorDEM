@@ -1,0 +1,49 @@
+{
+  "case_id": "D6",
+  "preset": "pilot",
+  "wall_clock_s": 100.0,
+  "git_sha": "deadbee",
+  "host": "node315",
+  "gravity": 9.81,
+  "case": {
+    "orifice_diameter": 0.012,
+    "particle_diameter": 0.002,
+    "D_over_d": 6.0,
+    "silo_radius": 0.012,
+    "fill_height": 0.02,
+    "mu": 0.5,
+    "mu_rolling": 0.05,
+    "wall_mu": 0.0,
+    "kn": 2000.0,
+    "seed": 20707
+  },
+  "result": {
+    "n_bed": 1140,
+    "rho_bulk": 1319,
+    "rho_bulk_measured": 1319,
+    "surface_height_m": 0.02,
+    "flow_rate_kg_s": 0.020616,
+    "flow_rate_std_kg_s": 0.001018,
+    "flow_rate_windows_kg_s": [
+      0.016362,
+      0.021074,
+      0.021336,
+      0.019896
+    ],
+    "particles_exited": 100,
+    "dt": 1e-05,
+    "steps": 40000,
+    "flow_rate_steady_windows": 2
+  },
+  "beverloo": {
+    "C_ref": 0.58,
+    "k_ref": 1.4,
+    "W_ref_kg_s": 0.019459,
+    "C_recovered": 0.614,
+    "Deff_m": 0.0092,
+    "rel_err_pct": 5.9,
+    "abs_rel_err_pct": 5.9,
+    "pass_10pct": true,
+    "pass_15pct": true
+  }
+}
