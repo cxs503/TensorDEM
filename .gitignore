@@ -12,3 +12,7 @@ artifacts/tutorial_first_verified_run/
 # local evidence scratch used by tests when the system temp dir is unusable
 .pytest_tmp/
 tests/.pytest_evidence/
+
+# m20707: the Beverloo verification note is rendered from these artefacts, so they
+# must survive the commit filter (the note cites them by path and fingerprint).
+!benchmarks/m20707_beverloo/results/
