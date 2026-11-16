@@ -40,6 +40,12 @@ def main() -> dict:
         vp = 4.0 / 3.0 * math.pi * r ** 3
         plate = n_p * vp / (0.12 * 0.05 * float(d["phi_bed_steady"]))
         boundary = plate / max(plate - 2.0 * r, 1e-12)
+        # Round 15-c (m23285): the shell accounting has two walled pairs.  The
+        # y term is reported for completeness; on this device the grafted bed
+        # sits denser against the y-walls than the geometric shell allows, so
+        # the z factor is an upper bound and ``measured/z_only`` <= 1 is the
+        # device-level claim (PREREG_R15C.md).
+        boundary_y = 0.05 / max(0.05 - 2.0 * r, 1e-12)
         rows.append({
             "I_target": I,
             "I_bulk": d.get("I_bulk"),
@@ -53,11 +59,19 @@ def main() -> dict:
             "slab_over_bed_measured": (d.get("phi_slab") / d["phi_bed_steady"]
                                        if d.get("phi_slab") else None),
             "boundary_layer_factor": boundary,
+            "boundary_factor_y": boundary_y,
+            "boundary_factor_2wall": boundary * boundary_y,
             "pressure_control_error": d.get("pressure_control_error_final"),
             "servo_valid": d.get("servo_valid"),
             "rate_ratio": d.get("rate_ratio"),
         })
     rows.sort(key=lambda r: r["I_target"])
+    for r in rows:
+        if r["slab_over_bed_measured"]:
+            r["slab_over_z_only"] = (r["slab_over_bed_measured"]
+                                     / r["boundary_layer_factor"])
+        else:
+            r["slab_over_z_only"] = None
 
     head = ["# Round 15 - archived phi(I)/mu(I) re-expressed under the",
             "# container-averaged solid-fraction definition",
@@ -66,17 +80,26 @@ def main() -> dict:
             "reference; `phi_container` is the same run re-expressed in the",
             "definition the reference law uses (N V_p / V_gap).",
             "",
+            "Round 15-c (m23285): the definitional gap is bounded by the z-wall",
+            "shell factor `plate_z/(plate_z-2r)`; `measured/z-only` is the",
+            "fraction of the measured gap that factor accounts for (< 1 means",
+            "the bed is denser at the y-walls than a geometric shell allows).",
+            "The two-wall product is listed as the analytic-packing prediction",
+            "and is deliberately NOT claimed for this device.",
+            "",
             "| I | mu_full | mu_ref | err_mu [%] | phi_centres (archived) "
             "| phi_container | phi_ref | err_phi [%] | slab/bed measured "
-            "| plate/(plate-2r) |",
-            "|---|---|---|---|---|---|---|---|---|---|"]
+            "| plate/(plate-2r) | measured/z-only | two-wall factor |",
+            "|---|---|---|---|---|---|---|---|---|---|---|---|"]
     for r in rows:
         head.append(
             f"| {r['I_target']:g} | {r['mu_full']:.4f} | {r['mu_ref']:.4f} "
             f"| {r['err_mu_pct']:+.1f} | {r['phi_centres_archived']:.4f} "
             f"| {r['phi_container']:.4f} | {r['phi_ref']:.4f} "
             f"| {r['err_phi_pct']:+.1f} | {r['slab_over_bed_measured']:.3f} "
-            f"| {r['boundary_layer_factor']:.3f} |")
+            f"| {r['boundary_layer_factor']:.3f} "
+            f"| {r['slab_over_z_only']:.3f} "
+            f"| {r['boundary_factor_2wall']:.3f} |")
     txt = "\n".join(head) + "\n"
     (OUT / "archived_rederived_tables.md").write_text(txt)
     (OUT / "archived_rederived.json").write_text(json.dumps(rows, indent=2))
@@ -107,6 +130,13 @@ def main() -> dict:
                label="measured slab/container")
     ax[1].plot(Is, [r["boundary_layer_factor"] for r in rows], "k--",
                label=r"$plate_z/(plate_z-2r)$ (z boundary layer)")
+    ax[1].plot(Is, [r["boundary_factor_2wall"] for r in rows], "k-.",
+               lw=0.8, label="two-wall product (analytic-packing prediction)")
+    for r in rows:
+        ax[1].annotate(f"{r['slab_over_z_only']:.2f}",
+                       (r["I_target"], r["slab_over_bed_measured"]), fontsize=6,
+                       xytext=(3, -8), textcoords="offset points")
+    ax[1].set_yscale("log")
     if synth:
         gaps = [0.12, 0.06, 0.045]
         ax[1].plot(gaps, [r["measured_slab_over_bed"] for r in synth["rows"]],

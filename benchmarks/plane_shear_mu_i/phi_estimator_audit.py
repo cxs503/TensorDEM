@@ -78,6 +78,11 @@ RUNS.mkdir(parents=True, exist_ok=True)
 RADIUS = 0.005
 W, D = 0.12, 0.05
 MARGIN_FRAC = 0.25
+# Round 15-c (m23285): predeclared tolerance on the *two-wall* boundary factor
+# (see runs/phi_audit/PREREG_R15C.md).  The incumbent z-only factor residual is
+# 9.7-12.6 % on the same packings, i.e. above this threshold, so admitting the
+# two-wall model and rejecting the z-only model are the same decision here.
+BOUNDARY_TOL_PCT = 5.0
 Y_MARGIN_FRAC = 0.20
 
 
@@ -142,12 +147,15 @@ def synthetic_audit(verbose: bool = True) -> dict:
             "phi_bed": d["phi_bed"], "phi_extent": d["phi_extent"],
             "phi_centres": d["phi_centres"],
             "predicted_boundary_factor": d["boundary_factor"],
+            "predicted_factor_2wall": d["boundary_factor_2wall"],
             "measured_slab_over_bed": d["slab_over_bed"],
             "bed_err_pct": 100.0 * (d["phi_bed"] / phi_true - 1.0),
             "extent_err_pct": 100.0 * (d["phi_extent"] / phi_true - 1.0),
             "centres_err_pct": 100.0 * (d["phi_centres"] / phi_true - 1.0),
             "factor_err_pct": 100.0 * (d["slab_over_bed"]
                                        / d["boundary_factor"] - 1.0),
+            "factor2wall_err_pct": 100.0 * (d["slab_over_bed"]
+                                            / d["boundary_factor_2wall"] - 1.0),
         })
         if verbose:
             r = rows[-1]
@@ -155,19 +163,38 @@ def synthetic_audit(verbose: bool = True) -> dict:
                   f"({r['bed_err_pct']:+.1f}%) extent={r['phi_extent']:.4f} "
                   f"({r['extent_err_pct']:+.1f}%) centres={r['phi_centres']:.4f} "
                   f"({r['centres_err_pct']:+.1f}%) | measured slab/bed="
-                  f"{r['measured_slab_over_bed']:.3f} vs predicted "
+                  f"{r['measured_slab_over_bed']:.3f} vs z-only "
                   f"{r['predicted_boundary_factor']:.3f} "
-                  f"({r['factor_err_pct']:+.1f}%)")
+                  f"({r['factor_err_pct']:+.1f}%) / two-wall "
+                  f"{r['predicted_factor_2wall']:.3f} "
+                  f"({r['factor2wall_err_pct']:+.1f}%)")
     # verdict: bed and extent are unbiased, centres are biased high by the
     # boundary-layer factor (that is the definitional defect, quantified).
-    ok = (all(abs(r["bed_err_pct"]) < 2.0 for r in rows)
-          and all(abs(r["extent_err_pct"]) < 3.0 for r in rows)
-          and all(r["centres_err_pct"] > 5.0 for r in rows)
-          and all(abs(r["factor_err_pct"]) < 10.0 for r in rows))
-    out = {"rows": rows,
-           "verdict": ("phi_bed_and_phi_extent_unbiased__phi_centres_biased_"
-                       "high_by_boundary_factor") if ok else "unexpected",
+    checks = {
+        "phi_bed_unbiased_lt_2pct":
+            all(abs(r["bed_err_pct"]) < 2.0 for r in rows),
+        "phi_extent_unbiased_lt_3pct":
+            all(abs(r["extent_err_pct"]) < 3.0 for r in rows),
+        "phi_centres_biased_high_gt_5pct":
+            all(r["centres_err_pct"] > 5.0 for r in rows),
+        # the two walled pairs (z: platen/floor, y: side walls; x is periodic)
+        "two_wall_factor_within_5pct":
+            all(abs(r["factor2wall_err_pct"]) < BOUNDARY_TOL_PCT for r in rows),
+        # and the incumbent z-only model must be shown insufficient, i.e. the
+        # round-15 claim is corrected rather than silently widened
+        "z_only_factor_insufficient":
+            any(abs(r["factor_err_pct"]) >= BOUNDARY_TOL_PCT for r in rows),
+    }
+    ok = all(checks.values())
+    failed = [k for k, v in checks.items() if not v]
+    out = {"rows": rows, "checks": checks, "boundary_tol_pct": BOUNDARY_TOL_PCT,
+           "verdict": ("two_wall_boundary_factor_reproduces_slab_gap__"
+                       "z_only_model_insufficient") if ok
+                      else "criterion_failed:" + ",".join(failed),
+           "failed_checks": failed,
            "ok": bool(ok)}
+    if not ok:
+        print(f"[WARN] audit criterion FAILED: {failed}")
     (RUNS / "synthetic.json").write_text(json.dumps(out, indent=2))
     return out
 

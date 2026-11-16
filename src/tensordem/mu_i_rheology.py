@@ -1150,6 +1150,21 @@ def phi_definitions(pos, radius: float, box_width: float, box_depth: float,
 
     Returns the three values plus the measured ``slab_over_bed`` ratio, so the
     boundary-layer discrepancy is *measured on the state* rather than assumed.
+
+    Round 15-c (m23285): the shell accounting has **two** walled pairs, not one.
+    Centres are excluded within ``r`` of *every* static wall, so a slab that is
+    interior in both walled directions sees a centre density larger than the
+    container average by ``boundary_factor_2wall``::
+
+        [ plate_z / (plate_z - 2r) ] * [ box_depth / (box_depth - 2r) ]
+
+    (x is the periodic shear direction and contributes no shell.)  The original
+    z-only ``boundary_factor`` under-predicted the measured gap on analytic
+    packings by 9.7-12.6 %, which made the round-15 audit's own verdict
+    (``ok: false``) silently fail; the two-wall factor closes the same gap to
+    <= 1.3 %.  Keys: ``boundary_factor`` is kept at its round-15 z-only meaning
+    for archived tables, ``boundary_factor_z`` aliases it, and
+    ``boundary_factor_2wall`` is the full geometric prediction.
     """
     import numpy as _np
 
@@ -1159,7 +1174,10 @@ def phi_definitions(pos, radius: float, box_width: float, box_depth: float,
     area = box_width * box_depth
     out = {"phi_bed": float("nan"), "phi_extent": float("nan"),
            "phi_centres": float("nan"), "slab_over_bed": float("nan"),
-           "bed_height_extent": float("nan"), "boundary_factor": float("nan")}
+           "bed_height_extent": float("nan"), "boundary_factor": float("nan"),
+           "boundary_factor_z": float("nan"), "boundary_factor_y": float("nan"),
+           "boundary_factor_2wall": float("nan"),
+           "slab_over_z_bound": float("nan")}
     if n == 0 or not _np.isfinite(z).all():
         return out
     solid = n * volume_particle
@@ -1171,11 +1189,20 @@ def phi_definitions(pos, radius: float, box_width: float, box_depth: float,
         out["bed_height_extent"] = height
         if plate_z > 0.0:
             _zc = max(plate_z - 2.0 * radius, 1e-12)
-            out["boundary_factor"] = plate_z / _zc
+            _fz = plate_z / _zc
+            out["boundary_factor"] = _fz          # round-15 z-only meaning
+            out["boundary_factor_z"] = _fz
+            if box_depth > 2.0 * radius:
+                _fy = box_depth / (box_depth - 2.0 * radius)
+                out["boundary_factor_y"] = _fy
+                out["boundary_factor_2wall"] = _fz * _fy
     if slab_volume > 0.0 and n_slab > 0:
         out["phi_centres"] = n_slab * volume_particle / slab_volume
         if out["phi_bed"] == out["phi_bed"] and out["phi_bed"] > 0.0:
             out["slab_over_bed"] = out["phi_centres"] / out["phi_bed"]
+            if out["boundary_factor_z"] == out["boundary_factor_z"]:
+                out["slab_over_z_bound"] = (out["slab_over_bed"]
+                                            / out["boundary_factor_z"])
     return out
 
 
@@ -1479,6 +1506,10 @@ def simulate_servo_shear(case: ServoShearCase, *, return_series: bool = False) -
                 "phi_extent": _defs["phi_extent"],
                 "slab_over_bed": _defs["slab_over_bed"],
                 "boundary_layer_factor": _defs["boundary_factor"],
+                # round 15-c (m23285): the y wall pair and the full product
+                "boundary_layer_factor_y": _defs["boundary_factor_y"],
+                "boundary_layer_factor_2wall": _defs["boundary_factor_2wall"],
+                "slab_over_z_bound": _defs["slab_over_z_bound"],
                 "bed_height_extent": _defs["bed_height_extent"],
             })
             # round 12: the velocity-profile shear rate is a *kinematic*
