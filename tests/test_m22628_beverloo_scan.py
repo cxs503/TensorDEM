@@ -24,7 +24,22 @@ BENCH = ROOT / "benchmarks" / "m22628_beverloo_scan"
 if str(BENCH) not in sys.path:
     sys.path.insert(0, str(BENCH))
 
-import analyse as A  # noqa: E402
+def _load(name: str):
+    """Load the scan's module under a mission-scoped name (see m22657's twin).
+
+    Benchmark directories each ship an ``analyse.py``; a bare ``import analyse``
+    lets the first-collected test file own the ``sys.modules`` slot and swap
+    estimators between missions.
+    """
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(f"m22628_{name}", BENCH / f"{name}.py")
+    mod = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = mod
+    spec.loader.exec_module(mod)
+    return mod
+
+
+A = _load("analyse")
 
 sys.path.insert(0, str(ROOT / "src"))
 
