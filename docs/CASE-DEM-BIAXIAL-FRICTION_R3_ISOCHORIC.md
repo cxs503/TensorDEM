@@ -159,3 +159,44 @@ PROBE_DIR=runs/m20537 PYTHONPATH=src python benchmarks/case_dem_biaxial_friction
 | `benchmarks/case_dem_biaxial_friction/analyse_isochoric.py` | 分析 + 图 + `run_iso.json`（程序化，零手抄） |
 | `runs/m20537/iso_anchor_24x48_mu055_p100.json` | 锚点原始应力路径（10:1 抽稀，原始 120 716 步在集群工件里） |
 | `artifacts/CASE-DEM-BIAXIAL-FRICTION/run_iso.json`、`biaxial_isochoric.png` | 结论数据与图 |
+## 9 复算与溯源（m22748，第 3 轮补记）
+
+§3–§6 的数字来自 120 716 步的完整记录，而该记录当时只存在于集群工件中：干净检出上**无法复算**。本节把这个洞补掉，并把复算差量显式写出来。
+
+### 9.1 仓库内可复算的应力路径
+
+| 路径 | 内容 | 体积 |
+|---|---|---|
+| `benchmarks/case_dem_biaxial_friction/results_m22748/iso_paths.json.gz` | 锚点工况全部记录量（12 条序列：σ_v/σ_h 墙牵引、Love-Weber 内应力、deviator、工程/对数体变、均值应力、应力比），定步长 13 抽稀 → 930 点，7 位有效数字 | 45.8 kB |
+| `prereg/PREREG_m22748_ISOCHORIC_SENSITIVITY.json` | 敏感性矩阵的**预注册**判定规则（在任何敏感性结果落地前写死） | — |
+| `tests/test_biaxial_isochoric_provenance.py` | 8 项溯源测试：读仓库内 bundle → 复算 → 钉住下列全部数字与闸门 | — |
+
+分析脚本新增 `--probe-dir / --compact / --max-samples / --markdown`，并在 probe 目录为空时自动回落到 bundle，因此干净检出上的复现命令只有一条：
+
+```bash
+PYTHONPATH=src python benchmarks/case_dem_biaxial_friction/analyse_isochoric.py --markdown
+PYTHONPATH=src python -m pytest tests/test_biaxial_isochoric_provenance.py -q   # 8 passed
+```
+
+### 9.2 复算结果（由 `analyse_isochoric.py --markdown` 程序化生成）
+
+| 量 | 已发表（完整记录，§3b） | 仓库内 bundle 复算 | 差量 | 判定 |
+|---|---|---|---|---|
+| φ_cv | 14.31° | **14.29°** | −0.022°（0.15 %） | 一致（≪ 1.5° 窗不确定度） |
+| φ_peak | 18.13° | 18.13° | 0.00° | 一致 |
+| dε_v/dε_a（对数） | +4.97×10⁻⁶ | +4.97×10⁻⁶ | — | 一致，`isochoric` ✓ |
+| q 相对漂移 | 0.111 | 0.105 | −0.006 | 一致，`deviator_stationary` ✗（不变） |
+| 三窗离散 | 0.43° | 0.42° | −0.01° | 一致，`window_independent` ✓ |
+| σ_h（窗内） | 245 kPa | 245 kPa | — | 一致，`lateral_walls_loaded` ✓ |
+| 综合 `converged` | False | False | — | 一致（honest-FAIL 不变） |
+| vs Rowe 28.81° | 50.3 % | 50.4 % | +0.1 pt | 一致，仍判 FAIL |
+
+抽稀不是无损的：把同一记录再粗化一倍（930 → 311 点）后 φ_cv 仍落在 0.10° 以内（`test_compaction_preserves_phi_cv`），所以 0.02° 的差量是采样密度效应而非分析逻辑变化——这条现在由 CI 钉住。
+
+**新增诊断量**：墙牵引 φ 与 Love-Weber virial φ 在同一临界窗内相差 −3.6 %（14.29° vs 13.77°），说明质点/边界两套应力定义在准静态下自洽到几个百分点；该量此前未在论文级表格中出现，现已随 bundle 一起入库并受测试约束。
+
+### 9.3 敏感性矩阵：预注册已立，数据未得（诚实记账）
+
+`cj4339–cj4343` 五个分片递交后全部返回 `state=succeeded, rc=0` 但取回工件为 **0 kB**、墙钟仅约 1 min——即作业并未真正执行 120 k 步积分，没有产生任何应力路径。因此 §5.5 的四个敏感性工况本轮**仍然未写**，不预判、不外推。判定规则已预注册入 `prereg/PREREG_m22748_ISOCHORIC_SENSITIVITY.json`（分辨率 ±2°、围压 ±2°、速率 ±2° 且 I<10⁻³、摩擦单调且报 sinφ_cv/μ），下一轮照此重递交即可，规则不得在看到数据后改动。
+
+顺带记录：锚点实测惯性数 I = 1.44×10⁻³ **略超**预注册的 10⁻³ 准静态界，所以即便速率工况落地，「速率无关」也只在本引擎的 I ~ 10⁻³ 档位上成立，不能外推到 I ≪ 10⁻³。
