@@ -54,6 +54,7 @@ so this module adds a *test and a measurement*, not a second contact model.
 from __future__ import annotations
 
 import math
+from collections import deque
 from dataclasses import replace
 from typing import Any, Sequence
 
@@ -414,6 +415,8 @@ def run_biaxial_shear_band(*, confining_stress: float = 100.0e3,
                            radius: float = 0.75,
                            strain_rate: float = 0.05,
                            strain_target: float = 0.15,
+                           post_peak_strain: float | None = None,
+                           strain_cap: float | None = None,
                            consolidation_steps: int = 4000,
                            snapshot_strain: float = 0.01,
                            jitter: float = 0.03,
@@ -449,6 +452,15 @@ def run_biaxial_shear_band(*, confining_stress: float = 100.0e3,
     strain rate is constant; the implied inertial number is reported so the
     quasi-static assumption is auditable.  Returns a JSON-serialisable dict.
 
+    ``post_peak_strain`` (log strain, ``None`` = off) adds a *peak-relative*
+    stopping rule: ``strain_target`` becomes a minimum and the shear phase
+    continues until the running deviator peak is at least ``post_peak_strain``
+    behind, bounded by ``strain_cap`` (defaults to
+    ``strain_target + 2 * post_peak_strain``).  A fixed budget alone truncates the
+    post-peak window of specimens whose peak arrives late, which is what made
+    the R5 band ensemble fail its resolution-count half.  The decision is
+    reported in ``result["stopping"]`` (never silently).
+
     ``record_snapshots`` additionally keeps every strain snapshot
     (``[{"strain": float, "positions": (N, 2) ndarray}, ...]``) under
     ``result["snapshots"]`` so a *local* (band-resolved) measurement can be run
@@ -468,6 +480,21 @@ def run_biaxial_shear_band(*, confining_stress: float = 100.0e3,
     if lateral_control not in ("servo", "isochoric"):
         raise ValueError(
             f"lateral_control must be 'servo' or 'isochoric', got {lateral_control!r}")
+    if post_peak_strain is not None and not post_peak_strain > 0.0:
+        raise ValueError(
+            f"post_peak_strain must be positive when given, got {post_peak_strain!r}")
+    if post_peak_strain is not None and strain_cap is None:
+        # default cap = target + two rule widths: one width for the post-peak
+        # window plus one for a peak that arrives up to a rule width past the
+        # target (the R5 failure mode), so the rule is never self-truncating
+        # while the run stays bounded
+        strain_cap = strain_target + 2.0 * post_peak_strain
+    if strain_cap is not None:
+        if post_peak_strain is None:
+            raise ValueError("strain_cap requires post_peak_strain (a cap alone is no rule)")
+        if strain_cap < strain_target:
+            raise ValueError(
+                f"strain_cap ({strain_cap}) must not be below strain_target ({strain_target})")
     overrides = dict(material_overrides or {})
     overrides.setdefault("particle_radius", float(radius))
     material = RidgeMaterial(**overrides)
@@ -556,7 +583,18 @@ def run_biaxial_shear_band(*, confining_stress: float = 100.0e3,
     bands: list[dict[str, Any]] = []
     next_snapshot = snapshot_strain
     diameter = 2.0 * material.particle_radius
-    max_steps = int(math.ceil(strain_target / (strain_rate * dt))) + 10
+    # step budget: the loop may run past ``strain_target`` up to ``strain_cap``
+    _budget = strain_target if strain_cap is None else max(strain_target, strain_cap)
+    max_steps = int(math.ceil(_budget / (strain_rate * dt))) + 10
+    # online peak tracker for the peak-relative stopping rule: trailing mean of
+    # the deviator over a 0.01-strain window (the window the offline smoother
+    # uses), so the detected peak is not a single noisy sample.
+    _peak_window = max(1, int(round(0.01 / (strain_rate * dt))))
+    _dev_tail: deque = deque()
+    _dev_sum = 0.0
+    _peak_dev_mean = -math.inf
+    _peak_row = -1
+    stop_reason = "steps_exhausted"
     for _step in range(max_steps):
         left, right, bottom, top = assembly.planes
         height = float(top.point[1] - bottom.point[1])
@@ -675,6 +713,28 @@ def run_biaxial_shear_band(*, confining_stress: float = 100.0e3,
                                   if k not in ("angles_deg", "eta2_curve")}
             bands.append(band)
             prev = current
+        # ---- peak-relative stopping rule (R6) --------------------------
+        # R5 (CASE_BIAXIAL_SHEAR_BAND) found the *fixed* strain budget to be the
+        # binding constraint on the post-peak band measurement: a specimen whose
+        # deviator peak arrives near the budget end has no post-peak window at
+        # all.  ``post_peak_strain`` therefore makes ``strain_target`` a
+        # *minimum* and keeps loading until the deviator peak lies this far
+        # behind, bounded by ``strain_cap``.  The peak is tracked online on the
+        # 0.01-strain trailing mean of the deviator (the full record is not
+        # available yet) and is located at the *first* row of the trailing
+        # window, i.e. at or before the raw peak, so the extension errs long.
+        if post_peak_strain is not None:
+            dev_now = float(history[-1]["deviator"])
+            _dev_tail.append((len(history) - 1, dev_now))
+            _dev_sum += dev_now
+            while len(_dev_tail) > _peak_window:
+                _, _dropped = _dev_tail.popleft()
+                _dev_sum -= _dropped
+            if len(_dev_tail) == _peak_window:
+                _dev_mean = _dev_sum / _peak_window
+                if _dev_mean > _peak_dev_mean:
+                    _peak_dev_mean = _dev_mean
+                    _peak_row = _dev_tail[0][0]
         # ``strain_target`` is a *true* (logarithmic) strain budget, and the step
         # budget above is derived from it (``t = strain_target / strain_rate``),
         # because the platen velocity is proportional to the *current* height.
@@ -684,7 +744,15 @@ def run_biaxial_shear_band(*, confining_stress: float = 100.0e3,
         # which is why earlier rounds reported "eps_a -> 0.45" for a target of
         # 0.60.  Breaking on the logarithmic measure makes the declared target and
         # the delivered path the same number (deviation <= one step).
-        if axial_log >= strain_target:
+        _bound, _reason = strain_target, "strain_target"
+        if post_peak_strain is not None and _peak_row >= 0:
+            _pp_bound = float(history[_peak_row]["axial_strain_log"]) + post_peak_strain
+            if _pp_bound > _bound:
+                _bound, _reason = _pp_bound, "post_peak"
+        if strain_cap is not None and _bound > strain_cap:
+            _bound, _reason = strain_cap, "strain_cap"
+        if axial_log >= _bound:
+            stop_reason = _reason
             break
 
     hist = {key: np.array([row[key] for row in history]) for key in history[0]}
@@ -756,6 +824,20 @@ def run_biaxial_shear_band(*, confining_stress: float = 100.0e3,
                      "radius": float(material.particle_radius),
                      "jitter": float(jitter),
                      "width0": width0, "height0": height0, "dt": float(dt)},
+        "stopping": {
+            "strain_target": float(strain_target),
+            "post_peak_strain": (None if post_peak_strain is None
+                                 else float(post_peak_strain)),
+            "strain_cap": None if strain_cap is None else float(strain_cap),
+            "stop_reason": stop_reason,
+            "online_peak_axial_strain_log": (float(history[_peak_row]["axial_strain_log"])
+                                             if _peak_row >= 0 else None),
+            "final_axial_strain_log": float(axial_log),
+            "post_peak_span_log": (float(axial_log)
+                                   - float(history[_peak_row]["axial_strain_log"])
+                                   if _peak_row >= 0 else None),
+            "peak_window_rows": int(_peak_window),
+        },
         "loading": {"axial_strain_rate": float(strain_rate),
                     "final_axial_strain": float(strain),
                     "steps": int(len(hist["axial_strain"])),
