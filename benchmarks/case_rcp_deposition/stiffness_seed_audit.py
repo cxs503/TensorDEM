@@ -440,7 +440,10 @@ def _figures(res: dict, path_prefix: str) -> list:
     fig.savefig(p2, dpi=150)
     plt.close(fig)
     files.append(p2)
-    return files
+    # Store the paths repo-relative: an absolute path bakes this checkout's
+    # location into a committed artefact, so a copy of the artefact points at
+    # somebody else's working tree (and dies when the checkout moves).
+    return [os.path.relpath(f, ROOT) for f in files]
 
 
 def main(argv=None) -> int:

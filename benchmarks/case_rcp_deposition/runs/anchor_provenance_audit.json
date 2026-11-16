@@ -763,8 +763,8 @@
    {
     "id": "G13_vs_ref_mu0",
     "mu": 0.0,
-    "limit": 0.6364354536058531,
-    "rel_error_vs_frictionless": 0.0002584768993826314,
+    "limit": 0.6363739458362907,
+    "rel_error_vs_frictionless": 0.00035509607871409,
     "pass": true,
     "anchor_used": 0.6366,
     "rel_error_vs_table_entry": -0.00035509607871409,
@@ -791,5 +791,5 @@
   "intercept_policy": "benchmarks/case_rcp_deposition/figures/fig_m21145_intercept_policy.png",
   "verdict_map": "benchmarks/case_rcp_deposition/figures/fig_m21145_verdict_map.png"
  },
- "self_sha256": "198195c374ba3b6c8076bb897ec74df110f72d3f74edab98ffd213aaf771453b"
+ "self_sha256": "7923e6e68ec9d12071f195cf213f4d8af299490f13a6799bb83230eb4b4fd69d"
 }

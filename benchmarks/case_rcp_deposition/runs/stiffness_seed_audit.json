@@ -5,10 +5,10 @@
   0.66
  ],
  "figures": [
-  "/srv/tensor/agent/work/m22796/benchmarks/case_rcp_deposition/figures/fig_stiff_stiffness_ladder_seeds.png",
-  "/srv/tensor/agent/work/m22796/benchmarks/case_rcp_deposition/figures/fig_stiff_stiffness_limit_ci.png"
+  "benchmarks/case_rcp_deposition/figures/fig_stiff_stiffness_ladder_seeds.png",
+  "benchmarks/case_rcp_deposition/figures/fig_stiff_stiffness_limit_ci.png"
  ],
- "n_mc": 1500,
+ "n_mc": 4000,
  "n_primary": 10000,
  "n_resolved": 2,
  "n_tiers": 2,
@@ -76,19 +76,19 @@
    "fit": {
     "A": 2.4688062820506946,
     "chi2_red": 2.928535446039853,
-    "hi": 0.6365386025753413,
-    "lo": 0.6334776797499087,
-    "n_mc": 1500,
+    "hi": 0.6365951963703596,
+    "lo": 0.6333881423742737,
+    "n_mc": 4000,
     "noise_available": true,
     "p": 0.7117335547988946,
-    "p_hi": 1.3945339866524407,
-    "p_lo": 0.3685255830791012,
+    "p_hi": 1.4658917389436703,
+    "p_lo": 0.354981644962733,
     "phi_inf": 0.6356246046858036,
     "pooled_levels": [
      16000.0,
      256000.0
     ],
-    "sd": 0.000902217011272652
+    "sd": 0.0008980885312343481
    },
    "levels": [
     {
@@ -281,12 +281,12 @@
    "fit": {
     "A": 1.2288127912776043,
     "chi2_red": 0.21216294283307943,
-    "hi": 0.6197123022500075,
-    "lo": 0.6107410795830753,
-    "n_mc": 1500,
+    "hi": 0.6198110493851364,
+    "lo": 0.6112769554779282,
+    "n_mc": 4000,
     "noise_available": true,
     "p": 0.6001957198824236,
-    "p_hi": 1.7928511694328242,
+    "p_hi": 1.867307999209378,
     "p_lo": 0.20000001026337855,
     "phi_inf": 0.6178226287513786,
     "pooled_levels": [
@@ -294,7 +294,7 @@
      64000.0,
      256000.0
     ],
-    "sd": 0.0026456343802177687
+    "sd": 0.0024057397235339004
    },
    "levels": [
     {
