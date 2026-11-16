@@ -115,9 +115,18 @@ def _configs(quick: bool, only_seed: int | None) -> list[dict]:
     return configs
 
 
-def _late_snapshots(snapshots: list[dict], peak_strain: float) -> list[dict]:
+def _late_snapshots(snapshots: list[dict], peak_strain: float,
+                    fraction: float = 0.6) -> list[dict]:
+    """Snapshots of the late post-peak window (last ``fraction`` of the record).
+
+    ``fraction = 0.6`` is the R4/R5/R6 window (``tail_start = peak +
+    0.4 * span``) and is the default, so the published rounds are reproduced
+    bit-identically; R7 passes 0.8 to match its wider rule (see
+    :func:`tensordem.biaxial_shear_band.late_window_span_cap`).
+    """
     final_strain = float(snapshots[-1]["strain"])
-    tail_start = peak_strain + 0.4 * max(final_strain - peak_strain, 0.0)
+    tail_start = peak_strain + (1.0 - float(fraction)) * max(
+        final_strain - peak_strain, 0.0)
     return [s for s in snapshots if s["strain"] >= tail_start]
 
 
@@ -186,7 +195,8 @@ def _bootstrap_angle(x_ref: np.ndarray, x_now: np.ndarray, bounds, *, seed: int,
 def _run_one(config: dict) -> dict:
     import torch
     torch.set_num_threads(int(os.environ.get("R4_THREADS", "1")))
-    from tensordem.biaxial_shear_band import run_biaxial_shear_band
+    from tensordem.biaxial_shear_band import (DEFAULT_LATE_WINDOW_FRACTION,
+                                              run_biaxial_shear_band)
 
     started = time.time()
     quick = bool(config.get("quick"))
@@ -198,6 +208,9 @@ def _run_one(config: dict) -> dict:
         # behaviour bit-identical to the published round
         post_peak_strain=config.get("post_peak_strain"),
         strain_cap=config.get("strain_cap"),
+        # absent key keeps the R4 semantics (0.6 of the post-peak record kept)
+        late_window_fraction=config.get("late_window_fraction",
+                                        DEFAULT_LATE_WINDOW_FRACTION),
         consolidation_steps=600 if quick else CONSOLIDATION_STEPS,
         snapshot_strain=0.01, servo_gain=3.0e-4, servo_velocity_limit=2.0,
         wall_friction=WALL_FRICTION,
@@ -206,7 +219,9 @@ def _run_one(config: dict) -> dict:
         record_snapshots=True)
     snapshots = result["snapshots"]
     peak_strain = float(result["peak"]["axial_strain"])
-    late = _late_snapshots(snapshots, peak_strain)
+    late = _late_snapshots(snapshots, peak_strain,
+                           config.get("late_window_fraction",
+                                      DEFAULT_LATE_WINDOW_FRACTION))
     pairs = list(zip(late[:-1], late[1:]))
 
     # ---- one-step (R3 production) route --------------------------------
