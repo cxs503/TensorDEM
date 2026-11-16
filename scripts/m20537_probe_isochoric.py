@@ -25,6 +25,8 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import platform
+import subprocess
 import sys
 import time
 
@@ -46,6 +48,27 @@ CONFIGS = [
 
 COMMON = dict(radius=0.75, strain_target=0.60, consolidation_steps=6000,
               snapshot_strain=1.0e9, wall_friction=0.0)
+
+
+def environment() -> dict:
+    """Enough to re-create the run: code revision, library versions, host."""
+    try:
+        sha = subprocess.check_output(["git", "rev-parse", "HEAD"],
+                                      cwd=os.path.dirname(__file__),
+                                      stderr=subprocess.DEVNULL).decode().strip()
+    except Exception:                                    # pragma: no cover
+        sha = "unknown"
+    return {
+        "git_sha": sha,
+        "python": platform.python_version(),
+        "numpy": np.__version__,
+        "torch": torch.__version__,
+        "platform": platform.platform(),
+        "machine": platform.machine(),
+        "threads": int(os.environ.get("TENSORDEM_THREADS", "4")),
+        "command": " ".join(sys.argv),
+        "common": dict(COMMON),
+    }
 
 
 def summarise(tag: str, res: dict, elapsed: float) -> None:
@@ -75,12 +98,16 @@ def summarise(tag: str, res: dict, elapsed: float) -> None:
 
 def main() -> int:
     ap = argparse.ArgumentParser()
+    ap.add_argument("--out-dir", default=os.path.join(
+        os.path.dirname(__file__), "..", "runs", "m20537"))
     ap.add_argument("--shard", type=int, default=1)
     ap.add_argument("--nshards", type=int, default=1)
     args = ap.parse_args()
     torch.set_num_threads(int(os.environ.get("TENSORDEM_THREADS", "4")))
-    out_dir = os.path.join(os.path.dirname(__file__), "..", "runs", "m20537")
+    out_dir = os.path.abspath(args.out_dir)
     os.makedirs(out_dir, exist_ok=True)
+    env = environment()
+    print("environment:", json.dumps(env))
     todo = [c for i, c in enumerate(CONFIGS) if i % args.nshards == args.shard - 1]
     for tag, cols, rows, pressure, mu, rate in todo:
         started = time.time()
@@ -102,6 +129,7 @@ def main() -> int:
             "specimen": res["specimen"], "loading": res["loading"],
             "peak": res["peak"], "note": res["note"],
             "elapsed_s": elapsed,
+            "environment": env,
             "stress_path": res["stress_path"],
         }
         path = os.path.join(out_dir, f"iso_{tag}.json")
