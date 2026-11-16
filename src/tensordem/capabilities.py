@@ -19,7 +19,7 @@ from .registry import capability
     tested=True,
     verified=True,
     test_path='tests/test_acoustics_source_terms.py',
-    evidence={'grade': 'A', 'note': 'verification module in package: verification.py'},
+    evidence={'grade': 'A', 'note': 'verification module in package: verification.py', 'level': 'ANALYTIC'},
     endpoint=None,
 )
 class _cap_dem_acoustics:
@@ -206,7 +206,7 @@ class _cap_dem_consolidation:
     tested=True,
     verified=True,
     test_path='tests/test_contact_calibration.py',
-    evidence={'grade': 'A', 'note': 'root verdict artifact names the module: verdict_m20232.json'},
+    evidence={'grade': 'A', 'note': 'root verdict artifact names the module: verdict_m20232.json', 'level': 'XVALUE'},
     endpoint=None,
 )
 class _cap_dem_contact:
@@ -291,7 +291,7 @@ class _cap_dem_drum_flow:
     tested=False,
     verified=True,
     test_path=None,
-    evidence={'grade': 'A', 'note': 'verification module in package: verification.py'},
+    evidence={'grade': 'A', 'note': 'verification module in package: verification.py', 'level': 'ANALYTIC'},
     endpoint=None,
 )
 class _cap_dem_drum_segregation:
@@ -410,7 +410,7 @@ class _cap_dem_fem_dem_seeding:
     tested=True,
     verified=True,
     test_path='tests/test_floe_attrition.py',
-    evidence={'grade': 'A', 'note': 'verification module in package: verification.py'},
+    evidence={'grade': 'A', 'note': 'verification module in package: verification.py', 'level': 'ANALYTIC'},
     endpoint=None,
 )
 class _cap_dem_floe_attrition:
@@ -512,7 +512,7 @@ class _cap_dem_granular2d:
     tested=True,
     verified=True,
     test_path='tests/test_granular3d_jamming.py',
-    evidence={'grade': 'A', 'note': 'root verdict artifact names the module: verdict_m20232.json'},
+    evidence={'grade': 'A', 'note': 'root verdict artifact names the module: verdict_m20232.json', 'level': 'XVALUE'},
     endpoint=None,
 )
 class _cap_dem_granular3d:
@@ -631,7 +631,7 @@ class _cap_dem_hull_collision:
     tested=True,
     verified=True,
     test_path='tests/test_ice_anisotropy_fabric.py',
-    evidence={'grade': 'A', 'note': 'verification module in package: verification.py'},
+    evidence={'grade': 'A', 'note': 'verification module in package: verification.py', 'level': 'ANALYTIC'},
     endpoint=None,
 )
 class _cap_dem_ice_anisotropy:
@@ -835,7 +835,7 @@ class _cap_dem_ice_rafting:
     tested=True,
     verified=True,
     test_path='tests/test_ice_ridge_3d.py',
-    evidence={'grade': 'A', 'note': 'verification module in package: verification.py'},
+    evidence={'grade': 'A', 'note': 'verification module in package: verification.py', 'level': 'ANALYTIC'},
     endpoint=None,
 )
 class _cap_dem_ice_ridge_3d:
@@ -886,7 +886,7 @@ class _cap_dem_ice_ridge_keel_porosity:
     tested=True,
     verified=True,
     test_path='tests/test_ice_ridge_mechanics.py',
-    evidence={'grade': 'A', 'note': 'verification module in package: verification.py'},
+    evidence={'grade': 'A', 'note': 'verification module in package: verification.py', 'level': 'ANALYTIC'},
     endpoint=None,
 )
 class _cap_dem_ice_ridge_mechanics:
@@ -903,7 +903,7 @@ class _cap_dem_ice_ridge_mechanics:
     tested=True,
     verified=True,
     test_path='tests/test_ice_slurry_rheology.py',
-    evidence={'grade': 'A', 'note': 'verification module in package: verification.py'},
+    evidence={'grade': 'A', 'note': 'verification module in package: verification.py', 'level': 'ANALYTIC'},
     endpoint=None,
 )
 class _cap_dem_ice_slurry_rheology:
@@ -1175,7 +1175,7 @@ class _cap_dem_pancake_ice:
     tested=False,
     verified=True,
     test_path=None,
-    evidence={'grade': 'A', 'note': 'root verdict artifact names the module: verdict_m20232.json'},
+    evidence={'grade': 'A', 'note': 'root verdict artifact names the module: verdict_m20232.json', 'level': 'XVALUE'},
     endpoint=None,
 )
 class _cap_dem_particle:
@@ -1192,7 +1192,7 @@ class _cap_dem_particle:
     tested=True,
     verified=True,
     test_path='tests/test_point_cfd_dem.py',
-    evidence={'grade': 'A', 'note': 'verification module in package: verification.py'},
+    evidence={'grade': 'A', 'note': 'verification module in package: verification.py', 'level': 'ANALYTIC'},
     endpoint=None,
 )
 class _cap_dem_point_cfd_dem:
@@ -1260,7 +1260,7 @@ class _cap_dem_polyhedron_floe3d:
     tested=True,
     verified=True,
     test_path='tests/test_propeller_ice_milling.py',
-    evidence={'grade': 'A', 'note': 'verification/xval test binding: tests/test_propeller_ice_milling_legacy_verification.py'},
+    evidence={'grade': 'A', 'note': 'verification test binding: tests/test_propeller_ice_milling_legacy_verification.py', 'level': 'ANALYTIC'},
     endpoint=None,
 )
 class _cap_dem_propeller_ice:
@@ -1430,7 +1430,7 @@ class _cap_dem_segregation:
     tested=True,
     verified=True,
     test_path='tests/test_sensitivity.py',
-    evidence={'grade': 'A', 'note': 'root verdict artifact names the module: verdict_m20232.json'},
+    evidence={'grade': 'A', 'note': 'root verdict artifact names the module: verdict_m20232.json', 'level': 'XVALUE'},
     endpoint=None,
 )
 class _cap_dem_sensitivity:
@@ -1515,7 +1515,7 @@ class _cap_dem_single_particle_crushing:
     tested=True,
     verified=True,
     test_path='tests/test_slurry_transport_closures.py',
-    evidence={'grade': 'A', 'note': 'verification module in package: verification.py'},
+    evidence={'grade': 'A', 'note': 'verification module in package: verification.py', 'level': 'ANALYTIC'},
     endpoint=None,
 )
 class _cap_dem_slurry_transport:
@@ -1600,7 +1600,7 @@ class _cap_dem_threebody_ice:
     tested=True,
     verified=True,
     test_path='tests/test_threefield.py',
-    evidence={'grade': 'A', 'note': 'verification module in package: boundary_verification.py'},
+    evidence={'grade': 'A', 'note': 'verification module in package: boundary_verification.py', 'level': 'ANALYTIC'},
     endpoint=None,
 )
 class _cap_dem_threefield:
@@ -1685,7 +1685,7 @@ class _cap_dem_wave_floe:
     tested=True,
     verified=True,
     test_path='tests/test_wave_ice_verification.py',
-    evidence={'grade': 'A', 'note': 'verification/xval test binding: tests/test_wave_ice_verification.py'},
+    evidence={'grade': 'A', 'note': 'verification test binding: tests/test_wave_ice_verification.py', 'level': 'ANALYTIC'},
     endpoint=None,
 )
 class _cap_dem_wave_ice:
@@ -1736,7 +1736,7 @@ class _cap_dem_whipping:
     tested=True,
     verified=True,
     test_path='tests/test_xval_dem_round2_deposition_rigid_limit_audit.py',
-    evidence={'grade': 'A', 'note': 'root verdict artifact names the module: verdict_m18189.json'},
+    evidence={'grade': 'A', 'note': 'root verdict artifact names the module: verdict_m18189.json', 'level': 'XVALUE'},
     endpoint=None,
 )
 class _cap_dem_xval:
@@ -1872,7 +1872,7 @@ class _cap_dem_attitude_matrix:
     tested=False,
     verified=True,
     test_path=None,
-    evidence={'grade': 'A', 'note': 'module itself is a verification/xval module (attitude_verification.py)'},
+    evidence={'grade': 'A', 'note': 'module itself is a verification module (attitude_verification.py)', 'level': 'ANALYTIC'},
     endpoint=None,
 )
 class _cap_dem_attitude_verification:
@@ -1906,7 +1906,7 @@ class _cap_dem_auto_calibration:
     tested=True,
     verified=True,
     test_path='tests/test_ball_ball_rolling_contact.py',
-    evidence={'grade': 'A', 'note': 'sibling verification module: ball_ball_rolling_verification.py'},
+    evidence={'grade': 'A', 'note': 'sibling verification module: ball_ball_rolling_verification.py', 'level': 'ANALYTIC'},
     endpoint=None,
 )
 class _cap_dem_ball_ball_rolling:
@@ -1923,7 +1923,7 @@ class _cap_dem_ball_ball_rolling:
     tested=False,
     verified=True,
     test_path=None,
-    evidence={'grade': 'A', 'note': 'module itself is a verification/xval module (ball_ball_rolling_verification.py)'},
+    evidence={'grade': 'A', 'note': 'module itself is a verification module (ball_ball_rolling_verification.py)', 'level': 'ANALYTIC'},
     endpoint=None,
 )
 class _cap_dem_ball_ball_rolling_verification:
@@ -2093,7 +2093,7 @@ class _cap_dem_biaxial_shear_band:
     tested=True,
     verified=True,
     test_path='tests/test_biaxial_xval.py',
-    evidence={'grade': 'A', 'note': 'module itself is a verification/xval module (biaxial_xval.py)'},
+    evidence={'grade': 'A', 'note': 'module itself is an xval module (biaxial_xval.py)', 'level': 'XVALUE'},
     endpoint=None,
 )
 class _cap_dem_biaxial_xval:
@@ -2314,7 +2314,7 @@ class _cap_dem_bulk_cargo:
     tested=True,
     verified=True,
     test_path='tests/test_buoyancy_verification_reference.py',
-    evidence={'grade': 'A', 'note': 'module itself is a verification/xval module (buoyancy_verification.py)'},
+    evidence={'grade': 'A', 'note': 'module itself is a verification module (buoyancy_verification.py)', 'level': 'ANALYTIC'},
     endpoint=None,
 )
 class _cap_dem_buoyancy_verification:
@@ -2365,7 +2365,7 @@ class _cap_dem_buoyancy_wet3d:
     tested=False,
     verified=True,
     test_path=None,
-    evidence={'grade': 'A', 'note': 'module itself is a verification/xval module (buoyancy_wiring_verification.py)'},
+    evidence={'grade': 'A', 'note': 'module itself is a verification module (buoyancy_wiring_verification.py)', 'level': 'ANALYTIC'},
     endpoint=None,
 )
 class _cap_dem_buoyancy_wiring_verification:
@@ -2909,7 +2909,7 @@ class _cap_dem_crushing_case:
     tested=True,
     verified=True,
     test_path='tests/test_dem.py',
-    evidence={'grade': 'A', 'note': 'root verdict artifact names the module: verdict_m18189.json'},
+    evidence={'grade': 'A', 'note': 'root verdict artifact names the module: verdict_m18189.json', 'level': 'XVALUE'},
     endpoint='cli:python -m tensordem dem-2d',
 )
 class _cap_dem_dem:
@@ -2926,7 +2926,7 @@ class _cap_dem_dem:
     tested=True,
     verified=True,
     test_path='tests/test_dem3d.py',
-    evidence={'grade': 'A', 'note': 'root verdict artifact names the module: verdict_m21538.json'},
+    evidence={'grade': 'A', 'note': 'root verdict artifact names the module: verdict_m21538.json', 'level': 'XVALUE'},
     endpoint=None,
 )
 class _cap_dem_dem3d:
@@ -3045,7 +3045,7 @@ class _cap_dem_dem3d_wedge:
     tested=False,
     verified=True,
     test_path=None,
-    evidence={'grade': 'A', 'note': 'module itself is a verification/xval module (dem_contact_verification.py)'},
+    evidence={'grade': 'A', 'note': 'module itself is a verification module (dem_contact_verification.py)', 'level': 'ANALYTIC'},
     endpoint=None,
 )
 class _cap_dem_dem_contact_verification:
@@ -3079,7 +3079,7 @@ class _cap_dem_dem_export:
     tested=False,
     verified=True,
     test_path=None,
-    evidence={'grade': 'A', 'note': 'root verdict artifact names the module: verdict_m21538.json'},
+    evidence={'grade': 'A', 'note': 'root verdict artifact names the module: verdict_m21538.json', 'level': 'XVALUE'},
     endpoint=None,
 )
 class _cap_dem_dem_fem_gates:
@@ -3096,7 +3096,7 @@ class _cap_dem_dem_fem_gates:
     tested=True,
     verified=True,
     test_path='tests/test_dem_vectorized_100k.py',
-    evidence={'grade': 'A', 'note': 'verification/xval test binding: tests/test_dem_vectorized_verification.py'},
+    evidence={'grade': 'A', 'note': 'verification test binding: tests/test_dem_vectorized_verification.py', 'level': 'ANALYTIC'},
     endpoint=None,
 )
 class _cap_dem_dem_vectorized:
@@ -3113,7 +3113,7 @@ class _cap_dem_dem_vectorized:
     tested=False,
     verified=True,
     test_path=None,
-    evidence={'grade': 'A', 'note': 'root verdict artifact names the module: verdict_m18189.json'},
+    evidence={'grade': 'A', 'note': 'root verdict artifact names the module: verdict_m18189.json', 'level': 'XVALUE'},
     endpoint=None,
 )
 class _cap_dem_deposition_packing:
@@ -3181,7 +3181,7 @@ class _cap_dem_fem_dem_failure_handover:
     tested=True,
     verified=True,
     test_path='tests/test_fem_euler_bernoulli_verification.py',
-    evidence={'grade': 'A', 'note': 'root verdict artifact names the module: verdict_m21538.json'},
+    evidence={'grade': 'A', 'note': 'root verdict artifact names the module: verdict_m21538.json', 'level': 'XVALUE'},
     endpoint=None,
 )
 class _cap_dem_fem_euler_bernoulli:
@@ -3351,7 +3351,7 @@ class _cap_dem_fracture_mass_mapping:
     tested=True,
     verified=True,
     test_path='tests/test_friction_contact_verification.py',
-    evidence={'grade': 'A', 'note': 'module itself is a verification/xval module (friction_contact_verification.py)'},
+    evidence={'grade': 'A', 'note': 'module itself is a verification module (friction_contact_verification.py)', 'level': 'ANALYTIC'},
     endpoint=None,
 )
 class _cap_dem_friction_contact_verification:
@@ -3368,7 +3368,7 @@ class _cap_dem_friction_contact_verification:
     tested=True,
     verified=True,
     test_path='tests/test_friction_polyhedron_contact.py',
-    evidence={'grade': 'A', 'note': 'sibling verification module: friction_polyhedron_verification.py'},
+    evidence={'grade': 'A', 'note': 'sibling verification module: friction_polyhedron_verification.py', 'level': 'ANALYTIC'},
     endpoint=None,
 )
 class _cap_dem_friction_polyhedron:
@@ -3385,7 +3385,7 @@ class _cap_dem_friction_polyhedron:
     tested=True,
     verified=True,
     test_path='tests/test_friction_polyhedron_real_verification.py',
-    evidence={'grade': 'A', 'note': 'module itself is a verification/xval module (friction_polyhedron_real_verification.py)'},
+    evidence={'grade': 'A', 'note': 'module itself is a verification module (friction_polyhedron_real_verification.py)', 'level': 'ANALYTIC'},
     endpoint='cli:python -m tensordem verify-friction-polyhedron',
 )
 class _cap_dem_friction_polyhedron_real_verification:
@@ -3402,7 +3402,7 @@ class _cap_dem_friction_polyhedron_real_verification:
     tested=False,
     verified=True,
     test_path=None,
-    evidence={'grade': 'A', 'note': 'module itself is a verification/xval module (friction_polyhedron_verification.py)'},
+    evidence={'grade': 'A', 'note': 'module itself is a verification module (friction_polyhedron_verification.py)', 'level': 'ANALYTIC'},
     endpoint=None,
 )
 class _cap_dem_friction_polyhedron_verification:
@@ -3453,7 +3453,7 @@ class _cap_dem_fsd_packing:
     tested=False,
     verified=True,
     test_path=None,
-    evidence={'grade': 'A', 'note': 'root verdict artifact names the module: verdict_m20232.json'},
+    evidence={'grade': 'A', 'note': 'root verdict artifact names the module: verdict_m20232.json', 'level': 'XVALUE'},
     endpoint=None,
 )
 class _cap_dem_granular3d_core:
@@ -3572,7 +3572,7 @@ class _cap_dem_hertz_mindlin:
     tested=True,
     verified=True,
     test_path='tests/test_hull_contact.py',
-    evidence={'grade': 'A', 'note': 'sibling verification module: hull_contact_verification.py'},
+    evidence={'grade': 'A', 'note': 'sibling verification module: hull_contact_verification.py', 'level': 'ANALYTIC'},
     endpoint=None,
 )
 class _cap_dem_hull_contact:
@@ -3589,7 +3589,7 @@ class _cap_dem_hull_contact:
     tested=True,
     verified=True,
     test_path='tests/test_hull_contact_verification.py',
-    evidence={'grade': 'A', 'note': 'module itself is a verification/xval module (hull_contact_verification.py)'},
+    evidence={'grade': 'A', 'note': 'module itself is a verification module (hull_contact_verification.py)', 'level': 'ANALYTIC'},
     endpoint=None,
 )
 class _cap_dem_hull_contact_verification:
@@ -4592,7 +4592,7 @@ class _cap_dem_inclined_plane:
     tested=False,
     verified=True,
     test_path=None,
-    evidence={'grade': 'A', 'note': 'root verdict artifact names the module: verdict_m18189.json'},
+    evidence={'grade': 'A', 'note': 'root verdict artifact names the module: verdict_m18189.json', 'level': 'XVALUE'},
     endpoint=None,
 )
 class _cap_dem_integration_callers:
@@ -4767,6 +4767,23 @@ class _cap_dem_lindqvist_reference:
 )
 class _cap_dem_liquid_bridge:
     """capability marker for dem.liquid_bridge"""
+
+@capability(
+    id='dem.literature_band_verification',
+    kind='dem',
+    maturity='mature',
+    module_path='tensordem.literature_band_verification',
+    entry='LiteratureBand',
+    params={},
+    wired=True,
+    tested=True,
+    verified=True,
+    test_path='tests/test_literature_band_verification.py',
+    evidence={'grade': 'A', 'note': 'module itself is a verification module (literature_band_verification.py)', 'level': 'ANALYTIC'},
+    endpoint=None,
+)
+class _cap_dem_literature_band_verification:
+    """capability marker for dem.literature_band_verification"""
 
 @capability(
     id='dem.material_calibration',
@@ -5153,7 +5170,7 @@ class _cap_dem_pressure_area_dem:
     tested=True,
     verified=True,
     test_path='tests/test_propeller_ice_milling.py',
-    evidence={'grade': 'A', 'note': 'verification/xval test binding: tests/test_propeller_ice_milling_legacy_verification.py'},
+    evidence={'grade': 'A', 'note': 'verification test binding: tests/test_propeller_ice_milling_legacy_verification.py', 'level': 'ANALYTIC'},
     endpoint=None,
 )
 class _cap_dem_propeller_ice_milling:
@@ -5272,7 +5289,7 @@ class _cap_dem_repose_material_calibration:
     tested=True,
     verified=True,
     test_path='tests/test_restitution.py',
-    evidence={'grade': 'A', 'note': 'root verdict artifact names the module: verdict_m21538.json'},
+    evidence={'grade': 'A', 'note': 'root verdict artifact names the module: verdict_m21538.json', 'level': 'XVALUE'},
     endpoint=None,
 )
 class _cap_dem_restitution:
@@ -5357,7 +5374,7 @@ class _cap_dem_ridge_freeze_bond_aging_dem:
     tested=True,
     verified=True,
     test_path='tests/test_ridge_geotech_capacity_verification.py',
-    evidence={'grade': 'A', 'note': 'verification/xval test binding: tests/test_ridge_geotech_capacity_verification.py'},
+    evidence={'grade': 'A', 'note': 'verification test binding: tests/test_ridge_geotech_capacity_verification.py', 'level': 'ANALYTIC'},
     endpoint=None,
 )
 class _cap_dem_ridge_geotech:
@@ -5374,7 +5391,7 @@ class _cap_dem_ridge_geotech:
     tested=True,
     verified=True,
     test_path='tests/test_ridge_grounding.py',
-    evidence={'grade': 'A', 'note': 'sibling verification module: ridge_grounding_verification.py'},
+    evidence={'grade': 'A', 'note': 'sibling verification module: ridge_grounding_verification.py', 'level': 'ANALYTIC'},
     endpoint=None,
 )
 class _cap_dem_ridge_grounding:
@@ -5391,7 +5408,7 @@ class _cap_dem_ridge_grounding:
     tested=False,
     verified=True,
     test_path=None,
-    evidence={'grade': 'A', 'note': 'module itself is a verification/xval module (ridge_grounding_verification.py)'},
+    evidence={'grade': 'A', 'note': 'module itself is a verification module (ridge_grounding_verification.py)', 'level': 'ANALYTIC'},
     endpoint=None,
 )
 class _cap_dem_ridge_grounding_verification:
@@ -5799,7 +5816,7 @@ class _cap_dem_segregation_stability:
     tested=True,
     verified=True,
     test_path='tests/test_sensitivity.py',
-    evidence={'grade': 'A', 'note': 'root verdict artifact names the module: verdict_m20232.json'},
+    evidence={'grade': 'A', 'note': 'root verdict artifact names the module: verdict_m20232.json', 'level': 'XVALUE'},
     endpoint=None,
 )
 class _cap_dem_sensitivity_mod:
@@ -5986,7 +6003,7 @@ class _cap_dem_shear_static:
     tested=True,
     verified=True,
     test_path='tests/test_silo_discharge_beverloo.py',
-    evidence={'grade': 'A', 'note': 'root verdict artifact names the module: verdict_m20232.json'},
+    evidence={'grade': 'A', 'note': 'root verdict artifact names the module: verdict_m20232.json', 'level': 'XVALUE'},
     endpoint=None,
 )
 class _cap_dem_silo_discharge:
@@ -6037,7 +6054,7 @@ class _cap_dem_sphere_pack_dem:
     tested=False,
     verified=True,
     test_path=None,
-    evidence={'grade': 'A', 'note': 'root verdict artifact names the module: verdict_m20232.json'},
+    evidence={'grade': 'A', 'note': 'root verdict artifact names the module: verdict_m20232.json', 'level': 'XVALUE'},
     endpoint=None,
 )
 class _cap_dem_stability:
@@ -6224,7 +6241,7 @@ class _cap_dem_tablet_compression:
     tested=False,
     verified=True,
     test_path=None,
-    evidence={'grade': 'A', 'note': 'module itself is a verification/xval module (tangential_verification.py)'},
+    evidence={'grade': 'A', 'note': 'module itself is a verification module (tangential_verification.py)', 'level': 'ANALYTIC'},
     endpoint=None,
 )
 class _cap_dem_tangential_verification:
@@ -6326,7 +6343,7 @@ class _cap_dem_unsteady_drag_api:
     tested=True,
     verified=True,
     test_path='tests/test_verification.py',
-    evidence={'grade': 'A', 'note': 'root verdict artifact names the module: verdict_m18189.json'},
+    evidence={'grade': 'A', 'note': 'root verdict artifact names the module: verdict_m18189.json', 'level': 'XVALUE'},
     endpoint=None,
 )
 class _cap_dem_verification:
