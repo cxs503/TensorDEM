@@ -4,29 +4,44 @@ Microservice-style self-registration: importing :mod:`tensordem.capabilities`
 registers every capability into the :data:`REGISTRY` singleton, the same way
 FastAPI route decorators register routes at import time.
 
-Dump CLI (two modes, identical JSON contract on stdout)::
+Dump CLI (three modes, single JSON object on stdout)::
 
     python -m tensordem.registry            # import mode (needs the package env)
     python -m tensordem.registry --static   # AST scan: no package import, no torch
+    python -m tensordem.registry --parity   # static vs import, field-by-field
 
-Both modes emit exactly::
+Direct file-path invocation is supported (the platform host may be torch-free
+and must not rely on ``-m``)::
 
-    {"source_commit": "<git HEAD or null>", "capabilities": [ ... ]}
+    python src/tensordem/registry.py --static
 
-The ``--static`` mode is the one the platform capability_sync daemon calls
-(it must work on a bare checkout without torch).  The two modes must agree
-on the capability set (enforced by ``tests/test_capability_registry.py``).
+All modes emit exactly one JSON object on stdout::
+
+    {"source_commit": ..., "capabilities": [...], "summary": {...},
+     "problems": [...]}
+
+``--parity`` emits ``{"source_commit", "parity", "static_count",
+"import_count", "differences", "problems"}`` and exits non-zero on mismatch.
+
+``problems`` is the honest-failure channel: a pointer that does not resolve
+(module file, entry symbol, test file) is reported here, never silently
+dropped.  Gate violations are reported the same way in static mode; in
+import mode they raise :class:`OverclaimError` at registration time.
 
 Anti-overclaim gates (client-side mirror of the platform 422 gate on
 ``POST /api/v1/tensor/capabilities/sync``):
 
-* ``maturity == "mature"`` requires ``verified and wired``;
-* a non-null ``endpoint`` (TensorPhysics callable) requires ``wired``.
+* ``maturity == "mature"``   requires ``verified and wired``;
+* ``maturity == "planned"``  requires an ``evidence.feature_ledger`` anchor;
+* a non-null ``endpoint``    requires ``wired`` and a ``cli:`` / ``route:`` /
+  ``api:`` prefix;
+* ``verified == True``       requires ``evidence.level`` in
+  ``ANALYTIC`` / ``XVALUE`` (self-declared verification is not accepted).
 
-``verified`` may not be self-declared: the generator
-(``scripts/gen_dem_capabilities.py``) only sets it when a machine-checkable
-reference-comparison artifact exists (``*_verification.py`` module, root
-``verdict_*.json``, or an xval/verification test binding).
+The generator (``scripts/gen_dem_capabilities.py``) only sets ``verified``
+when a machine-checkable reference-comparison artifact exists and stamps the
+level: ``ANALYTIC`` for closed-form reference comparisons, ``XVALUE`` for
+cross-validation against external/literature data.
 """
 
 from __future__ import annotations
@@ -43,6 +58,8 @@ from typing import Any
 REPO_NAME = "TensorDEM"
 
 VALID_MATURITY = ("mature", "developing", "planned")
+ENDPOINT_PREFIXES = ("cli:", "route:", "api:")
+VERIFIED_LEVELS = ("ANALYTIC", "XVALUE")
 
 
 class OverclaimError(ValueError):
@@ -81,6 +98,51 @@ class Capability:
         }
 
 
+def check_gates(caps: list[dict[str, Any]]) -> list[dict[str, str]]:
+    """Pure-data gate check over capability dicts (no import required).
+
+    Mirrors :meth:`Registry.register` so the static (AST) dump can report
+    violations as problems instead of crashing.
+    """
+    problems: list[dict[str, str]] = []
+    for c in caps:
+        cid = c.get("id", "?")
+        ev = c.get("evidence") or {}
+        if c.get("maturity") not in VALID_MATURITY:
+            problems.append({
+                "capability": cid, "code": "gate.maturity_invalid",
+                "detail": f"maturity={c.get('maturity')!r} not in {VALID_MATURITY}",
+            })
+        if c.get("maturity") == "mature" and not (c.get("verified") and c.get("wired")):
+            problems.append({
+                "capability": cid, "code": "gate.mature_requires_verified_wired",
+                "detail": f"verified={c.get('verified')} wired={c.get('wired')}",
+            })
+        if c.get("maturity") == "planned" and not str(ev.get("feature_ledger") or "").strip():
+            problems.append({
+                "capability": cid, "code": "gate.planned_requires_feature_ledger",
+                "detail": "evidence.feature_ledger anchor missing",
+            })
+        ep = c.get("endpoint")
+        if ep:
+            if not c.get("wired"):
+                problems.append({
+                    "capability": cid, "code": "gate.endpoint_requires_wired",
+                    "detail": f"endpoint={ep!r} but wired=False",
+                })
+            elif not str(ep).startswith(ENDPOINT_PREFIXES):
+                problems.append({
+                    "capability": cid, "code": "gate.endpoint_prefix",
+                    "detail": f"endpoint={ep!r} must start with one of {ENDPOINT_PREFIXES}",
+                })
+        if c.get("verified") and ev.get("level") not in VERIFIED_LEVELS:
+            problems.append({
+                "capability": cid, "code": "gate.verified_requires_analytic_xvalue",
+                "detail": f"evidence.level={ev.get('level')!r} not in {VERIFIED_LEVELS}",
+            })
+    return problems
+
+
 class Registry:
     """Singleton capability registry with anti-overclaim gates."""
 
@@ -88,21 +150,10 @@ class Registry:
         self._items: dict[str, Capability] = {}
 
     def register(self, cap: Capability) -> Capability:
-        if cap.maturity not in VALID_MATURITY:
-            raise OverclaimError(
-                f"capability {cap.id}: maturity {cap.maturity!r} not in {VALID_MATURITY}"
-            )
-        if cap.maturity == "mature" and not (cap.verified and cap.wired):
-            raise OverclaimError(
-                f"capability {cap.id}: maturity=mature requires verified+wired "
-                "machine evidence (anti-overclaim)"
-            )
-        if cap.endpoint and not cap.wired:
-            raise OverclaimError(
-                f"capability {cap.id}: endpoint (TensorPhysics callable) requires wired=true"
-            )
-        if not cap.module_path:
-            raise OverclaimError(f"capability {cap.id}: module_path is required")
+        if cap.id in self._items:
+            raise OverclaimError(f"capability {cap.id}: duplicate registration")
+        for p in check_gates([cap.to_dict()]):
+            raise OverclaimError(f"capability {cap.id}: {p['code']} ({p['detail']})")
         self._items[cap.id] = cap
         return cap
 
@@ -114,12 +165,6 @@ class Registry:
 
     def clear(self) -> None:
         self._items.clear()
-
-    def dump(self, source_commit: str | None) -> dict[str, Any]:
-        return {
-            "source_commit": source_commit,
-            "capabilities": [c.to_dict() for c in self.all()],
-        }
 
 
 REGISTRY = Registry()
@@ -142,6 +187,7 @@ def capability(
     """Decorator: register the decorated object as a capability at import time.
 
     The decorated object is returned unchanged; the metadata is the contract.
+    Gate violations raise :class:`OverclaimError` at import time (fail loud).
     """
 
     def decorator(obj: Any) -> Any:
@@ -171,8 +217,7 @@ def capability(
 # ---------------------------------------------------------------------------
 
 def _decorator_is_capability(node: ast.AST) -> bool:
-    dec = node.decorator_list
-    for d in dec:
+    for d in node.decorator_list:
         if isinstance(d, ast.Call):
             f = d.func
             if isinstance(f, ast.Name) and f.id == "capability":
@@ -204,7 +249,7 @@ def static_scan(package_dir: Path | None = None) -> list[dict[str, Any]]:
     for path in sorted(package_dir.rglob("*.py")):
         try:
             tree = ast.parse(path.read_text(encoding="utf-8"))
-        except (SyntaxError, UnicodeDecodeError):
+        except (SyntaxError, UnicodeDecodeError, OSError):
             continue
         for node in ast.walk(tree):
             if not isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
@@ -240,6 +285,109 @@ def static_scan(package_dir: Path | None = None) -> list[dict[str, Any]]:
     return out
 
 
+# ---------------------------------------------------------------------------
+# pointer resolution — module / entry / test_path must exist, else problem
+# ---------------------------------------------------------------------------
+
+def _module_file(module_path: str, pkg_root: Path) -> Path | None:
+    """Resolve ``tensordem.x.y`` to a file under the package root."""
+    parts = module_path.split(".")
+    if not parts or parts[0] != "tensordem":
+        return None
+    rel = Path(*parts[1:]) if len(parts) > 1 else Path()
+    base = pkg_root / rel
+    if base.is_dir():
+        # a directory only shadows the module file when it is a real package
+        init = base / "__init__.py"
+        if init.is_file():
+            return init
+    if base.with_suffix(".py").is_file():
+        return base.with_suffix(".py")
+    return None
+
+
+def _top_level_names(tree: ast.Module) -> set[str]:
+    names: set[str] = set()
+    for node in tree.body:
+        if isinstance(node, (ast.ClassDef, ast.FunctionDef)):
+            names.add(node.name)
+        elif isinstance(node, ast.Assign):
+            for t in node.targets:
+                if isinstance(t, ast.Name):
+                    names.add(t.id)
+        elif isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
+            names.add(node.target.id)
+        elif isinstance(node, ast.Import):
+            for a in node.names:
+                names.add((a.asname or a.name).split(".")[0])
+        elif isinstance(node, ast.ImportFrom):
+            for a in node.names:
+                names.add("*" if a.name == "*" else (a.asname or a.name))
+    return names
+
+
+def _module_names(mod_file: Path) -> set[str]:
+    """Names available from a module file (packages: __init__ + submodules)."""
+    try:
+        tree = ast.parse(mod_file.read_text(encoding="utf-8"))
+    except (SyntaxError, UnicodeDecodeError, OSError):
+        return set()
+    names = _top_level_names(tree)
+    if mod_file.name == "__init__.py":
+        for py in sorted(mod_file.parent.glob("*.py")):
+            if py.name == "__init__.py":
+                continue
+            try:
+                sub = ast.parse(py.read_text(encoding="utf-8"))
+            except (SyntaxError, UnicodeDecodeError, OSError):
+                continue
+            names |= _top_level_names(sub)
+    return names
+
+
+def resolve_pointers(
+    caps: list[dict[str, Any]],
+    pkg_root: Path | None = None,
+    repo_root: Path | None = None,
+) -> list[dict[str, str]]:
+    """Check module/entry/test_path pointers; missing = problem, not a drop.
+
+    File/AST based (no import, no torch) so both CLI modes share it.
+    """
+    if pkg_root is None:
+        pkg_root = Path(__file__).resolve().parent
+    if repo_root is None:
+        repo_root = _repo_root() or pkg_root.parent
+    problems: list[dict[str, str]] = []
+    for c in caps:
+        cid = c.get("id", "?")
+        mod = c.get("module_path") or ""
+        mod_file = _module_file(mod, pkg_root) if mod else None
+        if mod and mod_file is None:
+            problems.append({
+                "capability": cid, "code": "pointer.module_missing",
+                "detail": f"module file not found for {mod!r}",
+            })
+            continue
+        entry = c.get("entry")
+        if entry and mod_file is not None and entry not in _module_names(mod_file):
+            problems.append({
+                "capability": cid, "code": "pointer.entry_missing",
+                "detail": f"entry {entry!r} not defined in {mod}",
+            })
+        tp = c.get("test_path")
+        if tp and not (repo_root / tp).is_file():
+            problems.append({
+                "capability": cid, "code": "pointer.test_missing",
+                "detail": f"test file not found: {tp}",
+            })
+    return problems
+
+
+# ---------------------------------------------------------------------------
+# dump / parity / CLI
+# ---------------------------------------------------------------------------
+
 def _repo_root() -> Path | None:
     p = Path(__file__).resolve()
     for parent in [p] + list(p.parents):
@@ -264,29 +412,141 @@ def source_commit() -> str | None:
     return None
 
 
+def _summary(caps: list[dict[str, Any]], problems: list[dict[str, str]]) -> dict[str, Any]:
+    by_maturity = {m: 0 for m in VALID_MATURITY}
+    for c in caps:
+        m = c.get("maturity")
+        if m in by_maturity:
+            by_maturity[m] += 1
+    return {
+        "total": len(caps),
+        "by_maturity": by_maturity,
+        "wired": sum(1 for c in caps if c.get("wired")),
+        "tested": sum(1 for c in caps if c.get("tested")),
+        "verified": sum(1 for c in caps if c.get("verified")),
+        "endpoints": sum(1 for c in caps if c.get("endpoint")),
+        "problems": len(problems),
+    }
+
+
+def _import_caps() -> list[dict[str, Any]]:
+    _ensure_package_importable()
+    import tensordem.capabilities  # noqa: F401  (triggers registration)
+    # Read the registry from the *imported* module: in direct file-path mode
+    # this file runs as __main__ (its own REGISTRY), while capabilities.py
+    # registers into the imported tensordem.registry singleton.
+    import tensordem.registry as reg_mod
+    return [c.to_dict() for c in reg_mod.REGISTRY.all()]
+
+
+def _ensure_package_importable() -> None:
+    """Make ``import tensordem`` resolve to the package co-located with this file.
+
+    The platform host may carry a stale editable install of tensordem from
+    another worktree (or none at all); the checkout that ships this
+    registry.py must win, so its src dir is forced to the front of
+    sys.path and any foreign cached modules are dropped.
+    """
+    src_dir = Path(__file__).resolve().parent.parent
+    for name in [m for m in list(sys.modules)
+                 if m == "tensordem" or m.startswith("tensordem.")]:
+        f = getattr(sys.modules.get(name), "__file__", None) or ""
+        if not Path(f).is_relative_to(src_dir):
+            del sys.modules[name]
+    if str(src_dir) in sys.path:
+        sys.path.remove(str(src_dir))
+    sys.path.insert(0, str(src_dir))
+
+
 def dump(static: bool = False) -> dict[str, Any]:
+    """Build the single-JSON-object payload (contract on stdout)."""
     if static:
         caps = static_scan()
     else:
-        import tensordem.capabilities  # noqa: F401  (triggers registration)
-        caps = [c.to_dict() for c in REGISTRY.all()]
-    return {"source_commit": source_commit(), "capabilities": caps}
+        caps = _import_caps()
+    caps = sorted(caps, key=lambda c: c.get("id", ""))
+    problems = resolve_pointers(caps)
+    problems += check_gates(caps)
+    return {
+        "source_commit": source_commit(),
+        "capabilities": caps,
+        "summary": _summary(caps, problems),
+        "problems": problems,
+    }
+
+
+def _diff_caps(static: list[dict[str, Any]], imp: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    s = {c["id"]: c for c in static}
+    i = {c["id"]: c for c in imp}
+    diffs: list[dict[str, Any]] = []
+    for cid in sorted(set(s) - set(i)):
+        diffs.append({"id": cid, "where": "static_only"})
+    for cid in sorted(set(i) - set(s)):
+        diffs.append({"id": cid, "where": "import_only"})
+    for cid in sorted(set(s) & set(i)):
+        fields = [k for k in s[cid] if s[cid].get(k) != i[cid].get(k)]
+        if fields:
+            diffs.append({"id": cid, "where": "field_mismatch", "fields": fields})
+    return diffs
+
+
+def parity_report() -> dict[str, Any]:
+    """Compare the static (AST) and import (REGISTRY) capability sets."""
+    static = sorted(static_scan(), key=lambda c: c.get("id", ""))
+    try:
+        imp = sorted(_import_caps(), key=lambda c: c.get("id", ""))
+        import_error: str | None = None
+    except Exception as e:  # torch-free host without the package env
+        imp, import_error = [], f"{type(e).__name__}: {e}"
+    diffs = _diff_caps(static, imp)
+    problems = resolve_pointers(static) + check_gates(static)
+    if import_error is not None:
+        problems.append({
+            "capability": "-", "code": "parity.import_failed",
+            "detail": import_error,
+        })
+    parity = import_error is None and not diffs
+    return {
+        "source_commit": source_commit(),
+        "parity": parity,
+        "static_count": len(static),
+        "import_count": len(imp),
+        "differences": diffs,
+        "problems": problems,
+    }
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        prog="python -m tensordem.registry",
-        description="Dump the TensorDEM capability registry as JSON on stdout.",
+        prog="tensordem-registry",
+        description="Dump the TensorDEM capability registry as one JSON object on stdout.",
     )
     parser.add_argument(
         "--static", action="store_true",
         help="AST-scan the source tree (no package import, no torch)",
     )
+    parser.add_argument(
+        "--parity", action="store_true",
+        help="compare static vs import mode field-by-field (exit 1 on mismatch)",
+    )
+    parser.add_argument(
+        "--out", metavar="PATH", default=None,
+        help="also write the JSON payload to PATH (stdout stays the contract)",
+    )
     args = parser.parse_args(argv)
-    payload = dump(static=args.static)
-    json.dump(payload, sys.stdout, ensure_ascii=False, indent=1)
-    sys.stdout.write("\n")
-    return 0
+    if args.parity:
+        payload = parity_report()
+        rc = 0 if payload["parity"] else 1
+    else:
+        payload = dump(static=args.static)
+        rc = 0
+    text = json.dumps(payload, ensure_ascii=False, indent=1)
+    if args.out:
+        out = Path(args.out)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(text + "\n", encoding="utf-8")
+    sys.stdout.write(text + "\n")
+    return rc
 
 
 if __name__ == "__main__":
