@@ -8,11 +8,13 @@
       "phi_extent": 0.5200724089236088,
       "phi_centres": 0.6387420248618135,
       "predicted_boundary_factor": 1.0909090909090908,
+      "predicted_factor_2wall": 1.212121212121212,
       "measured_slab_over_bed": 1.228438228438228,
       "bed_err_pct": 0.0,
       "extent_err_pct": 0.021104579103803367,
       "centres_err_pct": 22.843822843822803,
-      "factor_err_pct": 12.606837606837583
+      "factor_err_pct": 12.606837606837583,
+      "factor2wall_err_pct": 1.3461538461538192
     },
     {
       "packing": "gap_0.06",
@@ -22,11 +24,13 @@
       "phi_extent": 0.5206919946954404,
       "phi_centres": 0.6969196665949579,
       "predicted_boundary_factor": 1.2,
+      "predicted_factor_2wall": 1.333333333333333,
       "measured_slab_over_bed": 1.34032634032634,
       "bed_err_pct": 0.0,
       "extent_err_pct": 0.1402642426751699,
       "centres_err_pct": 34.03263403263399,
-      "factor_err_pct": 11.693861693861663
+      "factor_err_pct": 11.693861693861663,
+      "factor2wall_err_pct": 0.5244755244755206
     },
     {
       "packing": "gap_0.045",
@@ -36,13 +40,24 @@
       "phi_extent": 0.5212505140966881,
       "phi_centres": 0.7336847040790976,
       "predicted_boundary_factor": 1.2857142857142858,
+      "predicted_factor_2wall": 1.4285714285714284,
       "measured_slab_over_bed": 1.4103758931345132,
       "bed_err_pct": 0.0,
       "extent_err_pct": 0.2009657934321618,
       "centres_err_pct": 41.03758931345132,
-      "factor_err_pct": 9.69590279935102
+      "factor_err_pct": 9.69590279935102,
+      "factor2wall_err_pct": -1.2736874805840626
     }
   ],
-  "verdict": "unexpected",
-  "ok": false
+  "checks": {
+    "phi_bed_unbiased_lt_2pct": true,
+    "phi_extent_unbiased_lt_3pct": true,
+    "phi_centres_biased_high_gt_5pct": true,
+    "two_wall_factor_within_5pct": true,
+    "z_only_factor_insufficient": true
+  },
+  "boundary_tol_pct": 5.0,
+  "verdict": "two_wall_boundary_factor_reproduces_slab_gap__z_only_model_insufficient",
+  "failed_checks": [],
+  "ok": true
 }
