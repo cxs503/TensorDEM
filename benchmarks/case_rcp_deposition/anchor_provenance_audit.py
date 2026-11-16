@@ -19,9 +19,10 @@ disordered-packing bracket as the strongest admissible statement.
 It also closes the extrapolation debt that the previous wave left open: the
 mu = 0.1 stiffness ladder had three levels only, so the fit had three
 parameters and the reported order ``p = 0.51`` could not be checked.  A fourth
-level (``k_n = 256000``, two seeds) is supplied as run artifacts and used
-leave-one-out; the intercept is additionally bracketed over the admissible
-order range ``p in [0.5, 1.5]`` because ``p`` itself is a fitted nuisance.
+level (``k_n = 256000``, one seed per tier) is supplied as run artifacts
+and used leave-one-out; the intercept is additionally bracketed over the
+admissible order range ``p in [0.5, 1.5]`` because ``p`` itself is a
+fitted nuisance.
 
 Every number written into ``docs/AUDIT_m21145_RCP_ANCHOR_PROVENANCE.md`` comes
 from this script -- nothing is hand copied.
@@ -223,6 +224,33 @@ def cross_script_consistency(res):
     return out
 
 
+def ledger_claims():
+    """Accuracy claims the merged ledger path (aggregate.py -> summary.json)
+    rests on non-literature anchors.
+
+    The m21145 policy was first enforced on this audit's own verdicts; the
+    see-through (m23840) extends the same check to the ledger gates so a
+    certified accuracy claim can no longer rest on a derived/unverified
+    anchor in *either* merged analysis path.  A reference-comparison gate
+    without a provenance marker is itself a violation (a claim without a
+    recorded anchor tier).
+    """
+    path = os.path.join(RUNS, "summary.json")
+    if not os.path.exists(path):
+        return []
+    d = json.load(open(path))
+    bad = []
+    for g in d.get("gates", []):
+        if "phi_ref_source" not in g:
+            continue  # not a reference-comparison gate
+        prov = g.get("anchor_provenance")
+        if prov is None:
+            bad.append(g["id"])
+        elif prov != "literature" and g.get("claim_status") != "WITHHELD":
+            bad.append(g["id"])
+    return bad
+
+
 def gates(res):
     g = []
     ref0 = frictionless_reference()
@@ -248,11 +276,13 @@ def gates(res):
               "criterion": "mu=0.1 ladder has >=4 stiffness levels (leave-one-out check exists)",
               "got": len(res["tiers"]["0.1"]["kn_levels"]),
               "pass": bool(sc is not None)})
-    # policy gate: no accuracy claim may rest on a derived anchor
+    # policy gate: no accuracy claim may rest on a derived anchor --
+    # enforced on this audit's verdicts AND on the merged ledger path
     bad = [r for r in res["verdicts"]
            if r["verdict"] != "WITHHELD" and r["anchor_provenance"] != "literature"]
+    bad += ledger_claims()
     g.append({"id": "A5_no_claim_on_derived_anchor",
-              "criterion": "0 verdicts claim accuracy against a non-literature anchor",
+              "criterion": "0 accuracy claims (this audit + merged ledger) rest on a non-literature anchor",
               "got": len(bad),
               "pass": not bad})
     # every tier reported must have a machine-readable policy
