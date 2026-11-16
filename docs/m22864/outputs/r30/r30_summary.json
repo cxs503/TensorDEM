@@ -1,0 +1,227 @@
+{
+ "round": 30,
+ "mission": 22864,
+ "cluster_job": "cj4332",
+ "provenance": {
+  "source": "/srv/tensor/agent/work/m22864/benchmarks/plane_shear_mu_i/runs/provenance_archive/dacruz2005_excerpts.txt",
+  "mu_sentence": "\u00b5\u2217 min : \u00b5\u2217\u2243\u00b5\u2217 min + bI, (14) with \u00b5\u2217 min \u22430.22 and b \u22431.0 (for \u00b5 \u0338= 0).",
+  "nu_sentence": "\u03bd(I) \u2243\u03bdmax \u2212aI, (13) 9 with \u03bdmax \u22430.81 and a \u22430.3 (for \u00b5 = 0.4).",
+  "digest": "cf6c4b0930ef14c9"
+ },
+ "reference_2d": {
+  "mu_min": 0.22,
+  "b": 1.0,
+  "nu_max": 0.81,
+  "a": 0.3,
+  "mu_contact": 0.4,
+  "saturation_I": 0.2
+ },
+ "reference_3d": {
+  "mu_s": 0.36,
+  "mu_2": 0.84,
+  "I_0": 0.3,
+  "phi_max": 0.64,
+  "phi_min": 0.58
+ },
+ "points": [
+  {
+   "I": 0.01936221131932868,
+   "mu": 0.16361454093847913,
+   "phi": 0.8209642890834121,
+   "mu_ref_2d": 0.23936221131932867,
+   "mu_err_2d_pct": -31.645626084142403,
+   "mu_ref_3d": 0.38910131851506025,
+   "mu_err_3d_pct": -57.95065882508789,
+   "phi_ref_2d": 0.8041913366042015,
+   "phi_err_2d_pct": 2.0856917646037463,
+   "phi_ref_3d": 0.6363623351856175,
+   "phi_err_3d_pct": 29.008937784469754,
+   "mu_pass_2d": false,
+   "mu_pass_3d": false,
+   "phi_pass_2d": true,
+   "phi_pass_3d": false,
+   "beyond_linear_range": false,
+   "w": 0.5,
+   "I_target": 0.02,
+   "n_seeds": 1,
+   "mu_sem": NaN,
+   "phi_sem": NaN,
+   "stationary": false,
+   "files": [
+    "long_r29_w0.5_I0.02_s0.json"
+   ]
+  },
+  {
+   "I": 0.049024745366663264,
+   "mu": 0.16612482662116784,
+   "phi": 0.8185344558308435,
+   "mu_ref_2d": 0.26902474536666326,
+   "mu_err_2d_pct": -38.249239342369606,
+   "mu_ref_3d": 0.4274218034348174,
+   "mu_err_3d_pct": -61.133282091328276,
+   "phi_ref_2d": 0.7952925763900011,
+   "phi_err_2d_pct": 2.9224313329243157,
+   "phi_ref_3d": 0.6315722745706478,
+   "phi_err_3d_pct": 29.602658126070427,
+   "mu_pass_2d": false,
+   "mu_pass_3d": false,
+   "phi_pass_2d": true,
+   "phi_pass_3d": false,
+   "beyond_linear_range": false,
+   "w": 0.5,
+   "I_target": 0.05,
+   "n_seeds": 3,
+   "mu_sem": 0.0064737135623133225,
+   "phi_sem": 0.0015298162199370053,
+   "stationary": true,
+   "files": [
+    "long_r29_w0.5_I0.05_s0.json",
+    "long_r29_w0.5_I0.05_s1.json",
+    "long_r29_w0.5_I0.05_s2.json"
+   ]
+  },
+  {
+   "I": 0.19348846030017197,
+   "mu": 0.21014529668564372,
+   "phi": 0.8016031841737338,
+   "mu_ref_2d": 0.41348846030017194,
+   "mu_err_2d_pct": -49.17747002344667,
+   "mu_ref_3d": 0.5481998636555558,
+   "mu_err_3d_pct": -61.666298987319344,
+   "phi_ref_2d": 0.7519534619099485,
+   "phi_err_2d_pct": 6.602765301149869,
+   "phi_ref_3d": 0.6164750170430555,
+   "phi_err_3d_pct": 30.030116713999558,
+   "mu_pass_2d": false,
+   "mu_pass_3d": false,
+   "phi_pass_2d": true,
+   "phi_pass_3d": false,
+   "beyond_linear_range": false,
+   "w": 0.5,
+   "I_target": 0.2,
+   "n_seeds": 3,
+   "mu_sem": 0.009894445490793945,
+   "phi_sem": 0.0021353909095552406,
+   "stationary": true,
+   "files": [
+    "long_r29_w0.5_I0.2_s0.json",
+    "long_r29_w0.5_I0.2_s1.json",
+    "long_r29_w0.5_I0.2_s2.json"
+   ]
+  }
+ ],
+ "crystal_control": [
+  {
+   "w": 0.0,
+   "I": 0.062362786672304146,
+   "mu": 0.04498063281956021,
+   "phi": 0.8754807002384524,
+   "files": [
+    "long_r29_w0_I0.05_s0.json"
+   ]
+  },
+  {
+   "w": 0.0,
+   "I": 0.2527847890152908,
+   "mu": 0.13310884184674887,
+   "phi": 0.8755799889372021,
+   "files": [
+    "long_r29_w0_I0.2_s0.json"
+   ]
+  }
+ ],
+ "fit_mu": {
+  "intercept": 0.15559266518002463,
+  "slope": 0.27916583216010465,
+  "intercept_se": 0.003632284665906614,
+  "slope_se": 0.03137187679458946,
+  "n": 3,
+  "chi2": 1.7082201223936643e-05
+ },
+ "fit_phi": {
+  "intercept": 0.8235737424383331,
+  "slope": -0.1131045386691449,
+  "intercept_se": 0.000582334532243567,
+  "slope_se": 0.005029596763231705,
+  "n": 3,
+  "chi2": 4.3906535270296297e-07
+ },
+ "kinetic": [
+  {
+   "file": "long_r29_w0.5_I0.05_s0.json",
+   "area": 0.04756802886305193,
+   "ke_mean": 0.05337346810384846,
+   "p_kin_upper": 1.1220449823033525,
+   "p_wall": 9918.187184409922,
+   "p_bulk": 9799.39689649275,
+   "frac_of_p_bulk": 0.00011450143250192649,
+   "v_rms_upper": 0.009199736707403303,
+   "shear_rate_measured": 9.460135531273481,
+   "I_bulk": 0.049742442350477714
+  },
+  {
+   "file": "long_r29_w0.5_I0.05_s1.json",
+   "area": 0.04787355926802323,
+   "ke_mean": 0.057715592739169,
+   "p_kin_upper": 1.2055839093985994,
+   "p_wall": 9609.493643859028,
+   "p_bulk": 9626.801352369579,
+   "frac_of_p_bulk": 0.00012523203349385122,
+   "v_rms_upper": 0.009581537681772353,
+   "shear_rate_measured": 9.399760679598643,
+   "I_bulk": 0.04956382411763883
+  },
+  {
+   "file": "long_r29_w0.5_I0.05_s2.json",
+   "area": 0.04751263810645976,
+   "ke_mean": 0.05034083632270374,
+   "p_kin_upper": 1.0595251774887124,
+   "p_wall": 9998.561090065068,
+   "p_bulk": 10097.179358833422,
+   "frac_of_p_bulk": 0.00010493278764646256,
+   "v_rms_upper": 0.008922084719241084,
+   "shear_rate_measured": 9.471164261426656,
+   "I_bulk": 0.04879744563047542
+  },
+  {
+   "file": "long_r29_w0.5_I0.2_s0.json",
+   "area": 0.048346132025245694,
+   "ke_mean": 0.6223647326151147,
+   "p_kin_upper": 12.873102904905076,
+   "p_wall": 10682.109962195927,
+   "p_bulk": 10201.627041676229,
+   "frac_of_p_bulk": 0.0012618676268319937,
+   "v_rms_upper": 0.062266219853567666,
+   "shear_rate_measured": 37.23152038430012,
+   "I_bulk": 0.1920760722366637
+  },
+  {
+   "file": "long_r29_w0.5_I0.2_s1.json",
+   "area": 0.04898699548728651,
+   "ke_mean": 0.6312993769786369,
+   "p_kin_upper": 12.887080962997143,
+   "p_wall": 9905.759802130777,
+   "p_bulk": 9797.407010025883,
+   "frac_of_p_bulk": 0.0013153562927220982,
+   "v_rms_upper": 0.0625020575881223,
+   "shear_rate_measured": 36.74444578800817,
+   "I_bulk": 0.19437181833094827
+  },
+  {
+   "file": "long_r29_w0.5_I0.2_s2.json",
+   "area": 0.04808943626703973,
+   "ke_mean": 0.621066594071508,
+   "p_kin_upper": 12.914823759270892,
+   "p_wall": 9872.507996328754,
+   "p_bulk": 9897.497261950586,
+   "frac_of_p_bulk": 0.0013048575228123533,
+   "v_rms_upper": 0.06225828721826001,
+   "shear_rate_measured": 37.43025786379849,
+   "I_bulk": 0.19549350194114945
+  }
+ ],
+ "figures": [
+  "docs/figures/r30_mu_phi_2d_vs_3d.png",
+  "docs/figures/r30_kinetic_bound_and_fit.png"
+ ]
+}
