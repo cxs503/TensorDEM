@@ -1,0 +1,121 @@
+{
+ "n_expected": 6,
+ "n_run": 2,
+ "n_fluid": 2,
+ "abscissa": {
+  "ratio_min": 0.07065959916590674,
+  "ratio_max": 0.1310820275331168,
+  "r2_min": 0.9333046269024692,
+  "valid": false,
+  "broken": true
+ },
+ "flow_stress": {
+  "p_share_max": 0.013005043287092224,
+  "tau_share_max": 7.473956736776066e-05,
+  "negligible": false,
+  "material": false
+ },
+ "rows": [
+  {
+   "w": 0.5,
+   "seed": 0,
+   "I_nominal": 0.11056844580212694,
+   "I_measured": 0.008925281207741118,
+   "mu": 0.15271549395634818,
+   "mu_total": 0.16564263103804952,
+   "phi": 0.8042556601589115,
+   "gamma_dot_ratio": 0.1310820275331168,
+   "r2": 0.9754411717255029,
+   "slip_bottom": 2.786001644158146,
+   "slip_top": -3.086385835049791,
+   "p_kin_share": 0.003896892870957,
+   "tau_kin_share": 7.473956736776066e-05,
+   "psi6": 0.382706201166441,
+   "mu_ref_nominal": 0.33056844580212696,
+   "err_nominal": -53.802156286942996,
+   "phi_ref_nominal": 0.776829466259362,
+   "err_phi_nominal": 3.5305295551691427,
+   "mu_ref_measured": 0.2289252812077411,
+   "err_measured": -33.29024511811581,
+   "phi_ref_measured": 0.8073224156376777,
+   "err_phi_measured": -0.379867500191221
+  },
+  {
+   "w": 0.5,
+   "seed": 0,
+   "I_nominal": 0.45053266274742965,
+   "I_measured": 0.018756966099366234,
+   "mu": 0.19266289690683952,
+   "mu_total": 0.19952921377334965,
+   "phi": 0.7838519701423564,
+   "gamma_dot_ratio": 0.07065959916590674,
+   "r2": 0.9333046269024692,
+   "slip_bottom": 6.411403688071818,
+   "slip_top": -6.632901732290779,
+   "p_kin_share": 0.013005043287092224,
+   "tau_kin_share": -0.00635875381094656,
+   "psi6": 0.39366715869772617,
+   "mu_ref_nominal": 0.6705326627474296,
+   "err_nominal": -71.26718687835046,
+   "phi_ref_nominal": 0.6748402011757711,
+   "err_phi_nominal": 16.153715913286515,
+   "mu_ref_measured": 0.23875696609936622,
+   "err_measured": -19.305853121514037,
+   "phi_ref_measured": 0.8043729101701902,
+   "err_phi_measured": -2.551172443573707
+  }
+ ],
+ "fit_nominal": {
+  "intercept": 0.13972317877166573,
+  "slope": 0.11750472831944703,
+  "intercept_se": NaN,
+  "slope_se": NaN,
+  "n": 2,
+  "chi2": 0.0
+ },
+ "fit_measured": {
+  "intercept": 0.11645092600260973,
+  "slope": 4.06312889304656,
+  "intercept_se": NaN,
+  "slope_se": NaN,
+  "n": 2,
+  "chi2": 7.703719777548943e-34
+ },
+ "fit_total": {
+  "intercept": 0.15462150999109492,
+  "slope": 0.09967691023420909,
+  "intercept_se": NaN,
+  "slope_se": NaN,
+  "n": 2,
+  "chi2": 7.703719777548943e-34
+ },
+ "worst_err_mu_nominal": 71.26718687835046,
+ "worst_err_mu_measured": 33.29024511811581,
+ "worst_err_phi_nominal": 16.153715913286515,
+ "localisation": [
+  {
+   "w": 0.5,
+   "I_target": 0.05,
+   "seed": 0,
+   "n_empty": 0,
+   "mu_local_min": 0.11679600145662807,
+   "mu_local_max": 0.29983217259429407,
+   "mu_local_spread": 2.567144156091988,
+   "phi_min": 0.5501646013406619,
+   "phi_max": 1.0336851500691981
+  },
+  {
+   "w": 0.5,
+   "I_target": 0.2,
+   "seed": 0,
+   "n_empty": 0,
+   "mu_local_min": 0.12470697714844317,
+   "mu_local_max": 0.3042494458344894,
+   "mu_local_spread": 2.4397147039522125,
+   "phi_min": 0.6309622266748366,
+   "phi_max": 0.8990495374890314
+  }
+ ],
+ "localisation_max_spread": 2.567144156091988,
+ "localised": false
+}
