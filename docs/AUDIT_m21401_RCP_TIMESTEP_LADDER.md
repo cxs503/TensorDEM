@@ -34,22 +34,23 @@
 |---|---|---|---|---|---|---|
 | 0 | 4000 | 0.64237 (3) | 0.64263 (1) | +2.576e-04 | [0.64272, 0.64289] | PASS |
 | 0 | 16000 | 0.63791 (1) | — | — | — | NOT_RUN |
-| 0 | 64000 | 0.63676 (3) | 0.63626 (1) | -5.069e-04 | [0.63575, 0.63609] | FAIL |
+| 0 | 64000 | 0.63676 (3) | 0.63603 (3) | -7.298e-04 | [0.63531, 0.63579] | FAIL |
 | 0 | 256000 | 0.63571 (1) | — | — | — | NOT_RUN |
 | 0.1 | 4000 | 0.62628 (3) | 0.62632 (1) | +4.370e-05 | [0.62634, 0.62637] | PASS |
 | 0.1 | 16000 | 0.62159 (1) | — | — | — | NOT_RUN |
 | 0.1 | 64000 | 0.61928 (1) | 0.61940 (1) | +1.188e-04 | [0.61944, 0.61952] | PASS |
+| 0.1 | 256000 | 0.61860 (1) | — | — | — | NOT_RUN |
 
 ## 4 截距：修正前后
 
 | mu | 阶梯 (k_n: phi) | 原始截距 | 阶次 p | 修正后截距 | 位移 | 相对文献/锚点 |
 |---|---|---|---|---|---|---|
-| 0 | 4000: 0.64237; 16000: 0.63791; 64000: 0.63676; 256000: 0.63571 | 0.63536 | n/a | 0.63569 | 3.267e-04 | 0.6366 (PASS) |
+| 0 | 4000: 0.64237; 16000: 0.63791; 64000: 0.63676; 256000: 0.63571 | 0.63536 | n/a | 0.63576 | 4.054e-04 | 0.6366 (PASS) |
 
-*mu = 0 修正后阶次 p = 1.624*
-| 0.1 | 4000: 0.62628; 16000: 0.62159; 64000: 0.61928 | 0.61705 | 0.512 | 0.61781 | 7.545e-04 | 0.6250 (WITHHELD) |
+*mu = 0 修正后阶次 p = 不可辨识*
+| 0.1 | 4000: 0.62628; 16000: 0.62159; 64000: 0.61928; 256000: 0.61860 | 0.61831 | 0.878 | 0.61796 | 3.453e-04 | 0.6250 (WITHHELD) |
 
-*mu = 0.1 修正后阶次 p = 0.588*
+*mu = 0.1 修正后阶次 p = 0.629*
 
 ## 5 闸门（预登记）
 
@@ -57,18 +58,19 @@
 |---|---|---|---|
 | T_bias_mu0_kn4000 | |Delta| < 0.0005 | +2.576e-04 | PASS |
 | T_bias_mu0_kn16000 | |Delta| < 0.0005 | no dt/2 run | NOT_RUN |
-| T_bias_mu0_kn64000 | |Delta| < 0.0005 | -5.069e-04 | FAIL |
+| T_bias_mu0_kn64000 | |Delta| < 0.0005 | -7.298e-04 | FAIL |
 | T_bias_mu0_kn256000 | |Delta| < 0.0005 | no dt/2 run | NOT_RUN |
 | T_bias_mu0.1_kn4000 | |Delta| < 0.0005 | +4.370e-05 | PASS |
 | T_bias_mu0.1_kn16000 | |Delta| < 0.0005 | no dt/2 run | NOT_RUN |
 | T_bias_mu0.1_kn64000 | |Delta| < 0.0005 | +1.188e-04 | PASS |
-| T_intercept_shift_corrected_mu0 | |limit_corrected - limit_raw| < 0.001 | 3.267e-04 | PASS |
-| T_intercept_shift_corrected_mu0.1 | |limit_corrected - limit_raw| < 0.001 | 7.545e-04 | PASS |
-| T_frictionless_claim_survives_dt_correction | verdict stays PASS vs literature anchor | PASS rel=-0.144% | PASS |
+| T_bias_mu0.1_kn256000 | |Delta| < 0.0005 | no dt/2 run | NOT_RUN |
+| T_intercept_shift_corrected_mu0 | |limit_corrected - limit_raw| < 0.001 | 4.054e-04 | PASS |
+| T_intercept_shift_corrected_mu0.1 | |limit_corrected - limit_raw| < 0.001 | 3.453e-04 | PASS |
+| T_frictionless_claim_survives_dt_correction | verdict stays PASS vs literature anchor | PASS rel=-0.131% | PASS |
 | T_stiff_end_covered_mu0 | a dt/2 probe exists at k_n >= 16000 (not only the softest level) | probed levels [4000.0, 64000.0] | PASS |
 | T_stiff_end_covered_mu0.1 | a dt/2 probe exists at k_n >= 16000 (not only the softest level) | probed levels [4000.0, 64000.0] | PASS |
 
-合计：PASS 8 · FAIL 1 · NOT_RUN 3。
+合计：PASS 8 · FAIL 1 · NOT_RUN 4。
 
 ## 6 图
 
@@ -94,7 +96,7 @@
 5. 本审计不重估稳态判据与控制体（分别见 `AUDIT_m17063`、`AUDIT_m18395`），
    也不改动刚度外推的阶次区间策略（见 `AUDIT_m21145`）。
 **边际 FAIL 说明（程序化判定）**：
-- `mu = 0, k_n = 64000`：`|Delta| = 5.069e-04` 略超阈 `0.0005`，但该档细时间步只有 1 个种子、粗时间步种子标准差 3.13e-04（z = 1.62）——**偏差与种子噪声不可分离**，故该档不得认证为时间收敛，闸门如实记 FAIL；补 2 个细时间步种子即可判定（本单未及回件，列为下一波首要欠账）。
+- `mu = 0, k_n = 64000`：`|Delta| = 7.298e-04` 超阈且 z = 2.33，属可分辨的真实偏差，需加密时间步。
 
 6. 刚性端探针为本单递交集群作业产出（n=10000，`dt = t_c/40`，种子 1），
    单种子，故档值噪声未由种子重复给出；其量级与粗时间步同档种子标准差可比。
@@ -103,14 +105,14 @@
 
 | mu | 量 | 计算值 | 基准 | 相对误差 | 判定 | <3%? |
 |---|---|---|---|---|---|---|
-| 0 | hard-sphere intercept (dt-corrected ladder) | 0.63569 | 0.6366 (PASS) | -0.14% | PASS | yes |
+| 0 | hard-sphere intercept (dt-corrected ladder) | 0.63576 | 0.6366 (PASS) | -0.13% | PASS | yes |
 | 0 | hard-sphere intercept (raw ladder) | 0.63536 | 0.6366 (PASS) | -0.19% | PASS | yes |
-| 0.1 | hard-sphere intercept (dt-corrected ladder) | 0.61781 | 0.6250 (WITHHELD) | -1.15% | WITHHELD | no admissible anchor |
-| 0.1 | hard-sphere intercept (raw ladder) | 0.61705 | 0.6250 (WITHHELD) | -1.27% | WITHHELD | no admissible anchor |
+| 0.1 | hard-sphere intercept (dt-corrected ladder) | 0.61796 | 0.6250 (WITHHELD) | -1.13% | WITHHELD | no admissible anchor |
+| 0.1 | hard-sphere intercept (raw ladder) | 0.61831 | 0.6250 (WITHHELD) | -1.07% | WITHHELD | no admissible anchor |
 
 **结论**：
-- 无摩擦档硬球截距（时间修正后）相对文献锚 0.6366 的相对误差为 -0.14%，**<3%**，判定 PASS。
-- 低摩擦档截距相对其表值锚的相对误差为 -1.15%，但该锚为 `derived` 级，
+- 无摩擦档硬球截距（时间修正后）相对文献锚 0.6366 的相对误差为 -0.13%，**<3%**，判定 PASS。
+- 低摩擦档截距相对其表值锚的相对误差为 -1.13%，但该锚为 `derived` 级，
   按 `AUDIT_m21145` 的锚点政策精度声称 **WITHHELD**，最强可声明为 PASS_BRACKET。
 - **诚实 FAIL**：无摩擦档刚性端（见第 7 节边际 FAIL 说明）时间偏差超出预登记阈，该档未被认证为时间收敛；本审计**不**把它算作通过，也不因此推翻无摩擦档的整体判定（截距位移 见第 4 节，且修正后相对文献锚仍在 3% 内）。
 
