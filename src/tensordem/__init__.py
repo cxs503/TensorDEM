@@ -4,11 +4,13 @@ The coupling_kernel subpackage is numpy-first and can be imported without torch.
 Other modules require torch and are imported conditionally.
 """
 
-# Try to import torch-dependent modules; if torch is unavailable, skip them
+# Try to import torch-dependent modules; if torch is unavailable (missing or
+# failing to initialize, e.g. a broken device backend on a torch-free host),
+# skip them so the package stays importable.
 _TORCH_AVAILABLE = True
 try:
     import torch  # noqa: F401
-except ImportError:
+except Exception:  # ImportError or backend RuntimeError
     _TORCH_AVAILABLE = False
 
 if _TORCH_AVAILABLE:

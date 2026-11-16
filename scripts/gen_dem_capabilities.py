@@ -16,6 +16,10 @@ machine-checkable evidence only.  Rules (documented, auditable):
     - a root-level ``verdict_*.json`` names the stem;
     - a bound test file is named *xval*/*verification*.
   Grade B = test binding only; grade C = declaration only.
+* evidence.level (required by the registry gate for verified=True):
+    - ANALYTIC: closed-form reference comparison (verification module);
+    - XVALUE: cross-validation against external/literature data (xval
+      module/test, campaign verdict artifact).
 * maturity: mature iff verified AND wired AND tested (stricter than the
   platform 422 gate, which requires verified+wired); else developing.
   planned: only feature_ledger-anchored roadmap items (none for TensorDEM
@@ -134,27 +138,38 @@ def bound_tests(stem: str) -> list[str]:
     return sorted(p.name for p in TESTS.glob("test_*.py") if pat.match(p.name))
 
 
-def verification_evidence(stem: str, pkgdir: Path | None) -> str | None:
-    """Machine-checkable reference-comparison artifact, or None."""
-    if stem.endswith("_verification") or stem.endswith("_xval"):
-        return f"module itself is a verification/xval module ({stem}.py)"
+def verification_evidence(stem: str, pkgdir: Path | None) -> tuple[str, str] | None:
+    """Machine-checkable reference-comparison artifact, or None.
+
+    Returns ``(level, note)`` where level is ANALYTIC (closed-form reference
+    comparison) or XVALUE (cross-validation vs external/literature data).
+    """
+    if stem.endswith("_xval"):
+        return ("XVALUE", f"module itself is an xval module ({stem}.py)")
+    if stem.endswith("_verification"):
+        return ("ANALYTIC", f"module itself is a verification module ({stem}.py)")
     if pkgdir is not None:
         for py in sorted(pkgdir.rglob("*.py")):
-            if "verification" in py.name or py.name.endswith("_xval.py"):
-                return f"verification module in package: {py.name}"
+            if py.name.endswith("_xval.py"):
+                return ("XVALUE", f"xval module in package: {py.name}")
+        for py in sorted(pkgdir.rglob("*.py")):
+            if "verification" in py.name:
+                return ("ANALYTIC", f"verification module in package: {py.name}")
     else:
         sib = PKG / f"{stem}_verification.py"
         if sib.exists():
-            return f"sibling verification module: {sib.name}"
+            return ("ANALYTIC", f"sibling verification module: {sib.name}")
     for v in sorted(ROOT.glob("verdict_*.json")):
         try:
             if stem in v.read_text(encoding="utf-8", errors="ignore"):
-                return f"root verdict artifact names the module: {v.name}"
+                return ("XVALUE", f"root verdict artifact names the module: {v.name}")
         except OSError:
             continue
     for t in bound_tests(stem):
-        if "xval" in t or "verification" in t:
-            return f"verification/xval test binding: tests/{t}"
+        if "xval" in t:
+            return ("XVALUE", f"xval test binding: tests/{t}")
+        if "verification" in t:
+            return ("ANALYTIC", f"verification test binding: tests/{t}")
     return None
 
 
@@ -180,13 +195,16 @@ def main() -> int:
         grade = "A" if verified else ("B" if tested else "C")
         maturity = "mature" if (verified and wired and tested) else "developing"
         mod = f"tensordem.{name}"
+        evidence = {"grade": grade,
+                    "note": (ev[1] if ev else ("test binding" if tested else "declaration only"))}
+        if ev:
+            evidence["level"] = ev[0]
         items.append({
             "id": f"dem.{name}", "kind": kind_for(name), "maturity": maturity,
             "module_path": mod, "entry": entry, "params": {},
             "wired": wired, "tested": tested, "verified": verified,
             "test_path": f"tests/{tests[0]}" if tests else None,
-            "evidence": {"grade": grade,
-                         "note": ev or ("test binding" if tested else "declaration only")},
+            "evidence": evidence,
             "endpoint": ENDPOINTS.get(mod) if wired else None,
         })
 
@@ -204,13 +222,16 @@ def main() -> int:
         cap_id = f"dem.{name}"
         if name in subpackages:  # package and module share the stem
             cap_id = f"dem.{name}_mod"
+        evidence = {"grade": grade,
+                    "note": (ev[1] if ev else ("test binding" if tested else "declaration only"))}
+        if ev:
+            evidence["level"] = ev[0]
         items.append({
             "id": cap_id, "kind": kind_for(name), "maturity": maturity,
             "module_path": mod, "entry": entry, "params": {},
             "wired": wired, "tested": tested, "verified": verified,
             "test_path": f"tests/{tests[0]}" if tests else None,
-            "evidence": {"grade": grade,
-                         "note": ev or ("test binding" if tested else "declaration only")},
+            "evidence": evidence,
             "endpoint": ENDPOINTS.get(mod) if wired else None,
         })
 
