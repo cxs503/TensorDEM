@@ -1,0 +1,102 @@
+{
+ "round": 29,
+ "strain_measure": 8.0,
+ "combos": [
+  {
+   "file": "benchmarks/plane_shear_mu_i/runs/plane_shear_2d/long_r29_w0.5_I0.02_s0.json",
+   "w": 0.5,
+   "I_target": 0.02,
+   "seed": 0,
+   "mu_wall": 0.15784790436524176,
+   "mu_bulk": 0.15778304798190027,
+   "phi_gap": 0.8199671410637286,
+   "I_bulk": 0.019376418013976,
+   "drift_z_mu_wall": 21.70187798842967,
+   "duration_s": 2075.221282720566
+  },
+  {
+   "file": "benchmarks/plane_shear_mu_i/runs/plane_shear_2d/long_r29_w0.5_I0.05_s0.json",
+   "w": 0.5,
+   "I_target": 0.05,
+   "seed": 0,
+   "mu_wall": 0.1704603848884995,
+   "mu_bulk": 0.16690147315593076,
+   "phi_gap": 0.8169384254069789,
+   "I_bulk": 0.049742442350477714,
+   "drift_z_mu_wall": 5.132411054182878,
+   "duration_s": 915.8291163444519
+  },
+  {
+   "file": "benchmarks/plane_shear_mu_i/runs/plane_shear_2d/long_r29_w0.5_I0.05_s1.json",
+   "w": 0.5,
+   "I_target": 0.05,
+   "seed": 1,
+   "mu_wall": 0.16595746523681118,
+   "mu_bulk": 0.15884400924865513,
+   "phi_gap": 0.8182123570574928,
+   "I_bulk": 0.04956382411763883,
+   "drift_z_mu_wall": 7.4211637620806075,
+   "duration_s": 1007.9315197467804
+  },
+  {
+   "file": "benchmarks/plane_shear_mu_i/runs/plane_shear_2d/long_r29_w0.5_I0.05_s2.json",
+   "w": 0.5,
+   "I_target": 0.05,
+   "seed": 2,
+   "mu_wall": 0.1684554368472522,
+   "mu_bulk": 0.15955494042727236,
+   "phi_gap": 0.8161317852453567,
+   "I_bulk": 0.04879744563047542,
+   "drift_z_mu_wall": -24.962996636493497,
+   "duration_s": 904.810919046402
+  },
+  {
+   "file": "benchmarks/plane_shear_mu_i/runs/plane_shear_2d/long_r29_w0.5_I0.2_s0.json",
+   "w": 0.5,
+   "I_target": 0.2,
+   "seed": 0,
+   "mu_wall": 0.20210728883409146,
+   "mu_bulk": 0.19263012276604552,
+   "phi_gap": 0.8037836903915716,
+   "I_bulk": 0.1920760722366637,
+   "drift_z_mu_wall": 4.125867823060375,
+   "duration_s": 341.30896258354187
+  },
+  {
+   "file": "benchmarks/plane_shear_mu_i/runs/plane_shear_2d/long_r29_w0.5_I0.2_s1.json",
+   "w": 0.5,
+   "I_target": 0.2,
+   "seed": 1,
+   "mu_wall": 0.20386583318395574,
+   "mu_bulk": 0.19204092216208124,
+   "phi_gap": 0.7996043746154321,
+   "I_bulk": 0.19437181833094827,
+   "drift_z_mu_wall": -7.076169446527197,
+   "duration_s": 379.97348380088806
+  },
+  {
+   "file": "benchmarks/plane_shear_mu_i/runs/plane_shear_2d/long_r29_w0.5_I0.2_s2.json",
+   "w": 0.5,
+   "I_target": 0.2,
+   "seed": 2,
+   "mu_wall": 0.21773138347019103,
+   "mu_bulk": 0.20384623281025058,
+   "phi_gap": 0.8063387519616371,
+   "I_bulk": 0.19549350194114945,
+   "drift_z_mu_wall": 5.603953553226846,
+   "duration_s": 379.5019905567169
+  },
+  {
+   "file": "benchmarks/plane_shear_mu_i/runs/plane_shear_2d/long_r29_w0_I0.05_s0.json",
+   "w": 0.0,
+   "I_target": 0.05,
+   "seed": 0,
+   "mu_wall": 0.04964408400137426,
+   "mu_bulk": 0.03863222827793568,
+   "phi_gap": 0.8754926066254066,
+   "I_bulk": 0.06324364104633509,
+   "drift_z_mu_wall": -9.96182646874587,
+   "duration_s": 393.30379939079285
+  }
+ ]
+}
