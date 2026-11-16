@@ -165,3 +165,163 @@ def test_silo_geometry_volume_is_positive():
                         outlet_radius=0.0075)
     assert geom.volume_below(0.06) > 0.0
     assert geom.volume_below(0.0) == 0.0
+
+
+# ---------------------------------------------------------------------------
+# 6. Preset reachability (regression: the pilot config quoted in the note was
+#    not runnable from the committed script, so its numbers were unverifiable)
+# ---------------------------------------------------------------------------
+BENCH_DIR = ROOT / "benchmarks" / "m20707_beverloo"
+if str(BENCH_DIR) not in sys.path:
+    sys.path.insert(0, str(BENCH_DIR))
+
+import campaign as CAMP  # noqa: E402
+
+
+def test_pilot_preset_matches_documented_parameters():
+    """docs/m20707_beverloo_verification.md §1 pilot table must be runnable."""
+    for cid, ratio in (("D4", 4.0), ("D5", 5.0), ("D6", 6.0)):
+        case, g = CAMP.build_case(cid, "pilot")
+        assert case.particle_diameter == pytest.approx(0.002)
+        assert case.silo_radius == pytest.approx(0.012)
+        assert case.fill_height == pytest.approx(0.020)
+        assert case.kn == pytest.approx(2.0e3)
+        assert (case.settle_time, case.discard_time, case.window_time) == (
+            pytest.approx(0.03), pytest.approx(0.05), pytest.approx(0.08))
+        assert case.n_windows == 4
+        assert case.mu == pytest.approx(0.50)
+        assert case.wall_mu == pytest.approx(0.0)
+        assert case.seed == 20707
+        assert case.orifice_diameter / case.particle_diameter == pytest.approx(ratio)
+        assert g == pytest.approx(9.81)
+
+
+def test_full_preset_matches_documented_parameters():
+    """docs §1 full-campaign table must be runnable too."""
+    for cid, ratio in (("D4", 4.0), ("D5", 5.0), ("D6", 6.0)):
+        case, g = CAMP.build_case(cid, "full")
+        assert case.particle_diameter == pytest.approx(0.003)
+        assert case.silo_radius == pytest.approx(0.025)
+        assert case.fill_height == pytest.approx(0.060)
+        assert case.kn == pytest.approx(5.0e3)
+        assert case.n_windows == 6
+        assert case.orifice_diameter / case.particle_diameter == pytest.approx(ratio)
+        assert g == pytest.approx(9.81)
+
+
+def test_mu_and_gravity_variants_are_distinct():
+    assert CAMP.build_case("D5_mu40", "full")[0].mu == pytest.approx(0.40)
+    assert CAMP.build_case("D5_mu55", "full")[0].mu == pytest.approx(0.55)
+    # only the g/4 case departs from terrestrial gravity
+    assert CAMP.build_case("D5_g4", "full")[1] == pytest.approx(9.81 / 4.0)
+    for cid in ("D4", "D5", "D6", "D5_mu40", "D5_mu55"):
+        assert CAMP.build_case(cid, "full")[1] == pytest.approx(9.81)
+    # the g/4 case must remain geometrically identical to D5
+    a, _ = CAMP.build_case("D5", "full")
+    b, _ = CAMP.build_case("D5_g4", "full")
+    assert a == b
+
+
+def test_build_case_rejects_unknown_inputs():
+    with pytest.raises(ValueError):
+        CAMP.build_case("D5", "nonexistent_preset")
+    with pytest.raises(ValueError):
+        CAMP.build_case("D9", "full")
+    with pytest.raises(ValueError):
+        CAMP.build_case("D5_mu45", "pilot")   # mu = 0.45 is not in any preset
+
+
+# ---------------------------------------------------------------------------
+# 7. Sharding: the work list must partition without gaps or duplication
+# ---------------------------------------------------------------------------
+def test_job_list_covers_every_preset_case():
+    jobs = CAMP.job_list(["full", "pilot"])
+    assert len(jobs) == sum(len(CAMP.PRESETS[p][1]) for p in ("full", "pilot"))
+    assert ("full", "D5") in jobs and ("pilot", "D5") in jobs
+
+
+@pytest.mark.parametrize("nsh", [1, 2, 3, 4, 9])
+def test_shard_partition_is_disjoint_and_complete(nsh):
+    jobs = CAMP.job_list(["full", "pilot"])
+    shards = [CAMP.shard_jobs(jobs, i, nsh) for i in range(nsh)]
+    flat = [j for s in shards for j in s]
+    assert sorted(flat) == sorted(jobs), "shards must be a partition of the work list"
+    assert all(isinstance(s, list) for s in shards)
+    # determinism
+    assert shards == [CAMP.shard_jobs(jobs, i, nsh) for i in range(nsh)]
+
+
+def test_parse_shard_validates_range():
+    assert CAMP.parse_shard("0/6") == (0, 6)
+    assert CAMP.parse_shard("5/6") == (5, 6)
+    for bad in ("6/6", "-1/6", "a/b", "0"):
+        with pytest.raises(Exception):
+            CAMP.parse_shard(bad)
+
+
+# ---------------------------------------------------------------------------
+# 8. analyse(): the pass/fail decision is a pure function of the artefacts
+# ---------------------------------------------------------------------------
+def test_analyse_recomputes_reference_and_flags():
+    case, gravity = CAMP.build_case("D5", "full")
+    # deliberately construct a measurement 5 % above the Beverloo prediction
+    d, D = case.particle_diameter, case.orifice_diameter
+    rho_b = 1400.0
+    W_ref = BEVERLOO_C * rho_b * math.sqrt(gravity) * (D - BEVERLOO_K * d) ** 2.5
+    res = {
+        "n_bed": 5000, "rho_bulk": rho_b, "flow_rate_kg_s": 1.05 * W_ref,
+        "flow_rate_std_kg_s": 1e-4, "flow_rate_windows_kg_s": [1.05 * W_ref] * 6,
+        "particles_exited": 100, "dt": 1e-5, "steps": 1000,
+    }
+    out = CAMP.analyse("D5", "full", case, gravity, res, wall=1.0)
+    assert out["preset"] == "full"
+    assert out["beverloo"]["W_ref_kg_s"] == pytest.approx(W_ref, rel=1e-12)
+    assert out["beverloo"]["rel_err_pct"] == pytest.approx(5.0, abs=1e-9)
+    assert out["beverloo"]["pass_10pct"] is True
+    assert out["beverloo"]["C_recovered"] == pytest.approx(1.05 * BEVERLOO_C, rel=1e-12)
+
+
+def test_analyse_flags_out_of_tolerance_case():
+    case, gravity = CAMP.build_case("D5", "full")
+    rho_b = 1400.0
+    d, D = case.particle_diameter, case.orifice_diameter
+    W_ref = BEVERLOO_C * rho_b * math.sqrt(gravity) * (D - BEVERLOO_K * d) ** 2.5
+    res = {
+        "n_bed": 5000, "rho_bulk": rho_b, "flow_rate_kg_s": 0.80 * W_ref,
+        "flow_rate_std_kg_s": 1e-4, "flow_rate_windows_kg_s": [0.80 * W_ref] * 6,
+        "particles_exited": 100, "dt": 1e-5, "steps": 1000,
+    }
+    out = CAMP.analyse("D5", "full", case, gravity, res, wall=1.0)
+    assert out["beverloo"]["rel_err_pct"] == pytest.approx(-20.0, abs=1e-9)
+    assert out["beverloo"]["pass_10pct"] is False
+    assert out["beverloo"]["pass_15pct"] is False
+
+
+def test_analyse_records_gravity_in_denominator():
+    """W_ref must scale as sqrt(g) — the g/4 case is otherwise silently wrong."""
+    case, g = CAMP.build_case("D5", "full")
+    case4, g4 = CAMP.build_case("D5_g4", "full")
+    res = {"n_bed": 1, "rho_bulk": 1400.0, "flow_rate_kg_s": 1e-3,
+           "flow_rate_std_kg_s": 0.0, "flow_rate_windows_kg_s": [1e-3],
+           "particles_exited": 1, "dt": 1e-5, "steps": 1}
+    a = CAMP.analyse("D5", "full", case, g, res, 1.0)
+    b = CAMP.analyse("D5_g4", "full", case4, g4, res, 1.0)
+    assert a["beverloo"]["W_ref_kg_s"] / b["beverloo"]["W_ref_kg_s"] == pytest.approx(2.0)
+
+
+# ---------------------------------------------------------------------------
+# 9. Committed artefacts (skipped until the campaign has been run)
+# ---------------------------------------------------------------------------
+PILOT_D5 = BENCH_DIR / "results" / "pilot" / "D5.json"
+
+
+@pytest.mark.skipif(not PILOT_D5.exists(), reason="pilot artefacts not produced yet")
+def test_committed_pilot_artefact_reproduces_documented_verdict():
+    d = json.loads(PILOT_D5.read_text())
+    assert d["preset"] == "pilot"
+    assert d["case"]["D_over_d"] == pytest.approx(5.0)
+    assert d["result"]["n_bed"] == 1140
+    assert d["result"]["rho_bulk"] == pytest.approx(1319, abs=1)
+    assert d["beverloo"]["C_recovered"] == pytest.approx(0.540, abs=0.002)
+    assert d["beverloo"]["rel_err_pct"] == pytest.approx(-6.9, abs=0.1)
+    assert d["beverloo"]["pass_10pct"] is True
