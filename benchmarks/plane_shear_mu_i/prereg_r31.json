@@ -1,0 +1,33 @@
+{
+  "round": 31,
+  "anchor": "CASE-DEM-PLANE-SHEAR-MUIDI",
+  "mission": 22979,
+  "written_before_results": true,
+  "question": "R30 left two open items: (1) is the realised shear rate the nominal 2V/h_eff (abscissa), (2) how large is the rate-dependent flow stress (magnitude, not bound).",
+  "device": {
+    "case": "bit-identical to runs long_r29_* (rounds 24-30): 458 free disks, W=0.30, gap=0.15, P=10 kPa, mu_p=0.4, thickness=d, w=0.5 (plus w=0 crystal control)",
+    "init_mode": "random",
+    "shear_settle_strain": 0.5,
+    "strain_measure": 8.0,
+    "combos": [[0.5, 0.02, 0], [0.5, 0.05, 0], [0.5, 0.05, 1], [0.5, 0.2, 0], [0.5, 0.2, 1], [0.0, 0.05, 0]],
+    "instrumentation": "profile_r31.ProfileAccumulator, 10 bins over [y_bottom+r, y_top-r], pooled over the whole 8-strain measurement window"
+  },
+  "decision_rules": {
+    "abscissa_valid": "gamma_dot_ratio in [0.90, 1.10] AND r2_linear >= 0.99 -> the nominal abscissa is correct; a mu deficit then cannot be blamed on I",
+    "abscissa_invalid": "gamma_dot_ratio < 0.80 OR r2_linear < 0.95 -> the realised rate (or the profile) is not Couette; every I must be rescaled and the bound mu must be re-judged at I_measured",
+    "flow_stress_negligible": "kinetic_share_p < 0.01 AND kinetic_share_tau < 0.01 -> the flow-stress term cannot account for the 3-4x deficit in b (R30 bound confirmed by direct measurement)",
+    "flow_stress_material": "kinetic_share_tau > 0.10 -> the flow term is large enough to matter and b must be refitted with tau_total"
+  },
+  "predictions": [
+    "P1 (from R30 line 5): the measured profile is Couette-like with gamma_dot_ratio > 0.8, so the 0.1 m/s apparent velocity scale in the KE is *not* the mean shear velocity (KE measures fluctuations, not the mean profile).",
+    "P2 (from R30's p_kin <= 0.132 % bound): the kinetic share of both p and tau is below 1 %.",
+    "P3: because P1 and P2 both hold, neither open item can rescue the 10 % acceptance; the anchor stays FAIL and the deficit is a contact-law/calibration issue.",
+    "P4: the shear is not localised into a band (10-bin mu_local stays finite and of the same order across the cell) - the crystal control w=0 is the plausible exception (basal slip)."
+  ],
+  "falsifiers": {
+    "P1": "gamma_dot_ratio < 0.8 or r2 < 0.95 on any w=0.5 run",
+    "P2": "kinetic_share_p > 0.01 on any run",
+    "P4": "mu_local varying by more than 3x across bins, or more than 2 empty bins"
+  },
+  "no_post_hoc_window_or_bin_choice": "bins = 10 fixed here; fit band = central 60 % fixed here; measurement window = the pre-registered 8 strain, unchanged from R29."
+}

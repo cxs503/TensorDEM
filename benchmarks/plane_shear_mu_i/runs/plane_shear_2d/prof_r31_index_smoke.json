@@ -1,0 +1,19 @@
+{
+ "round": 31,
+ "strain_measure": 8.0,
+ "combos": [
+  {
+   "file": "benchmarks/plane_shear_mu_i/runs/plane_shear_2d/prof_r31_w0.5_I0.05_s0_smoke.json",
+   "w": 0.5,
+   "I_target": 0.05,
+   "seed": 0,
+   "mu_bulk": 0.15271549395634818,
+   "mu_wall": 0.17706435820615848,
+   "phi_gap": 0.8042556601589115,
+   "I_bulk": 0.11056844580212694,
+   "gamma_dot_ratio": 0.1310820275331168,
+   "r2_linear": 0.9754411717255029,
+   "duration_s": 85.5945451259613
+  }
+ ]
+}
