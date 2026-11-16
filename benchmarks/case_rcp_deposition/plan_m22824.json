@@ -1,0 +1,10 @@
+{"mission": 22824,
+ "anchor": "CASE-DEM-RCP-PACKING-FRACTION",
+ "jobs": [
+  {"jid": "cj4410", "config": "n=10000 mu=0.1 kn=64000 seed2, dt=t_c/20", "why": "低摩擦刚性端粗时间步第二种子（原档仅 1 种子）", "status": "queued（未回件）"},
+  {"jid": "cj4411", "config": "n=10000 mu=0.1 kn=64000 seed3, dt=t_c/20", "why": "同上第三种子，使粗侧达到 3 种子", "status": "queued（未回件）"},
+  {"jid": "cj4412", "config": "n=10000 mu=0.1 kn=64000 seed2, dt=t_c/40", "why": "低摩擦刚性端细时间步第二种子", "status": "queued（未回件）"},
+  {"jid": "cj4413", "config": "n=10000 mu=0.1 kn=64000 seed3, dt=t_c/40", "why": "同上第三种子，使细侧达到 3 种子", "status": "queued（未回件）"},
+  {"jid": "cj4414", "config": "n=10000 mu=0 kn=4000 seed1, dt=t_c/20（重跑）", "why": "复现证书：存档摘要 cf4b761c 的算例在当前实现 b44c1914 下重跑", "status": "queued（未回件）"},
+  {"jid": "cj4415", "config": "n=10000 mu=0 kn=64000 seed1, dt=t_c/20（重跑）", "why": "同上，第二个证书配置（跨摘要时间步对所在档）", "status": "queued（未回件）"}
+ ]}
