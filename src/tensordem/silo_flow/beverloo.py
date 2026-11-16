@@ -24,12 +24,22 @@ tests the law in two ways:
 
 ``C`` follows from the intercept and the measured bulk density, and the
 ``g``-scaling is checked separately (``W ∝ sqrt(g)``) in the study driver.
+
+Arrest / arch detection (m23184)
+--------------------------------
+A measurement window series can *silently* describe a bed that arched over the
+outlet instead of flowing: the mass balance then returns a small, perfectly
+well-formed flow rate which is not a measurement of the Beverloo law at all
+(the archived ``-88.5 %`` of mission m23114 is exactly such a record).  Because
+``flow_rate_kg_s`` must keep its historical meaning, the diagnosis is added
+*beside* it, in ``discharge_status`` (see :func:`discharge_status`), and every
+record now carries ``arrested``.
 """
 from __future__ import annotations
 
 import math
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 import numpy as np
 
@@ -39,15 +49,27 @@ from .packing import build_bed
 __all__ = [
     "BEVERLOO_C",
     "BEVERLOO_K",
+    "ARREST_RATE_FRACTION",
+    "ARREST_EMPTY_WINDOW_FRACTION",
+    "ARREST_COLLAPSE_FRACTION",
     "DischargeCase",
     "run_discharge",
     "beverloo_prediction",
+    "discharge_status",
     "fit_power_law",
     "fit_law",
 ]
 
 BEVERLOO_C = 0.58
 BEVERLOO_K = 1.4
+
+#: an outlet of ``D/d >= 4`` can not sustain a *steady* rate below this fraction
+#: of the Beverloo reference: such a record is an arch, not a finite-size offset
+ARREST_RATE_FRACTION = 0.20
+#: a majority of empty measurement windows is an arrest whatever the mean says
+ARREST_EMPTY_WINDOW_FRACTION = 0.50
+#: a last/first-half drop by more than this factor is a collapse inside the window
+ARREST_COLLAPSE_FRACTION = 0.20
 
 
 @dataclass(frozen=True)
@@ -79,6 +101,87 @@ class DischargeCase:
             raise ValueError("fill_height must exceed the orifice diameter")
         if self.n_windows < 2:
             raise ValueError("at least two discharge windows are required")
+
+
+def discharge_status(window_particles, window_rates, *,
+                     reference_rate: float | None = None,
+                     surface_drop_m: float | None = None,
+                     particle_diameter: float | None = None,
+                     rate_fraction: float = ARREST_RATE_FRACTION,
+                     empty_window_fraction: float = ARREST_EMPTY_WINDOW_FRACTION,
+                     collapse_fraction: float = ARREST_COLLAPSE_FRACTION) -> dict:
+    """Classify a discharge measurement as ``FLOWING`` or ``ARRESTED``.
+
+    Pure post-processing of the window series (no DEM, no state), so it can be
+    applied to archived records as well as to fresh runs and can be pinned by
+    synthetic tests.  A record is ``ARRESTED`` when **any** of the four
+    indicators fires (all thresholds are declared here, not tuned per case):
+
+    1. no particle left the domain at all during the measurement windows;
+    2. at least ``empty_window_fraction`` of the windows are empty (the flow
+       comes in bursts of arch-collapse, it is not a jet);
+    3. the measured rate is below ``rate_fraction`` of the Beverloo reference
+       for the *same* geometry and bulk density (dimensionless, hence valid for
+       every orifice size; skipped when the reference is not positive);
+    4. the last half of the windows carries less than ``collapse_fraction`` of
+       the rate of the first half (the bed stops flowing inside the measurement).
+
+    ``status`` is a diagnosis, never a replacement of ``flow_rate_kg_s``.
+    """
+    p = np.asarray(window_particles, dtype=np.float64).ravel()
+    r = np.asarray(window_rates, dtype=np.float64).ravel()
+    if p.size != r.size:
+        raise ValueError("window_particles and window_rates must have the same length")
+    if p.size == 0:
+        raise ValueError("at least one window is required")
+    n = p.size
+    n_half = max(1, n // 2)
+    first = float(np.mean(r[:n_half]))
+    steady = float(np.mean(r[-n_half:]))
+    n_steady_particles = float(np.sum(p[-n_half:]))
+    total_particles = float(np.sum(p))
+    empty_frac = float(np.mean(p <= 0.0))
+    collapse = steady / first if first > 0.0 else (0.0 if steady <= 0.0 else math.inf)
+    ref_ratio = None
+    if reference_rate is not None and float(reference_rate) > 0.0:
+        ref_ratio = steady / float(reference_rate)
+
+    reasons: list[str] = []
+    if total_particles <= 0.0:
+        reasons.append("no particle exited during the measurement windows")
+    if empty_frac >= empty_window_fraction:
+        reasons.append(
+            f"{empty_frac:.0%} of the windows are empty (>= {empty_window_fraction:.0%}): "
+            "burst discharge, not a jet")
+    if ref_ratio is not None and ref_ratio < rate_fraction:
+        reasons.append(
+            f"rate is {ref_ratio:.1%} of the Beverloo reference "
+            f"(< {rate_fraction:.0%}): the outlet is arched, this is not a "
+            "flow-rate measurement")
+    if math.isfinite(collapse) and collapse < collapse_fraction:
+        reasons.append(
+            f"last/first-half rate ratio {collapse:.2f} < {collapse_fraction}: "
+            "the bed stopped flowing inside the measurement")
+
+    out = {
+        "status": "ARRESTED" if reasons else "FLOWING",
+        "arrested": bool(reasons),
+        "reasons": reasons,
+        "empty_window_fraction": empty_frac,
+        "last_over_first_half_rate": collapse,
+        "flow_rate_kg_s": steady,
+        "particles_in_steady_windows": int(round(n_steady_particles)),
+        # relative counting-noise floor of the steady-window mean, 1/sqrt(N)
+        "counting_noise_rel": (1.0 / math.sqrt(n_steady_particles)
+                               if n_steady_particles > 0.0 else float("inf")),
+        "reference_rate_kg_s": None if reference_rate is None else float(reference_rate),
+        "rate_over_reference": ref_ratio,
+    }
+    if surface_drop_m is not None:
+        out["surface_drop_m"] = float(surface_drop_m)
+        if particle_diameter:
+            out["surface_drop_over_particle"] = float(surface_drop_m) / float(particle_diameter)
+    return out
 
 
 def run_discharge(case: DischargeCase, *, dt: float | None = None, flow: SiloFlow | None = None) -> dict:
@@ -132,6 +235,14 @@ def run_discharge(case: DischargeCase, *, dt: float | None = None, flow: SiloFlo
     # steady state = the last 50 % of the measurement window series
     n_steady = max(1, len(rates) // 2)
     steady = rates[-n_steady:]
+    status = discharge_status(
+        [w["particles"] for w in windows],
+        rates,
+        reference_rate=beverloo_prediction(
+            case.orifice_diameter, case.particle_diameter, rho_b),
+        surface_drop_m=windows[0]["surface_height_start_m"] - windows[-1]["surface_height_end_m"],
+        particle_diameter=case.particle_diameter,
+    )
     return {
         "case": {
             "orifice_diameter": case.orifice_diameter,
@@ -162,6 +273,10 @@ def run_discharge(case: DischargeCase, *, dt: float | None = None, flow: SiloFlo
         "flow_rate_std_kg_s": float(np.std(steady, ddof=1)) if len(steady) > 1 else 0.0,
         "flow_rate_steady_windows": n_steady,
         "particles_exited": int(sum(w["particles"] for w in windows)),
+        "discharge_status": status,
+        # top-level convenience flag: a record with ``arrested = True`` measures
+        # an arch, so it must never be averaged into a Beverloo verdict
+        "arrested": bool(status["arrested"]),
         "n_final": flow.n,
         "energy": flow.balance(),
         "wall_clock_s": time.time() - t_wall,
