@@ -14,7 +14,8 @@ Four-stage verification chain for bulk-solids storage and discharge:
 The kernel is self-contained (numpy + scipy cKDTree): no torch dependency, so the
 campaign can be sharded over cores/nodes.
 """
-from .kernel import Material, SiloGeometry, SiloFlow, contact_time, damping_ratio
+from .kernel import (Material, SiloGeometry, SiloFlow, STEPS_PER_CONTACT,
+                   contact_time, damping_ratio, dt_for_steps)
 from .packing import build_bed, deposit_bed, lattice_fill, relax_overlaps
 from .beverloo import (
     BEVERLOO_C, BEVERLOO_K, DischargeCase, beverloo_prediction, fit_law, run_discharge,
@@ -25,7 +26,8 @@ from .flow_pattern import (
 )
 
 __all__ = [
-    "Material", "SiloGeometry", "SiloFlow", "contact_time", "damping_ratio",
+    "Material", "SiloGeometry", "SiloFlow", "STEPS_PER_CONTACT", "contact_time",
+    "damping_ratio", "dt_for_steps",
     "build_bed", "deposit_bed", "lattice_fill", "relax_overlaps",
     "BEVERLOO_C", "BEVERLOO_K", "DischargeCase", "beverloo_prediction", "fit_law",
     "run_discharge",
