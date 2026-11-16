@@ -68,6 +68,30 @@ def contact_time(mass_eff: float, kn: float) -> float:
     return 2.0 * math.pi * math.sqrt(mass_eff / kn)
 
 
+#: integration steps per contact period used by every driver in this package
+STEPS_PER_CONTACT = 20
+
+
+def dt_for_steps(mass_eff: float, kn: float,
+                 steps_per_contact: int = STEPS_PER_CONTACT) -> float:
+    """Canonical integration step: the contact period divided by an integer.
+
+    This function exists because "20 steps per contact period" has **two**
+    spellings that are not the same floating-point number: ``0.05 * T_c`` and
+    ``T_c / 20`` differ by one representable step (relative 1.8e-16 for the
+    campaign material).  Granular discharge is chaotic on that scale — in the
+    frozen Beverloo case a 1-ULP ``dt`` difference decorrelates the bed and
+    changes the cumulative discharged-particle count within 0.08 s
+    (`docs/CASE-DEM-SILO-BEVERLOO_m23261_ulp_dt_divergence.md`).  Every driver
+    must therefore obtain ``dt`` from this single division; never multiply the
+    period by a decimal approximation of ``1/steps``.
+    """
+    steps = int(steps_per_contact)
+    if steps < 1:
+        raise ValueError("steps_per_contact must be a positive integer")
+    return contact_time(mass_eff, kn) / float(steps)
+
+
 @dataclass(frozen=True)
 class Material:
     """Monodisperse sphere material + contact parameters (SI)."""
@@ -122,8 +146,13 @@ class Material:
 
     @property
     def dt(self) -> float:
-        """20 steps per contact period (linear-spring stability limit)."""
-        return 0.05 * contact_time(self.mass_eff, self.kn)
+        """20 steps per contact period (linear-spring stability limit).
+
+        Delegates to :func:`dt_for_steps` so that this property and any explicit
+        ``contact_time(...) / steps`` in a driver are bit-identical — see the
+        module docstring of :func:`dt_for_steps` for why that matters.
+        """
+        return dt_for_steps(self.mass_eff, self.kn)
 
 
 @dataclass(frozen=True)
