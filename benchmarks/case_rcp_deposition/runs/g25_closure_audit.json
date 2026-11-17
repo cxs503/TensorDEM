@@ -1,0 +1,149 @@
+{
+ "n_runs": 8,
+ "tiers": {
+  "0.0": {
+   "z_c": 6.0,
+   "rows": [
+    {
+     "mu": 0.0,
+     "kn": 4000.0,
+     "phi": 0.642607517556137,
+     "z_hard": 6.371267252195734,
+     "z_appropriate": 6.49159347553325,
+     "crossing_tolerance": 0.0,
+     "z_c": 6.0,
+     "resolved_at_appropriate": true
+    },
+    {
+     "mu": 0.0,
+     "kn": 16000.0,
+     "phi": 0.6379053116959197,
+     "z_hard": 5.9538094640391614,
+     "z_appropriate": 6.225555416091377,
+     "crossing_tolerance": 0.0001,
+     "z_c": 6.0,
+     "resolved_at_appropriate": true
+    },
+    {
+     "mu": 0.0,
+     "kn": 64000.0,
+     "phi": 0.6367992185609932,
+     "z_hard": 5.818948163059889,
+     "z_appropriate": 6.166456970306996,
+     "crossing_tolerance": 0.001,
+     "z_c": 6.0,
+     "resolved_at_appropriate": true
+    },
+    {
+     "mu": 0.0,
+     "kn": 256000.0,
+     "phi": 0.6357108331286041,
+     "z_hard": 5.409443887775551,
+     "z_appropriate": 6.090055110220441,
+     "crossing_tolerance": 0.001,
+     "z_c": 6.0,
+     "resolved_at_appropriate": true
+    }
+   ],
+   "z_appropriate": [
+    6.49159347553325,
+    6.225555416091377,
+    6.166456970306996,
+    6.090055110220441
+   ],
+   "z_hard": [
+    6.371267252195734,
+    5.9538094640391614,
+    5.818948163059889,
+    5.409443887775551
+   ],
+   "kn": [
+    4000.0,
+    16000.0,
+    64000.0,
+    256000.0
+   ],
+   "phi": [
+    0.642607517556137,
+    0.6379053116959197,
+    0.6367992185609932,
+    0.6357108331286041
+   ],
+   "verdict_convergent_z": true,
+   "verdict_threshold_artefact": true,
+   "verdict_phi_converged": true
+  },
+  "0.1": {
+   "z_c": 4.0,
+   "rows": [
+    {
+     "mu": 0.1,
+     "kn": 4000.0,
+     "phi": 0.626708391735631,
+     "z_hard": 5.80716049382716,
+     "z_appropriate": 5.955432098765432,
+     "crossing_tolerance": 0.0,
+     "z_c": 4.0,
+     "resolved_at_appropriate": true
+    },
+    {
+     "mu": 0.1,
+     "kn": 16000.0,
+     "phi": 0.6215875002833193,
+     "z_hard": 5.557267907779559,
+     "z_appropriate": 5.742941684132659,
+     "crossing_tolerance": 0.0,
+     "z_c": 4.0,
+     "resolved_at_appropriate": true
+    },
+    {
+     "mu": 0.1,
+     "kn": 64000.0,
+     "phi": 0.6192806087061297,
+     "z_hard": 5.407788664268883,
+     "z_appropriate": 5.662780602753317,
+     "crossing_tolerance": 0.0,
+     "z_c": 4.0,
+     "resolved_at_appropriate": true
+    },
+    {
+     "mu": 0.1,
+     "kn": 256000.0,
+     "phi": 0.6185973783302515,
+     "z_hard": 5.336725828472136,
+     "z_appropriate": 5.655330768276033,
+     "crossing_tolerance": 0.0,
+     "z_c": 4.0,
+     "resolved_at_appropriate": true
+    }
+   ],
+   "z_appropriate": [
+    5.955432098765432,
+    5.742941684132659,
+    5.662780602753317,
+    5.655330768276033
+   ],
+   "z_hard": [
+    5.80716049382716,
+    5.557267907779559,
+    5.407788664268883,
+    5.336725828472136
+   ],
+   "kn": [
+    4000.0,
+    16000.0,
+    64000.0,
+    256000.0
+   ],
+   "phi": [
+    0.626708391735631,
+    0.6215875002833193,
+    0.6192806087061297,
+    0.6185973783302515
+   ],
+   "verdict_convergent_z": true,
+   "verdict_threshold_artefact": false,
+   "verdict_phi_converged": true
+  }
+ }
+}
