@@ -39,7 +39,15 @@ for p in (ROOT / "src", HERE):
 
 from tensordem.silo_discharge import SiloCase  # noqa: E402
 
-import run_case  # noqa: E402  (same directory: predeclared D5 case + shared analyse())
+# Load the sibling run_case by path: a bare ``import run_case`` grabs whatever
+# benchmark directory an earlier test put in sys.modules (the m22885 collision),
+# which breaks full-suite collection of this module (m24538).
+import importlib.util as _ilu  # noqa: E402
+
+_spec = _ilu.spec_from_file_location("m20055_run_case", HERE / "run_case.py")
+run_case = _ilu.module_from_spec(_spec)
+sys.modules[_spec.name] = run_case
+_spec.loader.exec_module(run_case)
 
 REF = json.loads((HERE / "ref_beverloo_1961.json").read_text())
 C_LIT = float(REF["coefficients"]["C"])
