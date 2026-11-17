@@ -356,8 +356,16 @@ def resolve_pointers(
     """
     if pkg_root is None:
         pkg_root = Path(__file__).resolve().parent
+    alt_root: Path | None = None
     if repo_root is None:
-        repo_root = _repo_root() or pkg_root.parent
+        git_root = _repo_root()
+        if git_root is not None:
+            repo_root = git_root
+        else:
+            # No .git (bare export / clean room): the checkout may be flat
+            # (package at repo root) or src/-laid-out; accept either.
+            repo_root = pkg_root.parent
+            alt_root = pkg_root.parent.parent
     problems: list[dict[str, str]] = []
     for c in caps:
         cid = c.get("id", "?")
@@ -376,11 +384,15 @@ def resolve_pointers(
                 "detail": f"entry {entry!r} not defined in {mod}",
             })
         tp = c.get("test_path")
-        if tp and not (repo_root / tp).is_file():
-            problems.append({
-                "capability": cid, "code": "pointer.test_missing",
-                "detail": f"test file not found: {tp}",
-            })
+        if tp:
+            ok = (repo_root / tp).is_file()
+            if not ok and alt_root is not None:
+                ok = (alt_root / tp).is_file()
+            if not ok:
+                problems.append({
+                    "capability": cid, "code": "pointer.test_missing",
+                    "detail": f"test file not found: {tp}",
+                })
     return problems
 
 
