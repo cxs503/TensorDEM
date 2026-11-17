@@ -1,0 +1,9 @@
+{
+  "title": "TensorDEM registry --static 一致性 pytest（m24229）",
+  "summary": "为 src/tensordem/registry.py --static 输出新增 4 例聚焦一致性 pytest（subprocess 调用），验证①capabilities 非空且每条含 id/kind/maturity ②maturity 值域⊆{mature,developing,planned} ③无重复 name(id) ④source_commit 为 40 位 hex。全部通过。",
+  "scenario_key": "registry_static_consistency",
+  "mission_id": "24229",
+  "tags": ["tensordem","registry","static","consistency","pytest"],
+  "markdown": "## 案例介绍\nTensorDEM 能力注册表（registry.py）提供 --static（AST 扫描，无包导入、无 torch）与 --import 两种 dump 模式，输出单一 JSON 对象 {source_commit, capabilities, summary, problems}。本单为 --static 输出写一致性 pytest。\n\n## 怎么做\n新增 tests/test_registry_static_consistency.py，用 subprocess 调用 `python src/tensordem/registry.py --static`（PYTHONPATH 清空、仅 stdlib），解析 stdout 后断言 4 条一致性不变量。\n\n## 计算结果\n| 测试 | 断言 | 结果 |\n|---|---|---|\n| capabilities 非空+含 id/kind/maturity | 376 条，每条含三字段 | PASS |\n| maturity 值域 | {mature:35, developing:341, planned:0} ⊆ 合法集 | PASS |\n| 无重复 name(id) | 376 唯一 | PASS |\n| source_commit 40-hex | 7b70b9a0... 40 位 | PASS |\n\n## 注意点\n--static 为 AST 扫描，不依赖包环境与 torch，可在裸检出上运行；任务措辞 name/category 映射到实际字段 id/kind。\n\n## 误差判定\n本单为一致性/契约测试，无数值基准；断言全部通过即满足契约。",
+  "figures": []
+}
