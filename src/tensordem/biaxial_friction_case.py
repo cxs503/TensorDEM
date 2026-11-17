@@ -282,6 +282,9 @@ def run_biaxial_friction_case(*, quick: bool = False,
     # Bolton dilatancy index (informational)
     phi_cv_deg = cs_analysis.get("phi_cv_deg", float("nan"))
     I_R = bolton_dilatancy_index(phi_peak, phi_cv_deg)
+    # Reference dilatancy index from Bolton (1986) Table 2 (dense sand, D_r=80 %):
+    # I_R_ref = (phi_ref - phi_cv_ref) / A = (38 - 33) / 5 = 1.0
+    I_R_ref = bolton_dilatancy_index(PHI_REF_DEG, PHI_CV_REF_DEG)
 
     # Dimensionless numbers
     strain_rate = float(config["strain_rate"])
@@ -313,8 +316,10 @@ def run_biaxial_friction_case(*, quick: bool = False,
         "critical_state": cs_analysis,
         "bolton_dilatancy": {
             "I_R": I_R,
+            "I_R_ref": I_R_ref,
             "A": 5.0,
-            "note": "Bolton (1986) Eq.8: phi_peak = phi_cv + A*I_R, A=5 (plane strain)",
+            "note": "Bolton (1986) Eq.8: phi_peak = phi_cv + A*I_R, A=5 (plane strain); "
+                    "I_R_ref=(phi_ref-phi_cv_ref)/A=1.0 (Table 2, D_r=80 %)",
         },
         "dimensionless": {
             "inertial_number": inertial_number,

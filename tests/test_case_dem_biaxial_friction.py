@@ -216,6 +216,29 @@ def test_quick_pipeline_includes_bolton_dilatancy():
     assert bd["A"] == pytest.approx(5.0)
 
 
+def test_bolton_dilatancy_reference_index_is_predeclared():
+    """The reference dilatancy index follows from the pre-declared references.
+
+    Bolton (1986) Table 2 (dense Hostun sand, D_r = 80 %, sigma_3 = 100 kPa):
+    phi_ps = 38 deg, phi_cv = 33 deg, A = 5 (plane strain)
+    => I_R_ref = (38 - 33) / 5 = 1.0.
+    """
+    I_R_ref = bolton_dilatancy_index(PHI_REF_DEG, PHI_CV_REF_DEG)
+    assert I_R_ref == pytest.approx(1.0, abs=1e-12)
+
+
+def test_quick_pipeline_reports_reference_bolton_index():
+    """The pipeline must report the reference I_R alongside the measured one."""
+    result = run_biaxial_friction_case(quick=True)
+    bd = result.get("bolton_dilatancy", {})
+    assert "I_R_ref" in bd
+    # I_R_ref is derived from the pre-declared references, so it is exact
+    # even for the under-consolidated quick specimen (whose measured I_R is NaN).
+    assert bd["I_R_ref"] == pytest.approx(
+        bolton_dilatancy_index(PHI_REF_DEG, PHI_CV_REF_DEG), abs=1e-12)
+    assert bd["I_R_ref"] == pytest.approx(1.0, abs=1e-12)
+
+
 def test_quick_pipeline_includes_dimensionless_numbers():
     """The quick pipeline must include dimensionless numbers for quasi-static audit."""
     result = run_biaxial_friction_case(quick=True)
