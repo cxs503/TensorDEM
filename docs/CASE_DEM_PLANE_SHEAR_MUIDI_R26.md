@@ -89,19 +89,50 @@ The monodisperse seed is already crystalline at `psi6 = 0.886` (consistent with 
 0.819 → 0.114 → 0.079. `Z` here is a *seed* value (the bed is loose, not yet
 compacted) and is not the isostatic coordination of the sheared state.
 
-### ③b `mu(I)` and `phi(I)` after compaction — **not_run (queued)**
+### ③b `mu(I)` and `phi(I)` after compaction — **drained, measured (m24435)**
 
 The 9-point sweep (`I in {0.02, 0.05, 0.2}` x `w in {0, 0.25, 0.5}`, script
-`benchmarks/plane_shear_mu_i/run_polydispersity_r26.sh`) was submitted to the cluster as
-**`cj4227`** and had not drained when this document closed (queue position 56, ~55 jobs
-ahead). `benchmarks/plane_shear_mu_i/analyse_polydispersity_r26.py` reads
-`runs/plane_shear_2d/poly_w*_I*.json` and emits the `mu`/`phi` table with
-`reference_law.ref_mu/ref_phi` and the relative error per point — one command after the
-job drains, no code change.
+`benchmarks/plane_shear_mu_i/run_polydispersity_r26.sh`, cluster job `cj4227`) drained
+and `benchmarks/plane_shear_mu_i/analyse_polydispersity_r26.py` emitted the table
+(`docs/m22550/outputs/r26/r26_sweep_table.json`, figure
+`docs/figures/r26_mu_phi_vs_law.png`).  `I` is the *measured* inertial number; the
+reference is `reference_law.ref_mu/ref_phi` (da Cruz et al. 2005 / GDR MiDi 2004,
+`mu(I) = 0.36 + 0.48/(0.30/I + 1)`, `phi(I) = 0.64 - 0.06/(0.30/I + 1)`).
 
-**This round therefore does not claim the ledger acceptance is met, nor that it is
-refuted.** What it establishes is that the mechanism round 25 recommended now exists,
-is tested, and — at the seed level — does what it was supposed to do.
+| `w` | `I` (meas.) | `mu_wall` | `ref_mu` | `mu` err | `phi_gap` | `ref_phi` | `psi6` |
+|---|---|---|---|---|---|---|---|
+| 0.00 | 0.0259 | 0.0448 | 0.398 | **88.7 %** | 0.875 | 0.635 | 0.937 |
+| 0.00 | 0.0669 | 0.0593 | 0.447 | **86.7 %** | 0.875 | 0.629 | 0.914 |
+| 0.00 | 0.2383 | 0.1156 | 0.573 | **79.8 %** | 0.873 | 0.613 | 0.957 |
+| 0.25 | 0.0208 | 0.1379 | 0.391 | **64.7 %** | 0.816 | 0.636 | 0.448 |
+| 0.25 | 0.0502 | 0.1160 | 0.429 | **72.9 %** | 0.809 | 0.631 | 0.436 |
+| 0.25 | 0.2092 | 0.1639 | 0.557 | **70.6 %** | 0.801 | 0.615 | 0.465 |
+| 0.50 | 0.0199 | 0.1278 | 0.390 | **67.2 %** | 0.815 | 0.636 | 0.397 |
+| 0.50 | 0.0474 | 0.1543 | 0.426 | **63.7 %** | 0.812 | 0.632 | 0.401 |
+| 0.50 | 0.1730 | 0.1616 | 0.536 | **69.8 %** | 0.808 | 0.618 | 0.376 |
+
+**Reading.** The size spread does what round 25 asked of it, and then stops there:
+
+* **the crystal is broken.** `psi6` falls `0.91...0.96 -> 0.38...0.47` and the hexatic
+  fraction `0.82...0.93 -> 0.05...0.11`; the bed is disordered at every `w > 0`.
+* **`mu` leaves the frictionless branch but does not reach the law.** At `w = 0` the
+  device sits on the frictionless branch (`mu_wall = 0.045...0.116`,
+  `psi6 > 0.9`); at `w = 0.5` it rises to `0.128...0.162` — a factor
+  ~2.5-3 higher — yet stays `64...70 %` below `ref_mu` at every `I`. The crystal was a
+  *necessary* defect, not the whole story.
+* **`phi` is high, not low.** `phi_gap = 0.80...0.88` against `ref_phi = 0.61...0.64`
+  (`+28...+42 %`); the 2-D disk bed is denser than the 3-D
+  glass-bead reference it is compared to (the reference's own provenance is unverified,
+  see ⑤).
+* **`mu` rises with `I`** at every `w` (the qualitative rheology is right) and the
+  spread `w` shifts the curve up monotonically — the direction round 25 predicted — but
+  the *magnitude* is off by a factor ~3 at every `I`.
+
+**This round therefore refutes the strong form of the round-25 hypothesis** ("breaking
+the compaction crystal repairs the 2-D device to ledger acceptance") **and confirms the
+weak form** ("the crystal was a real, measurable defect on the frictionless branch").
+The residual is a *magnitude* gap, not a *branch* gap: the device now shears as a
+disordered granular material, but its wall friction is ~3x below the archived law.
 
 ## ④ Error / evidence verdict (honest)
 
@@ -111,12 +142,10 @@ is tested, and — at the seed level — does what it was supposed to do.
 | mean-radius invariance of the draw | exact | `|mean/r - 1| < 1e-15` | **PASS** (test) |
 | size-contrast bound at `w = 0.5` | `<= 3.0` | 2.995 | **PASS** |
 | seed disorder (hexatic fraction) | `< 0.5` | 0.079 at `w = 0.5` | **PASS** |
-| `mu(I)` within 10 % of the law | < 10 % | **not_run** (`cj4227` queued) | **WITHHELD** |
-| `phi(I)` within 10 % of the law | < 10 % | **not_run** (`cj4227` queued) | **WITHHELD** |
+| `mu(I)` within 10 % of the law | < 10 % | `mu_wall` `64...89 %` below `ref_mu` (best `63.7 %` at `w=0.5, I=0.047`) | **FAIL** |
+| `phi(I)` within 10 % of the law | < 10 % | `phi_gap` `+28...+42 %` vs `ref_phi` (reference provenance unverified) | **FAIL** (ref WITHHELD) |
 
-**Is any key transport quantity within 3 % of its reference? No claim is made**: the only
-quantities measured here are device/seed properties with exact criteria, and the
-`mu`/`phi` ordinates were not computed.
+**Is any key transport quantity within 3 % of its reference? No.** The drained sweep measures `mu_wall` and `phi_gap` at nine `(I, w)` points; the best `mu` agreement is `63.7 %` (`w=0.5, I=0.047`) and the best `phi` agreement is `+28 %` (`w=0.5, I=0.020`), so no transport quantity is within 3 % — or 10 % — of the archived law.
 
 ## ⑤ Notes, scope, limits
 
@@ -139,15 +168,20 @@ quantities measured here are device/seed properties with exact criteria, and the
   `CASE-DEM-PLANE-SHEAR-MUIDI` 3-D offset (+29 %), which round 24's hypothesis failed to
   explain and which stays unexplained.
 
-## ⑥ Next step (one command, already queued)
+## ⑥ Next step (the residual is a magnitude gap, not a branch gap)
 
-Drain `cj4227`; then
-`python3 benchmarks/plane_shear_mu_i/analyse_polydispersity_r26.py`.
-If `mu_wall` at `w = 0.5` approaches `0.22 + I` and `phi` drops towards the reference,
-the crystal diagnosis is confirmed *and* the 2-D device is repairable in the direction
-round 25 predicted; if `mu` stays on the frictionless branch with `psi6 < 0.5`, then the
-crystal was **not** the whole story and the wall slip / stress-path terms must be
-re-examined before any ledger amendment is requested.
+The drained sweep (m24435) shows the crystal was a *necessary* defect, not the whole
+story: breaking it lifts `mu` off the frictionless branch (x2.5-3) but leaves it ~3x
+below `ref_mu` at every `I`, and `phi` sits `+28...+42 %` against the
+(provenance-unverified) reference.  The next lever is therefore the **wall / stress-path
+terms**, not the seed:
+
+* the wall is a fixed rough row at `mu_p = 0.4` while the law's `mu_s = 0.36` is a
+  *bulk* friction — the wall friction and the normal-stress path must be re-examined;
+* `p_wall_over_P` drifts `0.93...1.36` across the sweep, so the constant-P servo is not
+  holding the wall stress at `P` at high `I` — a stress-path correction is needed before
+  any further `mu` comparison;
+* no ledger amendment is requested on this evidence.
 
 ## ⑦ Ledger
 
