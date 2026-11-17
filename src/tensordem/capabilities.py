@@ -60,6 +60,23 @@ class _cap_dem_bedcoupling:
     """capability marker for dem.bedcoupling"""
 
 @capability(
+    id='dem.brash_ice_rheology',
+    kind='ice',
+    maturity='developing',
+    module_path='tensordem.brash_ice_rheology',
+    entry='reference_anchor',
+    params={},
+    wired=True,
+    tested=True,
+    verified=False,
+    test_path='tests/test_brash_ice_rheology_mu_i_resistance.py',
+    evidence={'grade': 'B', 'note': 'test binding'},
+    endpoint=None,
+)
+class _cap_dem_brash_ice_rheology:
+    """capability marker for dem.brash_ice_rheology"""
+
+@capability(
     id='dem.breakage_pbm',
     kind='fracture',
     maturity='developing',
