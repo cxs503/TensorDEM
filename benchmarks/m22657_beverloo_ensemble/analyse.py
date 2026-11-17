@@ -8,6 +8,14 @@ is allowed to rescue the tolerance.
 
 Everything is computed from the per-case JSON files that
 ``python -m tensordem.silo_flow.study beverloo`` wrote; nothing is hand copied.
+
+Arrest handling (m23184 rule, in main since #1748): a record whose
+``discharge_status`` is ``ARRESTED`` describes a bed that arched over the
+orifice; its "flow rate" is an arch, not a measurement of the law.  Such
+records are reported as-is in ``per_seed`` (prereg.md §7: never resampled)
+but are excluded from the ensemble mean, the CI and the V1/V2/V3 verdicts.
+With fewer than two flowing seeds the verdict is ``NOT_DECIDABLE`` with the
+arching diagnosis - never a point FAIL that would blame the law.
 """
 from __future__ import annotations
 
@@ -229,11 +237,20 @@ def analyse(run_dir: Path | str | None = None, ref_path: Path | str | None = Non
         n_counted = float(np.sum(used)) * window_time / m_particle if m_particle else float("nan")
         trend = window_trend(used)
         noise = poisson_noise_budget([n_counted / n_steady] * n_steady, m_particle, window_time)
-        rates.append(W)
-        rhos.append(rho_b)
+        # m23184 rule: an arrested record (bed arched over the orifice) measures
+        # an arch, not a flow rate - it is reported as-is (prereg.md §7) but must
+        # never be averaged into the Beverloo verdict.
+        status = c.get("discharge_status") or {}
+        arrested = bool(status.get("arrested", False))
+        if not arrested:
+            rates.append(W)
+            rhos.append(rho_b)
         summary["per_seed"].append({
             "seed": c["_seed"],
             "file": Path(c["_path"]).name,
+            "discharge_status": status.get("status", "UNKNOWN"),
+            "arrested": arrested,
+            "arrest_reasons": list(status.get("reasons", [])),
             "orifice_diameter_m": D,
             "particle_diameter_m": d,
             "D_over_d": D / d,
@@ -254,6 +271,33 @@ def analyse(run_dir: Path | str | None = None, ref_path: Path | str | None = Non
             "n_final": int(c.get("n_final", -1)),
             "dt": float(c.get("dt", float("nan"))),
         })
+
+    n_arrested = len(cases) - len(rates)
+    summary["n_arrested"] = n_arrested
+    summary["arrested_seeds"] = [p["seed"] for p in summary["per_seed"] if p["arrested"]]
+    rho_all = [p["rho_bulk_kg_m3"] for p in summary["per_seed"]]
+    rho_spread = (max(rho_all) - min(rho_all)) / float(np.mean(rho_all))
+    if len(rates) < 2:
+        # fewer than two flowing seeds: no interval can be formed, and an
+        # arrested rate must not be averaged in (m23184) - the honest verdict
+        # is NOT_DECIDABLE with the arching diagnosis, not a point FAIL.
+        summary["ensemble"] = {}
+        summary["verdicts"] = {
+            "V1_ledger": "NOT_DECIDABLE",
+            "V2_reproducibility": "NOT_DECIDABLE",
+            "V3_steady_state": "NOT_DECIDABLE",
+            "V4_rho_control": "PASS" if rho_spread < RHO_SPREAD_TOL else "FAIL",
+            "supporting": {
+                "n_flow_seeds": len(rates),
+                "n_arrested_seeds": n_arrested,
+                "V4_relative_rho_spread": rho_spread,
+            },
+        }
+        summary["note"] = (
+            f"{n_arrested} of {len(cases)} seeds are ARRESTED (arching at the orifice); "
+            "arrested records are excluded from the ensemble (m23184 rule) and "
+            f"only {len(rates)} flowing seed(s) remain - no interval verdict is possible")
+        return summary
 
     stats = ensemble_stats(np.asarray(rates))
     # reference at the ensemble-mean bulk density, so the verdict is one number
@@ -279,10 +323,13 @@ def analyse(run_dir: Path | str | None = None, ref_path: Path | str | None = Non
         "ci_half_width_rel": 0.5 * (rel_hi - rel_lo),
         "C_recovered_ensemble": stats["mean_kg_s"] / (
             rho_mean * math.sqrt(9.81) * (c0["orifice_diameter_m"] - k_lit * c0["particle_diameter_m"]) ** 2.5),
-        "single_seed_rel_err": [p["rel_err"] for p in summary["per_seed"]],
-        "single_seed_worst_rel_err": max(abs(p["rel_err"]) for p in summary["per_seed"]),
+        "single_seed_rel_err": [p["rel_err"] for p in summary["per_seed"] if not p["arrested"]],
+        "single_seed_worst_rel_err": max(abs(p["rel_err"])
+                                        for p in summary["per_seed"] if not p["arrested"]),
         "expected_rel_noise_mean": float(np.mean([p["poisson_budget"]["expected_rel_noise"]
-                                                  for p in summary["per_seed"]])),
+                                                  for p in summary["per_seed"] if not p["arrested"]])),
+        "n_flow_seeds": len(rates),
+        "n_arrested_seeds": n_arrested,
     }
 
     # ---- verdicts (frozen rules, prereg.md §6)
@@ -295,9 +342,9 @@ def analyse(run_dir: Path | str | None = None, ref_path: Path | str | None = Non
     else:
         v1 = "NOT_DECIDABLE"
     v2 = "PASS" if stats["cv"] < REPRO_TOL else "FAIL"
-    drifts = [abs(p["window_trend"]["rel_drift"]) for p in summary["per_seed"]]
+    drifts = [abs(p["window_trend"]["rel_drift"])
+              for p in summary["per_seed"] if not p["arrested"]]
     v3 = "PASS" if max(drifts) < STEADY_DRIFT_TOL else "FAIL"
-    rho_spread = (max(rhos) - min(rhos)) / rho_mean
     v4 = "PASS" if rho_spread < RHO_SPREAD_TOL else "FAIL"
     summary["verdicts"] = {
         "V1_ledger": v1,
@@ -310,6 +357,8 @@ def analyse(run_dir: Path | str | None = None, ref_path: Path | str | None = Non
             "V2_cv": stats["cv"],
             "V3_max_abs_rel_drift": max(drifts),
             "V4_relative_rho_spread": rho_spread,
+            "n_flow_seeds": len(rates),
+            "n_arrested_seeds": n_arrested,
         },
     }
     return summary
