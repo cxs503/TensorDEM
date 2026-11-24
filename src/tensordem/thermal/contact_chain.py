@@ -295,6 +295,36 @@ def _chain_laplacian(conductance):
     return sp.diags([-conductance, diag, -conductance], [-1, 0, 1], format="csr")
 
 
+def cell_centered_slab_network(widths, conductivity, volumetric_heat_capacity, *,
+                               area=1., contact_resistance=0., films=(None, None)):
+    """Build links [K/W] and capacities [J/K] for a fixed 1D material stack.
+
+    Widths in m, k in W/(m K), volumetric capacity in J/(m³ K), area in m².
+    Each cell stores its full capacity at its centre. Internal contact
+    resistances (m² K/W) sit between adjacent half cells. The two end nodes
+    are prescribed reservoirs of zero capacity. A positive film coefficient
+    (W/(m² K)) adds external resistance; None prescribes the surface temperature.
+    """
+    widths = np.asarray(widths, dtype=float)
+    if widths.ndim != 1 or not widths.size or not np.isfinite(widths).all() or np.any(widths <= 0):
+        raise ChainError("supply a finite positive width for each cell")
+    area = _finite("area", area, positive=True)
+    k, cv = (np.broadcast_to(np.asarray(v, dtype=float), widths.shape)
+             for v in (conductivity, volumetric_heat_capacity))
+    if any(not np.isfinite(v).all() or np.any(v <= 0) for v in (k, cv)):
+        raise ChainError("conductivity and volumetric heat capacity must be finite and positive")
+    contacts = np.asarray(contact_resistance, dtype=float)
+    if not np.isfinite(contacts).all() or np.any(contacts < 0):
+        raise ChainError("contact resistance must be finite and nonnegative")
+    contacts = np.broadcast_to(contacts, (widths.size - 1,))
+    left, right = films
+    film_r = [0. if h is None else 1/_finite("film coefficient", h, positive=True) for h in (left, right)]
+    half = .5 * widths / k
+    links = np.r_[film_r[0]+half[0], half[:-1]+contacts+half[1:], half[-1]+film_r[1]] / area
+    capacity = np.r_[0., widths*area*cv, 0.]
+    return links, capacity
+
+
 def transient_contact_temperatures(link_resistance, heat_capacity, time, initial_temperature,
                                    *, t_left=None, t_right=None, nodal_power=0., theta=.5):
     """Integrate a fixed 1D contact network, returning temperatures [time,node].

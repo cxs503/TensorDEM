@@ -289,3 +289,24 @@ def test_zero_capacity_requires_a_prescribed_reservoir():
         transient_contact_temperatures([1.], [0., 1.], [0., 1.], [0., 1.])
     with pytest.raises(ChainError, match="sampled at each time"):
         transient_contact_temperatures([1.], [0., 1.], [0., 1.], [0., 1.], t_left=[5.])
+
+
+def test_cell_centered_slab_resistances_and_capacity_for_nonuniform_cells():
+    from tensordem.thermal import cell_centered_slab_network
+
+    links, capacity = cell_centered_slab_network(
+        [.2, .5, .3], [2., 5., 1.], [3., 4., 2.], area=2.,
+        contact_resistance=[.1, .2], films=(None, 4.))
+    np.testing.assert_allclose(links, [.025, .1, .2, .2])
+    np.testing.assert_allclose(capacity, [0., 1.2, 4., 1.2, 0.])
+
+
+def test_one_cell_between_films_relaxes_to_conductance_weighted_ambient():
+    from tensordem.thermal import cell_centered_slab_network, transient_contact_temperatures
+
+    links, capacity = cell_centered_slab_network([.5], 2., 4., area=2., films=(8., None))
+    time = np.linspace(0, .1, 101)
+    result = transient_contact_temperatures(links, capacity, time, [0., 0., 0.], t_left=6., t_right=3.)
+    # Link conductances 8 and 16 W/K, total capacity 4 J/K, equilibrium 4 K.
+    expected = 4 * (1 - np.exp(-6*time))
+    np.testing.assert_allclose(result[:, 1], expected, rtol=0, atol=4e-6)

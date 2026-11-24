@@ -52,6 +52,7 @@ from .contact_chain import (
     ice_bond_tensile_strength,
     lattice_network_temperatures,
     transient_contact_temperatures,
+    cell_centered_slab_network,
     sphere_bulk_resistance,
     square_lattice_resistance,
 )
@@ -86,6 +87,7 @@ __all__ = [
     "ice_bond_tensile_strength",
     "lattice_network_temperatures",
     "transient_contact_temperatures",
+    "cell_centered_slab_network",
     "sphere_bulk_resistance",
     "square_lattice_resistance",
     "CONDUCTIVITY_RATIO_SCAN",
