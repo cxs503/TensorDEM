@@ -310,3 +310,25 @@ def test_one_cell_between_films_relaxes_to_conductance_weighted_ambient():
     # Link conductances 8 and 16 W/K, total capacity 4 J/K, equilibrium 4 K.
     expected = 4 * (1 - np.exp(-6*time))
     np.testing.assert_allclose(result[:, 1], expected, rtol=0, atol=4e-6)
+
+
+def test_harmonic_contact_chain_matches_complex_single_store_response():
+    from tensordem.thermal import harmonic_contact_temperatures
+
+    left, right, drive = 1.+2j, -.3j, 1.-.5j
+    for omega in (.05, 3., 50.):
+        field = harmonic_contact_temperatures([.5, 2.], [0., 4., 0.], omega,
+                                              t_left=left, t_right=right, nodal_power=[0., drive, 0.])
+        expected = (2*left + .5*right + drive)/(2.5+4j*omega)
+        np.testing.assert_allclose(field, [left, expected, right], atol=1e-14, rtol=0.)
+
+
+def test_harmonic_insulated_chain_uniform_source_and_pinned_pair():
+    from tensordem.thermal import harmonic_contact_temperatures
+
+    field = harmonic_contact_temperatures([.4, .2], [1., 2., 3.], 2., nodal_power=[3., 6., 9.])
+    np.testing.assert_allclose(field, -1.5j, atol=1e-14, rtol=0.)
+    np.testing.assert_array_equal(harmonic_contact_temperatures([1.], 0., 2., t_left=1j, t_right=2.),
+                                  [1j, 2.])
+    with pytest.raises(ChainError):
+        harmonic_contact_temperatures([1.], [0., 1.], 2.)

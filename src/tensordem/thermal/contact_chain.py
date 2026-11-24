@@ -84,6 +84,7 @@ __all__ = [
     "chain_resistance",
     "contact_conductance",
     "contact_constriction_resistance",
+    "harmonic_contact_temperatures",
     "hertz_contact_radius",
     "ice_bond_tensile_strength",
     "lattice_network_temperatures",
@@ -325,6 +326,45 @@ def cell_centered_slab_network(widths, conductivity, volumetric_heat_capacity, *
     return links, capacity
 
 
+def _link_resistances(link_resistance):
+    r = np.asarray(link_resistance, dtype=float)
+    if r.ndim != 1 or not r.size or not np.isfinite(r).all() or np.any(r <= 0):
+        raise ChainError("supply a positive finite resistance for each link")
+    return r
+
+
+def harmonic_contact_temperatures(link_resistance, heat_capacity, angular_frequency, *,
+                                  t_left=None, t_right=None, nodal_power=0.):
+    """Return complex nodal temperatures for a fixed 1-D thermal network.
+
+    Signals use Re(phasor * exp(i*omega*t)), with omega in rad/s. Resistances
+    are in K/W, capacities in J/K, prescribed end amplitudes in K and nodal
+    powers in W. None leaves an endpoint free of imposed temperature.
+    """
+    omega = _finite("angular frequency", angular_frequency, positive=True)
+    r = _link_resistances(link_resistance)
+    n = len(r) + 1
+    capacity = np.broadcast_to(np.asarray(heat_capacity, dtype=float), (n,))
+    power = np.broadcast_to(np.asarray(nodal_power, dtype=complex), (n,))
+    if not np.isfinite(capacity).all() or np.any(capacity < 0) or not np.isfinite(power).all():
+        raise ChainError("capacity must be nonnegative and nodal inputs must be finite")
+    free = np.ones(n, dtype=bool)
+    temperature = np.zeros(n, dtype=complex)
+    for index, value in ((0, t_left), (-1, t_right)):
+        if value is not None:
+            if np.ndim(value) != 0 or not np.isfinite(value):
+                raise ChainError("wall temperature must be a finite scalar phasor")
+            temperature[index] = value
+            free[index] = False
+    if np.any(capacity[free] <= 0):
+        raise ChainError("free thermal nodes require positive capacity")
+    if free.any():
+        operator = _chain_laplacian(1/r) + sp.diags(1j*omega*capacity)
+        forcing = power[free] - operator[free][:, ~free] @ temperature[~free]
+        temperature[free] = sp.linalg.spsolve(operator[free][:, free].tocsc(), forcing)
+    return temperature
+
+
 def transient_contact_temperatures(link_resistance, heat_capacity, time, initial_temperature,
                                    *, t_left=None, t_right=None, nodal_power=0., theta=.5):
     """Integrate a fixed 1D contact network, returning temperatures [time,node].
@@ -337,9 +377,7 @@ def transient_contact_temperatures(link_resistance, heat_capacity, time, initial
     reservoir to the wall node, which retains its own heat capacity.
     The theta method spans Crank–Nicolson (0.5) to backward Euler (1).
     """
-    r = np.asarray(link_resistance, dtype=float)
-    if r.ndim != 1 or not r.size or not np.isfinite(r).all() or np.any(r <= 0):
-        raise ChainError("supply a positive finite resistance for each link")
+    r = _link_resistances(link_resistance)
     n = r.size + 1
     capacity, power, initial = (np.broadcast_to(np.asarray(v, dtype=float), (n,))
                                 for v in (heat_capacity, nodal_power, initial_temperature))
