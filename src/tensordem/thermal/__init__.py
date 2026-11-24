@@ -51,6 +51,7 @@ from .contact_chain import (
     hertz_contact_radius,
     ice_bond_tensile_strength,
     lattice_network_temperatures,
+    transient_contact_temperatures,
     sphere_bulk_resistance,
     square_lattice_resistance,
 )
@@ -84,6 +85,7 @@ __all__ = [
     "hertz_contact_radius",
     "ice_bond_tensile_strength",
     "lattice_network_temperatures",
+    "transient_contact_temperatures",
     "sphere_bulk_resistance",
     "square_lattice_resistance",
     "CONDUCTIVITY_RATIO_SCAN",

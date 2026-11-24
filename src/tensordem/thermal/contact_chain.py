@@ -288,6 +288,60 @@ def lattice_network_temperatures(nx: int, ny: int, r_link: float | tuple,
     return t.reshape(nx, ny)
 
 
+def _chain_laplacian(conductance):
+    diag = np.zeros(len(conductance) + 1)
+    diag[:-1] += conductance
+    diag[1:] += conductance
+    return sp.diags([-conductance, diag, -conductance], [-1, 0, 1], format="csr")
+
+
+def transient_contact_temperatures(link_resistance, heat_capacity, time, initial_temperature,
+                                   *, t_left=None, t_right=None, nodal_power=0., theta=.5):
+    """Integrate a fixed 1D contact network, returning temperatures [time,node].
+
+    Each link has a resistance in K/W. Each node stores heat with a positive
+    capacity in J/K and can receive constant power in W. End temperatures
+    default to insulated and may be pinned individually (including at t=0).
+    The theta method spans Crank–Nicolson (0.5) to backward Euler (1).
+    """
+    r = np.asarray(link_resistance, dtype=float)
+    if r.ndim != 1 or not r.size or not np.isfinite(r).all() or np.any(r <= 0):
+        raise ChainError("supply a positive finite resistance for each link")
+    n = r.size + 1
+    capacity, power, initial = (np.broadcast_to(np.asarray(v, dtype=float), (n,))
+                                for v in (heat_capacity, nodal_power, initial_temperature))
+    if not all(np.isfinite(v).all() for v in (capacity, power, initial)) or np.any(capacity <= 0):
+        raise ChainError("capacity must be positive and nodal inputs must be finite")
+    time = np.asarray(time, dtype=float)
+    if time.ndim != 1 or time.size < 2 or not np.isfinite(time).all() or np.any(np.diff(time) <= 0):
+        raise ChainError("time must be a strictly increasing finite vector")
+    if not .5 <= theta <= 1:
+        raise ChainError("theta must lie in [0.5, 1]")
+
+    history = np.broadcast_to(initial, (len(time), n)).copy()
+    free = np.ones(n, dtype=bool)
+    for i, wall in ((0, t_left), (-1, t_right)):
+        if wall is not None:
+            history[:, i] = _finite("wall temperature", wall)
+            free[i] = False
+    if not free.any():
+        return history
+
+    laplacian = _chain_laplacian(1 / r)
+    forcing = power[free] - laplacian[free][:, ~free] @ history[0, ~free]
+    operator = laplacian[free][:, free].tocsc()
+    mass = sp.diags(capacity[free], format="csc")
+    previous_dt = None
+    for i, dt in enumerate(np.diff(time)):
+        if dt != previous_dt:
+            lu = sp.linalg.splu(mass + theta * dt * operator)
+            previous_dt = dt
+        current = history[i, free]
+        rhs = capacity[free] * current + dt * (forcing - (1-theta) * (operator @ current))
+        history[i+1, free] = lu.solve(rhs)
+    return history
+
+
 # ------------------------------------------------------------------- chain FVM
 @dataclass(frozen=True)
 class ChainCase:
@@ -382,14 +436,7 @@ class ThermalChain:
     # ------------------------------------------------------------- operators
     def conduction_matrix(self) -> sp.csr_matrix:
         """Sparse Laplacian of the network (both end nodes included)."""
-        n_nodes = self.n_nodes
-        g = self.link_conductance
-        main = np.zeros(n_nodes)
-        main[:-1] += g
-        main[1:] += g
-        off = -g
-        return sp.diags([off, main, off], offsets=[-1, 0, 1],
-                        format="csr", shape=(n_nodes, n_nodes))
+        return _chain_laplacian(self.link_conductance)
 
     def _dirichlet_matrix(self) -> sp.csr_matrix:
         mat = self.conduction_matrix().tolil()

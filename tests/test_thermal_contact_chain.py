@@ -231,3 +231,32 @@ def test_edge_resistance_shape_and_positivity():
     for edges in ((np.ones((3, 2)), 1.), (1., 0.), (np.nan, 1.)):
         with pytest.raises(ChainError):
             lattice_network_temperatures(3, 2, edges, 10., 0.)
+
+
+def test_insulated_unequal_capacity_pair_preserves_heat_and_relaxes_at_exact_rate():
+    from tensordem.thermal import transient_contact_temperatures
+
+    # Total heat is 12 J and equilibrium is 2 K. The temperature difference
+    # decays at (1/R)*(1/C1+1/C2) = 1.5 per second.
+    errors = []
+    for steps in (10, 20, 40):
+        time = np.linspace(0., 1., steps+1)
+        temperatures = transient_contact_temperatures([.5], [2., 4.], time, [6., 0.])
+        exact = 2 + np.exp(-1.5 * time[:, None]) * [4., -2.]
+        errors.append(np.abs(temperatures - exact).max())
+        np.testing.assert_allclose(temperatures @ [2., 4.], 12., rtol=0, atol=1e-13)
+    assert all(a / b > 3.9 for a, b in zip(errors, errors[1:]))
+
+
+def test_power_and_single_thermostat_on_nonuniform_times():
+    from tensordem.thermal import transient_contact_temperatures
+
+    time = [0., .05, .17, .5]
+    # 2 W balances the link loss (9-5)/2. The thermostat overrides its
+    # initial temperature and supplies the opposing reaction.
+    for theta in (.5, 1.):
+        temp = transient_contact_temperatures([2.], [3., 2.], time, [9., -1.],
+                                             t_right=5., nodal_power=[2., 0.], theta=theta)
+        np.testing.assert_allclose(temp, np.tile([9., 5.], (len(time), 1)), atol=1e-13)
+    temp = transient_contact_temperatures([2.], [3., 2.], time, [9., 5.], nodal_power=[5., -2.])
+    np.testing.assert_allclose((temp - temp[0]) @ [3., 2.], 3 * np.asarray(time), atol=1e-13)
