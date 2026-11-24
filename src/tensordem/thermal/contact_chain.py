@@ -301,7 +301,10 @@ def transient_contact_temperatures(link_resistance, heat_capacity, time, initial
 
     Each link has a resistance in K/W. Each node stores heat with a positive
     capacity in J/K and can receive constant power in W. End temperatures
-    default to insulated and may be pinned individually (including at t=0).
+    default to insulated. A scalar or a vector sampled at the requested times
+    pins an end, including at t=0. A pinned reservoir may have zero capacity;
+    a film of conductance h*A is a link of resistance 1/(h*A) from that
+    reservoir to the wall node, which retains its own heat capacity.
     The theta method spans Crank–Nicolson (0.5) to backward Euler (1).
     """
     r = np.asarray(link_resistance, dtype=float)
@@ -310,8 +313,8 @@ def transient_contact_temperatures(link_resistance, heat_capacity, time, initial
     n = r.size + 1
     capacity, power, initial = (np.broadcast_to(np.asarray(v, dtype=float), (n,))
                                 for v in (heat_capacity, nodal_power, initial_temperature))
-    if not all(np.isfinite(v).all() for v in (capacity, power, initial)) or np.any(capacity <= 0):
-        raise ChainError("capacity must be positive and nodal inputs must be finite")
+    if not all(np.isfinite(v).all() for v in (capacity, power, initial)) or np.any(capacity < 0):
+        raise ChainError("capacity must be nonnegative and nodal inputs must be finite")
     time = np.asarray(time, dtype=float)
     if time.ndim != 1 or time.size < 2 or not np.isfinite(time).all() or np.any(np.diff(time) <= 0):
         raise ChainError("time must be a strictly increasing finite vector")
@@ -322,13 +325,19 @@ def transient_contact_temperatures(link_resistance, heat_capacity, time, initial
     free = np.ones(n, dtype=bool)
     for i, wall in ((0, t_left), (-1, t_right)):
         if wall is not None:
-            history[:, i] = _finite("wall temperature", wall)
+            trace = np.asarray(wall, dtype=float)
+            if trace.shape not in ((), time.shape) or not np.isfinite(trace).all():
+                raise ChainError("wall temperature must be finite and scalar or sampled at each time")
+            history[:, i] = trace
             free[i] = False
+    if np.any(capacity[free] <= 0):
+        raise ChainError("free thermal nodes require positive capacity")
     if not free.any():
         return history
 
     laplacian = _chain_laplacian(1 / r)
-    forcing = power[free] - laplacian[free][:, ~free] @ history[0, ~free]
+    boundary = laplacian[free][:, ~free]
+    applied_power = power[free]
     operator = laplacian[free][:, free].tocsc()
     mass = sp.diags(capacity[free], format="csc")
     previous_dt = None
@@ -337,6 +346,8 @@ def transient_contact_temperatures(link_resistance, heat_capacity, time, initial
             lu = sp.linalg.splu(mass + theta * dt * operator)
             previous_dt = dt
         current = history[i, free]
+        wall = (1-theta) * history[i, ~free] + theta * history[i+1, ~free]
+        forcing = applied_power - boundary @ wall
         rhs = capacity[free] * current + dt * (forcing - (1-theta) * (operator @ current))
         history[i+1, free] = lu.solve(rhs)
     return history

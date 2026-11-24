@@ -260,3 +260,32 @@ def test_power_and_single_thermostat_on_nonuniform_times():
         np.testing.assert_allclose(temp, np.tile([9., 5.], (len(time), 1)), atol=1e-13)
     temp = transient_contact_temperatures([2.], [3., 2.], time, [9., 5.], nodal_power=[5., -2.])
     np.testing.assert_allclose((temp - temp[0]) @ [3., 2.], 3 * np.asarray(time), atol=1e-13)
+
+
+@pytest.mark.parametrize("theta", [.5, 1.])
+def test_sampled_massless_reservoir_and_nodal_energy_balance(theta):
+    from tensordem.thermal import transient_contact_temperatures
+
+    # One C=2 J/K node connected through R=.5 K/W to a ramp T_a=t.
+    # T'=t-T, T(0)=0 gives T=t-1+exp(-t).
+    errors = []
+    for steps in (8, 16, 32):
+        time = np.linspace(0., 1., steps+1)**1.2
+        t = transient_contact_temperatures([.5], [0., 2.], time, [100., 0.],
+                                           t_left=time, theta=theta)
+        np.testing.assert_array_equal(t[:, 0], time)
+        power = (time - t[:, 1]) / .5
+        heat = np.diff(time) @ ((1-theta)*power[:-1] + theta*power[1:])
+        assert abs(heat - 2*t[-1, 1]) < 1e-13
+        errors.append(np.max(abs(t[:, 1] - (time-1+np.exp(-time)))))
+    bound = 3.8 if theta == .5 else 1.9
+    assert all(a/b > bound for a, b in zip(errors, errors[1:]))
+
+
+def test_zero_capacity_requires_a_prescribed_reservoir():
+    from tensordem.thermal import transient_contact_temperatures
+
+    with pytest.raises(ChainError, match="positive capacity"):
+        transient_contact_temperatures([1.], [0., 1.], [0., 1.], [0., 1.])
+    with pytest.raises(ChainError, match="sampled at each time"):
+        transient_contact_temperatures([1.], [0., 1.], [0., 1.], [0., 1.], t_left=[5.])
