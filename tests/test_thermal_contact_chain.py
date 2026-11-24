@@ -202,3 +202,32 @@ def test_thermal_api_contract_three_modes():
         thermal_chain_calculation({"mode": "nope"})
     with pytest.raises(ChainError):
         thermal_chain_calculation("not a mapping")
+
+
+def test_lattice_internal_heating_matches_parabola():
+    i = np.arange(8)
+    expected = 0.5 * 3. * 2. * i * (7 - i)
+    result = lattice_network_temperatures(8, 3, 2., 0., 0., nodal_power=3.)
+    np.testing.assert_allclose(result, np.repeat(expected[:, None], 3, axis=1))
+
+
+def test_layered_contact_lattice_series_heat_flow():
+    rx = np.repeat(np.array([[1.], [4.], [2.], [8.]]), 3, axis=1)
+    t = lattice_network_temperatures(5, 3, (rx, 0.5), 320., 290.)
+    # Each parallel path has 15 K/W in series and carries 2 W.
+    np.testing.assert_allclose(t[:, 0], [320., 318., 310., 306., 290.], atol=1e-12, rtol=0)
+    np.testing.assert_allclose(-np.diff(t, axis=0) / rx, 2., atol=1e-12, rtol=0)
+
+
+def test_unequal_contacts_drive_transverse_heat_flow():
+    rx = np.array([[1., 3.], [3., 1.]])
+    t = lattice_network_temperatures(3, 2, (rx, 1.), 10., 0.)
+    # Interior balances are 7a - 3b = 30 and -3a + 7b = 10.
+    np.testing.assert_allclose(t[1], [6., 4.])
+    np.testing.assert_allclose(np.sum((10.-t[1])/rx[0]), np.sum(t[1]/rx[1]))
+
+
+def test_edge_resistance_shape_and_positivity():
+    for edges in ((np.ones((3, 2)), 1.), (1., 0.), (np.nan, 1.)):
+        with pytest.raises(ChainError):
+            lattice_network_temperatures(3, 2, edges, 10., 0.)

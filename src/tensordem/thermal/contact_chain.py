@@ -228,19 +228,43 @@ def square_lattice_resistance(nx: int, ny: int, r_link: float) -> float:
     return (int(nx) - 1) / int(ny) * r
 
 
-def lattice_network_temperatures(nx: int, ny: int, r_link: float,
-                                 t_left: float, t_right: float) -> np.ndarray:
-    """Solve the ``nx x ny`` lattice with both x-faces pinned (returns ``(nx, ny)``)."""
+def lattice_network_temperatures(nx: int, ny: int, r_link: float | tuple,
+                                 t_left: float, t_right: float, *, nodal_power=0.0) -> np.ndarray:
+    """Solve a lattice with pinned x faces and insulated y faces.
+
+    r_link is a uniform resistance in K/W or a pair (Rx, Ry). Each entry
+    is scalar or an array on the edges of its axis: (nx-1, ny) for Rx,
+    (nx, ny-1) for Ry. Rx[i,j] connects (i,j) to (i+1,j), and Ry[i,j]
+    connects (i,j) to (i,j+1). nodal_power is in W.
+    """
     if int(nx) < 2:
         raise ChainError("nx must be >= 2")
     if int(ny) < 1:
         raise ChainError("ny must be >= 1")
-    g = 1.0 / _finite("r_link", r_link, positive=True)
+    def conductance(resistance, shape):
+        values = np.asarray(resistance, dtype=float)
+        if values.ndim and values.shape != shape:
+            raise ChainError(f"edge resistance needs shape {shape}, got {values.shape}")
+        if not np.isfinite(values).all() or np.any(values <= 0):
+            raise ChainError("edge resistance must be finite and positive")
+        return np.broadcast_to(1.0 / values, shape)
+
+    if isinstance(r_link, tuple):
+        if len(r_link) != 2:
+            raise ChainError("r_link needs the pair (Rx, Ry)")
+        rx, ry = r_link
+    else:
+        rx = ry = r_link
+    gx = conductance(rx, (nx - 1, ny))
+    gy = conductance(ry, (nx, ny - 1))
     n_cells = nx * ny
     rows: list[int] = []
     cols: list[int] = []
     vals: list[float] = []
-    rhs = np.zeros(n_cells)
+    power = np.broadcast_to(np.asarray(nodal_power, dtype=float), (nx, ny))
+    if not np.isfinite(power).all():
+        raise ChainError("nodal_power must be finite")
+    rhs = power.flatten()
     for i in range(nx):
         for j in range(ny):
             node = i * ny + j
@@ -256,6 +280,7 @@ def lattice_network_temperatures(nx: int, ny: int, r_link: float,
                 ni, nj = i + di, j + dj
                 if not (0 <= ni < nx) or not (0 <= nj < ny):
                     continue
+                g = gx[min(i, ni), j] if di else gy[i, min(j, nj)]
                 rows.append(node); cols.append(node); vals.append(g)
                 rows.append(node); cols.append(ni * ny + nj); vals.append(-g)
     mat = sp.csr_matrix((vals, (rows, cols)), shape=(n_cells, n_cells))
