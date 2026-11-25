@@ -174,3 +174,49 @@ def test_case_validation_rejects_unphysical_inputs():
         Column3DCase(packing="ultra-loose")
     with pytest.raises(ValueError):
         Column3DCase(aspect_ratio=1.0, length=0.01, radius=0.005)
+
+
+@pytest.mark.parametrize("geometry", ["axisymmetric", "rectangular"])
+@pytest.mark.parametrize("contact_mode", ["reference", "one_sided"])
+def test_same_step_contact_force_during_collapse(geometry, contact_mode, monkeypatch, record_property):
+    from tensordem.granular_column import axisym, column3d
+
+    module = axisym if geometry == "axisymmetric" else column3d
+    original = module.pair_contact_forces
+    start_contacts = set()
+    errors = []
+
+    def observe(pos, vel, omega, iu, ju, state, mat, dt, **kwargs):
+        nonlocal start_contacts
+        result = original(pos, vel, omega, iu, ju, state, mat, dt, **kwargs)
+        i, j = np.triu_indices(len(pos), 1)
+        active = np.linalg.norm(pos[j] - pos[i], axis=1) < 2 * mat.radius
+        contacts = set(zip(i[active], j[active]))
+        if not kwargs["update_state"]:
+            start_contacts = contacts
+        else:
+            measured = dict(zip(zip(result["ia"], result["ja"]), result["f_n"]))
+            for a, b in contacts - start_contacts:
+                delta = pos[b] - pos[a]
+                distance = np.linalg.norm(delta)
+                closing_speed = np.dot(vel[a] - vel[b], delta) / distance
+                if contact_mode == "one_sided":
+                    closing_speed = max(0., closing_speed)
+                expected = max(0., mat.kn * (2 * mat.radius - distance) + mat.gamma_pair * closing_speed)
+                errors.append(abs(measured[a, b] - expected))
+        return result
+
+    monkeypatch.setattr(module, "pair_contact_forces", observe)
+    options = dict(contact_mode=contact_mode, detect_new_contacts_after_drift=True)
+    if geometry == "axisymmetric":
+        case = axisym.AxisymCase(aspect_ratio=1., radius=.03, grains_per_radius=3., **options)
+        positions = np.array([[0., 0., .03], [.001, 0., .0901]])
+        report = axisym.simulate_axisymmetric_column(case, initial_positions=positions, max_steps=320)
+    else:
+        case = column3d.Column3DCase(aspect_ratio=1., radius=.005, length=.04, **options)
+        report = column3d.simulate_column(case, max_steps=320)
+    assert report["case"]["detect_new_contacts_after_drift"]
+    assert errors
+    record_property("new_contact_events", len(errors))
+    record_property("max_abs_force_error_N", max(errors))
+    assert max(errors) < 1e-10

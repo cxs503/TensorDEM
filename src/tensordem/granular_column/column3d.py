@@ -103,6 +103,9 @@ class Column3DCase:
     #: (tension-cutoff dashpot of tensordem.granular3d_core)
     contact_mode: str = "reference"
     rest_hold: int = 300
+    #: Include newly overlapping pairs in the second velocity-Verlet half-kick.
+    #: False reproduces the archived start-of-step neighbour protocol.
+    detect_new_contacts_after_drift: bool = False
 
     def __post_init__(self) -> None:
         for name in ("aspect_ratio", "length", "radius", "density", "kn",
@@ -150,6 +153,9 @@ class Column3DCase:
                      "dt_scale", "duration_factor", "min_time",
                      "sample_stride"):
             out[name] = getattr(self, name)
+        if self.detect_new_contacts_after_drift:
+            out["detect_new_contacts_after_drift"] = True
+            out["contact_mode"] = self.contact_mode
         out["height"] = self.height
         return out
 
@@ -224,13 +230,12 @@ def simulate_column(case: Column3DCase, *, return_positions: bool = True,
     back = x0_back
     rest_counter = 0
     max_contacts = 0
-    iu = np.zeros(0, dtype=np.int64)
-    ju = np.zeros(0, dtype=np.int64)
     stop_reason = "time_limit"
 
+    pairs = build_pairs(pos, mat.radius)
     for step in range(n_steps):
         # --- predictor: contact forces at (x, v, omega), springs untouched
-        iu, ju = build_pairs(pos, mat.radius)
+        iu, ju = pairs
         pred = pair_contact_forces(pos, vel, omega, iu, ju, pair_state, mat, dt,
                                    update_state=False,
                                    contact_mode=case.contact_mode)
@@ -243,6 +248,9 @@ def simulate_column(case: Column3DCase, *, return_positions: bool = True,
         v_half = vel + 0.5 * dt * acc
         w_half = omega + 0.5 * dt * alpha
         pos += v_half * dt
+        pairs = build_pairs(pos, mat.radius)
+        if case.detect_new_contacts_after_drift:
+            iu, ju = pairs
 
         # --- corrector: forces at the new positions, springs advanced once
         cur = pair_contact_forces(pos, v_half, w_half, iu, ju, pair_state, mat,

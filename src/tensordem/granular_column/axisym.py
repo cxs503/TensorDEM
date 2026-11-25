@@ -165,6 +165,9 @@ class AxisymCase:
     t_reach_fraction: float = 0.99
     contact_mode: str = "reference"
     label: str = ""
+    #: Include newly overlapping pairs in the second velocity-Verlet half-kick.
+    #: False reproduces the archived start-of-step neighbour protocol.
+    detect_new_contacts_after_drift: bool = False
 
     def __post_init__(self) -> None:
         for name in ("aspect_ratio", "grains_per_radius", "radius", "density",
@@ -209,7 +212,7 @@ class AxisymCase:
                           rolling_torsion=self.rolling_torsion)
 
     def signature(self) -> dict:
-        return {
+        out = {
             "case": "CASE-COLUMN-COLLAPSE",
             "reference": "Lube et al. 2004 JFM 508:175-199",
             "doi": LUBE2004_DOI,
@@ -242,6 +245,9 @@ class AxisymCase:
             "contact_mode": self.contact_mode,
             "label": self.label,
         }
+        if self.detect_new_contacts_after_drift:
+            out["detect_new_contacts_after_drift"] = True
+        return out
 
 
 def build_axisymmetric_column(case: AxisymCase) -> tuple[np.ndarray, Material3D]:
@@ -365,8 +371,9 @@ def simulate_axisymmetric_column(case: AxisymCase, *, return_positions: bool = T
     stop_reason = "time_limit"
     step = -1
 
+    pairs = build_pairs(pos, mat.radius)
     for step in range(n_steps):
-        iu, ju = build_pairs(pos, mat.radius)
+        iu, ju = pairs
         pred = pair_contact_forces(pos, vel, omega, iu, ju, pair_state, mat, dt,
                                    mu_i=mu_i,
                                    update_state=False, contact_mode=case.contact_mode)
@@ -380,6 +387,9 @@ def simulate_axisymmetric_column(case: AxisymCase, *, return_positions: bool = T
         v_half = vel + 0.5 * dt * acc
         w_half = omega + 0.5 * dt * alpha
         pos += v_half * dt
+        pairs = build_pairs(pos, mat.radius)
+        if case.detect_new_contacts_after_drift:
+            iu, ju = pairs
 
         cur = pair_contact_forces(pos, v_half, w_half, iu, ju, pair_state, mat, dt,
                                   mu_i=mu_i,
