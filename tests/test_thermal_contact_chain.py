@@ -673,3 +673,24 @@ def test_uniform_closed_chain_does_not_generate_heat_across_a_contact():
     np.testing.assert_array_equal(end,np.full_like(c,initial))
     np.testing.assert_array_equal(mean,end)
     np.testing.assert_array_equal(q,np.zeros(len(c)-1))
+
+
+def test_insulated_low_frequency_uniform_rate_does_not_change_link_heat():
+    from tensordem.thermal import harmonic_contact_interval, harmonic_contact_temperatures
+    c = np.array([2., 3.])
+    p = np.array([.7+.2j, -.7-.2j])
+    rate, omega, dt = .4+.6j, 1e-16, .5
+    opts = dict(t_left=None, t_right=None)
+    relative, measured = harmonic_contact_temperatures([.6], c, omega, nodal_power=p+c*rate,
+                                                        separate_mean=True, **opts)
+    np.testing.assert_allclose(measured, rate, atol=2e-15)
+    np.testing.assert_allclose(c@relative, 0., atol=2e-15)
+    np.testing.assert_allclose(-np.diff(relative)/.6, p[:1], atol=2e-15)
+    def interval(power):
+        return harmonic_contact_interval([.6], c, omega, 0., dt, [.4, -.6],
+                        nodal_power=power, return_interval_temperature=True, **opts)
+    end, heat, avg = interval(p)
+    driven, driven_heat, driven_avg = interval(p+c*rate)
+    np.testing.assert_allclose(driven-end, rate.real*dt, atol=2e-15, rtol=0)
+    np.testing.assert_allclose(driven_avg-avg, rate.real*dt/2, atol=2e-15, rtol=0)
+    np.testing.assert_allclose(driven_heat, heat, atol=2e-15, rtol=0)

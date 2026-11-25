@@ -414,14 +414,17 @@ def _massless_nodes(capacity, free, allow_massless):
 
 
 def harmonic_contact_temperatures(link_resistance, heat_capacity, angular_frequency, *,
-                                  t_left=None, t_right=None, nodal_power=0., allow_massless=False):
+                                  t_left=None, t_right=None, nodal_power=0., allow_massless=False,
+                                  separate_mean=False):
     """Return complex nodal temperatures for a fixed 1-D thermal network.
 
     Signals use Re(phasor * exp(i*omega*t)), with omega in rad/s. Resistances
     are in K/W, capacities in J/K, prescribed end amplitudes in K and nodal
     powers in W. None leaves an endpoint free of imposed temperature.
     With allow_massless=True a zero-capacity free node balances its incident
-    conductive powers and applied power algebraically.
+    conductive powers and applied power algebraically. For two insulated ends,
+    separate_mean=True returns (capacity-centered temperature phasors in K,
+    capacity-weighted mean heating rate phasor in K/s).
     """
     omega = _finite("angular frequency", angular_frequency, positive=True)
     r = _link_resistances(link_resistance)
@@ -439,8 +442,17 @@ def harmonic_contact_temperatures(link_resistance, heat_capacity, angular_freque
             temperature[index] = value
             free[index] = False
     _massless_nodes(capacity, free, allow_massless)
+    if separate_mean and not free.all():
+        raise ChainError("separate_mean requires two insulated ends")
     if free.any():
         operator = _chain_laplacian(1/r) + sp.diags(1j*omega*capacity)
+        if free.all():
+            total = capacity.sum()
+            rate = power.sum()/total
+            weights = sp.csc_matrix((capacity/total)[:, None])
+            constrained = sp.bmat([[operator, weights], [weights.T, None]], format="csc")
+            relative = sp.linalg.spsolve(constrained, np.r_[power-capacity*rate, 0.])[:-1]
+            return (relative, rate) if separate_mean else relative+rate/(1j*omega)
         forcing = power[free] - operator[free][:, ~free] @ temperature[~free]
         temperature[free] = sp.linalg.spsolve(operator[free][:, free].tocsc(), forcing)
     return temperature
@@ -462,8 +474,11 @@ def harmonic_contact_interval(link_resistance, heat_capacity, angular_frequency,
     start = _finite("start", start)
     duration = _finite("duration", duration, positive=True)
     r = _link_resistances(link_resistance)
-    phasor = harmonic_contact_temperatures(r, heat_capacity, angular_frequency,
-                                t_left=t_left, t_right=t_right, nodal_power=nodal_power,allow_massless=allow_massless)
+    closed = t_left is None and t_right is None
+    response = harmonic_contact_temperatures(r, heat_capacity, angular_frequency,
+                    t_left=t_left, t_right=t_right, nodal_power=nodal_power,
+                    allow_massless=allow_massless, separate_mean=closed)
+    phasor, mean_rate = response if closed else (response, 0j)
     initial = np.broadcast_to(np.asarray(initial_temperature, dtype=float), phasor.shape)
     if not np.isfinite(initial).all():
         raise ChainError("initial temperature must be finite")
@@ -478,6 +493,13 @@ def harmonic_contact_interval(link_resistance, heat_capacity, angular_frequency,
                         t_left=None if t_left is None else (0.,0.),
                         t_right=None if t_right is None else (0.,0.),allow_massless=allow_massless,
                         return_interval_temperature=True)
+        if closed:
+            # Integrate the uniform heating from the initial state without
+            # introducing the large harmonic temperature pole into link heats.
+            phi1 = np.expm1(angle)/angle
+            phi2 = (.5+angle/6+angle**2/24 if abs(angle) < 1e-4 else (phi1-1)/angle)
+            final += duration*(mean_rate*phase*phi1).real
+            mean += duration*(mean_rate*phase*phi2).real
         result = (final+offset,heat-np.diff(integral)/r)
         return (*result,mean+integral/duration) if return_interval_temperature else result
     if len(r) > 1:
