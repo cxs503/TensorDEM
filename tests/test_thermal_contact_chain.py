@@ -822,3 +822,15 @@ def test_transient_current_remains_resolved_at_one_ulp_drive():
     actual = chain.march(dt, 32, record_every=4)
     np.testing.assert_array_equal(actual["hot_flux"], normalized["hot_flux"])
     np.testing.assert_array_equal(actual["nodes"], 305.+normalized["nodes"])
+
+
+def test_transient_payload_temperature_error_is_offset_invariant():
+    from tensordem.thermal.contact_chain import thermal_chain_calculation
+
+    errors = []
+    for base in (0., 305.):
+        payload = thermal_chain_calculation(dict(mode="transient", n_spheres=4, cells_per_sphere=3,
+                                                 t_cold=base, t_hot=base+2**-44, steps=256))
+        errors.append(payload["transient"]["max_rel_error"])
+    assert errors[0] == errors[1]
+    assert 1e-3 < errors[0] < 3e-3

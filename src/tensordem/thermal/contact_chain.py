@@ -991,13 +991,17 @@ class TransientChain(ThermalChain):
         return t
 
     def march(self, dt: float, n_steps: int, *, initial: np.ndarray | None = None,
-              record_every: int = 1) -> dict[str, np.ndarray]:
-        """March in time; returns ``time``, node history and the hot-end flux."""
+              record_every: int = 1, relative_nodes: bool = False) -> dict[str, np.ndarray]:
+        """Return time, node history and hot-end flux.
+
+        With relative_nodes=True the node history contains T - t_cold in K.
+        The optional initial field is always supplied in absolute temperatures.
+        """
         c = self.case
         t = self.initial_state() if initial is None else np.asarray(
             initial, dtype=np.float64).copy()
         times = [0.0]
-        fields = [t.copy()]
+        fields = [t - c.t_cold if relative_nodes else t.copy()]
         # Keep the evolving state relative through all implicit steps. Adding
         # the absolute offset between steps would erase sub-ULP changes.
         t -= c.t_cold
@@ -1008,8 +1012,9 @@ class TransientChain(ThermalChain):
             t = self.step(t, dt, t_hot=drop, t_cold=0.)
             if (step + 1) % every == 0:
                 times.append((step + 1) * dt)
-                field = t + c.t_cold
-                field[[0, -1]] = (c.t_hot, c.t_cold)
+                field = t.copy() if relative_nodes else t + c.t_cold
+                if not relative_nodes:
+                    field[[0, -1]] = (c.t_hot, c.t_cold)
                 fields.append(field)
                 flux.append(float(self.link_conductance[0] * (t[0] - t[1])))
         return {"time": np.asarray(times), "nodes": np.asarray(fields),
@@ -1020,12 +1025,13 @@ class TransientChain(ThermalChain):
         g_full = self.conduction_matrix().toarray()
         return -g_full[1:-1, 1:-1] / float(self.capacity)
 
-    def analytic_transient(self, times: Sequence[float]) -> np.ndarray:
+    def analytic_transient(self, times: Sequence[float], *, relative_nodes: bool = False) -> np.ndarray:
         """Exact discrete solution (matrix exponential) of the same RC network.
 
         The Dirichlet end nodes are eliminated, so the reference is the exact
         solution of the *sampled* operator: comparing it with :meth:`march`
-        isolates the implicit-Euler time error from any spatial error.
+        isolates the implicit-Euler time error from any spatial error. With
+        relative_nodes=True the exact temperatures are relative to the cold end.
         """
         c = self.case
         a_int = self._interior_operator()
@@ -1034,9 +1040,11 @@ class TransientChain(ThermalChain):
         dev0 = -steady[1:-1]
         out = np.empty((len(times), self.n_nodes))
         for idx, tt in enumerate(times):
-            out[idx, 0] = c.t_hot
-            out[idx, -1] = c.t_cold
-            out[idx, 1:-1] = c.t_cold + (steady[1:-1] + sla.expm(a_int * float(tt)) @ dev0)
+            out[idx, 1:-1] = steady[1:-1] + sla.expm(a_int * float(tt)) @ dev0
+        if not relative_nodes:
+            out[:, 1:-1] += c.t_cold
+        out[:, 0] = c.t_hot-c.t_cold if relative_nodes else c.t_hot
+        out[:, -1] = 0. if relative_nodes else c.t_cold
         return out
 
     def relaxation_time(self) -> float:
@@ -1283,13 +1291,13 @@ def thermal_chain_calculation(request: dict) -> dict:
         tau = chain.relaxation_time()
         steps = int(request.get("steps", 3000))
         march = chain.march(dt=tau / max(steps / 3.0, 1.0), n_steps=steps,
-                            record_every=max(steps // 10, 1))
-        exact = chain.analytic_transient(march["time"])
+                            record_every=max(steps // 10, 1), relative_nodes=True)
+        exact = chain.analytic_transient(march["time"], relative_nodes=True)
         payload["transient"] = {
             "relaxation_time_s": tau,
             "continuum_relaxation_time_s": chain.continuum_relaxation_time(),
             "max_rel_error": float(np.max(np.abs(march["nodes"] - exact))
-                                   / np.ptp(exact)),
+                                   / (case.t_hot-case.t_cold)),
             "time_s": march["time"].tolist(),
             "hot_flux_w": march["hot_flux"].tolist(),
         }
