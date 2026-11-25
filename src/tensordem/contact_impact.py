@@ -169,6 +169,9 @@ class ImpactAnalytic:
     contact_time_geometric: float
     clamp_active: bool
     theta_star: float | None
+    release_overlap_m: float = 0.
+    dashpot_work_j: float = 0.
+    release_elastic_energy_j: float = 0.
 
     @property
     def e_bias(self) -> float:
@@ -179,15 +182,16 @@ class ImpactAnalytic:
 def impact_analytic(k_n: float, c_n: float, m_eff: float, v0: float = 1.0) -> ImpactAnalytic:
     """Closed-form impact metrics of the clamped and unclamped models.
 
-    ``v0`` does not enter any ratio (the model is linear); it is accepted for
-    signature symmetry with :func:`pair_impact`.
+    ``v0`` is relative closing speed. It sets the length and energy scales.
+    Dashpot work integrates c*delta_dot² during active contact. The spring
+    energy remaining at release completes the loss of relative kinetic energy.
     """
     if k_n <= 0 or m_eff <= 0:
         raise ValueError("k_n and m_eff must be positive")
     if c_n < 0:
         raise ValueError("c_n must be nonnegative")
-    if v0 <= 0:
-        raise ValueError("v0 must be positive")
+    if not math.isfinite(v0) or v0 <= 0:
+        raise ValueError("v0 must be finite and positive")
 
     omega_n = math.sqrt(k_n / m_eff)
     zeta = c_n / (2.0 * math.sqrt(k_n * m_eff))
@@ -199,6 +203,9 @@ def impact_analytic(k_n: float, c_n: float, m_eff: float, v0: float = 1.0) -> Im
     t_force = tau/omega_n
     t_geometric = t_force+c_n/k_n
     theta_star = t_force*omega_d if omega_d else None
+    release_overlap = (c_n/k_n)*(v0*e_clamped)
+    release_elastic_energy = .5*k_n*release_overlap**2
+    kinetic_loss = .5*m_eff*v0**2*(-math.expm1(-2*(zeta*tau)))
     return ImpactAnalytic(
         zeta=zeta,
         omega_n=omega_n,
@@ -210,6 +217,9 @@ def impact_analytic(k_n: float, c_n: float, m_eff: float, v0: float = 1.0) -> Im
         contact_time_geometric=t_geometric,
         clamp_active=True,
         theta_star=theta_star,
+        release_overlap_m=release_overlap,
+        dashpot_work_j=kinetic_loss-release_elastic_energy,
+        release_elastic_energy_j=release_elastic_energy,
     )
 
 
@@ -286,7 +296,7 @@ class PairImpactResult:
 
     @property
     def e_error_vs_unclamped(self) -> float:
-        return self.e_measured / self.e_unclamped - 1.0
+        return self.e_measured / self.e_unclamped - 1.0 if self.e_unclamped else math.inf
 
     @property
     def contact_time_error(self) -> float:
@@ -424,9 +434,7 @@ def pair_impact(
     dem.positions = saved
 
     momentum_before = float(dem.velocities[:, 2].sum())
-    # kinetic energy of the pair before/after: the two particles are free, so
-    # every joule missing afterwards went through the dashpot (the other lattice
-    # sites are fixed and carry no kinetic energy)
+    # Both spheres are free and approach with equal and opposite velocities.
     ke_before = 0.5 * m * float((dem.velocities[i] ** 2).sum()
                                 + (dem.velocities[j] ** 2).sum())
     contact_steps = 0
@@ -454,11 +462,10 @@ def pair_impact(
         raise RuntimeError("pair did not separate within the step budget")
 
     rebound = -float(dem.velocities[i, 2])
-    analytic = impact_analytic(k_n, c_n, m_eff, v0)
+    analytic = impact_analytic(k_n, c_n, m_eff, 2*v0)
     ke_after = 0.5 * m * float((dem.velocities[i] ** 2).sum()
                                + (dem.velocities[j] ** 2).sum())
-    # solver ledger: the pair is free-flying, so every joule lost from the
-    # kinetic energy went through the dashpot
+    # The kinetic loss includes dashpot work and spring energy left at release.
     dissipated = max(ke_before - ke_after, 0.0)
     thermal_state = None
     if thermal:

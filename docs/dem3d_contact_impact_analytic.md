@@ -202,3 +202,14 @@ branch. The published run therefore measured a purely elastic impact
 3 % band) and the `dt`-convergence evidence. The *derivation-level* claims of this
 document (clamped vs unclamped closed forms, RK4 cross-check) are unaffected;
 only the solver-side numbers of the earlier version were, and are superseded.
+
+### Energy at force release
+
+For relative closing speed `v0`, `impact_analytic` reports the release overlap
+`c*e_clamped*v0/k` and the spring energy `release_elastic_energy_j = k*overlap²/2`.
+During active contact the positive work dissipated by the dashpot is the time
+integral of `c*overlap_rate²`. The sum of this `dashpot_work_j` and the spring
+energy at release equals the relative kinetic energy loss. The two-sphere
+harness initializes each particle at speed `v0` in opposite directions, so its
+initial relative speed is twice the per-particle speed. Its measured
+`dissipated_energy` reports the total kinetic energy loss.

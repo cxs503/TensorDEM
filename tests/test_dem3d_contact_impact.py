@@ -207,6 +207,13 @@ def test_overdamped_dem_pair_at_three_time_steps(record_property):
     errors = []
     for scale in (.2, .1, .05):
         impact = pair_impact(e_target=target, damping="clamped_mapping", dt_scale=scale)
+        m_eff = impact.pair_mass_kg/2
+        damping = restitution_to_damping_clamped(target, 5.e4, m_eff)
+        reference = impact_analytic(5.e4, damping, m_eff, 2*impact.impact_speed)
+        loss = reference.dashpot_work_j + reference.release_elastic_energy_j
+        energy_error = abs(impact.dissipated_energy-loss)/loss
+        record_property(f"total_loss_relative_error_{scale}", energy_error)
+        assert energy_error < 5e-5
         error = abs(impact.e_measured-target)
         force_error = abs(impact.contact_time_force/impact.contact_time_force_analytic-1)
         geometric_error = abs(impact.contact_time/impact.contact_time_analytic-1)
@@ -218,3 +225,32 @@ def test_overdamped_dem_pair_at_three_time_steps(record_property):
         errors.append((force_error, geometric_error))
     for coarse, fine in zip(errors, errors[1:]):
         assert all(b < a for a,b in zip(coarse, fine))
+
+
+def test_active_dashpot_work_and_residual_spring_energy(record_property):
+    from scipy.integrate import solve_ivp
+
+    k, m, v = 73., 1.7, 2.3
+    worst = 0.
+    for zeta in (0., 1e-9, .3, 1., 4.):
+        c = 2*zeta*math.sqrt(k*m)
+        ref = impact_analytic(k, c, m, v)
+        # Integrate the active oscillator and its cumulative dashpot work.
+        def rhs(t, state):
+            overlap, rate, work = state
+            return rate, -(k*overlap+c*rate)/m, c*rate**2
+        def release(t, state):
+            return k*state[0]+c*state[1]
+        release.terminal = True
+        release.direction = -1
+        run = solve_ivp(rhs, (0., 2*math.pi*math.sqrt(m/k)), (0., v, 0.),
+                        events=release, atol=1e-13, rtol=1e-12)
+        (x, rate, work), = run.y_events[0]
+        initial = .5*m*v*v
+        worst = max(worst, abs(work-ref.dashpot_work_j)/initial,
+                    abs(.5*k*x*x-ref.release_elastic_energy_j)/initial)
+        assert abs(x-ref.release_overlap_m) < 2e-12
+        assert abs(.5*m*rate**2+ref.dashpot_work_j+ref.release_elastic_energy_j-initial) < 2e-11
+        assert ref.dashpot_work_j >= 0
+    record_property("max_component_error_over_incident_energy", worst)
+    assert worst < 2e-11
