@@ -284,6 +284,8 @@ def pair_contact_forces(pos: np.ndarray, vel: np.ndarray, omega: np.ndarray,
     if mu_r > 0.0:
         spin = omega[ja] - omega[ia]
         if not rolling_torsion:
+            # Express the existing spring and the new spin in the current tangent plane.
+            roll_old -= np.einsum("ij,ij->i", roll_old, nvec)[:, None] * nvec
             spin = spin - np.einsum("ij,ij->i", spin, nvec)[:, None] * nvec
         roll = roll_old + spin * dt
         r_norm = np.sqrt(np.einsum("ij,ij->i", roll, roll))

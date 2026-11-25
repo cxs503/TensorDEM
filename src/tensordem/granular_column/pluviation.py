@@ -198,7 +198,9 @@ def cylinder_wall_contact_forces(pos: np.ndarray, vel: np.ndarray,
     if mu_rolling_wall > 0.0:
         spin_w = omega_c
         if not rolling_torsion:
-            spin_w = spin_w - spin_w[:, 2:3] * np.array([[0.0, 0.0, 1.0]])
+            # The cylindrical side wall has a radial normal at each contact.
+            roll_old -= np.einsum("ij,ij->i", roll_old, er)[:, None] * er
+            spin_w = spin_w - np.einsum("ij,ij->i", spin_w, er)[:, None] * er
         roll = roll_old + spin_w * dt
         r_norm = np.sqrt(np.einsum("ij,ij->i", roll, roll))
         cap_r = (mu_rolling_wall * rolling_reff * f_n) / kr

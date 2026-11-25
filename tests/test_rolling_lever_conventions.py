@@ -89,3 +89,43 @@ def test_kernel_rolling_couple(lever, arm, torsion, spin_rate, record_property):
     expected = trial * min(1., cap / np.linalg.norm(trial))
     record_property("max_abs_torque_error_Nm", np.max(np.abs(torque - [expected, -expected])))
     np.testing.assert_allclose(torque, [expected, -expected], atol=1e-14, rtol=1e-14)
+
+
+@pytest.mark.parametrize("geometry", ["pair", "cylinder"])
+@pytest.mark.parametrize("torsion", [False, True])
+def test_contact_turn_preserves_only_allowed_rolling_components(geometry, torsion, record_property):
+    from tensordem.granular_column.kernel import PairSpringState, WallSpringState, pair_contact_forces
+    from tensordem.granular_column.pluviation import cylinder_wall_contact_forces
+
+    mat = Material3D(radius=.5, kn=100., kt_ratio=.5, mu=0., mu_rolling=.5,
+                     rolling_torsion=torsion)
+    state = PairSpringState() if geometry == "pair" else WallSpringState(1)
+    dt = .1
+    # At the first contact the normal is along x. The second normal is
+    # (3/5,4/5,0); its in-plane tangent is (-4/5,3/5,0).
+    for step, (normal, spin) in enumerate([
+        ([1., 0., 0.], [0., 1., 1.]),
+        ([.6, .8, 0.], [.6, .8, 1.]),
+    ]):
+        pos = np.array([normal]) * .75
+        omega = np.array([spin])
+        if geometry == "pair":
+            pos = np.vstack([np.zeros(3), pos])
+            omega = np.vstack([np.zeros(3), omega])
+            result = pair_contact_forces(pos, np.zeros_like(pos), omega, np.array([0]),
+                                         np.array([1]), state, mat, dt)
+        else:
+            result = cylinder_wall_contact_forces(pos, np.zeros_like(pos), omega, mat, dt,
+                                                  wall_radius=1., mu_rolling_wall=.5, state=state)
+        if step == 0:
+            angle = np.array([0., .1, .1])
+        elif torsion:
+            angle = np.array([.06, .18, .2])
+        else:
+            angle = np.array([-.048, .036, .2])
+        expected = -12.5 * angle
+        error = np.max(np.abs(result["torque"][-1] - expected))
+        record_property(f"step_{step}_max_abs_error_Nm", error)
+        np.testing.assert_allclose(result["torque"][-1], expected, atol=1e-14)
+        assert result["energy_rolling"] == pytest.approx(6.25 * np.dot(angle, angle))
+        assert abs(result["dissip_rolling"]) < 1e-14
