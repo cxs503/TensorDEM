@@ -414,3 +414,47 @@ def test_multibatch_pour_keeps_pair_history_at_first_kick(monkeypatch):
     assert len(report["positions"]) == report["n_target"] == 10
     assert report["poured_layers"] == 3
     assert report["admissible"]
+
+
+@pytest.mark.parametrize("preparation", ["pour", "relax"])
+def test_new_overlaps_apply_normal_force_on_same_step(preparation, monkeypatch, record_property):
+    from tensordem.granular_column import pluviation
+
+    original = pluviation.pair_contact_forces
+    start_contacts = set()
+    errors = []
+
+    def observe(pos, vel, omega, iu, ju, state, mat, dt, *, update_state):
+        nonlocal start_contacts
+        result = original(pos, vel, omega, iu, ju, state, mat, dt, update_state=update_state)
+        i, j = np.triu_indices(len(pos), k=1)
+        delta = pos[j] - pos[i]
+        distance = np.linalg.norm(delta, axis=1)
+        overlaps = distance < 2. * mat.radius
+        contacts = set(zip(i[overlaps], j[overlaps]))
+        if not update_state:
+            start_contacts = contacts
+        else:
+            measured = dict(zip(zip(result["ia"], result["ja"]), result["f_n"]))
+            for a, b in contacts - start_contacts:
+                vector = pos[b] - pos[a]
+                length = np.linalg.norm(vector)
+                closing = max(0., np.dot(vel[a] - vel[b], vector) / length)
+                expected = mat.kn * (2. * mat.radius - length) + mat.gamma_pair * closing
+                errors.append(abs(measured.get((a, b), 0.) - expected))
+        return result
+
+    monkeypatch.setattr(pluviation, "pair_contact_forces", observe)
+    if preparation == "pour":
+        case = pluviation.PluviationCase(radius=.03, column_radius=.09, aspect_ratio=.8,
+                                         batches_per_layer=2, batch_time_factor=2.,
+                                         compaction_time=.01, relax_time=.01, max_settle_time=.02)
+        pluviation.pluviate(case)
+    else:
+        case = pluviation.RelaxCase(max_settle_time=.04)
+        positions = np.array([[0., 0., .03], [0., 0., .0901]])
+        pluviation.relax_in_container(case, positions)
+    assert errors
+    record_property("new_contact_events", len(errors))
+    record_property("maximum_normal_force_error_N", max(errors))
+    assert max(errors) < 1e-10

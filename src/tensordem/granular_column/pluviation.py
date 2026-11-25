@@ -538,9 +538,8 @@ def pluviate(case: PluviationCase, *, progress: bool = False) -> dict:
         nonlocal pos, vel, omega, pair_state, floor_state, side_state, steps, t_sim, ke
         mass, inertia = mat.mass, mat.inertia
         gravity_vec = np.array([0.0, 0.0, -mat.gravity * float(g_scale)])
+        iu, ju = build_pairs(pos, mat.radius)
         for _ in range(int(n_steps)):
-            n = pos.shape[0]
-            iu, ju = build_pairs(pos, mat.radius)
             pred = pair_contact_forces(pos, vel, omega, iu, ju, pair_state, mat,
                                        dt, update_state=False)
             pf = wall_contact_forces(pos, vel, omega, mat, dt,
@@ -556,6 +555,7 @@ def pluviate(case: PluviationCase, *, progress: bool = False) -> dict:
             v_half = vel + 0.5 * dt * acc
             w_half = omega + 0.5 * dt * alpha
             pos = pos + v_half * dt
+            iu, ju = build_pairs(pos, mat.radius)
 
             cur = pair_contact_forces(pos, v_half, w_half, iu, ju, pair_state,
                                       mat, dt, update_state=True)
@@ -808,9 +808,9 @@ def relax_in_container(case: RelaxCase, positions: np.ndarray, *,
     slice_steps = max(1, int(round(0.01 / dt)))
     n_hold = 5
     held = 0
+    iu, ju = build_pairs(pos, mat.radius)
     while t_sim < case.max_settle_time:
         for _ in range(slice_steps):
-            iu, ju = build_pairs(pos, mat.radius)
             pred = pair_contact_forces(pos, vel, omega, iu, ju, pair_state, mat,
                                        dt, update_state=False)
             pf = wall_contact_forces(pos, vel, omega, mat, dt,
@@ -826,6 +826,7 @@ def relax_in_container(case: RelaxCase, positions: np.ndarray, *,
             v_half = vel + 0.5 * dt * acc
             w_half = omega + 0.5 * dt * alpha
             pos = pos + v_half * dt
+            iu, ju = build_pairs(pos, mat.radius)
             cur = pair_contact_forces(pos, v_half, w_half, iu, ju, pair_state,
                                       mat, dt, update_state=True)
             cf = wall_contact_forces(pos, v_half, w_half, mat, dt,
