@@ -350,3 +350,44 @@ def test_varying_nodal_heating_closes_each_store_on_nonuniform_steps(theta):
                 np.diff(time)[:, None]*((1-theta)*net[:-1]+theta*net[1:]), rtol=0, atol=2e-15)
     with pytest.raises(ChainError, match="power history"):
         transient_contact_temperatures(r, capacity, time, 0., t_left=0., nodal_power=power[:-1])
+
+
+@pytest.mark.parametrize("theta", [.5, 1.])
+def test_massless_driven_contact_matches_eliminated_network_at_every_instant(theta):
+    from tensordem.thermal import transient_contact_temperatures
+
+    r = np.array([.3, .7, .4])
+    times = np.array([0., .02, .06, .13, .19, .3])
+    wall = np.cos(5*times)
+    injection = .7*np.sin(8*times)+.2
+    input_power = np.zeros((len(times), 4))
+    input_power[:, 1] = injection
+    # Eliminate the junction between the left wall and the storage node.
+    # The store receives r0/(r0+r1) of the junction's applied power.
+    reduced_power = np.zeros((len(times), 3))
+    reduced_power[:, 1] = r[0]/sum(r[:2])*injection
+    reduced = transient_contact_temperatures([sum(r[:2]), r[2]], [0., 3., 0.],
+                 times, [0., 2., 0.], t_left=wall, t_right=.2, nodal_power=reduced_power, theta=theta)
+    full = transient_contact_temperatures(r, [0., 0., 3., 0.], times, [0., -500., 2., 0.],
+                 t_left=wall, t_right=.2, nodal_power=input_power, theta=theta, allow_massless=True)
+    np.testing.assert_allclose(full[:, [0, 2, 3]], reduced, atol=3e-14, rtol=0)
+    expected = (wall/r[0]+reduced[:, 1]/r[1]+injection)/(1/r[0]+1/r[1])
+    np.testing.assert_allclose(full[:, 1], expected, atol=3e-14, rtol=0)
+
+
+def test_all_massless_series_chain_requires_reference_and_obeys_power_balance():
+    from tensordem.thermal import harmonic_contact_temperatures, transient_contact_temperatures
+
+    r = np.array([.3, .4, .8])
+    fraction = np.r_[0., r.cumsum()]/r.sum()
+    endpoints = np.array([.3+1j, 2.-.4j])
+    expected = endpoints[0]+fraction*(endpoints[1]-endpoints[0])
+    t = harmonic_contact_temperatures(r, 0., 3., t_left=endpoints[0], t_right=endpoints[1], allow_massless=True)
+    np.testing.assert_allclose(t, expected, atol=1e-14, rtol=0)
+    time = np.array([0., .13, .3])
+    t = transient_contact_temperatures(r, 0., time, 0., t_left=1+time, t_right=2*time, allow_massless=True)
+    np.testing.assert_allclose(t, (1+time[:, None])*(1-fraction)+2*time[:, None]*fraction)
+    with pytest.raises(ChainError, match="prescribed temperature"):
+        harmonic_contact_temperatures(r, 0., 3., allow_massless=True)
+    with pytest.raises(ChainError, match="prescribed temperature"):
+        transient_contact_temperatures(r, 0., time, 0., allow_massless=True)

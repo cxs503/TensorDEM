@@ -333,13 +333,24 @@ def _link_resistances(link_resistance):
     return r
 
 
+def _massless_nodes(capacity, free, allow_massless):
+    massless = free & (capacity == 0)
+    if massless.any() and not allow_massless:
+        raise ChainError("free thermal nodes require positive capacity unless allow_massless=True")
+    if massless.all():
+        raise ChainError("a massless chain needs a prescribed temperature or a positive capacity")
+    return massless
+
+
 def harmonic_contact_temperatures(link_resistance, heat_capacity, angular_frequency, *,
-                                  t_left=None, t_right=None, nodal_power=0.):
+                                  t_left=None, t_right=None, nodal_power=0., allow_massless=False):
     """Return complex nodal temperatures for a fixed 1-D thermal network.
 
     Signals use Re(phasor * exp(i*omega*t)), with omega in rad/s. Resistances
     are in K/W, capacities in J/K, prescribed end amplitudes in K and nodal
     powers in W. None leaves an endpoint free of imposed temperature.
+    With allow_massless=True a zero-capacity free node balances its incident
+    conductive powers and applied power algebraically.
     """
     omega = _finite("angular frequency", angular_frequency, positive=True)
     r = _link_resistances(link_resistance)
@@ -356,8 +367,7 @@ def harmonic_contact_temperatures(link_resistance, heat_capacity, angular_freque
                 raise ChainError("wall temperature must be a finite scalar phasor")
             temperature[index] = value
             free[index] = False
-    if np.any(capacity[free] <= 0):
-        raise ChainError("free thermal nodes require positive capacity")
+    _massless_nodes(capacity, free, allow_massless)
     if free.any():
         operator = _chain_laplacian(1/r) + sp.diags(1j*omega*capacity)
         forcing = power[free] - operator[free][:, ~free] @ temperature[~free]
@@ -366,7 +376,7 @@ def harmonic_contact_temperatures(link_resistance, heat_capacity, angular_freque
 
 
 def transient_contact_temperatures(link_resistance, heat_capacity, time, initial_temperature,
-                                   *, t_left=None, t_right=None, nodal_power=0., theta=.5):
+                                   *, t_left=None, t_right=None, nodal_power=0., theta=.5, allow_massless=False):
     """Integrate a fixed 1D contact network, returning temperatures [time,node].
 
     Each link has a resistance in K/W. Each node stores heat with a positive
@@ -376,7 +386,10 @@ def transient_contact_temperatures(link_resistance, heat_capacity, time, initial
     pins an end, including at t=0. A pinned reservoir may have zero capacity;
     a film of conductance h*A is a link of resistance 1/(h*A) from that
     reservoir to the wall node, which retains its own heat capacity.
-    The theta method spans Crank–Nicolson (0.5) to backward Euler (1).
+    With allow_massless=True zero-capacity free nodes satisfy instantaneous
+    power balance, including at the initial time when their supplied temperatures
+    are replaced by consistent values. The theta method spans Crank–Nicolson
+    (0.5) to backward Euler (1).
     """
     r = _link_resistances(link_resistance)
     n = r.size + 1
@@ -404,12 +417,16 @@ def transient_contact_temperatures(link_resistance, heat_capacity, time, initial
                 raise ChainError("wall temperature must be finite and scalar or sampled at each time")
             history[:, i] = trace
             free[i] = False
-    if np.any(capacity[free] <= 0):
-        raise ChainError("free thermal nodes require positive capacity")
+    massless = _massless_nodes(capacity, free, allow_massless)
     if not free.any():
         return history
 
     laplacian = _chain_laplacian(1 / r)
+    if massless.any():
+        rows = laplacian[massless]
+        initial_power = power if power.ndim == 1 else power[0]
+        rhs = initial_power[massless] - rows[:, ~massless] @ history[0, ~massless]
+        history[0, massless] = sp.linalg.spsolve(rows[:, massless].tocsc(), rhs)
     boundary = laplacian[free][:, ~free]
     applied_power = power[..., free]
     operator = laplacian[free][:, free].tocsc()
