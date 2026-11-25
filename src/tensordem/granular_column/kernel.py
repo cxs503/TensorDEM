@@ -187,6 +187,20 @@ def _contact_friction(mu: float, mu_i: InertialFriction | None,
     return mu_i.effective_mu(speed, f_n, diameter, density), i_c
 
 
+def _normal_response(spring_force, normal_speed, gamma, dt, mode):
+    """Return compressive load and work dissipated by the active normal dashpot."""
+    if mode == "reference":
+        force = np.maximum(spring_force - gamma * normal_speed, 0.0)
+        active_speed = np.where(force > 0.0, normal_speed, 0.0)
+    elif mode == "one_sided":
+        closing_speed = np.maximum(-normal_speed, 0.0)
+        force = spring_force + gamma * closing_speed
+        active_speed = closing_speed
+    else:
+        raise ValueError(f"unknown contact_mode {mode!r}")
+    return force, float(np.sum(gamma * active_speed * active_speed) * dt)
+
+
 def pair_contact_forces(pos: np.ndarray, vel: np.ndarray, omega: np.ndarray,
                         iu: np.ndarray, ju: np.ndarray,
                         state: PairSpringState, mat: Material3D, dt: float,
@@ -248,16 +262,7 @@ def pair_contact_forces(pos: np.ndarray, vel: np.ndarray, omega: np.ndarray,
 
     v_rel = vel[ja] - vel[ia]
     v_n = np.einsum("ij,ij->i", v_rel, nvec)
-    if contact_mode == "reference":
-        # exact convention of tensordem.granular3d_core: linear spring-dashpot
-        # clipped at zero (tension cutoff)
-        f_n = np.maximum(kn * overlap_a - gamma * v_n, 0.0)
-    elif contact_mode == "one_sided":
-        # compression-only dashpot: continuous in the overlap (no stored elastic
-        # energy is discarded at pull-off), damping only while approaching.
-        f_n = kn * overlap_a + gamma * np.maximum(-v_n, 0.0)
-    else:
-        raise ValueError(f"unknown contact_mode {contact_mode!r}")
+    f_n, dashpot_work = _normal_response(kn * overlap_a, v_n, gamma, dt, contact_mode)
 
     # relative velocity of the two contact points (translation + spin)
     surf_i = np.cross(omega[ia], nvec * r)
@@ -329,7 +334,7 @@ def pair_contact_forces(pos: np.ndarray, vel: np.ndarray, omega: np.ndarray,
     res.update({
         "n_contacts": int(np.count_nonzero(f_n > 0.0)),
         "normal_force_sum": float(f_n.sum()),
-        "dissip_collision": float(np.sum(np.where(f_n > 0.0, gamma * v_n * v_n, 0.0)) * dt),
+        "dissip_collision": dashpot_work,
         "dissip_friction": float(-np.einsum("ij,ij->i", f_t, slip_t).sum()),
         "dissip_rolling": float(-np.einsum("ij,ij->i", torque_r, slip_r).sum()),
         "energy_normal": float(0.5 * kn * np.sum(overlap_a * overlap_a)),
@@ -419,12 +424,7 @@ def wall_contact_forces(pos: np.ndarray, vel: np.ndarray, omega: np.ndarray,
     idx = np.nonzero(act)[0]
     ov = overlap[idx]
     vz = vel[idx, 2]
-    if contact_mode == "reference":
-        f_n = np.maximum(kn * ov - gamma * vz, 0.0)
-    elif contact_mode == "one_sided":
-        f_n = kn * ov + gamma * np.maximum(-vz, 0.0)
-    else:
-        raise ValueError(f"unknown contact_mode {contact_mode!r}")
+    f_n, dashpot_work = _normal_response(kn * ov, vz, gamma, dt, contact_mode)
 
     # contact-point velocity: translation + spin about the contact at -r z
     omega_c = omega[idx]
@@ -507,7 +507,7 @@ def wall_contact_forces(pos: np.ndarray, vel: np.ndarray, omega: np.ndarray,
     out.update({
         "n_contacts": int(idx.size),
         "normal_force_sum": float(f_n.sum()),
-        "dissip_collision": float(np.sum(gamma * vz * vz) * dt),
+        "dissip_collision": dashpot_work,
         "dissip_friction": float(-np.einsum("ij,ij->i", f_t, slip_t).sum()),
         "dissip_rolling": float(-np.einsum("ij,ij->i", torque_r, slip_r).sum()),
         "energy_normal": float(0.5 * kn * np.sum(ov * ov)),

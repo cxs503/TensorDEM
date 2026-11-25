@@ -48,7 +48,7 @@ import math
 import numpy as np
 
 from ..granular3d_core import Material3D, build_pairs
-from .kernel import (PairSpringState, WallSpringState, pair_contact_forces,
+from .kernel import (_normal_response, PairSpringState, WallSpringState, pair_contact_forces,
                      wall_contact_forces)
 
 __all__ = [
@@ -160,12 +160,7 @@ def cylinder_wall_contact_forces(pos: np.ndarray, vel: np.ndarray,
     nrm = -er                                            # wall -> grain centre
     v = vel[idx]
     vn = np.einsum("ij,ij->i", v, nrm)
-    if contact_mode == "reference":
-        f_n = np.maximum(kn * ov - gamma * vn, 0.0)
-    elif contact_mode == "one_sided":
-        f_n = kn * ov + gamma * np.maximum(-vn, 0.0)
-    else:
-        raise ValueError(f"unknown contact_mode {contact_mode!r}")
+    f_n, dashpot_work = _normal_response(kn * ov, vn, gamma, dt, contact_mode)
 
     # contact-point velocity: translation + spin about the contact at +r e_r.
     # (omega x (r e_r)) . e_r == 0, so the spin contributes nothing normal.
@@ -228,7 +223,7 @@ def cylinder_wall_contact_forces(pos: np.ndarray, vel: np.ndarray,
             state.tang[dead] = 0.0
             state.roll[dead] = 0.0
 
-    out["dissip_collision"] = float(np.sum(f_n * np.maximum(-vn, 0.0) * dt))
+    out["dissip_collision"] = dashpot_work
     out["dissip_friction"] = float(np.sum(mu_w * f_n
                                          * np.linalg.norm(slip_t, axis=1)))
     out["dissip_rolling"] = float(np.sum(mu_rolling_wall * rolling_reff * f_n
