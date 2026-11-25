@@ -770,3 +770,22 @@ def test_low_frequency_single_link_matches_analytic_relaxation(closed):
         np.testing.assert_allclose(t, [wall, expected])
         np.testing.assert_allclose(slope, [0., -r*c[1]*expected])
         assert rate == 0.
+
+
+def test_lattice_surface_exchange_combines_on_one_row():
+    # Two axial links at 300 K, 3 W/K at 310 K and 1 W/K at 294 K.
+    t = lattice_network_temperatures(3, 1, 1., 300., 300.,
+                                     lower_exchange=([0., 3., 0.], [290., 310., 320.]),
+                                     upper_exchange=(1., 294.))
+    np.testing.assert_allclose(t[:, 0], [300., 304., 300.], rtol=0., atol=1e-13)
+
+
+@pytest.mark.parametrize("exchange", [(-1., 300.), ([1., 2.], 300.), (1., np.nan), (1., 300j)])
+def test_lattice_rejects_invalid_exchange(exchange):
+    with pytest.raises(ChainError):
+        lattice_network_temperatures(3, 2, 1., 300., 300., lower_exchange=exchange)
+
+
+def test_periodic_lattice_rejects_surface_exchange():
+    with pytest.raises(ChainError):
+        lattice_network_temperatures(3, 2, 1., 300., 300., periodic_y=True, upper_exchange=(1., 300.))

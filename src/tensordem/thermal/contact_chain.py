@@ -235,8 +235,8 @@ def square_lattice_resistance(nx: int, ny: int, r_link: float) -> float:
 
 def lattice_network_temperatures(nx: int, ny: int, r_link: float | tuple,
                                  t_left: float | np.ndarray, t_right: float | np.ndarray, *, nodal_power=0.0,
-                                 periodic_y: bool = False) -> np.ndarray:
-    """Solve a lattice with pinned x faces and insulated or periodic y boundaries.
+                                 periodic_y: bool = False, lower_exchange=None, upper_exchange=None) -> np.ndarray:
+    """Solve a lattice with pinned x faces and optional transverse thermal exchange.
 
     r_link is a uniform resistance in K/W or a pair (Rx, Ry). Each entry
     is scalar or an array on the edges of its axis: (nx-1, ny) for Rx,
@@ -245,7 +245,12 @@ def lattice_network_temperatures(nx: int, ny: int, r_link: float | tuple,
     accepts a scalar temperature in K or one temperature per transverse row.
     With periodic_y=True, Ry has shape (nx, ny) and its last column
     connects the last row to the first. Two rows then have parallel links,
-    and a single row has no transverse heat transfer.
+    and a single row has no transverse heat transfer. For nonperiodic y,
+    lower_exchange and upper_exchange optionally specify (conductance in W/K,
+    ambient temperature in K) for the first and last rows. Each value may be
+    scalar or a profile of length nx. Conductance includes any resistance
+    between the particle center and the ambient. Zero conductance insulates
+    the particle. The prescribed x-face temperatures take precedence.
     """
     if int(nx) < 2:
         raise ChainError("nx must be >= 2")
@@ -274,7 +279,31 @@ def lattice_network_temperatures(nx: int, ny: int, r_link: float | tuple,
     power = np.broadcast_to(np.asarray(nodal_power, dtype=float), (nx, ny))
     if not np.isfinite(power).all():
         raise ChainError("nodal_power must be finite")
+    exchange_links = []
     rhs = power.flatten()
+    for side, exchange in ((0, lower_exchange), (-1, upper_exchange)):
+        if exchange is None:
+            continue
+        if periodic_y or not isinstance(exchange, (list, tuple)) or len(exchange) != 2:
+            raise ChainError("surface exchange requires a nonperiodic face and a (conductance, ambient) pair")
+        profiles = []
+        for value in exchange:
+            array = np.asarray(value)
+            if np.iscomplexobj(array) or array.shape not in ((), (nx,)):
+                raise ChainError("exchange inputs must be real scalars or axial profiles of length nx")
+            profile = np.broadcast_to(np.asarray(array, dtype=float), (nx,))
+            if not np.isfinite(profile).all():
+                raise ChainError("exchange inputs must be finite")
+            profiles.append(profile)
+        g, ambient = profiles
+        if np.any(g < 0):
+            raise ChainError("exchange conductance must be nonnegative")
+        nodes = np.arange(1, nx-1) * ny + (side % ny)
+        rows.extend(nodes)
+        cols.extend(nodes)
+        vals.extend(g[1:-1])
+        rhs[nodes] += g[1:-1] * ambient[1:-1]
+        exchange_links.append((side, g, ambient))
     for i, values in ((0, t_left), (nx-1, t_right)):
         wall = np.asarray(values)
         if np.iscomplexobj(wall) or wall.shape not in ((), (ny,)):
@@ -306,6 +335,8 @@ def lattice_network_temperatures(nx: int, ny: int, r_link: float | tuple,
     # Refine against the physical link currents. Forming residuals from
     # differences preserves the constant mode even when diagonal sums round.
     residual = power.copy()
+    for side, g, ambient in exchange_links:
+        residual[:, side] += g * (ambient - temperature[:, side])
     x_heat = gx*np.diff(temperature, axis=0)
     residual[:-1] += x_heat
     residual[1:] -= x_heat
