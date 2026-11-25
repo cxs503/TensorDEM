@@ -370,7 +370,8 @@ def transient_contact_temperatures(link_resistance, heat_capacity, time, initial
     """Integrate a fixed 1D contact network, returning temperatures [time,node].
 
     Each link has a resistance in K/W. Each node stores heat with a positive
-    capacity in J/K and can receive constant power in W. End temperatures
+    capacity in J/K. Supply nodal_power in W as a constant scalar or nodal
+    vector, or as a (time, node) history sampled at the requested instants. End temperatures
     default to insulated. A scalar or a vector sampled at the requested times
     pins an end, including at t=0. A pinned reservoir may have zero capacity;
     a film of conductance h*A is a link of resistance 1/(h*A) from that
@@ -379,13 +380,18 @@ def transient_contact_temperatures(link_resistance, heat_capacity, time, initial
     """
     r = _link_resistances(link_resistance)
     n = r.size + 1
-    capacity, power, initial = (np.broadcast_to(np.asarray(v, dtype=float), (n,))
-                                for v in (heat_capacity, nodal_power, initial_temperature))
-    if not all(np.isfinite(v).all() for v in (capacity, power, initial)) or np.any(capacity < 0):
-        raise ChainError("capacity must be nonnegative and nodal inputs must be finite")
+    capacity, initial = (np.broadcast_to(np.asarray(v, dtype=float), (n,))
+                         for v in (heat_capacity, initial_temperature))
     time = np.asarray(time, dtype=float)
     if time.ndim != 1 or time.size < 2 or not np.isfinite(time).all() or np.any(np.diff(time) <= 0):
         raise ChainError("time must be a strictly increasing finite vector")
+    power = np.asarray(nodal_power, dtype=float)
+    if power.ndim <= 1:
+        power = np.broadcast_to(power, (n,))
+    elif power.shape != (len(time), n):
+        raise ChainError("power history must have shape (time, node)")
+    if not all(np.isfinite(v).all() for v in (capacity, power, initial)) or np.any(capacity < 0):
+        raise ChainError("capacity must be nonnegative and nodal inputs must be finite")
     if not .5 <= theta <= 1:
         raise ChainError("theta must lie in [0.5, 1]")
 
@@ -405,7 +411,7 @@ def transient_contact_temperatures(link_resistance, heat_capacity, time, initial
 
     laplacian = _chain_laplacian(1 / r)
     boundary = laplacian[free][:, ~free]
-    applied_power = power[free]
+    applied_power = power[..., free]
     operator = laplacian[free][:, free].tocsc()
     mass = sp.diags(capacity[free], format="csc")
     previous_dt = None
@@ -415,7 +421,9 @@ def transient_contact_temperatures(link_resistance, heat_capacity, time, initial
             previous_dt = dt
         current = history[i, free]
         wall = (1-theta) * history[i, ~free] + theta * history[i+1, ~free]
-        forcing = applied_power - boundary @ wall
+        step_power = (applied_power if applied_power.ndim == 1 else
+                      (1-theta)*applied_power[i] + theta*applied_power[i+1])
+        forcing = step_power - boundary @ wall
         rhs = capacity[free] * current + dt * (forcing - (1-theta) * (operator @ current))
         history[i+1, free] = lu.solve(rhs)
     return history

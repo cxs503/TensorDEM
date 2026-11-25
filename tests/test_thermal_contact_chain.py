@@ -332,3 +332,21 @@ def test_harmonic_insulated_chain_uniform_source_and_pinned_pair():
                                   [1j, 2.])
     with pytest.raises(ChainError):
         harmonic_contact_temperatures([1.], [0., 1.], 2.)
+
+
+@pytest.mark.parametrize("theta", [.5, 1.])
+def test_varying_nodal_heating_closes_each_store_on_nonuniform_steps(theta):
+    from tensordem.thermal import transient_contact_temperatures
+
+    time = np.array([0., .04, .15, .18, .4])
+    r = np.array([.4, 1.2])
+    capacity = np.array([0., 3., 2.])
+    power = np.column_stack((0*time, 1+time**2, .2-time))
+    t = transient_contact_temperatures(r, capacity, time, [1., .5, 2.], theta=theta,
+                                       t_left=1+time, nodal_power=power)
+    flux = -np.diff(t, axis=1)/r
+    net = power[:, 1:]+np.column_stack((flux[:, 0]-flux[:, 1], flux[:, 1]))
+    np.testing.assert_allclose(np.diff(t[:, 1:],axis=0)*capacity[1:],
+                np.diff(time)[:, None]*((1-theta)*net[:-1]+theta*net[1:]), rtol=0, atol=2e-15)
+    with pytest.raises(ChainError, match="power history"):
+        transient_contact_temperatures(r, capacity, time, 0., t_left=0., nodal_power=power[:-1])
