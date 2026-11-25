@@ -234,13 +234,14 @@ def square_lattice_resistance(nx: int, ny: int, r_link: float) -> float:
 
 
 def lattice_network_temperatures(nx: int, ny: int, r_link: float | tuple,
-                                 t_left: float, t_right: float, *, nodal_power=0.0) -> np.ndarray:
+                                 t_left: float | np.ndarray, t_right: float | np.ndarray, *, nodal_power=0.0) -> np.ndarray:
     """Solve a lattice with pinned x faces and insulated y faces.
 
     r_link is a uniform resistance in K/W or a pair (Rx, Ry). Each entry
     is scalar or an array on the edges of its axis: (nx-1, ny) for Rx,
     (nx, ny-1) for Ry. Rx[i,j] connects (i,j) to (i+1,j), and Ry[i,j]
-    connects (i,j) to (i,j+1). nodal_power is in W.
+    connects (i,j) to (i,j+1). nodal_power is in W. Each pinned face
+    accepts a scalar temperature in K or one temperature per transverse row.
     """
     if int(nx) < 2:
         raise ChainError("nx must be >= 2")
@@ -270,16 +271,19 @@ def lattice_network_temperatures(nx: int, ny: int, r_link: float | tuple,
     if not np.isfinite(power).all():
         raise ChainError("nodal_power must be finite")
     rhs = power.flatten()
+    for i, values in ((0, t_left), (nx-1, t_right)):
+        wall = np.asarray(values)
+        if np.iscomplexobj(wall) or wall.shape not in ((), (ny,)):
+            raise ChainError("each pinned face needs a real scalar or one temperature per row")
+        wall = np.asarray(wall, dtype=float)
+        if not np.isfinite(wall).all():
+            raise ChainError("pinned face temperatures must be finite")
+        rhs.reshape(nx, ny)[i] = wall
     for i in range(nx):
         for j in range(ny):
             node = i * ny + j
-            if i == 0:
+            if i in (0, nx-1):
                 rows.append(node); cols.append(node); vals.append(1.0)
-                rhs[node] = float(t_left)
-                continue
-            if i == nx - 1:
-                rows.append(node); cols.append(node); vals.append(1.0)
-                rhs[node] = float(t_right)
                 continue
             for di, dj in ((-1, 0), (1, 0), (0, -1), (0, 1)):
                 ni, nj = i + di, j + dj

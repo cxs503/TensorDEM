@@ -227,6 +227,18 @@ def test_unequal_contacts_drive_transverse_heat_flow():
     np.testing.assert_allclose(np.sum((10.-t[1])/rx[0]), np.sum(t[1]/rx[1]))
 
 
+def test_pinned_face_temperature_profiles_and_scalar_mixing():
+    # In the two-row lattice, the interior row difference is halved
+    # relative to the average of the prescribed end differences.
+    left = np.array([6., 2.])
+    t = lattice_network_temperatures(3, 2, 1., left, 0.)
+    np.testing.assert_allclose(t, [left, [2.5, 1.5], [0., 0.]])
+    np.testing.assert_allclose(lattice_network_temperatures(3, 2, 1., 0., left), t[::-1])
+    for invalid in ([1.], [[1., 2.]], [1., np.inf], np.array([1j, 0j])):
+        with pytest.raises(ChainError):
+            lattice_network_temperatures(3, 2, 1., left, invalid)
+
+
 def test_edge_resistance_shape_and_positivity():
     for edges in ((np.ones((3, 2)), 1.), (1., 0.), (np.nan, 1.)):
         with pytest.raises(ChainError):
