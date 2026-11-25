@@ -51,9 +51,11 @@ by ``v0*exp(-zeta*omega_n*t)``:
 
     => e_clamped = -delta'(t*)/v0,   t* = theta*/omega_d
 
-For ``zeta >= 1/sqrt(2)`` the force vanishes during the *approach* phase, so the
-clamped model loses contact before reaching maximum compression; that regime is
-integrated numerically (``rk4_clamped_restitution``) instead of using theta*.
+At release the overlap rate is negative and its magnitude is
+``v0*exp(-zeta*omega_n*t*)``. The dimensionless release time is
+``2*acos(zeta)/sqrt(1-zeta**2)`` below critical damping, 2 at critical
+damping, and ``2*acosh(zeta)/sqrt(zeta**2-1)`` above it. Free separation
+after release takes another ``c/k`` seconds by the zero-force condition.
 
 All quantities are SI: N, m, s, kg.
 """
@@ -77,8 +79,6 @@ __all__ = [
     "pair_impact",
 ]
 
-_ZETA_CLAMP_LIMIT = 1.0 / math.sqrt(2.0)
-
 
 # ===================================================================
 # Analytic references
@@ -100,26 +100,20 @@ def unclamped_restitution(zeta: float) -> float:
     return math.exp(-math.pi * zeta / math.sqrt(1.0 - zeta ** 2))
 
 
+def _release_time(zeta: float) -> float:
+    """Dimensionless time omega_n*t at the first unloading force zero."""
+    if not math.isfinite(zeta) or zeta < 0:
+        raise ValueError("zeta must be finite and nonnegative")
+    if zeta < 1:
+        return 2*math.acos(zeta)/math.sqrt((1-zeta)*(1+zeta))
+    if zeta == 1:
+        return 2.
+    return 2*math.acosh(zeta)/math.sqrt(zeta-1)/math.sqrt(zeta+1)
+
+
 def clamped_restitution(zeta: float) -> float:
-    """Restitution of the clamped model ``F = max(0, k*delta + c*delta')``.
-
-    Closed form valid for ``0 <= zeta < 1/sqrt(2)``; above that limit the model
-    detaches during the approach phase and ``rk4_clamped_restitution`` is used.
-    """
-    if zeta < 0:
-        raise ValueError("zeta must be nonnegative")
-    if zeta == 0.0:
-        return 1.0
-    if zeta >= 1.0:
-        return 0.0
-    if zeta >= _ZETA_CLAMP_LIMIT:
-        return rk4_clamped_restitution(zeta)
-
-    root = math.sqrt(1.0 - zeta ** 2)
-    theta_star = math.atan2(2.0 * zeta * root, 2.0 * zeta ** 2 - 1.0)  # in (pi/2, pi]
-    decay = math.exp(-zeta * theta_star / root)  # exp(-zeta*omega_n*t*) with t* = theta*/omega_d
-    rebound = decay * (math.cos(theta_star) - (zeta / root) * math.sin(theta_star))
-    return -rebound
+    """Rebound speed ratio of a compressive-only linear contact at any damping."""
+    return math.exp(-zeta*_release_time(zeta))
 
 
 def rk4_clamped_restitution(zeta: float, *, n_steps: int = 200_000, zeta_limit: float = 0.999) -> float:
@@ -179,7 +173,7 @@ class ImpactAnalytic:
     @property
     def e_bias(self) -> float:
         """Relative bias of the unclamped mapping: e_clamped/e_unclamped - 1."""
-        return self.e_clamped / self.e_unclamped - 1.0
+        return self.e_clamped / self.e_unclamped - 1.0 if self.e_unclamped else math.inf
 
 
 def impact_analytic(k_n: float, c_n: float, m_eff: float, v0: float = 1.0) -> ImpactAnalytic:
@@ -197,27 +191,14 @@ def impact_analytic(k_n: float, c_n: float, m_eff: float, v0: float = 1.0) -> Im
 
     omega_n = math.sqrt(k_n / m_eff)
     zeta = c_n / (2.0 * math.sqrt(k_n * m_eff))
-    if zeta >= 1.0:
-        raise ValueError("zeta >= 1: overdamped contact has no rebound to validate")
-    omega_d = omega_n * math.sqrt(1.0 - zeta ** 2)
-
+    tau = _release_time(zeta)
+    omega_d = omega_n*math.sqrt((1-zeta)*(1+zeta)) if zeta < 1 else 0.
     e_unc = unclamped_restitution(zeta)
-    t_unc = math.pi / omega_d
-    if zeta >= _ZETA_CLAMP_LIMIT:
-        nan = float("nan")
-        return ImpactAnalytic(zeta, omega_n, omega_d, e_unc, rk4_clamped_restitution(zeta),
-                              t_unc, nan, nan, True, None)
-
-    root = math.sqrt(1.0 - zeta ** 2)
-    theta_star = math.atan2(2.0 * zeta * root, 2.0 * zeta ** 2 - 1.0)
-    e_clamped = clamped_restitution(zeta)
-    decay = math.exp(-zeta * theta_star / root)
-    t_force = theta_star / omega_d
-    # After the force clamps to zero the pair still overlaps and separates at the
-    # constant rebound speed, so the geometric overlap lasts longer:
-    #   delta(t*) = (v0/omega_d)*decay*sin(theta*),  |delta'(t*)| = e_clamped*v0
-    overlap_at_detach = decay * math.sin(theta_star) / omega_d  # per unit v0
-    t_geometric = t_force + overlap_at_detach / e_clamped
+    t_unc = math.pi/omega_d if omega_d else math.inf
+    e_clamped = math.exp(-zeta*tau)
+    t_force = tau/omega_n
+    t_geometric = t_force+c_n/k_n
+    theta_star = t_force*omega_d if omega_d else None
     return ImpactAnalytic(
         zeta=zeta,
         omega_n=omega_n,
@@ -254,7 +235,9 @@ def restitution_to_damping_clamped(
     if e_target == 1.0:
         return 0.0
 
-    lo, hi = 0.0, 0.999
+    lo, hi = 0.0, 1.0
+    while clamped_restitution(hi) > e_target:
+        lo, hi = hi, 2*hi
     for _ in range(max_iter):
         mid = 0.5 * (lo + hi)
         if clamped_restitution(mid) > e_target:

@@ -54,7 +54,7 @@ This is the identity inverted by `contact_tangential.restitution_to_damping`.
     t_overlap = t_force + delta(t*)/(e_clamped*v0)             (the pair keeps overlapping after the force clamps)
 
 The closed form is cross-checked against an independent RK4 integration of the
-clamped ODE over the whole parameter range (maximum absolute difference in
+clamped ODE over the original underdamped benchmark range (maximum absolute difference in
 `e`: 1.174e-11).
 
 Solver protocol: `IceDEM3D.step()` (semi-implicit Euler) until the pair separates;
@@ -165,9 +165,14 @@ identity while the solver truncates the force at zero, so a requested
 2. The same truncation exists in the tool and platen branches, so the bias transfers
    to every normal contact in the solver; the pair case is used because it is the
    only configuration with an exact counterpart.
-3. The closed-form `e_clamped` assumes `zeta < 1/sqrt(2)`; above that the force
-   vanishes during the approach phase and the code falls back to RK4. Adhesive or
-   Hertzian contacts are out of scope - this validates the linear law only.
+3. For the linear compressive-only law the force vanishes during unloading at
+   every finite damping ratio. In units of inverse natural angular frequency,
+   the release time is `2 acos(zeta)/sqrt(1-zeta²)` below critical damping,
+   2 at critical damping and `2 acosh(zeta)/sqrt(zeta²-1)` above it. Restitution
+   is `exp(-zeta * dimensionless_release_time)`. After release the pair coasts
+   for `c/k` seconds until overlap vanishes. The contact-impact tests compare
+   force release and separation with an independently integrated trajectory
+   through `zeta=8` and measure a two-sphere impact at target restitution 0.08.
 4. The semi-implicit Euler integrator is first order; restitution errors are
    ~O(dt/t_contact). The default `recommended_dt` gives <1 % error for the cases
    tested here, but a soft-damping case with fewer than ~50 steps per contact must

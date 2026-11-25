@@ -169,3 +169,52 @@ class SolverImpactTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+def test_force_release_against_integrated_trajectory(record_property):
+    from scipy.integrate import solve_ivp
+
+    worst_e = worst_time = 0.
+    for zeta in (.71, .9999, 1., 1.0001, 2., 8.):
+        # Normalized mass, stiffness and initial closing speed are one.
+        def rhs(t, state):
+            x, v = state
+            return v, -x-2*zeta*v
+
+        def force_zero(t, state):
+            return state[0]+2*zeta*state[1]
+
+        force_zero.terminal = True
+        force_zero.direction = -1
+        result = solve_ivp(rhs, (0., 4.), (0., 1.), events=force_zero,
+                           rtol=2e-12, atol=2e-14)
+        release, = result.t_events[0]
+        (overlap, velocity), = result.y_events[0]
+        model = impact_analytic(1., 2*zeta, 1.)
+        assert velocity < 0 and overlap > 0
+        worst_e = max(worst_e, abs(model.e_clamped+velocity))
+        worst_time = max(worst_time, abs(model.contact_time_force-release),
+                         abs(model.contact_time_geometric-(release-overlap/velocity)))
+        damping = restitution_to_damping_clamped(model.e_clamped, 1., 1.)
+        assert abs(damping-2*zeta) < 2e-10
+    assert clamped_restitution(1.) == math.exp(-2.)
+    record_property("max_restitution_error", worst_e)
+    record_property("max_normalized_duration_error", worst_time)
+    assert worst_e < 1e-11 and worst_time < 1e-10
+
+
+def test_overdamped_dem_pair_at_three_time_steps(record_property):
+    target = .08
+    errors = []
+    for scale in (.2, .1, .05):
+        impact = pair_impact(e_target=target, damping="clamped_mapping", dt_scale=scale)
+        error = abs(impact.e_measured-target)
+        force_error = abs(impact.contact_time_force/impact.contact_time_force_analytic-1)
+        geometric_error = abs(impact.contact_time/impact.contact_time_analytic-1)
+        record_property(f"restitution_error_{scale}", error)
+        record_property(f"force_duration_relative_error_{scale}", force_error)
+        record_property(f"geometric_duration_relative_error_{scale}", geometric_error)
+        assert error < .0003
+        assert abs(impact.momentum_error) < 1e-12
+        errors.append((force_error, geometric_error))
+    for coarse, fine in zip(errors, errors[1:]):
+        assert all(b < a for a,b in zip(coarse, fine))
