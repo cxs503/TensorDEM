@@ -318,6 +318,8 @@ class PairImpactResult:
     final_transverse_relative_speed: float = 0.
     final_center_of_mass_velocity: tuple[float, float, float] = (0., 0., 0.)
     center_of_mass_position_error_m: float = 0.
+    active_dashpot_work_j: float = 0.
+    release_elastic_energy_j: float = 0.
 
     @property
     def e_error_vs_clamped(self) -> float:
@@ -508,6 +510,9 @@ def pair_impact(
     # Euler uses the force from the start of each step. The initial gap
     # gives zero load; subsequent values come from the sampled pair state.
     normal_force = 0.
+    dashpot_work = 0.
+    release_elastic_energy = 0.
+    overlap_now = -clearance
     compression_impulse = 0.
     rebound_impulse = 0.
     for _ in range(400_000):
@@ -530,7 +535,17 @@ def pair_impact(
         if v_next != v_prev:
             force_steps += 1
         sep = float(torch.linalg.vector_norm(dem.positions[j]-dem.positions[i]))
+        previous_overlap = overlap_now
         overlap_now = 2.0 * radius - sep
+        if normal_force > 0.:
+            trial_force = k_n*overlap_now + c_n*v_next
+            active_fraction = 1.
+            if trial_force <= 0.:
+                # Locate release before the geometric overlap necessarily ends.
+                active_fraction = normal_force/(normal_force-trial_force)
+                release_overlap = max(0., previous_overlap + active_fraction*(overlap_now-previous_overlap))
+                release_elastic_energy = .5*k_n*release_overlap**2
+            dashpot_work += c_n*v_prev**2*dem.dt*active_fraction
         if overlap_now > 0.0:
             contact_steps += 1
             if overlap_now > max_overlap:
@@ -572,6 +587,8 @@ def pair_impact(
     final_center = .5*(dem.positions[i]+dem.positions[j])
     final_drift = .5*(dem.velocities[i]+dem.velocities[j])
     return PairImpactResult(
+        active_dashpot_work_j=dashpot_work,
+        release_elastic_energy_j=release_elastic_energy,
         e_measured=rebound / v0,
         impact_speed=v0,
         rebound_speed=rebound,

@@ -258,3 +258,10 @@ result gives the final center velocity vector, its signed projection along the
 impact axis, and the distance from the expected straight-line center position
 at separation. The validation compares purely transverse and mixed boosts
 with the same impact in the center-of-mass frame.
+
+For the free-sphere benchmark, `pair_impact` also reports two energies in
+joules. `active_dashpot_work_j` accumulates the squared normal closing speed
+times the damping coefficient and active step duration. A linear interpolation
+of the trial force to zero gives the release overlap and
+`release_elastic_energy_j = k_n * overlap_at_release**2 / 2`. Their sum
+approaches the measured loss of relative kinetic energy as the step shrinks.

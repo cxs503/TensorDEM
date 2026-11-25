@@ -427,3 +427,27 @@ def test_head_on_impact_under_general_galilean_boost(record_property):
     record_property("max_center_velocity_error_m_s", worst_drift)
     record_property("max_center_trajectory_error_m", worst_position)
     assert worst_contact < 2e-10 and worst_drift < 1e-12 and worst_position < 1e-13
+
+
+def test_pair_impact_measured_energy_partition(record_property):
+    from tensordem.contact_impact import restitution_to_damping_clamped
+
+    errors = []
+    for scale in (.4, .2, .1):
+        result = pair_impact(e_target=.35, damping="clamped_mapping", dt_scale=scale,
+                             impact_axis=(1.,-2.,2.),center_of_mass_velocity=(.5,.25,-.2))
+        m = .5*result.pair_mass_kg
+        speed = 2*result.impact_speed
+        c = restitution_to_damping_clamped(.35, 5.e4, m)
+        ref = impact_analytic(5.e4,c,m,speed)
+        initial = .5*m*speed**2
+        work_error = abs(result.active_dashpot_work_j-ref.dashpot_work_j)/initial
+        release_error = abs(result.release_elastic_energy_j-ref.release_elastic_energy_j)/initial
+        closure = abs(result.dissipated_energy-result.active_dashpot_work_j
+                      -result.release_elastic_energy_j)/initial
+        record_property(f"dashpot_error_over_initial_energy_{scale}",work_error)
+        record_property(f"release_energy_error_over_initial_energy_{scale}",release_error)
+        record_property(f"energy_balance_error_over_initial_energy_{scale}",closure)
+        errors.append(max(work_error,release_error,closure))
+    assert errors[-1] < errors[1] < errors[0]
+    assert errors[-1] < 8e-4
