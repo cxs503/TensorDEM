@@ -14,15 +14,15 @@ cannot silently invalidate the macro conclusion:
 * wall contact: ``r_eff = r`` under both conventions, so the mapping *doubles*
   the wall cap and leaves ``k_r`` unchanged.
 
-No integration, no randomness: pure property checks (< 1 s).
+The pair-force kernel is also checked against the spring law and torque cap.
 """
 from __future__ import annotations
 
-import math
+import numpy as np
 
 import pytest
 
-from tensordem.granular3d_core import Material3D
+from tensordem.granular3d_core import ContactState, Material3D, contact_forces
 
 
 def test_pair_cap_is_equal_under_the_published_mapping():
@@ -70,3 +70,22 @@ def test_unknown_lever_is_rejected():
         _ = mat.pair_rolling_reff
     with pytest.raises(ValueError):
         _ = mat.wall_rolling_reff
+
+
+@pytest.mark.parametrize("lever,arm", [("particle_radius", .5), ("reduced_radius", .25)])
+@pytest.mark.parametrize("torsion", [False, True])
+@pytest.mark.parametrize("spin_rate", [0.1, 100.])
+def test_kernel_rolling_couple(lever, arm, torsion, spin_rate, record_property):
+    mat = Material3D(radius=.5, kn=100., kt_ratio=.5, mu=0., mu_rolling=.2,
+                     rolling_lever=lever, rolling_torsion=torsion)
+    pos = np.array([[0., 0., 0.], [.75, 0., 0.]])
+    omega = np.array([[0., 0., 0.], [spin_rate, spin_rate, 0.]])
+    dt = .1
+    _, torque = contact_forces(pos, np.zeros_like(pos), omega, np.array([0]), np.array([1]),
+                               ContactState(), mat, dt)
+    twist = dt * np.array([spin_rate if torsion else 0., spin_rate, 0.])
+    trial = 50. * arm**2 * twist
+    cap = .2 * 25. * arm
+    expected = trial * min(1., cap / np.linalg.norm(trial))
+    record_property("max_abs_torque_error_Nm", np.max(np.abs(torque - [expected, -expected])))
+    np.testing.assert_allclose(torque, [expected, -expected], atol=1e-14, rtol=1e-14)

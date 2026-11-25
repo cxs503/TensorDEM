@@ -84,6 +84,34 @@ class TestPeriodicKernel:
         assert f[0, 0] > 0.0 and f[1, 0] < 0.0
         assert f.sum(axis=0) == pytest.approx(np.zeros(3), abs=1e-9)
 
+    @pytest.mark.parametrize("keep_candidate", [False, True])
+    @pytest.mark.parametrize("return_pairs", [False, True])
+    def test_recontact_has_no_residual_shear_or_torque(self, keep_candidate, return_pairs):
+        mat = Material3D(radius=0.5, kn=100., kt_ratio=0.5, mu=0.4, mu_rolling=0.2)
+        pos = np.array([[9.75, 0., 0.], [0.5, 0., 0.]])
+        vel = np.zeros((2, 3))
+        spin = np.zeros_like(vel)
+        vel[1, 1] = 3.
+        spin[1, 0] = 1.
+        state = ContactState()
+        iu, ju = build_pairs(pos, mat.radius, BOX)
+        _, torque, pair = contact_forces(pos, vel, spin, iu, ju, state, mat, .1,
+                                         box=BOX, return_pairs=True)
+        # Fn = 25 N; the trial shear of 15 N saturates at mu * Fn.
+        np.testing.assert_allclose(pair["f_t"], [[0., -10., 0.]])
+        assert torque[0, 0] > 0.
+        pos[1, 0] += 2.
+        candidates = (iu, ju) if keep_candidate else build_pairs(pos, mat.radius, BOX)
+        contact_forces(pos, vel, spin, *candidates, state, mat, .1,
+                       box=BOX, return_pairs=return_pairs)
+        pos[1, 0] -= 2.
+        vel.fill(0.)
+        spin.fill(0.)
+        _, torque, pair = contact_forces(pos, vel, spin, iu, ju, state, mat, .1,
+                                         box=BOX, return_pairs=True)
+        np.testing.assert_array_equal(pair["f_t"], 0.)
+        np.testing.assert_array_equal(torque, 0.)
+
     def test_periodic_pair_force_is_newtonian(self):
         mat = Material3D(radius=0.5, mu=0.3)
         rng = np.random.default_rng(3)

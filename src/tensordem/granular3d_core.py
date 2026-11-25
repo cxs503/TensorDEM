@@ -299,18 +299,8 @@ def contact_forces(pos: np.ndarray, vel: np.ndarray, omega: np.ndarray,
         state_keys = iu * n + ju
     force = np.zeros((n, 3), dtype=np.float64)
     torque = np.zeros((n, 3), dtype=np.float64)
-    m_pairs = len(iu)
-    if m_pairs == 0:
-        if return_pairs:
-            empty = {"iu": np.zeros(0, dtype=np.int64),
-                     "ju": np.zeros(0, dtype=np.int64),
-                     "force_on_i": np.zeros((0, 3)), "branch": np.zeros((0, 3)),
-                     "f_n": np.zeros(0), "f_t": np.zeros((0, 3))}
-            return force, torque, empty
-        return force, torque
-
     r = mat.radius
-    kn, kt, kr = mat.kn, mat.kt, mat.kr
+    kn, kt = mat.kn, mat.kt
     mu, mu_r = mat.mu, mat.mu_rolling
     gamma = mat.gamma_pair
 
@@ -321,6 +311,8 @@ def contact_forces(pos: np.ndarray, vel: np.ndarray, omega: np.ndarray,
     overlap = 2.0 * r - dist
     active = overlap > 0.0
     if not active.any():
+        state.tang.clear()
+        state.roll.clear()
         if return_pairs:
             empty = {"iu": np.zeros(0, dtype=np.int64),
                      "ju": np.zeros(0, dtype=np.int64),
@@ -381,6 +373,7 @@ def contact_forces(pos: np.ndarray, vel: np.ndarray, omega: np.ndarray,
         np.add.at(torque, ju_a, t_i)
 
     if mat.mu_rolling > 0.0:
+        kr = mat.pair_rolling_kr
         spin = omega[ju_a] - omega[iu_a]
         keys = state_keys[active]
         cur = [state.roll.get(k) for k in keys]
@@ -390,8 +383,10 @@ def contact_forces(pos: np.ndarray, vel: np.ndarray, omega: np.ndarray,
         else:
             roll = np.array(cur, dtype=np.float64)
         roll = roll + spin * dt
+        if not mat.rolling_torsion:
+            roll -= (roll * nvec).sum(axis=1)[:, None] * nvec
         rnorm = np.linalg.norm(roll, axis=1)
-        cap_r = (mu_r * r * f_n) / kr
+        cap_r = (mu_r * mat.pair_rolling_reff * f_n) / kr
         scale_r = np.where(rnorm > cap_r, cap_r / np.maximum(rnorm, 1e-30), 1.0)
         roll = roll * scale_r[:, None]
         for k, key in enumerate(keys):
