@@ -789,3 +789,11 @@ def test_lattice_rejects_invalid_exchange(exchange):
 def test_periodic_lattice_rejects_surface_exchange():
     with pytest.raises(ChainError):
         lattice_network_temperatures(3, 2, 1., 300., 300., periodic_y=True, upper_exchange=(1., 300.))
+
+
+def test_weak_chain_link_currents_at_large_temperature_offset():
+    case = ChainCase(t_hot=305.+2**-24, t_cold=305., cells_per_sphere=64)
+    chain = ThermalChain(case)
+    temperature, currents = chain.solve_steady(return_link_currents=True)
+    np.testing.assert_array_equal(temperature, chain.solve_steady())
+    np.testing.assert_allclose(currents, case.heat_flow, rtol=1e-8, atol=0)

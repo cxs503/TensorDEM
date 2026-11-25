@@ -909,13 +909,21 @@ class ThermalChain:
         mat[-1, -1] = 1.0
         return mat.tocsr()
 
-    def solve_steady(self) -> np.ndarray:
-        """Solve the network with the two end nodes pinned to ``t_hot`` / ``t_cold``."""
+    def solve_steady(self, *, return_link_currents: bool = False) -> np.ndarray | tuple[np.ndarray, np.ndarray]:
+        """Return steady temperatures in K and optionally hot-to-cold link currents in W.
+
+        Currents are evaluated from the relative solution before adding the
+        cold-end temperature, preserving small differences at large offsets.
+        """
         c = self.case
         rhs = np.zeros(self.n_nodes)
-        rhs[0] = c.t_hot
-        rhs[-1] = c.t_cold
-        return sp.linalg.spsolve(self._dirichlet_matrix(), rhs)
+        rhs[0] = c.t_hot - c.t_cold
+        relative = sp.linalg.spsolve(self._dirichlet_matrix(), rhs)
+        temperature = relative + c.t_cold
+        temperature[[0, -1]] = (c.t_hot, c.t_cold)
+        if return_link_currents:
+            return temperature, -self.link_conductance * np.diff(relative)
+        return temperature
 
     # -------------------------------------------------------------- grading
     def analytic_steady(self) -> np.ndarray:
