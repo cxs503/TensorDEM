@@ -455,6 +455,54 @@ def harmonic_contact_interval(link_resistance, heat_capacity, angular_frequency,
     return final, -np.diff(integral)/r
 
 
+def constant_contact_interval(link_resistance, heat_capacity, duration, initial_temperature, *,
+                              t_left, t_right, nodal_power=0., allow_massless=False):
+    """Advance one constant-load interval without temporal discretization.
+
+    Return right-endpoint temperatures (K) and integrated rightward heat on
+    every link (J). Both ends are prescribed reservoirs. Interior nodes may
+    receive constant power (W); with allow_massless=True their zero-capacity
+    traces follow instantaneous power balance. To switch a load, pass the
+    returned temperatures to a new interval with its new boundary data.
+    Endpoint powers or storage affect reservoir reactions only; the returned
+    heat measures conduction through the links.
+    """
+    r = _link_resistances(link_resistance)
+    dt = _finite("duration", duration, positive=True)
+    left,right = _finite("left temperature",t_left),_finite("right temperature",t_right)
+    size = len(r)+1
+    c,u0,p = (np.broadcast_to(np.asarray(v,dtype=float),(size,))
+              for v in (heat_capacity,initial_temperature,nodal_power))
+    if np.any(c<0) or not all(np.isfinite(v).all() for v in (c,u0,p)):
+        raise ChainError("capacity must be nonnegative and nodal inputs finite")
+    if np.any(c[1:-1]==0) and not allow_massless:
+        raise ChainError("zero-capacity interior nodes require allow_massless=True")
+    # The steady link power increases by the local source at each node.
+    increase = np.r_[0.,np.cumsum(p[1:-1])]
+    steady_flux = (left-right-r@increase)/r.sum()+increase
+    steady = np.r_[left,left-np.cumsum(r*steady_flux)]
+    steady[-1] = right
+    active = np.flatnonzero(c[1:-1]>0)+1
+    if not active.size:
+        return steady,dt*steady_flux
+    anchors = np.r_[0,active,size-1]
+    reduced_r = np.add.reduceat(r,anchors[:-1])
+    conductance = 1/reduced_r
+    root = np.sqrt(c[active])
+    diagonal = (conductance[:-1]+conductance[1:])/c[active]
+    offdiag = -conductance[1:-1]/(root[:-1]*root[1:])
+    rates,basis = sla.eigh_tridiagonal(diagonal,offdiag)
+    modes = basis.T @ (root*(u0[active]-steady[active]))
+    evolved = (basis @ (np.exp(-dt*rates)*modes))/root
+    integrated = (basis @ ((-np.expm1(-dt*rates)/rates)*modes))/root
+    # The transient deviation is source-free at massless nodes. Its heat
+    # flow is constant along each series segment bounded by storing nodes.
+    position = np.r_[0.,np.cumsum(r)]
+    deviation = np.interp(position,position[anchors],np.r_[0.,evolved,0.])
+    transient_heat = -np.diff(np.r_[0.,integrated,0.])/reduced_r
+    return steady+deviation,dt*steady_flux+np.repeat(transient_heat,np.diff(anchors))
+
+
 def transient_contact_temperatures(link_resistance, heat_capacity, time, initial_temperature,
                                    *, t_left=None, t_right=None, nodal_power=0., theta=.5, allow_massless=False):
     """Integrate a fixed 1D contact network, returning temperatures [time,node].

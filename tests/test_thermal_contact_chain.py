@@ -482,3 +482,37 @@ def test_harmonic_interval_from_arbitrary_initial_state_with_link_heat():
                                t_left=wall[0], t_right=wall[1], nodal_power=[0., source, 0.])
     np.testing.assert_allclose(observed, exact, atol=2e-14, rtol=0)
     np.testing.assert_allclose(heats, -np.diff(integral)/r, atol=2e-14, rtol=0)
+
+
+def test_constant_interval_resolves_sheet_source_and_storage_exactly():
+    from tensordem.thermal import constant_contact_interval
+    r = np.array([.3,.7,.5])
+    c = [0.,0.,2.,0.]
+    initial = [0.,999.,.8,0.]
+    dt = .21
+    end,q = constant_contact_interval(r,c,dt,initial,t_left=1.,t_right=.4,
+                        nodal_power=[0.,.6,.2,0.],allow_massless=True)
+    # Eliminating the sheet gives C*T' = (1+.3*.6-T)/1 + (.4-T)/.5 + .2.
+    equilibrium = (1.+.3*.6+.4/.5+.2)/3
+    decay = np.exp(-1.5*dt)
+    expected = equilibrium+(.8-equilibrium)*decay
+    integral = equilibrium*dt+(.8-equilibrium)*(-np.expm1(-1.5*dt))/1.5
+    np.testing.assert_allclose(end,[1.,1.-.3*(1.-expected-.7*.6),expected,.4],atol=1e-14)
+    np.testing.assert_allclose(q,[(1.-.7*.6)*dt-integral,(1.+.3*.6)*dt-integral,
+                                  (integral-.4*dt)/.5],atol=1e-14)
+
+
+def test_constant_interval_all_massless_and_subdivision():
+    from tensordem.thermal import constant_contact_interval
+    end,heat = constant_contact_interval([1.,2.],0.,.25,99.,t_left=2.,t_right=0.,
+                                         nodal_power=[0.,1.,0.],allow_massless=True)
+    np.testing.assert_allclose(end,[2.,2.,0.])
+    np.testing.assert_allclose(heat,[0.,.25])
+    opts = dict(t_left=.4,t_right=-.3,nodal_power=[0.,1.,.4,0.])
+    def run(dt,u):
+        return constant_contact_interval([.4,.12,.5],[0.,1.,2.,0.],dt,u,**opts)
+    end,q = run(.25,1.)
+    mid,a = run(.1,1.)
+    split,b = run(.15,mid)
+    np.testing.assert_allclose(end,split,atol=1e-14)
+    np.testing.assert_allclose(q,a+b,atol=1e-14)
