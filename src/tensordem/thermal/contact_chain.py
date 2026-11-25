@@ -84,6 +84,9 @@ __all__ = [
     "chain_resistance",
     "contact_conductance",
     "contact_constriction_resistance",
+    "affine_contact_interval",
+    "constant_contact_interval",
+    "harmonic_contact_interval",
     "harmonic_contact_temperatures",
     "hertz_contact_radius",
     "ice_bond_tensile_strength",
@@ -298,13 +301,13 @@ def _chain_laplacian(conductance):
 
 def cell_centered_slab_network(widths, conductivity, volumetric_heat_capacity, *,
                                area=1., contact_resistance=0., films=(None, None), resolve_contacts=False,
-                               interface_heat_capacity=0., left_resistance_fraction=.5):
+                               interface_heat_capacity=0., left_resistance_fraction=.5, wall_areal_heat_capacity=(0.,0.)):
     """Build links [K/W] and capacities [J/K] for a fixed 1D material stack.
 
     Widths in m, k in W/(m K), volumetric capacity in J/(m³ K), area in m².
     Each cell stores its full capacity at its centre. Internal contact
     resistances (m² K/W) sit between adjacent half cells. The two end nodes
-    are prescribed reservoirs of zero capacity. A positive film coefficient
+    are prescribed reservoirs, with zero capacity by default. A positive film coefficient
     (W/(m² K)) adds external resistance; None prescribes the surface temperature.
     With resolve_contacts=True, insert two zero-capacity surface nodes at each
     strictly positive contact resistance. Use allow_massless=True when solving.
@@ -313,6 +316,10 @@ def cell_centered_slab_network(widths, conductivity, volumetric_heat_capacity, *
     of the contact resistance between the left material and the sheet (scalar
     or one per interface). At fractions 0 or 1, the sheet coincides with the
     corresponding surface node. The default splits the resistance equally.
+    wall_areal_heat_capacity (J/(m² K)) places storage at either exterior
+    surface. With a film, the surface becomes a separate node between the
+    cell and the prescribed ambient reservoir. Without a film, capacity
+    resides at the prescribed surface itself.
     """
     widths = np.asarray(widths, dtype=float)
     if widths.ndim != 1 or not widths.size or not np.isfinite(widths).all() or np.any(widths <= 0):
@@ -336,8 +343,13 @@ def cell_centered_slab_network(widths, conductivity, volumetric_heat_capacity, *
     fraction = np.broadcast_to(fraction, contacts.shape)
     left, right = films
     film_r = [0. if h is None else 1/_finite("film coefficient", h, positive=True) for h in (left, right)]
+    wall_capacity = np.broadcast_to(np.asarray(wall_areal_heat_capacity,dtype=float),(2,))
+    if np.any(wall_capacity<0) or not np.isfinite(wall_capacity).all():
+        raise ChainError("wall areal heat capacity must be finite and nonnegative")
+    storing_film = (wall_capacity>0) & (np.asarray(film_r)>0)
     half = .5 * widths / k
-    links = np.r_[film_r[0]+half[0], half[:-1]+contacts+half[1:], half[-1]+film_r[1]] / area
+    end_links = half[[0,-1]] + np.where(storing_film,0.,film_r)
+    links = np.r_[end_links[0],half[:-1]+contacts+half[1:],end_links[1]] / area
     capacity = np.r_[0., widths*area*cv, 0.]
     if np.any(sheet > 0) or (resolve_contacts and np.any(contacts > 0)):
         resolved_links = [links[0]]
@@ -367,7 +379,12 @@ def cell_centered_slab_network(widths, conductivity, volumetric_heat_capacity, *
             resolved_capacity.append(capacity[i+2])
         resolved_links.append(links[-1])
         resolved_capacity.append(0.)
-        return np.asarray(resolved_links), np.asarray(resolved_capacity)
+        links,capacity = np.asarray(resolved_links),np.asarray(resolved_capacity)
+    capacity[[0,-1]] = area*wall_capacity
+    if storing_film[0]:
+        links,capacity = np.r_[film_r[0]/area,links],np.r_[0.,capacity]
+    if storing_film[1]:
+        links,capacity = np.r_[links,film_r[1]/area],np.r_[capacity,0.]
     return links, capacity
 
 

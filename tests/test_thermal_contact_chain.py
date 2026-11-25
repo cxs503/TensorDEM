@@ -541,3 +541,14 @@ def test_affine_contact_interval_massless_trace_and_storage(dt):
     np.testing.assert_allclose(end,expected,atol=3e-14,rtol=0)
     np.testing.assert_allclose(mean,avg,atol=3e-14,rtol=0)
     np.testing.assert_allclose(q,-dt*np.diff(avg)/r,atol=5e-14,rtol=0)
+
+
+@pytest.mark.parametrize("films,expected_r,expected_c",[
+    ((2.,4.),[.25,.0625,.0625,.125],[0.,4.,1.5,6.,0.]),
+    ((None,4.),[.0625,.0625,.125],[4.,1.5,6.,0.]),
+    ((None,None),[.0625,.0625],[4.,1.5,6.])])
+def test_storing_surface_location_and_area_scaling(films,expected_r,expected_c):
+    from tensordem.thermal import cell_centered_slab_network
+    r,c = cell_centered_slab_network([.25],1.,3.,area=2.,films=films,wall_areal_heat_capacity=(2.,3.))
+    np.testing.assert_allclose(r,expected_r)
+    np.testing.assert_allclose(c,expected_c)
