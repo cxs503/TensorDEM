@@ -105,7 +105,7 @@ class PairSpringState:
 
 
 class WallSpringState:
-    """Per-particle tangential/rolling spring against a rigid plane."""
+    """Per-particle spring history and stored energy for a rigid wall."""
 
     __slots__ = ("tang", "roll", "active", "live")
 
@@ -114,6 +114,15 @@ class WallSpringState:
         self.roll = np.zeros((n, 3), dtype=np.float64)
         self.active = np.zeros(n, dtype=bool)
         self.live = np.zeros(n, dtype=np.float64)
+
+    def release_inactive(self, active: np.ndarray) -> float:
+        departed = self.active & ~active
+        loss = float(self.live[departed].sum())
+        self.tang[departed] = 0.
+        self.roll[departed] = 0.
+        self.live[departed] = 0.
+        self.active[:] = active
+        return loss
 
 
 def _empty_pair_result(n: int) -> dict:
@@ -412,13 +421,7 @@ def wall_contact_forces(pos: np.ndarray, vel: np.ndarray, omega: np.ndarray,
     act = overlap > 0.0
     if not act.any():
         if state is not None and update_state:
-            # all floor contacts lost: book their stored springs (normal +
-            # tangential + rolling) instead of zeroing them silently (m21164)
-            out["release_loss"] = float(state.live.sum())
-            state.tang[:] = 0.0
-            state.roll[:] = 0.0
-            state.active[:] = False
-            state.live[:] = 0.0
+            out["release_loss"] = state.release_inactive(act)
         return out
 
     idx = np.nonzero(act)[0]
@@ -490,18 +493,11 @@ def wall_contact_forces(pos: np.ndarray, vel: np.ndarray, omega: np.ndarray,
     live = (0.5 * kn * ov * ov
             + 0.5 * kt * np.einsum("ij,ij->i", tang, tang)
             + 0.5 * kr * np.einsum("ij,ij->i", roll, roll))
-    release_loss = 0.0
     if state is not None and update_state:
-        prev_live = state.live[idx]
-        release_loss = float(np.sum(prev_live[live <= 0.0])
-                             + max(float(state.live.sum() - prev_live.sum()), 0.0))
-        state.tang[:] = 0.0
-        state.roll[:] = 0.0
-        state.active[:] = False
-        state.live[:] = 0.0
+        out["release_loss"] = state.release_inactive(act)
+        out["release_loss"] += float(state.live[idx[live <= 0.0]].sum())
         state.tang[idx] = tang
         state.roll[idx] = roll
-        state.active[idx] = True
         state.live[idx] = live
 
     out.update({
@@ -513,8 +509,6 @@ def wall_contact_forces(pos: np.ndarray, vel: np.ndarray, omega: np.ndarray,
         "energy_normal": float(0.5 * kn * np.sum(ov * ov)),
         "energy_tangential": float(0.5 * kt * np.sum(tang * tang)),
         "energy_rolling": float(0.5 * kr * np.sum(roll * roll)),
-        "release_loss": release_loss,
-        "release_loss": release_loss,
         "energy_dead": float(np.sum(np.where(f_n <= 0.0,
                                              0.5 * kn * ov * ov
                                              + 0.5 * kt * np.einsum("ij,ij->i", tang, tang),

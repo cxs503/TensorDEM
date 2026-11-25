@@ -66,3 +66,48 @@ def test_cylinder_work_over_a_closed_indentation_cycle(mode, active_fraction, re
     expected = active_fraction * mat.gamma_wall * (amplitude * frequency)**2 * period / 2.
     record_property("relative_cycle_work_error", abs(work / expected - 1.))
     assert work == pytest.approx(expected, rel=1e-13)
+
+
+@pytest.mark.parametrize("geometry", ["cylinder", "floor"])
+@pytest.mark.parametrize("detach_together", [False, True])
+def test_wall_release_loss_is_booked_once_per_detached_grain(geometry, detach_together, record_property):
+    from tensordem.granular_column.kernel import WallSpringState
+
+    mat = Material3D(radius=.5, kn=100., kt_ratio=.5, mu=1.)
+    overlap = np.array([.1, .2])
+    state = WallSpringState(2)
+    dt = .1
+    # Slip along y, spin about the normal: the surface spin contributes
+    # no slip and the two independently loaded springs stay below the caps.
+    normal_axis = 0 if geometry == "cylinder" else 2
+    vel = np.zeros((2, 3))
+    vel[:, 1] = [.1, .2]
+    spin = np.zeros_like(vel)
+    spin[:, normal_axis] = [.2, .3]
+    expected = .5 * (100. * overlap**2 + 50. * (dt * vel[:, 1])**2
+                     + 12.5 * (dt * spin[:, normal_axis])**2)
+    pos = np.zeros_like(vel)
+
+    def evaluate(update):
+        if geometry == "cylinder":
+            pos[:, 0] = .5 + overlap
+            return cylinder_wall_contact_forces(pos, vel, spin, mat, dt, wall_radius=1.,
+                                                state=state, update_state=update, mu_rolling_wall=1.)
+        pos[:, 2] = .5 - overlap
+        return wall_contact_forces(pos, vel, spin, mat, dt, state=state, update_state=update,
+                                   mu_rolling_wall=1.)
+
+    assert evaluate(True)["release_loss"] == 0.
+    vel.fill(0.)
+    spin.fill(0.)
+    releases = [[0, 1]] if detach_together else [[0], [1]]
+    total = 0.
+    for departing in releases:
+        overlap[departing] = -.1
+        assert evaluate(False)["release_loss"] == 0.
+        loss = evaluate(True)["release_loss"]
+        assert loss == pytest.approx(expected[departing].sum(), abs=2e-15, rel=0.)
+        total += loss
+    record_property("absolute_total_release_error_J", abs(total - expected.sum()))
+    assert evaluate(True)["release_loss"] == 0.
+    np.testing.assert_array_equal(state.live, 0.)

@@ -148,9 +148,7 @@ def cylinder_wall_contact_forces(pos: np.ndarray, vel: np.ndarray,
     act = overlap > 0.0
     if not act.any():
         if state is not None and update_state:
-            state.tang[:] = 0.0
-            state.roll[:] = 0.0
-            state.active[:] = False
+            out["release_loss"] = state.release_inactive(act)
         return out
 
     idx = np.nonzero(act)[0]
@@ -214,14 +212,11 @@ def cylinder_wall_contact_forces(pos: np.ndarray, vel: np.ndarray,
         torque[idx] += torque_r
 
     if state is not None and update_state:
+        out["release_loss"] = state.release_inactive(act)
         state.tang[idx] = tang
         state.roll[idx] = roll
-        state.active[idx] = True
-        state.active[np.setdiff1d(np.arange(n), idx, assume_unique=True)] = False
-        dead = np.setdiff1d(np.arange(n), idx, assume_unique=True)
-        if dead.size:
-            state.tang[dead] = 0.0
-            state.roll[dead] = 0.0
+        state.live[idx] = .5 * (kn * ov**2 + kt * (tang * tang).sum(axis=1)
+                                + kr * (roll * roll).sum(axis=1))
 
     out["dissip_collision"] = dashpot_work
     out["dissip_friction"] = float(np.sum(mu_w * f_n
@@ -233,7 +228,6 @@ def cylinder_wall_contact_forces(pos: np.ndarray, vel: np.ndarray,
                                            * np.einsum("ij,ij->i", tang, tang)))
     out["energy_rolling"] = float(np.sum(0.5 * kr
                                         * np.einsum("ij,ij->i", roll, roll)))
-    out["release_loss"] = 0.0
     if idx.size:
         out["mu_eff_mean"] = float(mu_w)
         out["mu_eff_max"] = float(mu_w)
