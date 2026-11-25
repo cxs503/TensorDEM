@@ -117,7 +117,8 @@ def cylinder_wall_contact_forces(pos: np.ndarray, vel: np.ndarray,
                                  mu_rolling_wall: float = 0.0,
                                  state: WallSpringState | None = None,
                                  update_state: bool = True,
-                                 contact_mode: str = "one_sided") -> dict:
+                                 contact_mode: str = "one_sided",
+                                 corotate_wall_rolling: bool = False) -> dict:
     """Contact forces against the rigid cylinder ``r = wall_radius``.
 
     The wall is a surface of revolution about ``z``; a grain at radius ``rr``
@@ -128,7 +129,9 @@ def cylinder_wall_contact_forces(pos: np.ndarray, vel: np.ndarray,
     spring saturated at ``mu |F_n|``, rolling spring saturated at
     ``mu_r r_eff |F_n|``) is copied from
     :func:`~tensordem.granular_column.kernel.wall_contact_forces` so that the
-    container and the floor are the same physics.
+    container and the floor are the same physics. With
+    ``corotate_wall_rolling=True``, the stored rolling spring follows the
+    cylindrical frame before adding the current spin increment.
     """
     n = pos.shape[0]
     out = _empty_wall_result(n)
@@ -179,6 +182,7 @@ def cylinder_wall_contact_forces(pos: np.ndarray, vel: np.ndarray,
         roll_old = np.zeros((idx.size, 3))
     else:
         tang_old = state.tang[idx].copy()
+        roll_old = state.roll[idx].copy()
         if state.hoop_direction is not None:
             # On a cylinder the axial direction is fixed. Carry the signed
             # circumferential extension into the new local tangent plane.
@@ -186,7 +190,14 @@ def cylinder_wall_contact_forces(pos: np.ndarray, vel: np.ndarray,
             turned = state.active[idx] & np.any(old_hoop != hoop, axis=1)
             extension = (tang_old[turned, :2] * old_hoop[turned]).sum(axis=1)
             tang_old[turned, :2] = extension[:, None] * hoop[turned]
-        roll_old = state.roll[idx].copy()
+            if corotate_wall_rolling and mu_rolling_wall > 0.:
+                # Rotate the stored vector about the cylinder axis; torsion,
+                # when enabled, is the radial component of this vector.
+                old, new = old_hoop[turned], hoop[turned]
+                cosine = (old * new).sum(axis=1)
+                sine = old[:, 0] * new[:, 1] - old[:, 1] * new[:, 0]
+                x, y = roll_old[turned, :2].T
+                roll_old[turned, :2] = np.column_stack((cosine*x - sine*y, sine*x + cosine*y))
 
     tang = tang_old + u_t * dt
     t_norm = np.sqrt(np.einsum("ij,ij->i", tang, tang))
@@ -307,6 +318,7 @@ class PluviationCase:
     #: safety cap on the number of poured monolayers
     max_layers: int = 200
     label: str = ""
+    corotate_wall_rolling: bool = False
 
     def __post_init__(self) -> None:
         for name in ("column_radius", "radius", "aspect_ratio", "density",
@@ -352,7 +364,7 @@ class PluviationCase:
     def signature(self) -> dict:
         return {"radius": float(self.radius), "density": float(self.density),
                 "mu": float(self.mu), "mu_rolling": float(self.mu_rolling),
-                "mu_wall": float(self.mu_wall),
+                "mu_wall": float(self.mu_wall), "corotate_wall_rolling": self.corotate_wall_rolling,
                 "restitution": float(self.restitution), "kn": float(self.kn),
                 "kt_ratio": float(self.kt_ratio),
                 "gravity": float(self.gravity),
@@ -562,6 +574,7 @@ def pluviate(case: PluviationCase, *, progress: bool = False) -> dict:
             ps = cylinder_wall_contact_forces(
                 pos, vel, omega, mat, dt, wall_radius=R,
                 mu_wall=case.mu_wall, mu_rolling_wall=mat.mu_rolling,
+                corotate_wall_rolling=case.corotate_wall_rolling,
                 state=side_state, update_state=False)
             acc = (pred["force"] + pf["force"] + ps["force"]) / mass + gravity_vec
             alpha = (pred["torque"] + pf["torque"] + ps["torque"]) / inertia
@@ -579,6 +592,7 @@ def pluviate(case: PluviationCase, *, progress: bool = False) -> dict:
             cs = cylinder_wall_contact_forces(
                 pos, v_half, w_half, mat, dt, wall_radius=R,
                 mu_wall=case.mu_wall, mu_rolling_wall=mat.mu_rolling,
+                corotate_wall_rolling=case.corotate_wall_rolling,
                 state=side_state, update_state=True)
             acc = (cur["force"] + cf["force"] + cs["force"]) / mass + gravity_vec
             alpha = (cur["torque"] + cf["torque"] + cs["torque"]) / inertia
@@ -712,6 +726,7 @@ class RelaxCase:
     #: minimum settle time before "at rest" can be declared (s)
     min_settle_time: float = 0.15
     label: str = ""
+    corotate_wall_rolling: bool = False
 
     def material(self) -> Material3D:
         return Material3D(radius=self.radius, density=self.density, mu=self.mu,
@@ -732,7 +747,7 @@ class RelaxCase:
     def signature(self) -> dict:
         return {"radius": float(self.radius), "density": float(self.density),
                 "mu": float(self.mu), "mu_rolling": float(self.mu_rolling),
-                "mu_wall": float(self.mu_wall),
+                "mu_wall": float(self.mu_wall), "corotate_wall_rolling": self.corotate_wall_rolling,
                 "restitution": float(self.restitution), "kn": float(self.kn),
                 "kt_ratio": float(self.kt_ratio),
                 "gravity": float(self.gravity),
@@ -833,6 +848,7 @@ def relax_in_container(case: RelaxCase, positions: np.ndarray, *,
             ps = cylinder_wall_contact_forces(
                 pos, vel, omega, mat, dt, wall_radius=R,
                 mu_wall=case.mu_wall, mu_rolling_wall=mat.mu_rolling,
+                corotate_wall_rolling=case.corotate_wall_rolling,
                 state=side_state, update_state=False)
             acc = (pred["force"] + pf["force"] + ps["force"]) / mass + gravity_vec
             alpha = (pred["torque"] + pf["torque"] + ps["torque"]) / inertia
@@ -849,6 +865,7 @@ def relax_in_container(case: RelaxCase, positions: np.ndarray, *,
             cs = cylinder_wall_contact_forces(
                 pos, v_half, w_half, mat, dt, wall_radius=R,
                 mu_wall=case.mu_wall, mu_rolling_wall=mat.mu_rolling,
+                corotate_wall_rolling=case.corotate_wall_rolling,
                 state=side_state, update_state=True)
             acc = (cur["force"] + cf["force"] + cs["force"]) / mass + gravity_vec
             alpha = (cur["torque"] + cf["torque"] + cs["torque"]) / inertia

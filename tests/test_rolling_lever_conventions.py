@@ -129,3 +129,39 @@ def test_contact_turn_preserves_only_allowed_rolling_components(geometry, torsio
         np.testing.assert_allclose(result["torque"][-1], expected, atol=1e-14)
         assert result["energy_rolling"] == pytest.approx(6.25 * np.dot(angle, angle))
         assert abs(result["dissip_rolling"]) < 1e-14
+
+
+@pytest.mark.parametrize("torsion", [False, True])
+@pytest.mark.parametrize("friction", [.05, 1.])
+@pytest.mark.parametrize("direction", [-1., 1.])
+def test_cylinder_corotating_rolling_spring(torsion, friction, direction, record_property):
+    from tensordem.granular_column.kernel import WallSpringState
+    from tensordem.granular_column.pluviation import cylinder_wall_contact_forces
+
+    mat = Material3D(radius=.5, kn=100., kt_ratio=.5, mu=0., rolling_torsion=torsion)
+    state = WallSpringState(1)
+    dt, stiffness = .1, 12.5
+    # Components in the wall frame: radial torsion, hoop rolling, axial rolling.
+    trial = dt * np.array([1. if torsion else 0., 2., -1.])
+    cap = friction * .5 * 25.
+    retained = min(1., cap / (stiffness * np.linalg.norm(trial)))
+    angle = retained * trial
+    errors = []
+    for step, phi in enumerate(direction * np.deg2rad([0., 47., 90., 160., 270., 360.])):
+        radial = np.array([np.cos(phi), np.sin(phi), 0.])
+        hoop = np.array([-np.sin(phi), np.cos(phi), 0.])
+        pos = .75 * radial[None, :]
+        omega = np.array([[1., 2., -1.]]) if step == 0 else np.zeros_like(pos)
+        expected = -stiffness * (angle[0]*radial + angle[1]*hoop + [0., 0., angle[2]])
+        for update in (False, True):
+            result = cylinder_wall_contact_forces(pos, np.zeros_like(pos), omega, mat, dt,
+                                                  wall_radius=1., mu_rolling_wall=friction,
+                                                  state=state, update_state=update,
+                                                  corotate_wall_rolling=True)
+            errors.append(np.linalg.norm(result["torque"][0] - expected))
+            assert result["energy_rolling"] == pytest.approx(.5*stiffness*np.dot(angle, angle),
+                                                            abs=1e-14, rel=0.)
+            work = cap * np.linalg.norm(trial - angle) if step == 0 else 0.
+            assert result["dissip_rolling"] == pytest.approx(work, abs=1e-14, rel=0.)
+    record_property("max_abs_torque_error_Nm", max(errors))
+    assert max(errors) < 1e-13
