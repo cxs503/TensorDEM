@@ -552,3 +552,24 @@ def test_storing_surface_location_and_area_scaling(films,expected_r,expected_c):
     r,c = cell_centered_slab_network([.25],1.,3.,area=2.,films=films,wall_areal_heat_capacity=(2.,3.))
     np.testing.assert_allclose(r,expected_r)
     np.testing.assert_allclose(c,expected_c)
+
+
+def test_harmonic_interval_massless_sheet_power_and_arbitrary_initial_temperature():
+    from tensordem.thermal import harmonic_contact_interval
+    w,t0,dt = 7.,.12,.19
+    left,right,source = .4+.5j,-.2j,.7-.9j
+    # Condense the massless sheet between .25 and .75 K/W links.
+    store = (left+2*right+.25*source)/(3+1j*w)
+    sheet = .75*left+.25*store+.1875*source
+    amplitudes = np.array([left,sheet,store,right])*np.exp(1j*w*t0)
+    initial = 1.6
+    deviation = (initial-amplitudes[2].real)*np.array([0.,.25,1.,0.])
+    exact = (amplitudes*np.exp(1j*w*dt)).real+deviation*np.exp(-3*dt)
+    mean = (amplitudes*np.expm1(1j*w*dt)/(1j*w*dt)).real-deviation*np.expm1(-3*dt)/(3*dt)
+    r = np.array([.25,.75,.5])
+    end,q,avg = harmonic_contact_interval(r,[0.,0.,1.,0.],w,t0,dt,[0.,999.,initial,0.],
+                    t_left=left,t_right=right,nodal_power=[0.,source,0.,0.],allow_massless=True,
+                    return_interval_temperature=True)
+    np.testing.assert_allclose(end,exact,atol=4e-14,rtol=0)
+    np.testing.assert_allclose(avg,mean,atol=4e-14,rtol=0)
+    np.testing.assert_allclose(q,-dt*np.diff(mean)/r,atol=4e-14,rtol=0)

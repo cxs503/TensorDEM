@@ -7,10 +7,10 @@ import subprocess
 
 import numpy as np
 
-from tensordem.thermal import affine_contact_interval, cell_centered_slab_network, constant_contact_interval
+from tensordem.thermal import affine_contact_interval, cell_centered_slab_network, constant_contact_interval, harmonic_contact_interval
 
 
-def measure(n, ramp=False):
+def measure(n, ramp=False, harmonic=False):
     # Both sine branches vanish at the exterior walls. Select the right
     # diffusivity for equal decay rates and match the rightward heat flux.
     a,b = math.pi/2,1.4*math.pi
@@ -35,24 +35,42 @@ def measure(n, ramp=False):
     decay = math.exp(-rate*dt)
     interface = n//2+1
     extra = {}
-    if ramp:
-        # Superpose a rightward flux q(t)=.2-.7t on the decay mode.
-        # A linear background in resistance coordinates has exactly this
-        # flux across every link, including the two massless contact traces.
+    if ramp or harmonic:
         distance = np.r_[0.,np.cumsum(r)]
-        base = .4-.2*distance
-        slope = .15+.7*distance
-        initial += base
-        end,heat,mean = affine_contact_interval(r,c,dt,initial,t_left=(base[0],base[0]+dt*slope[0]),
-                      t_right=(base[-1],base[-1]+dt*slope[-1]),nodal_power_start=c*slope,
-                      allow_massless=True,return_interval_temperature=True)
+        if harmonic:
+            # Frequency-domain affine profile in resistance coordinates.
+            # Its power divergence is zero, so applied power supplies storage.
+            omega,start = 7.,.13
+            current = .3-.6j
+            profile = .4+.2j-current*distance
+            phase = np.exp(1j*omega*start)
+            base = (profile*phase).real
+            background_end = (profile*phase*np.exp(1j*omega*dt)).real
+            mean_phase = phase*np.expm1(1j*omega*dt)/(1j*omega*dt)
+            background_mean = (profile*mean_phase).real
+            background_heat = dt*(current*mean_phase).real
+            initial += base
+            end,heat,mean = harmonic_contact_interval(r,c,omega,start,dt,initial,t_left=profile[0],
+                         t_right=profile[-1],nodal_power=1j*omega*c*profile,allow_massless=True,
+                         return_interval_temperature=True)
+        else:
+            # Superpose a rightward flux q(t)=.2-.7t on the decay mode.
+            base = .4-.2*distance
+            slope = .15+.7*distance
+            background_end = base+dt*slope
+            background_mean = base+.5*dt*slope
+            background_heat = dt*(.2-.35*dt)
+            initial += base
+            end,heat,mean = affine_contact_interval(r,c,dt,initial,t_left=(base[0],background_end[0]),
+                          t_right=(base[-1],background_end[-1]),nodal_power_start=c*slope,
+                          allow_massless=True,return_interval_temperature=True)
         avg_mode = -math.expm1(-rate*dt)/(rate*dt)
-        observed_mean_mode = mean-(base+.5*dt*slope)
+        observed_mean_mode = mean-background_mean
         extra = dict(mean_cell_error_K=float(abs(observed_mean_mode[c>0]-avg_mode*means).max()),
                      mean_trace_error_K=float(abs(observed_mean_mode[interface:interface+2]-avg_mode*traces).max()))
-        balance = (c*(end-initial-dt*slope))[1:-1]+np.diff(heat)
-        end = end-(base+dt*slope)
-        heat = heat-dt*(.2-.35*dt)
+        balance = (c*((end-initial)-(background_end-base)))[1:-1]+np.diff(heat)
+        end = end-background_end
+        heat = heat-background_heat
     else:
         end,heat = constant_contact_interval(r,c,dt,initial,t_left=0.,t_right=0.,allow_massless=True)
         balance = (c*(end-initial))[1:-1]+np.diff(heat)
@@ -66,12 +84,14 @@ def measure(n, ramp=False):
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--ramp",action="store_true",help="superpose moving reservoirs and verify time-mean contact traces")
+    drive = parser.add_mutually_exclusive_group()
+    drive.add_argument("--harmonic",action="store_true",help="superpose a harmonic drive and check algebraic contact traces")
+    drive.add_argument("--ramp",action="store_true",help="superpose moving reservoirs and verify time-mean contact traces")
     args = parser.parse_args()
     rows = []
     previous = {}
     for n in (8,16,32,64,128):
-        row = measure(n,args.ramp)
+        row = measure(n,args.ramp,args.harmonic)
         errors = {key:val for key,val in row.items() if "_error_" in key}
         orders = {key:math.log2(previous[key]/val) for key,val in errors.items()} if previous else {}
         row.update(orders=orders,passed=row["node_balance_J"]<1e-11 and
@@ -79,5 +99,5 @@ if __name__=="__main__":
         rows.append(row)
         previous = errors
     rev = subprocess.check_output(["git","rev-parse","HEAD"],cwd=Path(__file__).parent,text=True).strip()
-    print(json.dumps(dict(commit=rev,ramp=args.ramp,runs=rows),indent=2,allow_nan=False))
+    print(json.dumps(dict(commit=rev,ramp=args.ramp,harmonic=args.harmonic,runs=rows),indent=2,allow_nan=False))
     raise SystemExit(0 if all(row["passed"] for row in rows) else 1)

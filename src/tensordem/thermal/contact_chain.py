@@ -438,14 +438,17 @@ def harmonic_contact_temperatures(link_resistance, heat_capacity, angular_freque
 
 
 def harmonic_contact_interval(link_resistance, heat_capacity, angular_frequency, start, duration,
-                              initial_temperature, *, t_left, t_right, nodal_power=0.):
+                              initial_temperature, *, t_left, t_right, nodal_power=0.,
+                              allow_massless=False, return_interval_temperature=False):
     """Return end temperatures (K) and integrated rightward link heats (J).
 
     Both end reservoirs have prescribed temperature phasors; interior stores
-    have positive capacities. Initial temperatures are real values at start
+    have positive capacities, or satisfy algebraic power balance when
+    allow_massless=True. Initial temperatures are real values at start
     (s); end nodes follow their prescribed phasors. The forcing convention is
     Re(phasor*exp(i*omega*t)). Superpose the harmonic response and the matrix
     exponential of the initial deviation, without time discretization.
+    return_interval_temperature appends time-mean node temperatures (K).
     """
     start = _finite("start", start)
     duration = _finite("duration", duration, positive=True)
@@ -453,7 +456,7 @@ def harmonic_contact_interval(link_resistance, heat_capacity, angular_frequency,
         raise ChainError("both end temperature phasors are required")
     r = _link_resistances(link_resistance)
     phasor = harmonic_contact_temperatures(r, heat_capacity, angular_frequency,
-                                t_left=t_left, t_right=t_right, nodal_power=nodal_power)
+                                t_left=t_left, t_right=t_right, nodal_power=nodal_power,allow_massless=allow_massless)
     initial = np.broadcast_to(np.asarray(initial_temperature, dtype=float), phasor.shape)
     if not np.isfinite(initial).all():
         raise ChainError("initial temperature must be finite")
@@ -461,6 +464,14 @@ def harmonic_contact_interval(link_resistance, heat_capacity, angular_frequency,
     angle = 1j*angular_frequency*duration
     final = (phasor*phase*np.exp(angle)).real.copy()
     integral = (phasor*phase*np.expm1(angle)/(1j*angular_frequency)).real.copy()
+    if allow_massless or return_interval_temperature:
+        # Superposition leaves a zero-drive relaxation. Algebraic nodes of
+        # this deviation obey the same series resistance interpolation.
+        offset,heat,mean = affine_contact_interval(r,heat_capacity,duration,initial-(phase*phasor).real,
+                        t_left=(0.,0.),t_right=(0.,0.),allow_massless=allow_massless,
+                        return_interval_temperature=True)
+        result = (final+offset,heat-np.diff(integral)/r)
+        return (*result,mean+integral/duration) if return_interval_temperature else result
     if len(r) > 1:
         c = np.broadcast_to(np.asarray(heat_capacity, dtype=float), phasor.shape)[1:-1]
         stiffness = _chain_laplacian(1/r)[1:-1, 1:-1].tocsc()
