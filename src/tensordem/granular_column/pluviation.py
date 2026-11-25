@@ -458,6 +458,24 @@ def settle_report(pos: np.ndarray, radius: float, column_radius: float,
     }
 
 
+def _extend_contact_histories(pair_state: PairSpringState, floor_state: WallSpringState,
+                              side_state: WallSpringState, n: int) -> None:
+    """Keep the existing particles' springs when a batch is appended."""
+    old_count = len(floor_state.active)
+    added = n - old_count
+    if not added:
+        return
+    if pair_state.keys.size:
+        # pair_contact_forces encodes (i, j) as i * particle_count + j.
+        i, j = np.divmod(pair_state.keys, old_count)
+        pair_state.keys = i * n + j
+    for wall in (floor_state, side_state):
+        wall.active = np.pad(wall.active, (0, added))
+        wall.live = np.pad(wall.live, (0, added))
+        wall.tang = np.pad(wall.tang, ((0, added), (0, 0)))
+        wall.roll = np.pad(wall.roll, ((0, added), (0, 0)))
+
+
 def pluviate(case: PluviationCase, *, progress: bool = False) -> dict:
     """Pour, settle and gate one disordered column; return its state.
 
@@ -558,15 +576,11 @@ def pluviate(case: PluviationCase, *, progress: bool = False) -> dict:
             t_sim += dt
 
     def grow(new_pos: np.ndarray) -> None:
-        """Append one grain (state arrays grow with it)."""
-        nonlocal pos, vel, omega, pair_state, floor_state, side_state
+        """Append one grain to the current batch."""
+        nonlocal pos, vel, omega
         pos = np.vstack([pos, new_pos[None, :]])
         vel = np.vstack([vel, np.zeros((1, 3))])
         omega = np.vstack([omega, np.zeros((1, 3))])
-        n = pos.shape[0]
-        pair_state = PairSpringState()
-        floor_state = WallSpringState(n)
-        side_state = WallSpringState(n)
 
     n_target = case.n_target
     batch_steps = max(1, int(round(layer_time / dt)))
@@ -588,6 +602,7 @@ def pluviate(case: PluviationCase, *, progress: bool = False) -> dict:
             placed_this_batch += 1
         if placed_this_batch == 0 and guard > 2000:
             break
+        _extend_contact_histories(pair_state, floor_state, side_state, len(pos))
         integrate(batch_steps)
         poured_layers += 1
         if progress and poured_layers % 8 == 0:

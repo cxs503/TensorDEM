@@ -336,3 +336,81 @@ def test_bundled_csv_loader_rejects_tampered_derived_columns(tmp_path):
         bad.write_text("\n".join([raw[0], ",".join(cells), *raw[2:]]) + "\n")
         with pytest.raises(ValueError):
             mod.load_bundled_cases(str(bad))
+
+
+def test_remote_grains_preserve_loaded_contacts(record_property):
+    from tensordem.granular_column.kernel import (
+        PairSpringState, WallSpringState, pair_contact_forces, wall_contact_forces,
+    )
+    from tensordem.granular_column.pluviation import _extend_contact_histories
+
+    mat = _material()
+    state = PairSpringState()
+    floor, side = WallSpringState(3), WallSpringState(3)
+    dt = 1e-4
+    pos = np.array([[0., 0., .2], [.215, 0., .025], [.215, .05, .025]])
+    vel = np.array([[0., 0., 0.], [.1, .2, .1], [-.1, .15, -.05]])
+    spin = vel.copy()
+    pair = np.array([1]), np.array([2])
+
+    def measure(update):
+        kwargs = dict(update_state=update)
+        wall = dict(mu_rolling_wall=.5, **kwargs)
+        return (pair_contact_forces(pos, vel, spin, *pair, state, mat, dt, **kwargs),
+                wall_contact_forces(pos, vel, spin, mat, dt, state=floor, **wall),
+                cylinder_wall_contact_forces(pos, vel, spin, mat, dt, wall_radius=.24,
+                                             state=side, **wall))
+
+    loaded = measure(True)
+    assert all(c["energy_tangential"] > 0. and c["energy_rolling"] > 0. for c in loaded)
+    vel.fill(0.)
+    spin.fill(0.)
+    reference = measure(False)
+    for count in (1, 2):
+        extra = np.zeros((count, 3))
+        vel = np.vstack([vel, extra])
+        spin = np.vstack([spin, extra])
+        extra[:, 2] = np.arange(len(pos), len(pos) + count)
+        pos = np.vstack([pos, extra])
+        _extend_contact_histories(state, floor, side, len(pos))
+        for name, actual, expected in zip(("pair", "floor", "side"), measure(True), reference):
+            error = np.max(np.abs(actual["force"][:3] - expected["force"]))
+            record_property(f"{name}_force_error_after_{count}_new_grains_N", error)
+            np.testing.assert_array_equal(actual["force"][:3], expected["force"])
+            np.testing.assert_array_equal(actual["torque"][:3], expected["torque"])
+            np.testing.assert_array_equal(actual["force"][3:], 0.)
+            for key in ("energy_normal", "energy_tangential", "energy_rolling", "release_loss"):
+                assert actual[key] == expected[key]
+
+
+def test_multibatch_pour_keeps_pair_history_at_first_kick(monkeypatch):
+    from tensordem.granular_column import pluviation
+
+    original = pluviation.pair_contact_forces
+    previous_count = 0
+    last_committed = {}
+    loaded_transitions = []
+
+    def observe(pos, vel, omega, iu, ju, state, mat, dt, *, update_state):
+        nonlocal previous_count, last_committed
+        count = len(pos)
+        if count > previous_count and last_committed:
+            loaded_transitions.append(count)
+            arrived = dict(zip(state.keys, state.live))
+            for (i, j), energy in last_committed.items():
+                assert arrived[i * count + j] == energy
+        result = original(pos, vel, omega, iu, ju, state, mat, dt, update_state=update_state)
+        if update_state:
+            last_committed = {divmod(key, count): energy for key, energy in zip(state.keys, state.live)}
+        previous_count = count
+        return result
+
+    monkeypatch.setattr(pluviation, "pair_contact_forces", observe)
+    case = pluviation.PluviationCase(radius=.03, column_radius=.09, aspect_ratio=.8,
+                                     batches_per_layer=2, batch_time_factor=2.,
+                                     compaction_time=.01, relax_time=.01)
+    report = pluviation.pluviate(case)
+    assert loaded_transitions
+    assert len(report["positions"]) == report["n_target"] == 10
+    assert report["poured_layers"] == 3
+    assert report["admissible"]
