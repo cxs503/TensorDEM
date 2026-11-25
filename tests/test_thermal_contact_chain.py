@@ -458,3 +458,27 @@ def test_asymmetric_sheet_heating_matches_two_branch_impedances(fraction):
         np.testing.assert_allclose(t[sheet], expected, atol=1e-14, rtol=0)
         flux = -np.diff(t)/r
         np.testing.assert_allclose([-flux[sheet-1], flux[sheet]], expected/z, atol=1e-14, rtol=0)
+
+
+def test_harmonic_interval_from_arbitrary_initial_state_with_link_heat():
+    from tensordem.thermal import harmonic_contact_interval
+
+    w, start, dt = 4., .23, .08
+    r = np.array([.5, .8])
+    c = 3.
+    wall = np.array([.2+.3j, -.5j])
+    source = .6-.2j
+    t0 = 1.7
+    mode = (sum(wall/r)+source)/(sum(1/r)+1j*w*c)
+    phase = np.exp(1j*w*start)
+    transient = t0-(mode*phase).real
+    rate = sum(1/r)/c
+    states = np.r_[wall[0], mode, wall[1]]
+    exact = (states*phase*np.exp(1j*w*dt)).real
+    exact[1] += transient*np.exp(-rate*dt)
+    integral = (states*phase*np.expm1(1j*w*dt)/(1j*w)).real
+    integral[1] -= transient*np.expm1(-rate*dt)/rate
+    observed, heats = harmonic_contact_interval(r, [0., c, 0.], w, start, dt, t0,
+                               t_left=wall[0], t_right=wall[1], nodal_power=[0., source, 0.])
+    np.testing.assert_allclose(observed, exact, atol=2e-14, rtol=0)
+    np.testing.assert_allclose(heats, -np.diff(integral)/r, atol=2e-14, rtol=0)

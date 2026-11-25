@@ -420,6 +420,41 @@ def harmonic_contact_temperatures(link_resistance, heat_capacity, angular_freque
     return temperature
 
 
+def harmonic_contact_interval(link_resistance, heat_capacity, angular_frequency, start, duration,
+                              initial_temperature, *, t_left, t_right, nodal_power=0.):
+    """Return end temperatures (K) and integrated rightward link heats (J).
+
+    Both end reservoirs have prescribed temperature phasors; interior stores
+    have positive capacities. Initial temperatures are real values at start
+    (s); end nodes follow their prescribed phasors. The forcing convention is
+    Re(phasor*exp(i*omega*t)). Superpose the harmonic response and the matrix
+    exponential of the initial deviation, without time discretization.
+    """
+    start = _finite("start", start)
+    duration = _finite("duration", duration, positive=True)
+    if t_left is None or t_right is None:
+        raise ChainError("both end temperature phasors are required")
+    r = _link_resistances(link_resistance)
+    phasor = harmonic_contact_temperatures(r, heat_capacity, angular_frequency,
+                                t_left=t_left, t_right=t_right, nodal_power=nodal_power)
+    initial = np.broadcast_to(np.asarray(initial_temperature, dtype=float), phasor.shape)
+    if not np.isfinite(initial).all():
+        raise ChainError("initial temperature must be finite")
+    phase = np.exp(1j*angular_frequency*start)
+    angle = 1j*angular_frequency*duration
+    final = (phasor*phase*np.exp(angle)).real.copy()
+    integral = (phasor*phase*np.expm1(angle)/(1j*angular_frequency)).real.copy()
+    if len(r) > 1:
+        c = np.broadcast_to(np.asarray(heat_capacity, dtype=float), phasor.shape)[1:-1]
+        stiffness = _chain_laplacian(1/r)[1:-1, 1:-1].tocsc()
+        deviation = initial[1:-1]-(phase*phasor[1:-1]).real
+        evolved = sp.linalg.expm_multiply(-duration*(sp.diags(1/c) @ stiffness), deviation)
+        final[1:-1] += evolved
+        # Integrate C*d(delta)/dt = -K*delta over this interval.
+        integral[1:-1] += sp.linalg.spsolve(stiffness, c*(deviation-evolved))
+    return final, -np.diff(integral)/r
+
+
 def transient_contact_temperatures(link_resistance, heat_capacity, time, initial_temperature,
                                    *, t_left=None, t_right=None, nodal_power=0., theta=.5, allow_massless=False):
     """Integrate a fixed 1D contact network, returning temperatures [time,node].
