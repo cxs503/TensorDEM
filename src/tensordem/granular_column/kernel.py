@@ -107,11 +107,13 @@ class PairSpringState:
 class WallSpringState:
     """Per-particle spring history and stored energy for a rigid wall."""
 
-    __slots__ = ("tang", "roll", "active", "live")
+    __slots__ = ("tang", "roll", "active", "live", "hoop_direction")
 
     def __init__(self, n: int) -> None:
         self.tang = np.zeros((n, 3), dtype=np.float64)
         self.roll = np.zeros((n, 3), dtype=np.float64)
+        # Only curved walls need a local basis for transporting shear history.
+        self.hoop_direction = None
         self.active = np.zeros(n, dtype=bool)
         self.live = np.zeros(n, dtype=np.float64)
 
@@ -121,6 +123,8 @@ class WallSpringState:
         self.tang[departed] = 0.
         self.roll[departed] = 0.
         self.live[departed] = 0.
+        if self.hoop_direction is not None:
+            self.hoop_direction[departed] = 0.
         self.active[:] = active
         return loss
 

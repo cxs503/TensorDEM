@@ -173,11 +173,19 @@ def cylinder_wall_contact_forces(pos: np.ndarray, vel: np.ndarray,
     out["n_contacts"] = int(idx.size)
     out["normal_force_sum"] = float(f_n.sum())
 
+    hoop = np.column_stack((-er[:, 1], er[:, 0]))
     if state is None:
         tang_old = np.zeros((idx.size, 3))
         roll_old = np.zeros((idx.size, 3))
     else:
         tang_old = state.tang[idx].copy()
+        if state.hoop_direction is not None:
+            # On a cylinder the axial direction is fixed. Carry the signed
+            # circumferential extension into the new local tangent plane.
+            old_hoop = state.hoop_direction[idx]
+            turned = state.active[idx] & np.any(old_hoop != hoop, axis=1)
+            extension = (tang_old[turned, :2] * old_hoop[turned]).sum(axis=1)
+            tang_old[turned, :2] = extension[:, None] * hoop[turned]
         roll_old = state.roll[idx].copy()
 
     tang = tang_old + u_t * dt
@@ -213,6 +221,9 @@ def cylinder_wall_contact_forces(pos: np.ndarray, vel: np.ndarray,
 
     if state is not None and update_state:
         out["release_loss"] = state.release_inactive(act)
+        if state.hoop_direction is None:
+            state.hoop_direction = np.zeros((n, 2))
+        state.hoop_direction[idx] = hoop
         state.tang[idx] = tang
         state.roll[idx] = roll
         state.live[idx] = .5 * (kn * ov**2 + kt * (tang * tang).sum(axis=1)
@@ -474,6 +485,8 @@ def _extend_contact_histories(pair_state: PairSpringState, floor_state: WallSpri
         wall.live = np.pad(wall.live, (0, added))
         wall.tang = np.pad(wall.tang, ((0, added), (0, 0)))
         wall.roll = np.pad(wall.roll, ((0, added), (0, 0)))
+        if wall.hoop_direction is not None:
+            wall.hoop_direction = np.pad(wall.hoop_direction, ((0, added), (0, 0)))
 
 
 def pluviate(case: PluviationCase, *, progress: bool = False) -> dict:

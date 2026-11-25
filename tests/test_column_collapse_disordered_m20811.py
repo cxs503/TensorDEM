@@ -458,3 +458,44 @@ def test_new_overlaps_apply_normal_force_on_same_step(preparation, monkeypatch, 
     record_property("new_contact_events", len(errors))
     record_property("maximum_normal_force_error_N", max(errors))
     assert max(errors) < 1e-10
+
+
+@pytest.mark.parametrize("direction", [-1., 1.])
+@pytest.mark.parametrize("friction", [1., .02])
+def test_preloaded_shear_follows_cylindrical_wall(direction, friction, record_property):
+    from tensordem.granular3d_core import Material3D
+    from tensordem.granular_column.kernel import WallSpringState
+
+    mat = Material3D(radius=.5, kn=100., kt_ratio=.5, mu=friction)
+    state = WallSpringState(1)
+    dt = .1
+    # The initial sticking spring has .02 m circumferential and -.01 m
+    # axial extension. Later evaluations have zero contact-point slip.
+    angles = direction * np.deg2rad([0., 45., 90., 160., 210., 360.])
+    trial_load = np.hypot(1., .5)
+    retained = min(1., 25. * friction / trial_load)
+    initial_slip_work = 25. * friction * trial_load / 50. * (1. - retained)
+    errors = []
+    for index, angle in enumerate(angles):
+        radial = np.array([np.cos(angle), np.sin(angle), 0.])
+        hoop = np.array([-np.sin(angle), np.cos(angle), 0.])
+        pos = .75 * radial[None, :]
+        vel = np.array([[0., .2, -.1]])
+        spin = np.zeros_like(pos)
+        if index:
+            # Move around the wall in pure rolling. Translation and spin
+            # give equal and opposite hoop velocities at the contact.
+            speed = .75 * (angle - angles[index - 1]) / dt
+            vel = speed * hoop[None, :]
+            spin[0, 2] = -speed / mat.radius
+        expected = retained * (-hoop + np.array([0., 0., .5]))
+        for update in (False, True):
+            result = cylinder_wall_contact_forces(pos, vel, spin, mat, dt,
+                                                  wall_radius=1., state=state, update_state=update)
+            shear = result["force"][0] + result["normal_force_sum"] * radial
+            errors.append(np.linalg.norm(shear - expected))
+            assert result["energy_tangential"] == pytest.approx(.0125 * retained**2, abs=1e-14, rel=0.)
+            expected_work = initial_slip_work if index == 0 else 0.
+            assert result["dissip_friction"] == pytest.approx(expected_work, abs=1e-14, rel=0.)
+    record_property("max_shear_vector_error_N", max(errors))
+    assert max(errors) < 1e-13
