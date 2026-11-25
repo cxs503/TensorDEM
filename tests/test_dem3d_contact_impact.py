@@ -366,3 +366,23 @@ def test_phase_impulses_against_integrated_contact_load(record_property):
                     abs(rebound/ref.rebound_impulse_ns-1))
     record_property("maximum_phase_impulse_relative_error", worst)
     assert worst < 2e-11
+
+
+def test_normal_impact_in_translating_frames(record_property):
+    options = dict(e_target=.5, damping="clamped_mapping", dt_scale=.25)
+    base = pair_impact(**options)
+    for drift in (-3., 3.):
+        moving = pair_impact(center_of_mass_speed=drift, **options)
+        errors = {}
+        for name in ("e_measured", "dissipated_energy", "compression_impulse_ns",
+                     "rebound_impulse_ns", "peak_force", "max_overlap"):
+            errors[name] = abs(getattr(moving,name)/getattr(base,name)-1)
+        error = max(errors.values())
+        record_property(f"max_relative_frame_discrepancy_{drift}", error)
+        record_property(f"center_of_mass_speed_error_{drift}", abs(moving.final_center_of_mass_speed-drift))
+        assert error < 2e-10, errors
+        assert abs(moving.final_center_of_mass_speed-drift) < 2e-13
+        assert moving.force_steps == base.force_steps
+        assert moving.contact_steps == base.contact_steps
+        impulse = moving.compression_impulse_ns + moving.rebound_impulse_ns
+        assert abs(impulse-moving.pair_mass_kg*(moving.impact_speed+moving.rebound_speed)) < 1e-11

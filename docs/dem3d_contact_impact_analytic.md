@@ -237,3 +237,9 @@ m v e. Both `impact_analytic` and `pair_impact` expose
 `compression_impulse_ns` and `rebound_impulse_ns` in N·s. The pair harness
 integrates the clipped force at each Euler step's starting state and splits
 the reversal step by linear interpolation of velocity.
+
+For two freely moving particles, pass a signed `center_of_mass_speed` in m/s
+to translate the pair along the collision axis. The reported impact and rebound
+speeds refer to either sphere in the center-of-mass frame. Relative velocity
+sets the compression/rebound transition and the kinetic energy lost in the
+collision. The result also reports the signed final center-of-mass velocity.

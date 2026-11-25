@@ -314,6 +314,7 @@ class PairImpactResult:
     time_to_peak_force_s: float = 0.
     compression_impulse_ns: float = 0.
     rebound_impulse_ns: float = 0.
+    final_center_of_mass_speed: float = 0.
 
     @property
     def e_error_vs_clamped(self) -> float:
@@ -395,6 +396,7 @@ def pair_impact(
     *,
     e_target: float = 0.5,
     v0: float = 0.5,
+    center_of_mass_speed: float = 0.,
     k_n: float = 5.0e4,
     radius: float = 0.05,
     density: float = 900.0,
@@ -414,6 +416,8 @@ def pair_impact(
                ``contact_tangential.restitution_to_damping`` (the mapping under
                review); ``"clamped_mapping"`` uses
                :func:`restitution_to_damping_clamped` (the corrected mapping).
+    center_of_mass_speed : signed common velocity along the collision axis (m/s).
+               Impact and rebound speeds are per-sphere speeds in the pair frame.
     dt_scale : multiplier on the solver's ``recommended_dt``.
     thermal  : if true, feed the work the solver actually dissipated into
                :mod:`tensordem.ice_thermal_stress` and attach the resulting
@@ -429,6 +433,11 @@ def pair_impact(
     """
     from .contact_tangential import restitution_to_damping
 
+    if not math.isfinite(center_of_mass_speed):
+        raise ValueError("center_of_mass_speed must be finite")
+    if not math.isfinite(v0) or v0 <= 0:
+        raise ValueError("v0 must be finite and positive")
+
     m = density * (4.0 / 3.0) * math.pi * radius ** 3
     m_eff = 0.5 * m
     if damping == "unclamped_mapping":
@@ -440,8 +449,8 @@ def pair_impact(
 
     dem, i, j = _build_pair(k_n, c_n, radius, density, dt_scale)
     dem.velocities = torch.zeros_like(dem.positions)
-    dem.velocities[i] = torch.tensor([0.0, 0.0, v0], dtype=dem.dtype)
-    dem.velocities[j] = torch.tensor([0.0, 0.0, -v0], dtype=dem.dtype)
+    dem.velocities[i] = torch.tensor([0.0, 0.0, center_of_mass_speed + v0], dtype=dem.dtype)
+    dem.velocities[j] = torch.tensor([0.0, 0.0, center_of_mass_speed - v0], dtype=dem.dtype)
     dem.time = 0.0
     dem.step_count = 0
 
@@ -459,9 +468,9 @@ def pair_impact(
     dem.positions = saved
 
     momentum_before = float(dem.velocities[:, 2].sum())
-    # Both spheres are free and approach with equal and opposite velocities.
-    ke_before = 0.5 * m * float((dem.velocities[i] ** 2).sum()
-                                + (dem.velocities[j] ** 2).sum())
+    # Relative kinetic energy excludes the uniform translation of the pair.
+    relative_speed = float(dem.velocities[i, 2] - dem.velocities[j, 2])
+    initial_relative_speed = relative_speed
     contact_steps = 0
     force_steps = 0
     clearance = float(dem.positions[j, 2]-dem.positions[i, 2])-2*radius
@@ -476,17 +485,17 @@ def pair_impact(
     compression_impulse = 0.
     rebound_impulse = 0.
     for _ in range(400_000):
-        v_prev = float(dem.velocities[i, 2])
+        v_prev = relative_speed
         dem.step()
-        v_next = float(dem.velocities[i, 2])
+        relative_speed = float(dem.velocities[i, 2] - dem.velocities[j, 2])
+        v_next = relative_speed
         impulse = normal_force*dem.dt
         if v_prev <= 0:
             rebound_impulse += impulse
         elif v_next >= 0:
             compression_impulse += impulse
         else:
-            # Interpolate the zero velocity inside the reversal step. In this
-            # symmetric pair the lower sphere stops at maximum compression.
+            # Maximum compression is where the relative velocity changes sign.
             fraction = v_prev/(v_prev-v_next)
             compression_impulse += fraction*impulse
             rebound_impulse += (1-fraction)*impulse
@@ -502,8 +511,7 @@ def pair_impact(
                 max_overlap = overlap_now
                 time_to_peak = dem.time-touch_time
             # the documented force law, evaluated on the solver's own state
-            vn_now = float(dem.velocities[j, 2] - dem.velocities[i, 2])
-            normal_force = max(0., k_n * overlap_now - c_n * vn_now)
+            normal_force = max(0., k_n * overlap_now + c_n * relative_speed)
             if normal_force > peak_force:
                 peak_force = normal_force
                 peak_force_time = dem.time-touch_time
@@ -512,12 +520,10 @@ def pair_impact(
     else:  # pragma: no cover - guarded by the physics
         raise RuntimeError("pair did not separate within the step budget")
 
-    rebound = -float(dem.velocities[i, 2])
+    rebound = -.5*relative_speed
     analytic = impact_analytic(k_n, c_n, m_eff, 2*v0)
-    ke_after = 0.5 * m * float((dem.velocities[i] ** 2).sum()
-                               + (dem.velocities[j] ** 2).sum())
-    # The kinetic loss includes dashpot work and spring energy left at release.
-    dissipated = max(ke_before - ke_after, 0.0)
+    dissipated = max(.5*m_eff*(initial_relative_speed-relative_speed)
+                     *(initial_relative_speed+relative_speed), 0.)
     thermal_state = None
     if thermal:
         from .ice_thermal_stress.dem_coupling import couple_impact_result
@@ -562,4 +568,5 @@ def pair_impact(
         time_to_peak_force_s=peak_force_time,
         compression_impulse_ns=compression_impulse,
         rebound_impulse_ns=rebound_impulse,
+        final_center_of_mass_speed=float((dem.velocities[i, 2]+dem.velocities[j, 2])/2),
     )
