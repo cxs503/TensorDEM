@@ -220,6 +220,14 @@ def test_overdamped_dem_pair_at_three_time_steps(record_property):
         record_property(f"peak_load_delay_in_steps_{scale}", impact.time_to_peak_force_s/impact.dt)
         assert force_peak_error < .01
         assert 0 <= impact.time_to_peak_force_s <= impact.dt
+        impulse = impact.compression_impulse_ns + impact.rebound_impulse_ns
+        particle_change = impact.pair_mass_kg*(impact.impact_speed+impact.rebound_speed)
+        closure = abs(impulse/particle_change-1)
+        rebound_error = abs(impact.rebound_impulse_ns/reference.rebound_impulse_ns-1)
+        record_property(f"impulse_momentum_relative_error_{scale}", closure)
+        record_property(f"rebound_impulse_relative_error_{scale}", rebound_error)
+        assert abs(impact.compression_impulse_ns/reference.compression_impulse_ns-1) < 1e-11
+        assert closure < 1e-11 and rebound_error < .003
         loss = reference.dashpot_work_j + reference.release_elastic_energy_j
         energy_error = abs(impact.dissipated_energy-loss)/loss
         record_property(f"total_loss_relative_error_{scale}", energy_error)
@@ -331,3 +339,30 @@ def test_dem_pair_has_interior_load_peak_at_weak_damping(record_property):
     record_property("peak_time_error_in_steps", delay_error)
     assert 0 < impact.time_to_peak_force_s < impact.time_to_peak_overlap_s
     assert load_error < .03 and delay_error < 2
+
+def test_phase_impulses_against_integrated_contact_load(record_property):
+    from scipy.integrate import solve_ivp
+
+    k, m, v = 73., 1.7, 2.3
+    worst = 0.
+    for zeta in (0., .3, 1., 4.):
+        c = 2*zeta*math.sqrt(k*m)
+        ref = impact_analytic(k,c,m,v)
+        def rhs(t, state):
+            x, rate, impulse = state
+            force = k*x+c*rate
+            return rate, -force/m, force
+        def reversal(t, state):
+            return state[1]
+        def release(t, state):
+            return k*state[0]+c*state[1]
+        reversal.direction = release.direction = -1
+        release.terminal = True
+        run = solve_ivp(rhs, (0., 2*math.pi*math.sqrt(m/k)), (0.,v,0.),
+                        events=(reversal,release), rtol=1e-12, atol=1e-14)
+        compression = run.y_events[0][0,2]
+        rebound = run.y_events[1][0,2]-compression
+        worst = max(worst,abs(compression/ref.compression_impulse_ns-1),
+                    abs(rebound/ref.rebound_impulse_ns-1))
+    record_property("maximum_phase_impulse_relative_error", worst)
+    assert worst < 2e-11

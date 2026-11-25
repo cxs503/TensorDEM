@@ -229,3 +229,11 @@ exposes `peak_force_n` and `time_to_peak_force_s` for both regimes. The
 two-particle harness reports the largest sampled normal load and its time
 since first geometric touch, so an initial peak can be detected up to one
 time step late.
+
+The positive normal impulse on each sphere separates into compression and
+rebound at the first zero of relative normal velocity. With effective mass
+m and relative closing speed v, the analytic phase impulses are m v and
+m v e. Both `impact_analytic` and `pair_impact` expose
+`compression_impulse_ns` and `rebound_impulse_ns` in N·s. The pair harness
+integrates the clipped force at each Euler step's starting state and splits
+the reversal step by linear interpolation of velocity.

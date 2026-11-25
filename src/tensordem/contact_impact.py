@@ -176,6 +176,8 @@ class ImpactAnalytic:
     time_to_peak_overlap_s: float = 0.
     peak_force_n: float = 0.
     time_to_peak_force_s: float = 0.
+    compression_impulse_ns: float = 0.
+    rebound_impulse_ns: float = 0.
 
     @property
     def e_bias(self) -> float:
@@ -237,6 +239,8 @@ def impact_analytic(k_n: float, c_n: float, m_eff: float, v0: float = 1.0) -> Im
         time_to_peak_overlap_s=.5*t_force,
         peak_force_n=peak_force,
         time_to_peak_force_s=peak_force_time,
+        compression_impulse_ns=m_eff*v0,
+        rebound_impulse_ns=m_eff*v0*e_clamped,
     )
 
 
@@ -308,6 +312,8 @@ class PairImpactResult:
     thermal_state: object = None      # ice_thermal_stress.dem_coupling.ThermalState
     time_to_peak_overlap_s: float = 0.  # from first geometric touch
     time_to_peak_force_s: float = 0.
+    compression_impulse_ns: float = 0.
+    rebound_impulse_ns: float = 0.
 
     @property
     def e_error_vs_clamped(self) -> float:
@@ -464,12 +470,29 @@ def pair_impact(
     time_to_peak = 0.0
     peak_force = 0.0
     peak_force_time = 0.0
+    # Euler uses the force from the start of each step. The initial gap
+    # gives zero load; subsequent values come from the sampled pair state.
+    normal_force = 0.
+    compression_impulse = 0.
+    rebound_impulse = 0.
     for _ in range(400_000):
         v_prev = float(dem.velocities[i, 2])
         dem.step()
+        v_next = float(dem.velocities[i, 2])
+        impulse = normal_force*dem.dt
+        if v_prev <= 0:
+            rebound_impulse += impulse
+        elif v_next >= 0:
+            compression_impulse += impulse
+        else:
+            # Interpolate the zero velocity inside the reversal step. In this
+            # symmetric pair the lower sphere stops at maximum compression.
+            fraction = v_prev/(v_prev-v_next)
+            compression_impulse += fraction*impulse
+            rebound_impulse += (1-fraction)*impulse
         # In free flight the normal force is exactly zero, so the velocity is
         # bit-for-bit unchanged; any change means the contact force was active.
-        if float(dem.velocities[i, 2]) != v_prev:
+        if v_next != v_prev:
             force_steps += 1
         sep = float(dem.positions[j, 2] - dem.positions[i, 2])
         overlap_now = 2.0 * radius - sep
@@ -480,9 +503,9 @@ def pair_impact(
                 time_to_peak = dem.time-touch_time
             # the documented force law, evaluated on the solver's own state
             vn_now = float(dem.velocities[j, 2] - dem.velocities[i, 2])
-            force = k_n * overlap_now - c_n * vn_now
-            if force > peak_force:
-                peak_force = force
+            normal_force = max(0., k_n * overlap_now - c_n * vn_now)
+            if normal_force > peak_force:
+                peak_force = normal_force
                 peak_force_time = dem.time-touch_time
         elif contact_steps:
             break
@@ -537,4 +560,6 @@ def pair_impact(
         thermal_state=thermal_state,
         time_to_peak_overlap_s=time_to_peak,
         time_to_peak_force_s=peak_force_time,
+        compression_impulse_ns=compression_impulse,
+        rebound_impulse_ns=rebound_impulse,
     )
