@@ -646,3 +646,18 @@ def test_insulated_harmonic_two_stores_with_transient_and_net_power():
     np.testing.assert_allclose(end,exact,atol=2e-15,rtol=0.)
     np.testing.assert_allclose(mean,avg,atol=2e-15,rtol=0.)
     np.testing.assert_allclose(q,dt*(avg[0]-avg[1])/r,atol=2e-15,rtol=0.)
+
+
+@pytest.mark.parametrize("resolve",[False,True])
+def test_stepped_area_resistances_and_storing_contact(resolve):
+    from tensordem.thermal import cell_centered_slab_network
+    r,c = cell_centered_slab_network([.6,.4],[2.,5.],[3.,4.],area=[1.,2.],
+                 films=(2.,4.),contact_resistance=.8,interface_heat_capacity=.7,
+                 left_resistance_fraction=.25,wall_areal_heat_capacity=(.1,.3),resolve_contacts=resolve)
+    # Each half cell uses its local area; the interface has 1 m² overlap.
+    expected = ([.5,.15,.15,.2,.6,.02,.02,.125] if resolve else
+                [.5,.15,.35,.62,.02,.125])
+    expected_c = ([0.,.1,1.8,0.,.7,0.,3.2,.6,0.] if resolve else
+                  [0.,.1,1.8,.7,3.2,.6,0.])
+    np.testing.assert_allclose(r,expected)
+    np.testing.assert_allclose(c,expected_c)

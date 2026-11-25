@@ -305,6 +305,9 @@ def cell_centered_slab_network(widths, conductivity, volumetric_heat_capacity, *
     """Build links [K/W] and capacities [J/K] for a fixed 1D material stack.
 
     Widths in m, k in W/(m K), volumetric capacity in J/(m³ K), area in m².
+    Area may be scalar or per cell. At an abrupt step, contact resistance
+    and sheet capacity use the smaller (overlapping) cross section. The
+    model assumes one-dimensional axial conduction and insulated shoulders.
     Each cell stores its full capacity at its centre. Internal contact
     resistances (m² K/W) sit between adjacent half cells. The two end nodes
     are prescribed reservoirs, with zero capacity by default. A positive film coefficient
@@ -324,7 +327,10 @@ def cell_centered_slab_network(widths, conductivity, volumetric_heat_capacity, *
     widths = np.asarray(widths, dtype=float)
     if widths.ndim != 1 or not widths.size or not np.isfinite(widths).all() or np.any(widths <= 0):
         raise ChainError("supply a finite positive width for each cell")
-    area = _finite("area", area, positive=True)
+    area = np.broadcast_to(np.asarray(area,dtype=float),widths.shape)
+    if not np.isfinite(area).all() or np.any(area<=0):
+        raise ChainError("area must be finite and positive for every cell")
+    joint_area = np.minimum(area[:-1],area[1:])
     k, cv = (np.broadcast_to(np.asarray(v, dtype=float), widths.shape)
              for v in (conductivity, volumetric_heat_capacity))
     if any(not np.isfinite(v).all() or np.any(v <= 0) for v in (k, cv)):
@@ -347,9 +353,12 @@ def cell_centered_slab_network(widths, conductivity, volumetric_heat_capacity, *
     if np.any(wall_capacity<0) or not np.isfinite(wall_capacity).all():
         raise ChainError("wall areal heat capacity must be finite and nonnegative")
     storing_film = (wall_capacity>0) & (np.asarray(film_r)>0)
-    half = .5 * widths / k
+    half = .5*widths/(k*area)
+    contacts = contacts/joint_area
+    sheet = sheet*joint_area
+    film_r = np.asarray(film_r)/area[[0,-1]]
     end_links = half[[0,-1]] + np.where(storing_film,0.,film_r)
-    links = np.r_[end_links[0],half[:-1]+contacts+half[1:],end_links[1]] / area
+    links = np.r_[end_links[0],half[:-1]+contacts+half[1:],end_links[1]]
     capacity = np.r_[0., widths*area*cv, 0.]
     if np.any(sheet > 0) or (resolve_contacts and np.any(contacts > 0)):
         resolved_links = [links[0]]
@@ -357,34 +366,34 @@ def cell_centered_slab_network(widths, conductivity, volumetric_heat_capacity, *
         for i, contact in enumerate(contacts):
             left_r, right_r = contact*fraction[i], contact*(1-fraction[i])
             if resolve_contacts and contact > 0:
-                resolved_links.append(half[i]/area)
+                resolved_links.append(half[i])
                 resolved_capacity.append(0.)
                 if sheet[i] > 0:
                     if left_r > 0:
-                        resolved_links.append(left_r/area)
+                        resolved_links.append(left_r)
                         resolved_capacity.append(0.)
-                    resolved_capacity[-1] = area*sheet[i]
+                    resolved_capacity[-1] = sheet[i]
                     if right_r > 0:
-                        resolved_links.append(right_r/area)
+                        resolved_links.append(right_r)
                         resolved_capacity.append(0.)
                 else:
-                    resolved_links.append(contact/area)
+                    resolved_links.append(contact)
                     resolved_capacity.append(0.)
-                resolved_links.append(half[i+1]/area)
+                resolved_links.append(half[i+1])
             elif sheet[i] > 0:
-                resolved_links.extend(((half[i]+left_r)/area, (half[i+1]+right_r)/area))
-                resolved_capacity.append(area*sheet[i])
+                resolved_links.extend((half[i]+left_r, half[i+1]+right_r))
+                resolved_capacity.append(sheet[i])
             else:
                 resolved_links.append(links[i+1])
             resolved_capacity.append(capacity[i+2])
         resolved_links.append(links[-1])
         resolved_capacity.append(0.)
         links,capacity = np.asarray(resolved_links),np.asarray(resolved_capacity)
-    capacity[[0,-1]] = area*wall_capacity
+    capacity[[0,-1]] = area[[0,-1]]*wall_capacity
     if storing_film[0]:
-        links,capacity = np.r_[film_r[0]/area,links],np.r_[0.,capacity]
+        links,capacity = np.r_[film_r[0],links],np.r_[0.,capacity]
     if storing_film[1]:
-        links,capacity = np.r_[links,film_r[1]/area],np.r_[capacity,0.]
+        links,capacity = np.r_[links,film_r[1]],np.r_[capacity,0.]
     return links, capacity
 
 
