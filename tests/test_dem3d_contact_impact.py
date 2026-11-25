@@ -152,6 +152,9 @@ class SolverImpactTests(unittest.TestCase):
         r = _run(e_target=0.5)
         self.assertLess(abs(r.contact_time_force_error), ACCURACY_BAND)
         self.assertLess(abs(r.contact_time_error), ACCURACY_BAND)
+        self.assertGreater(r.time_to_separation_s, r.time_to_force_release_s)
+        self.assertAlmostEqual(r.time_to_separation_s / r.contact_time_analytic, 1., delta=.01)
+        self.assertAlmostEqual(r.time_to_force_release_s / r.contact_time_force_analytic, 1., delta=.01)
 
     def test_rate_independence(self):
         """Linear contact model: restitution must not depend on impact speed."""

@@ -324,6 +324,9 @@ class PairImpactResult:
     rebound_dashpot_work_j: float = 0.
     compression_contact_work_j: float = 0.
     rebound_contact_work_j: float = 0.
+    # Interpolated event times measured from first geometric contact.
+    time_to_force_release_s: float = 0.
+    time_to_separation_s: float = 0.
 
     @property
     def e_error_vs_clamped(self) -> float:
@@ -517,6 +520,7 @@ def pair_impact(
     compression_work = 0.
     rebound_work = 0.
     release_elastic_energy = 0.
+    time_to_force_release = 0.
     overlap_now = -clearance
     compression_contact_work = 0.
     rebound_contact_work = 0.
@@ -556,6 +560,7 @@ def pair_impact(
             if trial_force <= 0.:
                 # Locate release before the geometric overlap necessarily ends.
                 active_fraction = normal_force/(normal_force-trial_force)
+                time_to_force_release = dem.time-(1-active_fraction)*dem.dt-touch_time
                 release_overlap = max(0., previous_overlap + active_fraction*(overlap_now-previous_overlap))
                 release_elastic_energy = .5*k_n*release_overlap**2
             work_per_step = c_n*v_prev**2*dem.dt
@@ -573,6 +578,8 @@ def pair_impact(
                 peak_force = normal_force
                 peak_force_time = dem.time-touch_time
         elif contact_steps:
+            fraction = previous_overlap/(previous_overlap-overlap_now)
+            time_to_separation = dem.time-(1-fraction)*dem.dt-touch_time
             break
     else:  # pragma: no cover - guarded by the physics
         raise RuntimeError("pair did not separate within the step budget")
@@ -603,6 +610,8 @@ def pair_impact(
     final_center = .5*(dem.positions[i]+dem.positions[j])
     final_drift = .5*(dem.velocities[i]+dem.velocities[j])
     return PairImpactResult(
+        time_to_force_release_s=time_to_force_release,
+        time_to_separation_s=time_to_separation,
         active_dashpot_work_j=compression_work+rebound_work,
         compression_contact_work_j=compression_contact_work,
         rebound_contact_work_j=rebound_contact_work,
