@@ -50,6 +50,27 @@ class TestPeriodicKernel:
         dvec = minimum_image(pos[ju] - pos[iu], BOX)
         assert np.linalg.norm(dvec[0]) == pytest.approx(0.1, abs=1e-12)
 
+    def test_translated_seam_with_negative_open_coordinate(self):
+        pos = np.array([[-0.05, -2., 6.], [20.05, -2., -6.], [0., -4., 0.]])
+        original = pos.copy()
+        iu, ju = build_pairs(pos, 0.5, box=BOX)
+        assert list(zip(iu, ju)) == [(0, 1)]
+        np.testing.assert_allclose(minimum_image(pos[ju] - pos[iu], BOX), [[0.1, 0., 0.]])
+        np.testing.assert_array_equal(pos, original)
+
+    def test_translated_contacts_against_explicit_periodic_images(self):
+        rng = np.random.default_rng(1731)
+        points = rng.uniform([0., -3., 0.], [10., 3., 6.], size=(64, 3))
+        images = np.array([[x, 0., z] for x in (-10., 0., 10.) for z in (-6., 0., 6.)])
+        expected = {
+            (i, j) for i in range(len(points)) for j in range(i + 1, len(points))
+            if np.min(np.linalg.norm(points[i] - points[j] + images, axis=1)) <= 1.
+        }
+        assert expected
+        translations = rng.integers(-4, 5, size=points.shape) * [10., 0., 6.]
+        iu, ju = build_pairs(points + translations, 0.5, box=BOX)
+        assert set(zip(iu, ju)) == expected
+
     def test_seam_contact_force_matches_open_box(self):
         mat = Material3D(radius=0.5, mu=0.5, restitution=0.88)
         state = ContactState()

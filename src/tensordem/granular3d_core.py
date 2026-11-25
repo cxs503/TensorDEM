@@ -259,9 +259,14 @@ def build_pairs(pos: np.ndarray, radius: float,
         tree = cKDTree(pos)
     else:
         boxsize = np.asarray(
-            [float(b) if (b is not None and np.isfinite(b) and b > 0.0) else np.inf
+            [float(b) if (b is not None and np.isfinite(b) and b > 0.0) else 0.0
              for b in box], dtype=np.float64)
-        tree = cKDTree(pos, boxsize=boxsize)
+        periodic = boxsize > 0.0
+        wrapped = np.array(pos, dtype=np.float64, copy=True)
+        values = wrapped[:, periodic] % boxsize[periodic]
+        # Rounding a tiny negative coordinate modulo L can return L itself.
+        wrapped[:, periodic] = np.where(values == boxsize[periodic], 0.0, values)
+        tree = cKDTree(wrapped, boxsize=boxsize)
     pairs = tree.query_pairs(2.0 * radius, output_type="ndarray")
     iu = np.minimum(pairs[:, 0], pairs[:, 1]).astype(np.int64)
     ju = np.maximum(pairs[:, 0], pairs[:, 1]).astype(np.int64)
