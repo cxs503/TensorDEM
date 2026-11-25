@@ -492,11 +492,13 @@ def harmonic_contact_interval(link_resistance, heat_capacity, angular_frequency,
 
 
 def constant_contact_interval(link_resistance, heat_capacity, duration, initial_temperature, *,
-                              t_left, t_right, nodal_power=0., allow_massless=False):
+                              t_left, t_right, nodal_power=0., allow_massless=False,
+                              return_interval_temperature=False):
     """Advance one constant-load interval without temporal discretization.
 
     Return right-endpoint temperatures (K) and integrated rightward heat on
-    every link (J). None leaves an end insulated. Free nodes may
+    every link (J). Set return_interval_temperature=True to append the time-mean
+    temperature (K) at every node. None leaves an end insulated. Free nodes may
     receive constant power (W); with allow_massless=True their zero-capacity
     traces follow instantaneous power balance. To switch a load, pass the
     returned temperatures to a new interval with its new boundary data.
@@ -506,7 +508,7 @@ def constant_contact_interval(link_resistance, heat_capacity, duration, initial_
     return affine_contact_interval(link_resistance, heat_capacity, duration, initial_temperature,
                     t_left=None if t_left is None else (t_left,t_left),
                     t_right=None if t_right is None else (t_right,t_right), nodal_power_start=nodal_power,
-                    allow_massless=allow_massless)
+                    allow_massless=allow_massless, return_interval_temperature=return_interval_temperature)
 
 
 def affine_contact_interval(link_resistance, heat_capacity, duration, initial_temperature, *,

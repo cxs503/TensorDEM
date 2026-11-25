@@ -490,13 +490,14 @@ def test_constant_interval_resolves_sheet_source_and_storage_exactly():
     c = [0.,0.,2.,0.]
     initial = [0.,999.,.8,0.]
     dt = .21
-    end,q = constant_contact_interval(r,c,dt,initial,t_left=1.,t_right=.4,
-                        nodal_power=[0.,.6,.2,0.],allow_massless=True)
+    end,q,mean = constant_contact_interval(r,c,dt,initial,t_left=1.,t_right=.4,
+                        nodal_power=[0.,.6,.2,0.],allow_massless=True,return_interval_temperature=True)
     # Eliminating the sheet gives C*T' = (1+.3*.6-T)/1 + (.4-T)/.5 + .2.
     equilibrium = (1.+.3*.6+.4/.5+.2)/3
     decay = np.exp(-1.5*dt)
     expected = equilibrium+(.8-equilibrium)*decay
     integral = equilibrium*dt+(.8-equilibrium)*(-np.expm1(-1.5*dt))/1.5
+    np.testing.assert_allclose(mean,[1.,1.-.3*(1.-integral/dt-.7*.6),integral/dt,.4],atol=1e-14)
     np.testing.assert_allclose(end,[1.,1.-.3*(1.-expected-.7*.6),expected,.4],atol=1e-14)
     np.testing.assert_allclose(q,[(1.-.7*.6)*dt-integral,(1.+.3*.6)*dt-integral,
                                   (integral-.4*dt)/.5],atol=1e-14)
