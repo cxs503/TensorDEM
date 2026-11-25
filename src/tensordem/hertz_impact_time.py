@@ -219,7 +219,9 @@ def measure_platen_impact(
     Returns the measured duration, the peak overlap, the outgoing/incoming speed
     ratio, ``dt``, the step count, the residual platen reaction left *after*
     separation (recorded because it is a diagnostic of the reaction read-out, not
-    of the contact law), and the grid / stability metadata.
+    of the contact law), and the grid / stability metadata. With record_history,
+    history contains end-of-step states, while platen_reaction_history contains
+    (step start time, signed total bottom platen reaction in N).
     """
     if not (math.isfinite(v_in) and v_in > 0.0):
         raise ValueError("v_in must be finite and positive")
@@ -254,11 +256,14 @@ def measure_platen_impact(
     residual_reaction = 0.0
     in_contact = False
     history: list[tuple[float, float, float]] = []
+    reaction_history: list[tuple[float, float]] = []
     max_steps = int(max_contacts * steps_per_contact * 4)
     for _ in range(max_steps):
+        start = sim.time
         sim.step()
         overlap = plane_z - (float(sim.positions[index, 2]) - radius_eff)
         if record_history:
+            reaction_history.append((float(start), float(sim.last_bottom_platen_reaction_z)))
             history.append(
                 (float(sim.time), overlap, float(sim.velocities[index, 2]))
             )
@@ -297,6 +302,7 @@ def measure_platen_impact(
     }
     if record_history:
         payload["history"] = history
+        payload["platen_reaction_history"] = reaction_history
     return payload
 
 
