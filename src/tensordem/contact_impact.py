@@ -174,6 +174,8 @@ class ImpactAnalytic:
     release_elastic_energy_j: float = 0.
     peak_overlap_m: float = 0.
     time_to_peak_overlap_s: float = 0.
+    peak_force_n: float = 0.
+    time_to_peak_force_s: float = 0.
 
     @property
     def e_bias(self) -> float:
@@ -208,6 +210,15 @@ def impact_analytic(k_n: float, c_n: float, m_eff: float, v0: float = 1.0) -> Im
     release_overlap = (c_n/k_n)*(v0*e_clamped)
     release_elastic_energy = .5*k_n*release_overlap**2
     kinetic_loss = .5*m_eff*v0**2*(-math.expm1(-2*(zeta*tau)))
+    # Initial force slope is k*v0*(1-4*zeta²). A later maximum exists
+    # only below zeta=1/2. atan2 retains accuracy near the transition.
+    peak_force_time = 0.
+    peak_force = c_n*v0
+    if zeta < .5:
+        root = math.sqrt(1-zeta*zeta)
+        phase = math.atan2(root*(1-2*zeta)*(1+2*zeta), zeta*(3-4*zeta*zeta))
+        peak_force_time = phase/omega_d
+        peak_force = m_eff*omega_n*v0*math.exp(-zeta*phase/root)
     return ImpactAnalytic(
         zeta=zeta,
         omega_n=omega_n,
@@ -224,6 +235,8 @@ def impact_analytic(k_n: float, c_n: float, m_eff: float, v0: float = 1.0) -> Im
         release_elastic_energy_j=release_elastic_energy,
         peak_overlap_m=(v0/omega_n)*math.exp(-.5*(zeta*tau)),
         time_to_peak_overlap_s=.5*t_force,
+        peak_force_n=peak_force,
+        time_to_peak_force_s=peak_force_time,
     )
 
 
@@ -294,6 +307,7 @@ class PairImpactResult:
     dissipated_energy: float = 0.0
     thermal_state: object = None      # ice_thermal_stress.dem_coupling.ThermalState
     time_to_peak_overlap_s: float = 0.  # from first geometric touch
+    time_to_peak_force_s: float = 0.
 
     @property
     def e_error_vs_clamped(self) -> float:
@@ -449,6 +463,7 @@ def pair_impact(
     max_overlap = 0.0
     time_to_peak = 0.0
     peak_force = 0.0
+    peak_force_time = 0.0
     for _ in range(400_000):
         v_prev = float(dem.velocities[i, 2])
         dem.step()
@@ -465,7 +480,10 @@ def pair_impact(
                 time_to_peak = dem.time-touch_time
             # the documented force law, evaluated on the solver's own state
             vn_now = float(dem.velocities[j, 2] - dem.velocities[i, 2])
-            peak_force = max(peak_force, max(0.0, k_n * overlap_now - c_n * vn_now))
+            force = k_n * overlap_now - c_n * vn_now
+            if force > peak_force:
+                peak_force = force
+                peak_force_time = dem.time-touch_time
         elif contact_steps:
             break
     else:  # pragma: no cover - guarded by the physics
@@ -518,4 +536,5 @@ def pair_impact(
         dissipated_energy=dissipated,
         thermal_state=thermal_state,
         time_to_peak_overlap_s=time_to_peak,
+        time_to_peak_force_s=peak_force_time,
     )

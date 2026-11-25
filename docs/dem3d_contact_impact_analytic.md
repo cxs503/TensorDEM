@@ -221,3 +221,11 @@ overlap is `(v0/ω) exp(-ζ ω t_peak)` for relative closing speed v0.
 `impact_analytic` returns both `peak_overlap_m` and `time_to_peak_overlap_s`.
 For `pair_impact`, the corresponding measurements are `max_overlap` and
 the elapsed time from first geometric touch to the largest sampled overlap.
+
+The maximum normal load occurs at first touch when ζ ≥ 1/2, where its
+right-hand limit is `c*v0`. Below this threshold the force first rises and
+then falls. The initial force slope is `k*v0*(1-4*ζ²)`. The analytic result
+exposes `peak_force_n` and `time_to_peak_force_s` for both regimes. The
+two-particle harness reports the largest sampled normal load and its time
+since first geometric touch, so an initial peak can be detected up to one
+time step late.

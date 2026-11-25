@@ -215,6 +215,11 @@ def test_overdamped_dem_pair_at_three_time_steps(record_property):
         record_property(f"peak_overlap_relative_error_{scale}", peak_error)
         record_property(f"peak_time_relative_error_{scale}", time_error)
         assert peak_error < .01 and time_error < .01
+        force_peak_error = abs(impact.peak_force/reference.peak_force_n-1)
+        record_property(f"peak_load_relative_error_{scale}", force_peak_error)
+        record_property(f"peak_load_delay_in_steps_{scale}", impact.time_to_peak_force_s/impact.dt)
+        assert force_peak_error < .01
+        assert 0 <= impact.time_to_peak_force_s <= impact.dt
         loss = reference.dashpot_work_j + reference.release_elastic_energy_j
         energy_error = abs(impact.dissipated_energy-loss)/loss
         record_property(f"total_loss_relative_error_{scale}", energy_error)
@@ -285,3 +290,44 @@ def test_peak_compression_against_velocity_zero_event(record_property):
     record_property("max_relative_peak_overlap_error", worst_depth)
     record_property("max_relative_peak_time_error", worst_time)
     assert max(worst_time, worst_depth) < 2e-11
+
+def test_peak_force_against_integrated_force_turning_point(record_property):
+    from scipy.integrate import solve_ivp
+
+    k, m, v = 73., 1.7, 2.3
+    worst_force = worst_time = 0.
+    for zeta in (0., .2, .49, .499999, .5, .500001, .8, 1., 4.):
+        c = 2*zeta*math.sqrt(k*m)
+        ref = impact_analytic(k, c, m, v)
+        def rhs(t, state):
+            x, rate = state
+            return rate, -(k*x+c*rate)/m
+        def turning(t, state):
+            rate, acc = rhs(t, state)
+            return k*rate+c*acc
+        turning.direction = -1
+        run = solve_ivp(rhs, (0., ref.contact_time_force), (0., v),
+                        events=turning, rtol=1e-12, atol=1e-14)
+        candidates = [(c*v, 0.)]
+        for time, (x, rate) in zip(run.t_events[0], run.y_events[0]):
+            candidates.append((k*x+c*rate, time))
+        force, time = max(candidates)
+        worst_force = max(worst_force, abs(ref.peak_force_n/force-1))
+        worst_time = max(worst_time, abs(ref.time_to_peak_force_s-time)*ref.omega_n)
+        assert ref.time_to_peak_force_s <= ref.time_to_peak_overlap_s
+    record_property("max_relative_peak_load_error", worst_force)
+    record_property("max_dimensionless_peak_time_error", worst_time)
+    assert max(worst_force,worst_time) < 3e-11
+
+
+def test_dem_pair_has_interior_load_peak_at_weak_damping(record_property):
+    impact = _run(e_target=.5, damping="clamped_mapping")
+    mass = impact.pair_mass_kg/2
+    damping = restitution_to_damping_clamped(.5, 5.e4, mass)
+    ref = impact_analytic(5.e4, damping, mass, 2*impact.impact_speed)
+    load_error = abs(impact.peak_force/ref.peak_force_n-1)
+    delay_error = abs(impact.time_to_peak_force_s-ref.time_to_peak_force_s)/impact.dt
+    record_property("relative_peak_load_error", load_error)
+    record_property("peak_time_error_in_steps", delay_error)
+    assert 0 < impact.time_to_peak_force_s < impact.time_to_peak_overlap_s
+    assert load_error < .03 and delay_error < 2
