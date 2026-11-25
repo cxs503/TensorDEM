@@ -573,3 +573,50 @@ def test_harmonic_interval_massless_sheet_power_and_arbitrary_initial_temperatur
     np.testing.assert_allclose(end,exact,atol=4e-14,rtol=0)
     np.testing.assert_allclose(avg,mean,atol=4e-14,rtol=0)
     np.testing.assert_allclose(q,-dt*np.diff(mean)/r,atol=4e-14,rtol=0)
+
+
+@pytest.mark.parametrize("insulated",[(True,True),(True,False),(False,True)])
+def test_affine_contact_insulated_ends_with_powered_massless_tails(insulated):
+    from tensordem.thermal import affine_contact_interval
+
+    # Manufacture a spatially varying linear ramp plus uniform acceleration.
+    # With a pinned wall the quadratic coefficient must vanish there.
+    r = np.array([.7,.3,.5,.8])
+    c = np.array([0.,2.,0.,1.5,0.])
+    u = np.array([.5,-.8,1.2,.2,.9])
+    v = np.array([-.2,.3,.5,-.1,.4])
+    a = .72 if all(insulated) else 0.
+    dt = .36
+    end = u+v*dt+a*dt**2
+    mean = u+v*dt/2+a*dt**2/3
+    def source(t):
+        flux = -np.diff(u+t*v)/r
+        return c*(v+2*a*t)+np.diff(np.r_[0.,flux,0.])
+    walls = [None if free else (u[i],end[i]) for i,free in zip((0,-1),insulated)]
+    initial = np.where(c>0,u,-789.)
+    state,q,avg = affine_contact_interval(r,c,dt,initial,t_left=walls[0],t_right=walls[1],
+                nodal_power_start=source(0),nodal_power_end=source(dt),allow_massless=True,
+                return_interval_temperature=True)
+    np.testing.assert_allclose(state,end,atol=2e-14,rtol=0.)
+    np.testing.assert_allclose(avg,mean,atol=2e-14,rtol=0.)
+    np.testing.assert_allclose(q,-dt*np.diff(mean)/r,atol=2e-14,rtol=0.)
+
+
+def test_insulated_two_particle_decay_and_single_storage_limit():
+    from tensordem.thermal import affine_contact_interval, constant_contact_interval
+    c = np.array([1.5,3.])
+    u = np.array([1.,-.2])
+    dt,r = .48,.7
+    equilibrium = c@u/c.sum()
+    rate = (1/c).sum()/r
+    state,q = constant_contact_interval([r],c,dt,u,t_left=None,t_right=None)
+    expected = equilibrium+(u-equilibrium)*np.exp(-rate*dt)
+    np.testing.assert_allclose(state,expected,atol=2e-15)
+    np.testing.assert_allclose(q,c[0]*(u[0]-expected[0]),atol=2e-15)
+    state,q,avg = affine_contact_interval([2.],[0.,3.],dt,[12.,.4],t_left=None,t_right=None,
+             nodal_power_start=[1.,2.],nodal_power_end=[2.,4.],allow_massless=True,return_interval_temperature=True)
+    final = .4+1.5*dt
+    mean = .4+2*dt/3
+    np.testing.assert_allclose(state,[final+4,final],atol=2e-15)
+    np.testing.assert_allclose(avg,[mean+3,mean],atol=2e-15)
+    np.testing.assert_allclose(q,[1.5*dt],atol=2e-15)
