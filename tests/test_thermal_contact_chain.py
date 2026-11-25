@@ -797,3 +797,16 @@ def test_weak_chain_link_currents_at_large_temperature_offset():
     temperature, currents = chain.solve_steady(return_link_currents=True)
     np.testing.assert_array_equal(temperature, chain.solve_steady())
     np.testing.assert_allclose(currents, case.heat_flow, rtol=1e-8, atol=0)
+
+
+def test_steady_payload_resolves_one_ulp_wall_difference():
+    import json
+    from tensordem.thermal.contact_chain import thermal_chain_calculation
+
+    payload = thermal_chain_calculation(dict(t_cold=305., t_hot=np.nextafter(305., np.inf),
+                                             cells_per_sphere=64))
+    json.dumps(payload, allow_nan=False)
+    steady = payload["steady"]
+    assert steady["measured_heat_flow_w"] == pytest.approx(steady["heat_flow_w"], rel=1e-8, abs=0)
+    assert steady["measured_k_eff_w_m_k"] == pytest.approx(payload["contact_law"]["k_eff_w_m_k"], rel=1e-8)
+    assert steady["contact_jump_k"] > 0

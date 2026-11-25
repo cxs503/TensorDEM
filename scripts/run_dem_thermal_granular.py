@@ -22,7 +22,7 @@ import os
 import platform
 import sys
 import time
-from dataclasses import replace
+from dataclasses import asdict, replace
 
 import numpy as np
 
@@ -50,6 +50,7 @@ from tensordem.thermal.contact_chain import (
     lattice_network_temperatures,
     sphere_bulk_resistance,
     square_lattice_resistance,
+    thermal_chain_calculation,
 )
 
 # --------------------------------------------------------------- task table
@@ -109,10 +110,7 @@ def run_thermal(outdir: str) -> dict[str, object]:
 
     case = ChainCase()
     chain = ThermalChain(case)
-    numeric = chain.solve_steady()
-    analytic = chain.analytic_steady()
-    span = float(np.ptp(analytic))
-    jump = chain.contact_jump(numeric, 0)
+    steady = thermal_chain_calculation(asdict(case))["steady"]
     out["contact_law"] = {
         "contact_force_n": case.contact_force,
         "hertz_contact_radius_m": case.contact_radius,
@@ -137,21 +135,21 @@ def run_thermal(outdir: str) -> dict[str, object]:
         "t_hot_k": case.t_hot,
         "t_cold_k": case.t_cold,
         "heat_flow_w": case.heat_flow,
-        "measured_heat_flow_w": chain.measured_heat_flow(numeric),
-        "contact_jump_numeric_k": jump,
+        "measured_heat_flow_w": steady["measured_heat_flow_w"],
+        "contact_jump_numeric_k": steady["contact_jump_k"],
         "contact_jump_analytic_k": case.heat_flow * contact_constriction_resistance(
             case.contact_radius, case.conductivity),
-        "max_abs_error_k": float(np.max(np.abs(numeric - analytic))),
-        "max_rel_error": float(np.max(np.abs(numeric - analytic)) / span),
-        "k_eff_numeric_w_m_k": chain.measured_effective_conductivity(numeric),
+        "max_abs_error_k": steady["max_abs_error_k"],
+        "max_rel_error": steady["max_rel_error"],
+        "k_eff_numeric_w_m_k": steady["measured_k_eff_w_m_k"],
         "k_eff_analytic_w_m_k": case.effective_conductivity,
         "gate": {"criterion": "steady chain temperature vs analytic < 5 %",
-                 "value": float(np.max(np.abs(numeric - analytic)) / span),
+                 "value": steady["max_rel_error"],
                  "threshold": 0.05,
-                 "passes": bool(np.max(np.abs(numeric - analytic)) / span < 0.05)},
+                 "passes": steady["max_rel_error"] < 0.05},
         "profile_x_over_l": _node_x(chain, case).tolist(),
-        "profile_numeric_k": numeric.tolist(),
-        "profile_analytic_k": analytic.tolist(),
+        "profile_numeric_k": steady["profile_k"],
+        "profile_analytic_k": steady["analytic_k"],
     }
 
     transient_case = ChainCase(n_spheres=8, cells_per_sphere=4, t_hot=272.15,

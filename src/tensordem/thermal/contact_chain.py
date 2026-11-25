@@ -208,15 +208,9 @@ def analytic_chain_temperature(n_spheres: int, contact_radius: float, radius: fl
     r_s = sphere_bulk_resistance(radius, conductivity)
     total = (n - 1) * r_c + n * r_s
     q = (float(t_hot) - float(t_cold)) / total
-    out = np.empty(n * (m + 1), dtype=np.float64)
-    t = float(t_hot)
-    for i in range(n):
-        for j in range(m + 1):
-            if i > 0 and j == 0:
-                t -= q * r_c
-            elif j > 0:
-                t -= q * r_s / m
-            out[i * (m + 1) + j] = t
+    sphere, node = np.divmod(np.arange(n * (m + 1)), m + 1)
+    out = float(t_hot) - q * (sphere * (r_c + r_s) + (node / m) * r_s)
+    out[[0, -1]] = (t_hot, t_cold)
     return out
 
 
@@ -1263,13 +1257,14 @@ def thermal_chain_calculation(request: dict) -> dict:
     }
     if mode == "steady":
         chain = ThermalChain(case)
-        numeric = chain.solve_steady()
+        numeric, currents = chain.solve_steady(return_link_currents=True)
         analytic = chain.analytic_steady()
-        span = float(np.ptp(analytic))
+        span = case.t_hot - case.t_cold
         payload["steady"] = {
             "heat_flow_w": case.heat_flow,
-            "measured_heat_flow_w": chain.measured_heat_flow(numeric),
-            "contact_jump_k": chain.contact_jump(numeric),
+            "measured_heat_flow_w": float(currents[0]),
+            "measured_k_eff_w_m_k": float(currents[0] * case.length / (case.area * span)),
+            "contact_jump_k": float(currents[chain.contact_links[0]] / chain.contact_g),
             "max_abs_error_k": float(np.max(np.abs(numeric - analytic))),
             "max_rel_error": float(np.max(np.abs(numeric - analytic)) / span),
             "profile_k": numeric.tolist(),
