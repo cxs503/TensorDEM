@@ -298,7 +298,7 @@ def _chain_laplacian(conductance):
 
 def cell_centered_slab_network(widths, conductivity, volumetric_heat_capacity, *,
                                area=1., contact_resistance=0., films=(None, None), resolve_contacts=False,
-                               interface_heat_capacity=0.):
+                               interface_heat_capacity=0., left_resistance_fraction=.5):
     """Build links [K/W] and capacities [J/K] for a fixed 1D material stack.
 
     Widths in m, k in W/(m K), volumetric capacity in J/(m³ K), area in m².
@@ -309,9 +309,10 @@ def cell_centered_slab_network(widths, conductivity, volumetric_heat_capacity, *
     With resolve_contacts=True, insert two zero-capacity surface nodes at each
     strictly positive contact resistance. Use allow_massless=True when solving.
     interface_heat_capacity (J/(m² K)) places a lumped sheet at each interface
-    with positive areal capacity. Half of the specified contact resistance
-    lies on either side of the sheet. Its node occurs between the adjacent
-    cell centres, and between the two surface nodes when these are resolved.
+    with positive areal capacity. left_resistance_fraction specifies the share
+    of the contact resistance between the left material and the sheet (scalar
+    or one per interface). At fractions 0 or 1, the sheet coincides with the
+    corresponding surface node. The default splits the resistance equally.
     """
     widths = np.asarray(widths, dtype=float)
     if widths.ndim != 1 or not widths.size or not np.isfinite(widths).all() or np.any(widths <= 0):
@@ -329,6 +330,10 @@ def cell_centered_slab_network(widths, conductivity, volumetric_heat_capacity, *
     if not np.isfinite(sheet).all() or np.any(sheet < 0):
         raise ChainError("interface heat capacity must be finite and nonnegative")
     sheet = np.broadcast_to(sheet, contacts.shape)
+    fraction = np.asarray(left_resistance_fraction, dtype=float)
+    if not np.isfinite(fraction).all() or np.any((fraction < 0) | (fraction > 1)):
+        raise ChainError("left_resistance_fraction must lie in [0, 1]")
+    fraction = np.broadcast_to(fraction, contacts.shape)
     left, right = films
     film_r = [0. if h is None else 1/_finite("film coefficient", h, positive=True) for h in (left, right)]
     half = .5 * widths / k
@@ -338,18 +343,24 @@ def cell_centered_slab_network(widths, conductivity, volumetric_heat_capacity, *
         resolved_links = [links[0]]
         resolved_capacity = [0., capacity[1]]
         for i, contact in enumerate(contacts):
+            left_r, right_r = contact*fraction[i], contact*(1-fraction[i])
             if resolve_contacts and contact > 0:
                 resolved_links.append(half[i]/area)
                 resolved_capacity.append(0.)
                 if sheet[i] > 0:
-                    resolved_links.extend((.5*contact/area, .5*contact/area))
-                    resolved_capacity.append(area*sheet[i])
+                    if left_r > 0:
+                        resolved_links.append(left_r/area)
+                        resolved_capacity.append(0.)
+                    resolved_capacity[-1] = area*sheet[i]
+                    if right_r > 0:
+                        resolved_links.append(right_r/area)
+                        resolved_capacity.append(0.)
                 else:
                     resolved_links.append(contact/area)
-                resolved_capacity.append(0.)
+                    resolved_capacity.append(0.)
                 resolved_links.append(half[i+1]/area)
             elif sheet[i] > 0:
-                resolved_links.extend(((half[i]+.5*contact)/area, (half[i+1]+.5*contact)/area))
+                resolved_links.extend(((half[i]+left_r)/area, (half[i+1]+right_r)/area))
                 resolved_capacity.append(area*sheet[i])
             else:
                 resolved_links.append(links[i+1])

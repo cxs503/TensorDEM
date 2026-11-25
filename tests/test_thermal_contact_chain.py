@@ -432,3 +432,29 @@ def test_interface_storage_splits_resistance_and_balances_complex_power(contact,
     r = np.array([.1, .1+contact/2, .2+contact/2, .2])/area
     exact = harmonic_contact_temperatures(r, [0., .8, 6., 6.4, 0.], 3., t_left=1+.3j, t_right=.2j)
     np.testing.assert_allclose(t[c > 0], exact[1:-1], atol=2e-14, rtol=0)
+
+
+@pytest.mark.parametrize("fraction", [0., .2, .85, 1.])
+def test_asymmetric_sheet_heating_matches_two_branch_impedances(fraction):
+    from tensordem.thermal import cell_centered_slab_network, harmonic_contact_temperatures
+
+    omega, area, source = 3., 2., .8+.3j
+    # Eliminate each adjacent cell with its heat capacity in parallel with
+    # the path to the reservoir. Sum the two branch admittances at the sheet.
+    half = np.array([.1, .2])/area
+    side_r = np.array([fraction, 1-fraction])*.7/area
+    cell_capacity = area*np.array([.2*2., .8*4.])
+    z = side_r+half+1/(1/half+1j*omega*cell_capacity)
+    expected = source/(sum(1/z)+1j*omega*3.*area)
+    for resolve in (False, True):
+        r, c = cell_centered_slab_network([.2,.8], [1.,2.], [2.,4.], area=area,
+                 contact_resistance=.7, interface_heat_capacity=3., resolve_contacts=resolve,
+                 left_resistance_fraction=fraction)
+        sheet, = np.flatnonzero(c == 3.*area)
+        power = np.zeros_like(c, dtype=complex)
+        power[sheet] = source
+        t = harmonic_contact_temperatures(r, c, omega, t_left=0., t_right=0.,
+                                         nodal_power=power, allow_massless=True)
+        np.testing.assert_allclose(t[sheet], expected, atol=1e-14, rtol=0)
+        flux = -np.diff(t)/r
+        np.testing.assert_allclose([-flux[sheet-1], flux[sheet]], expected/z, atol=1e-14, rtol=0)
