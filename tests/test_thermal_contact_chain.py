@@ -694,3 +694,26 @@ def test_insulated_low_frequency_uniform_rate_does_not_change_link_heat():
     np.testing.assert_allclose(driven-end, rate.real*dt, atol=2e-15, rtol=0)
     np.testing.assert_allclose(driven_avg-avg, rate.real*dt/2, atol=2e-15, rtol=0)
     np.testing.assert_allclose(driven_heat, heat, atol=2e-15, rtol=0)
+
+
+def test_zero_frequency_chain_anchors_balance_and_uniform_drift():
+    from tensordem.thermal import harmonic_contact_interval, harmonic_contact_temperatures
+    r, c = [.5, .3], np.array([2., 0., 1.])
+    opts = dict(allow_massless=True, nodal_power=[1., .5, -1.5])
+    t = harmonic_contact_temperatures(r, c, 0., **opts)
+    np.testing.assert_allclose(-np.diff(t)/r, [1., 1.5], atol=1e-14)
+    np.testing.assert_allclose(c@t, 0., atol=1e-14)
+    opts["nodal_power"] = np.asarray(opts["nodal_power"])+.8*c
+    with pytest.raises(ChainError, match="separate_mean"):
+        harmonic_contact_temperatures(r, c, 0., **opts)
+    drifted, rate = harmonic_contact_temperatures(r, c, 0., separate_mean=True, **opts)
+    np.testing.assert_allclose(drifted, t, atol=1e-14)
+    np.testing.assert_allclose(rate, .8, atol=1e-14)
+    anchored = harmonic_contact_temperatures(r, c, 0., t_left=2., t_right=-1., **opts)
+    expected = (.5+2/.5-1/.3)/(1/.5+1/.3)
+    np.testing.assert_allclose(anchored, [2., expected, -1.])
+    end, heat, mean = harmonic_contact_interval(r, c, 0., 4., .7, anchored.real,
+        t_left=2., t_right=-1., return_interval_temperature=True, **opts)
+    np.testing.assert_allclose(end, anchored)
+    np.testing.assert_allclose(mean, anchored)
+    np.testing.assert_allclose(heat, -.7*np.diff(anchored)/r)

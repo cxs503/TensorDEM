@@ -424,9 +424,15 @@ def harmonic_contact_temperatures(link_resistance, heat_capacity, angular_freque
     With allow_massless=True a zero-capacity free node balances its incident
     conductive powers and applied power algebraically. For two insulated ends,
     separate_mean=True returns (capacity-centered temperature phasors in K,
-    capacity-weighted mean heating rate phasor in K/s).
+    capacity-weighted mean heating rate phasor in K/s). At zero frequency
+    these are the relative steady profile and common drift under constant
+    power. With a prescribed end, zero frequency gives the static solution.
+    An insulated static solution defaults to zero capacity-weighted mean and
+    requires balanced power unless separate_mean=True.
     """
-    omega = _finite("angular frequency", angular_frequency, positive=True)
+    omega = _finite("angular frequency", angular_frequency)
+    if omega < 0:
+        raise ChainError("angular frequency must be nonnegative")
     r = _link_resistances(link_resistance)
     n = len(r) + 1
     capacity = np.broadcast_to(np.asarray(heat_capacity, dtype=float), (n,))
@@ -452,7 +458,13 @@ def harmonic_contact_temperatures(link_resistance, heat_capacity, angular_freque
             weights = sp.csc_matrix((capacity/total)[:, None])
             constrained = sp.bmat([[operator, weights], [weights.T, None]], format="csc")
             relative = sp.linalg.spsolve(constrained, np.r_[power-capacity*rate, 0.])[:-1]
-            return (relative, rate) if separate_mean else relative+rate/(1j*omega)
+            if separate_mean:
+                return relative, rate
+            if omega == 0:
+                if abs(power.sum()) > 8*np.finfo(float).eps*np.abs(power).sum():
+                    raise ChainError("nonzero net power at zero frequency requires separate_mean=True")
+                return relative
+            return relative+rate/(1j*omega)
         forcing = power[free] - operator[free][:, ~free] @ temperature[~free]
         temperature[free] = sp.linalg.spsolve(operator[free][:, free].tocsc(), forcing)
     return temperature
@@ -469,6 +481,7 @@ def harmonic_contact_interval(link_resistance, heat_capacity, angular_frequency,
     (s); end nodes follow their prescribed phasors. The forcing convention is
     Re(phasor*exp(i*omega*t)). Superpose the harmonic response and the matrix
     exponential of the initial deviation, without time discretization.
+    At zero frequency the real parts of the loads are constant in time.
     return_interval_temperature appends time-mean node temperatures (K).
     """
     start = _finite("start", start)
@@ -485,7 +498,8 @@ def harmonic_contact_interval(link_resistance, heat_capacity, angular_frequency,
     phase = np.exp(1j*angular_frequency*start)
     angle = 1j*angular_frequency*duration
     final = (phasor*phase*np.exp(angle)).real.copy()
-    integral = (phasor*phase*np.expm1(angle)/(1j*angular_frequency)).real.copy()
+    phi1 = np.expm1(angle)/angle if angle != 0 else 1.
+    integral = duration*(phasor*phase*phi1).real
     if allow_massless or return_interval_temperature or t_left is None or t_right is None:
         # Superposition leaves a zero-drive relaxation. Algebraic nodes of
         # this deviation obey the same series resistance interpolation.
@@ -496,7 +510,6 @@ def harmonic_contact_interval(link_resistance, heat_capacity, angular_frequency,
         if closed:
             # Integrate the uniform heating from the initial state without
             # introducing the large harmonic temperature pole into link heats.
-            phi1 = np.expm1(angle)/angle
             phi2 = (.5+angle/6+angle**2/24 if abs(angle) < 1e-4 else (phi1-1)/angle)
             final += duration*(mean_rate*phase*phi1).real
             mean += duration*(mean_rate*phase*phi2).real
