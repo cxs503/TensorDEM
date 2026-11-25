@@ -488,3 +488,39 @@ def test_elastic_contact_work_return(record_property):
     assert result.active_dashpot_work_j == 0.
     assert abs(result.compression_contact_work_j/initial-1.) < 2e-12
     assert abs(returned-1.) < 1e-5
+
+
+def test_weak_rebound_work_against_independent_force_integral(record_property):
+    from scipy.integrate import solve_ivp
+
+    # In natural units the reduced mass, stiffness and initial relative
+    # speed are one. Accumulate returned work only during unloading.
+    for target in (.08, .03):
+        c = restitution_to_damping_clamped(target, 1., 1.)
+        def rhs(t, state):
+            overlap, speed, _ = state
+            load = overlap + c*speed
+            return speed, -load, load*max(-speed, 0.)
+
+        def release(t, state):
+            return state[0]+c*state[1]
+
+        release.terminal = True
+        release.direction = -1
+        solution = solve_ivp(rhs,(0.,10.),(0.,1.,0.),events=release,
+                             rtol=2e-12,atol=1e-15,max_step=.01)
+        assert solution.status == 1
+        returned_fraction = 2*solution.y_events[0][0,2]
+        assert abs(returned_fraction/target**2-1) < 1e-8
+        record_property(f"reference_returned_fraction_{target}", returned_fraction)
+        errors = []
+        for scale in (.2,.1,.05):
+            impact = pair_impact(e_target=target,damping="clamped_mapping",dt_scale=scale)
+            initial = impact.pair_mass_kg*impact.impact_speed**2
+            returned = impact.rebound_contact_work_j/initial
+            error = abs(returned/returned_fraction-1)
+            errors.append(error)
+            record_property(f"returned_work_relative_error_{target}_{scale}",error)
+        # The discrete instant of first contact varies within a step. Grade
+        # the returned work itself on every grid, including intermediate ones.
+        assert max(errors) < .01
