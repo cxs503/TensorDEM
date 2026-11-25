@@ -977,14 +977,16 @@ class TransientChain(ThermalChain):
             raise ChainError("dt must be finite and positive")
         t = np.asarray(temperature, dtype=np.float64)
         lu, coeff = self._factorisation(dt)
-        rhs = coeff * t
-        rhs[0] = float(t_hot)
-        rhs[-1] = float(t_cold)
-        return lu.solve(rhs)
+        rhs = coeff * (t - t_cold)
+        rhs[0] = float(t_hot) - t_cold
+        rhs[-1] = 0.
+        result = lu.solve(rhs) + t_cold
+        result[[0, -1]] = (t_hot, t_cold)
+        return result
 
     def initial_state(self) -> np.ndarray:
         c = self.case
-        t = np.full(self.n_nodes, c.t_cold)
+        t = np.full(self.n_nodes, c.t_cold, dtype=float)
         t[0], t[-1] = c.t_hot, c.t_cold
         return t
 
@@ -996,13 +998,19 @@ class TransientChain(ThermalChain):
             initial, dtype=np.float64).copy()
         times = [0.0]
         fields = [t.copy()]
+        # Keep the evolving state relative through all implicit steps. Adding
+        # the absolute offset between steps would erase sub-ULP changes.
+        t -= c.t_cold
+        drop = c.t_hot - c.t_cold
         flux = [float(self.link_conductance[0] * (t[0] - t[1]))]
         every = max(int(record_every), 1)
         for step in range(int(n_steps)):
-            t = self.step(t, dt, t_hot=c.t_hot, t_cold=c.t_cold)
+            t = self.step(t, dt, t_hot=drop, t_cold=0.)
             if (step + 1) % every == 0:
                 times.append((step + 1) * dt)
-                fields.append(t.copy())
+                field = t + c.t_cold
+                field[[0, -1]] = (c.t_hot, c.t_cold)
+                fields.append(field)
                 flux.append(float(self.link_conductance[0] * (t[0] - t[1])))
         return {"time": np.asarray(times), "nodes": np.asarray(fields),
                 "hot_flux": np.asarray(flux)}
@@ -1021,14 +1029,14 @@ class TransientChain(ThermalChain):
         """
         c = self.case
         a_int = self._interior_operator()
-        steady = self.solve_steady()
-        t0 = self.initial_state()
-        dev0 = t0[1:-1] - steady[1:-1]
+        steady = analytic_chain_temperature(c.n_spheres, c.contact_radius, c.radius,
+                                            c.conductivity, self.m, c.t_hot-c.t_cold, 0.)
+        dev0 = -steady[1:-1]
         out = np.empty((len(times), self.n_nodes))
         for idx, tt in enumerate(times):
             out[idx, 0] = c.t_hot
             out[idx, -1] = c.t_cold
-            out[idx, 1:-1] = steady[1:-1] + sla.expm(a_int * float(tt)) @ dev0
+            out[idx, 1:-1] = c.t_cold + (steady[1:-1] + sla.expm(a_int * float(tt)) @ dev0)
         return out
 
     def relaxation_time(self) -> float:

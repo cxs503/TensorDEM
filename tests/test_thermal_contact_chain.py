@@ -810,3 +810,15 @@ def test_steady_payload_resolves_one_ulp_wall_difference():
     assert steady["measured_heat_flow_w"] == pytest.approx(steady["heat_flow_w"], rel=1e-8, abs=0)
     assert steady["measured_k_eff_w_m_k"] == pytest.approx(payload["contact_law"]["k_eff_w_m_k"], rel=1e-8)
     assert steady["contact_jump_k"] > 0
+
+
+def test_transient_current_remains_resolved_at_one_ulp_drive():
+    options = dict(n_spheres=4, cells_per_sphere=3)
+    drop = np.spacing(305.)
+    reference = TransientChain(ChainCase(t_hot=drop, t_cold=0., **options))
+    chain = TransientChain(ChainCase(t_hot=305.+drop, t_cold=305., **options))
+    dt = chain.relaxation_time()/32
+    normalized = reference.march(dt, 32, record_every=4)
+    actual = chain.march(dt, 32, record_every=4)
+    np.testing.assert_array_equal(actual["hot_flux"], normalized["hot_flux"])
+    np.testing.assert_array_equal(actual["nodes"], 305.+normalized["nodes"])
