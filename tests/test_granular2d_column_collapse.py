@@ -151,3 +151,42 @@ def test_spec_validation_and_shard_helper():
     spec = ColumnSpec(aspect_ratio=3.0)
     assert spec.height == pytest.approx(3.0 * spec.width)
     assert spec.particle_mass > 0.0
+
+def test_head_on_dashpot_ledger_matches_clipped_restitution():
+    # The underdamped oscillator releases when kn*overlap+c*overlap_rate
+    # first returns to zero. Integration of the remaining free flight gives
+    # restitution exp(-2*zeta*acos(zeta)/sqrt(1-zeta²)).
+    zeta,radius = .2,.01
+    config = DiskConfig(zeta=zeta,mu=0.,mu_rolling=0.,dt=1e-6)
+    system = DiskSystem([[-radius,0.],[radius,0.]],[radius,radius],config)
+    system.vel[:,0] = [.15,-.15]
+    initial = system.kinetic_energy()
+    system.enable_energy_ledger()
+    period = 2*math.pi*math.sqrt(system.mass[0]/(2*config.kn))
+    system.step(math.ceil(period/system.dt))
+    restitution = math.exp(-2*zeta*math.acos(zeta)/math.sqrt(1-zeta*zeta))
+    target = initial*(1-restitution**2)
+    assert system.dissipated_work() == pytest.approx(target,rel=.004)
+    assert system.kinetic_energy() == pytest.approx(initial*restitution**2,rel=.01)
+
+
+def test_sticking_and_elastic_rolling_store_energy_without_slip_loss():
+    cfg = DiskConfig(mu=1.,mu_rolling=1.,zeta=0.,dt=1e-6)
+    system = DiskSystem([[0.,.0099]],[.01],cfg,walls=[[[-.1,0.],[.1,0.]]])
+    system.vel[0,0] = .01
+    system.omega[0] = .3
+    ledger = system.enable_energy_ledger()
+    system.step()
+    energies = system.energies()
+    assert energies["elastic_tangential"] > 0
+    assert energies["elastic_rolling"] > 0
+    assert ledger["friction"] == ledger["rolling"] == 0.
+
+
+def test_disk_strip_area_and_tied_ranks():
+    from tensordem.granular2d.column_collapse import _disk_strip_areas, _spearman
+    edges = np.array([-2.,-1.,0.,1.,2.])
+    # Two disks centred at y=0 are cut exactly in half by the middle edge.
+    area = _disk_strip_areas(np.zeros(2),np.array([1.,.5]),edges)
+    np.testing.assert_allclose(area,[0.,.625*math.pi,.625*math.pi,0.],atol=1e-15)
+    assert _spearman(np.array([1,2,3]),np.array([4,4,7])) == pytest.approx(math.sqrt(3)/2)

@@ -265,6 +265,14 @@ def build_column(spec: ColumnSpec) -> tuple[DiskSystem, dict[str, float]]:
     return system, geometry
 
 
+def _disk_strip_areas(y, radii, edges):
+    """Sum disk cross-sectional areas inside each horizontal sampling strip."""
+    height = np.clip((edges[:,None]-y)/radii,-1.,1.)
+    # Primitive of the chord length 2 sqrt(r²-h²), from the centreline.
+    primitive = radii**2*(np.arcsin(height)+height*np.sqrt(1.-height**2))
+    return np.diff(primitive,axis=0).sum(axis=1)
+
+
 def _local_flow_sample(system: DiskSystem, spec: ColumnSpec) -> dict[str, list]:
     """Coarse-grained ``I``, ``mu`` and ``phi`` in vertical bins of the flow.
 
@@ -291,16 +299,14 @@ def _local_flow_sample(system: DiskSystem, spec: ColumnSpec) -> dict[str, list]:
 
     vx = np.zeros(nb)
     n_bin = np.zeros(nb, dtype=int)
-    area = np.zeros(nb)
     for b in range(nb):
         sel = idx == b
         n_bin[b] = int(np.count_nonzero(sel))
         if n_bin[b]:
             vx[b] = float(np.mean(system.vel[sel, 0]))
-            area[b] = float(np.sum(math.pi * system.radii[sel] ** 2))
     y_center = 0.5 * (edges[:-1] + edges[1:])
     cell_area = dx * dy
-    phi = area / cell_area
+    phi = _disk_strip_areas(system.pos[:,1],system.radii,edges) / cell_area
 
     mu_i: list[dict[str, float]] = []
     phi_i: list[dict[str, float]] = []
@@ -316,7 +322,8 @@ def _local_flow_sample(system: DiskSystem, spec: ColumnSpec) -> dict[str, list]:
             continue
         if phi[b] > 0.92:  # unphysical bin average (grain overlap / tiny cell)
             continue
-        inertial = abs(gamma_dot) * d / math.sqrt(pressure / (phi[b] * rho_2d_solid))
+        # I uses the intrinsic grain density and 2-D pressure (force/length).
+        inertial = abs(gamma_dot) * d / math.sqrt(pressure / rho_2d_solid)
         mu_local = abs(tau) / pressure
         if not (math.isfinite(inertial) and math.isfinite(mu_local)):
             continue
@@ -333,7 +340,7 @@ def run_collapse(spec: ColumnSpec, *, sample_flow: bool = True) -> ColumnResult:
     system, geo = build_column(spec)
     gravity = float(spec.gravity)
     e_p0 = float(np.sum(system.mass * gravity * system.pos[:, 1]))
-    ledger = system.enable_energy_ledger()
+    system.enable_energy_ledger()
     energies0 = system.energies()
     x_front0 = geo["front_initial"]
     front_history: list[tuple[float, float]] = []
@@ -365,8 +372,8 @@ def run_collapse(spec: ColumnSpec, *, sample_flow: bool = True) -> ColumnResult:
     energies1 = system.energies()
     x_front = float(np.max(system.pos[:, 0] + system.radii))
     e_p1 = float(np.sum(system.mass * gravity * system.pos[:, 1]))
-    elastic0 = energies0["elastic_normal"] + energies0["elastic_tangential"]
-    elastic1 = energies1["elastic_normal"] + energies1["elastic_tangential"]
+    elastic0 = energies0["elastic_normal"] + energies0["elastic_tangential"] + energies0["elastic_rolling"]
+    elastic1 = energies1["elastic_normal"] + energies1["elastic_tangential"] + energies1["elastic_rolling"]
     ke1 = energies1["kinetic"]
     dissipated = system.dissipated_work()
     residual = (e_p0 + elastic0) - (e_p1 + elastic1 + ke1 + dissipated)
@@ -473,8 +480,9 @@ def fit_phi_inertial(points: list[dict[str, float]]) -> dict[str, float]:
 def _spearman(x: np.ndarray, y: np.ndarray) -> float:
     if len(x) < 3:
         return 0.0
-    rx = np.argsort(np.argsort(x)).astype(float)
-    ry = np.argsort(np.argsort(y)).astype(float)
+    from scipy.stats import rankdata
+    rx = rankdata(x)
+    ry = rankdata(y)
     rx -= rx.mean()
     ry -= ry.mean()
     denom = math.sqrt(float(np.sum(rx * rx)) * float(np.sum(ry * ry)))
