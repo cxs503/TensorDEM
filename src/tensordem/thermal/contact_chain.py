@@ -467,40 +467,74 @@ def constant_contact_interval(link_resistance, heat_capacity, duration, initial_
     Endpoint powers or storage affect reservoir reactions only; the returned
     heat measures conduction through the links.
     """
+    return affine_contact_interval(link_resistance, heat_capacity, duration, initial_temperature,
+                    t_left=(t_left,t_left), t_right=(t_right,t_right), nodal_power_start=nodal_power,
+                    allow_massless=allow_massless)
+
+
+def affine_contact_interval(link_resistance, heat_capacity, duration, initial_temperature, *,
+                            t_left, t_right, nodal_power_start=0., nodal_power_end=None,
+                            allow_massless=False, return_interval_temperature=False):
+    """Integrate a fixed chain under linearly varying end temperatures and powers.
+
+    t_left and t_right are (start, end) reservoir temperature pairs in K.
+    Supply scalar or per-node powers in W at the start and optionally the end.
+    Returns endpoint node temperatures (K), signed rightward link heats (J),
+    and optionally the time-mean node temperatures (K). Free massless nodes
+    follow instantaneous power balance. Both reservoirs are prescribed.
+    """
     r = _link_resistances(link_resistance)
-    dt = _finite("duration", duration, positive=True)
-    left,right = _finite("left temperature",t_left),_finite("right temperature",t_right)
+    dt = _finite("duration",duration,positive=True)
+    walls = np.asarray([t_left,t_right],dtype=float)
+    if walls.shape!=(2,2) or not np.isfinite(walls).all():
+        raise ChainError("supply finite start and end temperatures for each reservoir")
     size = len(r)+1
-    c,u0,p = (np.broadcast_to(np.asarray(v,dtype=float),(size,))
-              for v in (heat_capacity,initial_temperature,nodal_power))
-    if np.any(c<0) or not all(np.isfinite(v).all() for v in (c,u0,p)):
+    power_end = nodal_power_start if nodal_power_end is None else nodal_power_end
+    c,u0,p0,p1 = (np.broadcast_to(np.asarray(v,dtype=float),(size,))
+                  for v in (heat_capacity,initial_temperature,nodal_power_start,power_end))
+    if np.any(c<0) or not all(np.isfinite(v).all() for v in (c,u0,p0,p1)):
         raise ChainError("capacity must be nonnegative and nodal inputs finite")
     if np.any(c[1:-1]==0) and not allow_massless:
         raise ChainError("zero-capacity interior nodes require allow_massless=True")
-    # The steady link power increases by the local source at each node.
-    increase = np.r_[0.,np.cumsum(p[1:-1])]
-    steady_flux = (left-right-r@increase)/r.sum()+increase
-    steady = np.r_[left,left-np.cumsum(r*steady_flux)]
-    steady[-1] = right
+
+    def steady(left,right,power):
+        increase = np.r_[0.,np.cumsum(power[1:-1])]
+        flux = (left-right-r@increase)/r.sum()+increase
+        temperature = np.r_[left,left-np.cumsum(r*flux)]
+        temperature[-1] = right
+        return temperature,flux
+
+    start,q0 = steady(*walls[:,0],p0)
+    end,q1 = steady(*walls[:,1],p1)
+    mean = .5*(start+end)
+    heat = (.5*dt)*(q0+q1)
     active = np.flatnonzero(c[1:-1]>0)+1
-    if not active.size:
-        return steady,dt*steady_flux
-    anchors = np.r_[0,active,size-1]
-    reduced_r = np.add.reduceat(r,anchors[:-1])
-    conductance = 1/reduced_r
-    root = np.sqrt(c[active])
-    diagonal = (conductance[:-1]+conductance[1:])/c[active]
-    offdiag = -conductance[1:-1]/(root[:-1]*root[1:])
-    rates,basis = sla.eigh_tridiagonal(diagonal,offdiag)
-    modes = basis.T @ (root*(u0[active]-steady[active]))
-    evolved = (basis @ (np.exp(-dt*rates)*modes))/root
-    integrated = (basis @ ((-np.expm1(-dt*rates)/rates)*modes))/root
-    # The transient deviation is source-free at massless nodes. Its heat
-    # flow is constant along each series segment bounded by storing nodes.
-    position = np.r_[0.,np.cumsum(r)]
-    deviation = np.interp(position,position[anchors],np.r_[0.,evolved,0.])
-    transient_heat = -np.diff(np.r_[0.,integrated,0.])/reduced_r
-    return steady+deviation,dt*steady_flux+np.repeat(transient_heat,np.diff(anchors))
+    if active.size:
+        anchors = np.r_[0,active,size-1]
+        reduced_r = np.add.reduceat(r,anchors[:-1])
+        conductance = 1/reduced_r
+        root = np.sqrt(c[active])
+        diagonal = (conductance[:-1]+conductance[1:])/c[active]
+        offdiag = -conductance[1:-1]/(root[:-1]*root[1:])
+        rates,basis = sla.eigh_tridiagonal(diagonal,offdiag)
+        modes = basis.T @ (root*(u0[active]-start[active]))
+        ramp = basis.T @ (root*(end[active]-start[active]))
+        z = dt*rates
+        phi1 = -np.expm1(-z)/z
+        # (1-phi1)/z loses precision for a short interval.
+        phi2 = np.empty_like(z)
+        small = z<1e-4
+        phi2[small] = .5-z[small]/6+z[small]**2/24
+        phi2[~small] = (1-phi1[~small])/z[~small]
+        evolved = (basis @ (np.exp(-z)*modes-phi1*ramp))/root
+        mean_offset = (basis @ (phi1*modes-phi2*ramp))/root
+        position = np.r_[0.,np.cumsum(r)]
+        end += np.interp(position,position[anchors],np.r_[0.,evolved,0.])
+        offset = np.r_[0.,mean_offset,0.]
+        heat -= dt*np.repeat(np.diff(offset)/reduced_r,np.diff(anchors))
+        if return_interval_temperature:
+            mean += np.interp(position,position[anchors],offset)
+    return (end,heat,mean) if return_interval_temperature else (end,heat)
 
 
 def transient_contact_temperatures(link_resistance, heat_capacity, time, initial_temperature,

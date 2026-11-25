@@ -516,3 +516,28 @@ def test_constant_interval_all_massless_and_subdivision():
     split,b = run(.15,mid)
     np.testing.assert_allclose(end,split,atol=1e-14)
     np.testing.assert_allclose(q,a+b,atol=1e-14)
+
+
+@pytest.mark.parametrize("dt",[1e-8,.37,6.])
+def test_affine_contact_interval_massless_trace_and_storage(dt):
+    from tensordem.thermal import affine_contact_interval
+    # Manufacture particle T=1+2t+0.4 exp(-3t) and algebraic trace S.
+    # Link resistances .25 and .75 on the left, .5 on the right, C=1.
+    def reference(t):
+        left,right,p_sheet = 2.+t,.7-.4*t,.3+.6*t
+        particle = 1.+2*t+.4*np.exp(-3*t)
+        sheet = .75*left+.25*particle+.1875*p_sheet
+        particle_power = 2+3*(1+2*t)-left-2*right-.25*p_sheet
+        return np.array([left,sheet,particle,right]),[0.,p_sheet,particle_power,0.]
+    initial,p0 = reference(0.)
+    expected,p1 = reference(dt)
+    r = np.array([.25,.75,.5])
+    end,q,mean = affine_contact_interval(r,[0.,0.,1.,0.],dt,initial,
+                t_left=(initial[0],expected[0]),t_right=(initial[-1],expected[-1]),
+                nodal_power_start=p0,nodal_power_end=p1,allow_massless=True,return_interval_temperature=True)
+    avg,_ = reference(dt/2)
+    avg[2] = 1+dt+.4*(-np.expm1(-3*dt))/(3*dt)
+    avg[1] = .75*avg[0]+.25*avg[2]+.1875*(.3+.3*dt)
+    np.testing.assert_allclose(end,expected,atol=3e-14,rtol=0)
+    np.testing.assert_allclose(mean,avg,atol=3e-14,rtol=0)
+    np.testing.assert_allclose(q,-dt*np.diff(avg)/r,atol=5e-14,rtol=0)
