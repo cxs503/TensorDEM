@@ -210,6 +210,11 @@ def test_overdamped_dem_pair_at_three_time_steps(record_property):
         m_eff = impact.pair_mass_kg/2
         damping = restitution_to_damping_clamped(target, 5.e4, m_eff)
         reference = impact_analytic(5.e4, damping, m_eff, 2*impact.impact_speed)
+        peak_error = abs(impact.max_overlap/reference.peak_overlap_m-1)
+        time_error = abs(impact.time_to_peak_overlap_s/reference.time_to_peak_overlap_s-1)
+        record_property(f"peak_overlap_relative_error_{scale}", peak_error)
+        record_property(f"peak_time_relative_error_{scale}", time_error)
+        assert peak_error < .01 and time_error < .01
         loss = reference.dashpot_work_j + reference.release_elastic_energy_j
         energy_error = abs(impact.dissipated_energy-loss)/loss
         record_property(f"total_loss_relative_error_{scale}", energy_error)
@@ -254,3 +259,29 @@ def test_active_dashpot_work_and_residual_spring_energy(record_property):
         assert ref.dashpot_work_j >= 0
     record_property("max_component_error_over_incident_energy", worst)
     assert worst < 2e-11
+
+def test_peak_compression_against_velocity_zero_event(record_property):
+    from scipy.integrate import solve_ivp
+
+    k, m, closing_speed = 73., 1.7, 2.3
+    worst_depth = worst_time = 0.
+    for zeta in (0., .25, .999999, 1., 1.000001, 3., 8.):
+        damping = 2*zeta*math.sqrt(k*m)
+        ref = impact_analytic(k, damping, m, closing_speed)
+        def rhs(t, state):
+            depth, speed = state
+            return speed, -(k*depth+damping*speed)/m
+        def peak(t, state):
+            return state[1]
+        peak.terminal = True
+        peak.direction = -1
+        run = solve_ivp(rhs, (0., math.pi*math.sqrt(m/k)), (0., closing_speed),
+                        events=peak, atol=1e-14, rtol=1e-12)
+        time, = run.t_events[0]
+        (depth, _), = run.y_events[0]
+        worst_depth = max(worst_depth, abs(ref.peak_overlap_m/depth-1))
+        worst_time = max(worst_time, abs(ref.time_to_peak_overlap_s/time-1))
+        assert 0 <= ref.release_overlap_m < ref.peak_overlap_m
+    record_property("max_relative_peak_overlap_error", worst_depth)
+    record_property("max_relative_peak_time_error", worst_time)
+    assert max(worst_time, worst_depth) < 2e-11

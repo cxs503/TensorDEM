@@ -172,6 +172,8 @@ class ImpactAnalytic:
     release_overlap_m: float = 0.
     dashpot_work_j: float = 0.
     release_elastic_energy_j: float = 0.
+    peak_overlap_m: float = 0.
+    time_to_peak_overlap_s: float = 0.
 
     @property
     def e_bias(self) -> float:
@@ -220,6 +222,8 @@ def impact_analytic(k_n: float, c_n: float, m_eff: float, v0: float = 1.0) -> Im
         release_overlap_m=release_overlap,
         dashpot_work_j=kinetic_loss-release_elastic_energy,
         release_elastic_energy_j=release_elastic_energy,
+        peak_overlap_m=(v0/omega_n)*math.exp(-.5*(zeta*tau)),
+        time_to_peak_overlap_s=.5*t_force,
     )
 
 
@@ -289,6 +293,7 @@ class PairImpactResult:
     peak_force: float = 0.0
     dissipated_energy: float = 0.0
     thermal_state: object = None      # ice_thermal_stress.dem_coupling.ThermalState
+    time_to_peak_overlap_s: float = 0.  # from first geometric touch
 
     @property
     def e_error_vs_clamped(self) -> float:
@@ -439,7 +444,10 @@ def pair_impact(
                                 + (dem.velocities[j] ** 2).sum())
     contact_steps = 0
     force_steps = 0
+    clearance = float(dem.positions[j, 2]-dem.positions[i, 2])-2*radius
+    touch_time = clearance/(2*v0)
     max_overlap = 0.0
+    time_to_peak = 0.0
     peak_force = 0.0
     for _ in range(400_000):
         v_prev = float(dem.velocities[i, 2])
@@ -452,7 +460,9 @@ def pair_impact(
         overlap_now = 2.0 * radius - sep
         if overlap_now > 0.0:
             contact_steps += 1
-            max_overlap = max(max_overlap, overlap_now)
+            if overlap_now > max_overlap:
+                max_overlap = overlap_now
+                time_to_peak = dem.time-touch_time
             # the documented force law, evaluated on the solver's own state
             vn_now = float(dem.velocities[j, 2] - dem.velocities[i, 2])
             peak_force = max(peak_force, max(0.0, k_n * overlap_now - c_n * vn_now))
@@ -507,4 +517,5 @@ def pair_impact(
         peak_force=peak_force,
         dissipated_energy=dissipated,
         thermal_state=thermal_state,
+        time_to_peak_overlap_s=time_to_peak,
     )

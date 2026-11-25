@@ -213,3 +213,11 @@ energy at release equals the relative kinetic energy loss. The two-sphere
 harness initializes each particle at speed `v0` in opposite directions, so its
 initial relative speed is twice the per-particle speed. Its measured
 `dissipated_energy` reports the total kinetic energy loss.
+
+At maximum compression the relative velocity first reaches zero. For the
+linear compressive-only law this occurs halfway through the active-force
+interval. With natural angular frequency ω and damping ratio ζ, the peak
+overlap is `(v0/ω) exp(-ζ ω t_peak)` for relative closing speed v0.
+`impact_analytic` returns both `peak_overlap_m` and `time_to_peak_overlap_s`.
+For `pair_impact`, the corresponding measurements are `max_overlap` and
+the elapsed time from first geometric touch to the largest sampled overlap.
