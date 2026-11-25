@@ -442,6 +442,15 @@ def test_pair_impact_measured_energy_partition(record_property):
         c = restitution_to_damping_clamped(.35, 5.e4, m)
         ref = impact_analytic(5.e4,c,m,speed)
         initial = .5*m*speed**2
+        measured_rebound = .5*m*(2*result.rebound_speed)**2
+        work_residual = max(abs(result.compression_contact_work_j-initial),
+                            abs(result.rebound_contact_work_j-measured_rebound))/initial
+        rebound_error = abs(result.rebound_contact_work_j/initial-ref.e_clamped**2)
+        record_property(f"phase_contact_work_balance_{scale}",work_residual)
+        record_property(f"rebound_contact_work_analytic_error_{scale}",rebound_error)
+        assert work_residual < 2e-12
+        if scale == .025:
+            assert rebound_error < 5e-4
         # At maximum compression all remaining relative energy is elastic.
         peak_energy = .5*5.e4*ref.peak_overlap_m**2
         compression_reference = initial-peak_energy
@@ -469,3 +478,13 @@ def test_pair_impact_measured_energy_partition(record_property):
     for coarse, fine in zip(phase_history, phase_history[1:]):
         assert all(a > b for a,b in zip(coarse,fine))
     assert max(phase_history[-1]) < 8e-4
+
+
+def test_elastic_contact_work_return(record_property):
+    result = pair_impact(e_target=1., damping="clamped_mapping", dt_scale=.2)
+    initial = result.pair_mass_kg*result.impact_speed**2
+    returned = result.rebound_contact_work_j/initial
+    record_property("returned_fraction_of_initial_relative_energy", returned)
+    assert result.active_dashpot_work_j == 0.
+    assert abs(result.compression_contact_work_j/initial-1.) < 2e-12
+    assert abs(returned-1.) < 1e-5

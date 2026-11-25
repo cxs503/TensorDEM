@@ -270,3 +270,10 @@ The fields `compression_dashpot_work_j` and `rebound_dashpot_work_j` split
 active dashpot work at maximum overlap. They use the relative normal velocity
 zero crossing to locate that instant within a step. Their references follow
 from energy at first touch, maximum overlap, and force release.
+
+The positive magnitudes `compression_contact_work_j` and
+`rebound_contact_work_j` measure the relative kinetic energy removed by the
+contact force during compression and returned during rebound. Each applied
+impulse is weighted by the mean relative normal speed over its phase of the
+step. For an isolated pair the difference equals the loss of relative kinetic
+energy. These quantities include both elastic and viscous forces.

@@ -322,6 +322,8 @@ class PairImpactResult:
     release_elastic_energy_j: float = 0.
     compression_dashpot_work_j: float = 0.
     rebound_dashpot_work_j: float = 0.
+    compression_contact_work_j: float = 0.
+    rebound_contact_work_j: float = 0.
 
     @property
     def e_error_vs_clamped(self) -> float:
@@ -516,6 +518,8 @@ def pair_impact(
     rebound_work = 0.
     release_elastic_energy = 0.
     overlap_now = -clearance
+    compression_contact_work = 0.
+    rebound_contact_work = 0.
     compression_impulse = 0.
     rebound_impulse = 0.
     for _ in range(400_000):
@@ -531,8 +535,14 @@ def pair_impact(
         else:
             # Maximum compression is where the relative velocity changes sign.
             compression_fraction = v_prev/(v_prev-v_next)
-        compression_impulse += compression_fraction*impulse
-        rebound_impulse += (1-compression_fraction)*impulse
+        loading_impulse = compression_fraction*impulse
+        unloading_impulse = (1-compression_fraction)*impulse
+        compression_impulse += loading_impulse
+        rebound_impulse += unloading_impulse
+        # Work of the applied step impulse uses the mean relative speed on
+        # each side of the zero crossing. Both reported energies are positive.
+        compression_contact_work += .5*loading_impulse*(max(v_prev, 0.)+max(v_next, 0.))
+        rebound_contact_work += .5*unloading_impulse*(max(-v_prev, 0.)+max(-v_next, 0.))
         # In free flight the normal force is exactly zero, so the velocity is
         # bit-for-bit unchanged; any change means the contact force was active.
         if v_next != v_prev:
@@ -594,6 +604,8 @@ def pair_impact(
     final_drift = .5*(dem.velocities[i]+dem.velocities[j])
     return PairImpactResult(
         active_dashpot_work_j=compression_work+rebound_work,
+        compression_contact_work_j=compression_contact_work,
+        rebound_contact_work_j=rebound_contact_work,
         compression_dashpot_work_j=compression_work,
         rebound_dashpot_work_j=rebound_work,
         release_elastic_energy_j=release_elastic_energy,
