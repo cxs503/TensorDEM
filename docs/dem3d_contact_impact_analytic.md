@@ -243,3 +243,10 @@ to translate the pair along the collision axis. The reported impact and rebound
 speeds refer to either sphere in the center-of-mass frame. Relative velocity
 sets the compression/rebound transition and the kinetic energy lost in the
 collision. The result also reports the signed final center-of-mass velocity.
+
+Set `impact_axis` to a nonzero three-component direction to rotate the
+head-on collision. The setup normalizes the direction before placing and
+launching the spheres. The signed center-of-mass speed is along that axis.
+The force-law check compares the assembled three-dimensional force to its
+expected vector, and `final_transverse_relative_speed` reports the residual
+relative speed perpendicular to the collision axis in m/s.

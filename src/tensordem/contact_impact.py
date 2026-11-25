@@ -315,6 +315,7 @@ class PairImpactResult:
     compression_impulse_ns: float = 0.
     rebound_impulse_ns: float = 0.
     final_center_of_mass_speed: float = 0.
+    final_transverse_relative_speed: float = 0.
 
     @property
     def e_error_vs_clamped(self) -> float:
@@ -349,7 +350,8 @@ class _ImpactLedger:
     dt: float
 
 
-def _build_pair(k_n: float, c_n: float, radius: float, density: float, dt_scale: float) -> tuple[IceDEM3D, int, int]:
+def _build_pair(k_n: float, c_n: float, radius: float, density: float, dt_scale: float,
+                axis=(0., 0., 1.)) -> tuple[IceDEM3D, int, int]:
     """Two free particles facing each other; every other lattice site parked and fixed."""
     cfg = DEM3DConfig(
         nx=2, ny=2, nz=2,
@@ -376,8 +378,8 @@ def _build_pair(k_n: float, c_n: float, radius: float, density: float, dt_scale:
         pos[i] = torch.tensor([10.0 * i, 500.0, 500.0], dtype=dem.dtype)
     # 1 um initial clearance (each centre one radius from the mid-plane) keeps the
     # free-flight phase negligible in step count while starting outside contact.
-    pos[0] = torch.tensor([0.0, 0.0, -(radius + 1.0e-6)], dtype=dem.dtype)
-    pos[1] = torch.tensor([0.0, 0.0, radius + 1.0e-6], dtype=dem.dtype)
+    offset = (radius + 1.0e-6)*pos.new_tensor(axis)
+    pos[0], pos[1] = -offset, offset
     dem.positions = pos.clone()
     dem.initial_positions = pos.clone()
     mask = torch.ones(n, dtype=torch.bool)
@@ -397,6 +399,7 @@ def pair_impact(
     e_target: float = 0.5,
     v0: float = 0.5,
     center_of_mass_speed: float = 0.,
+    impact_axis: tuple[float, float, float] = (0., 0., 1.),
     k_n: float = 5.0e4,
     radius: float = 0.05,
     density: float = 900.0,
@@ -416,6 +419,7 @@ def pair_impact(
                ``contact_tangential.restitution_to_damping`` (the mapping under
                review); ``"clamped_mapping"`` uses
                :func:`restitution_to_damping_clamped` (the corrected mapping).
+    impact_axis : nonzero direction from the first sphere to the second in 3-D.
     center_of_mass_speed : signed common velocity along the collision axis (m/s).
                Impact and rebound speeds are per-sphere speeds in the pair frame.
     dt_scale : multiplier on the solver's ``recommended_dt``.
@@ -447,33 +451,42 @@ def pair_impact(
     else:
         raise ValueError("damping must be 'unclamped_mapping' or 'clamped_mapping'")
 
-    dem, i, j = _build_pair(k_n, c_n, radius, density, dt_scale)
+    if len(impact_axis) != 3 or not all(math.isfinite(v) for v in impact_axis):
+        raise ValueError("impact_axis must contain three finite components")
+    scale = max(abs(v) for v in impact_axis)
+    if scale == 0:
+        raise ValueError("impact_axis must be nonzero")
+    scaled = tuple(v/scale for v in impact_axis)
+    length = math.hypot(*scaled)
+    unit_axis = tuple(v/length for v in scaled)
+    dem, i, j = _build_pair(k_n, c_n, radius, density, dt_scale, unit_axis)
+    axis = dem.positions.new_tensor(unit_axis)
     dem.velocities = torch.zeros_like(dem.positions)
-    dem.velocities[i] = torch.tensor([0.0, 0.0, center_of_mass_speed + v0], dtype=dem.dtype)
-    dem.velocities[j] = torch.tensor([0.0, 0.0, center_of_mass_speed - v0], dtype=dem.dtype)
+    dem.velocities[i] = (center_of_mass_speed + v0)*axis
+    dem.velocities[j] = (center_of_mass_speed - v0)*axis
     dem.time = 0.0
     dem.step_count = 0
 
     # Force-law conformance at a prescribed overlap, compared with max(0, k*d - c*vn).
     probe = dem.positions.clone()
-    probe[i] = torch.tensor([0.0, 0.0, -(radius - 1.0e-4)], dtype=dem.dtype)
-    probe[j] = torch.tensor([0.0, 0.0, radius - 1.0e-4], dtype=dem.dtype)
+    probe[i] = -(radius - 1.0e-4)*axis
+    probe[j] = (radius - 1.0e-4)*axis
     saved = dem.positions.clone()
     dem.positions = probe
     f_probe, _ = dem.forces(update_fracture=False)
-    overlap = 2.0 * radius - (probe[j, 2] - probe[i, 2])
-    vn = float(dem.velocities[j, 2] - dem.velocities[i, 2])
+    overlap = 2.0 * radius - torch.linalg.vector_norm(probe[j]-probe[i])
+    vn = float(torch.dot(dem.velocities[j]-dem.velocities[i], axis))
     expected = max(0.0, k_n * float(overlap) - c_n * vn)
-    force_law_residual = abs(float(f_probe[i, 2]) + expected) / max(expected, 1e-30)
+    force_law_residual = float(torch.linalg.vector_norm(f_probe[i]+expected*axis)) / max(expected, 1e-30)
     dem.positions = saved
 
-    momentum_before = float(dem.velocities[:, 2].sum())
+    momentum_before = float(torch.dot(dem.velocities.sum(dim=0), axis))
     # Relative kinetic energy excludes the uniform translation of the pair.
-    relative_speed = float(dem.velocities[i, 2] - dem.velocities[j, 2])
+    relative_speed = float(torch.dot(dem.velocities[i]-dem.velocities[j], axis))
     initial_relative_speed = relative_speed
     contact_steps = 0
     force_steps = 0
-    clearance = float(dem.positions[j, 2]-dem.positions[i, 2])-2*radius
+    clearance = float(torch.linalg.vector_norm(dem.positions[j]-dem.positions[i]))-2*radius
     touch_time = clearance/(2*v0)
     max_overlap = 0.0
     time_to_peak = 0.0
@@ -487,7 +500,7 @@ def pair_impact(
     for _ in range(400_000):
         v_prev = relative_speed
         dem.step()
-        relative_speed = float(dem.velocities[i, 2] - dem.velocities[j, 2])
+        relative_speed = float(torch.dot(dem.velocities[i]-dem.velocities[j], axis))
         v_next = relative_speed
         impulse = normal_force*dem.dt
         if v_prev <= 0:
@@ -503,7 +516,7 @@ def pair_impact(
         # bit-for-bit unchanged; any change means the contact force was active.
         if v_next != v_prev:
             force_steps += 1
-        sep = float(dem.positions[j, 2] - dem.positions[i, 2])
+        sep = float(torch.linalg.vector_norm(dem.positions[j]-dem.positions[i]))
         overlap_now = 2.0 * radius - sep
         if overlap_now > 0.0:
             contact_steps += 1
@@ -552,7 +565,7 @@ def pair_impact(
         force_steps=force_steps,
         contact_time_force=force_steps * dem.dt,
         max_overlap=max_overlap,
-        momentum_error=float(dem.velocities[:, 2].sum()) - momentum_before,
+        momentum_error=float(torch.dot(dem.velocities.sum(dim=0), axis)) - momentum_before,
         dt=dem.dt,
         steps_per_contact=contact_steps,
         force_law_residual=force_law_residual,
@@ -568,5 +581,7 @@ def pair_impact(
         time_to_peak_force_s=peak_force_time,
         compression_impulse_ns=compression_impulse,
         rebound_impulse_ns=rebound_impulse,
-        final_center_of_mass_speed=float((dem.velocities[i, 2]+dem.velocities[j, 2])/2),
+        final_transverse_relative_speed=float(torch.linalg.vector_norm(
+            dem.velocities[i]-dem.velocities[j]-relative_speed*axis)),
+        final_center_of_mass_speed=float(torch.dot(dem.velocities[i]+dem.velocities[j], axis)/2),
     )

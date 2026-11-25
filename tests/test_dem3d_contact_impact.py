@@ -386,3 +386,22 @@ def test_normal_impact_in_translating_frames(record_property):
         assert moving.contact_steps == base.contact_steps
         impulse = moving.compression_impulse_ns + moving.rebound_impulse_ns
         assert abs(impulse-moving.pair_mass_kg*(moving.impact_speed+moving.rebound_speed)) < 1e-11
+
+
+def test_rotated_translating_head_on_contact(record_property):
+    options = dict(e_target=.5, damping="clamped_mapping", center_of_mass_speed=.75, dt_scale=.4)
+    base = pair_impact(**options)
+    worst_scalar = worst_transverse = worst_force = 0.
+    for axis in ((1.,0.,0.), (-2.,1.,3.), (2.,-1.,-3.)):
+        result = pair_impact(impact_axis=axis, **options)
+        for name in ("e_measured","max_overlap","dissipated_energy","peak_force",
+                     "compression_impulse_ns","rebound_impulse_ns"):
+            worst_scalar = max(worst_scalar, abs(getattr(result,name)/getattr(base,name)-1))
+        worst_transverse = max(worst_transverse, result.final_transverse_relative_speed)
+        worst_force = max(worst_force, result.force_law_residual)
+        assert abs(result.final_center_of_mass_speed-.75) < 1e-12
+        assert result.contact_steps == base.contact_steps
+    record_property("maximum_relative_orientation_discrepancy", worst_scalar)
+    record_property("maximum_transverse_rebound_speed_m_s", worst_transverse)
+    record_property("maximum_relative_vector_force_residual", worst_force)
+    assert worst_scalar < 2e-10 and worst_force < 1e-11 and worst_transverse < 1e-12
