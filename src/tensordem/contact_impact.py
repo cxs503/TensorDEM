@@ -316,6 +316,8 @@ class PairImpactResult:
     rebound_impulse_ns: float = 0.
     final_center_of_mass_speed: float = 0.
     final_transverse_relative_speed: float = 0.
+    final_center_of_mass_velocity: tuple[float, float, float] = (0., 0., 0.)
+    center_of_mass_position_error_m: float = 0.
 
     @property
     def e_error_vs_clamped(self) -> float:
@@ -400,6 +402,7 @@ def pair_impact(
     v0: float = 0.5,
     center_of_mass_speed: float = 0.,
     impact_axis: tuple[float, float, float] = (0., 0., 1.),
+    center_of_mass_velocity: tuple[float, float, float] | None = None,
     k_n: float = 5.0e4,
     radius: float = 0.05,
     density: float = 900.0,
@@ -422,6 +425,8 @@ def pair_impact(
     impact_axis : nonzero direction from the first sphere to the second in 3-D.
     center_of_mass_speed : signed common velocity along the collision axis (m/s).
                Impact and rebound speeds are per-sphere speeds in the pair frame.
+    center_of_mass_velocity : optional three-component lab-frame common velocity
+               in m/s, used with center_of_mass_speed left at zero.
     dt_scale : multiplier on the solver's ``recommended_dt``.
     thermal  : if true, feed the work the solver actually dissipated into
                :mod:`tensordem.ice_thermal_stress` and attach the resulting
@@ -459,11 +464,19 @@ def pair_impact(
     scaled = tuple(v/scale for v in impact_axis)
     length = math.hypot(*scaled)
     unit_axis = tuple(v/length for v in scaled)
+    if center_of_mass_velocity is not None:
+        if center_of_mass_speed != 0.:
+            raise ValueError("specify center_of_mass_velocity or center_of_mass_speed")
+        if len(center_of_mass_velocity) != 3 or not all(math.isfinite(v) for v in center_of_mass_velocity):
+            raise ValueError("center_of_mass_velocity must contain three finite components")
     dem, i, j = _build_pair(k_n, c_n, radius, density, dt_scale, unit_axis)
     axis = dem.positions.new_tensor(unit_axis)
     dem.velocities = torch.zeros_like(dem.positions)
-    dem.velocities[i] = (center_of_mass_speed + v0)*axis
-    dem.velocities[j] = (center_of_mass_speed - v0)*axis
+    drift = (center_of_mass_speed*axis if center_of_mass_velocity is None else
+             dem.velocities.new_tensor(center_of_mass_velocity))
+    dem.velocities[i] = drift + v0*axis
+    dem.velocities[j] = drift - v0*axis
+    initial_center = .5*(dem.positions[i]+dem.positions[j])
     dem.time = 0.0
     dem.step_count = 0
 
@@ -556,6 +569,8 @@ def pair_impact(
             cells=thermal_cells,
             dt_s=thermal_dt_s,
         )
+    final_center = .5*(dem.positions[i]+dem.positions[j])
+    final_drift = .5*(dem.velocities[i]+dem.velocities[j])
     return PairImpactResult(
         e_measured=rebound / v0,
         impact_speed=v0,
@@ -583,5 +598,8 @@ def pair_impact(
         rebound_impulse_ns=rebound_impulse,
         final_transverse_relative_speed=float(torch.linalg.vector_norm(
             dem.velocities[i]-dem.velocities[j]-relative_speed*axis)),
-        final_center_of_mass_speed=float(torch.dot(dem.velocities[i]+dem.velocities[j], axis)/2),
+        final_center_of_mass_speed=float(torch.dot(final_drift, axis)),
+        final_center_of_mass_velocity=tuple(final_drift.tolist()),
+        center_of_mass_position_error_m=float(torch.linalg.vector_norm(
+            final_center-initial_center-dem.time*drift)),
     )

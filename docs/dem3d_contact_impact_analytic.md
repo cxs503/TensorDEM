@@ -250,3 +250,11 @@ launching the spheres. The signed center-of-mass speed is along that axis.
 The force-law check compares the assembled three-dimensional force to its
 expected vector, and `final_transverse_relative_speed` reports the residual
 relative speed perpendicular to the collision axis in m/s.
+
+For transverse translation or a general Galilean boost, set
+`center_of_mass_velocity=(vx, vy, vz)` in lab coordinates (m/s), leaving
+`center_of_mass_speed` at zero. The relative motion is still head-on. The
+result gives the final center velocity vector, its signed projection along the
+impact axis, and the distance from the expected straight-line center position
+at separation. The validation compares purely transverse and mixed boosts
+with the same impact in the center-of-mass frame.

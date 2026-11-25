@@ -405,3 +405,25 @@ def test_rotated_translating_head_on_contact(record_property):
     record_property("maximum_transverse_rebound_speed_m_s", worst_transverse)
     record_property("maximum_relative_vector_force_residual", worst_force)
     assert worst_scalar < 2e-10 and worst_force < 1e-11 and worst_transverse < 1e-12
+
+
+def test_head_on_impact_under_general_galilean_boost(record_property):
+    axis = (2., -1., 2.)
+    options = dict(impact_axis=axis, damping="clamped_mapping", e_target=.5, dt_scale=.4)
+    base = pair_impact(**options)
+    worst_contact = worst_drift = worst_position = 0.
+    for drift in ((1., 2., 0.), (-1.1, .4, 2.2)):
+        moving = pair_impact(center_of_mass_velocity=drift, **options)
+        for name in ("e_measured", "compression_impulse_ns", "rebound_impulse_ns",
+                     "max_overlap", "peak_force", "dissipated_energy"):
+            worst_contact = max(worst_contact, abs(getattr(moving,name)/getattr(base,name)-1))
+        worst_drift = max(worst_drift, math.dist(moving.final_center_of_mass_velocity, drift))
+        worst_position = max(worst_position, moving.center_of_mass_position_error_m)
+        projected = sum(v*d for v,d in zip(drift,axis))/math.hypot(*axis)
+        assert abs(moving.final_center_of_mass_speed-projected) < 1e-12
+        assert moving.final_transverse_relative_speed < 1e-12
+        assert moving.contact_steps == base.contact_steps
+    record_property("max_relative_contact_discrepancy", worst_contact)
+    record_property("max_center_velocity_error_m_s", worst_drift)
+    record_property("max_center_trajectory_error_m", worst_position)
+    assert worst_contact < 2e-10 and worst_drift < 1e-12 and worst_position < 1e-13
