@@ -717,3 +717,26 @@ def test_zero_frequency_chain_anchors_balance_and_uniform_drift():
     np.testing.assert_allclose(end, anchored)
     np.testing.assert_allclose(mean, anchored)
     np.testing.assert_allclose(heat, -.7*np.diff(anchored)/r)
+
+
+@pytest.mark.parametrize("closed", [False, True])
+def test_low_frequency_single_link_matches_analytic_relaxation(closed):
+    from tensordem.thermal import low_frequency_contact_temperatures
+    c = np.array([2., 3.])
+    r = .6
+    p = np.array([.2+.4j, .7-.3j])
+    wall = None if closed else .8+.3j
+    t, slope, rate = low_frequency_contact_temperatures([r], c, t_left=wall, nodal_power=p)
+    if closed:
+        relaxation = r/np.sum(1/c)
+        difference = relaxation*(p[0]/c[0]-p[1]/c[1])
+        expected = difference*np.array([c[1], -c[0]])/c.sum()
+        np.testing.assert_allclose(rate, p.sum()/c.sum())
+        np.testing.assert_allclose(t, expected)
+        np.testing.assert_allclose(slope, -relaxation*expected)
+    else:
+        # A prescribed west wall fixes T0; the east store has time constant r*C.
+        expected = wall+r*p[1]
+        np.testing.assert_allclose(t, [wall, expected])
+        np.testing.assert_allclose(slope, [0., -r*c[1]*expected])
+        assert rate == 0.

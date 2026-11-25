@@ -88,6 +88,7 @@ __all__ = [
     "constant_contact_interval",
     "harmonic_contact_interval",
     "harmonic_contact_temperatures",
+    "low_frequency_contact_temperatures",
     "hertz_contact_radius",
     "ice_bond_tensile_strength",
     "lattice_network_temperatures",
@@ -468,6 +469,28 @@ def harmonic_contact_temperatures(link_resistance, heat_capacity, angular_freque
         forcing = power[free] - operator[free][:, ~free] @ temperature[~free]
         temperature[free] = sp.linalg.spsolve(operator[free][:, free].tocsc(), forcing)
     return temperature
+
+
+def low_frequency_contact_temperatures(link_resistance, heat_capacity, *, t_left=None,
+                                       t_right=None, nodal_power=0., allow_massless=False):
+    """Return (T0, T1, rate) for frequency-independent thermal loads.
+
+    For small positive omega the nodal phasor is rate/(i*omega) + T0 +
+    i*omega*T1 + O(omega²). T0 is in K, T1 in K s and rate in K/s.
+    With insulated ends T0 and T1 have zero capacity-weighted mean.
+    With a fixed end the rate is zero and the slope vanishes at fixed nodes.
+    The rightward power coefficients follow from -diff(T0 or T1)/resistance.
+    """
+    closed = t_left is None and t_right is None
+    options = dict(allow_massless=allow_massless, separate_mean=closed)
+    steady = harmonic_contact_temperatures(link_resistance, heat_capacity, 0., t_left=t_left,
+                                          t_right=t_right, nodal_power=nodal_power, **options)
+    profile, rate = steady if closed else (steady, 0j)
+    # Equating coefficients of i*omega gives K*T1 = -C*T0 on free nodes.
+    slope = harmonic_contact_temperatures(link_resistance, heat_capacity, 0.,
+                        t_left=None if t_left is None else 0., t_right=None if t_right is None else 0.,
+                        nodal_power=-np.asarray(heat_capacity, dtype=float)*profile, **options)
+    return profile, slope[0] if closed else slope, rate
 
 
 def harmonic_contact_interval(link_resistance, heat_capacity, angular_frequency, start, duration,
