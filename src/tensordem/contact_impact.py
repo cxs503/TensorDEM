@@ -320,6 +320,8 @@ class PairImpactResult:
     center_of_mass_position_error_m: float = 0.
     active_dashpot_work_j: float = 0.
     release_elastic_energy_j: float = 0.
+    compression_dashpot_work_j: float = 0.
+    rebound_dashpot_work_j: float = 0.
 
     @property
     def e_error_vs_clamped(self) -> float:
@@ -510,7 +512,8 @@ def pair_impact(
     # Euler uses the force from the start of each step. The initial gap
     # gives zero load; subsequent values come from the sampled pair state.
     normal_force = 0.
-    dashpot_work = 0.
+    compression_work = 0.
+    rebound_work = 0.
     release_elastic_energy = 0.
     overlap_now = -clearance
     compression_impulse = 0.
@@ -522,14 +525,14 @@ def pair_impact(
         v_next = relative_speed
         impulse = normal_force*dem.dt
         if v_prev <= 0:
-            rebound_impulse += impulse
+            compression_fraction = 0.
         elif v_next >= 0:
-            compression_impulse += impulse
+            compression_fraction = 1.
         else:
             # Maximum compression is where the relative velocity changes sign.
-            fraction = v_prev/(v_prev-v_next)
-            compression_impulse += fraction*impulse
-            rebound_impulse += (1-fraction)*impulse
+            compression_fraction = v_prev/(v_prev-v_next)
+        compression_impulse += compression_fraction*impulse
+        rebound_impulse += (1-compression_fraction)*impulse
         # In free flight the normal force is exactly zero, so the velocity is
         # bit-for-bit unchanged; any change means the contact force was active.
         if v_next != v_prev:
@@ -545,7 +548,10 @@ def pair_impact(
                 active_fraction = normal_force/(normal_force-trial_force)
                 release_overlap = max(0., previous_overlap + active_fraction*(overlap_now-previous_overlap))
                 release_elastic_energy = .5*k_n*release_overlap**2
-            dashpot_work += c_n*v_prev**2*dem.dt*active_fraction
+            work_per_step = c_n*v_prev**2*dem.dt
+            active_compression = min(compression_fraction, active_fraction)
+            compression_work += work_per_step*active_compression
+            rebound_work += work_per_step*(active_fraction-active_compression)
         if overlap_now > 0.0:
             contact_steps += 1
             if overlap_now > max_overlap:
@@ -587,7 +593,9 @@ def pair_impact(
     final_center = .5*(dem.positions[i]+dem.positions[j])
     final_drift = .5*(dem.velocities[i]+dem.velocities[j])
     return PairImpactResult(
-        active_dashpot_work_j=dashpot_work,
+        active_dashpot_work_j=compression_work+rebound_work,
+        compression_dashpot_work_j=compression_work,
+        rebound_dashpot_work_j=rebound_work,
         release_elastic_energy_j=release_elastic_energy,
         e_measured=rebound / v0,
         impact_speed=v0,

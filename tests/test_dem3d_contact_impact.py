@@ -433,7 +433,8 @@ def test_pair_impact_measured_energy_partition(record_property):
     from tensordem.contact_impact import restitution_to_damping_clamped
 
     errors = []
-    for scale in (.4, .2, .1):
+    phase_history = []
+    for scale in (.4, .2, .1, .05, .025):
         result = pair_impact(e_target=.35, damping="clamped_mapping", dt_scale=scale,
                              impact_axis=(1.,-2.,2.),center_of_mass_velocity=(.5,.25,-.2))
         m = .5*result.pair_mass_kg
@@ -441,6 +442,19 @@ def test_pair_impact_measured_energy_partition(record_property):
         c = restitution_to_damping_clamped(.35, 5.e4, m)
         ref = impact_analytic(5.e4,c,m,speed)
         initial = .5*m*speed**2
+        # At maximum compression all remaining relative energy is elastic.
+        peak_energy = .5*5.e4*ref.peak_overlap_m**2
+        compression_reference = initial-peak_energy
+        rebound_reference = peak_energy-initial*ref.e_clamped**2-ref.release_elastic_energy_j
+        phase_errors = []
+        for phase, measured, reference in (
+            ("compression", result.compression_dashpot_work_j, compression_reference),
+            ("rebound", result.rebound_dashpot_work_j, rebound_reference),
+        ):
+            phase_errors.append(abs(measured-reference)/initial)
+            record_property(f"{phase}_work_error_over_initial_energy_{scale}", phase_errors[-1])
+            assert measured > 0.
+        assert result.active_dashpot_work_j == result.compression_dashpot_work_j + result.rebound_dashpot_work_j
         work_error = abs(result.active_dashpot_work_j-ref.dashpot_work_j)/initial
         release_error = abs(result.release_elastic_energy_j-ref.release_elastic_energy_j)/initial
         closure = abs(result.dissipated_energy-result.active_dashpot_work_j
@@ -449,5 +463,9 @@ def test_pair_impact_measured_energy_partition(record_property):
         record_property(f"release_energy_error_over_initial_energy_{scale}",release_error)
         record_property(f"energy_balance_error_over_initial_energy_{scale}",closure)
         errors.append(max(work_error,release_error,closure))
-    assert errors[-1] < errors[1] < errors[0]
-    assert errors[-1] < 8e-4
+        phase_history.append(phase_errors)
+    assert errors[2] < errors[1] < errors[0]
+    assert errors[2] < 8e-4
+    for coarse, fine in zip(phase_history, phase_history[1:]):
+        assert all(a > b for a,b in zip(coarse,fine))
+    assert max(phase_history[-1]) < 8e-4

@@ -265,3 +265,8 @@ times the damping coefficient and active step duration. A linear interpolation
 of the trial force to zero gives the release overlap and
 `release_elastic_energy_j = k_n * overlap_at_release**2 / 2`. Their sum
 approaches the measured loss of relative kinetic energy as the step shrinks.
+
+The fields `compression_dashpot_work_j` and `rebound_dashpot_work_j` split
+active dashpot work at maximum overlap. They use the relative normal velocity
+zero crossing to locate that instant within a step. Their references follow
+from energy at first touch, maximum overlap, and force release.
