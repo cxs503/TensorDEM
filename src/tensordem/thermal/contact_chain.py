@@ -297,7 +297,8 @@ def _chain_laplacian(conductance):
 
 
 def cell_centered_slab_network(widths, conductivity, volumetric_heat_capacity, *,
-                               area=1., contact_resistance=0., films=(None, None), resolve_contacts=False):
+                               area=1., contact_resistance=0., films=(None, None), resolve_contacts=False,
+                               interface_heat_capacity=0.):
     """Build links [K/W] and capacities [J/K] for a fixed 1D material stack.
 
     Widths in m, k in W/(m K), volumetric capacity in J/(m³ K), area in m².
@@ -306,8 +307,11 @@ def cell_centered_slab_network(widths, conductivity, volumetric_heat_capacity, *
     are prescribed reservoirs of zero capacity. A positive film coefficient
     (W/(m² K)) adds external resistance; None prescribes the surface temperature.
     With resolve_contacts=True, insert two zero-capacity surface nodes at each
-    strictly positive contact resistance. Positive-capacity nodes remain the
-    cell centres in material order. Use allow_massless=True when solving.
+    strictly positive contact resistance. Use allow_massless=True when solving.
+    interface_heat_capacity (J/(m² K)) places a lumped sheet at each interface
+    with positive areal capacity. Half of the specified contact resistance
+    lies on either side of the sheet. Its node occurs between the adjacent
+    cell centres, and between the two surface nodes when these are resolved.
     """
     widths = np.asarray(widths, dtype=float)
     if widths.ndim != 1 or not widths.size or not np.isfinite(widths).all() or np.any(widths <= 0):
@@ -321,18 +325,32 @@ def cell_centered_slab_network(widths, conductivity, volumetric_heat_capacity, *
     if not np.isfinite(contacts).all() or np.any(contacts < 0):
         raise ChainError("contact resistance must be finite and nonnegative")
     contacts = np.broadcast_to(contacts, (widths.size - 1,))
+    sheet = np.asarray(interface_heat_capacity, dtype=float)
+    if not np.isfinite(sheet).all() or np.any(sheet < 0):
+        raise ChainError("interface heat capacity must be finite and nonnegative")
+    sheet = np.broadcast_to(sheet, contacts.shape)
     left, right = films
     film_r = [0. if h is None else 1/_finite("film coefficient", h, positive=True) for h in (left, right)]
     half = .5 * widths / k
     links = np.r_[film_r[0]+half[0], half[:-1]+contacts+half[1:], half[-1]+film_r[1]] / area
     capacity = np.r_[0., widths*area*cv, 0.]
-    if resolve_contacts and np.any(contacts > 0):
+    if np.any(sheet > 0) or (resolve_contacts and np.any(contacts > 0)):
         resolved_links = [links[0]]
         resolved_capacity = [0., capacity[1]]
         for i, contact in enumerate(contacts):
-            if contact > 0:
-                resolved_links.extend((half[i]/area, contact/area, half[i+1]/area))
-                resolved_capacity.extend((0., 0.))
+            if resolve_contacts and contact > 0:
+                resolved_links.append(half[i]/area)
+                resolved_capacity.append(0.)
+                if sheet[i] > 0:
+                    resolved_links.extend((.5*contact/area, .5*contact/area))
+                    resolved_capacity.append(area*sheet[i])
+                else:
+                    resolved_links.append(contact/area)
+                resolved_capacity.append(0.)
+                resolved_links.append(half[i+1]/area)
+            elif sheet[i] > 0:
+                resolved_links.extend(((half[i]+.5*contact)/area, (half[i+1]+.5*contact)/area))
+                resolved_capacity.append(area*sheet[i])
             else:
                 resolved_links.append(links[i+1])
             resolved_capacity.append(capacity[i+2])

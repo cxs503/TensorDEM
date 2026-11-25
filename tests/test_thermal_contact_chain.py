@@ -412,3 +412,23 @@ def test_resolved_multiple_contacts_match_condensed_heterogeneous_stack():
         left = ids[cell]+1
         np.testing.assert_allclose(full[left]-full[left+1], resistance/1.7*flux[cell+1],
                                    atol=2e-14, rtol=0)
+
+
+@pytest.mark.parametrize("contact", [0., .6])
+@pytest.mark.parametrize("resolved", [False, True])
+def test_interface_storage_splits_resistance_and_balances_complex_power(contact, resolved):
+    from tensordem.thermal import cell_centered_slab_network, harmonic_contact_temperatures
+
+    area = 2.
+    links, c = cell_centered_slab_network([.2, .8], [1., 2.], [2., 4.], area=area,
+                    contact_resistance=contact, resolve_contacts=resolved, interface_heat_capacity=3.)
+    sheet, = np.flatnonzero(c == 6.)
+    assert c.sum() == pytest.approx(area*(.2*2+.8*4+3))
+    assert links.sum() == pytest.approx((.2+.8/2+contact)/area)
+    t = harmonic_contact_temperatures(links, c, 3., t_left=1+.3j, t_right=.2j, allow_massless=True)
+    q = -np.diff(t)/links
+    np.testing.assert_allclose(q[sheet-1]-q[sheet], 3j*c[sheet]*t[sheet], atol=2e-14)
+    # Independent three-store reduction and resistances to the sheet.
+    r = np.array([.1, .1+contact/2, .2+contact/2, .2])/area
+    exact = harmonic_contact_temperatures(r, [0., .8, 6., 6.4, 0.], 3., t_left=1+.3j, t_right=.2j)
+    np.testing.assert_allclose(t[c > 0], exact[1:-1], atol=2e-14, rtol=0)
