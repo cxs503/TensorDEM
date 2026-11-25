@@ -620,3 +620,29 @@ def test_insulated_two_particle_decay_and_single_storage_limit():
     np.testing.assert_allclose(state,[final+4,final],atol=2e-15)
     np.testing.assert_allclose(avg,[mean+3,mean],atol=2e-15)
     np.testing.assert_allclose(q,[1.5*dt],atol=2e-15)
+
+
+def test_insulated_harmonic_two_stores_with_transient_and_net_power():
+    from tensordem.thermal import harmonic_contact_interval
+    c = np.array([2.,3.])
+    initial = np.array([.4,-.6])
+    p = np.array([.8+.1j,-.3+.2j])
+    start,dt,w,r = .17,.23,4.,.6
+    phase = np.exp(1j*w*start)
+    mean_phase = phase*np.expm1(1j*w*dt)/(1j*w*dt)
+    rate = (1/c).sum()/r
+    # The capacity-weighted mean and the difference solve independent scalar ODEs.
+    common = p.sum()/(1j*w*c.sum())
+    difference = (p[0]/c[0]-p[1]/c[1])/(rate+1j*w)
+    drift = c@initial/c.sum()-(phase*common).real
+    offset = initial[0]-initial[1]-(phase*difference).real
+    sign = np.array([c[1],-c[0]])/c.sum()
+    def state(z,relax):
+        return drift+(z*common).real+sign*((z*difference).real+offset*relax)
+    end,q,mean = harmonic_contact_interval([r],c,w,start,dt,initial,t_left=None,t_right=None,
+                          nodal_power=p,return_interval_temperature=True)
+    exact = state(phase*np.exp(1j*w*dt),np.exp(-rate*dt))
+    avg = state(mean_phase,-np.expm1(-rate*dt)/(rate*dt))
+    np.testing.assert_allclose(end,exact,atol=2e-15,rtol=0.)
+    np.testing.assert_allclose(mean,avg,atol=2e-15,rtol=0.)
+    np.testing.assert_allclose(q,dt*(avg[0]-avg[1])/r,atol=2e-15,rtol=0.)

@@ -442,7 +442,7 @@ def harmonic_contact_interval(link_resistance, heat_capacity, angular_frequency,
                               allow_massless=False, return_interval_temperature=False):
     """Return end temperatures (K) and integrated rightward link heats (J).
 
-    Both end reservoirs have prescribed temperature phasors; interior stores
+    End reservoirs accept prescribed temperature phasors or None for insulation. Free stores
     have positive capacities, or satisfy algebraic power balance when
     allow_massless=True. Initial temperatures are real values at start
     (s); end nodes follow their prescribed phasors. The forcing convention is
@@ -452,8 +452,6 @@ def harmonic_contact_interval(link_resistance, heat_capacity, angular_frequency,
     """
     start = _finite("start", start)
     duration = _finite("duration", duration, positive=True)
-    if t_left is None or t_right is None:
-        raise ChainError("both end temperature phasors are required")
     r = _link_resistances(link_resistance)
     phasor = harmonic_contact_temperatures(r, heat_capacity, angular_frequency,
                                 t_left=t_left, t_right=t_right, nodal_power=nodal_power,allow_massless=allow_massless)
@@ -464,11 +462,12 @@ def harmonic_contact_interval(link_resistance, heat_capacity, angular_frequency,
     angle = 1j*angular_frequency*duration
     final = (phasor*phase*np.exp(angle)).real.copy()
     integral = (phasor*phase*np.expm1(angle)/(1j*angular_frequency)).real.copy()
-    if allow_massless or return_interval_temperature:
+    if allow_massless or return_interval_temperature or t_left is None or t_right is None:
         # Superposition leaves a zero-drive relaxation. Algebraic nodes of
         # this deviation obey the same series resistance interpolation.
         offset,heat,mean = affine_contact_interval(r,heat_capacity,duration,initial-(phase*phasor).real,
-                        t_left=(0.,0.),t_right=(0.,0.),allow_massless=allow_massless,
+                        t_left=None if t_left is None else (0.,0.),
+                        t_right=None if t_right is None else (0.,0.),allow_massless=allow_massless,
                         return_interval_temperature=True)
         result = (final+offset,heat-np.diff(integral)/r)
         return (*result,mean+integral/duration) if return_interval_temperature else result
