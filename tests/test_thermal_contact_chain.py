@@ -834,3 +834,19 @@ def test_transient_payload_temperature_error_is_offset_invariant():
         errors.append(payload["transient"]["max_rel_error"])
     assert errors[0] == errors[1]
     assert 1e-3 < errors[0] < 3e-3
+
+
+@pytest.mark.parametrize("theta", [.5, .75, 1.])
+def test_integrated_link_heat_pinned_ends_and_massless_junction(theta):
+    from tensordem.thermal.contact_chain import transient_contact_temperatures
+
+    time = np.array([0., .02, .1])
+    west, east = np.array([1., -.3, .7]), np.array([0., .2, -.4])
+    for links in ([3.], [1., 2.]):
+        field, heat = transient_contact_temperatures(
+            links, 0., time, 0., t_left=west, t_right=east, theta=theta,
+            allow_massless=True, return_link_heat=True)
+        power = (west-east)/3
+        expected = np.diff(time)*((1-theta)*power[:-1]+theta*power[1:])
+        np.testing.assert_allclose(heat, np.broadcast_to(expected[:, None], heat.shape), atol=1e-14)
+        assert field.shape == (3, len(links)+1) and heat.shape == (2, len(links))

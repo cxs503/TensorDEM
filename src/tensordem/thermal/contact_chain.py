@@ -729,7 +729,8 @@ def affine_contact_interval(link_resistance, heat_capacity, duration, initial_te
 
 
 def transient_contact_temperatures(link_resistance, heat_capacity, time, initial_temperature,
-                                   *, t_left=None, t_right=None, nodal_power=0., theta=.5, allow_massless=False):
+                                   *, t_left=None, t_right=None, nodal_power=0., theta=.5, allow_massless=False,
+                                   return_link_heat=False):
     """Integrate a fixed 1D contact network, returning temperatures [time,node].
 
     Each link has a resistance in K/W. Each node stores heat with a positive
@@ -742,7 +743,9 @@ def transient_contact_temperatures(link_resistance, heat_capacity, time, initial
     With allow_massless=True zero-capacity free nodes satisfy instantaneous
     power balance, including at the initial time when their supplied temperatures
     are replaced by consistent values. The theta method spans Crank–Nicolson
-    (0.5) to backward Euler (1).
+    (0.5) to backward Euler (1). With return_link_heat=True also return
+    an array (time intervals, links) of theta-integrated heat in J, positive
+    from the lower-index node to the higher-index node.
     """
     r = _link_resistances(link_resistance)
     n = r.size + 1
@@ -771,8 +774,15 @@ def transient_contact_temperatures(link_resistance, heat_capacity, time, initial
             history[:, i] = trace
             free[i] = False
     massless = _massless_nodes(capacity, free, allow_massless)
+    def result():
+        if not return_link_heat:
+            return history
+        power = -np.diff(history, axis=1)/r
+        heat = np.diff(time)[:, None]*((1-theta)*power[:-1] + theta*power[1:])
+        return history, heat
+
     if not free.any():
-        return history
+        return result()
 
     laplacian = _chain_laplacian(1 / r)
     if massless.any():
@@ -796,7 +806,7 @@ def transient_contact_temperatures(link_resistance, heat_capacity, time, initial
         forcing = step_power - boundary @ wall
         rhs = capacity[free] * current + dt * (forcing - (1-theta) * (operator @ current))
         history[i+1, free] = lu.solve(rhs)
-    return history
+    return result()
 
 
 # ------------------------------------------------------------------- chain FVM
