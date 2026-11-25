@@ -661,3 +661,14 @@ def test_stepped_area_resistances_and_storing_contact(resolve):
                   [0.,.1,1.8,.7,3.2,.6,0.])
     np.testing.assert_allclose(r,expected)
     np.testing.assert_allclose(c,expected_c)
+
+
+def test_uniform_closed_chain_does_not_generate_heat_across_a_contact():
+    from tensordem.thermal import affine_contact_interval
+    c = np.linspace(.003,.1,64)
+    initial = 1000.
+    end,q,mean = affine_contact_interval(np.geomspace(.01,3.,63),c,.7,initial,
+                        t_left=None,t_right=None,return_interval_temperature=True)
+    np.testing.assert_array_equal(end,np.full_like(c,initial))
+    np.testing.assert_array_equal(mean,end)
+    np.testing.assert_array_equal(q,np.zeros(len(c)-1))

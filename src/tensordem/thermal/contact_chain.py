@@ -575,7 +575,8 @@ def affine_contact_interval(link_resistance, heat_capacity, duration, initial_te
     if active.size:
         # Eliminating massless nodes puts all links between anchors in series.
         # At an insulated massless tail the transient deviation is constant.
-        reduced_r = np.diff(position[anchors])
+        segment_links = r[anchors[0]:anchors[-1]]
+        reduced_r = np.add.reduceat(segment_links,anchors[:-1]-anchors[0])
         conductance = 1/reduced_r
         dynamic = free[anchors]
         root = np.sqrt(c[active])
@@ -584,8 +585,15 @@ def affine_contact_interval(link_resistance, heat_capacity, duration, initial_te
         rates,basis = sla.eigh_tridiagonal(diagonal,offdiag)
         if closed:
             rates[0] = 0.
-        modes = basis.T @ (root*(u0[active]-start[active]))
+        initial_mean = 0.
+        if closed:
+            reference = u0[active[0]]
+            initial_mean = reference+c[active]@(u0[active]-reference)/c[active].sum()
+        modes = basis.T @ (root*((u0[active]-initial_mean)-start[active]))
         ramp = basis.T @ (root*(end[active]-start[active]))
+        if closed:
+            # The known uniform mode has no temperature gradient or link heat.
+            modes[0] = ramp[0] = 0.
         z = dt*rates
         phi1 = np.divide(-np.expm1(-z),z,out=np.ones_like(z),where=z!=0)
         # (1-phi1)/z loses precision for a short interval.
@@ -603,8 +611,8 @@ def affine_contact_interval(link_resistance, heat_capacity, duration, initial_te
         if return_interval_temperature:
             mean += np.interp(position,position[anchors],offset)
     if closed:
-        end += .5*dt*(rate0+rate1)
-        mean += dt*(2*rate0+rate1)/6
+        end += initial_mean+.5*dt*(rate0+rate1)
+        mean += initial_mean+dt*(2*rate0+rate1)/6
     return (end,heat,mean) if return_interval_temperature else (end,heat)
 
 
