@@ -391,3 +391,24 @@ def test_all_massless_series_chain_requires_reference_and_obeys_power_balance():
         harmonic_contact_temperatures(r, 0., 3., allow_massless=True)
     with pytest.raises(ChainError, match="prescribed temperature"):
         transient_contact_temperatures(r, 0., time, 0., allow_massless=True)
+
+
+def test_resolved_multiple_contacts_match_condensed_heterogeneous_stack():
+    from tensordem.thermal import cell_centered_slab_network, harmonic_contact_temperatures
+
+    args = ([.1, .25, .2, .45], [2., .8, 3., 1.], [3., 2., 4., 1.])
+    options = dict(area=1.7, films=(4., 7.), contact_resistance=[.1, 0., .4])
+    r, c = cell_centered_slab_network(*args, **options)
+    expanded, stores = cell_centered_slab_network(*args, resolve_contacts=True, **options)
+    ids = np.flatnonzero(stores)
+    np.testing.assert_array_equal(ids, [1, 4, 5, 8])
+    np.testing.assert_allclose(stores[ids], c[1:-1])
+    wall = dict(t_left=.3+.7j, t_right=.1j)
+    t = harmonic_contact_temperatures(r, c, 3., **wall)
+    full = harmonic_contact_temperatures(expanded, stores, 3., allow_massless=True, **wall)
+    np.testing.assert_allclose(full[ids], t[1:-1], atol=2e-14, rtol=0)
+    flux = -np.diff(t)/r
+    for cell, resistance in ((0, .1), (2, .4)):
+        left = ids[cell]+1
+        np.testing.assert_allclose(full[left]-full[left+1], resistance/1.7*flux[cell+1],
+                                   atol=2e-14, rtol=0)
