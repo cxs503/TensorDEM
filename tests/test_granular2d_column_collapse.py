@@ -190,3 +190,18 @@ def test_disk_strip_area_and_tied_ranks():
     area = _disk_strip_areas(np.zeros(2),np.array([1.,.5]),edges)
     np.testing.assert_allclose(area,[0.,.625*math.pi,.625*math.pi,0.],atol=1e-15)
     assert _spearman(np.array([1,2,3]),np.array([4,4,7])) == pytest.approx(math.sqrt(3)/2)
+
+
+def test_contact_inspection_preserves_sliding_and_rolling_history():
+    def integrate(probes):
+        cfg = DiskConfig(mu=1.,mu_rolling=1.,zeta=0.,dt=1e-6)
+        system = DiskSystem([[0.,.0099]],[.01],cfg,walls=[[[-.1,0.],[.1,0.]]])
+        system.vel[0,0] = .01
+        system.omega[0] = .3
+        system.enable_energy_ledger()
+        for _ in range(20):
+            for _ in range(probes):
+                system.contact_forces()
+            system.step()
+        return np.r_[system.pos.ravel(),system.vel.ravel(),system.omega,system.dissipated_work()]
+    np.testing.assert_array_equal(integrate(3),integrate(0))

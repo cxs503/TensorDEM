@@ -203,7 +203,6 @@ class DiskSystem:
         self.contact_history: list[dict[str, float]] = []
         # optional energy ledger (see enable_energy_ledger); None = disabled
         self.energy_ledger: dict[str, float] | None = None
-        self._ledger_armed = False
         self._elastic_normal = 0.0
         self._elastic_tangential = 0.0
         self._elastic_rolling = 0.0
@@ -397,13 +396,14 @@ class DiskSystem:
         return xi, roll
 
     # ---------------------------------------------------------------- forces
-    def _evaluate(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def _evaluate(self, *, advance_history: bool = False) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Return ``(force, torque, external_force)`` acting on the disks.
 
         Refreshes ``self.contacts`` (per-contact records consumed by the stress
         and force-chain analysis) and the hull/wall reaction accumulators.
         """
         cfg = self.config
+        record_work = advance_history and self.energy_ledger is not None
         n = self.n
         force = np.zeros((n, 2))
         torque = np.zeros(n)
@@ -443,9 +443,10 @@ class DiskSystem:
             self.wall_force = np.zeros(2)
             self._contact_force, self._contact_torque = force, torque
             self._external_force = ext
-            self._state_keys = np.zeros(0, dtype=np.int64)
-            self._state_xi = np.zeros((0, 2))
-            self._state_roll = np.zeros(0)
+            if advance_history:
+                self._state_keys = np.zeros(0, dtype=np.int64)
+                self._state_xi = np.zeros((0, 2))
+                self._state_roll = np.zeros(0)
             return force, torque, ext
 
         # stable ascending contact keys --------------------------------
@@ -487,7 +488,7 @@ class DiskSystem:
         f_t_mag = np.linalg.norm(f_t_vec, axis=1)
         cap = cfg.mu * f_n
         scale = np.where(f_t_mag > cap, cap / np.maximum(f_t_mag, 1e-30), 1.0)
-        if self._ledger_armed:
+        if record_work:
             # Only the plastic displacement discarded by the Coulomb cap
             # dissipates energy. Sticking stores recoverable spring energy.
             sliding_loss = float(np.sum(cap*np.maximum(f_t_mag-cap,0.))/k_t)
@@ -526,7 +527,7 @@ class DiskSystem:
             m_r = k_r * roll
             cap_r = cfg.mu_rolling * r_eff * f_n
             scale_r = np.where(np.abs(m_r) > cap_r, cap_r / np.maximum(np.abs(m_r), 1e-30), 1.0)
-            if self._ledger_armed:
+            if record_work:
                 rolling_loss = float(np.sum(cap_r*np.maximum(np.abs(m_r)-cap_r,0.)/k_r))
             m_r *= scale_r
             roll *= scale_r
@@ -574,7 +575,7 @@ class DiskSystem:
         }
         self._elastic_normal = float(0.5 * cfg.kn * np.sum(ov_all * ov_all))
         self._elastic_tangential = float(.5*k_t*np.sum(xi*xi))
-        if self._ledger_armed and self.energy_ledger is not None:
+        if record_work:
             # Non-conservative work done *by* the contact forces on the relative
             # motion over this step.  The spring parts are conservative (they are
             # exchanged with the stored elastic energy), so only the normal
@@ -585,9 +586,10 @@ class DiskSystem:
                 np.sum((f_n - cfg.kn * ov_all) * v_n) * self.dt)
             led["friction"] -= sliding_loss
             led["rolling"] -= rolling_loss
-        self._state_keys = keys
-        self._state_xi = xi
-        self._state_roll = roll
+        if advance_history:
+            self._state_keys = keys
+            self._state_xi = xi
+            self._state_roll = roll
         self._contact_force = force
         self._contact_torque = torque
         self._external_force = ext
@@ -599,11 +601,7 @@ class DiskSystem:
         if n < 0:
             raise ValueError("n must be nonnegative")
         for _ in range(n):
-            self._ledger_armed = self.energy_ledger is not None
-            try:
-                force, torque, _ = self._evaluate()
-            finally:
-                self._ledger_armed = False
+            force, torque, _ = self._evaluate(advance_history=True)
             self.vel += self.dt * (force / self.mass[:, None])
             self.omega += self.dt * (torque / self.inertia)
             if self.config.damping_time > 0.0:
