@@ -234,14 +234,18 @@ def square_lattice_resistance(nx: int, ny: int, r_link: float) -> float:
 
 
 def lattice_network_temperatures(nx: int, ny: int, r_link: float | tuple,
-                                 t_left: float | np.ndarray, t_right: float | np.ndarray, *, nodal_power=0.0) -> np.ndarray:
-    """Solve a lattice with pinned x faces and insulated y faces.
+                                 t_left: float | np.ndarray, t_right: float | np.ndarray, *, nodal_power=0.0,
+                                 periodic_y: bool = False) -> np.ndarray:
+    """Solve a lattice with pinned x faces and insulated or periodic y boundaries.
 
     r_link is a uniform resistance in K/W or a pair (Rx, Ry). Each entry
     is scalar or an array on the edges of its axis: (nx-1, ny) for Rx,
     (nx, ny-1) for Ry. Rx[i,j] connects (i,j) to (i+1,j), and Ry[i,j]
     connects (i,j) to (i,j+1). nodal_power is in W. Each pinned face
     accepts a scalar temperature in K or one temperature per transverse row.
+    With periodic_y=True, Ry has shape (nx, ny) and its last column
+    connects the last row to the first. Two rows then have parallel links,
+    and a single row has no transverse heat transfer.
     """
     if int(nx) < 2:
         raise ChainError("nx must be >= 2")
@@ -262,7 +266,7 @@ def lattice_network_temperatures(nx: int, ny: int, r_link: float | tuple,
     else:
         rx = ry = r_link
     gx = conductance(rx, (nx - 1, ny))
-    gy = conductance(ry, (nx, ny - 1))
+    gy = conductance(ry, (nx, ny if periodic_y else ny - 1))
     n_cells = nx * ny
     rows: list[int] = []
     cols: list[int] = []
@@ -287,9 +291,13 @@ def lattice_network_temperatures(nx: int, ny: int, r_link: float | tuple,
                 continue
             for di, dj in ((-1, 0), (1, 0), (0, -1), (0, 1)):
                 ni, nj = i + di, j + dj
+                if periodic_y:
+                    nj %= ny
+                    if ni == i and nj == j:
+                        continue
                 if not (0 <= ni < nx) or not (0 <= nj < ny):
                     continue
-                g = gx[min(i, ni), j] if di else gy[i, min(j, nj)]
+                g = gx[min(i, ni), j] if di else gy[i, j if dj == 1 else nj]
                 rows.append(node); cols.append(node); vals.append(g)
                 rows.append(node); cols.append(ni * ny + nj); vals.append(-g)
     mat = sp.csr_matrix((vals, (rows, cols)), shape=(n_cells, n_cells))

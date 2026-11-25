@@ -239,6 +239,18 @@ def test_pinned_face_temperature_profiles_and_scalar_mixing():
             lattice_network_temperatures(3, 2, 1., left, invalid)
 
 
+def test_periodic_two_row_links_and_single_row_limit():
+    # Two transverse links of conductance 1 and 3 connect the free pair.
+    # With two axial links per particle, the resulting temperature difference is 4/10 K.
+    ry = np.tile([1., 1/3], (3, 1))
+    t = lattice_network_temperatures(3, 2, (1., ry), [6., 2.], 0., periodic_y=True)
+    np.testing.assert_allclose(t[1], [2.2, 1.8])
+    single = lattice_network_temperatures(4, 1, 1., 3., 0., periodic_y=True)
+    np.testing.assert_allclose(single[:, 0], [3., 2., 1., 0.])
+    with pytest.raises(ChainError):
+        lattice_network_temperatures(3, 2, (1., ry[:, :1]), 1., 0., periodic_y=True)
+
+
 def test_edge_resistance_shape_and_positivity():
     for edges in ((np.ones((3, 2)), 1.), (1., 0.), (np.nan, 1.)):
         with pytest.raises(ChainError):
