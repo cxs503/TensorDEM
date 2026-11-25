@@ -301,8 +301,23 @@ def lattice_network_temperatures(nx: int, ny: int, r_link: float | tuple,
                 rows.append(node); cols.append(node); vals.append(g)
                 rows.append(node); cols.append(ni * ny + nj); vals.append(-g)
     mat = sp.csr_matrix((vals, (rows, cols)), shape=(n_cells, n_cells))
-    t = sp.linalg.spsolve(mat, rhs)
-    return t.reshape(nx, ny)
+    factor = sp.linalg.splu(mat.tocsc())
+    temperature = factor.solve(rhs).reshape(nx, ny)
+    # Refine against the physical link currents. Forming residuals from
+    # differences preserves the constant mode even when diagonal sums round.
+    residual = power.copy()
+    x_heat = gx*np.diff(temperature, axis=0)
+    residual[:-1] += x_heat
+    residual[1:] -= x_heat
+    if periodic_y:
+        y_heat = gy*(np.roll(temperature, -1, axis=1)-temperature)
+        residual += y_heat-np.roll(y_heat, 1, axis=1)
+    else:
+        y_heat = gy*np.diff(temperature, axis=1)
+        residual[:, :-1] += y_heat
+        residual[:, 1:] -= y_heat
+    residual[[0, -1]] = rhs.reshape(nx, ny)[[0, -1]]-temperature[[0, -1]]
+    return temperature + factor.solve(residual.ravel()).reshape(nx, ny)
 
 
 def _chain_laplacian(conductance):

@@ -239,6 +239,12 @@ def test_pinned_face_temperature_profiles_and_scalar_mixing():
             lattice_network_temperatures(3, 2, 1., left, invalid)
 
 
+@pytest.mark.parametrize("periodic", [False, True])
+def test_lattice_constant_temperature_with_nonbinary_conductances(periodic):
+    field = lattice_network_temperatures(97, 96, (1/1.5, 1/2.4), 300., 300., periodic_y=periodic)
+    np.testing.assert_allclose(field, 300., atol=2e-13, rtol=0.)
+
+
 def test_periodic_two_row_links_and_single_row_limit():
     # Two transverse links of conductance 1 and 3 connect the free pair.
     # With two axial links per particle, the resulting temperature difference is 4/10 K.
