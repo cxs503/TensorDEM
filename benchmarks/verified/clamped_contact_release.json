@@ -1,0 +1,68 @@
+{
+  "source_commit": "e462de56cd0168fb8e577388ed8ebceb1d968d6c",
+  "baseline_commit": "9dced2335800d271a1d50daea0e2716c38c8ce7d",
+  "command": "PYTHONPATH=src OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 python -m pytest -q tests/test_dem3d_restitution_verification.py tests/test_restitution.py tests/test_dem3d_restitution.py tests/test_dem3d_fixed_support_restitution.py tests/test_hull_penalty_restitution.py -o junit_family=legacy --junitxml=/tmp/dem-release-confirm.xml",
+  "passed": 57,
+  "subtests_passed": 32,
+  "reference": "Closed-form impact_analytic for a drag-free compressive-only linear spring-dashpot contact (18 N/m, 2 kg effective mass, 0.75 m/s approach). Compare RK4 at two resolutions in underdamped, critical and overdamped cases; numerical entries are absolute relative errors.",
+  "comparison": {
+    "0.05": {
+      "before_500": {
+        "e_reference": 1.086231875557786e-07,
+        "contact_time_s": 2.9581103122566788e-09,
+        "release_overlap_m": 0.019848504675661127
+      },
+      "before_1000": {
+        "e_reference": 6.3346944134679e-08,
+        "contact_time_s": 1.9560544295416094e-09,
+        "release_overlap_m": 0.01984851866486048
+      },
+      "after_500": {
+        "e_reference": 7.661649092938205e-12,
+        "contact_time_s": 1.2204681709704346e-11,
+        "release_overlap_m": 7.661649092938205e-12
+      },
+      "after_1000": {
+        "e_reference": 4.838351941316432e-13,
+        "contact_time_s": 7.629452625224076e-13,
+        "release_overlap_m": 4.838351941316432e-13
+      }
+    },
+    "1.0": {
+      "before_500": {
+        "e_reference": 1.4483103716322887e-07,
+        "contact_time_s": 7.281351710464179e-08,
+        "release_overlap_m": 0.0021680576051725797
+      },
+      "before_1000": {
+        "e_reference": 8.817124286242262e-08,
+        "contact_time_s": 4.4129046194996135e-08,
+        "release_overlap_m": 0.000597260028838198
+      },
+      "after_500": {
+        "e_reference": 1.0448653053884982e-10,
+        "contact_time_s": 3.264299941463378e-11,
+        "release_overlap_m": 1.0448653053884982e-10
+      },
+      "after_1000": {
+        "e_reference": 6.510125771796993e-12,
+        "contact_time_s": 2.034594714928062e-12,
+        "release_overlap_m": 6.510125771796993e-12
+      }
+    },
+    "100.0": {
+      "before_500": "clamped reference impact did not separate; check inputs",
+      "before_1000": "clamped reference impact did not separate; check inputs",
+      "after_500": {
+        "e_reference": 1.141309269314661e-13,
+        "contact_time_s": 1.1102230246251565e-13,
+        "release_overlap_m": 1.142419492339286e-13
+      },
+      "after_1000": {
+        "e_reference": 4.107825191113079e-15,
+        "contact_time_s": 6.661338147750939e-15,
+        "release_overlap_m": 3.9968028886505635e-15
+      }
+    }
+  }
+}
