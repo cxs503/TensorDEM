@@ -951,3 +951,36 @@ def test_affine_wall_moments_resolve_one_ulp_differential_ramp(change, sign, rec
     assert abs(end[1]-(base+change+amplitude*relative(dt))) <= np.spacing(base)
     expected_mean = base+change/2+amplitude*quad(relative, 0., dt)[0]/dt
     assert abs(mean[1]-expected_mean) <= np.spacing(base)
+
+
+@pytest.mark.parametrize("steps", [1, 2, 8, 16])
+@pytest.mark.parametrize("reference_rate", [-2., 2.])
+def test_affine_reference_continuation(steps, reference_rate, record_property):
+    from scipy.integrate import quad
+    from tensordem.thermal.contact_chain import affine_contact_interval
+
+    # Against the common ramp from 305 K, the scaled store obeys u'+2u=t.
+    amplitude = np.spacing(305.)/16
+    def store(t):
+        return t/2 + np.expm1(-2*t)/4
+
+    state = np.zeros(3)
+    totals = np.zeros((3, 2))
+    integrated_store = 0.
+    dt = 1/steps
+    for step in range(steps):
+        start = step*dt
+        state, heat, mean, (first, second) = affine_contact_interval(
+            [1., 1.], [0., 1., 0.], dt, state, t_left=(0., 0.),
+            t_right=(amplitude*start, amplitude*(start+dt)),
+            nodal_power_start=[0., reference_rate, 0.], reference_heating_rate=reference_rate,
+            return_interval_temperature=True, return_heat_moments=True)
+        totals += [heat, first+start*heat, second+2*start*first+start**2*heat]
+        integrated_store += dt*mean[1]
+    expected = [[quad(lambda t: -t**j*store(t), 0., 1.)[0],
+                 quad(lambda t: t**j*(store(t)-t), 0., 1.)[0]] for j in range(3)]
+    errors = [np.max(abs(totals/amplitude-expected)), abs(state[1]/amplitude-store(1.)),
+              abs(integrated_store/amplitude-quad(store, 0., 1.)[0])]
+    for name, error in zip(("heat_moments", "final_store", "mean_store"), errors):
+        record_property(name+"_scaled_error", float(error))
+        assert error < 2e-13
