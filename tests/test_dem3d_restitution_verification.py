@@ -119,3 +119,24 @@ class RestitutionVerificationTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+def test_force_release_and_geometric_separation_against_closed_form(record_property):
+    from tensordem.contact_impact import impact_analytic
+
+    k, mass, speed = 18., 2., .75
+    for zeta in (.05, 1., 100.):
+        damping = 2*zeta*math.sqrt(k*mass)
+        expected = impact_analytic(k, damping, mass, speed)
+        errors = []
+        for steps in (500, 1000):
+            result = clamped_restitution_ratio(damping, k, mass, v_in=speed, steps=steps)
+            level = []
+            for name, reference in (("e_reference", expected.e_clamped),
+                                    ("contact_time_s", expected.contact_time_geometric),
+                                    ("release_overlap_m", expected.release_overlap_m)):
+                error = abs(result[name]/reference - 1.)
+                record_property(f"zeta_{zeta}_steps_{steps}_{name}_relative_error", error)
+                level.append(error)
+            errors.append(max(level))
+        assert errors[1] < 1e-10
+        assert errors[1] < .25*errors[0]

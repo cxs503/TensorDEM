@@ -76,7 +76,7 @@ def clamped_restitution_ratio(
 ) -> dict[str, Any]:
     """Reference restitution of the compressive-only spring-dashpot impact.
 
-    Integrates, with classical RK4 and a fixed step count per contact,
+    Integrates the active force with classical RK4, then coasts to separation, following
 
         m_eff * d2(delta) = -max(k_n * delta + gamma_n * d(delta), 0)
 
@@ -97,7 +97,7 @@ def clamped_restitution_ratio(
     if not math.isfinite(gamma_n) or gamma_n < 0:
         raise ValueError(f"gamma_n must be finite and nonnegative, got {gamma_n}")
     if steps < 200:
-        raise ValueError("steps must be >= 1000")
+        raise ValueError("steps must be >= 200")
     if gamma_n == 0.0:
         return {
             "e_reference": 1.0,
@@ -108,50 +108,48 @@ def clamped_restitution_ratio(
         }
 
     zeta = gamma_n / (2.0 * math.sqrt(k_n * m_eff))
-    # Step from the undamped period so that the integration stays stable (and
-    # the step count meaningful) also for critical and over-critical damping.
-    contact_guess = math.pi * math.sqrt(m_eff / k_n)
-    dt = contact_guess / steps
+    # Resolve both the spring time scale and the fast viscous relaxation.
+    dt = math.pi * math.sqrt(m_eff / k_n) / (steps * max(1., zeta))
 
-    def accel(delta: float, rate: float) -> float:
-        force = max(k_n * delta + gamma_n * rate, 0.0)
-        if force <= 0.0 and rate < 0.0:
-            return 0.0
-        return -force / m_eff
+    def active_step(delta, rate, step):
+        def accel(d, v):
+            return -(k_n*d + gamma_n*v) / m_eff
+
+        a1 = accel(delta, rate)
+        v2 = rate + .5*step*a1
+        a2 = accel(delta + .5*step*rate, v2)
+        v3 = rate + .5*step*a2
+        a3 = accel(delta + .5*step*v2, v3)
+        v4 = rate + step*a3
+        a4 = accel(delta + step*v3, v4)
+        return (delta + step*(rate + 2*v2 + 2*v3 + v4)/6,
+                rate + step*(a1 + 2*a2 + 2*a3 + a4)/6)
 
     delta, rate = 0.0, v_in
-    t = 0.0
-    released = False
-    release_delta = 0.0
     max_delta = 0.0
-    max_steps = 40 * steps
-    for _ in range(max_steps):
-        if not released and k_n * delta + gamma_n * rate <= 0.0:
-            # Contact force switched off while still overlapping: the particle
-            # now coasts at constant velocity (clamped-law separation).
-            released = True
-            release_delta = delta
-        a1 = accel(delta, rate)
-        d2, r2 = delta + 0.5 * dt * rate, rate + 0.5 * dt * a1
-        a2 = accel(d2, r2)
-        d3, r3 = delta + 0.5 * dt * r2, rate + 0.5 * dt * a2
-        a3 = accel(d3, r3)
-        d4, r4 = delta + dt * r3, rate + dt * a3
-        a4 = accel(d4, r4)
-        new_delta = delta + dt * (rate + 2.0 * r2 + 2.0 * r3 + r4) / 6.0
-        new_rate = rate + dt * (a1 + 2.0 * a2 + 2.0 * a3 + a4) / 6.0
-        t += dt
+    for i in range(steps * (40 + math.ceil(math.log1p(zeta)))):
+        new_delta, new_rate = active_step(delta, rate, dt)
         max_delta = max(max_delta, new_delta)
-        if new_delta <= 0.0 and rate < 0.0 and t > dt:
-            # Locate the delta = 0 crossing linearly inside the final step.
-            frac = delta / (delta - new_delta) if delta != new_delta else 1.0
-            rate_out = rate + frac * (new_rate - rate)
+        if k_n*new_delta + gamma_n*new_rate <= 0.:
+            # Locate the first zero of the active force within this step.
+            lo, hi = 0., dt
+            for _ in range(48):
+                mid = (lo+hi)/2
+                d, v = active_step(delta, rate, mid)
+                if k_n*d + gamma_n*v > 0.:
+                    lo = mid
+                else:
+                    hi = mid
+            _, release_rate = active_step(delta, rate, hi)
+            # At release k*delta = -gamma*v. The remaining overlap is
+            # traversed at constant velocity, taking exactly gamma/k seconds.
+            coast = gamma_n/k_n
             return {
-                "e_reference": abs(rate_out / v_in),
+                "e_reference": -release_rate/v_in,
                 "zeta": zeta,
-                "contact_time_s": t - dt + frac * dt,
-                "release_overlap_m": release_delta,
-                "released_early": released,
+                "contact_time_s": i*dt + hi + coast,
+                "release_overlap_m": -release_rate*coast,
+                "released_early": True,
                 "max_overlap_m": max_delta,
             }
         delta, rate = new_delta, new_rate
