@@ -1,0 +1,23 @@
+{
+  "source_commit": "1a2f5184bb05786d394d98b8deb0c43ca15e24b5",
+  "command": "PYTHONPATH=src OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python -m pytest -q tests/test_interface_thermal*.py tests/test_thermal_contact_chain.py -o junit_family=legacy --junitxml=/tmp/dem-ambient-entropy.xml",
+  "reference": "Single particle in a constant 300 K bath: T(t)=Tb+(T0-Tb) exp(-ht/C). Entropy production integrates to C log(T_end/T0)-C(T_end-T0)/Tb. Separate stiff and insulated links check the backward Euler endpoint production at dt h/C=1e20 and zero coupling.",
+  "passed": 214,
+  "cases": {
+    "test_reservoir_entropy_against_exponential_relaxation[270.0]": {
+      "entropy_error_16_J_per_K": 0.0014847392581376767,
+      "entropy_error_32_J_per_K": 0.0007650771314901758,
+      "entropy_error_64_J_per_K": 0.0003884682323201487,
+      "entropy_error_128_J_per_K": 0.00019574969555054625
+    },
+    "test_reservoir_entropy_against_exponential_relaxation[360.0]": {
+      "entropy_error_16_J_per_K": 0.004153552559565052,
+      "entropy_error_32_J_per_K": 0.0021316484451180256,
+      "entropy_error_64_J_per_K": 0.0010801280309965244,
+      "entropy_error_128_J_per_K": 0.0005437173282543672
+    },
+    "test_stiff_and_insulated_reservoir_entropy": {
+      "stiff_relative_entropy_error": 4.440892098500626e-16
+    }
+  }
+}
