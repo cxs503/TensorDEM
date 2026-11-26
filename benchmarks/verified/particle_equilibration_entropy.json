@@ -1,0 +1,16 @@
+{
+  "source_commit": "6f2345fd6280d22815015a9ead6ff18b92b258f3",
+  "command": "PYTHONPATH=src OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python -m pytest -q tests/test_interface_thermal*.py tests/test_thermal_contact_chain.py -o junit_family=legacy --junitxml=/tmp/dem-equilibration.xml",
+  "reference": "Direct 85-digit Decimal state-function difference using the capacity-weighted equilibrium temperature of each isolated conducting component. Distinct datums, one-ulp jumps, unequal capacities, parallel and insulating contacts, and one unconnected particle.",
+  "passed": 218,
+  "cases": {
+    "test_isolated_equilibration_entropy_matches_component_energy_means[True]": {
+      "entropy_reference_J_per_K": 9.853245863120858e-32,
+      "relative_entropy_error": 0.0
+    },
+    "test_isolated_equilibration_entropy_matches_component_energy_means[False]": {
+      "entropy_reference_J_per_K": 5.4919671690866245,
+      "relative_entropy_error": 1.3322676295501878e-15
+    }
+  }
+}
