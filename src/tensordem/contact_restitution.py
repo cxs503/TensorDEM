@@ -89,7 +89,7 @@ def clamped_restitution_ratio(
     leaves elastic energy unspent and raises the observed restitution.
 
     Returns a dict with the restitution, the damping ratio, the contact
-    duration, and the residual overlap at which the force was switched off.
+    duration, release overlap, maximum overlap (m) and time to peak (s).
     """
     for name, value in (("k_n", k_n), ("m_eff", m_eff), ("v_in", v_in)):
         if not math.isfinite(value) or value <= 0:
@@ -99,10 +99,13 @@ def clamped_restitution_ratio(
     if steps < 200:
         raise ValueError("steps must be >= 200")
     if gamma_n == 0.0:
+        time_scale = math.sqrt(m_eff / k_n)
         return {
             "e_reference": 1.0,
             "zeta": 0.0,
-            "contact_time_s": math.pi * math.sqrt(m_eff / k_n),
+            "contact_time_s": math.pi * time_scale,
+            "max_overlap_m": v_in * time_scale,
+            "time_to_peak_overlap_s": .5 * math.pi * time_scale,
             "release_overlap_m": 0.0,
             "released_early": False,
         }
@@ -125,32 +128,37 @@ def clamped_restitution_ratio(
         return (delta + step*(rate + 2*v2 + 2*v3 + v4)/6,
                 rate + step*(a1 + 2*a2 + 2*a3 + a4)/6)
 
+    def locate_zero(delta, rate, event):
+        """Bisect a positive-to-nonpositive event within the current RK4 step."""
+        lo, hi = 0., dt
+        for _ in range(48):
+            mid = (lo+hi)/2
+            d, v = active_step(delta, rate, mid)
+            if event(d, v) > 0.:
+                lo = mid
+            else:
+                hi = mid
+        return hi, active_step(delta, rate, hi)
+
     delta, rate = 0.0, v_in
-    max_delta = 0.0
     for i in range(steps * (40 + math.ceil(math.log1p(zeta)))):
         new_delta, new_rate = active_step(delta, rate, dt)
-        max_delta = max(max_delta, new_delta)
+        if rate > 0. >= new_rate:
+            offset, (max_delta, _) = locate_zero(delta, rate, lambda d, v: v)
+            peak_time = i*dt + offset
         if k_n*new_delta + gamma_n*new_rate <= 0.:
-            # Locate the first zero of the active force within this step.
-            lo, hi = 0., dt
-            for _ in range(48):
-                mid = (lo+hi)/2
-                d, v = active_step(delta, rate, mid)
-                if k_n*d + gamma_n*v > 0.:
-                    lo = mid
-                else:
-                    hi = mid
-            _, release_rate = active_step(delta, rate, hi)
+            offset, (_, release_rate) = locate_zero(delta, rate, lambda d, v: k_n*d + gamma_n*v)
             # At release k*delta = -gamma*v. The remaining overlap is
             # traversed at constant velocity, taking exactly gamma/k seconds.
             coast = gamma_n/k_n
             return {
                 "e_reference": -release_rate/v_in,
                 "zeta": zeta,
-                "contact_time_s": i*dt + hi + coast,
+                "contact_time_s": i*dt + offset + coast,
                 "release_overlap_m": -release_rate*coast,
                 "released_early": True,
                 "max_overlap_m": max_delta,
+                "time_to_peak_overlap_s": peak_time,
             }
         delta, rate = new_delta, new_rate
     raise RuntimeError("clamped reference impact did not separate; check inputs")

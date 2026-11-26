@@ -140,3 +140,18 @@ def test_force_release_and_geometric_separation_against_closed_form(record_prope
             errors.append(max(level))
         assert errors[1] < 1e-10
         assert errors[1] < .25*errors[0]
+
+
+def test_peak_compression_against_oscillator_solution(record_property):
+    from tensordem.contact_impact import impact_analytic
+
+    for zeta in (0., .05, 1., 100.):
+        expected = impact_analytic(18., 12*zeta, 2., .75)
+        for steps in (500, 1000):
+            result = clamped_restitution_ratio(12*zeta, 18., 2., v_in=.75, steps=steps)
+            assert 0 < result["time_to_peak_overlap_s"] < result["contact_time_s"]
+            for name, reference in (("max_overlap_m", expected.peak_overlap_m),
+                                    ("time_to_peak_overlap_s", expected.time_to_peak_overlap_s)):
+                error = abs(result[name]/reference - 1)
+                record_property(f"zeta_{zeta}_steps_{steps}_{name}_relative_error", error)
+                assert error < 2e-9*(500/steps)**4
