@@ -709,6 +709,26 @@ def affine_contact_interval(link_resistance, heat_capacity, duration, initial_te
     anchors = np.flatnonzero(~free | (c>0))
     position = np.r_[0.,np.cumsum(r)]
 
+    datum = np.zeros(2)
+    if not closed:
+        # Remove a shared ramp when free-node powers supply its storage.
+        # Otherwise a constant datum still protects small static differences.
+        prescribed = [wall for wall in walls if wall is not None]
+        initial_temperatures = np.r_[u0[active], [wall[0] for wall in prescribed]]
+        initial_baseline = np.clip(0., initial_temperatures.min(), initial_temperatures.max())
+        temperatures = np.r_[initial_temperatures, [wall[1] for wall in prescribed]]
+        baseline = np.clip(0., temperatures.min(), temperatures.max())
+        datum[:] = baseline
+        for wall in prescribed:
+            storage = c*((wall[1]-wall[0])/dt)
+            if (active.size and wall[1] != wall[0] and wall[0] == initial_baseline
+                    and np.all(p0[active] == storage[active]) and np.all(p1[active] == storage[active])):
+                datum = wall.copy()
+                p0, p1 = p0-storage, p1-storage
+                break
+        u0 = u0-datum[0]
+        walls = [None if wall is None else wall-datum for wall in walls]
+
     def steady(sample,power):
         # Remove uniform heating from the closed network before solving the
         # zero-net-power steady problem. Its constant mode is integrated below.
@@ -793,6 +813,9 @@ def affine_contact_interval(link_resistance, heat_capacity, duration, initial_te
     if closed:
         end += initial_mean+.5*dt*(rate0+rate1)
         mean += initial_mean+dt*(2*rate0+rate1)/6
+    else:
+        end += datum[1]
+        mean += .5*datum[0]+.5*datum[1]
     result = (end,heat,mean) if return_interval_temperature else (end,heat)
     return (*result, moments) if return_heat_moments else result
 

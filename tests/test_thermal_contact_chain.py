@@ -924,3 +924,30 @@ def test_fixed_wall_weak_harmonic_heat_is_invariant_to_uniform_drive(omega, mome
     if moments:
         expected_mean = base*np.sinc(omega*dt/np.pi)+epsilon*quad(relative, 0., dt)[0]/dt
         assert abs(result[2][1]-expected_mean) <= np.spacing(base)
+
+
+@pytest.mark.parametrize("change", [-1., 0., 1.])
+@pytest.mark.parametrize("sign", [-1., 1.])
+def test_affine_wall_moments_resolve_one_ulp_differential_ramp(change, sign, record_property):
+    from scipy.integrate import quad
+    from tensordem.thermal.contact_chain import affine_contact_interval
+
+    base, dt = 305., .5
+    amplitude = sign*np.spacing(base)
+    # The relative store obeys u'+2u=t/dt in units of the differential drive.
+    def relative(t):
+        return t/(2*dt)+np.expm1(-2*t)/(4*dt)
+
+    end, heat, mean, moments = affine_contact_interval(
+        [1., 1.], [0., 1., 0.], dt, [base]*3, t_left=(base, base+change),
+        t_right=(base, base+change+amplitude), nodal_power_start=[0., change/dt, 0.],
+        return_interval_temperature=True, return_heat_moments=True)
+    for j, actual in enumerate([heat, *moments]):
+        expected = [quad(lambda t: -t**j*relative(t), 0., dt)[0],
+                    quad(lambda t: t**j*(relative(t)-t/dt), 0., dt)[0]]
+        error = float(np.max(abs(actual/amplitude-expected))/dt**(j+1))
+        record_property(f"scaled_order_{j}_error", error)
+        assert error < 2e-13
+    assert abs(end[1]-(base+change+amplitude*relative(dt))) <= np.spacing(base)
+    expected_mean = base+change/2+amplitude*quad(relative, 0., dt)[0]/dt
+    assert abs(mean[1]-expected_mean) <= np.spacing(base)
