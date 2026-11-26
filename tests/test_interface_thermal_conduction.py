@@ -515,3 +515,41 @@ def test_contact_and_two_reservoir_entropy_partition(record_property):
         if previous is not None:
             assert np.all(previous/errors > 1.8)
         previous = errors
+
+
+@pytest.mark.parametrize("near", [True, False])
+def test_isolated_equilibration_entropy_matches_component_energy_means(near, record_property):
+    from decimal import Decimal, localcontext
+
+    particles = [Particle(1., rho_kg_m3=r, cp_j_kg_k=1.) for r in (1., 3., 2., 5., 4.)]
+    net = ParticleThermalNetwork(particles, [(0,2), (3,1), (0,2), (2,1)])
+    net.contact_resistance[-1] = np.inf
+    if near:
+        t = [300., 1024., np.nextafter(300., np.inf), np.nextafter(1024., 0.), 16.]
+    else:
+        t = [180., 270., 350., 900., 50.]
+    net.reset(t)
+    # Direct state-function calculation, retaining enough digits to subtract
+    # opposing first-order entropy changes at a one-ulp temperature contrast.
+    with localcontext() as ctx:
+        ctx.prec = 85
+        expected = Decimal(0)
+        for group in ((0,2), (1,3), (4,)):
+            c = [Decimal.from_float(float(net.capacity[i])) for i in group]
+            temp = [Decimal.from_float(t[i]) for i in group]
+            mean = sum(a*b for a,b in zip(c,temp))/sum(c)
+            expected += sum(a*(mean/b).ln() for a,b in zip(c,temp))
+    actual = net.isolated_equilibration_entropy()
+    error = abs(actual/float(expected)-1)
+    record_property("entropy_reference_J_per_K", float(expected))
+    record_property("relative_entropy_error", error)
+    assert error < 2e-14
+
+
+def test_equilibration_entropy_of_disconnected_particles_and_invalid_datum():
+    net = ParticleThermalNetwork([Particle(1.), Particle(1.)], [])
+    net.reset([250., 350.])
+    assert net.isolated_equilibration_entropy() == 0.
+    net.reset([0., 300.])
+    with pytest.raises(ValueError, match="kelvin"):
+        net.isolated_equilibration_entropy()

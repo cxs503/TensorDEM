@@ -18,7 +18,7 @@ This module is the thermal substrate of the ice-structure contact coupling
    resistance between contacting particles
    (:func:`contact_heat_transfer_coefficient`, Cooper-Mikic-Yovanovich).
 
-Units are SI; temperatures are degC but only differences and derivatives enter.
+Units are SI. Conduction accepts a common temperature datum. Entropy diagnostics require kelvin.
 Surface fluxes are positive *into* the body (``q > 0`` heats the body).
 """
 from __future__ import annotations
@@ -30,6 +30,7 @@ from typing import Callable, Sequence
 import numpy as np
 from scipy.linalg import solve_banded
 from scipy.special import erfc
+from scipy.sparse import coo_matrix
 from scipy.sparse.csgraph import connected_components
 
 __all__ = [
@@ -634,6 +635,42 @@ class ParticleThermalNetwork:
             return heat_result(rhs)
         self.temperature = rhs
         return rhs
+
+    def isolated_equilibration_entropy(self) -> float:
+        """Entropy gain (J/K) on relaxing the current network to equilibrium.
+
+        Assume fixed positive heat capacities, no external heating and no
+        reservoir exchange. Each component joined by conducting contacts
+        conserves its own energy. The current temperatures must be in kelvin.
+        """
+        t = self.temperature
+        if not np.all(np.isfinite(t) & (t > 0)):
+            raise ValueError("equilibration entropy requires positive finite temperatures in kelvin")
+        edges = np.asarray(self.contacts, dtype=int).reshape(-1, 2)[self.conductances() > 0]
+        graph = coo_matrix((np.ones(len(edges)), edges.T), shape=(len(t), len(t)))
+        _, labels = connected_components(graph, directed=False)
+        gains = []
+        for indices in np.split(np.argsort(labels), np.cumsum(np.bincount(labels))[:-1]):
+            temp, capacity = t[indices], self.capacity[indices]
+            span = temp-temp.min()
+            if not span.any():
+                continue
+            weights = capacity/capacity.max()
+            mean_span = np.dot(weights/weights.sum(), span)
+            mean = temp.min()+mean_span
+            # The weighted sum of u=(T-mean)/mean is zero. Thus the
+            # entropy gain is a sum of nonnegative u-log(1+u) terms.
+            u = (span-mean_span)/mean
+            gap = np.empty_like(u)
+            small = abs(u) < .001
+            z = u[small]
+            gap[small] = z*z*(.5+z*(-1/3+z*(.25+z*(-.2+z/6))))
+            cold = u < -.5
+            gap[cold] = u[cold] + np.log(mean) - np.log(temp[cold])
+            rest = ~(small | cold)
+            gap[rest] = u[rest]-np.log1p(u[rest])
+            gains.append(float(capacity @ gap))
+        return math.fsum(gains)
 
     def equilibrium_temperature(self) -> float:
         """Energy-weighted equilibrium temperature (``sum C T / sum C``)."""
