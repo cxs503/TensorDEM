@@ -89,7 +89,7 @@ def clamped_restitution_ratio(
     leaves elastic energy unspent and raises the observed restitution.
 
     Returns a dict with the restitution, the damping ratio, the contact
-    duration, release overlap, maximum overlap (m) and time to peak (s).
+    duration, release overlap, peak overlap (m), peak force (N), and their times (s).
     """
     for name, value in (("k_n", k_n), ("m_eff", m_eff), ("v_in", v_in)):
         if not math.isfinite(value) or value <= 0:
@@ -106,6 +106,8 @@ def clamped_restitution_ratio(
             "contact_time_s": math.pi * time_scale,
             "max_overlap_m": v_in * time_scale,
             "time_to_peak_overlap_s": .5 * math.pi * time_scale,
+            "peak_force_n": k_n*v_in*time_scale,
+            "time_to_peak_force_s": .5 * math.pi * time_scale,
             "release_overlap_m": 0.0,
             "released_early": False,
         }
@@ -140,9 +142,19 @@ def clamped_restitution_ratio(
                 hi = mid
         return hi, active_step(delta, rate, hi)
 
+    def force_slope_over_stiffness(d, v):
+        return (1 - 2*zeta)*(1 + 2*zeta)*v - gamma_n/m_eff*d
+
+    # For zeta >= 1/2 the maximum occurs at first contact.
+    peak_force = gamma_n*v_in
+    force_peak_time = 0. if zeta >= .5 else None
     delta, rate = 0.0, v_in
     for i in range(steps * (40 + math.ceil(math.log1p(zeta)))):
         new_delta, new_rate = active_step(delta, rate, dt)
+        if force_peak_time is None and force_slope_over_stiffness(new_delta, new_rate) <= 0.:
+            offset, (d, v) = locate_zero(delta, rate, force_slope_over_stiffness)
+            peak_force = k_n*d + gamma_n*v
+            force_peak_time = i*dt + offset
         if rate > 0. >= new_rate:
             offset, (max_delta, _) = locate_zero(delta, rate, lambda d, v: v)
             peak_time = i*dt + offset
@@ -157,6 +169,8 @@ def clamped_restitution_ratio(
                 "contact_time_s": i*dt + offset + coast,
                 "release_overlap_m": -release_rate*coast,
                 "released_early": True,
+                "peak_force_n": peak_force,
+                "time_to_peak_force_s": force_peak_time,
                 "max_overlap_m": max_delta,
                 "time_to_peak_overlap_s": peak_time,
             }

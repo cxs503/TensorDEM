@@ -155,3 +155,25 @@ def test_peak_compression_against_oscillator_solution(record_property):
                 error = abs(result[name]/reference - 1)
                 record_property(f"zeta_{zeta}_steps_{steps}_{name}_relative_error", error)
                 assert error < 2e-9*(500/steps)**4
+
+
+def test_peak_force_against_oscillator_solution(record_property):
+    from tensordem.contact_impact import impact_analytic
+
+    k, mass, speed = 18., 2., .75
+    time_scale = math.sqrt(mass/k)
+    for zeta in (0., .05, .3, .4999, .5, .5001, 1., 100.):
+        damping = 2*zeta*math.sqrt(k*mass)
+        expected = impact_analytic(k, damping, mass, speed)
+        for steps in (500, 1000):
+            result = clamped_restitution_ratio(damping, k, mass, v_in=speed, steps=steps)
+            force_error = abs(result["peak_force_n"]/expected.peak_force_n - 1)
+            time_error = abs(result["time_to_peak_force_s"] - expected.time_to_peak_force_s)/time_scale
+            record_property(f"zeta_{zeta}_steps_{steps}_relative_force_error", force_error)
+            record_property(f"zeta_{zeta}_steps_{steps}_scaled_time_error", time_error)
+            assert max(force_error, time_error) < 2e-9*(500/steps)**4
+            if zeta >= .5:
+                assert result["time_to_peak_force_s"] == 0.
+                assert result["peak_force_n"] == damping*speed
+            else:
+                assert result["time_to_peak_force_s"] > 0.
