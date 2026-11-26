@@ -162,3 +162,25 @@ def test_unloaded_and_weakly_loaded_particle_contact(pressure_ratio, record_prop
     record_property("conductance_error_W_per_K", abs(float(network.conductances()[0])-exact_g))
     assert error < 2e-14
     assert network.conductances()[0] == pytest.approx(exact_g, rel=2e-15, abs=0.)
+
+
+@pytest.mark.parametrize("exponents", [(-700, -600), (500, 600), (1023, -300)])
+def test_particle_film_conductance_across_material_scales(exponents, record_property):
+    from fractions import Fraction
+
+    k1, k2 = [Fraction(2)**e for e in exponents]
+    # Unit pressure ratio, slope, and roughness. Add the two half-material
+    # resistivities in exact arithmetic before converting to binary64.
+    film = float(Fraction(5, 4) / ((1/k1 + 1/k2)/2))
+    # Unit patch radius, so the film area is pi and bulk spreading R=1/(4k).
+    expected = 1/(float((1/k1 + 1/k2)/4) + (1/film)/math.pi)
+    for left, right in ((float(k1), float(k2)), (float(k2), float(k1))):
+        actual_film = contact_heat_transfer_coefficient(left, right, 1., 1., 1., 1.)
+        assert actual_film == pytest.approx(film, rel=2e-15, abs=0.)
+        pair = ParticleThermalNetwork([Particle(2., left), Particle(2., right)], [(0, 1)],
+                                      contact_pressure_pa=1., hardness_pa=1., rms_roughness_m=1.,
+                                      rms_slope=1., patch_radius_fraction=.5)
+        actual = float(pair.conductances()[0])
+        error = abs(actual-expected)/expected
+        assert error < 2e-15
+        record_property("relative_conductance_error_" + ("ascending" if left < right else "descending"), error)

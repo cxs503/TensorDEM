@@ -343,7 +343,9 @@ def contact_heat_transfer_coefficient(
     hardness = _finite("hardness_pa", hardness_pa, positive=True)
     if pressure == 0.0:
         return 0.0
-    k_harmonic = 2.0 * k1 * k2 / (k1 + k2)
+    # Scale by the smaller conductivity so no product of materials is needed.
+    lower, upper = sorted((k1, k2))
+    k_harmonic = lower / (0.5 + 0.5 * (lower / upper))
     ratio = min(pressure / hardness, 1.0)
     return 1.25 * k_harmonic * (slope / sigma) * ratio ** 0.95
 
