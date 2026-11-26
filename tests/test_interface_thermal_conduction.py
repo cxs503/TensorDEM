@@ -355,3 +355,54 @@ def test_ambient_heat_only_for_disconnected_particles():
     np.testing.assert_array_equal(heat, [0., 0.])
     _, heat = net.step(1., ambient=[4., 1.], h_ambient_w_k=[net.capacity[0], 0.], return_ambient_heat=True)
     np.testing.assert_allclose(heat, [.5*net.capacity[0], 0.])
+
+
+def test_two_particle_contact_entropy_converges_to_isolated_entropy_gain(record_property):
+    net = ParticleThermalNetwork([Particle(1., rho_kg_m3=r, cp_j_kg_k=1.) for r in (1.,2.)], [(0,1)])
+    start = np.array([360., 270.])
+    c1,c2 = net.capacity
+    tau = 1/(net.conductances()[0]*(1/c1+1/c2))
+    jump = (start[0]-start[1])*np.exp(-2.)
+    mean = net.capacity@start/(c1+c2)
+    exact = mean+np.array([c2,-c1])*jump/(c1+c2)
+    exact_heat = c1*(start[0]-exact[0])
+    exact_entropy = net.capacity@np.log(exact/start)
+    previous = None
+    for steps in (16,32,64,128):
+        net.reset(start)
+        heat = entropy = 0.
+        for _ in range(steps):
+            _, q, s = net.step(2*tau/steps, return_contact_heat=True, return_contact_entropy=True)
+            heat += q[0]
+            entropy += s[0]
+            assert s[0] >= 0.
+        errors = np.array([abs(heat-exact_heat), abs(entropy-exact_entropy)])
+        record_property(f"heat_error_{steps}_J", errors[0])
+        record_property(f"entropy_error_{steps}_J_per_K", errors[1])
+        if previous is not None:
+            assert np.all(previous/errors > 1.9)
+        previous = errors
+
+
+def test_stiff_contact_entropy_resolves_rounded_endpoint_jump(record_property):
+    net = ParticleThermalNetwork([Particle(1.), Particle(1.)], [(1,0)])
+    net.reset([300., 301.])
+    ratio = 1.e20
+    dt = ratio*net.capacity[0]/net.conductances()[0]
+    field, entropy = net.step(dt, return_contact_entropy=True)
+    assert field[0] == field[1]
+    exact_jump = 1/(1+2*ratio)
+    exact = (net.capacity[0]*ratio*exact_jump)*exact_jump/(300.5**2)
+    error = abs(entropy[0]/exact-1)
+    record_property("relative_entropy_error", error)
+    assert error < 2e-15
+
+
+def test_contact_entropy_requires_positive_absolute_temperature():
+    net = ParticleThermalNetwork([Particle(1.)], [])
+    net.reset([1.])
+    with pytest.raises(ValueError, match="kelvin"):
+        net.step(1., particle_power_w=[-2*net.capacity[0]], return_contact_entropy=True)
+    np.testing.assert_array_equal(net.temperature, [1.])
+    _, entropy = net.step(1., return_contact_entropy=True)
+    assert entropy.shape == (0,)
