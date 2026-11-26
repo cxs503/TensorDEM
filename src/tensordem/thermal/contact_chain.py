@@ -547,7 +547,7 @@ def low_frequency_contact_temperatures(link_resistance, heat_capacity, *, t_left
 
 def harmonic_contact_interval(link_resistance, heat_capacity, angular_frequency, start, duration,
                               initial_temperature, *, t_left, t_right, nodal_power=0.,
-                              allow_massless=False, return_interval_temperature=False):
+                              allow_massless=False, return_interval_temperature=False, return_heat_moments=False):
     """Return end temperatures (K) and integrated rightward link heats (J).
 
     End reservoirs accept prescribed temperature phasors or None for insulation. Free stores
@@ -558,6 +558,8 @@ def harmonic_contact_interval(link_resistance, heat_capacity, angular_frequency,
     exponential of the initial deviation, without time discretization.
     At zero frequency the real parts of the loads are constant in time.
     return_interval_temperature appends time-mean node temperatures (K).
+    return_heat_moments appends a (2, links) array integrating τ*q and τ²*q
+    in J s and J s², with τ relative to the interval start.
     """
     start = _finite("start", start)
     duration = _finite("duration", duration, positive=True)
@@ -575,13 +577,14 @@ def harmonic_contact_interval(link_resistance, heat_capacity, angular_frequency,
     final = (phasor*phase*np.exp(angle)).real.copy()
     phi1 = np.expm1(angle)/angle if angle != 0 else 1.
     integral = duration*(phasor*phase*phi1).real
-    if allow_massless or return_interval_temperature or t_left is None or t_right is None:
+    if allow_massless or return_interval_temperature or return_heat_moments or t_left is None or t_right is None:
         # Superposition leaves a zero-drive relaxation. Algebraic nodes of
         # this deviation obey the same series resistance interpolation.
-        offset,heat,mean = affine_contact_interval(r,heat_capacity,duration,initial-(phase*phasor).real,
+        relaxation = affine_contact_interval(r,heat_capacity,duration,initial-(phase*phasor).real,
                         t_left=None if t_left is None else (0.,0.),
                         t_right=None if t_right is None else (0.,0.),allow_massless=allow_massless,
-                        return_interval_temperature=True)
+                        return_interval_temperature=True, return_heat_moments=return_heat_moments)
+        offset, heat, mean = relaxation[:3]
         if closed:
             # Integrate the uniform heating from the initial state without
             # introducing the large harmonic temperature pole into link heats.
@@ -589,7 +592,26 @@ def harmonic_contact_interval(link_resistance, heat_capacity, angular_frequency,
             final += duration*(mean_rate*phase*phi1).real
             mean += duration*(mean_rate*phase*phi2).real
         result = (final+offset,heat-np.diff(integral)/r)
-        return (*result,mean+integral/duration) if return_interval_temperature else result
+        if return_interval_temperature:
+            result += (mean+integral/duration,)
+        if return_heat_moments:
+            moments = relaxation[3].copy()
+            flux = -np.diff(phasor)*phase/r
+            weight = phi1
+            for j in (1, 2):
+                # Integrate u^j exp(angle*u) from 0 to 1. Around zero use
+                # its Taylor series to avoid cancellation in the recurrence.
+                if abs(angle) < .1:
+                    weight = 1/(j+1)
+                    term = 1.
+                    for k in range(1, 10):
+                        term *= angle/k
+                        weight += term/(j+k+1)
+                else:
+                    weight = (np.exp(angle)-j*weight)/angle
+                moments[j-1] += duration**(j+1)*(flux*weight).real
+            result += (moments,)
+        return result
     if len(r) > 1:
         c = np.broadcast_to(np.asarray(heat_capacity, dtype=float), phasor.shape)[1:-1]
         stiffness = _chain_laplacian(1/r)[1:-1, 1:-1].tocsc()

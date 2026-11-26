@@ -868,3 +868,29 @@ def test_affine_link_time_moments_match_independent_rc_integrals():
             expected = [quad(lambda t: t**j*(t-temp(t)), 0., dt)[0],
                         quad(lambda t: t**j*temp(t), 0., dt)[0]]
             np.testing.assert_allclose(actual, expected, rtol=2e-11, atol=dt**(j+1)*2e-13)
+
+
+@pytest.mark.parametrize("omega", [0., 1e-8, 2., 30.])
+def test_harmonic_moments_insulated_massless_junction(omega, record_property):
+    from scipy.integrate import quad
+    from tensordem.thermal.contact_chain import harmonic_contact_interval
+
+    # Two unit stores separated by two half-resistances and a massless source.
+    # With D=T_left-T_right and junction input S, q_left=D-S/2, q_right=D+S/2.
+    # Subtracting the two storage balances gives D'+2D=P_left-P_right.
+    start, dt = .27, .8
+    powers = np.array([.7+.2j, -.5+.4j, .1-.3j])
+    difference = (powers[0]-powers[2])/(2+1j*omega)
+    phase = np.exp(1j*omega*start)
+    departure = .9-(difference*phase).real
+    def flux(t, side):
+        harmonic = (difference+side*powers[1]/2)*phase*np.exp(1j*omega*t)
+        return harmonic.real+departure*np.exp(-2*t)
+    _, heat, _, moments = harmonic_contact_interval(
+        [.5, .5], [1., 0., 1.], omega, start, dt, [.9, 99., 0.],
+        t_left=None, t_right=None, nodal_power=powers, allow_massless=True,
+        return_interval_temperature=True, return_heat_moments=True)
+    for j, actual in enumerate([heat, *moments]):
+        expected = [quad(lambda t: t**j*flux(t, side), 0., dt)[0] for side in (-1, 1)]
+        record_property(f"order_{j}_max_error", float(np.max(np.abs(actual-expected))))
+        np.testing.assert_allclose(actual, expected, atol=2e-13, rtol=0.)
