@@ -1021,3 +1021,36 @@ def test_insulated_pair_under_quadratic_reference(steps, residual, record_proper
     heat_error = max(abs(moments-amplitude*np.array(expected)))/amplitude
     record_property("heat_moments_scaled_error", float(heat_error))
     assert heat_error < 2e-13
+
+
+@pytest.mark.parametrize("theta,forward,reverse", [(.5, .5, .5), (.75, 0., 1.), (1., 0., 2.)])
+def test_directional_link_heat_matches_theta_balance(theta, forward, reverse, record_property):
+    from tensordem.thermal import transient_contact_temperatures
+
+    # Both links conduct the same power, so the central store stays at zero.
+    # In the first second the power goes from +2 W to -2 W. The second
+    # interval holds it at -2 W for half a second.
+    options = dict(t_left=[2., -2., -2.], t_right=[-2., 2., 2.], theta=theta,
+                   return_directional_link_heat=True)
+    args = ([1., 1.], [0., 1., 0.], [0., 1., 1.5], [2., 0., -2.])
+    state, net, parts = transient_contact_temperatures(*args, return_link_heat=True, **options)
+    np.testing.assert_array_equal(state[:, 1], 0.)
+    for key, expected in (("rightward", [forward, 0.]), ("leftward", [reverse, 1.])):
+        error = np.max(abs(parts[key]-np.array(expected)[:, None]))
+        record_property(f"{key}_error_J", error)
+        assert error < 1e-14
+    balance = np.max(abs(parts["rightward"]-parts["leftward"]-net))
+    record_property("net_error_J", balance)
+    assert balance < 1e-14
+    _, directions_only = transient_contact_temperatures(*args, **options)
+    for key in parts:
+        np.testing.assert_array_equal(directions_only[key], parts[key])
+
+
+def test_directional_link_heat_retains_small_lobe_for_pinned_ends():
+    from tensordem.thermal import transient_contact_temperatures
+
+    _, parts = transient_contact_temperatures(
+        [1.], [0., 0.], [0., 2.], [1., 0.], t_left=[1., -1e-20], t_right=0.,
+        return_directional_link_heat=True)
+    np.testing.assert_allclose(parts["leftward"], [[1e-40]], atol=0., rtol=1e-14)

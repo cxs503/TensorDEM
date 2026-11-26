@@ -837,7 +837,7 @@ def affine_contact_interval(link_resistance, heat_capacity, duration, initial_te
 
 def transient_contact_temperatures(link_resistance, heat_capacity, time, initial_temperature,
                                    *, t_left=None, t_right=None, nodal_power=0., theta=.5, allow_massless=False,
-                                   return_link_heat=False):
+                                   return_link_heat=False, return_directional_link_heat=False):
     """Integrate a fixed 1D contact network, returning temperatures [time,node].
 
     Each link has a resistance in K/W. Each node stores heat with a positive
@@ -853,6 +853,12 @@ def transient_contact_temperatures(link_resistance, heat_capacity, time, initial
     (0.5) to backward Euler (1). With return_link_heat=True also return
     an array (time intervals, links) of theta-integrated heat in J, positive
     from the lower-index node to the higher-index node.
+    return_directional_link_heat appends a dictionary of rightward and leftward
+    heat magnitudes (J) per interval and link. Their difference equals the
+    theta-integrated heat. Direction is estimated from an affine power that
+    ends at the final link power and has the theta-weighted mean. This joins
+    both endpoint powers for theta=0.5 and is constant for backward Euler.
+    When both diagnostics are requested the order is history, net, directions.
     """
     r = _link_resistances(link_resistance)
     n = r.size + 1
@@ -882,11 +888,29 @@ def transient_contact_temperatures(link_resistance, heat_capacity, time, initial
             free[i] = False
     massless = _massless_nodes(capacity, free, allow_massless)
     def result():
-        if not return_link_heat:
+        if not (return_link_heat or return_directional_link_heat):
             return history
         power = -np.diff(history, axis=1)/r
-        heat = np.diff(time)[:, None]*((1-theta)*power[:-1] + theta*power[1:])
-        return history, heat
+        dt = np.diff(time)[:, None]
+        output = (history,)
+        if return_link_heat:
+            output += (dt*((1-theta)*power[:-1] + theta*power[1:]),)
+        if return_directional_link_heat:
+            end = power[1:]
+            start = 2*(1-theta)*power[:-1]+(2*theta-1)*end
+            crossing = ((start > 0) & (end < 0)) | ((start < 0) & (end > 0))
+            # Normalize before taking the ratio. Compute each triangular
+            # lobe separately to retain small transfers near an endpoint.
+            scale = np.maximum(abs(start), abs(end))
+            scale = np.where(scale == 0, 1., scale)
+            a, b = abs(start)/scale, abs(end)/scale
+            denominator = np.where(crossing, a+b, 1.)
+            start_weight = .5*np.where(crossing, a/denominator, 1.)
+            end_weight = .5*np.where(crossing, b/denominator, 1.)
+            forward = dt*(start_weight*np.maximum(start, 0.)+end_weight*np.maximum(end, 0.))
+            reverse = dt*(start_weight*np.maximum(-start, 0.)+end_weight*np.maximum(-end, 0.))
+            output += (dict(rightward=forward, leftward=reverse),)
+        return output
 
     if not free.any():
         return result()
