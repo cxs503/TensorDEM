@@ -464,13 +464,16 @@ class ParticleThermalNetwork:
     def step(self, dt: float, *, ambient: Sequence[float] | None = None,
              h_ambient_w_k: Sequence[float] | None = None,
              particle_power_w: Sequence[float] | None = None,
-             return_contact_heat: bool = False) -> np.ndarray | tuple[np.ndarray, np.ndarray]:
+             return_contact_heat: bool = False,
+             return_ambient_heat: bool = False) -> np.ndarray | tuple[np.ndarray, ...]:
         """Advance by backward Euler. Optionally return (temperature, contact heat).
 
         Heat is in joules over this step, positive from i to j for each
         (i, j) in contacts, in input order. Ambient exchange is external.
         particle_power_w supplies one applied power per particle in watts,
         held constant over the step. Positive power heats the particle.
+        return_ambient_heat appends one heat in joules per particle, positive
+        into the particle. When both heats are requested, contact heat comes first.
         """
         dt = _finite("dt", dt, positive=True)
         n = len(self.particles)
@@ -480,14 +483,16 @@ class ParticleThermalNetwork:
         for (i, j), g in zip(self.contacts, conductances):
             links[i, j] += g
             links[j, i] += g
+        report_heat = return_contact_heat or return_ambient_heat
         reference = 0.
-        if return_contact_heat:
+        if report_heat:
             # A separate datum per connected component keeps tiny exchanges
             # independent of unrelated particles' absolute temperatures.
             _, labels = connected_components(links != 0., directed=False)
             _, first = np.unique(labels, return_index=True)
             reference = self.temperature[first][labels]
         rhs = anchor * (self.temperature-reference)
+        power_w = 0.
         if particle_power_w is not None:
             power_w = np.asarray(particle_power_w, dtype=float)
             if power_w.shape != (n,) or not np.isfinite(power_w).all():
@@ -501,17 +506,46 @@ class ParticleThermalNetwork:
                 raise ValueError("ambient and conductance must be per particle")
             anchor += h
             rhs += h * (amb-reference)
+        need_contacts = return_contact_heat or (return_ambient_heat and ambient is not None
+                                                and np.any(h > self.capacity/dt))
+
+        def heat_result(field, contact_heat=None):
+            result = [field + reference]
+            if return_contact_heat:
+                result.append(contact_heat)
+            if return_ambient_heat:
+                external = np.zeros(n)
+                if ambient is not None:
+                    rate = self.capacity / dt
+                    strong = h > rate
+                    external[~strong] = dt * (h[~strong] * ((amb-reference)-field)[~strong])
+                    if strong.any():
+                        # Eliminate the final temperature from the Robin law
+                        # and the nodal energy balance. A stiff film can erase
+                        # its own temperature drop at floating-point precision.
+                        outward = np.zeros(n)
+                        for (i, j), amount in zip(self.contacts, contact_heat):
+                            outward[i] += amount
+                            outward[j] -= amount
+                        demand = self.capacity*(amb-self.temperature) - dt*power_w + outward
+                        external[strong] = demand[strong]/(1 + rate[strong]/h[strong])
+                result.append(external)
+            self.temperature = result[0]
+            return tuple(result)
+
         if np.any(anchor <= 0):
             # Signed ambient coefficients can require pivoting.
             field = np.linalg.solve(np.diag(anchor + links.sum(axis=1)) - links, rhs)
-            self.temperature = field + reference
-            if return_contact_heat:
+            if need_contacts:
                 jumps = np.asarray([field[i]-field[j] for i, j in self.contacts])
-                return self.temperature, dt * (conductances * jumps)
-            return self.temperature
+                return heat_result(field, dt * (conductances * jumps))
+            if report_heat:
+                return heat_result(field)
+            self.temperature = field
+            return field
 
         reductions = []
-        if return_contact_heat:
+        if need_contacts:
             original_links = links.copy()
         # Eliminate each particle by transferring its links, storage and
         # ambient coupling separately. This preserves the small diagonal
@@ -525,7 +559,7 @@ class ParticleThermalNetwork:
             rhs[remaining] += weights * rhs[i]
             block = np.ix_(remaining, remaining)
             added = np.outer(weights, neighbors)
-            if return_contact_heat:
+            if need_contacts:
                 # Store how each reduced link divides between its old direct
                 # path and the new path through particle i.
                 previous = links[block]
@@ -538,7 +572,7 @@ class ParticleThermalNetwork:
             rhs[i] /= pivot
         for i in reversed(range(n)):
             rhs[i] += links[i, i+1:] @ rhs[i+1:]
-        if return_contact_heat:
+        if need_contacts:
             # Undo the reductions in reverse, dividing the known currents
             # between parallel paths. This retains finite exchanged energy
             # even when two endpoint temperatures round to the same value.
@@ -555,8 +589,9 @@ class ParticleThermalNetwork:
             for e, ((i, j), g) in enumerate(zip(self.contacts, conductances)):
                 if g:
                     heat[e] = dt * (power[i, j] * (g/original_links[i, j]))
-            self.temperature = rhs + reference
-            return self.temperature, heat
+            return heat_result(rhs, heat)
+        if report_heat:
+            return heat_result(rhs)
         self.temperature = rhs
         return rhs
 

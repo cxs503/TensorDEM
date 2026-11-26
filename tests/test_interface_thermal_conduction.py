@@ -320,3 +320,38 @@ def test_applied_power_heats_isolated_particle_and_rejects_invalid_loads():
         with pytest.raises(ValueError, match="particle_power_w"):
             net.step(1., particle_power_w=invalid)
     assert net.temperature[0] == pytest.approx(5.)
+
+
+@pytest.mark.parametrize("film_ratio", [1e-8, 1., 1e20])
+def test_per_particle_ambient_heat_against_two_modes(film_ratio, record_property):
+    # Equal particles with a common ambient. Both modes exchange heat with it;
+    # the antisymmetric mode also decays through the contact at rate 2G/C.
+    net = ParticleThermalNetwork([Particle(1., rho_kg_m3=1., cp_j_kg_k=1.) for _ in range(2)], [(0, 1)])
+    cap = net.capacity[0]
+    dt = cap/net.conductances()[0]
+    ambient = np.full(2, 300.)
+    net.reset([301., 298.])
+    power = cap/dt*np.array([.5, -.25])
+    forcing = net.temperature-ambient + dt*power/cap
+    mean = forcing.mean()/(1+film_ratio)
+    contrast = (forcing-forcing.mean())/(3+film_ratio)
+    expected = -cap*film_ratio*(mean+contrast)
+    initial = net.temperature.copy()
+    field, contact, exchange = net.step(dt, ambient=ambient, h_ambient_w_k=np.full(2, film_ratio*cap/dt),
+                                        particle_power_w=power, return_contact_heat=True, return_ambient_heat=True)
+    error = float(max(abs((exchange-expected)/expected)))
+    balance = float(max(abs(cap*(field-initial)-dt*power-exchange+contact[0]*np.array([1., -1.]))))
+    record_property("max_relative_ambient_heat_error", error)
+    record_property("max_particle_residual_J", balance)
+    assert error < 3e-14
+    assert balance < 3e-13
+
+
+def test_ambient_heat_only_for_disconnected_particles():
+    net = ParticleThermalNetwork([Particle(1.), Particle(1.)], [])
+    net.reset([3., 7.])
+    field, heat = net.step(1., return_ambient_heat=True)
+    np.testing.assert_array_equal(field, [3., 7.])
+    np.testing.assert_array_equal(heat, [0., 0.])
+    _, heat = net.step(1., ambient=[4., 1.], h_ambient_w_k=[net.capacity[0], 0.], return_ambient_heat=True)
+    np.testing.assert_allclose(heat, [.5*net.capacity[0], 0.])
