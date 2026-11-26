@@ -1,0 +1,21 @@
+{
+  "source_commit": "6d2c8a0101301a838c9b199eb43a2eaf4ecefa49",
+  "command": "PYTHONPATH=src OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python -m pytest -q tests/test_interface_thermal*.py tests/test_thermal_contact_chain.py -o junit_family=legacy --junitxml=/tmp/dem-contact-entropy.xml",
+  "reference": "Isolated particle pair with unequal capacities and an exponentially decaying temperature difference. Exact cumulative entropy production equals the sum of C log(T_end/T_start). A separate equal-capacity pair verifies the discrete endpoint entropy at dt G/C=1e20.",
+  "passed": 211,
+  "cases": {
+    "test_two_particle_contact_entropy_converges_to_isolated_entropy_gain": {
+      "heat_error_16_J": 4.163331516467167,
+      "entropy_error_16_J_per_K": 0.0071230310758396,
+      "heat_error_32_J": 2.103712388973719,
+      "entropy_error_32_J_per_K": 0.003661802708097614,
+      "heat_error_64_J": 1.0573857439280516,
+      "entropy_error_64_J_per_K": 0.0018570644956362181,
+      "heat_error_128_J": 0.5300764639792135,
+      "entropy_error_128_J_per_K": 0.0009352167193543703
+    },
+    "test_stiff_contact_entropy_resolves_rounded_endpoint_jump": {
+      "relative_entropy_error": 6.661338147750939e-16
+    }
+  }
+}
