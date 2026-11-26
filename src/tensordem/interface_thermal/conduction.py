@@ -463,11 +463,14 @@ class ParticleThermalNetwork:
 
     def step(self, dt: float, *, ambient: Sequence[float] | None = None,
              h_ambient_w_k: Sequence[float] | None = None,
+             particle_power_w: Sequence[float] | None = None,
              return_contact_heat: bool = False) -> np.ndarray | tuple[np.ndarray, np.ndarray]:
         """Advance by backward Euler. Optionally return (temperature, contact heat).
 
         Heat is in joules over this step, positive from i to j for each
         (i, j) in contacts, in input order. Ambient exchange is external.
+        particle_power_w supplies one applied power per particle in watts,
+        held constant over the step. Positive power heats the particle.
         """
         dt = _finite("dt", dt, positive=True)
         n = len(self.particles)
@@ -485,6 +488,11 @@ class ParticleThermalNetwork:
             _, first = np.unique(labels, return_index=True)
             reference = self.temperature[first][labels]
         rhs = anchor * (self.temperature-reference)
+        if particle_power_w is not None:
+            power_w = np.asarray(particle_power_w, dtype=float)
+            if power_w.shape != (n,) or not np.isfinite(power_w).all():
+                raise ValueError("particle_power_w requires one finite power per particle")
+            rhs += power_w
         if ambient is not None:
             amb = np.asarray(ambient, dtype=float)
             h = np.asarray(h_ambient_w_k if h_ambient_w_k is not None else

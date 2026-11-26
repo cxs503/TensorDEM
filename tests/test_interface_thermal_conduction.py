@@ -272,3 +272,51 @@ def test_contact_heat_resolves_jumps_on_separate_temperature_datums():
     ratio = 1e20
     _, heat = net.step(ratio*net.capacity[0]/net.conductances()[0], return_contact_heat=True)
     np.testing.assert_allclose(heat, net.capacity[::2]*jumps*ratio/(1+2*ratio), rtol=2e-15, atol=0.)
+
+
+def test_particle_power_forces_contact_heat_reversal(record_property):
+    net = ParticleThermalNetwork([Particle(1., rho_kg_m3=r, cp_j_kg_k=1.) for r in (1., 2.)], [(0, 1)])
+    c1, c2 = net.capacity
+    g = net.conductances()[0]
+    tau = 1/(g*(1/c1+1/c2))
+    initial = np.array([-1., 0.])
+    # Applied heating and cooling give steady jump 2 K. From -1 K the
+    # exact jump is 2-3 exp(-t/tau); its integral times G is contact heat.
+    powers = np.array([c1, -c2])/tau
+    end = 2*tau
+    jump = 2-3*np.exp(-2.)
+    mean = (net.capacity@initial + powers.sum()*end)/(c1+c2)
+    exact = mean + np.array([c2, -c1])*jump/(c1+c2)
+    exact_heat = g*(2*end + 3*tau*np.expm1(-2.))
+    previous = None
+    for steps in (16, 32, 64, 128):
+        net.reset(initial)
+        dt = end/steps
+        amounts = []
+        balance = 0.
+        for _ in range(steps):
+            before = net.temperature.copy()
+            field, heat = net.step(dt, particle_power_w=powers, return_contact_heat=True)
+            amounts.append(heat[0])
+            residual = net.capacity*(field-before) - powers*dt + np.array([heat[0], -heat[0]])
+            balance = max(balance, max(abs(residual)))
+        assert amounts[0] < 0 < amounts[-1]
+        errors = np.array([max(abs(field-exact)), abs(sum(amounts)-exact_heat)])
+        record_property(f"temperature_error_{steps}_K", float(errors[0]))
+        record_property(f"contact_heat_error_{steps}_J", float(errors[1]))
+        record_property(f"max_particle_residual_{steps}_J", float(balance))
+        assert balance < 2e-14
+        if previous is not None:
+            assert np.all(previous/errors > 1.9)
+        previous = errors
+    assert errors[0] < .005 and errors[1] < .02
+
+
+def test_applied_power_heats_isolated_particle_and_rejects_invalid_loads():
+    net = ParticleThermalNetwork([Particle(1.)], [])
+    net.reset([2.])
+    assert net.step(3., particle_power_w=[net.capacity[0]])[0] == pytest.approx(5.)
+    for invalid in ([], [1., 2.], [np.inf]):
+        with pytest.raises(ValueError, match="particle_power_w"):
+            net.step(1., particle_power_w=invalid)
+    assert net.temperature[0] == pytest.approx(5.)
