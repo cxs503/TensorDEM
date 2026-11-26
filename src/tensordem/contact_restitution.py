@@ -90,6 +90,8 @@ def clamped_restitution_ratio(
 
     Returns a dict with the restitution, the damping ratio, the contact
     duration, release overlap, peak overlap (m), peak force (N), and their times (s).
+    Signed spring and dashpot impulses (N s) cover compression and rebound
+    up to force release. Positive impulse opposes the incident motion.
     """
     for name, value in (("k_n", k_n), ("m_eff", m_eff), ("v_in", v_in)):
         if not math.isfinite(value) or value <= 0:
@@ -101,6 +103,10 @@ def clamped_restitution_ratio(
     if gamma_n == 0.0:
         time_scale = math.sqrt(m_eff / k_n)
         return {
+            "compression_spring_impulse_ns": m_eff*v_in,
+            "compression_dashpot_impulse_ns": 0.,
+            "rebound_spring_impulse_ns": m_eff*v_in,
+            "rebound_dashpot_impulse_ns": 0.,
             "e_reference": 1.0,
             "zeta": 0.0,
             "contact_time_s": math.pi * time_scale,
@@ -127,15 +133,18 @@ def clamped_restitution_ratio(
         a3 = accel(delta + .5*step*v2, v3)
         v4 = rate + step*a3
         a4 = accel(delta + step*v3, v4)
-        return (delta + step*(rate + 2*v2 + 2*v3 + v4)/6,
-                rate + step*(a1 + 2*a2 + 2*a3 + a4)/6)
+        # Use the same RK4 stages for motion and both force integrals.
+        displacement = step*(rate + 2*v2 + 2*v3 + v4)/6
+        mean_delta = delta + step*(rate + v2 + v3)/6
+        return (delta + displacement, rate + step*(a1 + 2*a2 + 2*a3 + a4)/6,
+                k_n*step*mean_delta, gamma_n*displacement)
 
     def locate_zero(delta, rate, event):
         """Bisect a positive-to-nonpositive event within the current RK4 step."""
         lo, hi = 0., dt
         for _ in range(48):
             mid = (lo+hi)/2
-            d, v = active_step(delta, rate, mid)
+            d, v, _, _ = active_step(delta, rate, mid)
             if event(d, v) > 0.:
                 lo = mid
             else:
@@ -148,25 +157,45 @@ def clamped_restitution_ratio(
     # For zeta >= 1/2 the maximum occurs at first contact.
     peak_force = gamma_n*v_in
     force_peak_time = 0. if zeta >= .5 else None
+    compression_spring = compression_dashpot = 0.
+    rebound_spring = rebound_dashpot = 0.
     delta, rate = 0.0, v_in
     for i in range(steps * (40 + math.ceil(math.log1p(zeta)))):
-        new_delta, new_rate = active_step(delta, rate, dt)
+        new_delta, new_rate, spring, dashpot = active_step(delta, rate, dt)
         if force_peak_time is None and force_slope_over_stiffness(new_delta, new_rate) <= 0.:
-            offset, (d, v) = locate_zero(delta, rate, force_slope_over_stiffness)
+            offset, (d, v, _, _) = locate_zero(delta, rate, force_slope_over_stiffness)
             peak_force = k_n*d + gamma_n*v
             force_peak_time = i*dt + offset
+        released = k_n*new_delta + gamma_n*new_rate <= 0.
+        active_dt = dt
+        if released:
+            active_dt, (_, release_rate, spring, dashpot) = locate_zero(delta, rate, lambda d, v: k_n*d + gamma_n*v)
         if rate > 0. >= new_rate:
-            offset, (max_delta, _) = locate_zero(delta, rate, lambda d, v: v)
+            offset, (max_delta, _, spring, dashpot) = locate_zero(delta, rate, lambda d, v: v)
             peak_time = i*dt + offset
-        if k_n*new_delta + gamma_n*new_rate <= 0.:
-            offset, (_, release_rate) = locate_zero(delta, rate, lambda d, v: k_n*d + gamma_n*v)
+            compression_spring += spring
+            compression_dashpot += dashpot
+            _, _, spring, dashpot = active_step(max_delta, 0., active_dt-offset)
+            rebound_spring += spring
+            rebound_dashpot += dashpot
+        elif rate > 0.:
+            compression_spring += spring
+            compression_dashpot += dashpot
+        else:
+            rebound_spring += spring
+            rebound_dashpot += dashpot
+        if released:
             # At release k*delta = -gamma*v. The remaining overlap is
             # traversed at constant velocity, taking exactly gamma/k seconds.
             coast = gamma_n/k_n
             return {
                 "e_reference": -release_rate/v_in,
                 "zeta": zeta,
-                "contact_time_s": i*dt + offset + coast,
+                "contact_time_s": i*dt + active_dt + coast,
+                "compression_spring_impulse_ns": compression_spring,
+                "compression_dashpot_impulse_ns": compression_dashpot,
+                "rebound_spring_impulse_ns": rebound_spring,
+                "rebound_dashpot_impulse_ns": rebound_dashpot,
                 "release_overlap_m": -release_rate*coast,
                 "released_early": True,
                 "peak_force_n": peak_force,

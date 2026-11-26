@@ -177,3 +177,36 @@ def test_peak_force_against_oscillator_solution(record_property):
                 assert result["peak_force_n"] == damping*speed
             else:
                 assert result["time_to_peak_force_s"] > 0.
+
+
+def test_phase_impulses_against_integrated_oscillator(record_property):
+    import numpy as np
+    from scipy.integrate import quad_vec
+    from scipy.linalg import expm
+    from tensordem.contact_impact import impact_analytic
+
+    k, mass, speed = 18., 2., .75
+    for zeta in (0., .05, 1., 100.):
+        damping = 2*zeta*math.sqrt(k*mass)
+        ref = impact_analytic(k, damping, mass, speed)
+        evolution = np.array([[0., 1.], [-k/mass, -damping/mass]])
+
+        def forces(t):
+            overlap, rate = expm(t*evolution)[:, 1]*speed
+            return np.array([k*overlap, damping*rate])
+
+        for phase, start, stop in (
+            ("compression", 0., ref.time_to_peak_overlap_s),
+            ("rebound", ref.time_to_peak_overlap_s, ref.contact_time_force),
+        ):
+            expected, _ = quad_vec(forces, start, stop, epsabs=1e-14)
+            for steps in (500, 1000):
+                result = clamped_restitution_ratio(damping, k, mass, v_in=speed, steps=steps)
+                for component, impulse in zip(("spring", "dashpot"), expected):
+                    field = f"{phase}_{component}_impulse_ns"
+                    if impulse == 0.:
+                        assert result[field] == 0.
+                        continue
+                    error = abs(result[field]/impulse - 1.)
+                    record_property(f"zeta_{zeta}_steps_{steps}_{field}_relative_error", error)
+                    assert error < 5e-9*(500/steps)**4
