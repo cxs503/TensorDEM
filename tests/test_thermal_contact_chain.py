@@ -894,3 +894,33 @@ def test_harmonic_moments_insulated_massless_junction(omega, record_property):
         expected = [quad(lambda t: t**j*flux(t, side), 0., dt)[0] for side in (-1, 1)]
         record_property(f"order_{j}_max_error", float(np.max(np.abs(actual-expected))))
         np.testing.assert_allclose(actual, expected, atol=2e-13, rtol=0.)
+
+
+@pytest.mark.parametrize("omega", [0., .75])
+@pytest.mark.parametrize("moments", [False, True])
+def test_fixed_wall_weak_harmonic_heat_is_invariant_to_uniform_drive(omega, moments, record_property):
+    from scipy.integrate import quad
+    from tensordem.thermal.contact_chain import harmonic_contact_interval
+
+    # Compensating bulk power maintains the common oscillation of the store.
+    # Relative to it, u'+2u = epsilon*cos(omega*t), initially u=0.
+    base, epsilon, dt = 305., 2.**-44, .73
+    c = np.array([0., 1., 0.])
+    result = harmonic_contact_interval(
+        [1., 1.], c, omega, 0., dt, [base]*3, t_left=base, t_right=base+epsilon,
+        nodal_power=1j*omega*c*base, return_interval_temperature=moments, return_heat_moments=moments)
+    amplitude = 1/(2+1j*omega)
+    def relative(t):
+        return (amplitude*np.exp(1j*omega*t)).real-amplitude.real*np.exp(-2*t)
+    orders = [result[1], *result[-1]] if moments else [result[1]]
+    for j, actual in enumerate(orders):
+        expected = [quad(lambda t: -t**j*relative(t), 0., dt)[0],
+                    quad(lambda t: t**j*(relative(t)-np.cos(omega*t)), 0., dt)[0]]
+        scaled_error = np.max(abs(actual/epsilon-expected))/dt**(j+1)
+        record_property(f"scaled_order_{j}_error", scaled_error)
+        assert scaled_error < 2e-13
+    expected_end = base*np.cos(omega*dt)+epsilon*relative(dt)
+    assert abs(result[0][1]-expected_end) <= np.spacing(base)
+    if moments:
+        expected_mean = base*np.sinc(omega*dt/np.pi)+epsilon*quad(relative, 0., dt)[0]/dt
+        assert abs(result[2][1]-expected_mean) <= np.spacing(base)

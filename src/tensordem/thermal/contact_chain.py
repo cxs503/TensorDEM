@@ -565,6 +565,30 @@ def harmonic_contact_interval(link_resistance, heat_capacity, angular_frequency,
     duration = _finite("duration", duration, positive=True)
     r = _link_resistances(link_resistance)
     closed = t_left is None and t_right is None
+    # Work relative to a prescribed wall phasor. Its spatially uniform
+    # component has no link flux but contributes i*omega*C*T to storage.
+    datum = 0j
+    if not closed:
+        prescribed = [v for v in (t_left, t_right) if v is not None]
+        if any(np.ndim(v) != 0 or not np.isfinite(v) for v in prescribed):
+            raise ChainError("wall temperature must be a finite scalar phasor")
+        datum = min(prescribed, key=abs)
+        angular_frequency = _finite("angular frequency", angular_frequency)
+        uniform_power = 1j*angular_frequency*np.broadcast_to(heat_capacity, (len(r)+1,))*datum
+        free = np.ones(len(r)+1, dtype=bool)
+        free[[0, -1]] = [t_left is None, t_right is None]
+        power = np.broadcast_to(nodal_power, free.shape)
+        # A rapid, uncompensated wall oscillation can leave the interior
+        # nearly stationary. Keep the absolute solve when subtracting the
+        # uniform storage load would enlarge the forcing on a free node.
+        if np.any(abs(power[free]-uniform_power[free]) > abs(power[free])):
+            datum = 0j
+        else:
+            nodal_power = power-uniform_power
+        if t_left is not None:
+            t_left = t_left-datum
+        if t_right is not None:
+            t_right = t_right-datum
     response = harmonic_contact_temperatures(r, heat_capacity, angular_frequency,
                     t_left=t_left, t_right=t_right, nodal_power=nodal_power,
                     allow_massless=allow_massless, separate_mean=closed)
@@ -574,7 +598,9 @@ def harmonic_contact_interval(link_resistance, heat_capacity, angular_frequency,
         raise ChainError("initial temperature must be finite")
     phase = np.exp(1j*angular_frequency*start)
     angle = 1j*angular_frequency*duration
+    initial = initial-(phase*datum).real
     final = (phasor*phase*np.exp(angle)).real.copy()
+    final += (datum*phase*np.exp(angle)).real
     phi1 = np.expm1(angle)/angle if angle != 0 else 1.
     integral = duration*(phasor*phase*phi1).real
     if allow_massless or return_interval_temperature or return_heat_moments or t_left is None or t_right is None:
@@ -593,7 +619,7 @@ def harmonic_contact_interval(link_resistance, heat_capacity, angular_frequency,
             mean += duration*(mean_rate*phase*phi2).real
         result = (final+offset,heat-np.diff(integral)/r)
         if return_interval_temperature:
-            result += (mean+integral/duration,)
+            result += (mean+integral/duration+(datum*phase*phi1).real,)
         if return_heat_moments:
             moments = relaxation[3].copy()
             flux = -np.diff(phasor)*phase/r
