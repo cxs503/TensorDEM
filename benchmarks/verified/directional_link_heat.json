@@ -1,0 +1,26 @@
+{
+  "source_commit": "13d8ebc9e489fa74273979ecf35658dfa5293cc2",
+  "command": "OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 PYTHONPATH=src python -m pytest -q tests/test_thermal_contact_chain.py tests/test_interface_thermal_contact_chain.py -o junit_family=legacy --junitxml=/tmp/dem_directional.xml",
+  "reference": "Two unit-resistance links and a unit central heat store between antisymmetric pinned reservoirs. Each power decreases from +2 W to -2 W over 1 s and holds at -2 W for 0.5 s. At theta=0.5 the first interval gives 0.5 J in each direction. Theta=0.75 and 1 use affine reconstructions matching the discrete net heat; the physical linear-ramp directional reference applies at theta=0.5.",
+  "tests": 126,
+  "errors": 0,
+  "failures": 0,
+  "skipped": 0,
+  "cases": {
+    "test_directional_link_heat_matches_theta_balance[0.5-0.5-0.5]": {
+      "rightward_error_J": 0.0,
+      "leftward_error_J": 0.0,
+      "net_error_J": 0.0
+    },
+    "test_directional_link_heat_matches_theta_balance[0.75-0.0-1.0]": {
+      "rightward_error_J": 0.0,
+      "leftward_error_J": 0.0,
+      "net_error_J": 0.0
+    },
+    "test_directional_link_heat_matches_theta_balance[1.0-0.0-2.0]": {
+      "rightward_error_J": 0.0,
+      "leftward_error_J": 0.0,
+      "net_error_J": 0.0
+    }
+  }
+}
