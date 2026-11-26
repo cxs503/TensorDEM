@@ -675,7 +675,7 @@ def constant_contact_interval(link_resistance, heat_capacity, duration, initial_
 def affine_contact_interval(link_resistance, heat_capacity, duration, initial_temperature, *,
                             t_left, t_right, nodal_power_start=0., nodal_power_end=None,
                             allow_massless=False, return_interval_temperature=False, return_heat_moments=False,
-                            reference_heating_rate=0.):
+                            reference_heating_rate=0., reference_heating_rate_end=None):
     """Integrate a fixed chain under linearly varying end temperatures and powers.
 
     t_left and t_right are (start, end) reservoir temperature pairs in K.
@@ -687,8 +687,10 @@ def affine_contact_interval(link_resistance, heat_capacity, duration, initial_te
     return_heat_moments, append a (2, links) array integrating t*q and t²*q
     measured from the start of this interval.
 
-    For temperatures expressed relative to a common linear reference, pass its
-    slope in K/s as reference_heating_rate. Supply initial and wall deviations
+    For temperatures expressed relative to a common reference, pass its initial
+    slope in K/s as reference_heating_rate. Its slope stays constant unless
+    reference_heating_rate_end specifies the final slope of a linear rate
+    ramp. Wall deviations interpolate linearly. Supply initial and wall deviations
     in K, and physical nodal powers in W. Endpoint and mean temperatures then
     give deviations from the instantaneous reference. Consecutive intervals
     can share the returned endpoint deviations if their references agree at
@@ -710,9 +712,10 @@ def affine_contact_interval(link_resistance, heat_capacity, duration, initial_te
     if np.any(c<0) or not all(np.isfinite(v).all() for v in (c,u0,p0,p1)):
         raise ChainError("capacity must be nonnegative and nodal inputs finite")
     reference_rate = _finite("reference_heating_rate", reference_heating_rate)
-    if reference_rate:
-        storage_power = c*reference_rate
-        p0, p1 = p0-storage_power, p1-storage_power
+    final_reference_rate = (reference_rate if reference_heating_rate_end is None else
+                            _finite("reference_heating_rate_end", reference_heating_rate_end))
+    if reference_rate or final_reference_rate:
+        p0, p1 = p0-c*reference_rate, p1-c*final_reference_rate
     free = np.ones(size,dtype=bool)
     free[[0,-1]] = [w is None for w in walls]
     _massless_nodes(c,free,allow_massless)

@@ -984,3 +984,40 @@ def test_affine_reference_continuation(steps, reference_rate, record_property):
     for name, error in zip(("heat_moments", "final_store", "mean_store"), errors):
         record_property(name+"_scaled_error", float(error))
         assert error < 2e-13
+
+
+@pytest.mark.parametrize("steps", [1, 4, 16])
+@pytest.mark.parametrize("residual", [0., .125])
+def test_insulated_pair_under_quadratic_reference(steps, residual, record_property):
+    from scipy.integrate import quad
+    from tensordem.thermal import affine_contact_interval
+
+    # Two stores lose their initial difference at rate 1.5/s. Equal extra
+    # power per unit capacity changes their mean but leaves this mode intact.
+    c = np.array([1., 2.])
+    amplitude = residual or np.spacing(305.)/16
+    initial = amplitude*np.array([2., -1.])
+    state = initial.copy()
+    mean = np.zeros(2)
+    moments = np.zeros(3)
+    dt = 1/steps
+    for i in range(steps):
+        t = i*dt
+        rate0, rate1 = 1-2*t, 1-2*(t+dt)
+        state, heat, avg, (first, second) = affine_contact_interval(
+            [1.], c, dt, state, t_left=None, t_right=None,
+            nodal_power_start=c*(rate0+residual), nodal_power_end=c*(rate1+residual),
+            reference_heating_rate=rate0, reference_heating_rate_end=rate1,
+            return_interval_temperature=True, return_heat_moments=True)
+        moments += [heat[0], first[0]+t*heat[0], second[0]+2*t*first[0]+t*t*heat[0]]
+        mean += dt*avg
+    state_error = max(abs(state-(residual+initial*np.exp(-1.5))))/amplitude
+    mean_error = max(abs(mean-(residual/2+initial*(-np.expm1(-1.5)/1.5))))/amplitude
+    energy_error = abs(c@state-c.sum()*residual)/(amplitude*c.sum())
+    for name, error in (("end", state_error), ("mean", mean_error), ("energy", energy_error)):
+        record_property(name+"_scaled_error", float(error))
+        assert error < 2e-13
+    expected = [quad(lambda t: 3*t**j*np.exp(-1.5*t), 0., 1.)[0] for j in range(3)]
+    heat_error = max(abs(moments-amplitude*np.array(expected)))/amplitude
+    record_property("heat_moments_scaled_error", float(heat_error))
+    assert heat_error < 2e-13
