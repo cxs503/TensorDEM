@@ -466,7 +466,8 @@ class ParticleThermalNetwork:
              particle_power_w: Sequence[float] | None = None,
              return_contact_heat: bool = False,
              return_ambient_heat: bool = False,
-             return_contact_entropy: bool = False) -> np.ndarray | tuple[np.ndarray, ...]:
+             return_contact_entropy: bool = False,
+             return_ambient_entropy: bool = False) -> np.ndarray | tuple[np.ndarray, ...]:
         """Advance by backward Euler. Optionally return (temperature, contact heat).
 
         Heat is in joules over this step, positive from i to j for each
@@ -478,6 +479,9 @@ class ParticleThermalNetwork:
         return_contact_entropy appends conductive entropy production per contact
         (J/K), using backward Euler endpoint quadrature. Temperatures must then
         be absolute (K) and positive. Insulating contacts produce zero entropy.
+        return_ambient_entropy appends one entropy production (J/K) per particle
+        from its passive ambient link, after all other requested outputs. It
+        uses the endpoint particle and reservoir temperatures in kelvin.
         """
         dt = _finite("dt", dt, positive=True)
         n = len(self.particles)
@@ -487,9 +491,11 @@ class ParticleThermalNetwork:
         for (i, j), g in zip(self.contacts, conductances):
             links[i, j] += g
             links[j, i] += g
-        if return_contact_entropy and not np.all(np.isfinite(self.temperature) & (self.temperature > 0)):
-            raise ValueError("contact entropy requires positive finite temperatures in kelvin")
-        report_heat = return_contact_heat or return_ambient_heat or return_contact_entropy
+        need_entropy = return_contact_entropy or return_ambient_entropy
+        need_ambient_heat = return_ambient_heat or return_ambient_entropy
+        if need_entropy and not np.all(np.isfinite(self.temperature) & (self.temperature > 0)):
+            raise ValueError("entropy requires positive finite temperatures in kelvin")
+        report_heat = return_contact_heat or need_ambient_heat or need_entropy
         reference = 0.
         if report_heat:
             # A separate datum per connected component keeps tiny exchanges
@@ -510,16 +516,21 @@ class ParticleThermalNetwork:
                            np.zeros(n), dtype=float)
             if amb.shape != (n,) or h.shape != (n,):
                 raise ValueError("ambient and conductance must be per particle")
+            if return_ambient_entropy:
+                if not np.isfinite(h).all() or (h < 0).any():
+                    raise ValueError("ambient entropy requires finite nonnegative conductances")
+                if not np.isfinite(amb).all() or (amb <= 0).any():
+                    raise ValueError("ambient entropy requires positive finite reservoir temperatures in kelvin")
             anchor += h
             rhs += h * (amb-reference)
-        need_contacts = return_contact_heat or return_contact_entropy or (return_ambient_heat and ambient is not None
+        need_contacts = return_contact_heat or return_contact_entropy or (need_ambient_heat and ambient is not None
                                                 and np.any(h > self.capacity/dt))
 
         def heat_result(field, contact_heat=None):
             result = [field + reference]
             if return_contact_heat:
                 result.append(contact_heat)
-            if return_ambient_heat:
+            if need_ambient_heat:
                 external = np.zeros(n)
                 if ambient is not None:
                     rate = self.capacity / dt
@@ -535,11 +546,13 @@ class ParticleThermalNetwork:
                             outward[j] -= amount
                         demand = self.capacity*(amb-self.temperature) - dt*power_w + outward
                         external[strong] = demand[strong]/(1 + rate[strong]/h[strong])
-                result.append(external)
-            if return_contact_entropy:
+                if return_ambient_heat:
+                    result.append(external)
+            if need_entropy:
                 temperature = result[0]
                 if not np.all(np.isfinite(temperature) & (temperature > 0)):
-                    raise ValueError("contact entropy requires positive finite temperatures in kelvin")
+                    raise ValueError("entropy requires positive finite temperatures in kelvin")
+            if return_contact_entropy:
                 entropy = np.zeros(len(self.contacts))
                 for e, ((i, j), g) in enumerate(zip(self.contacts, conductances)):
                     if g:
@@ -547,6 +560,15 @@ class ParticleThermalNetwork:
                         # contact transfer even when both final temperatures round alike.
                         jump = (contact_heat[e]/dt)/g
                         entropy[e] = (contact_heat[e]/temperature[i])*(jump/temperature[j])
+                result.append(entropy)
+            if return_ambient_entropy:
+                entropy = np.zeros(n)
+                if ambient is not None:
+                    # The finite heat balance resolves a stiff link's drop even
+                    # when its endpoint temperature has rounded to the reservoir.
+                    jump = (amb-reference)-field
+                    jump[strong] = (external[strong]/dt)/h[strong]
+                    entropy = (external/temperature)*(jump/amb)
                 result.append(entropy)
             self.temperature = result[0]
             return tuple(result)

@@ -406,3 +406,49 @@ def test_contact_entropy_requires_positive_absolute_temperature():
     np.testing.assert_array_equal(net.temperature, [1.])
     _, entropy = net.step(1., return_contact_entropy=True)
     assert entropy.shape == (0,)
+
+
+@pytest.mark.parametrize("start", [270., 360.])
+def test_reservoir_entropy_against_exponential_relaxation(start, record_property):
+    net = ParticleThermalNetwork([Particle(1., rho_kg_m3=1., cp_j_kg_k=1.)], [])
+    capacity = net.capacity[0]
+    bath, h = 300., 2.5
+    end = bath+(start-bath)*np.exp(-2.)
+    exact = capacity*(np.log(end/start)-(end-start)/bath)
+    previous = None
+    for steps in (16,32,64,128):
+        net.reset([start])
+        total = 0.
+        for _ in range(steps):
+            _, entropy = net.step(2*capacity/(h*steps), ambient=[bath], h_ambient_w_k=[h],
+                                  return_ambient_entropy=True)
+            assert entropy[0] >= 0.
+            total += entropy[0]
+        error = abs(total-exact)
+        record_property(f"entropy_error_{steps}_J_per_K", float(error))
+        if previous is not None:
+            assert previous/error > 1.9
+        previous = error
+
+
+def test_stiff_and_insulated_reservoir_entropy(record_property):
+    net = ParticleThermalNetwork([Particle(1.), Particle(1.)], [])
+    net.reset([302., 280.])
+    capacity = net.capacity[0]
+    ratio = 1e20
+    field, contact, heat, contact_entropy, entropy = net.step(
+        1., ambient=[300., 310.], h_ambient_w_k=[capacity*ratio, 0.],
+        return_contact_heat=True, return_ambient_heat=True,
+        return_contact_entropy=True, return_ambient_entropy=True)
+    assert field[0] == 300. and heat[0] < 0
+    assert len(contact) == len(contact_entropy) == 0
+    assert entropy[1] == heat[1] == 0.
+    gap = 2/(1+ratio)
+    exact = capacity*(2-gap)*gap/(300.*(300.+gap))
+    error = abs(entropy[0]/exact-1)
+    record_property("stiff_relative_entropy_error", float(error))
+    assert error < 2e-15
+    for h,bath in ((-1.,300.), (1.,0.)):
+        with pytest.raises(ValueError, match="ambient entropy"):
+            net.step(1., ambient=[bath,bath], h_ambient_w_k=[h,h], return_ambient_entropy=True)
+    np.testing.assert_array_equal(net.temperature, field)
