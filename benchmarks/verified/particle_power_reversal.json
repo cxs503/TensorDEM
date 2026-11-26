@@ -1,0 +1,20 @@
+{
+  "source_commit": "836789a9b069dd62791456af265afd2f3e494411",
+  "command": "PYTHONPATH=src OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python -m pytest -q tests/test_interface_thermal*.py tests/test_thermal_contact_chain.py -o junit_family=legacy --junitxml=/tmp/dem_particle_power.xml",
+  "reference": "Unequal capacities C2=2C1; apply P1=C1/tau and P2=-C2/tau with tau=1/[G(1/C1+1/C2)]. Initial temperatures (-1,0) give T1-T2=2-3exp(-t/tau). At t=2tau compare temperatures using the network total energy and compare signed heat to the time integral of G*(T1-T2).",
+  "metrics": {
+    "temperature_error_16_K": 0.0331307395288013,
+    "contact_heat_error_16_J": 0.13877771721557286,
+    "max_particle_residual_16_J": 2.3869795029440866e-15,
+    "temperature_error_32_K": 0.0167408112774377,
+    "contact_heat_error_32_J": 0.070123746299108,
+    "max_particle_residual_32_J": 2.3869795029440866e-15,
+    "temperature_error_64_K": 0.00841440839504639,
+    "contact_heat_error_64_J": 0.03524619146424346,
+    "max_particle_residual_64_J": 4.191091917959966e-15,
+    "temperature_error_128_K": 0.004218214472952578,
+    "contact_heat_error_128_J": 0.017669215465991872,
+    "max_particle_residual_128_J": 2.248201624865942e-15
+  },
+  "passed": 204
+}
