@@ -1,0 +1,16 @@
+{
+  "source_commit": "451e00e3d2152d70ea54dac9420b3c874405ec79",
+  "command": "PYTHONPATH=src OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python -m pytest -q tests/test_interface_thermal*.py tests/test_thermal_contact_chain.py -o junit_family=legacy --junitxml=/tmp/dem_stiff_network_verified.xml",
+  "reference": "Exact backward-Euler modes for two disconnected pairs with unequal capacities (with and without ambient exchange), and the four-particle star with equal capacities and contact conductances. Step ratio dt*G/C_ref ranges from 1 to 1e20.",
+  "before_disconnected_at_1e20": "Singular matrix with and without ambient exchange",
+  "before_isolated_pairs_max_error_K_at_1e8": 4.426917499245064e-09,
+  "after_max_temperature_error_K": {
+    "test_stiff_disconnected_contact_pairs[False-100000000.0]": 8.881784197001252e-16,
+    "test_stiff_disconnected_contact_pairs[False-1e+20]": 0.0,
+    "test_stiff_disconnected_contact_pairs[True-100000000.0]": 8.881784197001252e-16,
+    "test_stiff_disconnected_contact_pairs[True-1e+20]": 8.881784197001252e-16,
+    "test_star_network_eliminated_junction[1.0]": 4.440892098500626e-16,
+    "test_star_network_eliminated_junction[1e+20]": 8.881784197001252e-16
+  },
+  "passed": 197
+}
