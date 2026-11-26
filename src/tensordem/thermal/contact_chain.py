@@ -603,7 +603,7 @@ def harmonic_contact_interval(link_resistance, heat_capacity, angular_frequency,
 
 def constant_contact_interval(link_resistance, heat_capacity, duration, initial_temperature, *,
                               t_left, t_right, nodal_power=0., allow_massless=False,
-                              return_interval_temperature=False):
+                              return_interval_temperature=False, return_heat_moments=False):
     """Advance one constant-load interval without temporal discretization.
 
     Return right-endpoint temperatures (K) and integrated rightward heat on
@@ -612,18 +612,21 @@ def constant_contact_interval(link_resistance, heat_capacity, duration, initial_
     receive constant power (W); with allow_massless=True their zero-capacity
     traces follow instantaneous power balance. To switch a load, pass the
     returned temperatures to a new interval with its new boundary data.
+    Set return_heat_moments to append two arrays of link moments (J s and
+    J s²) weighted by time since the interval start and its square.
     Endpoint powers or storage affect reservoir reactions only; the returned
     heat measures conduction through the links.
     """
     return affine_contact_interval(link_resistance, heat_capacity, duration, initial_temperature,
                     t_left=None if t_left is None else (t_left,t_left),
                     t_right=None if t_right is None else (t_right,t_right), nodal_power_start=nodal_power,
-                    allow_massless=allow_massless, return_interval_temperature=return_interval_temperature)
+                    allow_massless=allow_massless, return_interval_temperature=return_interval_temperature,
+                    return_heat_moments=return_heat_moments)
 
 
 def affine_contact_interval(link_resistance, heat_capacity, duration, initial_temperature, *,
                             t_left, t_right, nodal_power_start=0., nodal_power_end=None,
-                            allow_massless=False, return_interval_temperature=False):
+                            allow_massless=False, return_interval_temperature=False, return_heat_moments=False):
     """Integrate a fixed chain under linearly varying end temperatures and powers.
 
     t_left and t_right are (start, end) reservoir temperature pairs in K.
@@ -631,7 +634,9 @@ def affine_contact_interval(link_resistance, heat_capacity, duration, initial_te
     Returns endpoint node temperatures (K), signed rightward link heats (J),
     and optionally the time-mean node temperatures (K). Free massless nodes
     follow instantaneous power balance. None leaves an end insulated; its
-    specified nodal power still enters the network energy balance.
+    specified nodal power still enters the network energy balance. With
+    return_heat_moments, append a (2, links) array integrating t*q and t²*q
+    measured from the start of this interval.
     """
     r = _link_resistances(link_resistance)
     dt = _finite("duration",duration,positive=True)
@@ -684,6 +689,8 @@ def affine_contact_interval(link_resistance, heat_capacity, duration, initial_te
     end,q1,rate1 = steady(1,p1)
     mean = .5*(start+end)
     heat = (.5*dt)*(q0+q1)
+    if return_heat_moments:
+        moments = np.stack([dt**(j+1)*(q0/(j+1)+(q1-q0)/(j+2)) for j in (1, 2)])
     if active.size:
         # Eliminating massless nodes puts all links between anchors in series.
         # At an insulated massless tail the transient deviation is constant.
@@ -720,12 +727,26 @@ def affine_contact_interval(link_resistance, heat_capacity, duration, initial_te
         end += np.interp(position,position[anchors],offset)
         offset[dynamic] = mean_offset
         heat[anchors[0]:anchors[-1]] -= dt*np.repeat(np.diff(offset)/reduced_r,np.diff(anchors))
+        if return_heat_moments:
+            from scipy.special import hyp1f1
+            for j in (1, 2):
+                # Integral of u^j exp(-z*u) on [0,1], and the integrated
+                # affine-load response (1-exp(-z*u))/z with the same weight.
+                weight = hyp1f1(j+1, j+2, -z)/(j+1)
+                ramp_weight = np.empty_like(z)
+                ramp_weight[small] = (1/(j+2)-z[small]/(2*(j+3))+z[small]**2/(6*(j+4)))
+                ramp_weight[~small] = (1/(j+1)-weight[~small])/z[~small]
+                weighted = np.zeros(len(anchors))
+                weighted[dynamic] = (basis @ (weight*modes-ramp_weight*ramp))/root
+                moments[j-1, anchors[0]:anchors[-1]] -= dt**(j+1)*np.repeat(
+                    np.diff(weighted)/reduced_r, np.diff(anchors))
         if return_interval_temperature:
             mean += np.interp(position,position[anchors],offset)
     if closed:
         end += initial_mean+.5*dt*(rate0+rate1)
         mean += initial_mean+dt*(2*rate0+rate1)/6
-    return (end,heat,mean) if return_interval_temperature else (end,heat)
+    result = (end,heat,mean) if return_interval_temperature else (end,heat)
+    return (*result, moments) if return_heat_moments else result
 
 
 def transient_contact_temperatures(link_resistance, heat_capacity, time, initial_temperature,

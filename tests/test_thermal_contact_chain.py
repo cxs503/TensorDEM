@@ -850,3 +850,21 @@ def test_integrated_link_heat_pinned_ends_and_massless_junction(theta):
         expected = np.diff(time)*((1-theta)*power[:-1]+theta*power[1:])
         np.testing.assert_allclose(heat, np.broadcast_to(expected[:, None], heat.shape), atol=1e-14)
         assert field.shape == (3, len(links)+1) and heat.shape == (2, len(links))
+
+
+def test_affine_link_time_moments_match_independent_rc_integrals():
+    from scipy.integrate import quad
+    from tensordem.thermal.contact_chain import affine_contact_interval
+
+    # C=1 and two unit resistors. Left wall ramps as t, right wall stays zero.
+    # dT/dt+2T=t, T(0)=1.
+    for dt in (1e-6, .7, 25.):
+        _, heat, moments = affine_contact_interval(
+            [1., 1.], [0., 1., 0.], dt, [0., 1., 0.],
+            t_left=(0., dt), t_right=(0., 0.), return_heat_moments=True)
+        def temp(t):
+            return t/2-.25+1.25*np.exp(-2*t)
+        for j, actual in enumerate([heat, *moments]):
+            expected = [quad(lambda t: t**j*(t-temp(t)), 0., dt)[0],
+                        quad(lambda t: t**j*temp(t), 0., dt)[0]]
+            np.testing.assert_allclose(actual, expected, rtol=2e-11, atol=dt**(j+1)*2e-13)
