@@ -1,0 +1,24 @@
+{
+  "source_commit": "cbd2ca1bb39f354d981bad0ada8487636de743b9",
+  "command": "PYTHONPATH=src OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python -m pytest -q tests/test_interface_thermal*.py tests/test_thermal_contact_chain.py -o junit_family=legacy --junitxml=/tmp/dem_edge_heat.xml",
+  "reference": "Equal-capacity triangle with two equal contacts per side listed in opposite directions. In a backward Euler step, each signed heat is C*r*(b_i-b_j)/(1.25+6*r), r=dt*G/C and b=T_initial+0.25*T_ambient. Independently check the nodal balance including ambient heat.",
+  "cases": {
+    "test_signed_contact_heat_in_parallel_triangle[1e-08]": {
+      "relative_heat_error": 1.8054842007331294e-16,
+      "max_particle_energy_residual_J": 1.9496872031001477e-15
+    },
+    "test_signed_contact_heat_in_parallel_triangle[1.0]": {
+      "relative_heat_error": 3.5137556480930285e-16,
+      "max_particle_energy_residual_J": 8.881784197001252e-15
+    },
+    "test_signed_contact_heat_in_parallel_triangle[1e+20]": {
+      "relative_heat_error": 2.907935708766644e-16,
+      "max_particle_energy_residual_J": 7.105427357601002e-15
+    }
+  },
+  "other_checks": [
+    "insulating and absent contacts",
+    "one-ulp jumps about distinct temperature datums"
+  ],
+  "passed": 202
+}
