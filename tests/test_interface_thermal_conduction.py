@@ -226,3 +226,49 @@ def test_star_network_eliminated_junction(step_ratio, record_property):
     error = float(np.max(abs(star.step(dt)-expected)))
     record_property("max_temperature_error_K", error)
     assert error < 5e-14
+
+
+@pytest.mark.parametrize("step_ratio", [1e-8, 1., 1e20])
+def test_signed_contact_heat_in_parallel_triangle(step_ratio, record_property):
+    # Each side has two equal contacts listed in opposite directions. All
+    # nonuniform modes have decay rate 6G/C. The ambient link adds h*dt/C.
+    contacts = [(0, 1), (1, 0), (2, 1), (1, 2), (2, 0), (0, 2)]
+    net = ParticleThermalNetwork([Particle(1., rho_kg_m3=1., cp_j_kg_k=1.) for _ in range(3)], contacts)
+    initial = np.array([3., 8., -2.])
+    ambient = np.array([1., -1., 4.])
+    net.reset(initial)
+    capacity = net.capacity[0]
+    dt = step_ratio*capacity/net.conductances()[0]
+    coupling = .25
+    field, heat = net.step(dt, ambient=ambient, h_ambient_w_k=coupling*net.capacity/dt,
+                           return_contact_heat=True)
+    forcing = initial + coupling*ambient
+    expected = np.array([forcing[i]-forcing[j] for i, j in contacts])*capacity*step_ratio/(1+coupling+6*step_ratio)
+    error = float(np.max(abs(heat-expected))/max(abs(expected)))
+    into_nodes = np.zeros(3)
+    for (i, j), amount in zip(contacts, heat):
+        into_nodes[i] -= amount
+        into_nodes[j] += amount
+    balance = max(abs(capacity*(field-initial)-coupling*capacity*(ambient-field)-into_nodes))
+    record_property("relative_heat_error", error)
+    record_property("max_particle_energy_residual_J", float(balance))
+    assert error < 2e-14
+    assert balance < 5e-14
+
+
+def test_insulating_and_absent_contacts_report_no_heat():
+    for contacts in ([], [(0, 1)]):
+        net = ParticleThermalNetwork([Particle(1.), Particle(1.)], contacts, contact_pressure_pa=0.)
+        net.reset([1., -2.])
+        _, heat = net.step(1., return_contact_heat=True)
+        np.testing.assert_array_equal(heat, np.zeros(len(contacts)))
+
+
+def test_contact_heat_resolves_jumps_on_separate_temperature_datums():
+    net = ParticleThermalNetwork([Particle(1.) for _ in range(4)], [(0, 1), (2, 3)])
+    datums = np.array([300., 2.**40])
+    jumps = np.spacing(datums)
+    net.reset(np.column_stack((datums+jumps, datums)).ravel())
+    ratio = 1e20
+    _, heat = net.step(ratio*net.capacity[0]/net.conductances()[0], return_contact_heat=True)
+    np.testing.assert_allclose(heat, net.capacity[::2]*jumps*ratio/(1+2*ratio), rtol=2e-15, atol=0.)

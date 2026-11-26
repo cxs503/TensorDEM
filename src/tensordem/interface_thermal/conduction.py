@@ -30,6 +30,7 @@ from typing import Callable, Sequence
 import numpy as np
 from scipy.linalg import solve_banded
 from scipy.special import erfc
+from scipy.sparse.csgraph import connected_components
 
 __all__ = [
     "semi_infinite_temperature_profile",
@@ -461,16 +462,29 @@ class ParticleThermalNetwork:
         return float(np.dot(self.capacity, self.temperature))
 
     def step(self, dt: float, *, ambient: Sequence[float] | None = None,
-             h_ambient_w_k: Sequence[float] | None = None) -> np.ndarray:
-        """One implicit-Euler step with optional convective links to an ambient."""
+             h_ambient_w_k: Sequence[float] | None = None,
+             return_contact_heat: bool = False) -> np.ndarray | tuple[np.ndarray, np.ndarray]:
+        """Advance by backward Euler. Optionally return (temperature, contact heat).
+
+        Heat is in joules over this step, positive from i to j for each
+        (i, j) in contacts, in input order. Ambient exchange is external.
+        """
         dt = _finite("dt", dt, positive=True)
         n = len(self.particles)
         anchor = self.capacity / dt
-        rhs = anchor * self.temperature
         links = np.zeros((n, n))
-        for (i, j), g in zip(self.contacts, self.conductances()):
+        conductances = self.conductances()
+        for (i, j), g in zip(self.contacts, conductances):
             links[i, j] += g
             links[j, i] += g
+        reference = 0.
+        if return_contact_heat:
+            # A separate datum per connected component keeps tiny exchanges
+            # independent of unrelated particles' absolute temperatures.
+            _, labels = connected_components(links != 0., directed=False)
+            _, first = np.unique(labels, return_index=True)
+            reference = self.temperature[first][labels]
+        rhs = anchor * (self.temperature-reference)
         if ambient is not None:
             amb = np.asarray(ambient, dtype=float)
             h = np.asarray(h_ambient_w_k if h_ambient_w_k is not None else
@@ -478,12 +492,19 @@ class ParticleThermalNetwork:
             if amb.shape != (n,) or h.shape != (n,):
                 raise ValueError("ambient and conductance must be per particle")
             anchor += h
-            rhs += h * amb
+            rhs += h * (amb-reference)
         if np.any(anchor <= 0):
             # Signed ambient coefficients can require pivoting.
-            self.temperature = np.linalg.solve(np.diag(anchor + links.sum(axis=1)) - links, rhs)
+            field = np.linalg.solve(np.diag(anchor + links.sum(axis=1)) - links, rhs)
+            self.temperature = field + reference
+            if return_contact_heat:
+                jumps = np.asarray([field[i]-field[j] for i, j in self.contacts])
+                return self.temperature, dt * (conductances * jumps)
             return self.temperature
 
+        reductions = []
+        if return_contact_heat:
+            original_links = links.copy()
         # Eliminate each particle by transferring its links, storage and
         # ambient coupling separately. This preserves the small diagonal
         # contribution even when adding it to a contact would round it away.
@@ -494,13 +515,42 @@ class ParticleThermalNetwork:
             weights = neighbors / pivot
             anchor[remaining] += weights * anchor[i]
             rhs[remaining] += weights * rhs[i]
-            links[np.ix_(remaining, remaining)] += np.outer(weights, neighbors)
+            block = np.ix_(remaining, remaining)
+            added = np.outer(weights, neighbors)
+            if return_contact_heat:
+                # Store how each reduced link divides between its old direct
+                # path and the new path through particle i.
+                previous = links[block]
+                total = previous + added
+                total[total == 0.] = 1.
+                reductions.append((remaining, weights, anchor[i], rhs[i],
+                                   previous/total, added/total))
+            links[block] += added
             links[i, remaining] = weights
             rhs[i] /= pivot
         for i in reversed(range(n)):
             rhs[i] += links[i, i+1:] @ rhs[i+1:]
+        if return_contact_heat:
+            # Undo the reductions in reverse, dividing the known currents
+            # between parallel paths. This retains finite exchanged energy
+            # even when two endpoint temperatures round to the same value.
+            power = np.zeros((n, n))
+            for i in reversed(range(n)):
+                nodes, weights, storage, load, direct, indirect = reductions[i]
+                block = np.ix_(nodes, nodes)
+                reduced = power[block]
+                outgoing = weights*(load-storage*rhs[nodes]) - (indirect*reduced).sum(axis=1)
+                power[block] = direct*reduced
+                power[i, nodes] = outgoing
+                power[nodes, i] = -outgoing
+            heat = np.zeros(len(self.contacts))
+            for e, ((i, j), g) in enumerate(zip(self.contacts, conductances)):
+                if g:
+                    heat[e] = dt * (power[i, j] * (g/original_links[i, j]))
+            self.temperature = rhs + reference
+            return self.temperature, heat
         self.temperature = rhs
-        return self.temperature
+        return rhs
 
     def equilibrium_temperature(self) -> float:
         """Energy-weighted equilibrium temperature (``sum C T / sum C``)."""
