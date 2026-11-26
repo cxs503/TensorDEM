@@ -184,3 +184,45 @@ def test_particle_film_conductance_across_material_scales(exponents, record_prop
         error = abs(actual-expected)/expected
         assert error < 2e-15
         record_property("relative_conductance_error_" + ("ascending" if left < right else "descending"), error)
+
+
+@pytest.mark.parametrize("step_ratio", [1e8, 1e20])
+@pytest.mark.parametrize("with_ambient", [False, True])
+def test_stiff_disconnected_contact_pairs(step_ratio, with_ambient, record_property):
+    # Two disconnected pairs, each with unequal capacities and its own
+    # equilibrium temperature. Uniform h/C within each pair separates the
+    # capacity-weighted mean and the temperature difference into two modes.
+    particles = [Particle(1., rho_kg_m3=rho, cp_j_kg_k=1.) for rho in (1., 2., 3., 4.)]
+    network = ParticleThermalNetwork(particles, [(0, 1), (2, 3)])
+    initial = np.array([3., 9., -2., 2.])
+    network.reset(initial)
+    dt = step_ratio*network.capacity[0]/network.conductances()[0]
+    ambient = np.array([1., 1., -3., -3.])
+    coupling = .25 if with_ambient else 0.
+    expected = []
+    for i, g in zip((0, 2), network.conductances()):
+        c1, c2 = network.capacity[i:i+2]
+        t1, t2 = initial[i:i+2]
+        mean = ((c1*t1+c2*t2)/(c1+c2) + coupling*ambient[i])/(1+coupling)
+        jump = (t1-t2)/(1+coupling+dt*g*(1/c1+1/c2))
+        expected.extend([mean+c2/(c1+c2)*jump, mean-c1/(c1+c2)*jump])
+    options = dict(ambient=ambient, h_ambient_w_k=coupling*network.capacity/dt) if with_ambient else {}
+    actual = network.step(dt, **options)
+    error = float(np.max(abs(actual-expected)))
+    record_property("max_temperature_error_K", error)
+    assert error < 5e-14
+
+
+@pytest.mark.parametrize("step_ratio", [1., 1e20])
+def test_star_network_eliminated_junction(step_ratio, record_property):
+    # The junction is eliminated first. Its three leaves share one symmetric
+    # mode and two difference modes, with rates 4G/C and G/C respectively.
+    star = ParticleThermalNetwork([Particle(1.) for _ in range(4)], [(0, i) for i in (1, 2, 3)])
+    initial = np.array([9., 1., 2., 3.])
+    star.reset(initial)
+    dt = step_ratio*star.capacity[0]/star.conductances()[0]
+    jump = (initial[0]-initial[1:].mean())/(1+4*step_ratio)
+    expected = initial.mean() + np.r_[.75*jump, -.25*jump+(initial[1:]-2.)/(1+step_ratio)]
+    error = float(np.max(abs(star.step(dt)-expected)))
+    record_property("max_temperature_error_K", error)
+    assert error < 5e-14

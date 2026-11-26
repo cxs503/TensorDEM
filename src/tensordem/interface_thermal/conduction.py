@@ -465,23 +465,41 @@ class ParticleThermalNetwork:
         """One implicit-Euler step with optional convective links to an ambient."""
         dt = _finite("dt", dt, positive=True)
         n = len(self.particles)
-        mat = np.zeros((n, n))
-        mat[np.diag_indices(n)] = self.capacity / dt
-        rhs = self.capacity / dt * self.temperature
+        anchor = self.capacity / dt
+        rhs = anchor * self.temperature
+        links = np.zeros((n, n))
         for (i, j), g in zip(self.contacts, self.conductances()):
-            mat[i, i] += g
-            mat[j, j] += g
-            mat[i, j] -= g
-            mat[j, i] -= g
+            links[i, j] += g
+            links[j, i] += g
         if ambient is not None:
             amb = np.asarray(ambient, dtype=float)
             h = np.asarray(h_ambient_w_k if h_ambient_w_k is not None else
                            np.zeros(n), dtype=float)
             if amb.shape != (n,) or h.shape != (n,):
                 raise ValueError("ambient and conductance must be per particle")
-            mat[np.diag_indices(n)] += h
-            rhs = rhs + h * amb
-        self.temperature = np.linalg.solve(mat, rhs)
+            anchor += h
+            rhs += h * amb
+        if np.any(anchor <= 0):
+            # Signed ambient coefficients can require pivoting.
+            self.temperature = np.linalg.solve(np.diag(anchor + links.sum(axis=1)) - links, rhs)
+            return self.temperature
+
+        # Eliminate each particle by transferring its links, storage and
+        # ambient coupling separately. This preserves the small diagonal
+        # contribution even when adding it to a contact would round it away.
+        for i in range(n):
+            remaining = i + 1 + np.flatnonzero(links[i, i+1:])
+            neighbors = links[i, remaining]
+            pivot = anchor[i] + neighbors.sum()
+            weights = neighbors / pivot
+            anchor[remaining] += weights * anchor[i]
+            rhs[remaining] += weights * rhs[i]
+            links[np.ix_(remaining, remaining)] += np.outer(weights, neighbors)
+            links[i, remaining] = weights
+            rhs[i] /= pivot
+        for i in reversed(range(n)):
+            rhs[i] += links[i, i+1:] @ rhs[i+1:]
+        self.temperature = rhs
         return self.temperature
 
     def equilibrium_temperature(self) -> float:
