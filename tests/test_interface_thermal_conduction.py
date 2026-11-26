@@ -452,3 +452,66 @@ def test_stiff_and_insulated_reservoir_entropy(record_property):
         with pytest.raises(ValueError, match="ambient entropy"):
             net.step(1., ambient=[bath,bath], h_ambient_w_k=[h,h], return_ambient_entropy=True)
     np.testing.assert_array_equal(net.temperature, field)
+
+
+def test_contact_and_two_reservoir_entropy_partition(record_property):
+    from scipy.integrate import quad_vec
+
+    particles = [Particle(1., rho_kg_m3=1., cp_j_kg_k=1.) for _ in range(2)]
+    net = ParticleThermalNetwork(particles, [(0,1)])
+    c, g = net.capacity[0], net.conductances()[0]
+    start = np.array([280., 345.])
+    baths = np.array([355., 275.])
+    # With both reservoir conductances equal to the contact conductance G,
+    # the mean and half-difference decay with rates G/C and 3G/C. The
+    # hotter reservoir acts on the initially colder particle, reversing flow.
+    signs = np.array([1., -1.])
+    steady = baths.mean() + signs*(baths[0]-baths[1])/6
+    common = (start-steady).mean()
+    differential = start-steady-common
+    def exact(s):
+        return steady + common*np.exp(-s) + differential*np.exp(-3*s)
+
+    def entropy_density(s):
+        t = exact(s)
+        # Dimensionless time s=t_physical*G/C. Rates below include dt/ds.
+        return c*np.r_[(t[0]-t[1])**2/(t[0]*t[1]), (baths-t)**2/(baths*t)]
+
+    end = 2.
+    reference, _ = quad_vec(entropy_density, 0., end, epsabs=1e-14, epsrel=1e-13)
+    ambient_heat = c*((baths-steady)*end + common*np.expm1(-end)
+                      + differential*np.expm1(-3*end)/3)
+    total = c*np.log(exact(end)/start).sum() - (ambient_heat/baths).sum()
+    assert abs(reference.sum()-total) < 2e-14
+
+    previous = None
+    for steps in (16,32,64,128):
+        net.reset(start)
+        amounts = np.zeros(3)
+        reservoir_heat = np.zeros(2)
+        time_defect = 0.
+        first_contact = None
+        for _ in range(steps):
+            before = net.temperature.copy()
+            field, heat, exchange, contact_s, ambient_s = net.step(
+                end*c/(steps*g), ambient=baths, h_ambient_w_k=[g,g],
+                return_contact_heat=True, return_ambient_heat=True,
+                return_contact_entropy=True, return_ambient_entropy=True)
+            if first_contact is None:
+                first_contact = heat[0]
+            amounts += np.r_[contact_s, ambient_s]
+            reservoir_heat += exchange
+            # Endpoint quadrature uses C*dT/T_end for each particle.
+            delta = field-before
+            time_defect += c*np.sum(np.log1p(delta/before)-delta/field)
+        assert first_contact < 0 < heat[0]
+        state_entropy = c*np.log(field/start).sum() - (reservoir_heat/baths).sum()
+        residual = abs(state_entropy-amounts.sum()-time_defect)
+        errors = abs(amounts-reference)
+        for name,value in zip(("contact", "hot_bath", "cold_bath"), errors):
+            record_property(f"{name}_error_{steps}_J_per_K", float(value))
+        record_property(f"entropy_balance_{steps}_J_per_K", float(residual))
+        assert residual < 3e-14
+        if previous is not None:
+            assert np.all(previous/errors > 1.8)
+        previous = errors
