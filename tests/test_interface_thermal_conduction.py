@@ -140,3 +140,25 @@ def test_particle_network_two_particle_relaxation_matches_analytic():
     analytic = 5.0 * math.exp(-time / tau)
     numeric = 0.5 * (network.temperature[1] - network.temperature[0])
     assert numeric == pytest.approx(analytic, rel=5e-3)
+
+@pytest.mark.parametrize("pressure_ratio", [0., 1e-16, 1e-13])
+def test_unloaded_and_weakly_loaded_particle_contact(pressure_ratio, record_property):
+    # The two conductivities (2 and 6) give harmonic mean 3. Unit roughness,
+    # slope and patch radius isolate the pressure dependence of the film.
+    particles = [Particle(2., k, 1., 1.) for k in (2., 6.)]
+    network = ParticleThermalNetwork(particles, [(0, 1)], contact_pressure_pa=pressure_ratio,
+                                     hardness_pa=1., rms_roughness_m=1., rms_slope=1.,
+                                     patch_radius_fraction=.5)
+    film = 3.75*pressure_ratio**.95
+    # Each bulk constriction is in series with the film of area pi.
+    exact_g = math.pi*film / (1 + math.pi*film*(1/8 + 1/24))
+    dt = 1e15
+    capacity = 32*math.pi/3
+    network.reset([1., -1.])
+    exact_hot = 1/(1 + 2*dt*exact_g/capacity)
+    temperatures = network.step(dt)
+    error = float(np.max(abs(temperatures-[exact_hot, -exact_hot])))
+    record_property("max_temperature_error_K", error)
+    record_property("conductance_error_W_per_K", abs(float(network.conductances()[0])-exact_g))
+    assert error < 2e-14
+    assert network.conductances()[0] == pytest.approx(exact_g, rel=2e-15, abs=0.)

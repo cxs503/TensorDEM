@@ -341,8 +341,10 @@ def contact_heat_transfer_coefficient(
     slope = _finite("rms_slope", rms_slope, positive=True)
     pressure = _finite("contact_pressure_pa", contact_pressure_pa, nonnegative=True)
     hardness = _finite("hardness_pa", hardness_pa, positive=True)
+    if pressure == 0.0:
+        return 0.0
     k_harmonic = 2.0 * k1 * k2 / (k1 + k2)
-    ratio = min(max(pressure / hardness, 1e-12), 1.0)
+    ratio = min(pressure / hardness, 1.0)
     return 1.25 * k_harmonic * (slope / sigma) * ratio ** 0.95
 
 
@@ -362,12 +364,13 @@ def contact_thermal_resistance(
     k1_w_m_k: float, k2_w_m_k: float, patch_radius_m: float,
     h_c_w_m2_k: float,
 ) -> float:
-    """Series resistance of two constrictions plus the asperity film (K/W)."""
-    h_c = _finite("h_c_w_m2_k", h_c_w_m2_k, positive=True)
+    """Series resistance (K/W), infinite for an insulating asperity film."""
+    h_c = _finite("h_c_w_m2_k", h_c_w_m2_k, nonnegative=True)
     area = math.pi * _finite("patch_radius_m", patch_radius_m, positive=True) ** 2
+    film_conductance = h_c * area
     return (maxwell_constriction_resistance(k1_w_m_k, patch_radius_m)
             + maxwell_constriction_resistance(k2_w_m_k, patch_radius_m)
-            + 1.0 / (h_c * area))
+            + (math.inf if film_conductance == 0.0 else 1.0 / film_conductance))
 
 
 # ---------------------------------------------------------------------------
