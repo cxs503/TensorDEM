@@ -1,0 +1,96 @@
+{
+  "source_commit": "7c2298f1e0fa7bf888c0f3b999fbfe7c63b7ce02",
+  "benchmark_command": "PYTHONPATH=src OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python examples/thermal_section_reversal.py --double-reversal",
+  "regression_command": "PYTHONPATH=src OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python -m pytest -q tests/test_thermal_contact_chain.py tests/test_interface_thermal_contact_chain.py",
+  "regression": {
+    "tests": 134,
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0
+  },
+  "single_reversal_matches_archive": true,
+  "reference": "Choose two axial modes to place exact zeros of the width-integrated power at 0.003 and 0.015 s. Compare three native signed section energies through t=0.025 s to the analytic primitive, and their sum to integrated particle-link transport. Check both subdomains at all output times.",
+  "runs": [
+    {
+      "n": 16,
+      "steps": 32,
+      "reversal_times_s": [
+        0.0032656981578044406,
+        0.01492124165612258
+      ],
+      "analytic_reversal_times_s": [
+        0.003,
+        0.015
+      ],
+      "reversal_error_s": 0.0002656981578044405,
+      "signed_lobe_heat_J": [
+        0.0018090451778330797,
+        -0.002713300619060021,
+        0.002928412710729342
+      ],
+      "analytic_signed_lobe_heat_J": [
+        0.0018155587766965147,
+        -0.00330557166800894,
+        0.0030348454560481554
+      ],
+      "directional_error_J": 0.0005922710489489188,
+      "section_net_mismatch_J": 8.673617379884035e-19,
+      "lobe_sum_residual_J": 4.336808689942018e-19,
+      "subdomain_balance_J": 5.551115123125783e-17
+    },
+    {
+      "n": 32,
+      "steps": 64,
+      "reversal_times_s": [
+        0.003062472401659995,
+        0.014989750327754759
+      ],
+      "analytic_reversal_times_s": [
+        0.003,
+        0.015
+      ],
+      "reversal_error_s": 6.247240165999481e-05,
+      "signed_lobe_heat_J": [
+        0.0018146307895065207,
+        -0.0031589036279835686,
+        0.003004821388420542
+      ],
+      "analytic_signed_lobe_heat_J": [
+        0.0018155587766965147,
+        -0.00330557166800894,
+        0.0030348454560481554
+      ],
+      "directional_error_J": 0.00014666804002537144,
+      "section_net_mismatch_J": 8.673617379884035e-19,
+      "lobe_sum_residual_J": 8.673617379884035e-19,
+      "subdomain_balance_J": 4.163336342344337e-17
+    },
+    {
+      "n": 64,
+      "steps": 128,
+      "reversal_times_s": [
+        0.0030162622925595578,
+        0.0149979310093094
+      ],
+      "analytic_reversal_times_s": [
+        0.003,
+        0.015
+      ],
+      "reversal_error_s": 1.6262292559557703e-05,
+      "signed_lobe_heat_J": [
+        0.0018153506354466557,
+        -0.00326898717251549,
+        0.0030271398368552057
+      ],
+      "analytic_signed_lobe_heat_J": [
+        0.0018155587766965147,
+        -0.00330557166800894,
+        0.0030348454560481554
+      ],
+      "directional_error_J": 3.6584495493450185e-05,
+      "section_net_mismatch_J": 4.336808689942018e-19,
+      "lobe_sum_residual_J": 6.505213034913027e-19,
+      "subdomain_balance_J": 9.71445146547012e-17
+    }
+  ]
+}
