@@ -1054,3 +1054,31 @@ def test_directional_link_heat_retains_small_lobe_for_pinned_ends():
         [1.], [0., 0.], [0., 2.], [1., 0.], t_left=[1., -1e-20], t_right=0.,
         return_directional_link_heat=True)
     np.testing.assert_allclose(parts["leftward"], [[1e-40]], atol=0., rtol=1e-14)
+
+
+@pytest.mark.parametrize("periodic,ny", [(False, 6), (True, 6), (True, 2), (True, 1), (False, 1)])
+def test_transient_lattice_signed_link_heat(periodic, ny):
+    from tensordem.thermal import transient_lattice_temperatures
+
+    nx = 9
+    ax = np.pi/(nx-1)
+    by = (2 if periodic else 1)*np.pi/ny if ny > 1 else 0.
+    shape = np.sin(ax*np.arange(nx))[:, None]*np.cos(by*(np.arange(ny)+(0 if periodic else .5)))
+    shape[[0, -1]] = 0.
+    gx, gy, capacity = 1.5, .75, 2.
+    decay = (4*gx*np.sin(ax/2)**2 + 4*gy*np.sin(by/2)**2)/capacity
+    previous = None
+    for count in (8, 16, 32):
+        time = np.linspace(0, 1/decay, count+1)
+        history, heat = transient_lattice_temperatures((1/gx, 1/gy), capacity, time, shape,
+                                                      periodic_y=periodic, return_link_heat=True)
+        error = np.max(abs(history-np.exp(-decay*time[:, None, None])*shape))
+        if previous is not None:
+            assert error < previous/3.8
+        previous = error
+        exact_x = -gx*np.diff(shape, axis=0)*(1-np.exp(-1))/decay
+        np.testing.assert_allclose(heat["x"].sum(axis=0), exact_x, atol=.001/count, rtol=.01/count)
+        transverse = (heat["y"]-np.roll(heat["y"], 1, axis=2) if periodic else
+                      np.diff(np.pad(heat["y"], ((0, 0), (0, 0), (1, 1))), axis=2))
+        residual = capacity*np.diff(history[:, 1:-1], axis=0)+np.diff(heat["x"], axis=1)+transverse[:, 1:-1]
+        assert np.max(abs(residual)) < 1e-14

@@ -92,6 +92,7 @@ __all__ = [
     "hertz_contact_radius",
     "ice_bond_tensile_strength",
     "lattice_network_temperatures",
+    "transient_lattice_temperatures",
     "sphere_bulk_resistance",
     "square_lattice_resistance",
     "thermal_chain_calculation",
@@ -227,6 +228,26 @@ def square_lattice_resistance(nx: int, ny: int, r_link: float) -> float:
     return (int(nx) - 1) / int(ny) * r
 
 
+def _lattice_conductances(nx, ny, r_link, periodic_y):
+    def conductance(resistance, shape):
+        values = np.asarray(resistance, dtype=float)
+        if values.ndim and values.shape != shape:
+            raise ChainError(f"edge resistance needs shape {shape}, got {values.shape}")
+        if not np.isfinite(values).all() or np.any(values <= 0):
+            raise ChainError("edge resistance must be finite and positive")
+        return np.broadcast_to(1.0 / values, shape)
+
+    if isinstance(r_link, tuple):
+        if len(r_link) != 2:
+            raise ChainError("r_link needs the pair (Rx, Ry)")
+        rx, ry = r_link
+    else:
+        rx = ry = r_link
+    gx = conductance(rx, (nx - 1, ny))
+    gy = conductance(ry, (nx, ny if periodic_y else ny - 1))
+    return gx, gy
+
+
 def lattice_network_temperatures(nx: int, ny: int, r_link: float | tuple,
                                  t_left: float | np.ndarray, t_right: float | np.ndarray, *, nodal_power=0.0,
                                  periodic_y: bool = False, lower_exchange=None, upper_exchange=None) -> np.ndarray:
@@ -250,22 +271,7 @@ def lattice_network_temperatures(nx: int, ny: int, r_link: float | tuple,
         raise ChainError("nx must be >= 2")
     if int(ny) < 1:
         raise ChainError("ny must be >= 1")
-    def conductance(resistance, shape):
-        values = np.asarray(resistance, dtype=float)
-        if values.ndim and values.shape != shape:
-            raise ChainError(f"edge resistance needs shape {shape}, got {values.shape}")
-        if not np.isfinite(values).all() or np.any(values <= 0):
-            raise ChainError("edge resistance must be finite and positive")
-        return np.broadcast_to(1.0 / values, shape)
-
-    if isinstance(r_link, tuple):
-        if len(r_link) != 2:
-            raise ChainError("r_link needs the pair (Rx, Ry)")
-        rx, ry = r_link
-    else:
-        rx = ry = r_link
-    gx = conductance(rx, (nx - 1, ny))
-    gy = conductance(ry, (nx, ny if periodic_y else ny - 1))
+    gx, gy = _lattice_conductances(nx, ny, r_link, periodic_y)
     n_cells = nx * ny
     rows: list[int] = []
     cols: list[int] = []
@@ -343,6 +349,65 @@ def lattice_network_temperatures(nx: int, ny: int, r_link: float | tuple,
         residual[:, 1:] -= y_heat
     residual[[0, -1]] = rhs.reshape(nx, ny)[[0, -1]]-temperature[[0, -1]]
     return temperature + factor.solve(residual.ravel()).reshape(nx, ny)
+
+
+def transient_lattice_temperatures(r_link, heat_capacity, time, initial_temperature, *,
+                                   periodic_y=False, theta=.5, return_link_heat=False):
+    """Advance a rectangular network of fixed thermal links without internal sources.
+
+    The initial temperature (K) has shape (nx, ny); its first and last x rows
+    remain pinned. Supply node capacities in J/K, positive at free nodes.
+    Link resistances (K/W) and periodic y indexing follow lattice_network_temperatures.
+    With return_link_heat, also return a dict of signed joules per interval
+    on x and y links. Positive heat goes towards the next index, wrapping on
+    the final periodic y link. The theta method uses .5 for Crank–Nicolson.
+    """
+    initial = np.asarray(initial_temperature, dtype=float)
+    grid = np.asarray(time, dtype=float)
+    if initial.ndim != 2 or initial.shape[0] < 2 or initial.shape[1] < 1 or not np.isfinite(initial).all():
+        raise ChainError("provide a finite (nx, ny) temperature grid with two x faces")
+    if grid.ndim != 1 or len(grid) < 2 or not np.isfinite(grid).all() or not (np.diff(grid) > 0).all():
+        raise ChainError("provide strictly increasing finite times")
+    if not .5 <= theta <= 1:
+        raise ChainError("theta must lie in [.5, 1]")
+    nx, ny = initial.shape
+    gx, gy = _lattice_conductances(nx, ny, r_link, periodic_y)
+    capacity = np.broadcast_to(np.asarray(heat_capacity, dtype=float), initial.shape)
+    if not np.isfinite(capacity).all() or (capacity < 0).any() or (capacity[1:-1] <= 0).any():
+        raise ChainError("capacities must be nonnegative and positive on free nodes")
+
+    ids = np.arange(initial.size).reshape(initial.shape)
+    y_from = ids if periodic_y else ids[:, :-1]
+    y_to = np.roll(ids, -1, axis=1) if periodic_y else ids[:, 1:]
+    start = np.r_[ids[:-1].ravel(), y_from.ravel()]
+    end = np.r_[ids[1:].ravel(), y_to.ravel()]
+    conductance = np.r_[gx.ravel(), gy.ravel()]
+    links = np.arange(start.size)
+    incidence = sp.csr_matrix((np.tile([-1., 1.], start.size),
+                               (links.repeat(2), np.column_stack((start, end)).ravel())),
+                              shape=(start.size, initial.size))
+    free = incidence[:, ny:-ny]
+    laplacian = free.T @ free.multiply(conductance[:, None])
+    mass = sp.diags(capacity[1:-1].ravel(), format="csc") if nx > 2 else None
+    history = np.broadcast_to(initial, (len(grid), nx, ny)).copy()
+    last_dt = None
+    for step, dt in enumerate(np.diff(grid)):
+        if nx == 2:
+            break
+        if dt != last_dt:
+            factor = sp.linalg.splu((mass + theta*dt*laplacian).tocsc())
+            last_dt = dt
+        state = history[step].ravel()
+        flow = conductance*(state[start]-state[end])
+        increment = factor.solve(dt*(free.T @ flow))
+        history[step+1, 1:-1] = history[step, 1:-1] + increment.reshape(nx-2, ny)
+    if not return_link_heat:
+        return history
+    power_x = -gx*np.diff(history, axis=1)
+    power_y = gy*(history-np.roll(history, -1, axis=2)) if periodic_y else -gy*np.diff(history, axis=2)
+    def integrated(power):
+        return np.diff(grid)[:, None, None]*((1-theta)*power[:-1] + theta*power[1:])
+    return history, {"x": integrated(power_x), "y": integrated(power_y)}
 
 
 def _chain_laplacian(conductance):
