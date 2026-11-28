@@ -1,0 +1,222 @@
+{
+  "artifact": "papers/data/w32-2026-11-16/ice/granular_vs_kerr.json",
+  "mission": "paper-exp-ice-ridge-keel-grounding-5",
+  "mission_id": 28180,
+  "repo": "TensorDEM",
+  "runner": "native",
+  "generated_utc": "2026-11-28T08:10:52Z",
+  "configuration": {
+    "keel_height_m": 2.0,
+    "cell_ratio": 8.0,
+    "solid_fraction": 0.62,
+    "w0_m": 0.008,
+    "n_particles": 50000,
+    "seed": 7,
+    "increments": 6,
+    "steps_per_increment": 100,
+    "bond_law": "spacing_consistent",
+    "bond_reference_length_m": 1.0,
+    "ice_young_Pa": 1000000000.0,
+    "footing_widths_m": [
+      1.0,
+      2.0,
+      4.0
+    ]
+  },
+  "dem_specimen": {
+    "n_particles": 50065,
+    "n_bonds": 121094,
+    "coordination": 4.837471287326475,
+    "length_m": 16.0,
+    "height_m": 2.0,
+    "spacing_m": 0.027184707917553962,
+    "mean_radius_m": 0.011241606671672497,
+    "solid_fraction": 0.62,
+    "kPa_per_bond": 22448.239052574874,
+    "seed": 7,
+    "bond_law": "spacing_consistent",
+    "bond_reference_length_m": 1.0
+  },
+  "dem_results": {
+    "confined_compression": {
+      "test": "confined_compression",
+      "settlements_m": [
+        0.0013333333333333333,
+        0.0026666666666666666,
+        0.004,
+        0.005333333333333333,
+        0.006666666666666667,
+        0.008
+      ],
+      "pressures_Pa": [
+        180656.4695186068,
+        309160.0361113877,
+        414153.42745682306,
+        505055.0779606975,
+        586314.1547879995,
+        660441.8970497772
+      ],
+      "k_subgrade_small_strain_N_per_m3": 135492352.13895512,
+      "k_subgrade_N_per_m3": 82555237.13122214,
+      "wall_time_s": 11.93941330909729
+    },
+    "simple_shear": {
+      "test": "simple_shear",
+      "gammas": [
+        0.0006666666666666666,
+        0.0013333333333333333,
+        0.002,
+        0.0026666666666666666,
+        0.0033333333333333335,
+        0.004
+      ],
+      "taus_Pa": [
+        136624.22963250452,
+        233094.4448449507,
+        313063.0781043737,
+        382399.6579503084,
+        444379.22276674263,
+        500911.1742638187
+      ],
+      "G_skeleton_Pa": 204936344.44875678,
+      "wall_time_s": 11.37096881866455
+    },
+    "footings": {
+      "0.5": {
+        "footing_width_m": 1.0,
+        "settlements_m": [
+          0.0013333333333333333,
+          0.0026666666666666666,
+          0.004,
+          0.005333333333333333,
+          0.006666666666666667,
+          0.008
+        ],
+        "resistance_N_per_m": [
+          138370.56544428322,
+          291923.58912016044,
+          421691.8934116154,
+          537491.9439238798,
+          643369.6020284332,
+          741701.5808076892
+        ],
+        "secant_stiffness_N_per_m2": 103777924.08321242,
+        "n_footing_particles": 76,
+        "wall_time_s": 11.227487564086914
+      },
+      "1.0": {
+        "footing_width_m": 2.0,
+        "settlements_m": [
+          0.0013333333333333333,
+          0.0026666666666666666,
+          0.004,
+          0.005333333333333333,
+          0.006666666666666667,
+          0.008
+        ],
+        "resistance_N_per_m": [
+          -311177.57250594825,
+          279623.1052884849,
+          626439.3777878706,
+          889345.4511877827,
+          1109601.4824535812,
+          1303708.1069182155
+        ],
+        "secant_stiffness_N_per_m2": -233383179.3794612,
+        "n_footing_particles": 150,
+        "wall_time_s": 11.22853946685791
+      },
+      "2.0": {
+        "footing_width_m": 4.0,
+        "settlements_m": [
+          0.0013333333333333333,
+          0.0026666666666666666,
+          0.004,
+          0.005333333333333333,
+          0.006666666666666667,
+          0.008
+        ],
+        "resistance_N_per_m": [
+          -627648.7815522447,
+          499619.9554276345,
+          1166595.636635348,
+          1671789.9892566686,
+          2093195.5389984117,
+          2462586.035526114
+        ],
+        "secant_stiffness_N_per_m2": -470736586.1641835,
+        "n_footing_particles": 302,
+        "wall_time_s": 12.112959861755371
+      }
+    },
+    "total_wall_time_s": 58.04924774169922
+  },
+  "kerr_identification": {
+    "method": "K from confined compression, sqrt(G2*K) from narrow footing (b=0.5Hk)",
+    "parameters": {
+      "K_N_per_m3": 82555237.13122214,
+      "G2_N_per_m": 312439.3036092751,
+      "sqrt_G2K_N_per_m1_5": 5078730.234869501,
+      "k_upper_N_per_m3": 165110474.2624443,
+      "k_lower_N_per_m3": 165110474.2624443,
+      "shear_N_per_m": 624878.6072185502,
+      "c_m2": 0.0018923045615667638
+    },
+    "foundation_dict": {
+      "k_upper_N_per_m3": 165110474.2624443,
+      "k_lower_N_per_m3": 165110474.2624443,
+      "shear_N_per_m": 624878.6072185502,
+      "k_series_N_per_m3": 82555237.13122214,
+      "c_m2": 0.0018923045615667638,
+      "g2_N_per_m": 312439.3036092751,
+      "sqrt_c_m": 0.04350062713992482
+    }
+  },
+  "kerr_selfcheck": {
+    "law_inside_rel_err": 1.7626883204558515e-16,
+    "law_outside_rel_err": 1.7626883204558515e-16,
+    "edge_jump_rel_err": 3.581583032422268e-16,
+    "integral_rel_err": 1.2061842068027506e-08,
+    "integral_N_per_m": 741701.5897539766,
+    "closed_form_N_per_m": 741701.5808076892,
+    "all_pass": true
+  },
+  "comparison": {
+    "w0_m": 0.008,
+    "predictions": {
+      "0.5": {
+        "footing_width_m": 1.0,
+        "R_dem_N_per_m": 741701.5808076892,
+        "R_kerr_N_per_m": 741701.5808076892,
+        "rel_error": 0.0,
+        "rel_error_pct": 0.0
+      },
+      "1.0": {
+        "footing_width_m": 2.0,
+        "R_dem_N_per_m": 1303708.1069182155,
+        "R_kerr_N_per_m": 1402143.4778574663,
+        "rel_error": 0.07550414883277692,
+        "rel_error_pct": 7.550414883277693
+      },
+      "2.0": {
+        "footing_width_m": 4.0,
+        "R_dem_N_per_m": 2462586.035526114,
+        "R_kerr_N_per_m": 2723027.2719570207,
+        "rel_error": 0.10575924360558037,
+        "rel_error_pct": 10.575924360558037
+      }
+    },
+    "summary": {
+      "max_abs_rel_error": 0.10575924360558037,
+      "max_abs_rel_error_pct": 10.575924360558037,
+      "all_pass_15pct": true
+    }
+  },
+  "limitations": [
+    "Small-strain only (w0/Hk = 0.004), no bond breakage",
+    "Plane strain, periodic lateral boundaries",
+    "Kerr layer cannot resolve k_u/k_l split from footing test alone",
+    "DEM modulus is a lattice modulus, not a continuum ice modulus",
+    "Quasi-static solver: no inertia physics claimed"
+  ]
+}
