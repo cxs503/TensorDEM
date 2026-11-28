@@ -71,6 +71,7 @@ import scipy.linalg as sla
 import scipy.sparse as sp
 
 __all__ = [
+    "slab_contact_temperature_jumps",
     "GAS_CONSTANT",
     "ICE_CREEP_ACTIVATION_ENERGY",
     "ICE_CREEP_EXPONENT",
@@ -445,6 +446,42 @@ def _chain_laplacian(conductance):
     return sp.diags([-conductance, diag, -conductance], [-1, 0, 1], format="csr")
 
 
+def _slab_areas(area, cells):
+    area = np.broadcast_to(np.asarray(area, dtype=float), (cells,))
+    if not np.isfinite(area).all() or np.any(area <= 0):
+        raise ChainError("area must be finite and positive for every cell")
+    return area, np.minimum(area[:-1], area[1:])
+
+
+def slab_contact_temperature_jumps(left_power, contact_resistance, *, area=1.,
+                                   right_power=None, left_resistance_fraction=.5):
+    """Return left-minus-right contact drops in K on a cell-centred stack.
+
+    Supply rightward powers (W) at the interior interfaces only, shaped
+    (..., n_cells-1). Leading dimensions may represent samples or phasors.
+    Contact resistance is areal (m² K/W); area is scalar or per cell (m²).
+    At a step use the overlap of the two adjacent cross sections. For a
+    storing or powered sheet, supply the two distinct rightward powers
+    and the same resistance split as in cell_centered_slab_network.
+    """
+    power = np.asarray(left_power)
+    if power.ndim == 0 or not np.isfinite(power).all():
+        raise ChainError("supply finite powers with an interior interface axis")
+    _, overlap = _slab_areas(area, power.shape[-1]+1)
+    resistance = np.broadcast_to(np.asarray(contact_resistance, dtype=float), overlap.shape)
+    if not np.isfinite(resistance).all() or np.any(resistance < 0):
+        raise ChainError("contact resistance must be finite and nonnegative")
+    if right_power is not None:
+        right = np.asarray(right_power)
+        if right.shape != power.shape or not np.isfinite(right).all():
+            raise ChainError("right powers must match the left power shape and be finite")
+        fraction = np.broadcast_to(np.asarray(left_resistance_fraction, dtype=float), overlap.shape)
+        if not np.isfinite(fraction).all() or np.any((fraction < 0) | (fraction > 1)):
+            raise ChainError("left_resistance_fraction must lie in [0, 1]")
+        power = fraction*power + (1-fraction)*right
+    return (resistance/overlap)*power
+
+
 def cell_centered_slab_network(widths, conductivity, volumetric_heat_capacity, *,
                                area=1., contact_resistance=0., films=(None, None), resolve_contacts=False,
                                interface_heat_capacity=0., left_resistance_fraction=.5, wall_areal_heat_capacity=(0.,0.)):
@@ -473,10 +510,7 @@ def cell_centered_slab_network(widths, conductivity, volumetric_heat_capacity, *
     widths = np.asarray(widths, dtype=float)
     if widths.ndim != 1 or not widths.size or not np.isfinite(widths).all() or np.any(widths <= 0):
         raise ChainError("supply a finite positive width for each cell")
-    area = np.broadcast_to(np.asarray(area,dtype=float),widths.shape)
-    if not np.isfinite(area).all() or np.any(area<=0):
-        raise ChainError("area must be finite and positive for every cell")
-    joint_area = np.minimum(area[:-1],area[1:])
+    area, joint_area = _slab_areas(area, widths.size)
     k, cv = (np.broadcast_to(np.asarray(v, dtype=float), widths.shape)
              for v in (conductivity, volumetric_heat_capacity))
     if any(not np.isfinite(v).all() or np.any(v <= 0) for v in (k, cv)):

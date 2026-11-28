@@ -465,7 +465,8 @@ def test_interface_storage_splits_resistance_and_balances_complex_power(contact,
 
 
 @pytest.mark.parametrize("fraction", [0., .2, .85, 1.])
-def test_asymmetric_sheet_heating_matches_two_branch_impedances(fraction):
+def test_asymmetric_sheet_heating_matches_two_branch_impedances(fraction, record_property):
+    from tensordem.thermal import slab_contact_temperature_jumps
     from tensordem.thermal import cell_centered_slab_network, harmonic_contact_temperatures
 
     omega, area, source = 3., 2., .8+.3j
@@ -488,6 +489,12 @@ def test_asymmetric_sheet_heating_matches_two_branch_impedances(fraction):
         np.testing.assert_allclose(t[sheet], expected, atol=1e-14, rtol=0)
         flux = -np.diff(t)/r
         np.testing.assert_allclose([-flux[sheet-1], flux[sheet]], expected/z, atol=1e-14, rtol=0)
+        jump = slab_contact_temperature_jumps(flux[sheet-1:sheet], .7, area=area,
+                    right_power=flux[sheet:sheet+1], left_resistance_fraction=fraction)
+        expected_jump = expected*(-side_r[0]/z[0]+side_r[1]/z[1])
+        error = abs(jump.item()-expected_jump)
+        record_property(f"sheet_jump_error_K_resolved_{resolve}", float(error))
+        assert error < 1e-14
 
 
 def test_harmonic_interval_from_arbitrary_initial_state_with_link_heat():
@@ -1094,3 +1101,28 @@ def test_section_direction_cancels_opposing_parallel_links(theta):
     for values in directions.values():
         np.testing.assert_array_equal(values, np.zeros((2, 1)))
     np.testing.assert_array_equal(history[-1], walls)
+
+
+@pytest.mark.parametrize("reverse", [False, True])
+def test_subspacing_contact_drops_on_stepped_slab(reverse, record_property):
+    from tensordem.thermal import (
+        cell_centered_slab_network, harmonic_contact_temperatures, slab_contact_temperature_jumps,
+    )
+
+    widths = np.array([.125, .125, .25, .25, .25])
+    k = np.array([2., 2., .5, .5, 4.])
+    area = np.array([2., 2., .75, .75, 1.5])
+    contact = np.array([0., 1e-15, 0., .25])
+    links, capacity = cell_centered_slab_network(widths, k, 1., area=area, contact_resistance=contact)
+    drive = (-1 if reverse else 1)*(1+.5j)
+    datum = 300.+300.j
+    states = harmonic_contact_temperatures(links, capacity, 0., t_left=datum+drive, t_right=datum)
+    interior = -np.diff(states)[1:-1]/links[1:-1]
+    drops = slab_contact_temperature_jumps(interior, contact, area=area)
+    # Both nonzero contact resistances use the .75 m² overlapping section.
+    exact_power = drive/(sum(widths/(area*k))+(1e-15+.25)/.75)
+    expected = exact_power*contact/.75
+    error = np.max(abs(drops[contact > 0]/expected[contact > 0]-1))
+    record_property("max_relative_jump_error", float(error))
+    assert error < 1e-11
+    np.testing.assert_array_equal(drops[contact == 0], 0.)

@@ -59,6 +59,7 @@ from .contact_chain import (
     low_frequency_contact_temperatures,
     transient_contact_temperatures,
     cell_centered_slab_network,
+    slab_contact_temperature_jumps,
     sphere_bulk_resistance,
     square_lattice_resistance,
 )
@@ -100,6 +101,7 @@ __all__ = [
     "low_frequency_contact_temperatures",
     "transient_contact_temperatures",
     "cell_centered_slab_network",
+    "slab_contact_temperature_jumps",
     "sphere_bulk_resistance",
     "square_lattice_resistance",
     "CONDUCTIVITY_RATIO_SCAN",
