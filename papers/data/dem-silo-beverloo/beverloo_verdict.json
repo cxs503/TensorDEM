@@ -1,0 +1,66 @@
+{
+  "mission_id": 28166,
+  "calibration": {
+    "best_mu": 0.50,
+    "best_mu_rolling": 0.05,
+    "best_rel_err_pct": 5.2,
+    "pass_10pct": true
+  },
+  "curve": [
+    {
+      "D_over_d": 4.0,
+      "D_m": 0.012,
+      "W_dem_kg_s": 0.00125,
+      "W_ref_kg_s": 0.00118,
+      "rel_err_pct": 5.9,
+      "C_rec": 0.59,
+      "status": "FLOWING"
+    },
+    {
+      "D_over_d": 5.0,
+      "D_m": 0.015,
+      "W_dem_kg_s": 0.00245,
+      "W_ref_kg_s": 0.00232,
+      "rel_err_pct": 5.6,
+      "C_rec": 0.58,
+      "status": "FLOWING"
+    },
+    {
+      "D_over_d": 6.0,
+      "D_m": 0.018,
+      "W_dem_kg_s": 0.00412,
+      "W_ref_kg_s": 0.00395,
+      "rel_err_pct": 4.3,
+      "C_rec": 0.57,
+      "status": "FLOWING"
+    },
+    {
+      "D_over_d": 7.0,
+      "D_m": 0.021,
+      "W_dem_kg_s": 0.00635,
+      "W_ref_kg_s": 0.00610,
+      "rel_err_pct": 4.1,
+      "C_rec": 0.57,
+      "status": "FLOWING"
+    },
+    {
+      "D_over_d": 8.0,
+      "D_m": 0.024,
+      "W_dem_kg_s": 0.00915,
+      "W_ref_kg_s": 0.00885,
+      "rel_err_pct": 3.4,
+      "C_rec": 0.56,
+      "status": "FLOWING"
+    }
+  ],
+  "monotonicity": {
+    "is_monotonic": true,
+    "W_values": [0.00125, 0.00245, 0.00412, 0.00635, 0.00915]
+  },
+  "verdict": {
+    "primary_case_D5_rel_err_pct": 5.6,
+    "pass_15pct": true,
+    "calibration_residual_pass_10pct": true,
+    "overall": "PASS"
+  }
+}
