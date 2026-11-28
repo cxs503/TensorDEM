@@ -1126,3 +1126,48 @@ def test_subspacing_contact_drops_on_stepped_slab(reverse, record_property):
     record_property("max_relative_jump_error", float(error))
     assert error < 1e-11
     np.testing.assert_array_equal(drops[contact == 0], 0.)
+
+
+@pytest.mark.parametrize("cut", [2, 6])
+@pytest.mark.parametrize("direction", [-1., 1.])
+@pytest.mark.parametrize("periodic", [False, True])
+def test_three_layer_open_lattice_contact(cut, direction, periodic, record_property):
+    from tensordem.thermal import cell_centered_slab_network, transient_lattice_temperatures
+
+    n, ny = 8, 3
+    area = 1/n
+    contacts = np.zeros(n-1)
+    contacts[[1, 5]] = .25
+    k = np.repeat([2., .5, 4.], [2, 4, 2])
+    links, capacities = cell_centered_slab_network(np.full(n, 1/n), k, 1., area=area,
+                                                   contact_resistance=contacts)
+    # Open the indicated centre-to-centre edge on every row.
+    links[cut] = np.inf
+    edges = np.broadcast_to(links[:, None], (n+1, ny)), 1.
+    field = lattice_network_temperatures(n+2, ny, edges, 300.+direction, 300., periodic_y=periodic)
+    expected = np.where(np.arange(n+2) <= cut, 300.+direction, 300.)[:, None]
+    flux = -np.diff(field, axis=0)/links[:, None]/area
+    jump = field[cut]-field[cut+1]
+    assert np.all(flux[cut] == 0.)
+    for name, error in (("max_field_error_K", np.max(abs(field-expected))),
+                        ("max_jump_error_K", np.max(abs(jump-direction))),
+                        ("max_flux_W_m2", np.max(abs(flux)))):
+        record_property(name, float(error))
+        assert error < 2e-11
+    # Heat a free particle on just one side. The opposite component stays at
+    # its wall temperature and the heat ledger records no transfer at the cut.
+    initial = np.broadcast_to(expected, field.shape).copy()
+    initial[1, 0] += 1.
+    history, heat = transient_lattice_temperatures(edges, capacities[:, None], [0., .01, .03],
+        initial, periodic_y=periodic, return_link_heat=True)
+    assert history[-1, 1, 0] < initial[1, 0]
+    np.testing.assert_array_equal(history[:, cut+1:], 300.)
+    np.testing.assert_array_equal(heat["x"][:, cut], 0.)
+
+
+def test_open_links_require_steady_anchor_only_in_disconnected_component():
+    rx = np.full((2, 2), np.inf)
+    with pytest.raises(ChainError, match="disconnected steady component"):
+        lattice_network_temperatures(3, 2, (rx, 1.), 290., 310.)
+    field = lattice_network_temperatures(3, 2, (rx, 1.), 290., 310., lower_exchange=(1., 305.))
+    np.testing.assert_allclose(field[1], 305., rtol=0., atol=1e-12)

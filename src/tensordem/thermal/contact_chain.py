@@ -234,8 +234,8 @@ def _lattice_conductances(nx, ny, r_link, periodic_y):
         values = np.asarray(resistance, dtype=float)
         if values.ndim and values.shape != shape:
             raise ChainError(f"edge resistance needs shape {shape}, got {values.shape}")
-        if not np.isfinite(values).all() or np.any(values <= 0):
-            raise ChainError("edge resistance must be finite and positive")
+        if not np.all(values > 0):
+            raise ChainError("edge resistance must be positive (+inf opens the link)")
         return np.broadcast_to(1.0 / values, shape)
 
     if isinstance(r_link, tuple):
@@ -266,7 +266,9 @@ def lattice_network_temperatures(nx: int, ny: int, r_link: float | tuple,
     ambient temperature in K) for the first and last rows. Each value may be
     scalar or a profile of length nx. Conductance includes any resistance
     between the particle center and the ambient. Zero conductance insulates
-    the particle. The prescribed x-face temperatures take precedence.
+    the particle. A +inf edge resistance opens that link. Every connected
+    component needs a pinned node or positive ambient conductance for a
+    unique steady solution. The prescribed x-face temperatures take precedence.
     """
     if int(nx) < 2:
         raise ChainError("nx must be >= 2")
@@ -331,6 +333,16 @@ def lattice_network_temperatures(nx: int, ny: int, r_link: float | tuple,
                 rows.append(node); cols.append(node); vals.append(g)
                 rows.append(node); cols.append(ni * ny + nj); vals.append(-g)
     mat = sp.csr_matrix((vals, (rows, cols)), shape=(n_cells, n_cells))
+    if np.any(gx == 0) or np.any(gy == 0):
+        # Weak connectivity includes links into the rows with prescribed values.
+        mat.eliminate_zeros()
+        count, labels = sp.csgraph.connected_components(mat, directed=False)
+        anchored = np.zeros((nx, ny), dtype=bool)
+        anchored[[0, -1]] = True
+        for side, g, _ in exchange_links:
+            anchored[:, side] |= g > 0
+        if np.unique(labels[anchored.ravel()]).size != count:
+            raise ChainError("each disconnected steady component needs a pinned node or ambient exchange")
     factor = sp.linalg.splu(mat.tocsc())
     temperature = factor.solve(rhs).reshape(nx, ny)
     # Refine against the physical link currents. Forming residuals from
