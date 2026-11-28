@@ -1,0 +1,35 @@
+{
+  "source_commit": "525e9b5783d338f81c27ecc3dfa617bdff0a00ae",
+  "command": "PYTHONPATH=src OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python -m pytest -q tests/test_thermal_contact_chain.py tests/test_interface_thermal_contact_chain.py -o junit_family=legacy --junitxml=/tmp/dem_contact_jumps.xml",
+  "regression": {
+    "tests": 136,
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0
+  },
+  "reference": "Series resistances of cells and overlapping material contacts at a 300+300j K datum. In a powered storing sheet use the independently calculated branch impedances and the respective shares of contact resistance. Positive power and temperature drop follow the increasing cell index.",
+  "measurements": {
+    "test_asymmetric_sheet_heating_matches_two_branch_impedances[0.0]": {
+      "sheet_jump_error_K_resolved_False": 3.469446951953614e-18,
+      "sheet_jump_error_K_resolved_True": 5.204170427930421e-18
+    },
+    "test_asymmetric_sheet_heating_matches_two_branch_impedances[0.2]": {
+      "sheet_jump_error_K_resolved_False": 9.341771812940338e-18,
+      "sheet_jump_error_K_resolved_True": 6.071532165918825e-18
+    },
+    "test_asymmetric_sheet_heating_matches_two_branch_impedances[0.85]": {
+      "sheet_jump_error_K_resolved_False": 5.485677294651096e-18,
+      "sheet_jump_error_K_resolved_True": 8.673617379884035e-18
+    },
+    "test_asymmetric_sheet_heating_matches_two_branch_impedances[1.0]": {
+      "sheet_jump_error_K_resolved_False": 3.469446951953614e-18,
+      "sheet_jump_error_K_resolved_True": 0.0
+    },
+    "test_subspacing_contact_drops_on_stepped_slab[False]": {
+      "max_relative_jump_error": 1.5585339165101188e-13
+    },
+    "test_subspacing_contact_drops_on_stepped_slab[True]": {
+      "max_relative_jump_error": 4.2491091745035086e-13
+    }
+  }
+}
