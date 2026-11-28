@@ -1,0 +1,59 @@
+{
+  "source_commit": "639c4c104cfe18505c1de4cb8b1fa19a42c0e592",
+  "benchmark_command": "PYTHONPATH=src OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python examples/thermal_section_reversal.py",
+  "regression_command": "PYTHONPATH=src OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python -m pytest -q tests/test_thermal_contact_chain.py tests/test_interface_thermal_contact_chain.py",
+  "regression": {
+    "tests": 134,
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0
+  },
+  "reference": "Unit square fixed particle network, unit material properties, periodic y and pinned end reservoirs. Integrate the section power 1-0.75*pi*cos(15*pi/8)*exp(-25*pi^2*t) on either side of the zero at x=3/8 over 0 to 0.012 seconds.",
+  "runs": [
+    {
+      "n": 16,
+      "steps": 16,
+      "left_right_heat_J": [
+        0.0015594005304255321,
+        0.004967324443427834
+      ],
+      "analytic_left_right_heat_J": [
+        0.0016169468457037867,
+        0.005251311644735942
+      ],
+      "directional_error_J": 0.0002839872013081085,
+      "section_net_mismatch_J": 4.336808689942018e-19,
+      "left_storage_residual_J": 1.680513367352532e-17
+    },
+    {
+      "n": 32,
+      "steps": 32,
+      "left_right_heat_J": [
+        0.0016034783486223187,
+        0.005180315630723466
+      ],
+      "analytic_left_right_heat_J": [
+        0.0016169468457037867,
+        0.005251311644735942
+      ],
+      "directional_error_J": 7.099601401247633e-05,
+      "section_net_mismatch_J": 2.168404344971009e-19,
+      "left_storage_residual_J": 1.1709383462843448e-17
+    },
+    {
+      "n": 64,
+      "steps": 64,
+      "left_right_heat_J": [
+        0.001613639285615959,
+        0.00523357099647615
+      ],
+      "analytic_left_right_heat_J": [
+        0.0016169468457037867,
+        0.005251311644735942
+      ],
+      "directional_error_J": 1.7740648259792664e-05,
+      "section_net_mismatch_J": 2.168404344971009e-19,
+      "left_storage_residual_J": 5.7462715141731735e-18
+    }
+  ]
+}
