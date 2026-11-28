@@ -1082,3 +1082,15 @@ def test_transient_lattice_signed_link_heat(periodic, ny):
                       np.diff(np.pad(heat["y"], ((0, 0), (0, 0), (1, 1))), axis=2))
         residual = capacity*np.diff(history[:, 1:-1], axis=0)+np.diff(heat["x"], axis=1)+transverse[:, 1:-1]
         assert np.max(abs(residual)) < 1e-14
+
+
+@pytest.mark.parametrize("theta", [.5, .75, 1.])
+def test_section_direction_cancels_opposing_parallel_links(theta):
+    from tensordem.thermal import transient_lattice_temperatures
+
+    walls = np.array([[2., 0.], [0., 2.]])
+    history, directions = transient_lattice_temperatures(
+        1., 0., [0., .2, .7], walls, theta=theta, return_directional_section_heat=True)
+    for values in directions.values():
+        np.testing.assert_array_equal(values, np.zeros((2, 1)))
+    np.testing.assert_array_equal(history[-1], walls)

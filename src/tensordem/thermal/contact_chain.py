@@ -351,8 +351,26 @@ def lattice_network_temperatures(nx: int, ny: int, r_link: float | tuple,
     return temperature + factor.solve(residual.ravel()).reshape(nx, ny)
 
 
+def _directional_heat(power, dt, theta):
+    end = power[1:]
+    start = 2*(1-theta)*power[:-1]+(2*theta-1)*end
+    crossing = ((start > 0) & (end < 0)) | ((start < 0) & (end > 0))
+    # Normalize before taking the ratio. Compute each triangular
+    # lobe separately to retain small transfers near an endpoint.
+    scale = np.maximum(abs(start), abs(end))
+    scale = np.where(scale == 0, 1., scale)
+    a, b = abs(start)/scale, abs(end)/scale
+    denominator = np.where(crossing, a+b, 1.)
+    start_weight = .5*np.where(crossing, a/denominator, 1.)
+    end_weight = .5*np.where(crossing, b/denominator, 1.)
+    forward = dt*(start_weight*np.maximum(start, 0.)+end_weight*np.maximum(end, 0.))
+    reverse = dt*(start_weight*np.maximum(-start, 0.)+end_weight*np.maximum(-end, 0.))
+    return dict(rightward=forward, leftward=reverse)
+
+
 def transient_lattice_temperatures(r_link, heat_capacity, time, initial_temperature, *,
-                                   periodic_y=False, theta=.5, return_link_heat=False):
+                                   periodic_y=False, theta=.5, return_link_heat=False,
+                                   return_directional_section_heat=False):
     """Advance a rectangular network of fixed thermal links without internal sources.
 
     The initial temperature (K) has shape (nx, ny); its first and last x rows
@@ -361,6 +379,11 @@ def transient_lattice_temperatures(r_link, heat_capacity, time, initial_temperat
     With return_link_heat, also return a dict of signed joules per interval
     on x and y links. Positive heat goes towards the next index, wrapping on
     the final periodic y link. The theta method uses .5 for Crank–Nicolson.
+    return_directional_section_heat appends rightward and leftward magnitudes
+    in joules, shaped (interval, x link index). Sum the instantaneous powers
+    across y before splitting the section history by sign. Within each step
+    the affine reconstruction ends at the final power and has the theta mean.
+    When both outputs are requested the order is history, links, sections.
     """
     initial = np.asarray(initial_temperature, dtype=float)
     grid = np.asarray(time, dtype=float)
@@ -401,13 +424,18 @@ def transient_lattice_temperatures(r_link, heat_capacity, time, initial_temperat
         flow = conductance*(state[start]-state[end])
         increment = factor.solve(dt*(free.T @ flow))
         history[step+1, 1:-1] = history[step, 1:-1] + increment.reshape(nx-2, ny)
-    if not return_link_heat:
+    if not (return_link_heat or return_directional_section_heat):
         return history
+    output = (history,)
     power_x = -gx*np.diff(history, axis=1)
-    power_y = gy*(history-np.roll(history, -1, axis=2)) if periodic_y else -gy*np.diff(history, axis=2)
-    def integrated(power):
-        return np.diff(grid)[:, None, None]*((1-theta)*power[:-1] + theta*power[1:])
-    return history, {"x": integrated(power_x), "y": integrated(power_y)}
+    if return_link_heat:
+        power_y = gy*(history-np.roll(history, -1, axis=2)) if periodic_y else -gy*np.diff(history, axis=2)
+        def integrated(power):
+            return np.diff(grid)[:, None, None]*((1-theta)*power[:-1] + theta*power[1:])
+        output += ({"x": integrated(power_x), "y": integrated(power_y)},)
+    if return_directional_section_heat:
+        output += (_directional_heat(power_x.sum(axis=2), np.diff(grid)[:, None], theta),)
+    return output
 
 
 def _chain_laplacian(conductance):
@@ -961,20 +989,7 @@ def transient_contact_temperatures(link_resistance, heat_capacity, time, initial
         if return_link_heat:
             output += (dt*((1-theta)*power[:-1] + theta*power[1:]),)
         if return_directional_link_heat:
-            end = power[1:]
-            start = 2*(1-theta)*power[:-1]+(2*theta-1)*end
-            crossing = ((start > 0) & (end < 0)) | ((start < 0) & (end > 0))
-            # Normalize before taking the ratio. Compute each triangular
-            # lobe separately to retain small transfers near an endpoint.
-            scale = np.maximum(abs(start), abs(end))
-            scale = np.where(scale == 0, 1., scale)
-            a, b = abs(start)/scale, abs(end)/scale
-            denominator = np.where(crossing, a+b, 1.)
-            start_weight = .5*np.where(crossing, a/denominator, 1.)
-            end_weight = .5*np.where(crossing, b/denominator, 1.)
-            forward = dt*(start_weight*np.maximum(start, 0.)+end_weight*np.maximum(end, 0.))
-            reverse = dt*(start_weight*np.maximum(-start, 0.)+end_weight*np.maximum(-end, 0.))
-            output += (dict(rightward=forward, leftward=reverse),)
+            output += (_directional_heat(power, dt, theta),)
         return output
 
     if not free.any():
