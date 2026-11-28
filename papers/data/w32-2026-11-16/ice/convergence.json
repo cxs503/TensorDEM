@@ -1,0 +1,143 @@
+{
+  "mission": "paper-exp-ice-ridge-keel-grounding-6",
+  "study": "coupled_beam_on_keel_convergence",
+  "date": "2026-11-16",
+  "configuration": {
+    "keel_height_m": 2.0,
+    "beam_length_m": 16.0,
+    "platen_width_m": 2.0,
+    "w0_m": 0.008,
+    "ei_N_m2": 3663003663.003663,
+    "ramp_width_m": 0.0008,
+    "penetration_levels": 6,
+    "mesh_elements": [
+      32,
+      64,
+      128
+    ],
+    "keel_law": {
+      "settlements_m": [
+        0.0013333,
+        0.0026667,
+        0.004,
+        0.0053333,
+        0.0066667,
+        0.008
+      ],
+      "pressures_Pa": [
+        4081700.0,
+        6954700.0,
+        9298800.0,
+        11327700.0,
+        13140600.0,
+        14793700.0
+      ]
+    }
+  },
+  "results": [
+    {
+      "n_elements": 32,
+      "element_length_m": 0.5,
+      "resistance_N_per_m": 74443777.04657474,
+      "contact_area_m2_per_m": 6.67762890971197,
+      "q_max_Pa": 14911190.02416688,
+      "converged": true,
+      "newton_iterations": 6
+    },
+    {
+      "n_elements": 64,
+      "element_length_m": 0.25,
+      "resistance_N_per_m": 76046772.30839631,
+      "contact_area_m2_per_m": 6.806410042455508,
+      "q_max_Pa": 14826062.710155748,
+      "converged": true,
+      "newton_iterations": 6
+    },
+    {
+      "n_elements": 128,
+      "element_length_m": 0.125,
+      "resistance_N_per_m": 76993390.1922723,
+      "contact_area_m2_per_m": 6.871012385194451,
+      "q_max_Pa": 14802112.018978909,
+      "converged": true,
+      "newton_iterations": 6
+    }
+  ],
+  "penetration_force_data": {
+    "settlements_m": [
+      0.0013333333333333333,
+      0.0026666666666666666,
+      0.004,
+      0.005333333333333333,
+      0.006666666666666667,
+      0.008
+    ],
+    "forces_per_mesh": [
+      [
+        18305728.939971387,
+        32656482.545192912,
+        44726818.49434628,
+        55470697.33128513,
+        65289711.20584904,
+        74443777.04657474
+      ],
+      [
+        18728351.453006264,
+        33395527.083719503,
+        45727783.12295394,
+        56702070.507595666,
+        66728285.69345121,
+        76046772.30839631
+      ],
+      [
+        18983784.303257775,
+        33835416.51303963,
+        46319233.961442664,
+        57425342.7594725,
+        67570284.89941569,
+        76993390.1922723
+      ]
+    ]
+  },
+  "spearman_correlation": {
+    "n": 6,
+    "rho": 1.0,
+    "p_value": 0.0
+  },
+  "force_peak_difference": {
+    "fine_vs_medium_rel": 0.01229479415716138,
+    "fine_resistance_N_per_m": 76993390.1922723,
+    "medium_resistance_N_per_m": 76046772.30839631
+  },
+  "gci_analysis": {
+    "fine": 74443777.04657474,
+    "medium": 76046772.30839631,
+    "coarse": 76993390.1922723,
+    "r": 2.0,
+    "monotone": false,
+    "convergence_ratio_R": 1.6933921164239865,
+    "observed_order_p": 0.7599160777338109,
+    "gci_fine_rel": 0.03881816058278449
+  },
+  "richardson_limit": {
+    "fine": 74443777.04657474,
+    "medium": 76046772.30839631,
+    "coarse": 76993390.1922723,
+    "r": 2.0,
+    "monotone": false,
+    "convergence_ratio_R": 1.6933921164239865,
+    "observed_order_p": 0.7599160777338109,
+    "gci_fine_rel": 0.03881816058278449,
+    "richardson_limit": 72131960.65314838,
+    "uncertainty_band_abs": 2889770.4917829484,
+    "uncertainty_band_rel": 0.04006227566277608,
+    "safety_factor": 1.25,
+    "verdict": "extrapolated"
+  },
+  "criteria": {
+    "spearman_rho": 1.0,
+    "spearman_threshold": 1.0,
+    "force_peak_diff_threshold": 0.05,
+    "force_peak_diff_actual": 0.01229479415716138
+  }
+}
